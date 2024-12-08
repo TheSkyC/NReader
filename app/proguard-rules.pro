@@ -32,7 +32,7 @@
   public *;
 }
 
--assumenosideeffects class com.dar.nclientv2.utility.LogUtility {
+-assumenosideeffects class com.maxwai.nclientv2NG.utility.LogUtility {
     public static void d(...);
     public static void i(...);
     public static void e(...);
