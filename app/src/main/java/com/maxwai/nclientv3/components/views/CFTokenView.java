@@ -72,9 +72,7 @@ public class CFTokenView {
 
         private void forceAcceptCookies() {
             CookieManager.getInstance().setAcceptCookie(true);
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                CookieManager.getInstance().setAcceptThirdPartyCookies(this, true);
-            }
+            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true);
         }
 
         @SuppressLint("SetJavaScriptEnabled")
@@ -84,7 +82,6 @@ public class CFTokenView {
             WebSettings webSettings = getSettings();
             webSettings.setJavaScriptEnabled(true);
             webSettings.setDomStorageEnabled(true);
-            webSettings.setDatabaseEnabled(true);
             webSettings.setUseWideViewPort(true);
             webSettings.setLoadWithOverviewMode(true);
             webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);

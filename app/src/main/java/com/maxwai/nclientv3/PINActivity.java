@@ -18,9 +18,7 @@ import java.util.List;
 
 public class PINActivity extends GeneralActivity {
     private static final int PIN_LENGHT = 4;
-    private List<Button> numbers;
     private List<TextView> texts;
-    private ImageButton cancelButton;
     private TextView text;
     private String pin = "";
     private String confirmPin = null;
@@ -42,10 +40,10 @@ public class PINActivity extends GeneralActivity {
         logo.setImageResource(Global.getTheme() == Global.ThemeScheme.LIGHT ? R.drawable.ic_logo_dark : R.drawable.ic_logo);
         LinearLayout linear = findViewById(R.id.linearLayout);
         text = findViewById(R.id.textView);
-        cancelButton = findViewById(R.id.cancelButton);
+        ImageButton cancelButton = findViewById(R.id.cancelButton);
         texts = new ArrayList<>(PIN_LENGHT);
         for (int i = 0; i < PIN_LENGHT; i++) texts.add((TextView) linear.getChildAt(i));
-        numbers = Arrays.asList(
+        List<Button> numbers = Arrays.asList(
             findViewById(R.id.btn0), findViewById(R.id.btn1), findViewById(R.id.btn2),
             findViewById(R.id.btn3), findViewById(R.id.btn4), findViewById(R.id.btn5),
             findViewById(R.id.btn6), findViewById(R.id.btn7), findViewById(R.id.btn8),

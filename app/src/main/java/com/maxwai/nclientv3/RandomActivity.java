@@ -125,6 +125,6 @@ public class RandomActivity extends GeneralActivity {
     @Override
     public void onBackPressed() {
         loadedGallery = null;
-        super.onBackPressed();
+        getOnBackPressedDispatcher().onBackPressed();
     }
 }

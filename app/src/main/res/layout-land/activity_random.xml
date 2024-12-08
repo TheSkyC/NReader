@@ -22,6 +22,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginBottom="24dp"
         android:clickable="true"
+        android:contentDescription="@string/shuffle_contentDescription"
         android:focusable="true"
         app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"

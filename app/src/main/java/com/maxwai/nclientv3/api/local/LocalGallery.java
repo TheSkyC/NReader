@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3.api.local;
 
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Parcel;
 import android.util.JsonReader;
 
@@ -76,13 +77,23 @@ public class LocalGallery extends GenericGallery {
     }
 
     private LocalGallery(Parcel in) {
-        galleryData = Objects.requireNonNull(in.readParcelable(GalleryData.class.getClassLoader()));
-        maxSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader()));
-        minSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            galleryData = Objects.requireNonNull(in.readParcelable(GalleryData.class.getClassLoader(), GalleryData.class));
+            maxSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader(), Size.class));
+            minSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader(), Size.class));
+        } else {
+            galleryData = Objects.requireNonNull(in.readParcelable(GalleryData.class.getClassLoader()));
+            maxSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader()));
+            minSize = Objects.requireNonNull(in.readParcelable(Size.class.getClassLoader()));
+        }
         trueTitle = in.readString();
         title = in.readString();
         hasAdvancedData = in.readByte() == 1;
-        folder = in.readParcelable(GalleryFolder.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            folder = in.readParcelable(GalleryFolder.class.getClassLoader(), GalleryFolder.class);
+        } else {
+            folder = in.readParcelable(GalleryFolder.class.getClassLoader());
+        }
         valid = true;
     }
 

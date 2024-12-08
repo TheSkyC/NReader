@@ -157,15 +157,9 @@ public class GalleryDownloaderManager {
         PendingIntent pStop;
         PendingIntent pPause;
         PendingIntent pStart;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            pStop = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-            pPause = PendingIntent.getService(context, 1, pauseIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-            pStart = PendingIntent.getService(context, 2, startIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        } else {
-            pStop = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            pPause = PendingIntent.getService(context, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            pStart = PendingIntent.getService(context, 2, startIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        }
+        pStop = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+        pPause = PendingIntent.getService(context, 1, pauseIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+        pStart = PendingIntent.getService(context, 2, startIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
         if (pauseMode)
             notification.addAction(R.drawable.ic_play, context.getString(R.string.resume), pStart);
         else notification.addAction(R.drawable.ic_pause, context.getString(R.string.pause), pPause);
@@ -175,7 +169,7 @@ public class GalleryDownloaderManager {
 
     private synchronized void notificationUpdate() {
         try {
-            NotificationSettings.notify(context.getString(R.string.channel1_name), notificationId, notification.build());
+            NotificationSettings.notify(context, context.getString(R.string.channel1_name), notificationId, notification.build());
         } catch (NullPointerException | ConcurrentModificationException ignore) {
         }
     }

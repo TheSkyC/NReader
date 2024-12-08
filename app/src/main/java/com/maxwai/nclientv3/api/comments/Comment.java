@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3.api.comments;
 
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.JsonReader;
@@ -52,7 +53,11 @@ public class Comment implements Parcelable {
 
     protected Comment(Parcel in) {
         id = in.readInt();
-        poster = in.readParcelable(User.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            poster = in.readParcelable(User.class.getClassLoader(), User.class);
+        } else {
+            poster = in.readParcelable(User.class.getClassLoader());
+        }
         body = in.readString();
         postDate = new Date(in.readLong());
     }

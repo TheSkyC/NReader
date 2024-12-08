@@ -3,6 +3,7 @@ package com.maxwai.nclientv3.api.components;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcel;
 import android.util.JsonReader;
 import android.util.JsonWriter;
@@ -91,10 +92,17 @@ public class Gallery extends GenericGallery {
     }
 
     public Gallery(Parcel in) {
-        maxSize = in.readParcelable(Size.class.getClassLoader());
-        minSize = in.readParcelable(Size.class.getClassLoader());
-        galleryData = in.readParcelable(GalleryData.class.getClassLoader());
-        folder = in.readParcelable(GalleryFolder.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            maxSize = in.readParcelable(Size.class.getClassLoader(), Size.class);
+            minSize = in.readParcelable(Size.class.getClassLoader(), Size.class);
+            galleryData = in.readParcelable(GalleryData.class.getClassLoader(), GalleryData.class);
+            folder = in.readParcelable(GalleryFolder.class.getClassLoader(), GalleryFolder.class);
+        } else {
+            maxSize = in.readParcelable(Size.class.getClassLoader());
+            minSize = in.readParcelable(Size.class.getClassLoader());
+            galleryData = in.readParcelable(GalleryData.class.getClassLoader());
+            folder = in.readParcelable(GalleryFolder.class.getClassLoader());
+        }
         in.readTypedList(related, SimpleGallery.CREATOR);
         onlineFavorite = in.readByte() == 1;
         language = loadLanguage(getTags());

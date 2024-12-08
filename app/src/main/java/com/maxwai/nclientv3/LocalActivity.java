@@ -179,7 +179,7 @@ public class LocalActivity extends BaseActivity {
         if (adapter != null && adapter.getMode() == MultichoiceAdapter.Mode.SELECTING)
             adapter.deselectAll();
         else
-            super.onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
     }
 
     private void showDialogFolderChoose() {

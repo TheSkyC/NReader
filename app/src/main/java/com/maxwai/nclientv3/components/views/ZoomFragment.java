@@ -3,6 +3,7 @@ package com.maxwai.nclientv3.components.views;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -107,7 +108,11 @@ public class ZoomFragment extends Fragment {
         //read arguments
         String str = getArguments().getString("URL");
         url = str == null ? null : Uri.parse(str);
-        pageFile = getArguments().getParcelable("FOLDER");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
+        } else {
+            pageFile = getArguments().getParcelable("FOLDER");
+        }
         photoView.setAllowParentInterceptOnEdge(true);
         photoView.setOnPhotoTapListener((view, x, y) -> {
             boolean prev = x < CHANGE_PAGE_THRESHOLD;

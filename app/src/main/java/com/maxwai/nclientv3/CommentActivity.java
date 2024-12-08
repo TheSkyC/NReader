@@ -67,7 +67,7 @@ public class CommentActivity extends BaseActivity {
             String submitUrl = String.format(Locale.US, Utility.getBaseUrl() + "api/gallery/%d/comments/submit", id);
             String requestString = createRequestString(commentText.getText().toString());
             commentText.setText("");
-            RequestBody body = RequestBody.create(MediaType.get("application/json"), requestString);
+            RequestBody body = RequestBody.create(requestString, MediaType.get("application/json"));
             new AuthRequest(refererUrl, submitUrl, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -130,7 +130,7 @@ public class CommentActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);

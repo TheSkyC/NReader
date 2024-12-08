@@ -1,6 +1,5 @@
 package com.maxwai.nclientv3.async.converters;
 
-import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -28,7 +27,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-@TargetApi(Build.VERSION_CODES.KITKAT)
 public class CreatePDF extends JobIntentService {
     private int notId;
     private int totalPage;
@@ -59,7 +57,12 @@ public class CreatePDF extends JobIntentService {
         }
         notId = NotificationSettings.getNotificationId();
         System.gc();
-        LocalGallery gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY");
+        LocalGallery gallery;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY", LocalGallery.class);
+        } else {
+            gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY");
+        }
         if (gallery == null) return;
         totalPage = gallery.getPageCount();
         preExecute(gallery.getDirectory());
@@ -77,12 +80,12 @@ public class CreatePDF extends JobIntentService {
                 bitmap.recycle();
             }
             notification.setProgress(totalPage - 1, a + 1, false);
-            NotificationSettings.notify(getString(R.string.channel2_name), notId, notification.build());
+            NotificationSettings.notify(this, getString(R.string.channel2_name), notId, notification.build());
 
         }
         notification.setContentText(getString(R.string.writing_pdf));
         notification.setProgress(totalPage, 0, true);
-        NotificationSettings.notify(getString(R.string.channel2_name), notId, notification.build());
+        NotificationSettings.notify(this, getString(R.string.channel2_name), notId, notification.build());
         try {
 
             File finalPath = Global.PDFFOLDER;
@@ -98,13 +101,13 @@ public class CreatePDF extends JobIntentService {
             notification.setContentTitle(getString(R.string.created_pdf));
             notification.setContentText(gallery.getTitle());
             createIntentOpen(finalPath);
-            NotificationSettings.notify(getString(R.string.channel2_name), notId, notification.build());
+            NotificationSettings.notify(this, getString(R.string.channel2_name), notId, notification.build());
             LogUtility.d(finalPath.getAbsolutePath());
         } catch (IOException e) {
             notification.setContentTitle(getString(R.string.error_pdf));
             notification.setContentText(getString(R.string.failed));
             notification.setProgress(0, 0, false);
-            NotificationSettings.notify(getString(R.string.channel2_name), notId, notification.build());
+            NotificationSettings.notify(this, getString(R.string.channel2_name), notId, notification.build());
             throw new RuntimeException("Error generating file", e);
         } finally {
             document.close();
@@ -127,11 +130,7 @@ public class CreatePDF extends JobIntentService {
                 getApplicationContext().grantUriPermission(packageName, apkURI, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_MUTABLE));
-            } else {
-                notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, 0));
-            }
+            notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_MUTABLE));
             LogUtility.d(apkURI.toString());
         } catch (IllegalArgumentException ignore) {//sometimes the uri isn't available
 
@@ -148,7 +147,7 @@ public class CreatePDF extends JobIntentService {
             .setProgress(totalPage - 1, 0, false)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS);
-        NotificationSettings.notify(getString(R.string.channel2_name), notId, notification.build());
+        NotificationSettings.notify(this, getString(R.string.channel2_name), notId, notification.build());
     }
 
 }

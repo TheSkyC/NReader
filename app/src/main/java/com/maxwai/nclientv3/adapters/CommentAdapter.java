@@ -58,9 +58,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         int position = holder.getBindingAdapterPosition();
         Comment c = comments.get(position);
         holder.layout.setOnClickListener(v1 -> {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7));
-            }
+            context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7));
         });
         holder.close.setVisibility(c.getPosterId() != userId ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());

@@ -146,9 +146,6 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             new Thread(new MetadataFetcher(act)).start();
             return true;
         });
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            findPreference(getString(R.string.key_use_rtl)).setVisible(false);
-        }
         findPreference(getString(R.string.key_fake_icon)).setOnPreferenceChangeListener((preference, newValue) -> {
             PackageManager pm = act.getPackageManager();
             ComponentName name1 = new ComponentName(act, LauncherReal.class);
@@ -201,7 +198,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         findPreference(getString(R.string.key_cache)).setSummary(getString(R.string.cache_size_formatted, cacheSize));
         findPreference(getString(R.string.key_cookie)).setOnPreferenceClickListener(preference -> {
             Login.clearCookies();
-            CookieManager.getInstance().removeAllCookie();
+            CookieManager.getInstance().removeAllCookies(null);
             return true;
         });
         findPreference(getString(R.string.key_cache)).setOnPreferenceClickListener(preference -> {
@@ -287,7 +284,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
 
 
     private void initStoragePaths(ListPreference storagePreference) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || !Global.hasStoragePermission(act)) {
+        if (!Global.hasStoragePermission(act)) {
             storagePreference.setVisible(false);
             return;
         }

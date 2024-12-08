@@ -18,7 +18,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.util.DisplayMetrics;
-import android.webkit.CookieSyncManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -155,7 +154,7 @@ public class Global {
     }
 
     public static boolean isDestroyed(Activity activity) {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed();
+        return activity.isDestroyed();
     }
 
     @NonNull
@@ -280,7 +279,6 @@ public class Global {
     public static void initFromShared(@NonNull Context context) {
         Login.initLogin(context);
         SharedPreferences shared = context.getSharedPreferences("Settings", 0);
-        CookieSyncManager.createInstance(context);
         initHttpClient(context);
         initTitleType(context);
         initTheme(context);
@@ -383,7 +381,6 @@ public class Global {
                     new SharedPrefsCookiePersistor(preferences)
                 )
             );
-        CustomSSLSocketFactory.enableTls12OnPreLollipop(builder);
         builder.addInterceptor(new CustomInterceptor(context.getApplicationContext(), true));
         client = builder.build();
         client.dispatcher().setMaxRequests(25);
@@ -403,11 +400,7 @@ public class Global {
         Resources resources = context.getResources();
         Locale l = getLanguage(context);
         Configuration c = new Configuration(resources.getConfiguration());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            c.setLocale(l);
-        } else {
-            c.locale = l;
-        }
+        c.setLocale(l);
         resources.updateConfiguration(c, resources.getDisplayMetrics());
         return l;
     }
@@ -591,21 +584,11 @@ public class Global {
     }
 
     public static int getStatusBarHeight(Context context) {
-        Resources resources = context.getResources();
-        int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            return resources.getDimensionPixelSize(resourceId);
-        }
-        return 0;
+        return context.getResources().getDimensionPixelSize(R.dimen.status_bar_height);
     }
 
     public static int getNavigationBarHeight(Context context) {
-        Resources resources = context.getResources();
-        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            return resources.getDimensionPixelSize(resourceId);
-        }
-        return 0;
+        return context.getResources().getDimensionPixelSize(R.dimen.nav_header_height);
     }
 
     public static void shareURL(Context context, String title, String url) {
@@ -630,19 +613,17 @@ public class Global {
     }
 
     private static void loadNotificationChannel(@NonNull Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel1 = new NotificationChannel(CHANNEL_ID1, context.getString(R.string.channel1_name), NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationChannel channel2 = new NotificationChannel(CHANNEL_ID2, context.getString(R.string.channel2_name), NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationChannel channel3 = new NotificationChannel(CHANNEL_ID3, context.getString(R.string.channel3_name), NotificationManager.IMPORTANCE_DEFAULT);
-            channel1.setDescription(context.getString(R.string.channel1_description));
-            channel2.setDescription(context.getString(R.string.channel2_description));
-            channel3.setDescription(context.getString(R.string.channel3_description));
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            if (notificationManager != null) {
-                notificationManager.createNotificationChannel(channel1);
-                notificationManager.createNotificationChannel(channel2);
-                notificationManager.createNotificationChannel(channel3);
-            }
+        NotificationChannel channel1 = new NotificationChannel(CHANNEL_ID1, context.getString(R.string.channel1_name), NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel channel2 = new NotificationChannel(CHANNEL_ID2, context.getString(R.string.channel2_name), NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel channel3 = new NotificationChannel(CHANNEL_ID3, context.getString(R.string.channel3_name), NotificationManager.IMPORTANCE_DEFAULT);
+        channel1.setDescription(context.getString(R.string.channel1_description));
+        channel2.setDescription(context.getString(R.string.channel2_description));
+        channel3.setDescription(context.getString(R.string.channel3_description));
+        NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+        if (notificationManager != null) {
+            notificationManager.createNotificationChannel(channel1);
+            notificationManager.createNotificationChannel(channel2);
+            notificationManager.createNotificationChannel(channel3);
         }
     }
 
@@ -650,9 +631,6 @@ public class Global {
         List<File> strings = new ArrayList<>(3);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R)
             strings.add(Environment.getExternalStorageDirectory());
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT)
-            return strings;
 
         File[] files = context.getExternalFilesDirs(null);
         strings.addAll(Arrays.asList(files));
@@ -663,7 +641,7 @@ public class Global {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return true; //We don't check permission on Android 13
         } else {
-            return Build.VERSION.SDK_INT < Build.VERSION_CODES.M || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         }
     }
 
@@ -772,7 +750,6 @@ public class Global {
 
     public static void applyFastScroller(RecyclerView recycler) {
         if (recycler == null) return;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
         Drawable drawable = ContextCompat.getDrawable(recycler.getContext(), R.drawable.thumb);
         if (drawable == null) return;
         new FastScrollerBuilder(recycler).setThumbDrawable(drawable).build();

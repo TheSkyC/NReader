@@ -26,7 +26,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment"
             android:name="com.maxwai.nclientv3.components.views.GeneralPreferenceFragment"
             android:layout_width="match_parent"

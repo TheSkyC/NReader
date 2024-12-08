@@ -1,8 +1,11 @@
 package com.maxwai.nclientv3.settings;
 
+import android.Manifest;
 import android.app.Notification;
 import android.content.Context;
+import android.content.pm.PackageManager;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.maxwai.nclientv3.R;
@@ -32,12 +35,22 @@ public class NotificationSettings {
         trimArray();
     }
 
-    public static void notify(String channel, int notificationId, Notification notification) {
+    public static void notify(Context context, String channel, int notificationId, Notification notification) {
         if (maximumNotification == 0) return;
         notificationArray.remove(Integer.valueOf(notificationId));
         notificationArray.add(notificationId);
         trimArray();
         LogUtility.d("Notification count: " + notificationArray.size());
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         notificationSettings.notificationManager.notify(notificationId, notification);
     }
 

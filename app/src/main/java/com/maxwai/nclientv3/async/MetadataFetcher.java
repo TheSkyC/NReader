@@ -28,6 +28,7 @@ public class MetadataFetcher implements Runnable {
             LocalGallery lg = new LocalGallery(f, false);
             if (lg.getId() == SpecialTagIds.INVALID_ID || lg.hasGalleryData()) continue;
             InspectorV3 inspector = InspectorV3.galleryInspector(context, lg.getId(), null);
+            //noinspection CallToThreadRun
             inspector.run();//it is run, not start
             if (inspector.getGalleries() == null || inspector.getGalleries().size() == 0)
                 continue;

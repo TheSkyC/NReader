@@ -16,7 +16,6 @@ import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.ScrapeTags;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
-import com.maxwai.nclientv3.components.classes.MySenderFactory;
 import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.TagV2;
@@ -25,7 +24,7 @@ import com.maxwai.nclientv3.utility.network.NetworkUtil;
 
 import org.acra.ACRA;
 import org.acra.ReportField;
-import org.acra.annotation.AcraCore;
+import org.acra.config.CoreConfigurationBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,14 +33,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 
-@AcraCore(buildConfigClass = BuildConfig.class, reportSenderFactoryClasses = MySenderFactory.class, reportContent = {
-    ReportField.PACKAGE_NAME,
-    ReportField.BUILD_CONFIG,
-    ReportField.APP_VERSION_CODE,
-    ReportField.STACK_TRACE,
-    ReportField.ANDROID_VERSION,
-    ReportField.LOGCAT
-})
 public class CrashApplication extends MultiDexApplication {
     private static final String SIGNATURE_GITHUB = "ce96fdbcc89991f083320140c148db5f";
 
@@ -127,7 +118,17 @@ public class CrashApplication extends MultiDexApplication {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
-        ACRA.init(this);
+
+        CoreConfigurationBuilder builder = new CoreConfigurationBuilder()
+            .withBuildConfigClass(BuildConfig.class)
+            .withReportContent(ReportField.PACKAGE_NAME,
+                ReportField.BUILD_CONFIG,
+                ReportField.APP_VERSION_CODE,
+                ReportField.STACK_TRACE,
+                ReportField.ANDROID_VERSION,
+                ReportField.LOGCAT);
+
+        ACRA.init(this, builder);
         ACRA.getErrorReporter().setEnabled(getSharedPreferences("Settings", 0).getBoolean(getString(R.string.key_send_report), false));
     }
 }

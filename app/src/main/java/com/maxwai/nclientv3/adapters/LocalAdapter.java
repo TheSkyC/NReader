@@ -1,5 +1,6 @@
 package com.maxwai.nclientv3.adapters;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
@@ -244,12 +245,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
 
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)
-                    holder.title.setMaxLines(7);
-                else if (holder.title.getMaxLines() == 7) holder.title.setMaxLines(3);
-                else holder.layout.performClick();
-            } else holder.layout.performClick();
+            if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)
+                holder.title.setMaxLines(7);
+            else if (holder.title.getMaxLines() == 7) holder.title.setMaxLines(3);
+            else holder.layout.performClick();
         });
 
         /*holder.layout.setOnLongClickListener(v -> {
@@ -421,6 +420,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                 return results;
             }
 
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null) {

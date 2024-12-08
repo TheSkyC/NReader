@@ -47,7 +47,12 @@ public class CreateZIP extends JobIntentService {
     @Override
     protected void onHandleWork(@Nullable Intent intent) {
         System.gc();
-        LocalGallery gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY");
+        LocalGallery gallery;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY", LocalGallery.class);
+        } else {
+            gallery = intent.getParcelableExtra(getPackageName() + ".GALLERY");
+        }
         if (gallery == null) return;
         preExecute(gallery.getDirectory());
         try {
@@ -70,7 +75,7 @@ public class CreateZIP extends JobIntentService {
                 in.close();
                 out.closeEntry();
                 notification.setProgress(gallery.getPageCount(), i, false);
-                NotificationSettings.notify(getString(R.string.channel3_name), notId, notification.build());
+                NotificationSettings.notify(this, getString(R.string.channel3_name), notId, notification.build());
             }
             out.flush();
             out.close();
@@ -92,7 +97,7 @@ public class CreateZIP extends JobIntentService {
         } else {
             createIntentOpen(file);
         }
-        NotificationSettings.notify(getString(R.string.channel3_name), notId, notification.build());
+        NotificationSettings.notify(this, getString(R.string.channel3_name), notId, notification.build());
 
     }
 
@@ -110,11 +115,7 @@ public class CreateZIP extends JobIntentService {
                 getApplicationContext().grantUriPermission(packageName, apkURI, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_MUTABLE));
-            } else {
-                notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, 0));
-            }
+            notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_MUTABLE));
             LogUtility.d(apkURI.toString());
         } catch (IllegalArgumentException ignore) {//sometimes the uri isn't available
 
@@ -131,6 +132,6 @@ public class CreateZIP extends JobIntentService {
             .setProgress(1, 0, false)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS);
-        NotificationSettings.notify(getString(R.string.channel3_name), notId, notification.build());
+        NotificationSettings.notify(this, getString(R.string.channel3_name), notId, notification.build());
     }
 }

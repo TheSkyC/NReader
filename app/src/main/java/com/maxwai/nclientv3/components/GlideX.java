@@ -56,13 +56,4 @@ public class GlideX {
             return null;
         }
     }
-
-    @Nullable
-    public static RequestManager with(Activity activity) {
-        try {
-            return Glide.with(activity);
-        } catch (VerifyError | IllegalStateException ignore) {
-            return null;
-        }
-    }
 }

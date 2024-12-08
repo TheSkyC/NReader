@@ -69,7 +69,6 @@ public class OkHttpUrlLoader implements ModelLoader<GlideUrl, InputStream> {
                 synchronized (Factory.class) {
                     if (internalClient == null) {
                         OkHttpClient.Builder builder = new OkHttpClient.Builder();
-                        CustomSSLSocketFactory.enableTls12OnPreLollipop(builder);
                         builder.addInterceptor(new CustomInterceptor(null, false));
                         OkHttpClient client = builder.build();
                         client.dispatcher().setMaxRequests(25);

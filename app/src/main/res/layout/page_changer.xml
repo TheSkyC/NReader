@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:contentDescription="@string/prev"
-            android:tint="?android:attr/colorForeground"
+            app:tint="?android:attr/colorForeground"
             app:backgroundTint="@android:color/transparent"
             app:srcCompat="@drawable/ic_keyboard_arrow_left" />
 
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:contentDescription="@string/next"
-            android:tint="?android:attr/colorForeground"
+            app:tint="?android:attr/colorForeground"
             app:backgroundTint="@android:color/transparent"
             app:srcCompat="@drawable/ic_keyboard_arrow_right" />
     </LinearLayout>

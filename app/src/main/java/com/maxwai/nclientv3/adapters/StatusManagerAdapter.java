@@ -29,8 +29,8 @@ import java.util.List;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdapter.ViewHolder> {
-    private List<Status> statusList;
-    private Activity activity;
+    private final List<Status> statusList;
+    private final Activity activity;
     private int newColor;
 
     public StatusManagerAdapter(Activity activity) {
@@ -140,10 +140,10 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout master;
-        Button color;
-        ImageButton cancel;
-        TextView name;
+        final LinearLayout master;
+        final Button color;
+        final ImageButton cancel;
+        final TextView name;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

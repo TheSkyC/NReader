@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -347,7 +348,11 @@ public class MainActivity extends BaseActivity
     }
 
     private void useBookmarkMode(Intent intent, String packageName) {
-        inspector = intent.getParcelableExtra(packageName + ".INSPECTOR");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            inspector = intent.getParcelableExtra(packageName + ".INSPECTOR", InspectorV3.class);
+        } else {
+            inspector = intent.getParcelableExtra(packageName + ".INSPECTOR");
+        }
         assert inspector != null;
         inspector.initialize(this, resetDataset);
         modeType = ModeType.BOOKMARK;
@@ -374,7 +379,12 @@ public class MainActivity extends BaseActivity
     private void createSearchInspector(Intent intent, String packageName, String query) {
         boolean advanced = intent.getBooleanExtra(packageName + ".ADVANCED", false);
         ArrayList<Tag> tagArrayList = intent.getParcelableArrayListExtra(packageName + ".TAGS");
-        Ranges ranges = intent.getParcelableExtra(getPackageName() + ".RANGES");
+        Ranges ranges;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ranges = intent.getParcelableExtra(getPackageName() + ".RANGES", Ranges.class);
+        } else {
+            ranges = intent.getParcelableExtra(getPackageName() + ".RANGES");
+        }
         HashSet<Tag> tags = null;
         query = query.trim();
         if (advanced) {
@@ -397,7 +407,12 @@ public class MainActivity extends BaseActivity
     }
 
     private void useTagMode(Intent intent, String packageName) {
-        Tag t = intent.getParcelableExtra(packageName + ".TAG");
+        Tag t;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            t = intent.getParcelableExtra(packageName + ".TAG", Tag.class);
+        } else {
+            t = intent.getParcelableExtra(packageName + ".TAG");
+        }
         inspector = InspectorV3.tagInspector(this, t, 1, Global.getSortType(), resetDataset);
         modeType = ModeType.TAG;
     }
@@ -489,7 +504,7 @@ public class MainActivity extends BaseActivity
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START))
             drawerLayout.closeDrawer(GravityCompat.START);
-        else super.onBackPressed();
+        else getOnBackPressedDispatcher().onBackPressed();
     }
 
     public void hidePageSwitcher() {
@@ -517,6 +532,7 @@ public class MainActivity extends BaseActivity
         }).setNegativeButton(R.string.no, null).show();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onResume() {
         super.onResume();
@@ -776,7 +792,6 @@ public class MainActivity extends BaseActivity
         return true;
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     private void requestStorage() {
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
     }

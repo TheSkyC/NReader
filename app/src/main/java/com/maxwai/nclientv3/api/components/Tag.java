@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3.api.components;
 
 
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.JsonReader;
@@ -80,7 +81,11 @@ public class Tag implements Parcelable {
         name = in.readString();
         count = in.readInt();
         id = in.readInt();
-        type = in.readParcelable(TagType.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            type = in.readParcelable(TagType.class.getClassLoader(), TagType.class);
+        } else {
+            type = in.readParcelable(TagType.class.getClassLoader());
+        }
         status = TagStatus.values()[in.readByte()];
     }
 

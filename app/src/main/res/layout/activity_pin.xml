@@ -43,7 +43,8 @@
                 android:text="1"
                 android:textColor="?android:attr/colorForeground"
                 android:tint="?android:attr/colorForeground"
-                app:backgroundTint="@android:color/transparent" />
+                app:backgroundTint="@android:color/transparent"
+                tools:ignore="NestedWeights" />
 
             <Button
                 android:id="@+id/btn2"
@@ -88,7 +89,8 @@
                 android:text="4"
                 android:textColor="?android:attr/colorForeground"
                 android:tint="?android:attr/colorForeground"
-                app:backgroundTint="@android:color/transparent" />
+                app:backgroundTint="@android:color/transparent"
+                tools:ignore="NestedWeights" />
 
             <Button
                 android:id="@+id/btn5"
@@ -134,7 +136,8 @@
                 android:text="7"
                 android:textColor="?android:attr/colorForeground"
                 android:tint="?android:attr/colorForeground"
-                app:backgroundTint="@android:color/transparent" />
+                app:backgroundTint="@android:color/transparent"
+                tools:ignore="NestedWeights" />
 
             <Button
                 android:id="@+id/btn8"
@@ -177,9 +180,10 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/app_name"
                 android:textColor="?android:attr/colorForeground"
-                android:tint="?android:attr/colorForeground"
+                app:tint="?android:attr/colorForeground"
                 app:backgroundTint="@android:color/transparent"
-                app:srcCompat="@drawable/ic_arrow_back" />
+                app:srcCompat="@drawable/ic_arrow_back"
+                tools:ignore="NestedWeights" />
 
             <Button
                 android:id="@+id/btn0"
@@ -200,7 +204,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/app_name"
                 android:textColor="?android:attr/colorForeground"
-                android:tint="?android:attr/colorForeground"
+                app:tint="?android:attr/colorForeground"
                 app:backgroundTint="@android:color/transparent"
                 app:srcCompat="@drawable/ic_backspace" />
         </LinearLayout>

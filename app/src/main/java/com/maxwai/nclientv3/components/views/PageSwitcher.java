@@ -20,7 +20,6 @@ import java.util.Locale;
 
 public class PageSwitcher extends CardView {
 
-    private LinearLayout master;
     private AppCompatImageButton prev, next;
     private AppCompatEditText text;
     @Nullable
@@ -75,7 +74,7 @@ public class PageSwitcher extends CardView {
     }
 
     private void init(Context context) {
-        master = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.page_switcher, this, true).findViewById(R.id.master_layout);
+        LinearLayout master = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.page_switcher, this, true).findViewById(R.id.master_layout);
         prev = master.findViewById(R.id.prev);
         next = master.findViewById(R.id.next);
         text = master.findViewById(R.id.page_index);

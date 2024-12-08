@@ -1,5 +1,6 @@
 package com.maxwai.nclientv3.api.components;
 
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.JsonReader;
@@ -73,7 +74,11 @@ public class Page implements Parcelable {
 
     protected Page(Parcel in) {
         page = in.readInt();
-        size = in.readParcelable(Size.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            size = in.readParcelable(Size.class.getClassLoader(), Size.class);
+        } else {
+            size = in.readParcelable(Size.class.getClassLoader());
+        }
         imageExt = ImageExt.values()[in.readByte()];
         imageType = ImageType.values()[in.readByte()];
     }

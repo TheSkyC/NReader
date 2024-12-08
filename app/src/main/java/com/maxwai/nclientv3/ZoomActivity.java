@@ -41,14 +41,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.File;
 
 public class ZoomActivity extends GeneralActivity {
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private final static int hideFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         | View.SYSTEM_UI_FLAG_FULLSCREEN
-        | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ? View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY : 0);
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
     private final static int showFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
@@ -75,7 +73,11 @@ public class ZoomActivity extends GeneralActivity {
         setContentView(R.layout.activity_zoom);
 
         //read arguments
-        gallery = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gallery = getIntent().getParcelableExtra(getPackageName() + ".GALLERY", GenericGallery.class);
+        } else {
+            gallery = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
+        }
         final int page = getIntent().getExtras().getInt(getPackageName() + ".PAGE", 1) - 1;
         directory = gallery.getGalleryFolder();
         //toolbar setup
@@ -114,9 +116,7 @@ public class ZoomActivity extends GeneralActivity {
         seekBar.setMax(gallery.getPageCount() - 1);
         if (Global.useRtl()) {
             seekBar.setRotationY(180);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                mViewPager.setLayoutDirection(ViewPager2.LAYOUT_DIRECTION_RTL);
-            }
+            mViewPager.setLayoutDirection(ViewPager2.LAYOUT_DIRECTION_RTL);
         }
 
         //Adding listeners
@@ -319,7 +319,6 @@ public class ZoomActivity extends GeneralActivity {
             .show();
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     private void requestStorage() {
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
     }
@@ -399,12 +398,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void applyVisibilityFlag() {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-            getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
-        } else {
-            getWindow().addFlags(isHidden ? WindowManager.LayoutParams.FLAG_FULLSCREEN : WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-            getWindow().clearFlags(isHidden ? WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN : WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
+        getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
     }
 
     private enum ScrollType {HORIZONTAL, VERTICAL}

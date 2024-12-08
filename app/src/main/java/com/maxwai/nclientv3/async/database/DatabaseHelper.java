@@ -1,5 +1,6 @@
 package com.maxwai.nclientv3.async.database;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -121,6 +122,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * Add all item which are favorite into the favorite table
      */
+    @SuppressLint("Range")
     private int[] getAllFavoriteIndex() {
         Cursor c = Queries.GalleryTable.getAllFavoriteCursorDeprecated("%", false);
         int[] favorites = new int[c.getCount()];

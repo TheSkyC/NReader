@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3.api.components;
 
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.JsonReader;
@@ -77,9 +78,15 @@ public class GalleryData implements Parcelable {
         pageCount = in.readInt();
         mediaId = in.readInt();
         titles = Objects.requireNonNull(in.createStringArray());
-        tags = Objects.requireNonNull(in.readParcelable(TagList.class.getClassLoader()));
-        cover = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader()));
-        thumbnail = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            tags = Objects.requireNonNull(in.readParcelable(TagList.class.getClassLoader(), TagList.class));
+            cover = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader(), Page.class));
+            thumbnail = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader(), Page.class));
+        } else {
+            tags = Objects.requireNonNull(in.readParcelable(TagList.class.getClassLoader()));
+            cover = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader()));
+            thumbnail = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader()));
+        }
         pages = Objects.requireNonNull(in.createTypedArrayList(Page.CREATOR));
         valid = in.readByte() != 0;
     }

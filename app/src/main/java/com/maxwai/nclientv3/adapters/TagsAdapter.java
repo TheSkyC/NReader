@@ -175,7 +175,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
         jw.endArray().endObject();
 
         final String url = String.format(Locale.US, Utility.getBaseUrl() + "users/%d/%s/blacklist", Login.getUser().getId(), Login.getUser().getCodename());
-        final RequestBody ss = RequestBody.create(MediaType.get("application/json"), sw.toString());
+        final RequestBody ss = RequestBody.create(sw.toString(), MediaType.get("application/json"));
         new AuthRequest(url, url, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {

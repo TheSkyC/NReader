@@ -55,26 +55,24 @@ public class SettingsActivity extends GeneralActivity {
     private int selectedItem;
 
     private void registerActivities() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            IMPORT_ZIP = registerForActivityResult(new ActivityResultContracts.GetContent(), selectedFile -> {
-                if (selectedFile == null) return;
-                importSettings(selectedFile);
-            });
-            SAVE_SETTINGS = registerForActivityResult(new ActivityResultContracts.CreateDocument() {
-                @NonNull
-                @Override
-                public Intent createIntent(@NonNull Context context, @NonNull String input) {
-                    Intent i = super.createIntent(context, input);
-                    i.setType("application/zip");
-                    return i;
-                }
-            }, selectedFile -> {
-                if (selectedFile == null) return;
+        IMPORT_ZIP = registerForActivityResult(new ActivityResultContracts.GetContent(), selectedFile -> {
+            if (selectedFile == null) return;
+            importSettings(selectedFile);
+        });
+        SAVE_SETTINGS = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/zip") {
+            @NonNull
+            @Override
+            public Intent createIntent(@NonNull Context context, @NonNull String input) {
+                Intent i = super.createIntent(context, input);
+                i.setType("application/zip");
+                return i;
+            }
+        }, selectedFile -> {
+            if (selectedFile == null) return;
 
-                exportSettings(selectedFile);
+            exportSettings(selectedFile);
 
-            });
-        }
+        });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             REQUEST_STORAGE_MANAGER = registerForActivityResult(new ActivityResultContract<Object, Object>() {
 

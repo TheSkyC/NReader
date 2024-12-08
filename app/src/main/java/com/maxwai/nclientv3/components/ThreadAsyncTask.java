@@ -7,6 +7,7 @@ import com.maxwai.nclientv3.settings.Global;
 public abstract class ThreadAsyncTask<Params, Progress, Result> {
 
     private final AppCompatActivity activity;
+    /** @noinspection FieldCanBeLocal*/
     private Thread thread;
     public ThreadAsyncTask(AppCompatActivity activity) {
         this.activity = activity;
@@ -35,7 +36,7 @@ public abstract class ThreadAsyncTask<Params, Progress, Result> {
 
     class AsyncThread extends Thread {
 
-        Params[] params;
+        final Params[] params;
 
         AsyncThread(Params[] params) {
             this.params = params;

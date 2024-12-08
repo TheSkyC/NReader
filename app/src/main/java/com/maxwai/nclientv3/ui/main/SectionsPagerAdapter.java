@@ -17,7 +17,7 @@ import java.util.Locale;
  * one of the sections/tabs/pages.
  */
 public class SectionsPagerAdapter extends FragmentStateAdapter {
-    List<String> statuses;
+    final List<String> statuses;
 
     public SectionsPagerAdapter(StatusViewerActivity context) {
         super(context.getSupportFragmentManager(), context.getLifecycle());

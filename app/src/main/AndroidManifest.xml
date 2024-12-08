@@ -3,12 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
     <uses-sdk tools:overrideLibrary="me.zhanghai.android.fastscroll" />
 
@@ -21,14 +23,13 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/DarkTheme">
+        android:theme="@style/DarkTheme" >
 
         <activity android:name=".StatusManagerActivity" />
         <activity
             android:name=".PINActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/DarkTheme">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -72,7 +73,6 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:label="@string/app_name"
             android:parentActivityName=".PINActivity"
             android:theme="@style/DarkTheme">
             <intent-filter>
@@ -110,9 +110,8 @@
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data
-                    android:host="nhentai.net"
-                    android:pathPattern="/g/.*" />
+                <data android:host="nhentai.net"/>
+                <data android:pathPattern="/g/.*"/>
             </intent-filter>
 
             <meta-data
@@ -220,6 +219,11 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+
+        <meta-data
+            android:name="com.maxwai.nclientv3.components.classes.integration.OkHttpGlideModule"
+            android:value="GlideModule" />
     </application>
 
     <queries>
@@ -228,7 +232,4 @@
             <data android:mimeType="application/pdf" />
         </intent>
     </queries>
-    <meta-data
-        android:name="com.maxwai.nclientv3.components.classes.integration.OkHttpGlideModule"
-        android:value="GlideModule" />
 </manifest>

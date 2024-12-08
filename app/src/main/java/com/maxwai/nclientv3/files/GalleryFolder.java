@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3.files;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -67,7 +68,12 @@ public class GalleryFolder implements Parcelable, Iterable<PageFile> {
         int pageCount = in.readInt();
         for (int i = 0; i < pageCount; i++) {
             int k = in.readInt();
-            PageFile f = in.readParcelable(PageFile.class.getClassLoader());
+            PageFile f;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                f = in.readParcelable(PageFile.class.getClassLoader(), PageFile.class);
+            } else {
+                f = in.readParcelable(PageFile.class.getClassLoader());
+            }
             pageArray.put(k, f);
         }
     }

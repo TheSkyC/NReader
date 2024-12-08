@@ -380,7 +380,7 @@ public class SearchActivity extends GeneralActivity {
         addChipTag(tag, true, true);
         getGroup(loadedTag).addView(addChip[loadedTag.getId()]);
 
-        inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), InputMethodManager.SHOW_IMPLICIT);
+        inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         autoComplete.setText("");
         advanced = true;
         if (autoComplete.getParent() != null)

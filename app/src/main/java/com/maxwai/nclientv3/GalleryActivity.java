@@ -85,7 +85,12 @@ public class GalleryActivity extends BaseActivity {
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
         masterLayout = findViewById(R.id.master_layout);
-        GenericGallery gal = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
+        GenericGallery gal;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gal = getIntent().getParcelableExtra(getPackageName() + ".GALLERY", GenericGallery.class);
+        } else {
+            gal = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
+        }
         if (gal == null && !tryLoadFromURL()) {
             finish();
             return;
@@ -296,7 +301,7 @@ public class GalleryActivity extends BaseActivity {
             item.setIcon(isLocalFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
             Global.setTint(item.getIcon());
         } else if (id == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         }
 
@@ -325,12 +330,8 @@ public class GalleryActivity extends BaseActivity {
                 Utility.writeStreamToFile(response.body().byteStream(), file);
                 Intent intent=new Intent(Intent.ACTION_VIEW);
                 Uri torrentUri;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    torrentUri = FileProvider.getUriForFile(GalleryActivity.this, GalleryActivity.this.getPackageName() + ".provider", file);
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }else{
-                    torrentUri=Uri.fromFile(file);
-                }
+                torrentUri = FileProvider.getUriForFile(GalleryActivity.this, GalleryActivity.this.getPackageName() + ".provider", file);
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.setDataAndType(torrentUri, "application/x-bittorrent");
                 try {
                     GalleryActivity.this.startActivity(intent);
@@ -496,7 +497,6 @@ public class GalleryActivity extends BaseActivity {
         }).start();
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     private void requestStorage() {
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
     }

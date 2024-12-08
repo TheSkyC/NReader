@@ -36,7 +36,6 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     private final SparseIntArray statuses = new SparseIntArray();
     private final List<SimpleGallery> mDataset;
     private final BaseActivity context;
-    private final boolean storagePermission;
     private final String queryString;
 
     public ListAdapter(BaseActivity cont) {
@@ -51,7 +50,6 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
                 }
             }
         };
-        storagePermission = Global.hasStoragePermission(context);
         queryString = TagV2.getAvoidedTags();
     }
 
@@ -101,12 +99,10 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         } else holder.flag.setVisibility(View.GONE);
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)
-                    holder.title.setMaxLines(7);
-                else if (holder.title.getMaxLines() == 7) holder.title.setMaxLines(3);
-                else holder.layout.performClick();
-            } else holder.layout.performClick();
+            if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)
+                holder.title.setMaxLines(7);
+            else if (holder.title.getMaxLines() == 7) holder.title.setMaxLines(3);
+            else holder.layout.performClick();
         });
         holder.layout.setOnClickListener(v -> {
               /*Intent intent = new Intent(context, GalleryActivity.class);

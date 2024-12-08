@@ -1,9 +1,9 @@
 apply plugin: 'com.android.application'
 
 android {
+    compileSdk 35
     defaultConfig {
         applicationId "com.maxwai.nclientv3"
-        compileSdk 35
         minSdkVersion 28
         versionCode 400
         multiDexEnabled true
@@ -26,8 +26,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     lint {
         abortOnError false
@@ -36,34 +36,52 @@ android {
     lintOptions {
         disable 'RestrictedApi'
     }
+    bundle {
+        language {
+            // Specifies that the app bundle should not support
+            // configuration APKs for language resources. These
+            // resources are instead packaged with each base and
+            // dynamic feature APK.
+            enableSplit = false
+        }
+    }
     namespace 'com.maxwai.nclientv3'
+    buildFeatures {
+        buildConfig true
+    }
 }
 
 dependencies {
 // AndroidX
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.fragment:fragment:1.5.6'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'androidx.viewpager2:viewpager2:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.3.0'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.fragment:fragment:1.8.5'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.work:work-runtime-ktx:2.10.0'
 
 // Other
-    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.12.12'//Because of min SDK
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.12.0'//Because of min SDK
     implementation 'com.github.franmontiel:PersistentCookieJar:v1.0.1'
     //implementation 'com.github.chrisbanes:PhotoView:2.3.0'
-    implementation 'org.jsoup:jsoup:1.16.1'
-    implementation 'ch.acra:acra-core:5.7.0'
-    implementation('com.github.bumptech.glide:glide:4.15.1') {
+    implementation 'org.jsoup:jsoup:1.18.3'
+
+    implementation 'ch.acra:acra-core:5.12.0'
+    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
+    implementation 'com.google.guava:guava:31.1-android'
+
+    implementation('com.github.bumptech.glide:glide:4.16.0') {
         exclude group: "com.android.support"
     }
     implementation "androidx.multidex:multidex:2.0.1"
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
     implementation 'com.github.yukuku:ambilwarna:2.0.1'
-    implementation 'me.zhanghai.android.fastscroll:library:1.2.0'
+    implementation 'me.zhanghai.android.fastscroll:library:1.3.0'
 
     implementation 'com.github.opacapp:multiline-collapsingtoolbar:v27.1.0'
     implementation 'com.zeugmasolutions.localehelper:locale-helper-android:1.5.1'

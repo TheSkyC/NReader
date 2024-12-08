@@ -2,6 +2,7 @@ package com.maxwai.nclientv3.api;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -34,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -91,7 +93,11 @@ public class InspectorV3 extends Thread implements Parcelable {
         }
         galleries = (ArrayList<GenericGallery>) x;
         tags = new HashSet<>(in.createTypedArrayList(Tag.CREATOR));
-        ranges = in.readParcelable(Ranges.class.getClassLoader());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ranges = in.readParcelable(Ranges.class.getClassLoader(), Ranges.class);
+        } else {
+            ranges = in.readParcelable(Ranges.class.getClassLoader());
+        }
     }
 
     private InspectorV3(Context context, InspectorResponse response) {
@@ -278,7 +284,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         else if (requestType == ApiRequestType.BYSINGLE) builder.append("g/").append(id);
         else if (requestType == ApiRequestType.FAVORITE) {
             builder.append("favorites/");
-            if (query != null && query.length() > 0)
+            if (query != null && !query.isEmpty())
                 builder.append("?q=").append(query).append('&');
             else builder.append('?');
             builder.append("page=").append(page);
@@ -286,7 +292,16 @@ public class InspectorV3 extends Thread implements Parcelable {
             builder.append("search/?q=").append(query);
             for (Tag tt : tags) {
                 if (builder.toString().contains(tt.toQueryTag(TagStatus.ACCEPTED))) continue;
-                builder.append('+').append(URLEncoder.encode(tt.toQueryTag()));
+                builder.append('+');
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    builder.append(URLEncoder.encode(tt.toQueryTag(), Charset.defaultCharset()));
+                } else {
+                    try {
+                        builder.append(URLEncoder.encode(tt.toQueryTag(), Charset.defaultCharset().name()));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
             if (ranges != null)
                 builder.append('+').append(ranges.toQuery());
