@@ -2,7 +2,7 @@
 
 [![Github](https://img.shields.io/github/v/release/maxwai/NClientV2-ng.svg?logo=github)](https://github.com/maxwai/NClientV2-ng/releases/latest)
 
-An unofficial NHentai Android Client. This is a fork of the original Project by @Dar9586 found [here](https://github.com/Dar9586/NClientV2)
+An unofficial NHentai Android Client. This is a fork of the original Project by [@Dar9586](https://github.com/Dar9586) found [here](https://github.com/Dar9586/NClientV2)
 
 This app  works for devices from API 14 (Android 4.0) and above.
 Releases: <https://github.com/maxwai/NClientV2-ng/releases>
