@@ -49,6 +49,8 @@ Search|Random manga
 
 ## Contributors
 
+- [shirokun20](https://github.com/shirokun20) for the initial Bug fixes
+
 ## Contributors of original Project
 
 - [Still34](https://github.com/Still34) for code cleanup & Traditional Chinese translation
