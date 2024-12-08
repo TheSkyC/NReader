@@ -1,14 +1,11 @@
-# NClientV2
+# NClientV2-NG
 
-[![Github](https://img.shields.io/github/v/release/Dar9586/NClientV2.svg?logo=github)](https://github.com/Dar9586/NClientV2/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/com.dar.nclientv2)](https://f-droid.org/en/packages/com.dar.nclientv2/) ![Bitrise](https://img.shields.io/bitrise/0a79e29cfda80c5f?token=BrSKdUUfKb97MHigL9nA1w)
+[![Github](https://img.shields.io/github/v/release/maxwai/NClientV2-ng.svg?logo=github)](https://github.com/maxwai/NClientV2-ng/releases/latest)
 
-An unofficial NHentai Android Client.
+An unofficial NHentai Android Client. This is a fork of the original Project by @Dar9586 found [here](https://github.com/Dar9586/NClientV2)
+
 This app  works for devices from API 14 (Android 4.0) and above.
-Releases: <https://github.com/Dar9586/NClientV2/releases>
-
-## Translation
-
-You can translate this app on [Crowdin](https://crowdin.com/project/nclientv2)
+Releases: <https://github.com/maxwai/NClientV2-ng/releases>
 
 ## API Features
 
@@ -30,11 +27,13 @@ You can translate this app on [Crowdin](https://crowdin.com/project/nclientv2)
 
 Main page|Lateral menu
 :-:|:-:
-![Main page](https://raw.githubusercontent.com/Dar9586/NClientV2/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img1.jpg)|![Lateral menu](https://media.discordapp.net/attachments/608725424092086280/720369411030253578/Screenshot_20200610-230229_NClientV2.jpg?width=360&height=658)
+![Main page](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img1.jpg)|![Lateral menu](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img2.jpg)
 Search|Random manga
-![Search](https://media.discordapp.net/attachments/608725424092086280/720369411030253578/Screenshot_20200610-230229_NClientV2.jpg?width=360&height=658)|![Random manga](https://raw.githubusercontent.com/Dar9586/NClientV2/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img4.jpg)
+![Search](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img3.jpg)|![Random manga](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img4.jpg)
 
 ## Contributors
+
+## Contributors of original Project
 
 - [Still34](https://github.com/Still34) for code cleanup & Traditional Chinese translation
 - [TacoTheDank](https://github.com/TacoTheDank) for XML and gradle cleanup
@@ -50,8 +49,6 @@ Search|Random manga
 - [chayleaf](https://github.com/chayleaf) for Cloudflare bypass
 - [Atmosphelen](https://github.com/Atmosphelen) for Ukrainian translation
 
-
-
 ## Libraries
 
 - PersistentCookieJar ([License](https://github.com/franmontiel/PersistentCookieJar/blob/master/LICENSE.txt))
@@ -62,16 +59,10 @@ Search|Random manga
 - ACRA ([License](https://github.com/ACRA/acra/blob/master/LICENSE))
 - Glide ([License](https://github.com/bumptech/glide/blob/master/LICENSE))
 
-## Donation
-
-Paypal|Liberapay|Bitcoin
-:-:|:-:|:-:
-[![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CVMR2STUSVE6U)|[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Dar9586/donate)|[113U1W3BxrAzyFWgP7HXqMfB3nF6MpHj6p](https://www.blockchain.com/btc/address/113U1W3BxrAzyFWgP7HXqMfB3nF6MpHj6p)
-
 ## License
 
 ```text
-   Copyright 2021 Dar9586
+   Copyright 2024 maxwai
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
