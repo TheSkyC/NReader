@@ -45,7 +45,7 @@ import com.maxwai.nclientv2NG.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
-import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 
 import java.io.File;
 import java.io.IOException;
