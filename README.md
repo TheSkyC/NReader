@@ -1,12 +1,24 @@
-# NClientV2-NG
+# NClientV3
 
-[![Github](https://img.shields.io/github/v/release/maxwai/NClientV2-ng.svg?logo=github)](https://github.com/maxwai/NClientV2-ng/releases/latest)
+[![Github](https://img.shields.io/github/v/release/maxwai/NClientV3.svg?logo=github)](https://github.com/maxwai/NClientV3/releases/latest)
 
 An unofficial NHentai Android Client. This is a fork of the original Project by [@Dar9586](https://github.com/Dar9586) found [here](https://github.com/Dar9586/NClientV2)
 
 This app  works for devices from API 28 (Android 9) and above.
 
-Releases: <https://github.com/maxwai/NClientV2-ng/releases>
+Releases: <https://github.com/maxwai/NClientV3/releases>
+
+## Migrate from original NClientV2 to NClientV3
+
+Unfortunately, due to Android security features, it is not possible to create an APK that will update the original App since the same signature will not be possible. For that reason a migration is necessary.
+
+1. If not already done, move your download folder to outside the protected folders in `Settings -> Folder location`
+   1. There are a lot of tutorials online on how to access `/storage/emulated/0/Android/data`. For example here from [medium.com](https://medium.com/@naira-nicol/how-to-access-android-data-folder-c0227e0a42ef)
+   2. Be sure to not move it to `/storage/emulated/0/Android/data` but to a folder that your normal file app can see it. (Notice: `/storage/emulated/0/nclient` would work for example for a new path)
+2. Export your data in `Settings -> Export data`
+3. Open NClientV3
+4. Set the download folder in `Settings -> Folder location` to the same path as in NClientV2
+5. Import your data in `Settings -> Import data`, choose the zip file you created in Step 2
 
 ## API Features
 
@@ -28,9 +40,9 @@ Releases: <https://github.com/maxwai/NClientV2-ng/releases>
 
 Main page|Lateral menu
 :-:|:-:
-![Main page](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img1.jpg)|![Lateral menu](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img2.jpg)
+![Main page](https://raw.githubusercontent.com/maxwai/NClientV3/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img1.jpg)|![Lateral menu](https://raw.githubusercontent.com/maxwai/NClientV3/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img2.jpg)
 Search|Random manga
-![Search](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img3.jpg)|![Random manga](https://raw.githubusercontent.com/maxwai/NClientV2-ng/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img4.jpg)
+![Search](https://raw.githubusercontent.com/maxwai/NClientV3/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img3.jpg)|![Random manga](https://raw.githubusercontent.com/maxwai/NClientV3/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img4.jpg)
 
 ## Contributors
 

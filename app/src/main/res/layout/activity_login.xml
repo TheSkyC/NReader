@@ -17,7 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <view class="com.maxwai.nclientv2NG.components.views.CFTokenView$CFTokenWebView"
+    <view class="com.maxwai.nclientv3.components.views.CFTokenView$CFTokenWebView"
         android:id="@+id/webView"
         android:layout_width="0dp"
         android:layout_height="0dp"

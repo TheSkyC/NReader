@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <com.maxwai.nclientv2NG.components.widgets.CustomSearchView
+                <com.maxwai.nclientv3.components.widgets.CustomSearchView
                     android:id="@+id/search"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
