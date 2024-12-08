@@ -54,7 +54,7 @@ public class PageSwitcher extends CardView {
         if (this.totalPage == totalPage && !pageChanged) return;
         this.totalPage = totalPage;
         this.actualPage = actualPage;
-        if (pageChanged && changer != null) changer.pageChanged(this, actualPage);
+        if (pageChanged && changer != null) changer.pageChanged();
         updateViews();
     }
 
@@ -74,7 +74,7 @@ public class PageSwitcher extends CardView {
     }
 
     private void init(Context context) {
-        LinearLayout master = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.page_switcher, this, true).findViewById(R.id.master_layout);
+        LinearLayout master = LayoutInflater.from(context).inflate(R.layout.page_switcher, this, true).findViewById(R.id.master_layout);
         prev = master.findViewById(R.id.prev);
         next = master.findViewById(R.id.next);
         text = master.findViewById(R.id.page_index);
@@ -122,7 +122,7 @@ public class PageSwitcher extends CardView {
 
 
     public interface PageChanger {
-        void pageChanged(PageSwitcher switcher, int page);
+        void pageChanged();
 
         void onPrevClicked(PageSwitcher switcher);
 
@@ -132,7 +132,7 @@ public class PageSwitcher extends CardView {
     public static class DefaultPageChanger implements PageChanger {
 
         @Override
-        public void pageChanged(PageSwitcher switcher, int page) {
+        public void pageChanged() {
         }
 
         @Override

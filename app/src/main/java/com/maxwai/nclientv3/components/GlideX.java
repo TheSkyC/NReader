@@ -1,25 +1,14 @@
 package com.maxwai.nclientv3.components;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 
 public class GlideX {
-    @Nullable
-    public static Glide get(Context context) {
-        try {
-            return Glide.get(context);
-        } catch (VerifyError | IllegalStateException ignore) {
-            return null;
-        }
-    }
 
     @Nullable
     public static RequestManager with(View view) {
@@ -39,21 +28,4 @@ public class GlideX {
         }
     }
 
-    @Nullable
-    public static RequestManager with(Fragment fragment) {
-        try {
-            return Glide.with(fragment);
-        } catch (VerifyError | IllegalStateException ignore) {
-            return null;
-        }
-    }
-
-    @Nullable
-    public static RequestManager with(FragmentActivity fragmentActivity) {
-        try {
-            return Glide.with(fragmentActivity);
-        } catch (VerifyError | IllegalStateException ignore) {
-            return null;
-        }
-    }
 }

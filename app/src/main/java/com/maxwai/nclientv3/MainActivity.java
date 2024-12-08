@@ -2,7 +2,6 @@ package com.maxwai.nclientv3;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -221,7 +220,7 @@ public class MainActivity extends BaseActivity
     private void initializePageSwitcherActions() {
         pageSwitcher.setChanger(new PageSwitcher.DefaultPageChanger() {
             @Override
-            public void pageChanged(PageSwitcher switcher, int page) {
+            public void pageChanged() {
                 inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
                 inspector.setPage(pageSwitcher.getActualPage());
                 inspector.start();
@@ -425,7 +424,7 @@ public class MainActivity extends BaseActivity
         TagType dataType;
 
         LogUtility.d("Datas: " + datas);
-        if (datas.size() == 0) {
+        if (datas.isEmpty()) {
             useNormalMode();
             return;
         }
@@ -479,7 +478,7 @@ public class MainActivity extends BaseActivity
         layoutHeader.setBackgroundResource(light ? R.drawable.side_nav_bar_light : R.drawable.side_nav_bar_dark);
     }
 
-    private void changeUsedLanguage(MenuItem item) {
+    private void changeUsedLanguage() {
         switch (Global.getOnlyLanguage()) {
             case ENGLISH:
                 Global.updateOnlyLanguage(this, Language.JAPANESE);
@@ -659,7 +658,7 @@ public class MainActivity extends BaseActivity
         if (item.getItemId() == R.id.by_popular) {
             updateSortType(item);
         } else if (item.getItemId() == R.id.only_language) {
-            changeUsedLanguage(item);
+            changeUsedLanguage();
             showLanguageIcon(item);
         } else if (item.getItemId() == R.id.search) {
             if (modeType != ModeType.FAVORITE) {//show textbox or start search activity
@@ -827,7 +826,7 @@ public class MainActivity extends BaseActivity
         public void onSuccess(List<GenericGallery> galleries) {
             super.onSuccess(galleries);
             if (adapter != null) adapter.resetStatuses();
-            if (galleries.size() == 0)
+            if (galleries.isEmpty())
                 showError(R.string.no_entry_found, null);
         }
 

@@ -23,7 +23,6 @@ import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.util.Collections;
 import java.util.List;
 
 import yuku.ambilwarna.AmbilWarnaDialog;
@@ -121,13 +120,13 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
             Status newStatus = StatusManager.updateStatus(status, name.getText().toString(), newColor);
             if (status == null) {
                 statusList.add(newStatus);
-                Collections.sort(statusList, (o1, o2) -> o1.name.compareToIgnoreCase(o2.name));
+                statusList.sort((o1, o2) -> o1.name.compareToIgnoreCase(o2.name));
                 int index = statusList.indexOf(newStatus);
                 notifyItemInserted(index);
             } else {
                 int oldIndex = statusList.indexOf(status);
                 statusList.set(oldIndex, newStatus);
-                Collections.sort(statusList, (o1, o2) -> o1.name.compareToIgnoreCase(o2.name));
+                statusList.sort((o1, o2) -> o1.name.compareToIgnoreCase(o2.name));
                 int newIndex = statusList.indexOf(newStatus);
                 notifyItemMoved(oldIndex, newIndex);
                 notifyItemChanged(newIndex);

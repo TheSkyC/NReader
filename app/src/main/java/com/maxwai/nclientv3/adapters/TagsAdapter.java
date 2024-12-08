@@ -48,7 +48,6 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
     private String lastQuery = null;
     private boolean wasSortedByName;
     private Cursor cursor = null;
-    private boolean force = false;
 
     public TagsAdapter(TagFilterActivity cont, String query, boolean online) {
         this.context = cont;
@@ -79,7 +78,6 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
                 if (constraint == null) constraint = "";
-                force = false;
                 wasSortedByName = TagV2.isSortedByName();
 
                 lastQuery = constraint.toString();
@@ -213,13 +211,12 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
     }
 
     public void addItem() {
-        force = true;
         getFilter().filter(lastQuery);
     }
 
     private enum TagMode {ONLINE, OFFLINE, TYPE}
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageView imgView;
         final TextView title, count;
         final ConstraintLayout master;

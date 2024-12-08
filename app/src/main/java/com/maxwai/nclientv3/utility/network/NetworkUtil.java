@@ -60,6 +60,6 @@ public class NetworkUtil {
         }
     }
 
-    public enum ConnectionType {NO_CONNECTION, WIFI, CELLULAR}
+    public enum ConnectionType {WIFI, CELLULAR}
 
 }

@@ -3,7 +3,6 @@ package com.maxwai.nclientv3.adapters;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.Build;
 import android.text.Layout;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -42,7 +41,6 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     private boolean sortByTitle = false;
 
     public FavoriteAdapter(FavoriteActivity activity) {
-        boolean online = false;
         this.activity = activity;
         this.lastQuery = "";
         setHasStableIds(true);
@@ -120,14 +118,6 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         forceReload();
     }
 
-    public void updateColor(int position) {
-        Gallery ent = galleryFromPosition(position);
-        if (ent == null) return;
-        int id = ent.getId();
-        statuses.put(id, Queries.StatusMangaTable.getStatus(id).color);
-        notifyItemChanged(position);
-    }
-
     @Override
     public int getItemCount() {
         return cursor == null ? 0 : cursor.getCount();
@@ -184,13 +174,6 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
 
     public void setRefresh(boolean refresh) {
         activity.runOnUiThread(() -> activity.getRefresher().setRefreshing(refresh));
-    }
-
-    public void clearGalleries() {
-        Queries.FavoriteTable.removeAllFavorite();
-        int s = getItemCount();
-        updateCursor(null);
-        activity.runOnUiThread(() -> notifyItemRangeRemoved(0, s));
     }
 
     private void updateCursor(@Nullable Cursor c) {

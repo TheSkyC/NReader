@@ -22,7 +22,7 @@ public class RandomLoader {
 
         @Override
         public void onSuccess(List<GenericGallery> galleryList) {
-            if (galleryList.size() == 0 || !galleryList.get(0).isValid()) {
+            if (galleryList.isEmpty() || !galleryList.get(0).isValid()) {
                 loadRandomGallery();
                 return;
             }
@@ -53,7 +53,7 @@ public class RandomLoader {
             if (galleries.get(i) == null)
                 galleries.remove(i--);
         }
-        if (galleries.size() > 0) {
+        if (!galleries.isEmpty()) {
             Gallery gallery = galleries.remove(0);
             activity.runOnUiThread(() -> activity.loadGallery(gallery));
             galleryHasBeenRequested = false;

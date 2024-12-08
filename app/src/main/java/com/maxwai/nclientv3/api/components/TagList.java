@@ -3,13 +3,10 @@ package com.maxwai.nclientv3.api.components;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.annotation.NonNull;
-
 import com.maxwai.nclientv3.api.enums.TagType;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +14,7 @@ import java.util.Set;
 
 public class TagList implements Parcelable {
 
-    public static final Creator<TagList> CREATOR = new Creator<TagList>() {
+    public static final Creator<TagList> CREATOR = new Creator<>() {
         @Override
         public TagList createFromParcel(Parcel in) {
             return new TagList(in);
@@ -71,12 +68,6 @@ public class TagList implements Parcelable {
         return tagList[type.getId()].get(index);
     }
 
-    public int getTotalCount() {
-        int total = 0;
-        for (Tags t : tagList) total += t.size();
-        return total;
-    }
-
     public void addTag(Tag tag) {
         tagList[tag.getType().getId()].add(tag);
     }
@@ -89,12 +80,8 @@ public class TagList implements Parcelable {
         return tagList[type.getId()];
     }
 
-    public int getLenght() {
-        return tagList.length;
-    }
-
     public void sort(Comparator<Tag> comparator) {
-        for (Tags t : tagList) Collections.sort(t, comparator);
+        for (Tags t : tagList) t.sort(comparator);
     }
 
     public boolean hasTag(Tag tag) {
@@ -111,15 +98,9 @@ public class TagList implements Parcelable {
     }
 
     public static class Tags extends ArrayList<Tag> {
-        public Tags(int initialCapacity) {
-            super(initialCapacity);
-        }
 
         public Tags() {
         }
 
-        public Tags(@NonNull Collection<? extends Tag> c) {
-            super(c);
-        }
     }
 }

@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Locale;
 
 public class SimpleGallery extends GenericGallery {
-    public static final Creator<SimpleGallery> CREATOR = new Creator<SimpleGallery>() {
+    public static final Creator<SimpleGallery> CREATOR = new Creator<>() {
         @Override
         public SimpleGallery createFromParcel(Parcel in) {
             return new SimpleGallery(in);
@@ -53,10 +53,6 @@ public class SimpleGallery extends GenericGallery {
         mediaId = in.readInt();
         thumbnail = ImageExt.values()[in.readByte()];
         language = Language.values()[in.readByte()];
-    }
-
-    public boolean hasTag(Tag tag) {
-        return tags.hasTag(tag);
     }
 
     public boolean hasTags(Collection<Tag> tags) {

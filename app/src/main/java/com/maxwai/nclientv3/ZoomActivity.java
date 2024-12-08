@@ -3,7 +3,6 @@ package com.maxwai.nclientv3;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -242,10 +241,6 @@ public class ZoomActivity extends GeneralActivity {
         view.setLayoutParams(lp);
     }
 
-    public ViewPager2 geViewPager() {
-        return mViewPager;
-    }
-
     private void changeLayout(boolean landscape) {
         int statusBarHeight = Global.getStatusBarHeight(this);
         applyMargin(landscape, findViewById(R.id.master_layout));
@@ -401,7 +396,7 @@ public class ZoomActivity extends GeneralActivity {
         getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
     }
 
-    private enum ScrollType {HORIZONTAL, VERTICAL}
+    private enum ScrollType {HORIZONTAL}
 
     public class SectionsPagerAdapter extends FragmentStateAdapter {
         public SectionsPagerAdapter(ZoomActivity activity) {
@@ -423,7 +418,7 @@ public class ZoomActivity extends GeneralActivity {
                         setUserInput(!allowScroll);
                         allowScroll = _allowScroll;
                     }
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             });
 

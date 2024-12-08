@@ -3,7 +3,6 @@ package com.maxwai.nclientv3.async;
 import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.widget.Toast;
@@ -107,9 +106,6 @@ public class VersionChecker {
 
         while (jr.peek() != JsonToken.END_OBJECT) {
             switch (jr.nextName()) {
-                default:
-                    jr.skipValue();
-                    break;
                 case "tag_name":
                     release.versionCode = jr.nextString();
                     break;
@@ -133,6 +129,9 @@ public class VersionChecker {
                             release.downloadUrl = null;
                     }
                     jr.endArray();
+                    break;
+                default:
+                    jr.skipValue();
                     break;
             }
         }

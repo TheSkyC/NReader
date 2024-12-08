@@ -57,7 +57,7 @@ public class FavoriteActivity extends BaseActivity {
         pageSwitcher.setPages(1, 1);
         pageSwitcher.setChanger(new PageSwitcher.DefaultPageChanger() {
             @Override
-            public void pageChanged(PageSwitcher switcher, int page) {
+            public void pageChanged() {
                 if (adapter != null) adapter.changePage();
             }
         });
@@ -66,10 +66,6 @@ public class FavoriteActivity extends BaseActivity {
 
     public int getActualPage() {
         return pageSwitcher.getActualPage();
-    }
-
-    public void changePages(int totalPages, int actualPages) {
-        pageSwitcher.setPages(totalPages, actualPages);
     }
 
     @Override

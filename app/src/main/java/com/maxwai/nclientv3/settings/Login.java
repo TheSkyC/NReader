@@ -3,7 +3,6 @@ package com.maxwai.nclientv3.settings;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.webkit.CookieManager;
-import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,27 +49,16 @@ public class Login {
     }
 
 
-    public static void removeCloudflareCookies() {
-        CustomCookieJar cookieJar = (CustomCookieJar) Global.client.cookieJar();
-        List<Cookie> cookies = cookieJar.loadForRequest(BASE_HTTP_URL);
-        for (Cookie cookie : cookies) {
-            if (cookie.name().equals(LOGIN_COOKIE)) {
-                continue;
-            }
-            cookieJar.removeCookie(cookie.name());
-        }
-    }
-
     public static void logout(Context context) {
         CustomCookieJar cookieJar = (CustomCookieJar) Global.client.cookieJar();
         removeCookie(LOGIN_COOKIE);
         cookieJar.clearSession();
         updateUser(null);//remove user
         clearOnlineTags();//remove online tags
-        clearWebViewCookies(context);//clear webView cookies
+        clearWebViewCookies();//clear webView cookies
     }
 
-    public static void clearWebViewCookies(Context context) {
+    public static void clearWebViewCookies() {
         try {
             CookieManager.getInstance().removeAllCookies(null);
             CookieManager.getInstance().flush();
@@ -144,6 +132,4 @@ public class Login {
         return Queries.TagTable.isBlackListed(tag);
     }
 
-    public static void hasLogged(WebView webView) {
-    }
 }

@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Size implements Parcelable {
-    public static final Creator<Size> CREATOR = new Creator<Size>() {
+    public static final Creator<Size> CREATOR = new Creator<>() {
         @Override
         public Size createFromParcel(Parcel in) {
             return new Size(in);

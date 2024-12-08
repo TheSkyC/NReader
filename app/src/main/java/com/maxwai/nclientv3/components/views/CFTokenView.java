@@ -2,7 +2,6 @@ package com.maxwai.nclientv3.components.views;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
@@ -30,10 +29,6 @@ public class CFTokenView {
         webView=masterLayout.findViewById(R.id.webView);
         button=masterLayout.findViewById(R.id.hideWebView);
         button.setOnClickListener(v -> CookieInterceptor.hideWebView());
-    }
-
-    public Button getButton() {
-        return button;
     }
 
     public CFTokenWebView getWebView() {

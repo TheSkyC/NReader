@@ -1,7 +1,6 @@
 package com.maxwai.nclientv3.adapters;
 
 import android.content.Intent;
-import android.os.Build;
 import android.text.Layout;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -40,12 +39,12 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
 
     public ListAdapter(BaseActivity cont) {
         this.context = cont;
-        this.mDataset = new ArrayList<SimpleGallery>(){
+        this.mDataset = new ArrayList<>() {
             @Override
             public SimpleGallery get(int index) {
                 try {
                     return super.get(index);
-                }catch (ArrayIndexOutOfBoundsException ignore){
+                } catch (ArrayIndexOutOfBoundsException ignore) {
                     return null;
                 }
             }

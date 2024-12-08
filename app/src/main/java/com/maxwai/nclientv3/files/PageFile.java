@@ -1,23 +1,15 @@
 package com.maxwai.nclientv3.files;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.annotation.Nullable;
-
-import com.maxwai.nclientv3.api.components.Page;
 import com.maxwai.nclientv3.api.enums.ImageExt;
-import com.maxwai.nclientv3.settings.Global;
 
 import java.io.File;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PageFile extends File implements Parcelable {
-    public static final Creator<PageFile> CREATOR = new Creator<PageFile>() {
+    public static final Creator<PageFile> CREATOR = new Creator<>() {
         @Override
         public PageFile createFromParcel(Parcel in) {
             return new PageFile(in);
@@ -28,8 +20,6 @@ public class PageFile extends File implements Parcelable {
             return new PageFile[size];
         }
     };
-    private static final Pattern DEFAULT_THUMBNAIL = Pattern.compile("^0*1\\.(gif|png|jpg|webp)$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern VALID_PAGE = Pattern.compile("^0*(\\d+)\\.(gif|png|jpg|webp)$", Pattern.CASE_INSENSITIVE);
     private final ImageExt ext;
     private final int page;
 
@@ -45,46 +35,8 @@ public class PageFile extends File implements Parcelable {
         ext = ImageExt.values()[in.readByte()];
     }
 
-    /**
-     * This only works with app-created files with format %03d.%s
-     */
-    private static @Nullable
-    PageFile fastThumbnail(File folder) {
-        for (ImageExt ext : ImageExt.values()) {
-            String name = "001." + ext.getName();
-            File file = new File(folder, name);
-            if (file.exists()) return new PageFile(ext, file, 1);
-        }
-        return null;
-    }
-
-    public static @Nullable
-    PageFile getThumbnail(Context context, int id) {
-        File file = Global.findGalleryFolder(context, id);
-        if (file == null) return null;
-        PageFile pageFile = fastThumbnail(file);
-        if (pageFile != null) return pageFile;
-        File[] files = file.listFiles();
-        if (files == null) return null;
-        for (File f : files) {
-            Matcher m = DEFAULT_THUMBNAIL.matcher(f.getName());
-            if (!m.matches()) continue;
-            ImageExt ext = Page.charToExt(Objects.requireNonNull(m.group(1)).charAt(0));
-            return new PageFile(ext, f, 1);
-        }
-        return null;
-    }
-
     public Uri toUri() {
         return Uri.fromFile(this);
-    }
-
-    public ImageExt getExt() {
-        return ext;
-    }
-
-    public int getPage() {
-        return page;
     }
 
     @Override

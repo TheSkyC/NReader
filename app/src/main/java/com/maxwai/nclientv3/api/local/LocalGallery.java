@@ -18,13 +18,12 @@ import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
 import java.io.FileReader;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LocalGallery extends GenericGallery {
-    public static final Creator<LocalGallery> CREATOR = new Creator<LocalGallery>() {
+    public static final Creator<LocalGallery> CREATOR = new Creator<>() {
         @Override
         public LocalGallery createFromParcel(Parcel in) {
             return new LocalGallery(in);
@@ -35,9 +34,7 @@ public class LocalGallery extends GenericGallery {
             return new LocalGallery[size];
         }
     };
-    private static final Pattern FILE_PATTERN = Pattern.compile("^(\\d{1,9})\\.(gif|png|jpg|webp)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern DUP_PATTERN = Pattern.compile("^(.*)\\.DUP\\d+$");
-    private static final Pattern IDFILE_PATTERN = Pattern.compile("^\\.\\d{1,6}$");
     private final GalleryFolder folder;
     @NonNull
     private final GalleryData galleryData;
@@ -97,35 +94,12 @@ public class LocalGallery extends GenericGallery {
         valid = true;
     }
 
-    private static int getPageFromFile(File f) {
-        String n = f.getName();
-        return Integer.parseInt(n.substring(0, n.indexOf('.')));
-    }
-
     private static String createTitle(File file) {
         String name = file.getName();
         Matcher matcher = DUP_PATTERN.matcher(name);
         if (!matcher.matches()) return name;
         String title = matcher.group(1);
         return title == null ? name : title;
-    }
-
-    /**
-     * @return null if not found or the file if found
-     */
-    public static File getPage(File dir, int page) {
-        if (dir == null || !dir.exists()) return null;
-        String pag = String.format(Locale.US, "%03d.", page);
-        File x;
-        x = new File(dir, pag + "jpg");
-        if (x.exists()) return x;
-        x = new File(dir, pag + "png");
-        if (x.exists()) return x;
-        x = new File(dir, pag + "gif");
-        if (x.exists()) return x;
-        x = new File(dir, pag + "webp");
-        if (x.exists()) return x;
-        return null;
     }
 
     @Override

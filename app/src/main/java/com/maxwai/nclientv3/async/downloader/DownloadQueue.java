@@ -28,12 +28,6 @@ public class DownloadQueue {
         return null;
     }
 
-    public static void clear() {
-        for (GalleryDownloaderManager x : downloadQueue)
-            x.downloader().setStatus(GalleryDownloaderV2.Status.CANCELED);
-        downloadQueue.clear();
-    }
-
     public static CopyOnWriteArrayList<GalleryDownloaderV2> getDownloaders() {
         CopyOnWriteArrayList<GalleryDownloaderV2> downloaders = new CopyOnWriteArrayList<>();
         for (GalleryDownloaderManager manager : downloadQueue)
@@ -89,8 +83,4 @@ public class DownloadQueue {
         return null;
     }
 
-    public static boolean isEmpty() {
-        return downloadQueue.size() == 0;
-
-    }
 }

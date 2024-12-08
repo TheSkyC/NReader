@@ -3,7 +3,6 @@ package com.maxwai.nclientv3.adapters;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.Build;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;

@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,7 +24,6 @@ import okhttp3.Cookie;
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends GeneralActivity {
-    public TextView invalid;
     CookieWaiter waiter;
     WebView webView;
 

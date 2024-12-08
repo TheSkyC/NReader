@@ -1,22 +1,11 @@
 package com.maxwai.nclientv3.components.classes;
 
-import android.os.Build;
-
-import com.maxwai.nclientv3.utility.LogUtility;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import okhttp3.ConnectionSpec;
-import okhttp3.OkHttpClient;
-import okhttp3.TlsVersion;
 
 public class CustomSSLSocketFactory extends SSLSocketFactory {
     private static final String[] TLS_V12_ONLY = {"TLSv1.2"};

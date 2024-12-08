@@ -115,8 +115,8 @@ public class SearchActivity extends GeneralActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 query = query.trim();
-                if (query.length() == 0 && !advanced) return true;
-                if (query.length() > 0) adapter.addHistory(query);
+                if (query.isEmpty() && !advanced) return true;
+                if (!query.isEmpty()) adapter.addHistory(query);
                 final Intent i = new Intent(SearchActivity.this, MainActivity.class);
                 i.putExtra(getPackageName() + ".SEARCHMODE", true);
                 i.putExtra(getPackageName() + ".QUERY", query);
@@ -169,42 +169,38 @@ public class SearchActivity extends GeneralActivity {
         Button toPage = pageRangeLayout.findViewById(R.id.toButton);
         Button fromDate = uploadRangeLayout.findViewById(R.id.fromButton);
         Button toDate = uploadRangeLayout.findViewById(R.id.toButton);
-        fromPage.setOnClickListener(v -> {
-            createPageBuilder(R.string.from_page, 0, 2000, ranges.getFromPage(), new DefaultDialogs.CustomDialogResults() {
-                @Override
-                public void positive(int actual) {
-                    ranges.setFromPage(actual);
-                    fromPage.setText(String.format(Locale.US, "%d", actual));
-                    if (ranges.getFromPage() > ranges.getToPage()) {
-                        ranges.setToPage(Ranges.UNDEFINED);
-                        toPage.setText("");
-                    }
-                    advanced = true;
-                }
-
-                @Override
-                public void neutral() {
-                    ranges.setFromPage(Ranges.UNDEFINED);
-                    fromPage.setText("");
-                }
-            });
-        });
-        toPage.setOnClickListener(v -> {
-            createPageBuilder(R.string.to_page, ranges.getFromPage(), 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
-                @Override
-                public void positive(int actual) {
-                    ranges.setToPage(actual);
-                    toPage.setText(String.format(Locale.US, "%d", actual));
-                    advanced = true;
-                }
-
-                @Override
-                public void neutral() {
+        fromPage.setOnClickListener(v -> createPageBuilder(R.string.from_page, 0, 2000, ranges.getFromPage(), new DefaultDialogs.CustomDialogResults() {
+            @Override
+            public void positive(int actual) {
+                ranges.setFromPage(actual);
+                fromPage.setText(String.format(Locale.US, "%d", actual));
+                if (ranges.getFromPage() > ranges.getToPage()) {
                     ranges.setToPage(Ranges.UNDEFINED);
                     toPage.setText("");
                 }
-            });
-        });
+                advanced = true;
+            }
+
+            @Override
+            public void neutral() {
+                ranges.setFromPage(Ranges.UNDEFINED);
+                fromPage.setText("");
+            }
+        }));
+        toPage.setOnClickListener(v -> createPageBuilder(R.string.to_page, ranges.getFromPage(), 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
+            @Override
+            public void positive(int actual) {
+                ranges.setToPage(actual);
+                toPage.setText(String.format(Locale.US, "%d", actual));
+                advanced = true;
+            }
+
+            @Override
+            public void neutral() {
+                ranges.setToPage(Ranges.UNDEFINED);
+                toPage.setText("");
+            }
+        }));
         fromDate.setOnClickListener(v -> showUnitDialog(fromDate, true));
         toDate.setOnClickListener(v -> showUnitDialog(toDate, false));
     }

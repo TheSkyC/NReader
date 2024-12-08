@@ -69,11 +69,6 @@ public class ZoomFragment extends Fragment {
         return fragment;
     }
 
-    private boolean isValueApproximate(final float expectedValue, final float value) {
-        final float errorMargin = 0.05f;
-        return Math.abs(expectedValue - value) < errorMargin;
-    }
-
     public void setClickListener(View.OnClickListener clickListener) {
         this.clickListener = clickListener;
     }
@@ -202,7 +197,7 @@ public class ZoomFragment extends Fragment {
             .placeholder(R.drawable.ic_launcher_foreground)
             .error(R.drawable.ic_refresh)
             .priority(priority)
-            .addListener(new RequestListener<Drawable>() {
+            .addListener(new RequestListener<>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                     return false;

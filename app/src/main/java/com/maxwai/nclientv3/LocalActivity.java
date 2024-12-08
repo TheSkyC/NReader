@@ -184,7 +184,7 @@ public class LocalActivity extends BaseActivity {
 
     private void showDialogFolderChoose() {
         List<File> strings = Global.getUsableFolders(this);
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.select_dialog_singlechoice, strings);
+        ArrayAdapter<File> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, strings);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.choose_directory).setIcon(R.drawable.ic_folder);
         builder.setAdapter(adapter, (dialog, which) -> {

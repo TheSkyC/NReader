@@ -13,7 +13,8 @@ public abstract class ThreadAsyncTask<Params, Progress, Result> {
         this.activity = activity;
     }
 
-    public void execute(Params... params) {
+    @SafeVarargs
+    public final void execute(Params... params) {
         thread = new AsyncThread(params);
         thread.start();
     }
@@ -29,6 +30,7 @@ public abstract class ThreadAsyncTask<Params, Progress, Result> {
 
     protected abstract Result doInBackground(Params... params);
 
+    @SafeVarargs
     protected final void publishProgress(Progress... values) {
         if (!Global.isDestroyed(activity))
             activity.runOnUiThread(() -> onProgressUpdate(values));

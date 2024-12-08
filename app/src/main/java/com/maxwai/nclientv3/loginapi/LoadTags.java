@@ -73,7 +73,7 @@ public class LoadTags extends Thread {
     }
 
     private void analyzeScripts(Elements scripts) throws IOException, StringIndexOutOfBoundsException {
-        if (scripts.size() > 0) {
+        if (!scripts.isEmpty()) {
             Login.clearOnlineTags();
             String array = Utility.unescapeUnicodeString(extractArray(scripts.last()));
             JsonReader reader = new JsonReader(new StringReader(array));

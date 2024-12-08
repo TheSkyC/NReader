@@ -41,13 +41,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class InspectorV3 extends Thread implements Parcelable {
-    public static final Creator<InspectorV3> CREATOR = new Creator<InspectorV3>() {
+    public static final Creator<InspectorV3> CREATOR = new Creator<>() {
         @Override
         public InspectorV3 createFromParcel(Parcel in) {
             return new InspectorV3(in);
@@ -79,19 +80,17 @@ public class InspectorV3 extends Thread implements Parcelable {
         query = in.readString();
         url = in.readString();
         requestType = ApiRequestType.values[in.readByte()];
-        ArrayList x = null;
         switch (GenericGallery.Type.values()[in.readByte()]) {
             case LOCAL:
-                x = in.createTypedArrayList(LocalGallery.CREATOR);
+                galleries.addAll(in.createTypedArrayList(LocalGallery.CREATOR));
                 break;
             case SIMPLE:
-                x = in.createTypedArrayList(SimpleGallery.CREATOR);
+                galleries.addAll(in.createTypedArrayList(SimpleGallery.CREATOR));
                 break;
             case COMPLETE:
-                x = in.createTypedArrayList(Gallery.CREATOR);
+                galleries.addAll(in.createTypedArrayList(Gallery.CREATOR));
                 break;
         }
-        galleries = (ArrayList<GenericGallery>) x;
         tags = new HashSet<>(in.createTypedArrayList(Tag.CREATOR));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ranges = in.readParcelable(Ranges.class.getClassLoader(), Ranges.class);
@@ -215,9 +214,7 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        if (sortType != null)
-            dest.writeByte((byte) (sortType.ordinal()));
-        else dest.writeByte((byte) SortType.RECENT_ALL_TIME.ordinal());
+        dest.writeByte((byte) (Objects.requireNonNullElse(sortType, SortType.RECENT_ALL_TIME).ordinal()));
         dest.writeByte((byte) (custom ? 1 : 0));
         dest.writeInt(page);
         dest.writeInt(pageCount);
@@ -225,7 +222,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         dest.writeString(query);
         dest.writeString(url);
         dest.writeByte(requestType.ordinal());
-        if (galleries == null || galleries.size() == 0)
+        if (galleries == null || galleries.isEmpty())
             dest.writeByte((byte) GenericGallery.Type.SIMPLE.ordinal());
         else dest.writeByte((byte) galleries.get(0).getType().ordinal());
         dest.writeTypedList(galleries);
@@ -235,7 +232,7 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public String getSearchTitle() {
         //triggered only when in searchMode
-        if (query.length() > 0) return query;
+        if (!query.isEmpty()) return query;
         return url.replace(Utility.getBaseUrl() + "search/?q=", "").replace('+', ' ');
     }
 
@@ -273,7 +270,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     private void createUrl() {
         String query;
         try {
-            query = this.query == null ? null : URLEncoder.encode(this.query, "UTF-8");
+            query = this.query == null ? null : URLEncoder.encode(this.query, Charset.defaultCharset().name());
         } catch (UnsupportedEncodingException ignore) {
             query = this.query;
         }
@@ -314,11 +311,6 @@ public class InspectorV3 extends Thread implements Parcelable {
         LogUtility.d("WWW: " + getBookmarkURL());
     }
 
-    public void forceStart() {
-        forceStart = true;
-        start();
-    }
-
     private String getBookmarkURL() {
         if (page < 2) return url;
         else return url.substring(0, url.lastIndexOf('=') + 1);
@@ -340,10 +332,6 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public void setHtmlDocument(Document htmlDocument) {
         this.htmlDocument = htmlDocument;
-    }
-
-    public boolean canParseDocument() {
-        return this.htmlDocument != null;
     }
 
     @Override
@@ -424,7 +412,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         galleries = new ArrayList<>(gal.size());
         for (Element e : gal) galleries.add(new SimpleGallery(context.get(), e));
         gal = document.getElementsByClass("last");
-        pageCount = gal.size() == 0 ? Math.max(1, page) : findTotal(gal.last());
+        pageCount = gal.isEmpty() ? Math.max(1, page) : findTotal(gal.last());
         if (document.getElementById("content") == null)
             throw new InvalidResponseException();
         if (Global.isExactTagMatch())
@@ -469,14 +457,6 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public int getPageCount() {
         return pageCount;
-    }
-
-    public boolean isCustom() {
-        return custom;
-    }
-
-    public String getQuery() {
-        return query;
     }
 
     public Tag getTag() {

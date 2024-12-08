@@ -59,7 +59,7 @@ public class PINActivity extends GeneralActivity {
             });
         }
         cancelButton.setOnClickListener(v -> {
-            if (pin.length() == 0) return;
+            if (pin.isEmpty()) return;
             pin = pin.substring(0, pin.length() - 1);
             applyPinMask();
         });

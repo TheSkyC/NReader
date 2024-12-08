@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
 
@@ -107,7 +108,7 @@ public class GalleryDownloaderV2 {
     }
 
     public int getPercentage() {
-        if (gallery == null || urls.size() == 0) return 0;
+        if (gallery == null || urls.isEmpty()) return 0;
         return ((getTotalPage() - urls.size()) * 100) / getTotalPage();
     }
 
@@ -183,7 +184,7 @@ public class GalleryDownloaderV2 {
         try {
             if (!inspector.createDocument()) return false;
             inspector.parseDocument();
-            if (inspector.getGalleries() == null || inspector.getGalleries().size() == 0)
+            if (inspector.getGalleries() == null || inspector.getGalleries().isEmpty())
                 return false;
             Gallery g = (Gallery) inspector.getGalleries().get(0);
             if (g.isValid())
@@ -253,7 +254,6 @@ public class GalleryDownloaderV2 {
         Bitmap bitmap = BitmapFactory.decodeFile(path, options);
         boolean x = bitmap == null;
         if (!x) bitmap.recycle();
-        bitmap = null;
         return x;
     }
 
@@ -347,7 +347,7 @@ public class GalleryDownloaderV2 {
         GalleryDownloaderV2 that = (GalleryDownloaderV2) o;
 
         if (id != that.id) return false;
-        return folder != null ? folder.equals(that.folder) : that.folder == null;
+        return Objects.equals(folder, that.folder);
     }
 
     @Override

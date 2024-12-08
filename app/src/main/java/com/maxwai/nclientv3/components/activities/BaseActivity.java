@@ -43,7 +43,7 @@ public abstract class BaseActivity extends GeneralActivity {
 
     protected void changeLayout(boolean landscape) {
         CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
-        RecyclerView.Adapter adapter = recycler.getAdapter();
+        RecyclerView.Adapter<?> adapter = recycler.getAdapter();
         int count = landscape ? getLandscapeColumnCount() : getPortraitColumnCount();
         int position = 0;
 

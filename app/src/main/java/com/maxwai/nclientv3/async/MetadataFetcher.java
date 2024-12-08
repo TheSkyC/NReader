@@ -30,7 +30,7 @@ public class MetadataFetcher implements Runnable {
             InspectorV3 inspector = InspectorV3.galleryInspector(context, lg.getId(), null);
             //noinspection CallToThreadRun
             inspector.run();//it is run, not start
-            if (inspector.getGalleries() == null || inspector.getGalleries().size() == 0)
+            if (inspector.getGalleries() == null || inspector.getGalleries().isEmpty())
                 continue;
             Gallery g = (Gallery) inspector.getGalleries().get(0);
             try {

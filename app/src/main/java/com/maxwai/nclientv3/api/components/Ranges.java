@@ -12,7 +12,7 @@ public class Ranges implements Parcelable {
 
     public static final int UNDEFINED = -1;
     public static final TimeUnit UNDEFINED_DATE = null;
-    public static final Creator<Ranges> CREATOR = new Creator<Ranges>() {
+    public static final Creator<Ranges> CREATOR = new Creator<>() {
         @Override
         public Ranges createFromParcel(Parcel in) {
             return new Ranges(in);
@@ -63,32 +63,16 @@ public class Ranges implements Parcelable {
         this.toPage = toPage;
     }
 
-    public int getFromDate() {
-        return fromDate;
-    }
-
     public void setFromDate(int fromDate) {
         this.fromDate = fromDate;
-    }
-
-    public int getToDate() {
-        return toDate;
     }
 
     public void setToDate(int toDate) {
         this.toDate = toDate;
     }
 
-    public TimeUnit getFromDateUnit() {
-        return fromDateUnit;
-    }
-
     public void setFromDateUnit(TimeUnit fromDateUnit) {
         this.fromDateUnit = fromDateUnit;
-    }
-
-    public TimeUnit getToDateUnit() {
-        return toDateUnit;
     }
 
     public void setToDateUnit(TimeUnit toDateUnit) {
@@ -96,7 +80,6 @@ public class Ranges implements Parcelable {
     }
 
     public String toQuery() {
-        boolean pageCreated = false;
         StringBuilder builder = new StringBuilder();
         if (fromPage != UNDEFINED && toPage != UNDEFINED && fromPage == toPage) {
             builder.append("pages:").append(fromPage).append(' ');

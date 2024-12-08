@@ -282,13 +282,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         return true;
     }
 
-    public void setBaseRotation(final float degrees) {
-        mBaseRotation = degrees % 360;
-        update();
-        setRotationBy(mBaseRotation);
-        checkAndDisplayMatrix();
-    }
-
     public void setRotationTo(float degrees) {
         mSuppMatrix.setRotate(degrees % 360);
         checkAndDisplayMatrix();
@@ -471,15 +464,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         }
     }
 
-    /**
-     * Set the zoom interpolator
-     *
-     * @param interpolator the zoom interpolator
-     */
-    public void setZoomInterpolator(Interpolator interpolator) {
-        mInterpolator = interpolator;
-    }
-
     public boolean isZoomable() {
         return mZoomEnabled;
     }
@@ -624,6 +608,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             RectF mTempSrc = new RectF(0, 0, drawableWidth, drawableHeight);
             RectF mTempDst = new RectF(0, 0, viewWidth, viewHeight);
             if ((int) mBaseRotation % 180 != 0) {
+                //noinspection SuspiciousNameCombination
                 mTempSrc = new RectF(0, 0, drawableHeight, drawableWidth);
             }
             switch (mScaleType) {

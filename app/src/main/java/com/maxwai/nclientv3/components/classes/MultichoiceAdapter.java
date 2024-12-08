@@ -21,7 +21,7 @@ import java.util.List;
 public abstract class MultichoiceAdapter<D, T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<MultichoiceAdapter.MultichoiceViewHolder<T>> {
     private final List<MultichoiceListener> listeners = new ArrayList<>(3);
     private Mode mode = Mode.NORMAL;
-    private final HashMap<Long, D> map = new HashMap<Long, D>() {
+    private final HashMap<Long, D> map = new HashMap<>() {
         @Nullable
         @Override
         public D put(Long key, D value) {
@@ -210,11 +210,9 @@ public abstract class MultichoiceAdapter<D, T extends RecyclerView.ViewHolder> e
         final T innerHolder;
         final View censor;
         final ImageView checkmark;
-        final ConstraintLayout multichoiceHolder;
 
         public MultichoiceViewHolder(@NonNull ConstraintLayout multichoiceHolder, T holder) {
             super(holder.itemView);
-            this.multichoiceHolder = multichoiceHolder;
             this.innerHolder = holder;
             this.censor = multichoiceHolder.findViewById(R.id.censor);
             this.checkmark = multichoiceHolder.findViewById(R.id.checkmark);

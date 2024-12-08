@@ -13,7 +13,7 @@ import com.maxwai.nclientv3.components.classes.Size;
 import java.io.IOException;
 
 public class Page implements Parcelable {
-    public static final Creator<Page> CREATOR = new Creator<Page>() {
+    public static final Creator<Page> CREATOR = new Creator<>() {
         @Override
         public Page createFromParcel(Parcel in) {
             return new Page(in);
@@ -146,20 +146,12 @@ public class Page implements Parcelable {
         dest.writeByte((byte) (imageType == null ? ImageType.PAGE.ordinal() : imageType.ordinal()));
     }
 
-    public int getPage() {
-        return page;
-    }
-
     public ImageExt getImageExt() {
         return imageExt;
     }
 
     public char getImageExtChar() {
         return extToChar(imageExt);
-    }
-
-    public ImageType getImageType() {
-        return imageType;
     }
 
     public Size getSize() {

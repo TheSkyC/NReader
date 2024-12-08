@@ -15,7 +15,7 @@ import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -26,7 +26,7 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
 
     GenericAdapter(List<T> dataset) {
         this.dataset = dataset;
-        Collections.sort(dataset, (o1, o2) -> o1.getTitle().compareTo(o2.getTitle()));
+        dataset.sort(Comparator.comparing(GenericGallery::getTitle));
         filter = new ArrayList<>(dataset);
     }
 
@@ -74,7 +74,7 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
         };
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageView imgView;
         final View overlay;
         final TextView title, pages, flag;

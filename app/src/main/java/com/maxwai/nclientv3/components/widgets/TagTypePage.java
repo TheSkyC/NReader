@@ -57,11 +57,6 @@ public class TagTypePage extends Fragment {
         return fragment;
     }
 
-    public void setQuery(String query) {
-        this.query = query;
-        refilter(query);
-    }
-
     public RecyclerView getRecyclerView() {
         return recyclerView;
     }

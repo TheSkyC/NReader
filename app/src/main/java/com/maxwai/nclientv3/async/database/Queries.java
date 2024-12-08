@@ -51,6 +51,7 @@ public class Queries {
     }
 
     public static class DebugDatabase {
+        /** @noinspection unused*/
         private static void dumpTable(String name, FileWriter sb) throws IOException {
 
             String query = "SELECT * FROM " + name;
@@ -246,6 +247,7 @@ public class Queries {
 
     public static class TagTable {
         public static final String TABLE_NAME = "Tags";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Tags` (" +
             " `idTag` INT  NOT NULL PRIMARY KEY," +
@@ -304,7 +306,7 @@ public class Queries {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(TABLE_NAME);
             sql.append(" WHERE ");
             sql.append(COUNT).append(">=? ");                                        //min tag count
-            if (query.length() > 0)
+            if (!query.isEmpty())
                 sql.append("AND ").append(NAME).append(" LIKE ?");  //query if is used
             if (type != null)
                 sql.append("AND ").append(TYPE).append("=? ");            //type if is used
@@ -320,7 +322,7 @@ public class Queries {
             //create parameter list
             ArrayList<String> list = new ArrayList<>();
             list.add("" + TagV2.getMinCount());               //minium tags (always provided)
-            if (query.length() > 0) list.add('%' + query + '%');    //query
+            if (!query.isEmpty()) list.add('%' + query + '%');    //query
             if (type != null) list.add("" + type.getId());      //type of the tag
             LogUtility.d("FILTER URL: " + sql + ", ARGS: " + list);
             return db.rawQuery(sql.toString(), list.toArray(new String[0]));
@@ -561,6 +563,7 @@ public class Queries {
         public static final String RANGE_START = "range_start";
         public static final String RANGE_END = "range_end";
         public static final String TABLE_NAME = "Downloads";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Downloads` (" +
             "`id_gallery`  INT NOT NULL PRIMARY KEY , " +
@@ -612,6 +615,7 @@ public class Queries {
         public static final String THUMB = "thumbType";
         public static final String TIME = "time";
         public static final String TABLE_NAME = "History";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `History`(" +
             "`id` INT NOT NULL PRIMARY KEY," +
@@ -650,6 +654,7 @@ public class Queries {
         }
 
         private static void cleanHistory() {
+            //noinspection StatementWithEmptyBody
             while (db.delete(TABLE_NAME, "(SELECT COUNT(*) FROM " + TABLE_NAME + ")>? AND " + TIME + "=(SELECT MIN(" + TIME + ") FROM " + TABLE_NAME + ")", new String[]{"" + Global.getMaxHistory()}) == 1)
                 ;
         }
@@ -657,6 +662,7 @@ public class Queries {
 
     public static class BookmarkTable {
         public static final String TABLE_NAME = "Bookmark";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String URL = "url";
         static final String PAGE = "page";
@@ -708,6 +714,7 @@ public class Queries {
 
     public static class GalleryBridgeTable {
         public static final String TABLE_NAME = "GalleryTags";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `GalleryTags` (" +
             "`id_gallery` INT NOT NULL , " +
@@ -753,6 +760,7 @@ public class Queries {
 
     public static class FavoriteTable {
         public static final String TABLE_NAME = "Favorite";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Favorite` (" +
             "`id_gallery` INT NOT NULL PRIMARY KEY , " +
@@ -880,6 +888,7 @@ public class Queries {
 
     public static class ResumeTable {
         public static final String TABLE_NAME = "Resume";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Resume` (" +
             "`id_gallery` INT NOT NULL PRIMARY KEY , " +
@@ -915,6 +924,7 @@ public class Queries {
 
     public static class StatusMangaTable {
         public static final String TABLE_NAME = "StatusManga";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `StatusManga` (" +
             "`gallery` INT NOT NULL PRIMARY KEY, " +
@@ -998,6 +1008,7 @@ public class Queries {
 
     public static class StatusTable {
         public static final String TABLE_NAME = "Status";
+        /** @noinspection unused*/
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Status` (" +
             "`name` TINYTEXT NOT NULL PRIMARY KEY, " +

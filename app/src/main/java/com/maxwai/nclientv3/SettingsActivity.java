@@ -74,7 +74,7 @@ public class SettingsActivity extends GeneralActivity {
 
         });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            REQUEST_STORAGE_MANAGER = registerForActivityResult(new ActivityResultContract<Object, Object>() {
+            REQUEST_STORAGE_MANAGER = registerForActivityResult(new ActivityResultContract<>() {
 
                 @RequiresApi(api = Build.VERSION_CODES.R)
                 @NonNull
@@ -105,9 +105,7 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void exportSettings(Uri selectedFile) {
-        new Manager(selectedFile, this, true, () -> {
-            Toast.makeText(this, R.string.export_finished, Toast.LENGTH_SHORT).show();
-        }).start();
+        new Manager(selectedFile, this, true, () -> Toast.makeText(this, R.string.export_finished, Toast.LENGTH_SHORT).show()).start();
     }
 
     public void importSettings() {
@@ -128,9 +126,7 @@ public class SettingsActivity extends GeneralActivity {
             selectedItem = which;
         });
 
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            importSettings(Uri.fromFile(new File(Global.BACKUPFOLDER, files[selectedItem])));
-        }).setNegativeButton(R.string.cancel, null);
+        builder.setPositiveButton(R.string.ok, (dialog, which) -> importSettings(Uri.fromFile(new File(Global.BACKUPFOLDER, files[selectedItem])))).setNegativeButton(R.string.cancel, null);
         builder.show();
     }
 
@@ -163,9 +159,7 @@ public class SettingsActivity extends GeneralActivity {
         builder.setIcon(R.drawable.ic_file);
         builder.setTitle(R.string.requesting_storage_access);
         builder.setMessage(R.string.request_storage_manager_summary);
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            REQUEST_STORAGE_MANAGER.launch(null);
-        }).setNegativeButton(R.string.cancel, null).show();
+        builder.setPositiveButton(R.string.ok, (dialog, which) -> REQUEST_STORAGE_MANAGER.launch(null)).setNegativeButton(R.string.cancel, null).show();
     }
 
     public enum Type {MAIN, COLUMN, DATA}

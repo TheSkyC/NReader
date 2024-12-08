@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class GalleryFolder implements Parcelable, Iterable<PageFile> {
 
-    public static final Creator<GalleryFolder> CREATOR = new Creator<GalleryFolder>() {
+    public static final Creator<GalleryFolder> CREATOR = new Creator<>() {
         @Override
         public GalleryFolder createFromParcel(Parcel in) {
             return new GalleryFolder(in);
@@ -117,14 +117,6 @@ public class GalleryFolder implements Parcelable, Iterable<PageFile> {
 
     public File getGalleryDataFile() {
         return nomedia;
-    }
-
-    public PageFile[] getPages() {
-        PageFile[] files = new PageFile[pageArray.size()];
-        for (int i = 0; i < pageArray.size(); i++) {
-            files[i] = pageArray.valueAt(i);
-        }
-        return files;
     }
 
     public File getFolder() {

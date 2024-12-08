@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 public class User implements Parcelable {
-    public static final Creator<User> CREATOR = new Creator<User>() {
+    public static final Creator<User> CREATOR = new Creator<>() {
         @Override
         public User createFromParcel(Parcel in) {
             return new User(in);

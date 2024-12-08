@@ -82,7 +82,7 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
         return bookmarks.size();
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final AppCompatImageButton deleteButton;
         final TextView queryText;
         final TextView pageLabel;

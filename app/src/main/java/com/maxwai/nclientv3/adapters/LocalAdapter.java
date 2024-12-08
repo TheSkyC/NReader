@@ -3,7 +3,6 @@ package com.maxwai.nclientv3.adapters;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Build;
 import android.text.Layout;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -85,7 +84,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
 
     private List<Object> filter;
     @NonNull
-    private String lastQuery = "";
+    private String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
         private void updatePosition(GalleryDownloaderV2 downloader) {
             final int id = filter.indexOf(downloader);
@@ -187,7 +186,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             Collections.shuffle(arr, Utility.RANDOM);
         } else {
             try {
-                Collections.sort(arr, getComparator(type.type));
+                arr.sort(getComparator(type.type));
             } catch (IllegalArgumentException ignore) {
             }
             if (type.descending) Collections.reverse(arr);
@@ -235,7 +234,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         return filter.get(position) instanceof LocalGallery ? 0 : 1;
     }
 
-    private void bindGallery(@NonNull final ViewHolder holder, int position, LocalGallery ent) {
+    private void bindGallery(@NonNull final ViewHolder holder, LocalGallery ent) {
         if (holder.flag != null) holder.flag.setVisibility(View.GONE);
         ImageDownloadUtility.loadImage(context, ent.getPage(ent.getMin()), holder.imgView);
         holder.title.setText(ent.getTitle());
@@ -337,7 +336,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     @Override
     public void onBindMultichoiceViewHolder(@NonNull ViewHolder holder, int position) {
         if (filter.get(position) instanceof LocalGallery)
-            bindGallery(holder, position, (LocalGallery) filter.get(position));
+            bindGallery(holder, (LocalGallery) filter.get(position));
         else
             bindDownload(holder, position, (GalleryDownloaderV2) filter.get(position));
     }
@@ -436,7 +435,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     public void viewRandom() {
-        if (dataset.size() == 0) return;
+        if (dataset.isEmpty()) return;
         int x = Utility.RANDOM.nextInt(dataset.size());
         startGallery(context, dataset.get(x).getDirectory());
     }
@@ -477,7 +476,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         showDialogPDF();
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageView imgView;
         final View overlay;
         final TextView title, pages, flag, progress;

@@ -25,7 +25,7 @@ import java.util.Date;
 import java.util.Objects;
 
 public class GalleryData implements Parcelable {
-    public static final Creator<GalleryData> CREATOR = new Creator<GalleryData>() {
+    public static final Creator<GalleryData> CREATOR = new Creator<>() {
         @Override
         public GalleryData createFromParcel(Parcel in) {
             return new GalleryData(in);
@@ -233,10 +233,6 @@ public class GalleryData implements Parcelable {
         return mediaId;
     }
 
-    public String getTitle(int i) {
-        return titles[i];
-    }
-
     public String getTitle(TitleType type) {
         return titles[type.ordinal()];
     }
@@ -295,7 +291,7 @@ public class GalleryData implements Parcelable {
         writer.write(Integer.toString(pages.size()));
         writer.write(cover.getImageExtChar());
         writer.write(thumbnail.getImageExtChar());
-        if (pages.size() == 0) return writer.toString();
+        if (pages.isEmpty()) return writer.toString();
         ImageExt referencePage = pages.get(0).getImageExt(), actualPage;
         int intervalLen = 1;
         for (int i = 1; i < pages.size(); i++) {

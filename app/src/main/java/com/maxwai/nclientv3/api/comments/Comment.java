@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Date;
 
 public class Comment implements Parcelable {
-    public static final Creator<Comment> CREATOR = new Creator<Comment>() {
+    public static final Creator<Comment> CREATOR = new Creator<>() {
         @Override
         public Comment createFromParcel(Parcel in) {
             return new Comment(in);
@@ -77,10 +77,6 @@ public class Comment implements Parcelable {
 
     public int getId() {
         return id;
-    }
-
-    public User getPoster() {
-        return poster;
     }
 
     public Date getPostDate() {

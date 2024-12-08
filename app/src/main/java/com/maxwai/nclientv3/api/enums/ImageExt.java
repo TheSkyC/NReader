@@ -11,10 +11,6 @@ public enum ImageExt {
         this.firstLetter = name.charAt(0);
     }
 
-    public char getFirstLetter() {
-        return firstLetter;
-    }
-
     public String getName() {
         return name;
     }

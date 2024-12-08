@@ -17,7 +17,7 @@ import java.util.Locale;
 
 @SuppressWarnings("unused")
 public class Tag implements Parcelable {
-    public static final Creator<Tag> CREATOR = new Creator<Tag>() {
+    public static final Creator<Tag> CREATOR = new Creator<>() {
         @Override
         public Tag createFromParcel(Parcel in) {
             return new Tag(in);

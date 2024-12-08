@@ -7,7 +7,6 @@ import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
 import com.bumptech.glide.load.model.MultiModelLoaderFactory;
-import com.maxwai.nclientv3.components.classes.CustomSSLSocketFactory;
 import com.maxwai.nclientv3.settings.CustomInterceptor;
 
 import java.io.InputStream;

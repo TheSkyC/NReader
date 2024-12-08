@@ -39,7 +39,7 @@ public class User {
                 User user = null;
                 Document doc = Jsoup.parse(response.body().byteStream(), null, Utility.getBaseUrl());
                 Elements elements = doc.getElementsByClass("fa-tachometer-alt");
-                if (elements.size() > 0) {
+                if (!elements.isEmpty()) {
                     Element x = elements.first().parent();
                     String username = x.text().trim();
                     String[] y = x.attr("href").split("/");

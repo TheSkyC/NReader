@@ -117,7 +117,7 @@ public class TagFilterActivity extends GeneralActivity {
         if (data != null) {
             List<String> params = data.getPathSegments();
             for (String x : params) LogUtility.i(x);
-            if (params.size() > 0) {
+            if (!params.isEmpty()) {
                 switch (params.get(0)) {
                     case "tags":
                         return 1;
@@ -233,7 +233,7 @@ public class TagFilterActivity extends GeneralActivity {
         if (page != null) {
             RecyclerView recycler = page.getRecyclerView();
             if (recycler != null) {
-                RecyclerView.Adapter adapter = recycler.getAdapter();
+                RecyclerView.Adapter<?> adapter = recycler.getAdapter();
                 CustomGridLayoutManager gridLayoutManager = new CustomGridLayoutManager(this, count);
                 recycler.setLayoutManager(gridLayoutManager);
                 recycler.setAdapter(adapter);

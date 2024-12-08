@@ -13,7 +13,7 @@ public class TagType implements Parcelable {
     public static final TagType LANGUAGE = new TagType(6, "language", null);
     public static final TagType CATEGORY = new TagType(7, "category", null);
     public static final TagType[] values = new TagType[]{UNKNOWN, PARODY, CHARACTER, TAG, ARTIST, GROUP, LANGUAGE, CATEGORY};
-    public static final Creator<TagType> CREATOR = new Creator<TagType>() {
+    public static final Creator<TagType> CREATOR = new Creator<>() {
         @Override
         public TagType createFromParcel(Parcel in) {
             return new TagType(in);
@@ -50,10 +50,6 @@ public class TagType implements Parcelable {
 
     public String getSingle() {
         return single;
-    }
-
-    public String getPlural() {
-        return plural;
     }
 
     @Override

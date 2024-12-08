@@ -1,7 +1,6 @@
 package com.maxwai.nclientv3;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -69,7 +68,6 @@ public class GalleryActivity extends BaseActivity {
     private String statusString;
 
     private int newStatusColor;
-    private String newStatusName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +129,7 @@ public class GalleryActivity extends BaseActivity {
             InspectorV3.galleryInspector(this, id, new InspectorV3.DefaultInspectorResponse() {
                 @Override
                 public void onSuccess(List<GenericGallery> galleries) {
-                    if (galleries.size() > 0) {
+                    if (!galleries.isEmpty()) {
                         Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
                         intent.putExtra(getPackageName() + ".GALLERY", galleries.get(0));
                         intent.putExtra(getPackageName() + ".ZOOM", zoom);
@@ -280,7 +278,7 @@ public class GalleryActivity extends BaseActivity {
                 new RangeSelector(this, (Gallery) gallery).show();
             else
                 requestStorage();
-        } else if (id == R.id.add_online_gallery) addToFavorite(item);
+        } else if (id == R.id.add_online_gallery) addToFavorite();
         else if (id == R.id.change_view) updateColumnCount(true);
         else if (id == R.id.download_torrent) downloadTorrent();
         else if (id == R.id.load_internet) toInternet();
@@ -350,7 +348,7 @@ public class GalleryActivity extends BaseActivity {
         List<String> statuses = StatusManager.getNames();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         statusString = Queries.StatusMangaTable.getStatus(gallery.getId()).name;
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.select_dialog_singlechoice, statuses) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, statuses) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -419,7 +417,7 @@ public class GalleryActivity extends BaseActivity {
         });
     }
 
-    private void addToFavorite(final MenuItem item) {
+    private void addToFavorite() {
 
         boolean wasFavorite = onlineFavoriteItem.getTitle().equals(getString(R.string.remove_from_online_favorites));
         String url = String.format(Locale.US, Utility.getBaseUrl() + "api/gallery/%d/%sfavorite", gallery.getId(), wasFavorite ? "un" : "");
@@ -488,7 +486,7 @@ public class GalleryActivity extends BaseActivity {
         InspectorV3.galleryInspector(this, gallery.getId(), new InspectorV3.DefaultInspectorResponse() {
             @Override
             public void onSuccess(List<GenericGallery> galleries) {
-                if (galleries.size() == 0) return;
+                if (galleries.isEmpty()) return;
                 Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
                 LogUtility.d(galleries.get(0).toString());
                 intent.putExtra(getPackageName() + ".GALLERY", galleries.get(0));

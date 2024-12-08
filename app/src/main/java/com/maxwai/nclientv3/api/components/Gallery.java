@@ -40,7 +40,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public class Gallery extends GenericGallery {
-    public static final Creator<Gallery> CREATOR = new Creator<Gallery>() {
+    public static final Creator<Gallery> CREATOR = new Creator<>() {
         @Override
         public Gallery createFromParcel(Parcel in) {
             LogUtility.d("Reading to parcel");

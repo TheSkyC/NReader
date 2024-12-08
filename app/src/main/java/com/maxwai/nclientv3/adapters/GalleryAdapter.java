@@ -162,7 +162,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return;
         }
         final Gallery gallery = (Gallery) this.gallery;
-        if (!gallery.isRelatedLoaded() || gallery.getRelated().size() == 0) {
+        if (!gallery.isRelatedLoaded() || gallery.getRelated().isEmpty()) {
             holder.master.setVisibility(View.GONE);
             return;
         } else holder.master.setVisibility(View.VISIBLE);
@@ -406,7 +406,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     public enum Policy {PROPORTION, MAX, FULL}
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final View master;
         final TextView pageNumber;
 

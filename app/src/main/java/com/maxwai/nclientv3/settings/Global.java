@@ -36,7 +36,6 @@ import com.maxwai.nclientv3.api.enums.SortType;
 import com.maxwai.nclientv3.api.enums.TitleType;
 import com.maxwai.nclientv3.api.local.LocalSortType;
 import com.maxwai.nclientv3.components.CustomCookieJar;
-import com.maxwai.nclientv3.components.classes.CustomSSLSocketFactory;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 import com.maxwai.nclientv3.utility.network.NetworkUtil;
@@ -218,14 +217,6 @@ public class Global {
     private static void initGallerySize() {
         galleryHeight = screenSize.y / 2;
         galleryWidth = (galleryHeight * 3) / 4;//the ratio is 3:4
-    }
-
-    public static int getScreenHeight() {
-        return screenSize.y;
-    }
-
-    public static int getScreenWidth() {
-        return screenSize.x;
     }
 
     public static int getGalleryHeight() {
@@ -412,13 +403,11 @@ public class Global {
         String langCode = sharedPreferences.getString(prefLangKey, defaultValue);
         assert langCode != null;
         if (langCode.equalsIgnoreCase(defaultValue)) {
-            Locale defaultLocale = Locale.getDefault();
-            return defaultLocale;
+            return Locale.getDefault();
         }
         if (langCode.contains("-") || langCode.contains("_")) {
             String[] regexSplit = langCode.split("[-_]");
-            Locale targetLocale = new Locale(regexSplit[0], regexSplit[1]);
-            return targetLocale;
+            return new Locale(regexSplit[0], regexSplit[1]);
         } else {
             Locale targetLocale = new Locale(langCode);
             System.out.println(targetLocale.getCountry());
@@ -429,10 +418,6 @@ public class Global {
 
     public static int getOffscreenLimit() {
         return offscreenLimit;
-    }
-
-    private static String getLocaleCode(Locale locale) {
-        return String.format("%s-%s", locale.getLanguage(), locale.getCountry());
     }
 
     private static ThemeScheme initTheme(Context context) {
@@ -693,7 +678,7 @@ public class Global {
         return null;
     }
 
-    private static void updateConfigurationNightMode(AppCompatActivity activity, Configuration c) {
+    private static void updateConfigurationNightMode(Configuration c) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         c.uiMode &= (~Configuration.UI_MODE_NIGHT_MASK);//clear night mode bits
         c.uiMode |= Configuration.UI_MODE_NIGHT_NO; //disable night mode
@@ -703,7 +688,7 @@ public class Global {
         if (!invertFix) return;
         Resources resources = context.getResources();
         Configuration c = new Configuration(resources.getConfiguration());
-        updateConfigurationNightMode(context, c);
+        updateConfigurationNightMode(c);
         resources.updateConfiguration(c, resources.getDisplayMetrics());
     }
 

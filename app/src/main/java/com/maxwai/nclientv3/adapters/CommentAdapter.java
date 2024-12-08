@@ -1,6 +1,5 @@
 package com.maxwai.nclientv3.adapters;
 
-import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,9 +56,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     public void onBindViewHolder(@NonNull CommentAdapter.ViewHolder holder, int pos) {
         int position = holder.getBindingAdapterPosition();
         Comment c = comments.get(position);
-        holder.layout.setOnClickListener(v1 -> {
-            context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7));
-        });
+        holder.layout.setOnClickListener(v1 -> context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7)));
         holder.close.setVisibility(c.getPosterId() != userId ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());
         holder.body.setText(c.getComment());

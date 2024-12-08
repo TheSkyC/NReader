@@ -12,7 +12,6 @@ import androidx.multidex.MultiDexApplication;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
-import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.ScrapeTags;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
@@ -26,8 +25,6 @@ import org.acra.ACRA;
 import org.acra.ReportField;
 import org.acra.config.CoreConfigurationBuilder;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -46,7 +43,7 @@ public class CrashApplication extends MultiDexApplication {
         String version = Global.getLastVersion(this), actualVersion = Global.getVersionName(this);
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
         if (!actualVersion.equals(version))
-            afterUpdateChecks(preferences, version, actualVersion);
+            afterUpdateChecks(preferences, version);
 
         Global.initFromShared(this);
         NetworkUtil.initConnectivity(this);
@@ -76,7 +73,7 @@ public class CrashApplication extends MultiDexApplication {
         return false;
     }
 
-    private void afterUpdateChecks(SharedPreferences preferences, String oldVersion, String actualVersion) {
+    private void afterUpdateChecks(SharedPreferences preferences, String oldVersion) {
         SharedPreferences.Editor editor = preferences.edit();
         removeOldUpdates();
         //update tags
@@ -87,27 +84,6 @@ public class CrashApplication extends MultiDexApplication {
         Global.setLastVersion(this);
     }
 
-
-    private void createIdHiddenFile(File folder) {
-        LocalGallery gallery = new LocalGallery(folder);
-        if (gallery.getId() < 0) return;
-        File hiddenFile = new File(folder, "." + gallery.getId());
-        try {
-            hiddenFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void createIdHiddenFiles() {
-        if (!Global.hasStoragePermission(this)) return;
-        File[] files = Global.DOWNLOADFOLDER.listFiles();
-        if (files == null) return;
-        for (File f : files) {
-            if (f.isDirectory())
-                createIdHiddenFile(f);
-        }
-    }
 
     private void removeOldUpdates() {
         if (!Global.hasStoragePermission(this)) return;
