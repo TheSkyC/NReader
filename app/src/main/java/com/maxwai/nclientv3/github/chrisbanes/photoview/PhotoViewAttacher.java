@@ -31,6 +31,8 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.OverScroller;
 
+import androidx.annotation.NonNull;
+
 /**
  * The component of {@link PhotoView} which does the work allowing for zooming, scaling, panning, etc.
  * It is made public in case you need to subclass something other than AppCompatImageView and still
@@ -60,7 +62,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private final Matrix mSuppMatrix = new Matrix();
     private final RectF mDisplayRect = new RectF();
     private final float[] mMatrixValues = new float[9];
-    private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
+    private final Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
     private int mZoomDuration = DEFAULT_ZOOM_DURATION;
     private float mMinScale = DEFAULT_MIN_SCALE;
     private float mMidScale = DEFAULT_MID_SCALE;
@@ -168,14 +170,14 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
             // forward long click listener
             @Override
-            public void onLongPress(MotionEvent e) {
+            public void onLongPress(@NonNull MotionEvent e) {
                 if (mLongClickListener != null) {
                     mLongClickListener.onLongClick(mImageView);
                 }
             }
 
             @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2,
+            public boolean onFling(MotionEvent e1, @NonNull MotionEvent e2,
                                    float velocityX, float velocityY) {
                 if (mSingleFlingListener != null) {
                     if (getScale() > DEFAULT_MIN_SCALE) {
@@ -192,7 +194,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         });
         mGestureDetector.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener() {
             @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
+            public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                 if (mOnClickListener != null) {
                     mOnClickListener.onClick(mImageView);
                 }
@@ -222,7 +224,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             }
 
             @Override
-            public boolean onDoubleTap(MotionEvent ev) {
+            public boolean onDoubleTap(@NonNull MotionEvent ev) {
                 try {
                     float scale = getScale();
                     float x = ev.getX();
@@ -241,7 +243,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             }
 
             @Override
-            public boolean onDoubleTapEvent(MotionEvent e) {
+            public boolean onDoubleTapEvent(@NonNull MotionEvent e) {
                 // Wait for the confirmed onDoubleTap() instead
                 return false;
             }

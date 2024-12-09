@@ -6,6 +6,8 @@ import android.os.Parcelable;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
+import androidx.annotation.NonNull;
+
 import com.maxwai.nclientv3.api.enums.ImageExt;
 import com.maxwai.nclientv3.api.enums.ImageType;
 import com.maxwai.nclientv3.components.classes.Size;
@@ -158,6 +160,7 @@ public class Page implements Parcelable {
         return size;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Page{" +

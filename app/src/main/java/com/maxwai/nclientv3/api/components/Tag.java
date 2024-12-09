@@ -8,6 +8,8 @@ import android.util.JsonReader;
 import android.util.JsonToken;
 import android.util.JsonWriter;
 
+import androidx.annotation.NonNull;
+
 import com.maxwai.nclientv3.api.enums.TagStatus;
 import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.utility.LogUtility;
@@ -156,6 +158,7 @@ public class Tag implements Parcelable {
     }
 
 
+    @NonNull
     @Override
     public String toString() {
         return "Tag{" +

@@ -60,7 +60,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         }
     };
     private SortType sortType;
-    private boolean custom, forceStart = false;
+    private boolean custom;
     private int page, pageCount = -1, id;
     private String query, url;
     private ApiRequestType requestType;
@@ -337,7 +337,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     @Override
     public synchronized void start() {
         if (getState() != State.NEW) return;
-        if (forceStart || response.shouldStart(this))
+        if (response.shouldStart(this))
             super.start();
     }
 

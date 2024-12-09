@@ -22,12 +22,11 @@ public class CFTokenView {
 
     private final ViewGroup masterLayout;
     private final CFTokenWebView webView;
-    private final Button button;
 
     public CFTokenView(ViewGroup masterLayout) {
         this.masterLayout = masterLayout;
         webView=masterLayout.findViewById(R.id.webView);
-        button=masterLayout.findViewById(R.id.hideWebView);
+        Button button = masterLayout.findViewById(R.id.hideWebView);
         button.setOnClickListener(v -> CookieInterceptor.hideWebView());
     }
 

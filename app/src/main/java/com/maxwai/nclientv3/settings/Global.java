@@ -175,7 +175,6 @@ public class Global {
     private static void initFilesTree(Context context) {
         List<File> files = getUsableFolders(context);
         String path = context.getSharedPreferences("Settings", Context.MODE_PRIVATE).getString(context.getString(R.string.key_save_path), getDefaultFileParent(context));
-        assert path != null;
         File ROOTFOLDER = new File(path);
         //in case the permission is removed
         if (!files.contains(ROOTFOLDER) && !isExternalStorageManager())
@@ -238,7 +237,6 @@ public class Global {
 
     private static void initTitleType(@NonNull Context context) {
         String s = context.getSharedPreferences("Settings", 0).getString(context.getString(R.string.key_title_type), "pretty");
-        assert s != null;
         switch (s) {
             case "pretty":
                 titleType = TitleType.PRETTY;
@@ -401,7 +399,6 @@ public class Global {
         String prefLangKey = context.getString(R.string.key_language);
         String defaultValue = context.getString(R.string.key_default_value);
         String langCode = sharedPreferences.getString(prefLangKey, defaultValue);
-        assert langCode != null;
         if (langCode.equalsIgnoreCase(defaultValue)) {
             return Locale.getDefault();
         }
@@ -422,7 +419,6 @@ public class Global {
 
     private static ThemeScheme initTheme(Context context) {
         String h = context.getSharedPreferences("Settings", 0).getString(context.getString(R.string.key_theme_select), "dark");
-        assert h != null;
         return theme = h.equals("light") ? ThemeScheme.LIGHT : ThemeScheme.DARK;
     }
 

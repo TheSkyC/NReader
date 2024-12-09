@@ -3,6 +3,8 @@ package com.maxwai.nclientv3.components.classes;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.NonNull;
+
 public class Size implements Parcelable {
     public static final Creator<Size> CREATOR = new Creator<>() {
         @Override
@@ -54,6 +56,7 @@ public class Size implements Parcelable {
         dest.writeInt(height);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Size{" +

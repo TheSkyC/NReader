@@ -8,7 +8,7 @@
         <item name="colorPrimary">@android:color/holo_blue_dark</item>
     </style>
 
-    <style name="DarkTheme.NoTitle" parent="DarkTheme"></style>
+    <style name="DarkTheme.NoTitle" parent="DarkTheme" />
 
     <style name="LightTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
@@ -17,6 +17,6 @@
         <item name="colorPrimary">@android:color/holo_blue_bright</item>
     </style>
 
-    <style name="LightTheme.NoTitle" parent="LightTheme"></style>
+    <style name="LightTheme.NoTitle" parent="LightTheme" />
 
 </resources>

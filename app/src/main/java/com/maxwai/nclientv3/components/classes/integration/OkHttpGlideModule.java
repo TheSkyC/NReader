@@ -31,7 +31,7 @@ public class OkHttpGlideModule implements com.bumptech.glide.module.GlideModule 
     }
 
     @Override
-    public void registerComponents(Context context, Glide glide, Registry registry) {
+    public void registerComponents(@NonNull Context context, @NonNull Glide glide, Registry registry) {
         registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
     }
 }

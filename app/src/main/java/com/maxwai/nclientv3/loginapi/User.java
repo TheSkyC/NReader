@@ -51,6 +51,7 @@ public class User {
         });
     }
 
+    @NonNull
     @Override
     public String toString() {
         return username + '(' + id + '/' + codename + ')';

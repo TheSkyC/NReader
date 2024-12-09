@@ -205,6 +205,7 @@ public class GalleryData implements Parcelable {
         pages.trimToSize();
     }
 
+    @NonNull
     public Date getUploadDate() {
         return uploadDate;
     }
@@ -237,14 +238,17 @@ public class GalleryData implements Parcelable {
         return titles[type.ordinal()];
     }
 
+    @NonNull
     public TagList getTags() {
         return tags;
     }
 
+    @NonNull
     public Page getCover() {
         return cover;
     }
 
+    @NonNull
     public Page getThumbnail() {
         return thumbnail;
     }
@@ -253,6 +257,7 @@ public class GalleryData implements Parcelable {
         return pages.get(index);
     }
 
+    @NonNull
     public ArrayList<Page> getPages() {
         return pages;
     }
