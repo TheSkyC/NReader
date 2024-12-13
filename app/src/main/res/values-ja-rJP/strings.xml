@@ -204,7 +204,6 @@
     <string name="data_usage_full">サムネイルまたは完全な画像をダウンロード</string>
     <string name="data_usage_no">画像をダウンロードしない</string>
     <string name="enable_network_to_continue">イメージのダウンロードを有効にするか、ネットワークを変更してイメージを開きます</string>
-    <string name="donate">開発者をサポートします。(PaypalかLiberapayかBitcoinでサポートできます。）</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">IDをクリップボードにコピーしました。</string>
     <string name="copied_to_clipboard">クリップボードにコピー</string>

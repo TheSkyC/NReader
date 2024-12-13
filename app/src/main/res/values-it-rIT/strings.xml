@@ -204,7 +204,6 @@
     <string name="data_usage_full">Scarica immagini complete o anteprime</string>
     <string name="data_usage_no">Non scaricare le immagini</string>
     <string name="enable_network_to_continue">Abilita il download delle immagini o cambia tipo di rete per aprire l\'immagine</string>
-    <string name="donate">Supporta lo sviluppatore</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">ID copiato nella clipboard</string>
     <string name="copied_to_clipboard">Copiato nella clipboard</string>

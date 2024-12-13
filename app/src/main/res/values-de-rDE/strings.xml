@@ -204,7 +204,6 @@
     <string name="data_usage_full">Lade Vorschaubilder oder ganze Bilder herunter</string>
     <string name="data_usage_no">Lade keine Bilder herunter</string>
     <string name="enable_network_to_continue">Aktiviere Bilder laden oder wechsel das Netzwerk um Bild zu öffnen</string>
-    <string name="donate">Unterstütze den Entwickler</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">ID in die Zwischenablage kopiert</string>
     <string name="copied_to_clipboard">In die Zwischenablage kopiert</string>

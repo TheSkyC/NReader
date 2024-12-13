@@ -204,7 +204,6 @@
     <string name="data_usage_full">Завантажити ескіз або повне зображення</string>
     <string name="data_usage_no">Не завантажувати зображення</string>
     <string name="enable_network_to_continue">Увімкнути завантаження зображень або змінити мережу для відкриття зображення</string>
-    <string name="donate">Підтримати розробника</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">ID скопійовано до буфера обміну</string>
     <string name="copied_to_clipboard">Скопійовано до буфера обміну</string>

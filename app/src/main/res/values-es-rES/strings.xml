@@ -204,7 +204,6 @@
     <string name="data_usage_full">Descargar imágenes en miniaturas o completas</string>
     <string name="data_usage_no">No descargar imágenes</string>
     <string name="enable_network_to_continue">Habilitar la descarga de imágenes o cambiar de red para abrir la imagen</string>
-    <string name="donate">Apoyar al desarrollador</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">ID copiada al portapapeles</string>
     <string name="copied_to_clipboard">Copiado al portapapeles</string>

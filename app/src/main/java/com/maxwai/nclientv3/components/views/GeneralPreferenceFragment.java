@@ -225,12 +225,6 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             startActivity(i);
             return true;
         });
-        // TODO: remove donate
-        findPreference("donate").setOnPreferenceClickListener(preference -> {
-            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/maxwai/NClientV3#donation"));
-            startActivity(i);
-            return true;
-        });
         findPreference("copy_settings").setOnPreferenceClickListener(preference -> {
             try {
                 CopyToClipboardActivity.copyTextToClipboard(getContext(), getDataSettings(getContext()));

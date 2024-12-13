@@ -204,7 +204,6 @@
     <string name="data_usage_full">Télécharger la miniature ou les images complètes</string>
     <string name="data_usage_no">Ne pas télécharger les images</string>
     <string name="enable_network_to_continue">Activer le téléchargement des images ou changer de réseau pour l\'ouvrir</string>
-    <string name="donate">Soutenir le développeur</string>
     <string name="id_tag">ID :</string>
     <string name="id_copied_to_clipboard">ID copié dans le presse-papiers</string>
     <string name="copied_to_clipboard">Copié dans le presse-papiers</string>

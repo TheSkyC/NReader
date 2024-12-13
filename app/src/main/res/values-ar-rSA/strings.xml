@@ -204,7 +204,6 @@
     <string name="data_usage_full">نزِّل الصُّويرات أو الصور كاملة</string>
     <string name="data_usage_no">لا تُنزِّل الصور</string>
     <string name="enable_network_to_continue">فعِّل تنزيل الصور أو تغيير الشبكة لفتحها</string>
-    <string name="donate">اِدعم المُطوِّر</string>
     <string name="id_tag">المُعرِّف:</string>
     <string name="id_copied_to_clipboard">نُسخ المُعرِّف إلى الحافظة</string>
     <string name="copied_to_clipboard">نُسخ إلى الحافظة</string>

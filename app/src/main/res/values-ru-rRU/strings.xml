@@ -204,7 +204,6 @@
     <string name="data_usage_full">Загружать превью или полные изображения</string>
     <string name="data_usage_no">Не загружать изображения</string>
     <string name="enable_network_to_continue">Включите загрузку изображения или смените сеть чтобы открыть изображение</string>
-    <string name="donate">Поддержать разработчика</string>
     <string name="id_tag">ID:</string>
     <string name="id_copied_to_clipboard">ID скопирован в буфер обмена</string>
     <string name="copied_to_clipboard">Скопировано в буфер обмена</string>
