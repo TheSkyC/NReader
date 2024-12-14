@@ -24,6 +24,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
@@ -194,6 +195,7 @@ public class ZoomFragment extends Fragment {
         if (dra == null) return;
         dra
             .transform(new Rotate(degree))
+            .apply(new RequestOptions().fitCenter())
             .placeholder(R.drawable.ic_launcher_foreground)
             .error(R.drawable.ic_refresh)
             .priority(priority)
