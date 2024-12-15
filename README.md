@@ -4,7 +4,9 @@
 
 An unofficial NHentai Android Client. This is a fork of the original Project by [@Dar9586](https://github.com/Dar9586) found [here](https://github.com/Dar9586/NClientV2)
 
-This app  works for devices from API 28 (Android 9) and above.
+This app works for devices from API 26 (Android 8) and above.
+
+For Devices Running Android 8 (SDK 26 and 27) there is a separate SDK with `pre28` in the name. Support for this Version of the app will be reduced.
 
 Releases: <https://github.com/maxwai/NClientV3/releases>
 
