@@ -13,4 +13,5 @@ output.json
 /app/schemas
 .externalNativeBuild
 /crowdin.properties
-
+/keystore.properties
+*.jks
