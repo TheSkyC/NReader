@@ -75,6 +75,17 @@ android {
     }
 }
 
+android.applicationVariants.configureEach { variant ->
+    variant.outputs.configureEach {
+        def suffix = ""
+        if (variant.flavorName == "pre28") {
+            suffix = "_pre28"
+        }
+        def version = variant.versionName.substring(0, variant.versionName.indexOf("-"))
+        outputFileName = "NClientV3_${version}${suffix}.apk"
+    }
+}
+
 dependencies {
 // AndroidX
     implementation 'androidx.appcompat:appcompat:1.7.0'
