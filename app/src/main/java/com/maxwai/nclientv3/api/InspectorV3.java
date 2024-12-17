@@ -80,16 +80,22 @@ public class InspectorV3 extends Thread implements Parcelable {
         query = in.readString();
         url = in.readString();
         requestType = ApiRequestType.values[in.readByte()];
+        List<? extends GenericGallery> tmpList = null;
         switch (GenericGallery.Type.values()[in.readByte()]) {
             case LOCAL:
-                galleries.addAll(in.createTypedArrayList(LocalGallery.CREATOR));
+                tmpList = in.createTypedArrayList(LocalGallery.CREATOR);
                 break;
             case SIMPLE:
-                galleries.addAll(in.createTypedArrayList(SimpleGallery.CREATOR));
+                tmpList = in.createTypedArrayList(SimpleGallery.CREATOR);
                 break;
             case COMPLETE:
-                galleries.addAll(in.createTypedArrayList(Gallery.CREATOR));
+                tmpList = in.createTypedArrayList(Gallery.CREATOR);
                 break;
+        }
+        if (tmpList != null)
+        {
+            galleries = new ArrayList<>();
+            galleries.addAll(tmpList);
         }
         tags = new HashSet<>(in.createTypedArrayList(Tag.CREATOR));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
