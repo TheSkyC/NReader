@@ -129,6 +129,7 @@ public class MainActivity extends BaseActivity
     private int idOpenedGallery = -1;//Position in the recycler of the opened gallery
     private boolean inspecting = false, filteringTag = false;
     private SortType temporaryType;
+    private Language selectedLanguage;
     private Snackbar snackbar = null;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
@@ -478,26 +479,26 @@ public class MainActivity extends BaseActivity
         layoutHeader.setBackgroundResource(light ? R.drawable.side_nav_bar_light : R.drawable.side_nav_bar_dark);
     }
 
-    private void changeUsedLanguage() {
-        switch (Global.getOnlyLanguage()) {
-            case ENGLISH:
-                Global.updateOnlyLanguage(this, Language.JAPANESE);
-                break;
-            case JAPANESE:
-                Global.updateOnlyLanguage(this, Language.CHINESE);
-                break;
-            case CHINESE:
-                Global.updateOnlyLanguage(this, Language.ALL);
-                break;
-            case ALL:
-                Global.updateOnlyLanguage(this, Language.ENGLISH);
-                break;
-        }
-        //wait 250ms to reduce the requests
-        changeLanguageTimeHandler.removeCallbacks(changeLanguageRunnable);
-        changeLanguageTimeHandler.postDelayed(changeLanguageRunnable, CHANGE_LANGUAGE_DELAY);
+    // private void changeUsedLanguage() {
+    //     switch (Global.getOnlyLanguage()) {
+    //         case ENGLISH:
+    //             Global.updateOnlyLanguage(this, Language.JAPANESE);
+    //             break;
+    //         case JAPANESE:
+    //             Global.updateOnlyLanguage(this, Language.CHINESE);
+    //             break;
+    //         case CHINESE:
+    //             Global.updateOnlyLanguage(this, Language.ALL);
+    //             break;
+    //         case ALL:
+    //             Global.updateOnlyLanguage(this, Language.ENGLISH);
+    //             break;
+    //     }
+    //     //wait 250ms to reduce the requests
+    //     changeLanguageTimeHandler.removeCallbacks(changeLanguageRunnable);
+    //     changeLanguageTimeHandler.postDelayed(changeLanguageRunnable, CHANGE_LANGUAGE_DELAY);
 
-    }
+    // }
 
     @Override
     public void onBackPressed() {
@@ -658,8 +659,9 @@ public class MainActivity extends BaseActivity
         if (item.getItemId() == R.id.by_popular) {
             updateSortType(item);
         } else if (item.getItemId() == R.id.only_language) {
-            changeUsedLanguage();
-            showLanguageIcon(item);
+            updateLanguageAndIcon(item);
+            // changeUsedLanguage();
+            // showLanguageIcon(item);
         } else if (item.getItemId() == R.id.search) {
             if (modeType != ModeType.FAVORITE) {//show textbox or start search activity
                 i = new Intent(this, SearchActivity.class);
@@ -715,6 +717,30 @@ public class MainActivity extends BaseActivity
         });
         builder.setNegativeButton(R.string.cancel, null);
         builder.show();
+    }
+
+    private void updateLanguageAndIcon(MenuItem item) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+
+        for (OnlyLanguage lang : OnlyLanguage.values()) {
+            adapter.add(getString(lang.getNameId()));
+        }
+        selectedLanguage = OnlyLanguage.findFromLanguages(Global.getOnlyLanguage());
+        builder.setIcon(R.drawable.ic_world)
+            .setTitle(R.string.change_language)
+            .setSingleChoiceItems(adapter, selectedLanguage.ordinal(),
+                (dialog, which) -> selectedLanguage = OnlyLanguage.values()[which])
+            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.name()));
+                // wait 250ms to reduce the requests
+                changeLanguageTimeHandler.removeCallbacks(changeLanguageRunnable);
+                changeLanguageTimeHandler.postDelayed(changeLanguageRunnable, CHANGE_LANGUAGE_DELAY);
+                showLanguageIcon(item);
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+
     }
 
     private void showDialogDownloadAll() {
