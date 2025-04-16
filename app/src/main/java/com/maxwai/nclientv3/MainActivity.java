@@ -62,11 +62,13 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import okhttp3.Cookie;
 
@@ -723,14 +725,17 @@ public class MainActivity extends BaseActivity
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
 
-        for (OnlyLanguage lang : OnlyLanguage.values()) {
-            adapter.add(getString(lang.getNameId()));
-        }
-        selectedLanguage = OnlyLanguage.findFromLanguages(Global.getOnlyLanguage());
+        adapter.addAll(Arrays.stream(Language.values())
+            .filter(lang -> lang != Language.UNKNOWN) // 排除 UNKNOWN
+            .map(Language::getLanguage)
+            .collect(Collectors.toList())
+        );
+
+        selectedLanguage = Global.getOnlyLanguage();
         builder.setIcon(R.drawable.ic_world)
             .setTitle(R.string.change_language)
             .setSingleChoiceItems(adapter, selectedLanguage.ordinal(),
-                (dialog, which) -> selectedLanguage = OnlyLanguage.values()[which])
+                (dialog, which) -> selectedLanguage = Language.values()[which])
             .setPositiveButton(R.string.ok, (dialog, which) -> {
                 Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.name()));
                 // wait 250ms to reduce the requests
@@ -740,7 +745,6 @@ public class MainActivity extends BaseActivity
             })
             .setNegativeButton(R.string.cancel, null)
             .show();
-
     }
 
     private void showDialogDownloadAll() {
