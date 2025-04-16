@@ -727,7 +727,7 @@ public class MainActivity extends BaseActivity
 
         adapter.addAll(Arrays.stream(Language.values())
             .filter(lang -> lang != Language.UNKNOWN) // 排除 UNKNOWN
-            .map(Language::getLanguage)
+            .map(lang -> getString(lang.getNameId()))
             .collect(Collectors.toList())
         );
 

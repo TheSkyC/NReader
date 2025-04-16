@@ -213,6 +213,7 @@
     <string name="sort_recent">最近</string>
     <string name="sort_popular_day">日榜</string>
     <string name="sort_popular_week">周榜</string>
+    <string name="sort_popoular_month">月榜</string>
     <string name="sort_type_title_format" formatted="true">选择排序类型（%s）</string>
     <string name="sort_select_type">选择排序类型：</string>
     <string name="unable_to_connect_to_the_site">无法连接站点</string>
@@ -285,7 +286,6 @@
     <string name="downloaded_update_at" formatted="true">Downloaded update at %s</string>
     <string name="summary_offscreen_limit">Set the number of images to preload offscreen when reading a gallery</string>
     <string name="title_offscreen_limit">Image to preload</string>
-    <string name="sort_popoular_month">Monthly popular</string>
     <string name="random">Random</string>
     <string name="summary_fetch_metadata">Chinese</string>
     <string name="title_fetch_metadata">Fetch metadata for old galleries</string>
