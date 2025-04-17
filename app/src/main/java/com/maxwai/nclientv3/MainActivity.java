@@ -68,6 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import okhttp3.Cookie;
@@ -131,7 +132,6 @@ public class MainActivity extends BaseActivity
     private int idOpenedGallery = -1;//Position in the recycler of the opened gallery
     private boolean inspecting = false, filteringTag = false;
     private SortType temporaryType;
-    private Language selectedLanguage;
     private Snackbar snackbar = null;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
@@ -707,13 +707,13 @@ public class MainActivity extends BaseActivity
             .collect(Collectors.toList())
         );
 
-        selectedLanguage = Global.getOnlyLanguage();
+        AtomicReference<Language> selectedLanguage = new AtomicReference<>(Global.getOnlyLanguage());
         builder.setIcon(R.drawable.ic_world)
             .setTitle(R.string.change_language)
-            .setSingleChoiceItems(adapter, selectedLanguage.ordinal(),
-                (dialog, which) -> selectedLanguage = Language.getFilteredValuesArray()[which])
+            .setSingleChoiceItems(adapter, selectedLanguage.get().ordinal(),
+                (dialog, which) -> selectedLanguage.set(Language.getFilteredValuesArray()[which]))
             .setPositiveButton(R.string.ok, (dialog, which) -> {
-                Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.name()));
+                Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.get().name()));
                 // wait 250ms to reduce the requests
                 changeLanguageTimeHandler.removeCallbacks(changeLanguageRunnable);
                 changeLanguageTimeHandler.postDelayed(changeLanguageRunnable, CHANGE_LANGUAGE_DELAY);
