@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import com.maxwai.nclientv3.R;
 
 public enum Language {
-//    ENGLISH, CHINESE, JAPANESE, UNKNOWN, ALL
     ENGLISH(R.string.only_english,"ENGLISH"),
     CHINESE(R.string.only_chinese,"CHINESE"),
     JAPANESE(R.string.only_japanese,"JAPANESE"),
