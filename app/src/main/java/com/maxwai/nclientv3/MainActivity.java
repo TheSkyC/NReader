@@ -702,9 +702,8 @@ public class MainActivity extends BaseActivity
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
 
-        adapter.addAll(Arrays.stream(Language.values())
-            .filter(lang -> lang != Language.UNKNOWN) // 排除 UNKNOWN
-            .map(lang -> getString(lang.getNameId()))
+        adapter.addAll(Arrays.stream(Language.getFilteredValuesArray())
+            .map(lang -> getString(lang.getNameResId()))
             .collect(Collectors.toList())
         );
 
@@ -712,7 +711,7 @@ public class MainActivity extends BaseActivity
         builder.setIcon(R.drawable.ic_world)
             .setTitle(R.string.change_language)
             .setSingleChoiceItems(adapter, selectedLanguage.ordinal(),
-                (dialog, which) -> selectedLanguage = Language.values()[which])
+                (dialog, which) -> selectedLanguage = Language.getFilteredValuesArray()[which])
             .setPositiveButton(R.string.ok, (dialog, which) -> {
                 Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.name()));
                 // wait 250ms to reduce the requests

@@ -52,6 +52,7 @@ Unfortunately, due to Android security features, it is not possible to create an
 ## Contributors
 
 - [shirokun20](https://github.com/shirokun20) for the initial Bug fixes
+- [w0x8m](https://github.com/w0x8m) for the new language picker
 
 ## Contributors of original Project
 

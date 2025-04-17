@@ -4,29 +4,41 @@ import androidx.annotation.Nullable;
 
 import com.maxwai.nclientv3.R;
 
+import java.util.Arrays;
+
 public enum Language {
-    ENGLISH(R.string.only_english,"ENGLISH"),
-    CHINESE(R.string.only_chinese,"CHINESE"),
-    JAPANESE(R.string.only_japanese,"JAPANESE"),
-    UNKNOWN(R.string.sort_popular_day,"UNKNOWN"),
-    ALL(R.string.all_languages,"ALL");
+    ENGLISH(R.string.only_english, "ENGLISH"),
+    CHINESE(R.string.only_chinese, "CHINESE"),
+    JAPANESE(R.string.only_japanese, "JAPANESE"),
+    ALL(R.string.all_languages, "ALL"),
+    UNKNOWN(R.string.unknown_language, "UNKNOWN");
 
 
-    private final int nameId;
+    private final int nameResId;
     @Nullable
     private final String language;
 
-    Language(int nameId,@Nullable String languageCode) {
-        this.nameId = nameId;
+    Language(int nameResId, @Nullable String languageCode) {
+        this.nameResId = nameResId;
         this.language = languageCode;
     }
 
-    public int getNameId() {
-        return nameId;
+    public int getNameResId() {
+        return nameResId;
     }
 
     @Nullable
     public String getLanguage() {
         return language;
+    }
+
+
+    /**
+     * @return Array without the UNKNOWN value
+     */
+    public static Language[] getFilteredValuesArray() {
+        return Arrays.stream(Language.values())
+            .filter(lang -> lang != Language.UNKNOWN)
+            .toArray(Language[]::new);
     }
 }
