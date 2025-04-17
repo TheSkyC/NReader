@@ -25,6 +25,12 @@ Unfortunately, due to Android security features, it is not possible to create an
 6. Import your data in `Settings -> Import data`, choose the zip file you created in Step 3
    1. IMPORTANT: wait for the pop up message saying `Import finished`
 
+## Translate App
+
+You can help translate the Project by going to the Crowdin Project [here](https://crowdin.com/project/nclientv3/invite?h=33e3f83681ebaea1bf037ed157d2ea272410538).
+
+If your desired language is missing, write an issue, the language will be added.
+
 ## API Features
 
 - Browse main page
