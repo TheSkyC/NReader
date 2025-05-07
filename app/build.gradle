@@ -58,8 +58,6 @@ android {
     lint {
         abortOnError false
         checkReleaseBuilds false
-    }
-    lintOptions {
         disable 'RestrictedApi'
     }
     bundle {
