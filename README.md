@@ -58,7 +58,7 @@ If your desired language is missing, write an issue, the language will be added.
 ## Contributors
 
 - [shirokun20](https://github.com/shirokun20) for the initial Bug fixes
-- [w0x8m](https://github.com/w0x8m) for the new language picker
+- [w0x8m](https://github.com/w0x8m) for the new language picker & Chinese Simplified translation
 
 ## Contributors of original Project
 
