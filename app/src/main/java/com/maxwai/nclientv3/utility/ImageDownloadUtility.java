@@ -97,11 +97,13 @@ public class ImageDownloadUtility {
                     public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
                         if (gallery != null && !gallery.getGalleryData().getCheckedExt())
                             gallery.getGalleryData().setCheckedExt();
-                        //noinspection DataFlowIssue
-                        while (imageDownloadQueue.containsKey(gallery) && !imageDownloadQueue.get(gallery).isEmpty()) {
+                        new Handler(context.getMainLooper()).post(() -> {
                             //noinspection DataFlowIssue
-                            imageDownloadQueue.get(gallery).remove(0).run();
-                        }
+                            while (imageDownloadQueue.containsKey(gallery) && !imageDownloadQueue.get(gallery).isEmpty()) {
+                                //noinspection DataFlowIssue
+                                imageDownloadQueue.get(gallery).remove(0).run();
+                            }
+                        });
                         return false;
                     }
                 })
@@ -109,7 +111,7 @@ public class ImageDownloadUtility {
                 .into(new ImageViewTarget<Drawable>(view) {
                     @Override
                     protected void setResource(@Nullable Drawable resource) {
-                        this.view.setImageDrawable(resource);
+                        new Handler(context.getMainLooper()).post(() -> this.view.setImageDrawable(resource));
                     }
                 });
         });
