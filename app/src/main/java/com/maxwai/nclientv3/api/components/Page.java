@@ -99,10 +99,12 @@ public class Page implements Parcelable {
             case "webp":
             case "w":
                 return ImageExt.WEBP;
-            case "jpg.webp":
-                return ImageExt.JPG_WEBP;
+            case "gif.webp":
+                return ImageExt.GIF_WEBP;
             case "png.webp":
                 return ImageExt.PNG_WEBP;
+            case "jpg.webp":
+                return ImageExt.JPG_WEBP;
             case "webp.webp":
                 return ImageExt.WEBP_WEBP;
         }

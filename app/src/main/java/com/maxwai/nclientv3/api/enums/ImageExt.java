@@ -5,6 +5,7 @@ public enum ImageExt {
     PNG("png"),
     GIF("gif"),
     WEBP("webp"),
+    GIF_WEBP("gif.webp"),
     JPG_WEBP("jpg.webp"),
     PNG_WEBP("png.webp"),
     WEBP_WEBP("webp.webp");
