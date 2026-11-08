@@ -50,11 +50,6 @@
             android:summary="@string/title_type_summary"
             android:title="@string/change_title_type"
             app:iconSpaceReserved="false" />
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:key="@string/preference_key_hide_multitasking"
-            android:title="@string/title_hide_multitasking"
-            app:iconSpaceReserved="false" />
         <ListPreference
             android:key="@string/preference_key_save_path"
             android:title="@string/folder_location"
