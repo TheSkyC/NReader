@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -54,8 +53,7 @@ public abstract class GeneralActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (Global.hideMultitask())
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        // FLAG_SECURE (防截屏/防录屏/隐藏多任务预览) 已移除，允许正常截屏录屏
         Global.initActivity(this);
     }
 
