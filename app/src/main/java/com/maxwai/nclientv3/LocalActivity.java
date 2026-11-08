@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.content.res.Configuration;
@@ -196,7 +197,7 @@ public class LocalActivity extends BaseActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.choose_directory).setIcon(R.drawable.ic_folder);
         builder.setAdapter(adapter, (dialog, which) -> {
-            folder = new File(strings.get(which), "NClientV3");
+            folder = new File(strings.get(which), Global.MAINFOLDER_NAME);
             new FakeInspector(this, folder).execute(this);
         }).setNegativeButton(R.string.cancel, null).show();
     }

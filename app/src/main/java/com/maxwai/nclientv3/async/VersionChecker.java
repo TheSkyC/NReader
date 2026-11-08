@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async;
 
 import android.Manifest;
@@ -32,8 +33,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class VersionChecker {
-    private static final String RELEASE_API_URL = "https://api.github.com/repos/maxwai/NClientV3/releases";
-    private static final String LATEST_RELEASE_URL = "https://github.com/maxwai/NClientV3/releases/latest";
+    private static final String RELEASE_API_URL = "https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases";
+    private static final String LATEST_RELEASE_URL = "https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest";
     private static String latest = null;
     private final AppCompatActivity context;
     private String downloadUrl;
@@ -41,6 +42,7 @@ public class VersionChecker {
     public VersionChecker(AppCompatActivity context, final boolean silent) {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
+        if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
         if (latest != null && Global.hasStoragePermission(context)) {
             downloadVersion(latest);
             latest = null;
@@ -164,7 +166,7 @@ public class VersionChecker {
         if (finalBody == null) return;
         finalBody = finalBody
             .replace("\r\n", "\n")//Remove ugly newline
-            .replace("NClientV3 " + latestVersion, "")//remove version header
+            .replace("NReader " + latestVersion, "")//remove version header
             .replaceAll("(\\s*\n\\s*)+", "\n")//remove multiple newline
             .replaceAll("\\(.*\\)", "").trim();//remove things between ()
         LogUtility.d("Evaluated: " + finalBody);
@@ -189,7 +191,7 @@ public class VersionChecker {
     }
 
     private void downloadVersion(String latestVersion) {
-        final File f = new File(Global.UPDATEFOLDER, "NClientV3_" + latestVersion + ".apk");
+        final File f = new File(Global.UPDATEFOLDER, "NReader_" + latestVersion + ".apk");
         if (f.exists()) {
             if (context.getSharedPreferences("Settings", 0).getBoolean("downloaded", false)) {
                 installApp(f);

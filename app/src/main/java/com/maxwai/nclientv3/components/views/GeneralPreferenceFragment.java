@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.views;
 
 import static androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK;
@@ -51,9 +52,12 @@ import com.maxwai.nclientv3.utility.Utility;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -167,6 +171,9 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     @SuppressLint("ApplySharedPref")
     private void mainMenu() {
         addPreferencesFromResource(R.xml.settings);
+
+        Preference updateSettings = Objects.requireNonNull(findPreference(getString(R.string.preference_key_update_settings)));
+        updateSettings.setVisible(!BuildConfig.UPDATE_REPOSITORY.isEmpty());
 
         fillRoba();
 
@@ -367,8 +374,9 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
         {
             Preference bug = Objects.requireNonNull(findPreference(getString(R.string.preference_key_bug)));
+            bug.setVisible(!BuildConfig.ISSUE_TRACKER_URL.isEmpty());
             bug.setOnPreferenceClickListener(preference -> {
-                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/maxwai/NClientV3/issues/new"));
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.ISSUE_TRACKER_URL));
                 startActivity(i);
                 return true;
             });
@@ -377,6 +385,22 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             Preference bug = Objects.requireNonNull(findPreference(getString(R.string.preference_key_copy_logs)));
             bug.setOnPreferenceClickListener(preference -> {
                 act.exportLogs();
+                return true;
+            });
+        }
+        {
+            Preference credits = Objects.requireNonNull(findPreference(getString(R.string.preference_key_credits)));
+            credits.setOnPreferenceClickListener(preference -> {
+                try {
+                    new MaterialAlertDialogBuilder(act)
+                        .setTitle(R.string.app_name)
+                        .setMessage(readLegalAsset("NOTICE") + "\n\n" + readLegalAsset("LICENSE"))
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                } catch (IOException e) {
+                    LogUtility.e("Error reading legal notices", e);
+                    Toast.makeText(act, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
+                }
                 return true;
             });
         }
@@ -418,6 +442,18 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+    }
+
+    private String readLegalAsset(String name) throws IOException {
+        StringBuilder text = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+            requireContext().getAssets().open(name), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                text.append(line).append('\n');
+            }
+        }
+        return text.toString();
     }
 
     @Override

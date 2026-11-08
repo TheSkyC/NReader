@@ -1,7 +1,7 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.internal.extensions.stdlib.capitalized
-import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
@@ -10,27 +10,33 @@ plugins {
 
 val keystorePropertiesFile: File = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
-    load(FileInputStream(keystorePropertiesFile))
+    if (keystorePropertiesFile.isFile) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
 }
 
-val majorVersion = 4
-val minorVersion = 2
-val patchVersion = 7
+val majorVersion = 1
+val minorVersion = 0
+val patchVersion = 0
 val buildVersion = 0
 val version = "${majorVersion}.${minorVersion}.${patchVersion}"
 
 android {
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+        if (keystorePropertiesFile.isFile) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
         }
     }
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.maxwai.nclientv3"
+        applicationId = "com.theskyc.nreader"
+        buildConfigField("String", "UPDATE_REPOSITORY", "\"\"")
+        buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
         // Format: MmPPbb
         // M: Major, m: minor, P: Patch, b: build
         versionCode =
@@ -58,14 +64,13 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            versionNameSuffix = "-release"
-            resValue("string", "app_name", "NClientV3")
-            signingConfig = signingConfigs.getByName("release")
+            resValue("string", "app_name", "NReader")
+            signingConfig = signingConfigs.findByName("release")
         }
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            resValue("string", "app_name", "NClientV3 Debug")
+            resValue("string", "app_name", "NReader Debug")
         }
         create("RelWithDebInfo") {
             initWith(buildTypes["release"])
@@ -113,6 +118,11 @@ androidComponents {
         dependsOn(deleteFolder)
     }
     onVariants { variant ->
+        val copyLegalNotices = tasks.register<CopyLegalNotices>("copy${variant.name.capitalized()}LegalNotices") {
+            licenseFile.set(rootProject.layout.projectDirectory.file("LICENSE"))
+            noticeFile.set(rootProject.layout.projectDirectory.file("NOTICE"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(copyLegalNotices, CopyLegalNotices::outputDirectory)
         var suffix = ""
         if (variant.flavorName == "pre28") {
             suffix += "_pre28"
@@ -182,6 +192,25 @@ dependencies {
 
 
 
+abstract class CopyLegalNotices : DefaultTask() {
+    @get:InputFile
+    abstract val licenseFile: RegularFileProperty
+
+    @get:InputFile
+    abstract val noticeFile: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun taskAction() {
+        val output = outputDirectory.get().asFile
+        output.mkdirs()
+        licenseFile.get().asFile.copyTo(output.resolve("LICENSE"), overwrite = true)
+        noticeFile.get().asFile.copyTo(output.resolve("NOTICE"), overwrite = true)
+    }
+}
+
 abstract class CreateRenamedApk : DefaultTask() {
     @get:InputFiles
     abstract val apkFolder: DirectoryProperty
@@ -199,7 +228,7 @@ abstract class CreateRenamedApk : DefaultTask() {
     fun taskAction() {
         val builtArtifacts = builtArtifactsLoader.get().load(apkFolder.get())
             ?: throw RuntimeException("Cannot load APKs")
-        val newName = "NClientV3_${versionName.get()}${suffix.get()}.apk"
+        val newName = "NReader_${versionName.get()}${suffix.get()}.apk"
         val newFile = apkFolder.asFile.get().resolve(newName)
         File(builtArtifacts.elements.single().outputFile).renameTo(newFile)
         if (!suffix.get().contains("_debug")) {

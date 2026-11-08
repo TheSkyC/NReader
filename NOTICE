@@ -1,0 +1,34 @@
+NReader
+Copyright 2026 TheSkyC (NReader modifications only)
+
+NReader is a modified version of NClientV3:
+https://github.com/maxwai/NClientV3
+Copyright 2024 maxwai
+Upstream baseline: 8877d1220b17ae3e3e669ef21c1106049027f0f5
+
+NClientV3 is based on NClientV2 by Dar9586 and its contributors:
+https://github.com/Dar9586/NClientV2
+
+Original authors and contributors retain their respective copyrights.
+The upstream LICENSE, contributor acknowledgments, and Git history are retained.
+This fork is maintained independently by TheSkyC; attribution does not imply
+endorsement by the upstream authors.
+
+Modifications by TheSkyC in 2026:
+- Allow screenshots and screen recording; remove the multitasking privacy toggle
+  (original local commit 5084b77d0d9e11c85147220880477201a22e905f,
+  replayed after NReader initialization).
+- Rename the project, application labels, APKs, storage directory, and user agent
+  to NReader; give the installed application its own application ID.
+- Start the independent NReader version sequence at 1.0.0.
+- Add NReader maintainer and upstream attribution in documentation and Settings.
+- Package LICENSE and NOTICE with the application.
+- Make release signing optional for development and use local fork credentials.
+- Disable APK updates and bug-report links until fork destinations are configured.
+- Adapt CI and security-reporting documentation for independent maintenance.
+- Define Git line-ending normalization and binary-file attributes.
+
+Modified source and configuration files carry a NReader modification notice.
+NReader modifications are licensed under Apache License 2.0, as is NClientV3.
+See LICENSE for the full terms. Third-party libraries retain their own licenses.
+This NOTICE is informational and does not alter any license terms.
