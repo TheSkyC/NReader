@@ -1,50 +1,87 @@
-# NClientV3
+# NReader
 
-[![Github](https://img.shields.io/github/v/release/maxwai/NClientV3.svg?logo=github)](https://github.com/maxwai/NClientV3/releases/latest)
+NReader is an unofficial NHentai Android client maintained and modified by **TheSkyC**.
+It is a derivative of [NClientV3 by maxwai](https://github.com/maxwai/NClientV3),
+which is based on [NClientV2 by Dar9586](https://github.com/Dar9586/NClientV2).
 
-An unofficial NHentai Android Client. This is a fork of the original Project by [@Dar9586](https://github.com/Dar9586) found [here](https://github.com/Dar9586/NClientV2)
+NReader modifications are Copyright 2026 TheSkyC and are distributed under
+Apache License 2.0. The original authors retain copyright in their work.
+See [LICENSE](LICENSE), [NOTICE](NOTICE), and [CHANGELOG](CHANGELOG.md).
 
-This app works for devices from API 26 (Android 8) and above.
+## Build on Windows
 
-For Devices Running Android 8 (SDK 26 and 27) there is a separate APK with `pre28` in the name. Support for this Version of the app will be reduced.
+Use JDK 17 or newer, Android SDK platform 36, and the included Gradle wrapper.
+Set `JAVA_HOME` to a JDK and configure `ANDROID_HOME` or an ignored
+`local.properties` file with your SDK location.
 
-Releases: <https://github.com/maxwai/NClientV3/releases>
+```powershell
+.\gradlew.bat assembleDebug
+```
 
-## Migrate from original NClientV2 to NClientV3
+- `post28`: Android 9 / API 28 and newer.
+- `pre28`: Android 8 / API 26–27, retaining the upstream compatibility flavor.
+- APK filenames begin with `NReader_`. Debug builds are labeled `NReader Debug`.
 
-Info can be found in the [wiki](https://github.com/maxwai/NClientV3/wiki/Migrate-from-NClientV2-to-NClientV3)
+Debug builds use Android's standard debug signing configuration and do not need
+`keystore.properties`. To sign release builds, copy
+[keystore.properties.example](keystore.properties.example) to
+`keystore.properties`, supply your own keystore and credentials, and run:
 
-## Translate App
+```powershell
+.\gradlew.bat assembleRelease
+```
 
-You can help translate the Project by going to the Crowdin Project [here](https://crowdin.com/project/nclientv3/invite?h=a094bdfd22d231bbcd92ddb94b5cc4392828343).
+Without that local configuration, release APKs are **unsigned** and must be signed
+before installation or distribution. Keep the same private signing key for future
+NReader releases. Keystores, passwords, local SDK configuration, build outputs, and
+IDE caches were not imported from the source working directory and must not be committed.
 
-If your desired language is missing, write an issue, the language will be added.
+## Data and updates
 
-## API Features
+NReader installs alongside NClientV3. App-private settings, databases, favorites,
+and login state are separate; they are not automatically copied from NClientV3.
+Export supported data in the old app and import it in NReader. The default shared
+storage directory is `NReader`; back up and copy existing downloads manually if needed.
+The old application's files are not renamed or removed.
 
-- Browse main page
-- Search by query or tags
-- Include or exclude tags
-- Blur or hide excluded tags
-- Download manga
-- Favorite galleries
-- Enable PIN to access the app
+The upstream application-update and bug-report destinations are not used for NReader.
+Until your own repository is available, update checks and the bug-report entry are
+hidden and no release-update requests are made. To enable them, edit these
+`defaultConfig` fields in [app/build.gradle.kts](app/build.gradle.kts):
 
-## Custom feature
+- `UPDATE_REPOSITORY`: your GitHub `owner/repository` for NReader releases.
+- `ISSUE_TRACKER_URL`: your NReader issue-reporting URL.
 
-- Share galleries
-- Open in browser
-- Bookmark
+Leave either field empty to keep that feature disabled. Publish APKs built with
+NReader's application ID and your own signing key. Tag metadata continues to use
+the upstream NClientV3 data feed; this is independent of APK updates.
+Translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
+is retained as a format mapping, without claiming ownership of the upstream
+Crowdin project.
 
-## App Screen
+## Features
 
-|                                                                     Main page                                                                     |                                                                Lateral menu                                                                 |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|
-| ![Main page](https://raw.githubusercontent.com/maxwai/NClientV3/refs/heads/main/docs/images/phoneScreenshots/img1.png) | ![Lateral menu](https://raw.githubusercontent.com/maxwai/NClientV3/main/docs/images/phoneScreenshots/img2.png) |
-|                                                                      Search                                                                       |                                                                Random manga                                                                 |
-|        ![Search](https://raw.githubusercontent.com/maxwai/NClientV3/main/docs/images/phoneScreenshots/img3.png)        | ![Random manga](https://raw.githubusercontent.com/maxwai/NClientV3/main/docs/images/phoneScreenshots/img4.jpg) |
+- Browse and search galleries by query or tags.
+- Include, exclude, blur, or hide tags.
+- Download manga and manage favorites and bookmarks.
+- Share galleries or open them in a browser.
+- Protect app access with a PIN.
+- Take screenshots and screen recordings, as enabled by the preserved local change.
 
-## Contributors
+Screenshots and screen recording are permitted even on PIN-protected screens;
+multitasking previews are no longer hidden by `FLAG_SECURE`.
+
+## Upstream screenshots
+
+These images are retained from NClientV3 and show the upstream interface.
+
+| Main page | Lateral menu |
+| --- | --- |
+| ![Main page](docs/images/phoneScreenshots/img1.png) | ![Lateral menu](docs/images/phoneScreenshots/img2.png) |
+| Search | Random manga |
+| ![Search](docs/images/phoneScreenshots/img3.png) | ![Random manga](docs/images/phoneScreenshots/img4.jpg) |
+
+## Contributors to NClientV3
 
 - [shirokun20](https://github.com/shirokun20) for the initial bug fixes
 - [w0x8m](https://github.com/w0x8m) for the new language picker & Chinese Simplified & Traditional translation
@@ -59,7 +96,7 @@ If your desired language is missing, write an issue, the language will be added.
 - [Locked_Fog](https://github.com/locked-fog) for Chinese Simplified translation
 - [zhongshen6](https://github.com/zhongshen6) for bug fixes
 
-## Contributors of original Project
+## Contributors to NClientV2
 
 - [Still34](https://github.com/Still34) for code cleanup & Traditional Chinese translation
 - [TacoTheDank](https://github.com/TacoTheDank) for XML and gradle cleanup
@@ -75,16 +112,6 @@ If your desired language is missing, write an issue, the language will be added.
 - [chayleaf](https://github.com/chayleaf) for Cloudflare bypass
 - [Atmosphelen](https://github.com/Atmosphelen) for Ukrainian translation
 
-## Star History
-
-<a href="https://www.star-history.com/?repos=maxwai%2FNClientV3&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=maxwai/NClientV3&type=date&theme=dark&legend=top-left&sealed_token=migTu9jM4dpLMR0uQpFgyLNFTnt5qdYCOyoruWdAajo2DIRDQMJ3ySI0dtYXNSIcAFSGve0U-m31Q3lyd9_4a5PwQEmHcoMFv5fP8zeJ4xSa-o_UBCrX_xZmBqp732tyqpBW48shykrKN1OdZZbmD061ohmh_rp4qQiOeOR5HcvVFlNkSyuo6Zf3_LFl" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=maxwai/NClientV3&type=date&legend=top-left&sealed_token=migTu9jM4dpLMR0uQpFgyLNFTnt5qdYCOyoruWdAajo2DIRDQMJ3ySI0dtYXNSIcAFSGve0U-m31Q3lyd9_4a5PwQEmHcoMFv5fP8zeJ4xSa-o_UBCrX_xZmBqp732tyqpBW48shykrKN1OdZZbmD061ohmh_rp4qQiOeOR5HcvVFlNkSyuo6Zf3_LFl" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=maxwai/NClientV3&type=date&legend=top-left&sealed_token=migTu9jM4dpLMR0uQpFgyLNFTnt5qdYCOyoruWdAajo2DIRDQMJ3ySI0dtYXNSIcAFSGve0U-m31Q3lyd9_4a5PwQEmHcoMFv5fP8zeJ4xSa-o_UBCrX_xZmBqp732tyqpBW48shykrKN1OdZZbmD061ohmh_rp4qQiOeOR5HcvVFlNkSyuo6Zf3_LFl" />
- </picture>
-</a>
-
 ## Libraries
 
 - OKHttp ([License](https://github.com/square/okhttp/blob/master/LICENSE.txt))
@@ -94,10 +121,13 @@ If your desired language is missing, write an issue, the language will be added.
 - AmbilWarna ([License](https://github.com/yukuku/ambilwarna/blob/master/LICENSE))
 - AndroidFastScroll ([License](https://github.com/zhanghai/AndroidFastScroll/blob/master/LICENSE))
 
+These components retain their respective licenses and notices.
+
 ## License
 
 ```text
 Copyright 2024 maxwai
+Copyright 2026 TheSkyC (NReader modifications only)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -111,3 +141,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+The full license and attribution notices are included in APK assets and are
+readable from the NReader entry in Settings.

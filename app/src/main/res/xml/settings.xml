@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -219,6 +220,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:key="@string/preference_key_update_settings"
         android:title="@string/update_settings"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
@@ -259,6 +261,11 @@
         <Preference
             android:enabled="false"
             android:key="@string/preference_key_version"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:key="@string/preference_key_credits"
+            android:title="@string/app_name"
+            android:summary="@string/project_credits"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 </PreferenceScreen>
