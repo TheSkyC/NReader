@@ -1,24 +1,26 @@
-# Security Policy
+# NReader security policy
 
-## Supported Versions
+Modified for NReader by TheSkyC (2026); see NOTICE.
 
-Only the latest version is supported. The `pre28` versions are also not supported.
+NReader is independently maintained by TheSkyC. Security reports about this fork
+should go to its maintainer rather than the NClientV3 authors.
 
-## Reporting a Vulnerability
+## Supported versions
 
-If you discover a security vulnerability, please open a private security report in the [Security tab](https://github.com/maxwai/NClientV3/security) of the repo or send an email to [security.penny394@passmail.net](mailto:security.penny394@passmail.net) Please do not create a public issue for the vulnerability.
+This fork is currently in development. Use the latest NReader revision when
+reporting a problem and specify the Android version and build flavor.
+No response-time or long-term-support commitment is made.
 
-Your email should include the following information:
+## Reporting a vulnerability
 
-- A description of the vulnerability
-- Steps to reproduce the vulnerability
-- Possible impact of the vulnerability
-- Any suggested mitigation or remediation steps
+Contact TheSkyC privately through the repository hosting service. If a private
+security-reporting channel has not yet been configured, ask for one without
+disclosing vulnerability details. Do not publish sensitive details, credentials,
+or personal data in a public issue.
 
-We will respond to your email as soon as possible and work with you to address any security issues.
+Include a description, affected revision, reproduction steps, potential impact,
+and any suggested fix. Reports may be written in Chinese or English.
 
-If there isn't a response within 5 working days (considering public holidays in Germany), please send a follow-up post or email, depending on how you reported the vulnerability.
-
-## Language
-
-All reports must be done in English
+Screenshots and screen recording are deliberately enabled in NReader, including
+on PIN-protected screens. The PIN does not prevent screen capture or multitasking
+previews. See the preserved capture change described in CHANGELOG.md.

@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.settings;
 
 import android.content.Context;
@@ -34,7 +35,7 @@ public class ApiAuthInterceptor implements Interceptor {
         }
 
         Request.Builder r = request.newBuilder();
-        r.addHeader("User-Agent", "NClient/" + BuildConfig.VERSION_NAME + " (https://github.com/maxwai/NClientV3)");
+        r.addHeader("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
 
         if (!AuthStore.hasValidApiKey(context)) return chain.proceed(r.build());
 

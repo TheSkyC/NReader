@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.settings;
 
 import android.Manifest;
@@ -53,7 +54,7 @@ import okhttp3.OkHttpClient;
 
 public class Global {
     public static final String CHANNEL_ID1 = "download_gallery", CHANNEL_ID2 = "create_pdf", CHANNEL_ID3 = "create_zip";
-    private static final String MAINFOLDER_NAME = "NClientV3";
+    public static final String MAINFOLDER_NAME = "NReader";
     private static final String DOWNLOADFOLDER_NAME = "Download";
     private static final String SCREENFOLDER_NAME = "Screen";
     private static final String PDFFOLDER_NAME = "PDF";
@@ -364,7 +365,8 @@ public class Global {
     }
 
     public static boolean shouldCheckForUpdates(Context context) {
-        return context.getSharedPreferences("Settings", 0).getBoolean(context.getString(R.string.preference_key_check_update), true);
+        return !BuildConfig.UPDATE_REPOSITORY.isEmpty()
+            && context.getSharedPreferences("Settings", 0).getBoolean(context.getString(R.string.preference_key_check_update), true);
     }
 
     public static Drawable getLogo(Resources resources) {

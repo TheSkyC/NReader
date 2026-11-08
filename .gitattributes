@@ -1,0 +1,18 @@
+# NReader Git attributes - TheSkyC (2026); see NOTICE.
+
+# Normalize text in Git and use LF when checking out source files.
+* text=auto eol=lf
+
+# Windows command scripts keep CRLF in the working tree.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets and packages must never receive text conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.jar binary
+*.apk binary
+*.aab binary
+*.jks binary
+*.keystore binary
