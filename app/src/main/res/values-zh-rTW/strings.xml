@@ -341,4 +341,11 @@
     <string name="download_error_invalid_data">伺服器傳回不支援或無效的作品資料。</string>
     <string name="download_error_network">已達重試次數上限，下載已停止。請檢查網路後重試。</string>
     <string name="download_conflicting_task">此作品已有排程或正在停止的工作。請先在下載清單完成或停止原工作，再選擇其他範圍。</string>
+    <string name="state_local_favorite">本機收藏</string>
+    <string name="state_custom_status">狀態：%1$s</string>
+    <string name="state_reading_page">讀到第 %1$d 頁</string>
+    <string name="state_download_complete">已下載</string>
+    <string name="state_download_partial">部分下載</string>
+    <string name="state_download_damaged">下載已損壞</string>
+    <string name="state_download_unverified">本機檔案未驗證</string>
 </resources>

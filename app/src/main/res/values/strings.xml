@@ -438,4 +438,11 @@
     <string name="download_error_invalid_data">The server returned unsupported or invalid gallery data.</string>
     <string name="download_error_network">The download stopped after a limited number of attempts. Check your connection and retry.</string>
     <string name="download_conflicting_task">Another task for this gallery is queued or stopping. Finish or stop it in Downloads before requesting a different range.</string>
+    <string name="state_local_favorite">Local favorite</string>
+    <string name="state_custom_status">Status: %1$s</string>
+    <string name="state_reading_page">Read to page %1$d</string>
+    <string name="state_download_complete">Downloaded</string>
+    <string name="state_download_partial">Partial download</string>
+    <string name="state_download_damaged">Damaged download</string>
+    <string name="state_download_unverified">Local files unverified</string>
 </resources>
