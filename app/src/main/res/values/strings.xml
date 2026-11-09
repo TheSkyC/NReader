@@ -426,4 +426,15 @@
 
     <string name="continue_reading">Continue reading</string>
     <string name="open_manual_bookmark">Open page bookmark</string>
+    <string name="pause_download">Pause download</string>
+    <string name="download_failed">Failed</string>
+    <string name="stop_download_options">Stop this task and keep its downloaded pages, or delete the downloaded files. Pausing keeps the task in the queue.</string>
+    <string name="stop_keep_files">Stop and keep files</string>
+    <string name="stop_delete_files">Stop and delete files</string>
+    <string name="download_error_authentication">Access was denied. Check your sign-in and API key before retrying.</string>
+    <string name="download_error_rate_limit">The server limited requests. Wait before retrying this task.</string>
+    <string name="download_error_storage">Unable to write pages. Check free space and storage access before retrying.</string>
+    <string name="download_error_not_found">The requested gallery or page is no longer available.</string>
+    <string name="download_error_invalid_data">The server returned unsupported or invalid gallery data.</string>
+    <string name="download_error_network">The download stopped after a limited number of attempts. Check your connection and retry.</string>
 </resources>

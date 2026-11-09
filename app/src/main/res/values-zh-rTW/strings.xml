@@ -329,4 +329,15 @@
     <string name="auth_subtitle">使用您的生物特徵憑證登入</string>
     <string name="continue_reading">繼續閱讀</string>
     <string name="open_manual_bookmark">開啟頁內書籤</string>
+    <string name="pause_download">暫停下載</string>
+    <string name="download_failed">下載失敗</string>
+    <string name="stop_download_options">停止工作時可保留已下載頁面，也可刪除下載檔案。暫停則會保留佇列中的工作。</string>
+    <string name="stop_keep_files">停止並保留檔案</string>
+    <string name="stop_delete_files">停止並刪除檔案</string>
+    <string name="download_error_authentication">存取遭拒，請檢查登入狀態和 API 金鑰後重試。</string>
+    <string name="download_error_rate_limit">伺服器限制了請求，請稍後手動重試。</string>
+    <string name="download_error_storage">無法寫入頁面，請檢查剩餘空間和儲存權限後重試。</string>
+    <string name="download_error_not_found">請求的作品或頁面已無法使用。</string>
+    <string name="download_error_invalid_data">伺服器傳回不支援或無效的作品資料。</string>
+    <string name="download_error_network">已達重試次數上限，下載已停止。請檢查網路後重試。</string>
 </resources>

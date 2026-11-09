@@ -6,6 +6,10 @@
   page and single-column restoration and a Continue action.
 - Add database version 14 through an additive migration. Preserve existing
   tables and import legacy backups; roll back failed database restores.
+- Bound metadata and page retries, classify failures, honor rate-limit delays,
+  and allow explicit retry after failure. Write pages through temporary files.
+- Offer stopping downloads with files retained or deleted, after active requests
+  stop, while preserving favorites, statuses and reading positions.
 
 ## 1.0.0 — 2026-11-09
 

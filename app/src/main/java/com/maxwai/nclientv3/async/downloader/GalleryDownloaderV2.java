@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.downloader;
 
 import android.content.Context;
@@ -20,6 +21,13 @@ import com.maxwai.nclientv3.utility.Utility;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +37,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Call;
 
 public class GalleryDownloaderV2 {
     public static final String DUPLICATE_EXTENSION = ".DUP";
@@ -37,7 +46,16 @@ public class GalleryDownloaderV2 {
     private final int id;
     private final CopyOnWriteArraySet<DownloadObserver> observers = new CopyOnWriteArraySet<>();
     private final List<PageContainer> urls = new ArrayList<>();
-    private Status status = Status.NOT_STARTED;
+    private volatile Status status = Status.NOT_STARTED;
+    private volatile DownloadFailure failure = DownloadFailure.NONE;
+    private volatile Call activeCall;
+    private volatile InspectorV3 activeInspector;
+    private final Object lifecycleLock = new Object();
+    private static final ExecutorService cleanupExecutor = Executors.newSingleThreadExecutor();
+    private boolean working;
+    private boolean deleteOnCancel;
+    private boolean restartRequested;
+    private String retryAfter;
     private String title;
     private Uri thumbnail;
     private int start = -1, end = -1;
@@ -98,9 +116,15 @@ public class GalleryDownloaderV2 {
         this.gallery = gallery;
         title = gallery.getPathTitle();
         thumbnail = gallery.getThumbnail();
-        Queries.DownloadTable.addGallery(this);
         if (start == -1) start = 0;
         if (end == -1) end = gallery.getPageCount() - 1;
+        start = Math.max(0, Math.min(start, gallery.getPageCount() - 1));
+        end = Math.max(start, Math.min(end, gallery.getPageCount() - 1));
+        if (working) persist();
+    }
+
+    void persist() {
+        if (gallery != null) Queries.DownloadTable.addGallery(this);
     }
 
     private int getTotalPage() {
@@ -108,20 +132,21 @@ public class GalleryDownloaderV2 {
     }
 
     public int getPercentage() {
-        if (gallery == null || urls.isEmpty()) return 0;
+        if (gallery == null || !initialized) return 0;
         return ((getTotalPage() - urls.size()) * 100) / getTotalPage();
     }
 
     private void onStart() {
-        setStatus(Status.DOWNLOADING);
         for (DownloadObserver observer : observers) observer.triggerStartDownload(this);
     }
 
     private void onEnd() {
-        setStatus(Status.FINISHED);
-        for (DownloadObserver observer : observers) observer.triggerEndDownload(this);
-        LogUtility.d("Delete 75: " + id);
+        synchronized (lifecycleLock) {
+            if (!isRunning()) return;
+            status = Status.FINISHED;
+        }
         Queries.DownloadTable.removeGallery(id);
+        for (DownloadObserver observer : observers) observer.triggerEndDownload(this);
     }
 
     private void onUpdate() {
@@ -140,7 +165,7 @@ public class GalleryDownloaderV2 {
     }
 
     public LocalGallery localGallery() {
-        if (status != Status.FINISHED || folder == null) return null;
+        if ((status != Status.FINISHED && status != Status.CANCELED) || folder == null || !folder.isDirectory()) return null;
         return new LocalGallery(folder);
     }
 
@@ -180,20 +205,41 @@ public class GalleryDownloaderV2 {
      */
     public boolean downloadGalleryData() {
         if (this.gallery != null) return true;
-        InspectorV3 inspector = InspectorV3.galleryInspector(context, id, null);
-        try {
-            if (!inspector.createDocument()) return false;
-            inspector.parseDocument();
-            if (inspector.getGalleries() == null || inspector.getGalleries().isEmpty())
-                return false;
-            Gallery g = (Gallery) inspector.getGalleries().get(0);
-            if (g.isValid())
-                setGallery(g);
-            return g.isValid();
-        } catch (Exception e) {
-            LogUtility.e("Error while downloading", e);
-            return false;
+        for (int attempt = 1; attempt <= DownloadRetryPolicy.MAX_ATTEMPTS && isRunning(); attempt++) {
+            InspectorV3 inspector = InspectorV3.galleryInspector(context, id, null);
+            retryAfter = null;
+            synchronized (lifecycleLock) {
+                if (!isRunning()) return false;
+                activeInspector = inspector;
+            }
+            try {
+                if (inspector.createDocument()) {
+                    inspector.parseDocument();
+                    if (inspector.getGalleries() != null && !inspector.getGalleries().isEmpty()) {
+                        Gallery result = (Gallery) inspector.getGalleries().get(0);
+                        if (result.isValid() && result.getPageCount() > 0 && isRunning()) {
+                            setGallery(result);
+                            return true;
+                        }
+                    }
+                    failure = DownloadFailure.INVALID_DATA;
+                } else {
+                    failure = DownloadFailure.fromHttpCode(inspector.getResponseCode());
+                    retryAfter = inspector.getRetryAfter();
+                }
+            } catch (IOException exception) {
+                failure = DownloadFailure.NETWORK;
+                LogUtility.w("Download metadata request failed for gallery " + id);
+            } catch (Exception exception) {
+                failure = DownloadFailure.INVALID_DATA;
+                LogUtility.w("Download metadata is invalid for gallery " + id);
+            } finally {
+                activeInspector = null;
+            }
+            if (!retryAfterFailure(attempt)) break;
         }
+        fail();
+        return false;
     }
 
     public Uri getThumbnail() {
@@ -201,7 +247,7 @@ public class GalleryDownloaderV2 {
     }
 
     public boolean canBeFetched() {
-        return status != Status.FINISHED && status != Status.PAUSED;
+        return status == Status.NOT_STARTED;
     }
 
     public Status getStatus() {
@@ -209,44 +255,159 @@ public class GalleryDownloaderV2 {
     }
 
     public void setStatus(Status status) {
-        if (this.status == status) return;
-        this.status = status;
         if (status == Status.CANCELED) {
-            LogUtility.d("Delete 95: " + id);
-            onCancel();
-            Global.recursiveDelete(folder);
-            Queries.DownloadTable.removeGallery(id);
+            cancel(true);
+            return;
         }
+        synchronized (lifecycleLock) {
+            if (this.status == Status.CANCELED || this.status == Status.FINISHED) return;
+            this.status = status;
+            if (status == Status.PAUSED) {
+                restartRequested = false;
+                cancelRequests();
+            }
+        }
+        if (status == Status.PAUSED) {
+            onPause();
+        }
+    }
+
+    public DownloadFailure getFailure() {
+        return failure;
+    }
+
+    public void retry() {
+        synchronized (lifecycleLock) {
+            if (status == Status.CANCELED || status == Status.FINISHED || status == Status.DOWNLOADING) return;
+            if (working) {
+                restartRequested = true;
+                return;
+            }
+            failure = DownloadFailure.NONE;
+            status = Status.NOT_STARTED;
+        }
+    }
+
+    public void cancel(boolean deleteFiles) {
+        synchronized (lifecycleLock) {
+            if (status == Status.CANCELED || status == Status.FINISHED) return;
+            deleteOnCancel = deleteFiles;
+            status = Status.CANCELED;
+            restartRequested = false;
+            cancelRequests();
+            if (!working) cleanupExecutor.execute(this::cleanupCanceled);
+        }
+    }
+
+    private void cancelRequests() {
+        Call call = activeCall;
+        if (call != null) call.cancel();
+        InspectorV3 inspector = activeInspector;
+        if (inspector != null) inspector.cancelRequest();
+    }
+
+    private void cleanupCanceled() {
+        if (folder == null) folder = Global.findGalleryFolder(context, id);
+        if (deleteOnCancel) {
+            Global.recursiveDelete(folder);
+        }
+        Queries.DownloadTable.removeGallery(id);
+        DownloadQueue.remove(this, false);
+        onCancel();
+    }
+
+    public void runDownload() {
+        synchronized (lifecycleLock) {
+            if (!canBeFetched() || working) return;
+            working = true;
+            status = Status.DOWNLOADING;
+        }
+        try {
+            if (downloadGalleryData() && isRunning()) download();
+        } catch (RuntimeException exception) {
+            failure = DownloadFailure.STORAGE;
+            fail();
+            LogUtility.e("Download task failed for gallery " + id, exception);
+        } finally {
+            boolean canceled;
+            synchronized (lifecycleLock) {
+                working = false;
+                canceled = status == Status.CANCELED;
+                if (!canceled && restartRequested) {
+                    restartRequested = false;
+                    failure = DownloadFailure.NONE;
+                    status = Status.NOT_STARTED;
+                }
+            }
+            if (canceled) cleanupCanceled();
+            else if (status == Status.DOWNLOADING) setStatus(Status.PAUSED);
+        }
+    }
+
+    private boolean isRunning() {
+        return status == Status.DOWNLOADING && !Thread.currentThread().isInterrupted();
+    }
+
+    private void fail() {
+        synchronized (lifecycleLock) {
+            if (!isRunning()) return;
+            status = Status.FAILED;
+        }
+        onPause();
+    }
+
+    private boolean retryAfterFailure(int attempt) {
+        if (!isRunning() || !failure.retryable || attempt >= DownloadRetryPolicy.MAX_ATTEMPTS) return false;
+        long delay = DownloadRetryPolicy.delayMillis(attempt, retryAfter, System.currentTimeMillis());
+        if (delay < 0) return false;
+        long deadline = android.os.SystemClock.elapsedRealtime() + delay;
+        while (isRunning() && android.os.SystemClock.elapsedRealtime() < deadline) {
+            try {
+                Thread.sleep(Math.min(100, Math.max(1, deadline - android.os.SystemClock.elapsedRealtime())));
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                setStatus(Status.PAUSED);
+                return false;
+            }
+        }
+        return isRunning();
     }
 
     public void download() {
-        initDownload();
-        onStart();
-        while (!urls.isEmpty()) {
-            downloadPage(urls.get(0));
-            Utility.threadSleep(50);
-            if (status == Status.PAUSED) {
-                onPause();
-                return;
-            }
-            if (status == Status.CANCELED) {
-                onCancel();
-                return;
-            }
+        try {
+            initDownload();
+        } catch (IOException exception) {
+            failure = DownloadFailure.STORAGE;
+            fail();
+            return;
         }
-        onEnd();
-    }
-
-    private void downloadPage(PageContainer page) {
-        if (savePage(page)) {
+        if (!isRunning()) return;
+        onStart();
+        while (!urls.isEmpty() && isRunning()) {
+            PageContainer page = urls.get(0);
+            boolean saved = false;
+            for (int attempt = 1; attempt <= DownloadRetryPolicy.MAX_ATTEMPTS && isRunning(); attempt++) {
+                if (savePage(page)) {
+                    saved = true;
+                    break;
+                }
+                if (!retryAfterFailure(attempt)) break;
+            }
+            if (!isRunning()) return;
+            if (!saved) {
+                fail();
+                return;
+            }
             urls.remove(page);
             onUpdate();
         }
+        if (isRunning()) onEnd();
     }
 
     private boolean isCorrupted(File file) {
         String path = file.getAbsolutePath();
-        if (path.endsWith(".jpg") || path.endsWith(".jpeg")) {
+        String imagePath = path.endsWith(".part") ? path.substring(0, path.length() - 5) : path;
+        if (imagePath.endsWith(".jpg") || imagePath.endsWith(".jpeg")) {
             return Global.isJPEGCorrupted(path);
         }
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -259,39 +420,78 @@ public class GalleryDownloaderV2 {
 
     private boolean savePage(PageContainer page) {
         if (page == null) return true;
+        retryAfter = null;
         File filePath = new File(folder, page.getPageName());
-        LogUtility.d("Saving into: " + filePath + "," + page.url);
         if (filePath.exists() && !isCorrupted(filePath)) return true;
-        try (Response r = Global.getClient(context).newCall(new Request.Builder().url(page.url.toString()).build()).execute()) {
+        File temporaryFile = new File(folder, page.getPageName() + ".part");
+        Call call = Global.getClient(context).newCall(new Request.Builder().url(page.url.toString()).build());
+        synchronized (lifecycleLock) {
+            if (!isRunning()) return false;
+            activeCall = call;
+        }
+        try (Response r = call.execute()) {
             if (r.code() != 200) {
+                failure = DownloadFailure.fromHttpCode(r.code());
+                retryAfter = r.header("Retry-After");
                 return false;
             }
-            //noinspection DataFlowIssue
-            long expectedSize = Integer.parseInt(r.header("Content-Length", "-1"));
-            long len = r.body().contentLength();
-            if (len < 0 || expectedSize != len) {
+            if (r.body() == null) {
+                failure = DownloadFailure.INVALID_DATA;
                 return false;
             }
-            long written = Utility.writeStreamToFile(r.body().byteStream(), filePath);
-            if (written != len) {
-                //noinspection ResultOfMethodCallIgnored
-                filePath.delete();
+            long expectedSize = r.body().contentLength();
+            long written = 0;
+            OutputStream output;
+            try {
+                output = new FileOutputStream(temporaryFile);
+            } catch (IOException exception) {
+                failure = DownloadFailure.STORAGE;
                 return false;
             }
+            try (OutputStream destination = output; InputStream input = r.body().byteStream()) {
+                byte[] buffer = new byte[16384];
+                int count;
+                while (isRunning() && (count = input.read(buffer)) != -1) {
+                    try {
+                        destination.write(buffer, 0, count);
+                    } catch (IOException exception) {
+                        failure = DownloadFailure.STORAGE;
+                        return false;
+                    }
+                    written += count;
+                }
+            }
+            if (!isRunning()) return false;
+            if (written == 0 || (expectedSize >= 0 && written != expectedSize) || isCorrupted(temporaryFile)) {
+                failure = DownloadFailure.NETWORK;
+                return false;
+            }
+            try {
+                Files.move(temporaryFile.toPath(), filePath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException exception) {
+                failure = DownloadFailure.STORAGE;
+                return false;
+            }
+            failure = DownloadFailure.NONE;
             return true;
-        } catch (IOException | NumberFormatException e) {
-            LogUtility.e(e, e);
+        } catch (IOException exception) {
+            if (failure != DownloadFailure.STORAGE) failure = DownloadFailure.NETWORK;
+        } finally {
+            activeCall = null;
+            if (temporaryFile.exists() && !temporaryFile.delete())
+                LogUtility.w("Unable to remove temporary download page for gallery " + id);
         }
         return false;
     }
 
 
-    public void initDownload() {
+    public synchronized void initDownload() throws IOException {
         if (initialized) return;
-        initialized = true;
         createFolder();
+        urls.clear();
         createPages();
         checkPages();
+        initialized = true;
     }
 
     private void checkPages() {
@@ -312,17 +512,12 @@ public class GalleryDownloaderV2 {
             urls.add(new PageContainer(i + 1, gallery.getHighPage(i)));
     }
 
-    private void createFolder() {
+    private void createFolder() throws IOException {
+        if (Global.DOWNLOADFOLDER == null) throw new IOException("Download storage is unavailable");
         folder = findFolder(Global.DOWNLOADFOLDER, title, id);
-        if (!folder.mkdirs()) {
-            return;
-        }
-        try {
-            writeNoMedia();
-            createIdFile();
-        } catch (IOException e) {
-            LogUtility.e("Error creating base files", e);
-        }
+        if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Unable to create download folder");
+        writeNoMedia();
+        createIdFile();
     }
 
     private void createIdFile() throws IOException {
@@ -357,7 +552,7 @@ public class GalleryDownloaderV2 {
         return result;
     }
 
-    public enum Status {NOT_STARTED, DOWNLOADING, PAUSED, FINISHED, CANCELED}
+    public enum Status {NOT_STARTED, DOWNLOADING, PAUSED, FINISHED, CANCELED, FAILED}
 
     public static class PageContainer {
         public final int page;
@@ -370,7 +565,9 @@ public class GalleryDownloaderV2 {
 
         public String getPageName() {
             String fileName = Objects.requireNonNull(url.getLastPathSegment());
-            return String.format(Locale.US, "%03d.%s", page, fileName.substring(fileName.indexOf('.') + 1));
+            String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase(Locale.US);
+            if (!extension.matches("jpg|jpeg|png|gif|webp")) throw new IllegalArgumentException("Unsupported page image format");
+            return String.format(Locale.US, "%03d.%s", page, extension);
         }
     }
 }
