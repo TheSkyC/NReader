@@ -424,4 +424,6 @@
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
 
+    <string name="continue_reading">Continue reading</string>
+    <string name="open_manual_bookmark">Open page bookmark</string>
 </resources>

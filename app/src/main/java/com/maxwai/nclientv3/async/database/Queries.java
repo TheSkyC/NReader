@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.database;
 
 import android.annotation.SuppressLint;
@@ -24,6 +25,7 @@ import com.maxwai.nclientv3.api.enums.TitleType;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderManager;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
 import com.maxwai.nclientv3.components.classes.Bookmark;
+import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.status.Status;
 import com.maxwai.nclientv3.components.status.StatusManager;
 import com.maxwai.nclientv3.settings.Global;
@@ -605,8 +607,6 @@ public class Queries {
         }
 
         public static void removeGallery(int id) {
-            boolean favorite = Queries.FavoriteTable.isFavorite(id);
-            if (!favorite) Queries.GalleryTable.delete(id);
             db.delete(TABLE_NAME, ID_GALLERY + "=?", new String[]{"" + id});
         }
 
@@ -912,6 +912,33 @@ public class Queries {
 
         public static void removeAllFavorite() {
             db.delete(TABLE_NAME, null, null);
+        }
+    }
+
+    public static class ReadingProgressTable {
+        public static final String TABLE_NAME = "ReadingProgress";
+        static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `ReadingProgress` (" +
+            "`id_gallery` INT NOT NULL PRIMARY KEY CHECK (`id_gallery` > 0), " +
+            "`page` INT NOT NULL CHECK (`page` > 0), " +
+            "`offset` REAL NOT NULL DEFAULT 0 CHECK (`offset` >= 0 AND `offset` < 1), " +
+            "`updated_at` INT NOT NULL);";
+
+        public static void insert(int id, ReadingPosition position) {
+            if (id <= 0) return;
+            ContentValues values = new ContentValues(4);
+            values.put("id_gallery", id);
+            values.put("page", position.page);
+            values.put("offset", position.offset);
+            values.put("updated_at", System.currentTimeMillis());
+            db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        }
+
+        @Nullable
+        public static ReadingPosition fromId(int id) {
+            try (Cursor cursor = db.query(TABLE_NAME, new String[]{"page", "offset"},
+                "id_gallery=?", new String[]{Integer.toString(id)}, null, null, null)) {
+                return cursor.moveToFirst() ? new ReadingPosition(cursor.getInt(0), cursor.getFloat(1)) : null;
+            }
         }
     }
 

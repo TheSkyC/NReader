@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.Manifest;
@@ -29,6 +30,8 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.bumptech.glide.Priority;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
@@ -79,7 +82,15 @@ public class ZoomActivity extends GeneralActivity {
         } else {
             gallery = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
         }
-        final int page = Objects.requireNonNull(getIntent().getExtras()).getInt(getPackageName() + ".PAGE", 1) - 1;
+        if (gallery == null || gallery.getPageCount() <= 0) {
+            finish();
+            return;
+        }
+        int requestedPage = savedInstanceState == null
+            ? getIntent().getIntExtra(getPackageName() + ".PAGE", 1)
+            : savedInstanceState.getInt("readerPage", 1);
+        final int page = new ReadingPosition(requestedPage, 0f).clamp(gallery.getPageCount()).page - 1;
+        actualPage = page;
         directory = gallery.getGalleryFolder();
         //toolbar setup
         toolbar = findViewById(R.id.toolbar);
@@ -132,6 +143,7 @@ public class ZoomActivity extends GeneralActivity {
                 seekBar.setProgress(newPage);
                 clearFarRequests(oldPage, newPage);
                 makeNearRequests(newPage);
+                savePosition();
             }
         });
         pageManagerLabel.setOnClickListener(v -> DefaultDialogs.pageChangerDialog(
@@ -174,6 +186,24 @@ public class ZoomActivity extends GeneralActivity {
 
     private void setUserInput(boolean enabled) {
         mViewPager.setUserInputEnabled(enabled);
+    }
+
+    private void savePosition() {
+        if (gallery != null && mViewPager != null)
+            ReadingProgress.save(gallery.getId(), new ReadingPosition(mViewPager.getCurrentItem() + 1, 0f));
+    }
+
+    @Override
+    protected void onPause() {
+        savePosition();
+        super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle state) {
+        if (mViewPager != null) state.putInt("readerPage", mViewPager.getCurrentItem() + 1);
+        savePosition();
+        super.onSaveInstanceState(state);
     }
 
     private void setPageText(int page) {

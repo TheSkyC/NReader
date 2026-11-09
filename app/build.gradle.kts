@@ -87,6 +87,9 @@ android {
         checkReleaseBuilds = false
         disable += "RestrictedApi"
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
     bundle {
         language {
             // Specifies that the app bundle should not support
@@ -157,6 +160,8 @@ androidComponents {
 
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
 // Android
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.cardview:cardview:1.0.0")

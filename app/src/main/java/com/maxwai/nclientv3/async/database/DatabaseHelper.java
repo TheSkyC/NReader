@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.database;
 
 import android.annotation.SuppressLint;
@@ -25,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 13;
+    private static final int DATABASE_VERSION = 14;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -52,6 +53,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(Queries.HistoryTable.CREATE_TABLE);
         db.execSQL(Queries.FavoriteTable.CREATE_TABLE);
         db.execSQL(Queries.ResumeTable.CREATE_TABLE);
+        db.execSQL(Queries.ReadingProgressTable.CREATE_TABLE);
         db.execSQL(Queries.StatusTable.CREATE_TABLE);
         db.execSQL(Queries.StatusMangaTable.CREATE_TABLE);
 
@@ -81,7 +83,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Database.setDatabase(db);
+        Queries.setDb(db);
         if (oldVersion == 2) insertLanguageTags();
         if (oldVersion <= 3) insertCategoryTags();
         if (oldVersion <= 4) db.execSQL(Queries.BookmarkTable.CREATE_TABLE);
@@ -93,6 +95,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 10) db.execSQL(Queries.ResumeTable.CREATE_TABLE);
         if (oldVersion <= 11) updateFavoriteTable(db);
         if (oldVersion <= 12) addStatusTables(db);
+        if (oldVersion <= 13) db.execSQL(Queries.ReadingProgressTable.CREATE_TABLE);
 
     }
 
@@ -112,12 +115,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void updateFavoriteTable(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE Favorite ADD COLUMN `time` INT NOT NULL DEFAULT " + new Date().getTime());
+        if (!hasColumn(db, Queries.FavoriteTable.TABLE_NAME, "time"))
+            db.execSQL("ALTER TABLE Favorite ADD COLUMN `time` INT NOT NULL DEFAULT " + new Date().getTime());
     }
 
     private void addRangeColumn(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE Downloads ADD COLUMN `range_start` INT NOT NULL DEFAULT -1");
-        db.execSQL("ALTER TABLE Downloads ADD COLUMN `range_end`   INT NOT NULL DEFAULT -1");
+        if (!hasColumn(db, Queries.DownloadTable.TABLE_NAME, "range_start"))
+            db.execSQL("ALTER TABLE Downloads ADD COLUMN `range_start` INT NOT NULL DEFAULT -1");
+        if (!hasColumn(db, Queries.DownloadTable.TABLE_NAME, "range_end"))
+            db.execSQL("ALTER TABLE Downloads ADD COLUMN `range_end` INT NOT NULL DEFAULT -1");
+    }
+
+    private boolean hasColumn(SQLiteDatabase db, String table, String column) {
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(`" + table + "`)", null)) {
+            int nameIndex = cursor.getColumnIndexOrThrow("name");
+            while (cursor.moveToNext()) {
+                if (column.equals(cursor.getString(nameIndex))) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -147,7 +163,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * populate favorite
      */
     private void insertFavorite(Context context, SQLiteDatabase db) {
-        Database.setDatabase(db);
+        Queries.setDb(db);
         db.execSQL(Queries.FavoriteTable.CREATE_TABLE);
         int[] favorites = getAllFavoriteIndex();
         List<Gallery> allGalleries = Queries.GalleryTable.getAllGalleries(context);

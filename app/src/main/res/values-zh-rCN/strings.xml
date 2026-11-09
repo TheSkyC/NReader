@@ -327,4 +327,6 @@
     <string name="auth_error">身份验证错误</string>
     <string name="auth_title">生物识别登录</string>
     <string name="auth_subtitle">使用您的生物识别凭证登录</string>
+    <string name="continue_reading">继续阅读</string>
+    <string name="open_manual_bookmark">打开页内书签</string>
 </resources>

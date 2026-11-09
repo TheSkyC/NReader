@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.database.export;
 
 import android.content.Context;
@@ -29,7 +30,7 @@ public class Exporter {
         "Settings",
         "ScrapedTags",
     };
-    private static final String[] SCHEMAS = new String[]{
+    static final String[] SCHEMAS = new String[]{
         Queries.GalleryTable.TABLE_NAME,
         Queries.TagTable.TABLE_NAME,
         Queries.GalleryBridgeTable.TABLE_NAME,
@@ -38,6 +39,7 @@ public class Exporter {
         Queries.HistoryTable.TABLE_NAME,
         Queries.FavoriteTable.TABLE_NAME,
         Queries.ResumeTable.TABLE_NAME,
+        Queries.ReadingProgressTable.TABLE_NAME,
         Queries.StatusTable.TABLE_NAME,
         Queries.StatusMangaTable.TABLE_NAME,
     };

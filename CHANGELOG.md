@@ -1,5 +1,12 @@
 # NReader changes
 
+## Unreleased
+
+- Save automatic reading positions separately from manual bookmarks, with
+  page and single-column restoration and a Continue action.
+- Add database version 14 through an additive migration. Preserve existing
+  tables and import legacy backups; roll back failed database restores.
+
 ## 1.0.0 — 2026-11-09
 
 Modified by TheSkyC; see NOTICE and LICENSE.

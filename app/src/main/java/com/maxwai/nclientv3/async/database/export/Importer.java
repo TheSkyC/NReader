@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.database.export;
 
 import android.content.ContentValues;
@@ -6,22 +7,28 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.JsonReader;
+import android.util.JsonToken;
 
 import androidx.annotation.NonNull;
 
 import com.maxwai.nclientv3.settings.Database;
+import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 class Importer {
-    private static void importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
+    private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
             String[] names = sharedName.split("/");
@@ -60,67 +67,120 @@ class Importer {
             }
             reader.endObject();
         }
-        editor.apply();
+        reader.endObject();
+        if (reader.peek() != JsonToken.END_DOCUMENT) throw new IOException("Trailing backup preference data");
+        return editor;
     }
 
-    private static void importDB(InputStream stream) throws IOException {
+    static void importDB(InputStream stream) throws IOException {
+        ReadingProgress.restore(() -> importDBLocked(stream));
+    }
+
+    private static void importDBLocked(InputStream stream) throws IOException {
         SQLiteDatabase db = Database.getDatabase();
         if (db == null)
             throw new IOException("Can't import Database, don't have database connection yet");
         db.beginTransaction();
-        JsonReader reader = new JsonReader(new InputStreamReader(stream));
-        reader.beginObject();
-        while (reader.hasNext()) {
-            String tableName = reader.nextName();
-            db.delete(tableName, null, null);
-            reader.beginArray();
+        try {
+            JsonReader reader = new JsonReader(new InputStreamReader(stream));
+            reader.beginObject();
+            db.delete(Queries.ReadingProgressTable.TABLE_NAME, null, null);
+            Set<String> seenTables = new HashSet<>();
             while (reader.hasNext()) {
-                reader.beginObject();
-                ContentValues values = new ContentValues();
-                while (reader.hasNext()) {
-                    String fieldName = reader.nextName();
-                    switch (reader.peek()) {
-                        case NULL:
-                            values.putNull(fieldName);
-                            reader.nextNull();
-                            break;
-                        case NUMBER:
-                            //there are no doubles in the DB
-                            values.put(fieldName, reader.nextLong());
-                            break;
-                        case STRING:
-                            values.put(fieldName, reader.nextString());
-                            break;
-                    }
+                String tableName = reader.nextName();
+                if (!Arrays.asList(Exporter.SCHEMAS).contains(tableName)) {
+                    reader.skipValue();
+                    continue;
                 }
-                db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE);
-                reader.endObject();
+                if (!seenTables.add(tableName)) throw new IOException("Duplicate backup table");
+                db.delete(tableName, null, null);
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    reader.beginObject();
+                    ContentValues values = new ContentValues();
+                    while (reader.hasNext()) {
+                        String fieldName = reader.nextName();
+                        if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME) && reader.peek() != JsonToken.NUMBER)
+                            throw new IOException("Invalid reading position field type");
+                        switch (reader.peek()) {
+                            case NULL:
+                                values.putNull(fieldName);
+                                reader.nextNull();
+                                break;
+                            case NUMBER:
+                                if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME) && fieldName.equals("offset"))
+                                    values.put(fieldName, reader.nextDouble());
+                                else values.put(fieldName, reader.nextLong());
+                                break;
+                            case STRING:
+                                values.put(fieldName, reader.nextString());
+                                break;
+                            default:
+                                throw new IOException("Unsupported backup value");
+                        }
+                    }
+                    if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME)) validateReadingPosition(values);
+                    if (db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE) == -1)
+                        throw new IOException("Unable to restore backup row");
+                    reader.endObject();
+                }
+                reader.endArray();
             }
-            reader.endArray();
-
-
+            reader.endObject();
+            if (reader.peek() != JsonToken.END_DOCUMENT) throw new IOException("Trailing database backup data");
+            db.setTransactionSuccessful();
+        } catch (RuntimeException exception) {
+            throw new IOException("Invalid database backup", exception);
+        } finally {
+            db.endTransaction();
         }
+    }
 
-        reader.endObject();
-        db.setTransactionSuccessful();
-        db.endTransaction();
+    private static void validateReadingPosition(ContentValues values) throws IOException {
+        Long id = values.getAsLong("id_gallery");
+        Long page = values.getAsLong("page");
+        Long updatedAt = values.getAsLong("updated_at");
+        Double offset = values.getAsDouble("offset");
+        if (id == null || id <= 0 || id > Integer.MAX_VALUE || page == null || page <= 0 || page > Integer.MAX_VALUE
+            || updatedAt == null || updatedAt < 0 || (offset != null && (!Double.isFinite(offset) || offset < 0 || offset >= 1)))
+            throw new IOException("Invalid reading position values");
     }
 
     public static void importData(@NonNull Context context, Uri selectedFile) throws IOException {
-        InputStream stream = context.getContentResolver().openInputStream(selectedFile);
-        try (ZipInputStream inputStream = new ZipInputStream(stream)) {
-            ZipEntry entry;
-            while ((entry = inputStream.getNextEntry()) != null) {
-                String name = entry.getName();
-                LogUtility.d("Importing: " + name);
-                if (Exporter.DB_ZIP_FILE.equals(name)) {
-                    importDB(inputStream);
-                } else {
-                    String shared = name.substring(0, name.length() - 5);
-                    importSharedPreferences(context, shared, inputStream);
+        ReadingProgress.restore(() -> importDataLocked(context, selectedFile));
+    }
+
+    private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
+        SQLiteDatabase database = Database.getDatabase();
+        if (database == null) throw new IOException("Database is not available");
+        database.beginTransaction();
+        List<SharedPreferences.Editor> preferences = new ArrayList<>();
+        try {
+            try (InputStream stream = context.getContentResolver().openInputStream(selectedFile);
+                 ZipInputStream inputStream = new ZipInputStream(stream)) {
+                ZipEntry entry;
+                Set<String> seenEntries = new HashSet<>();
+                boolean hasDatabase = false;
+                while ((entry = inputStream.getNextEntry()) != null) {
+                    String name = entry.getName();
+                    if (!seenEntries.add(name)) throw new IOException("Duplicate backup entry");
+                    if (Exporter.DB_ZIP_FILE.equals(name)) {
+                        importDBLocked(inputStream);
+                        hasDatabase = true;
+                    } else if (name.equals("Settings.json") || name.equals("ScrapedTags.json")) {
+                        String shared = name.substring(0, name.length() - 5);
+                        preferences.add(importSharedPreferences(context, shared, inputStream));
+                    }
+                    inputStream.closeEntry();
                 }
-                inputStream.closeEntry();
+                if (!hasDatabase) throw new IOException("Backup has no database");
             }
+            database.setTransactionSuccessful();
+        } catch (RuntimeException exception) {
+            throw new IOException("Invalid backup archive", exception);
+        } finally {
+            database.endTransaction();
         }
+        for (SharedPreferences.Editor editor : preferences) editor.apply();
     }
 }
