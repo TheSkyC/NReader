@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.Manifest;
@@ -12,6 +13,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.ViewTreeObserver;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
@@ -23,6 +27,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate;
 
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -32,6 +38,8 @@ import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.status.Status;
 import com.maxwai.nclientv3.components.status.StatusManager;
@@ -67,6 +75,14 @@ public class GalleryActivity extends BaseActivity {
     private String statusString;
 
     private int newStatusColor;
+    private ReadingPosition automaticPosition;
+    private boolean positionReady;
+    private boolean readerOpened;
+    private boolean restoringPosition;
+    private ReadingPosition pendingPosition;
+    private boolean scrollDirty;
+    private ReadingPosition activeScrollTarget;
+    private ViewTreeObserver.OnGlobalLayoutListener restoreListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,8 +105,8 @@ public class GalleryActivity extends BaseActivity {
         } else {
             gal = getIntent().getParcelableExtra(getPackageName() + ".GALLERY");
         }
-        if (gal == null && !tryLoadFromURL()) {
-            finish();
+        if (gal == null) {
+            if (!tryLoadFromURL()) finish();
             return;
         }
         if (gal != null) this.gallery = gal;
@@ -105,6 +121,35 @@ public class GalleryActivity extends BaseActivity {
         recycler.setLayoutManager(new CustomGridLayoutManager(this, Global.getColumnCount()));
 
         loadGallery(gallery, zoom);//if already has gallery
+        recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy != 0 && positionReady && !restoringPosition) scrollDirty = true;
+            }
+
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) stopRestoringPosition();
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) saveScrollPosition();
+            }
+        });
+        recycler.setOnGenericMotionListener((view, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_SCROLL) stopRestoringPosition();
+            return false;
+        });
+        recycler.setAccessibilityDelegateCompat(new RecyclerViewAccessibilityDelegate(recycler) {
+            @Override
+            public boolean performAccessibilityAction(@NonNull View host, int action, @Nullable Bundle args) {
+                stopRestoringPosition();
+                return super.performAccessibilityAction(host, action, args);
+            }
+        });
+        if (savedInstanceState != null && savedInstanceState.getBoolean("continuousReader", false)) {
+            pendingPosition = new ReadingPosition(savedInstanceState.getInt("readerPage", 1),
+                savedInstanceState.getFloat("readerOffset", 0f)).clamp(gallery.getPageCount());
+            readerOpened = true;
+        }
+        loadAutomaticPosition();
     }
 
     private boolean tryLoadFromURL() {
@@ -162,28 +207,139 @@ public class GalleryActivity extends BaseActivity {
         adapter = new GalleryAdapter(this, gallery, Global.getColumnCount());
         recycler.setAdapter(adapter);
         lookup();
-        if (zoom > 0 && Global.getDownloadPolicy() != Global.DataUsageType.NONE) {
+        if (zoom > 0 && (gallery.isLocal() || Global.getDownloadPolicy() != Global.DataUsageType.NONE)) {
             Intent intent = new Intent(this, ZoomActivity.class);
             intent.putExtra(getPackageName() + ".GALLERY", this.gallery);
             intent.putExtra(getPackageName() + ".DIRECTORY", adapter.getDirectory());
             intent.putExtra(getPackageName() + ".PAGE", zoom);
             startActivity(intent);
         }
-        checkBookmark();
     }
 
     private void checkBookmark() {
         int page = Queries.ResumeTable.pageFromId(gallery.getId());
         if (page < 0) return;
+        page = new ReadingPosition(page, 0f).clamp(gallery.getPageCount()).page;
+        final int bookmarkPage = page;
         Snackbar snack = Snackbar.make(toolbar, getString(R.string.resume_from_page, page), Snackbar.LENGTH_LONG);
         //Should be already compensated
         snack.setAction(R.string.resume, v -> new Thread(() -> {
-            runOnUiThread(() -> recycler.scrollToPosition(page));
+            runOnUiThread(() -> recycler.scrollToPosition(bookmarkPage));
             if (Global.getColumnCount() != 1) return;
             Utility.threadSleep(500);
-            runOnUiThread(() -> recycler.scrollToPosition(page));
+            runOnUiThread(() -> recycler.scrollToPosition(bookmarkPage));
         }).start());
         snack.show();
+    }
+
+    private void loadAutomaticPosition() {
+        ReadingProgress.load(gallery.getId(), position -> runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            automaticPosition = position == null ? null : position.clamp(gallery.getPageCount());
+            positionReady = true;
+            supportInvalidateOptionsMenu();
+            if (pendingPosition != null) {
+                ReadingPosition pending = pendingPosition;
+                pendingPosition = null;
+                resumeReading(pending);
+            } else if (automaticPosition != null && zoom <= 0) {
+                Snackbar.make(toolbar, getString(R.string.resume_from_page, automaticPosition.page), Snackbar.LENGTH_LONG)
+                    .setAction(R.string.resume, view -> resumeReading(automaticPosition)).show();
+            } else checkBookmark();
+        }));
+    }
+
+    private void resumeReading(ReadingPosition position) {
+        if (position == null || gallery.getPageCount() <= 0) return;
+        ReadingPosition target = position.clamp(gallery.getPageCount());
+        if (Global.getColumnCount() == 1) {
+            stopRestoringPosition();
+            readerOpened = true;
+            restoringPosition = true;
+            automaticPosition = target;
+            activeScrollTarget = target;
+            CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
+            if (manager == null) {
+                stopRestoringPosition();
+                return;
+            }
+            final int[] lastHeight = {-1};
+            restoreListener = () -> {
+                View pageView = manager.findViewByPosition(target.page);
+                if (pageView != null && pageView.getHeight() > 0 && lastHeight[0] != pageView.getHeight()) {
+                    lastHeight[0] = pageView.getHeight();
+                    manager.scrollToPositionWithOffset(target.page, -(int) (lastHeight[0] * target.offset));
+                }
+            };
+            recycler.getViewTreeObserver().addOnGlobalLayoutListener(restoreListener);
+            manager.scrollToPositionWithOffset(target.page, 0);
+            ReadingProgress.save(gallery.getId(), target);
+        } else if (gallery.isLocal() || Global.getDownloadPolicy() != Global.DataUsageType.NONE) {
+            Intent intent = new Intent(this, ZoomActivity.class);
+            intent.putExtra(getPackageName() + ".GALLERY", gallery);
+            intent.putExtra(getPackageName() + ".PAGE", target.page);
+            startActivity(intent);
+        }
+    }
+
+    private void stopRestoringPosition() {
+        if (restoreListener != null && recycler != null)
+            recycler.getViewTreeObserver().removeOnGlobalLayoutListener(restoreListener);
+        restoreListener = null;
+        activeScrollTarget = null;
+        restoringPosition = false;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) stopRestoringPosition();
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopRestoringPosition();
+        super.onDestroy();
+    }
+
+    @Nullable
+    private ReadingPosition scrollPosition() {
+        if (recycler == null || Global.getColumnCount() != 1 || restoringPosition) return null;
+        CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
+        if (manager == null) return null;
+        int page = manager.findFirstVisibleItemPosition();
+        if (page < 1 || page > gallery.getPageCount()) return null;
+        View pageView = manager.findViewByPosition(page);
+        if (pageView == null || pageView.getHeight() <= 0) return null;
+        return new ReadingPosition(page, Math.max(0, recycler.getPaddingTop() - pageView.getTop()) / (float) pageView.getHeight());
+    }
+
+    private void saveScrollPosition() {
+        if (!positionReady || !scrollDirty) return;
+        ReadingPosition position = scrollPosition();
+        if (position == null) return;
+        readerOpened = true;
+        automaticPosition = position;
+        ReadingProgress.save(gallery.getId(), position);
+        scrollDirty = false;
+    }
+
+    @Override
+    protected void onPause() {
+        saveScrollPosition();
+        super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle state) {
+        saveScrollPosition();
+        ReadingPosition currentPosition = activeScrollTarget != null ? activeScrollTarget : scrollPosition();
+        if (readerOpened && currentPosition != null) {
+            state.putBoolean("continuousReader", true);
+            state.putInt("readerPage", currentPosition.page);
+            state.putFloat("readerOffset", currentPosition.offset);
+        }
+        super.onSaveInstanceState(state);
     }
 
     private void applyTitle() {
@@ -242,6 +398,8 @@ public class GalleryActivity extends BaseActivity {
 
         menu.findItem(R.id.favorite_manager).setIcon(isLocalFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
         menuItemsVisible(menu);
+        menu.findItem(R.id.continue_reading).setVisible(automaticPosition != null);
+        menu.findItem(R.id.manual_bookmark).setVisible(Queries.ResumeTable.pageFromId(gallery.getId()) > 0);
         initFavoriteIcon(menu);
         Utility.tintMenu(this, menu);
         updateColumnCount(false);
@@ -267,12 +425,23 @@ public class GalleryActivity extends BaseActivity {
         super.onResume();
         updateColumnCount(false);
         supportInvalidateOptionsMenu();
+        if (positionReady) {
+            ReadingProgress.load(gallery.getId(), position -> runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                automaticPosition = position == null ? null : position.clamp(gallery.getPageCount());
+                supportInvalidateOptionsMenu();
+            }));
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.download_gallery) {
+        if (id == R.id.continue_reading) {
+            resumeReading(automaticPosition);
+        } else if (id == R.id.manual_bookmark) {
+            resumeReading(new ReadingPosition(Queries.ResumeTable.pageFromId(gallery.getId()), 0f));
+        } else if (id == R.id.download_gallery) {
             if (Global.hasStoragePermission(this))
                 new RangeSelector(this, (Gallery) gallery).show();
             else

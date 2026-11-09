@@ -81,12 +81,17 @@ Crowdin project.
 - Browse and search galleries by query or tags.
 - Include, exclude, blur, or hide tags.
 - Download manga and manage favorites and bookmarks.
+- Save reading positions automatically in paged and single-column reading,
+  with a separate Continue action and preserved manual page bookmarks.
 - Share galleries or open them in a browser.
 - Protect app access with a PIN.
 - Take screenshots and screen recordings, as enabled by the preserved local change.
 
 Screenshots and screen recording are permitted even on PIN-protected screens;
 multitasking previews are no longer hidden by `FLAG_SECURE`.
+
+State definitions, database upgrades and backup compatibility are documented in
+[state and reading contracts](docs/state-and-reading.md).
 
 ## Upstream screenshots
 

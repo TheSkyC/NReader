@@ -3,6 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/continue_reading"
+        android:orderInCategory="510"
+        android:title="@string/continue_reading"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/manual_bookmark"
+        android:orderInCategory="520"
+        android:title="@string/open_manual_bookmark"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/favorite_manager"
         android:icon="@drawable/ic_favorite_border"
         android:orderInCategory="100"

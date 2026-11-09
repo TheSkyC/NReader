@@ -327,4 +327,6 @@
     <string name="auth_error">驗證錯誤</string>
     <string name="auth_title">生物特徵登入</string>
     <string name="auth_subtitle">使用您的生物特徵憑證登入</string>
+    <string name="continue_reading">繼續閱讀</string>
+    <string name="open_manual_bookmark">開啟頁內書籤</string>
 </resources>
