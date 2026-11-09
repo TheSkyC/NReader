@@ -227,7 +227,7 @@ public class ZoomFragment extends Fragment {
             request = glide.load(pageFile);
             LogUtility.d("Requested file glide: " + pageFile);
         } else {
-            if (url == null) request = glide.load(R.mipmap.ic_launcher);
+            if (url == null) request = glide.load(R.drawable.ic_launcher_foreground);
             else {
                 LogUtility.d("Requested url glide: " + url);
                 request = glide.load(url);

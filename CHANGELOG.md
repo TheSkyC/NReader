@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use one consistent single-column page placeholder while requests wait or fail,
+  with balanced logo padding in light and dark themes.
 - Keep cover loading and error placeholders centered at a bounded size while
   loaded cover images continue to fill their cards.
 - Refine gallery cards with rounded covers, reading position and total at the top

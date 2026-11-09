@@ -4,8 +4,10 @@ package com.maxwai.nclientv3.utility;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Handler;
+import android.view.Gravity;
 import android.widget.ImageView;
 
 import androidx.annotation.DrawableRes;
@@ -45,7 +47,7 @@ public class ImageDownloadUtility {
     public static void loadImageOp(Context context, ImageView view, File file, int angle) {
         RequestManager glide = GlideX.with(context);
         if (glide == null) return;
-        Drawable logo = Global.getLogo(context.getResources());
+        Drawable logo = placeholder(view);
         glide.load(file).transform(new Rotate(angle)).error(logo).placeholder(logo).into(DebugImageMask.target(view));
         LogUtility.d("Requested file glide: " + file);
     }
@@ -64,8 +66,8 @@ public class ImageDownloadUtility {
     }
 
     private static void loadImageOp(Context context, ImageView view, @Nullable Gallery gallery, Supplier<Uri> url, int angle, boolean priority) {
+        loadLogo(view);
         if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) {
-            loadLogo(view);
             return;
         }
         boolean newGallery = false;
@@ -78,7 +80,7 @@ public class ImageDownloadUtility {
             LogUtility.d("Requested url glide: " + url.get());
             RequestManager glide = GlideX.with(context);
             if (glide == null) return;
-            Drawable logo = Global.getLogo(context.getResources());
+            Drawable logo = placeholder(view);
             RequestBuilder<Drawable> dra = glide.load(url.get());
             if (angle != 0)
                 dra = dra.transform(new Rotate(angle));
@@ -125,7 +127,22 @@ public class ImageDownloadUtility {
     }
 
     private static void loadLogo(ImageView imageView) {
-        imageView.setImageDrawable(Global.getLogo(imageView.getResources()));
+        imageView.setImageDrawable(placeholder(imageView));
+    }
+
+    static Drawable placeholder(ImageView imageView) {
+        Drawable logo = Global.getLogo(imageView.getResources());
+        if (logo == null || imageView.getScaleType() != ImageView.ScaleType.CENTER_CROP) return logo;
+        int width = Math.round(72 * imageView.getResources().getDisplayMetrics().density);
+        int height = Math.round(width * (float) logo.getIntrinsicHeight() / logo.getIntrinsicWidth());
+        // Unspecified intrinsic dimensions keep ImageView from cropping the placeholder.
+        LayerDrawable placeholder = new LayerDrawable(new Drawable[]{logo}) {
+            @Override public int getIntrinsicWidth() { return -1; }
+            @Override public int getIntrinsicHeight() { return -1; }
+        };
+        placeholder.setLayerSize(0, width, height);
+        placeholder.setLayerGravity(0, Gravity.CENTER);
+        return placeholder;
     }
 
     public static void loadImage(Activity activity, Uri url, ImageView imageView) {

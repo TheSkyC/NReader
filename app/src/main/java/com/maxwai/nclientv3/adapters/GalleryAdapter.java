@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.content.Intent;
@@ -340,14 +341,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             else if (!gallery.isLocal()) {
                 Gallery ent = (Gallery) gallery;
                 ImageDownloadUtility.loadImageOp(context, imgView, ent, pos - 1, angle);
-            } else ImageDownloadUtility.loadImage(R.mipmap.ic_launcher, imgView);
+            } else ImageDownloadUtility.loadImage(R.drawable.ic_logo, imgView);
         } else {
             if (file != null && file.exists())
                 ImageDownloadUtility.loadImage(context, file, imgView);
             else if (!gallery.isLocal()) {
                 Gallery ent = (Gallery) gallery;
                 ImageDownloadUtility.downloadPage(context, imgView, ent, pos - 1, false);
-            } else ImageDownloadUtility.loadImage(R.mipmap.ic_launcher, imgView);
+            } else ImageDownloadUtility.loadImage(R.drawable.ic_logo, imgView);
         }
     }
 
