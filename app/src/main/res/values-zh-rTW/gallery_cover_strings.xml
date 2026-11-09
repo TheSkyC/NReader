@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cover_add_favorite">加入本機收藏</string>
+    <string name="cover_remove_favorite">取消本機收藏</string>
+    <string name="cover_favorite_added">已加入收藏</string>
+    <string name="cover_favorite_removed">已取消收藏</string>
+    <string name="cover_undo">復原</string>
+    <string name="cover_download_queued">等待下載</string>
+    <string name="cover_download_running">正在下載：%1$d%%</string>
+    <string name="cover_download_paused">下載已暫停</string>
+</resources>

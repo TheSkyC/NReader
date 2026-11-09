@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Manuelles Lesezeichen öffnen</string>
     <string name="pause_download">Download pausieren</string>
     <string name="download_failed">Download fehlgeschlagen</string>
-    <string name="stop_download_options">Diese Aufgabe stoppen und heruntergeladene Seiten behalten oder die Dateien löschen. Beim Pausieren bleibt die Aufgabe in der Warteschlange.</string>
-    <string name="stop_keep_files">Stoppen und Dateien behalten</string>
-    <string name="stop_delete_files">Stoppen und Dateien löschen</string>
     <string name="download_error_authentication">Zugriff verweigert. Prüfe den API-Schlüssel und die Kontoberechtigungen.</string>
     <string name="download_error_rate_limit">Zu viele Anfragen. Warte vor einem erneuten Versuch.</string>
     <string name="download_error_storage">Dateien konnten nicht geschrieben werden. Prüfe Speicherplatz und Zugriffsrechte.</string>

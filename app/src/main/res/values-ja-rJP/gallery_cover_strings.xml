@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cover_add_favorite">ローカルのお気に入りに追加</string>
+    <string name="cover_remove_favorite">ローカルのお気に入りから削除</string>
+    <string name="cover_favorite_added">お気に入りに追加しました</string>
+    <string name="cover_favorite_removed">お気に入りから削除しました</string>
+    <string name="cover_undo">元に戻す</string>
+    <string name="cover_download_queued">ダウンロード待機中</string>
+    <string name="cover_download_running">ダウンロード中：%1$d%%</string>
+    <string name="cover_download_paused">ダウンロード一時停止中</string>
+</resources>

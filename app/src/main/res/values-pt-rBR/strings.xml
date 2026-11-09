@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Abrir marcador manual</string>
     <string name="pause_download">Pausar download</string>
     <string name="download_failed">Falha no download</string>
-    <string name="stop_download_options">Pare esta tarefa e mantenha as páginas baixadas ou exclua os arquivos. Pausar mantém a tarefa na fila.</string>
-    <string name="stop_keep_files">Parar e manter arquivos</string>
-    <string name="stop_delete_files">Parar e excluir arquivos</string>
     <string name="download_error_authentication">Acesso negado. Verifique a chave API e as permissões da conta.</string>
     <string name="download_error_rate_limit">Muitas solicitações. Aguarde antes de tentar novamente.</string>
     <string name="download_error_storage">Não foi possível gravar os arquivos. Verifique o espaço e as permissões de armazenamento.</string>

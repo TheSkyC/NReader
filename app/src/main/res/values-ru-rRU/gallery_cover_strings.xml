@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cover_add_favorite">Добавить в локальное избранное</string>
+    <string name="cover_remove_favorite">Удалить из локального избранного</string>
+    <string name="cover_favorite_added">Добавлено в избранное</string>
+    <string name="cover_favorite_removed">Удалено из избранного</string>
+    <string name="cover_undo">Отменить</string>
+    <string name="cover_download_queued">Загрузка в очереди</string>
+    <string name="cover_download_running">Загрузка: %1$d%%</string>
+    <string name="cover_download_paused">Загрузка приостановлена</string>
+</resources>

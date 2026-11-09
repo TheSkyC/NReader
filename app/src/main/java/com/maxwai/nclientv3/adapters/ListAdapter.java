@@ -57,6 +57,12 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         return new GenericAdapter.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.entry_layout, parent, false));
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recycler) {
+        super.onAttachedToRecyclerView(recycler);
+        GenericAdapter.prepareGalleryGrid(recycler);
+    }
+
     private void loadGallery(final GenericAdapter.ViewHolder holder, SimpleGallery ent) {
         if (context.isFinishing()) return;
         try {
@@ -84,7 +90,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             CardView card = (CardView) holder.layout.getParent();
             ViewGroup.LayoutParams params = card.getLayoutParams();
             params.width = Global.getGalleryWidth();
-            params.height = Global.getGalleryHeight();
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             card.setLayoutParams(params);
         }
         holder.overlay.setVisibility((queryString != null && ent.hasIgnoredTags(queryString)) ? View.VISIBLE : View.GONE);

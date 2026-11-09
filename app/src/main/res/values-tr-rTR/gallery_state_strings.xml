@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">%2$d sayfanın %1$d. sayfasına kadar okundu</string>
+    <string name="state_reading_page_unknown">%1$d. sayfaya kadar okundu; toplam bilinmiyor</string>
+    <string name="state_download_unverified_help">Özgün sayfa sayısı veya yerel dosyalara erişim olmadığından bütünlük doğrulanamıyor. Mevcut ve okunabilir sayfalar yine de açılabilir.</string>
+</resources>

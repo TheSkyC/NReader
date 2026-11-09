@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">Прочитано до сторінки %1$d із %2$d</string>
+    <string name="state_reading_page_unknown">Прочитано до сторінки %1$d; загальна кількість невідома</string>
+    <string name="state_download_unverified_help">Неможливо підтвердити повноту: невідома початкова кількість сторінок або немає доступу до локальних файлів. Наявні сторінки, які можна прочитати, як і раніше можна відкрити.</string>
+</resources>

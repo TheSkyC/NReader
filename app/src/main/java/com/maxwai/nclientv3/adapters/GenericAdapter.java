@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.GenericGallery;
+import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,6 +30,22 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
         this.dataset = dataset;
         dataset.sort(Comparator.comparing(GenericGallery::getTitle));
         filter = new ArrayList<>(dataset);
+    }
+
+    static void prepareGalleryGrid(RecyclerView recycler) {
+        float density = recycler.getResources().getDisplayMetrics().density;
+        int padding = Math.round(6 * density);
+        recycler.setPadding(padding, padding, padding, padding);
+        recycler.setClipToPadding(false);
+        if (recycler.getLayoutManager() instanceof CustomGridLayoutManager) {
+            ((CustomGridLayoutManager) recycler.getLayoutManager()).setMinimumColumnWidth(Math.round(116 * density));
+        }
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recycler) {
+        super.onAttachedToRecyclerView(recycler);
+        prepareGalleryGrid(recycler);
     }
 
     @NonNull
@@ -99,7 +116,7 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
             layout = v.findViewById(R.id.master_layout);
             flag = v.findViewById(R.id.flag);
             overlay = v.findViewById(R.id.overlay);
-            stateBadge = new GalleryStateBadge(v, title);
+            stateBadge = new GalleryStateBadge(v);
         }
     }
 

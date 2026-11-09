@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Abrir marcador manual</string>
     <string name="pause_download">Pausar descarga</string>
     <string name="download_failed">Descarga fallida</string>
-    <string name="stop_download_options">Detén esta tarea y conserva las páginas descargadas, o elimina los archivos. Al pausarla, la tarea permanece en la cola.</string>
-    <string name="stop_keep_files">Detener y conservar archivos</string>
-    <string name="stop_delete_files">Detener y eliminar archivos</string>
     <string name="download_error_authentication">Acceso denegado. Revisa la clave API y los permisos de la cuenta.</string>
     <string name="download_error_rate_limit">Demasiadas solicitudes. Espera antes de volver a intentarlo.</string>
     <string name="download_error_storage">No se pudieron escribir los archivos. Revisa el espacio y los permisos de almacenamiento.</string>

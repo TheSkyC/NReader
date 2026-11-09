@@ -86,6 +86,19 @@ public class DownloadGalleryV2 extends Worker {
         downloadGallery(context, gallery, start, end);
     }
 
+    public static void restart(Context context, GalleryDownloaderV2 downloader) {
+        Gallery gallery = downloader.getGallery();
+        if (gallery != null) {
+            downloadRange(context, gallery, downloader.getStart(), downloader.getEnd());
+        } else if (downloader.getId() > 0) {
+            downloadGallery(context, downloader.getPathTitle(), downloader.getThumbnail(), downloader.getId());
+        }
+    }
+
+    public static void restartAfterCancel(Context context, GalleryDownloaderV2 downloader) {
+        downloader.cancel(false, () -> restart(context, downloader));
+    }
+
     public static void startWork(@Nullable Context context) {
         if (context != null) {
             WorkRequest DownloadGalleryWorkRequest = new OneTimeWorkRequest.Builder(DownloadGalleryV2.class).build();

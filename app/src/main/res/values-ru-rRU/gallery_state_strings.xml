@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">Прочитано до страницы %1$d из %2$d</string>
+    <string name="state_reading_page_unknown">Прочитано до страницы %1$d; общее число неизвестно</string>
+    <string name="state_download_unverified_help">Нельзя подтвердить полноту: неизвестно исходное число страниц или нет доступа к локальным файлам. Существующие читаемые страницы по-прежнему можно открыть.</string>
+</resources>

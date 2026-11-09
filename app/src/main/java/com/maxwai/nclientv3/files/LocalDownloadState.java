@@ -34,7 +34,8 @@ public enum LocalDownloadState {
         return missing ? PARTIAL : COMPLETE;
     }
 
-    private static int expectedPages(File directory) {
+    public static int expectedPages(File directory) {
+        if (directory == null) return 0;
         try (JsonReader reader = new JsonReader(new FileReader(new File(directory, ".nomedia")))) {
             int count = -1;
             reader.beginObject();
@@ -43,9 +44,9 @@ public enum LocalDownloadState {
                 else reader.skipValue();
             }
             reader.endObject();
-            return count;
+            return count > 0 && count <= 10000 ? count : 0;
         } catch (IOException | RuntimeException exception) {
-            return -1;
+            return 0;
         }
     }
 }

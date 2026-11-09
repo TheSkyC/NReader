@@ -51,10 +51,25 @@ New download metadata preserves the original total in `num_pages`. Legacy
 metadata without that field remains readable, but local file count must not be
 used as evidence of the original total or of a complete download.
 
-Cards display local favorites, custom status names, automatic page positions and
-local file state independently. Truncated labels keep their full accessibility
-description. State callbacks must not update a recycled card bound to another
-gallery. A complete copy in another indexed directory can establish completion.
+Cards use a consistent rounded cover with favorite and download controls at the
+bottom corners and the automatic page position / total at the top right. Unstarted
+galleries show only the known total. A bottom gradient keeps controls legible.
+Titles reserve two lines below the cover, followed by a single author line.
+The selected column count is an upper bound: cards require at least 116dp per
+column, including margins, so the two 48dp action targets do not overlap.
+API list cards retain `num_pages`, including their in-app Parcelable transfer;
+legacy history without a known total continues to show `page/?` when started.
+Custom status names appear at the top of the cover with their own label color.
+Favorite controls toggle local favorites and offer Undo after removal. Download
+controls use both icon shape and color, including verified completion in the local
+library, and open task actions or a file-state explanation. Removing local files
+is a separate, explicit action. Progress uses `page/total`
+with an original metadata total, or `page/?` when that total is unknown. Unknown
+storage without evidence of a local copy does
+not produce a per-gallery file warning. Truncated labels keep their full
+accessibility description. State callbacks must not update a recycled card bound
+to another gallery. A complete copy in another indexed directory can establish
+completion.
 
 ## Download lifecycle
 
@@ -62,8 +77,10 @@ Transient network/server/rate-limit failures have a finite retry budget and
 backoff. Authentication, missing resources and storage failures stop the task
 with an actionable reason. A failed task requires an explicit retry. Metadata
 failures obey the same bounded policy. Pausing retains the queued task; stopping
-can retain files or delete them after the active writer has stopped. Neither
-choice removes favorites, custom statuses or reading positions.
+temporarily retains completed pages for the Undo window, then deletes the local
+folder after the active writer has stopped. Undo restarts the same gallery and
+range, allowing the downloader to skip completed pages. Stopping does not remove
+favorites, custom statuses or reading positions.
 
 Each metadata request and page has at most four attempts, with exponential
 backoff from one second and a 30-second delay ceiling. A valid `Retry-After`
@@ -71,8 +88,8 @@ above that ceiling stops automatic retries instead of retrying early. This
 policy applies to the existing page downloader, not the API archive endpoint.
 Failure details are in memory; restored legacy download tasks start paused.
 Pages are validated in a temporary sibling file before replacing the final
-filename. Stopping removes the queued download row only; retained files remain
-available in the local library.
+filename. Stopping removes the queued download row; if Undo is not used, its
+local gallery folder is deleted after the Snackbar is dismissed.
 
 A second request is accepted only when the queued range covers it. A conflicting
 range is rejected with an explanation, preserving the original task and files.

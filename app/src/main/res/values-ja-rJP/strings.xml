@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">手動しおりを開く</string>
     <string name="pause_download">ダウンロードを一時停止</string>
     <string name="download_failed">失敗</string>
-    <string name="stop_download_options">このタスクを停止してダウンロード済みのページを保持するか、ファイルを削除します。一時停止ではタスクを待機列に残します。</string>
-    <string name="stop_keep_files">停止してファイルを保持</string>
-    <string name="stop_delete_files">停止してファイルを削除</string>
     <string name="download_error_authentication">アクセスが拒否されました。APIキーとアカウントの権限を確認してください。</string>
     <string name="download_error_rate_limit">リクエストが多すぎます。時間をおいて再試行してください。</string>
     <string name="download_error_storage">ファイルを書き込めませんでした。空き容量とストレージの権限を確認してください。</string>

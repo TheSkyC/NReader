@@ -2,14 +2,20 @@
 
 ## Unreleased
 
+- Keep cover loading and error placeholders centered at a bounded size while
+  loaded cover images continue to fill their cards.
+- Refine gallery cards with rounded covers, reading position and total at the top
+  right, favorite and download controls inside the cover, and aligned title and
+  author rows below. Keep touch targets separated by adapting grid columns.
 - Save automatic reading positions separately from manual bookmarks, with
   page and single-column restoration and a Continue action.
 - Add database version 14 through an additive migration. Preserve existing
   tables and import legacy backups; roll back failed database restores.
 - Bound metadata and page retries, classify failures, honor rate-limit delays,
   and allow explicit retry after failure. Write pages through temporary files.
-- Offer stopping downloads with files retained or deleted, after active requests
-  stop, while preserving favorites, statuses and reading positions.
+- Stop downloads with an Undo window that resumes the same gallery and page range
+  from completed pages; delete the local folder when the message is dismissed
+  without Undo. Preserve favorites, statuses and reading positions.
 - Show independent local favorite, custom status, automatic reading position and
   verified local download state across gallery lists, with asynchronous refresh.
 - Preserve expected page totals in partial downloads; distinguish missing pages,

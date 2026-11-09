@@ -197,6 +197,12 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         }).start();
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recycler) {
+        super.onAttachedToRecyclerView(recycler);
+        GenericAdapter.prepareGalleryGrid(recycler);
+    }
+
     public void addGalleries(@Nullable List<LocalGallery> gallery) {
         if (gallery != null && !gallery.isEmpty()) {
             dataset.removeAll(gallery);
@@ -282,7 +288,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                 id = colCount == 1 ? R.layout.entry_layout_single : R.layout.entry_layout;
                 break;
             case 1:
-                id = colCount == 1 ? R.layout.entry_download_layout : R.layout.entry_download_layout_compact;
+                id = colCount == 1 ? R.layout.entry_download_layout : R.layout.entry_layout;
                 break;
         }
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(id, parent, false));
@@ -329,6 +335,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     @Override
     protected void defaultMasterAction(int position) {
         if (position < 0 || filter.size() <= position) return;
+        if (filter.get(position) instanceof GalleryDownloaderV2) {
+            GalleryCardActions.task(context, (GalleryDownloaderV2) filter.get(position));
+            return;
+        }
         if (!(filter.get(position) instanceof LocalGallery)) return;
         LocalGallery lg = (LocalGallery) filter.get(position);
         startGallery(context, lg.getDirectory());
@@ -336,6 +346,13 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private void bindDownload(@NonNull final ViewHolder holder, int position, GalleryDownloaderV2 downloader) {
+        if (holder.stateBadge != null) {
+            ImageDownloadUtility.loadImage(context, downloader.getThumbnail(), holder.imgView);
+            holder.title.setText(downloader.getTitle());
+            if (holder.flag != null) holder.flag.setVisibility(View.GONE);
+            holder.stateBadge.bindDownload(downloader);
+            return;
+        }
         int percentage = downloader.getPercentage();
         //if (!downloader.hasData())return;
         ImageDownloadUtility.loadImage(context, downloader.getThumbnail(), holder.imgView);
@@ -385,13 +402,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private void removeDownloader(GalleryDownloaderV2 downloader) {
-        new MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.stop_download)
-            .setMessage(R.string.stop_download_options)
-            .setPositiveButton(R.string.stop_keep_files, (dialog, which) -> DownloadQueue.remove(downloader, true, false))
-            .setNegativeButton(R.string.stop_delete_files, (dialog, which) -> DownloadQueue.remove(downloader, true, true))
-            .setNeutralButton(R.string.cancel, null)
-            .show();
+        GalleryCardActions.task(context, downloader);
     }
 
     private int failureMessage(GalleryDownloaderV2 downloader) {
@@ -594,7 +605,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             progressBar = itemView.findViewById(R.id.progressBar);
             playButton = itemView.findViewById(R.id.playButton);
             cancelButton = itemView.findViewById(R.id.cancelButton);
-            stateBadge = v.findViewById(R.id.gallery_state) == null ? null : new GalleryStateBadge(v, title);
+            stateBadge = v.findViewById(R.id.gallery_state) == null ? null : new GalleryStateBadge(v);
         }
     }
 }

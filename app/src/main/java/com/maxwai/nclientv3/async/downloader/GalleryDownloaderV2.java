@@ -54,6 +54,8 @@ public class GalleryDownloaderV2 {
     private static final ExecutorService cleanupExecutor = Executors.newSingleThreadExecutor();
     private boolean working;
     private boolean deleteOnCancel;
+    private boolean cancelCleanupComplete;
+    private final List<Runnable> cancelCleanupCallbacks = new ArrayList<>();
     private boolean restartRequested;
     private String retryAfter;
     private String title;
@@ -301,8 +303,17 @@ public class GalleryDownloaderV2 {
     }
 
     public void cancel(boolean deleteFiles) {
+        cancel(deleteFiles, null);
+    }
+
+    public void cancel(boolean deleteFiles, Runnable afterCleanup) {
         synchronized (lifecycleLock) {
-            if (status == Status.CANCELED || status == Status.FINISHED) return;
+            if (status == Status.FINISHED) return;
+            if (afterCleanup != null) {
+                if (cancelCleanupComplete) afterCleanup.run();
+                else cancelCleanupCallbacks.add(afterCleanup);
+            }
+            if (status == Status.CANCELED) return;
             deleteOnCancel = deleteFiles;
             status = Status.CANCELED;
             restartRequested = false;
@@ -326,6 +337,28 @@ public class GalleryDownloaderV2 {
         Queries.DownloadTable.removeGallery(id);
         DownloadQueue.remove(this, false);
         onCancel();
+        List<Runnable> callbacks;
+        synchronized (lifecycleLock) {
+            cancelCleanupComplete = true;
+            callbacks = new ArrayList<>(cancelCleanupCallbacks);
+            cancelCleanupCallbacks.clear();
+        }
+        for (Runnable callback : callbacks) callback.run();
+    }
+
+    public void deleteLocalFiles() {
+        synchronized (lifecycleLock) {
+            if (status != Status.CANCELED) return;
+            if (!cancelCleanupComplete) {
+                cancelCleanupCallbacks.add(this::deleteLocalFiles);
+                return;
+            }
+        }
+        cleanupExecutor.execute(() -> {
+            if (folder == null) folder = Global.findGalleryFolder(context, id);
+            Global.recursiveDelete(folder);
+            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
+        });
     }
 
     public void runDownload() {

@@ -112,18 +112,23 @@ public final class GalleryStateRepository {
         }
         LocalDownloadState local = storageUncertain ? LocalDownloadState.UNVERIFIED : LocalDownloadState.ABSENT;
         List<File> candidates = directory == null ? folders.get(id) : java.util.Collections.singletonList(directory);
+        int expectedPages = 0;
         if (candidates != null) {
             local = LocalDownloadState.UNVERIFIED;
             for (File candidate : candidates) {
                 LocalDownloadState inspected = LocalDownloadState.inspect(candidate);
+                int candidateTotal = LocalDownloadState.expectedPages(candidate);
+                if (expectedPages == 0) expectedPages = candidateTotal;
                 if (inspected == LocalDownloadState.COMPLETE) {
                     local = inspected;
+                    expectedPages = candidateTotal;
                     break;
                 }
                 if (inspected != LocalDownloadState.UNVERIFIED) local = inspected;
             }
         }
-        return new GalleryState(favorite, name, color, position, local);
+        return new GalleryState(favorite, name, color, position, local, expectedPages,
+            candidates != null && !candidates.isEmpty());
     }
 
     private static void indexFolders(Context context, long version) {

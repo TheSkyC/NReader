@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">全 %2$d ページ中 %1$d ページまで読了</string>
+    <string name="state_reading_page_unknown">%1$d ページまで読了、総ページ数不明</string>
+    <string name="state_download_unverified_help">元の総ページ数がないか、ローカルファイルにアクセスできないため、完全性を確認できません。読み取り可能な既存のページは引き続き開けます。</string>
+</resources>

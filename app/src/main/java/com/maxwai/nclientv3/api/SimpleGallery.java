@@ -1,3 +1,4 @@
+// NReader modifications by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api;
 
 import android.annotation.SuppressLint;
@@ -44,6 +45,7 @@ public class SimpleGallery extends GenericGallery {
     private final String title;
     private final Uri thumbnail;
     private final int id, mediaId;
+    private int pageCount;
     private Language language = Language.UNKNOWN;
     private TagList tags;
 
@@ -53,6 +55,7 @@ public class SimpleGallery extends GenericGallery {
         mediaId = in.readInt();
         thumbnail = Uri.parse(in.readString());
         language = Language.values()[in.readByte()];
+        pageCount = Math.max(0, in.readInt());
     }
 
     @SuppressLint("Range")
@@ -77,6 +80,8 @@ public class SimpleGallery extends GenericGallery {
         mediaId = gallery.getMediaId();
         id = gallery.getId();
         thumbnail = gallery.getThumbnail();
+        pageCount = gallery.getPageCount();
+        tags = gallery.getTags();
     }
 
     /**
@@ -144,7 +149,14 @@ public class SimpleGallery extends GenericGallery {
             }
         }
         if (context != null && id > Global.getMaxId()) Global.updateMaxId(context, id);
-        return new SimpleGallery(title, id, mediaId, Uri.parse("https://t1." + Utility.getHost() + "/" + thumbPath), language, tags);
+        SimpleGallery gallery = new SimpleGallery(title, id, mediaId,
+            Uri.parse("https://t1." + Utility.getHost() + "/" + thumbPath), language, tags);
+        gallery.pageCount = Math.max(0, json.optInt("num_pages", 0));
+        return gallery;
+    }
+
+    public TagList getTags() {
+        return tags;
     }
 
     public boolean hasTags(Collection<Tag> tags) {
@@ -177,7 +189,7 @@ public class SimpleGallery extends GenericGallery {
 
     @Override
     public int getPageCount() {
-        return 0;
+        return pageCount;
     }
 
     @Override
@@ -213,6 +225,7 @@ public class SimpleGallery extends GenericGallery {
         dest.writeInt(mediaId);
         dest.writeString(thumbnail.toString());
         dest.writeByte((byte) language.ordinal());
+        dest.writeInt(pageCount);
         //TAGS AREN'T WRITTEN
     }
 

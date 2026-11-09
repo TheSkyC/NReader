@@ -428,9 +428,7 @@
     <string name="open_manual_bookmark">Open page bookmark</string>
     <string name="pause_download">Pause download</string>
     <string name="download_failed">Failed</string>
-    <string name="stop_download_options">Stop this task and keep its downloaded pages, or delete the downloaded files. Pausing keeps the task in the queue.</string>
-    <string name="stop_keep_files">Stop and keep files</string>
-    <string name="stop_delete_files">Stop and delete files</string>
+    <string name="download_stopped">Download stopped</string>
     <string name="download_error_authentication">Access was denied. Check your sign-in and API key before retrying.</string>
     <string name="download_error_rate_limit">The server limited requests. Wait before retrying this task.</string>
     <string name="download_error_storage">Unable to write pages. Check free space and storage access before retrying.</string>
@@ -441,10 +439,10 @@
     <string name="state_local_favorite">Local favorite</string>
     <string name="state_custom_status">Status: %1$s</string>
     <string name="state_reading_page">Read to page %1$d</string>
-    <string name="state_download_complete">Downloaded</string>
-    <string name="state_download_partial">Partial download</string>
-    <string name="state_download_damaged">Damaged download</string>
-    <string name="state_download_unverified">Local files unverified</string>
+    <string name="state_download_complete">Fully downloaded</string>
+    <string name="state_download_partial">Missing pages</string>
+    <string name="state_download_damaged">Damaged images</string>
+    <string name="state_download_unverified">Completeness unknown</string>
     <string name="debug_mask_images">Mask images for debugging</string>
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
 </resources>
