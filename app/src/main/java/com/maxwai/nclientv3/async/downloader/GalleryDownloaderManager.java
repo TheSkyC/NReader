@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.downloader;
 
 import android.app.PendingIntent;
@@ -48,12 +49,11 @@ public class GalleryDownloaderManager {
         @Override
         public void triggerCancelDownload(GalleryDownloaderV2 downloader) {
             cancelNotification();
-            Global.recursiveDelete(downloader.getFolder());
         }
 
         @Override
         public void triggerPauseDownload(GalleryDownloaderV2 downloader) {
-            notificationUpdate();
+            cancelNotification();
         }
     };
 

@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.downloader;
 
 import java.util.List;
@@ -6,19 +7,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DownloadQueue {
     private static final List<GalleryDownloaderManager> downloadQueue = new CopyOnWriteArrayList<>();
 
-    public static void add(GalleryDownloaderManager x) {
+    public static synchronized void add(GalleryDownloaderManager x) {
         for (GalleryDownloaderManager manager : downloadQueue)
             if (x.downloader().getId() == manager.downloader().getId()) {
-                manager.downloader().setStatus(GalleryDownloaderV2.Status.NOT_STARTED);
+                manager.downloader().retry();
                 givePriority(manager.downloader());
                 return;
             }
+        x.downloader().persist();
         downloadQueue.add(x);
     }
 
     public static GalleryDownloaderV2 fetchForData() {
         for (GalleryDownloaderManager x : downloadQueue)
-            if (!x.downloader().hasData()) return x.downloader();
+            if (!x.downloader().hasData() && x.downloader().canBeFetched()) return x.downloader();
         return null;
     }
 
@@ -31,7 +33,8 @@ public class DownloadQueue {
     public static CopyOnWriteArrayList<GalleryDownloaderV2> getDownloaders() {
         CopyOnWriteArrayList<GalleryDownloaderV2> downloaders = new CopyOnWriteArrayList<>();
         for (GalleryDownloaderManager manager : downloadQueue)
-            downloaders.add(manager.downloader());
+            if (manager.downloader().getStatus() != GalleryDownloaderV2.Status.CANCELED)
+                downloaders.add(manager.downloader());
         return downloaders;
     }
 
@@ -53,14 +56,20 @@ public class DownloadQueue {
     }
 
     public static void remove(GalleryDownloaderV2 downloader, boolean cancel) {
+        remove(downloader, cancel, true);
+    }
+
+    public static synchronized void remove(GalleryDownloaderV2 downloader, boolean cancel, boolean deleteFiles) {
         GalleryDownloaderManager manager = findManagerFromDownloader(downloader);
         if (manager == null) return;
-        if (cancel)
-            downloader.setStatus(GalleryDownloaderV2.Status.CANCELED);
+        if (cancel) {
+            downloader.cancel(deleteFiles);
+            return;
+        }
         downloadQueue.remove(manager);
     }
 
-    public static void givePriority(GalleryDownloaderV2 downloader) {
+    public static synchronized void givePriority(GalleryDownloaderV2 downloader) {
         GalleryDownloaderManager manager = findManagerFromDownloader(downloader);
         if (manager == null) return;
         downloadQueue.remove(manager);

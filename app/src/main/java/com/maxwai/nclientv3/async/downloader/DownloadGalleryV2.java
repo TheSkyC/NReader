@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.downloader;
 
 import android.content.Context;
@@ -26,6 +27,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class DownloadGalleryV2 extends Worker {
     private static final ReentrantLock lock = new ReentrantLock();
+    private volatile GalleryDownloaderV2 currentDownload;
+
+    @Override
+    public void onStopped() {
+        GalleryDownloaderV2 downloader = currentDownload;
+        if (downloader != null) downloader.setStatus(GalleryDownloaderV2.Status.PAUSED);
+    }
 
     public DownloadGalleryV2(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -33,7 +41,10 @@ public class DownloadGalleryV2 extends Worker {
 
     public static void downloadGallery(Context context, GenericGallery gallery) {
         if (gallery.isValid() && gallery instanceof Gallery)
+        {
             downloadGallery(context, (Gallery) gallery);
+            return;
+        }
         if (gallery.getId() > 0) {
             if (gallery instanceof SimpleGallery) {
                 SimpleGallery simple = (SimpleGallery) gallery;
@@ -63,7 +74,6 @@ public class DownloadGalleryV2 extends Worker {
             gg.downloader().setStatus(GalleryDownloaderV2.Status.PAUSED);
             DownloadQueue.add(gg);
         }
-        new PageChecker().start();
         startWork(context);
     }
 
@@ -81,30 +91,29 @@ public class DownloadGalleryV2 extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        lock.lock();
         try {
-            obtainData();
+            lock.lockInterruptibly();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return Result.success();
+        }
+        try {
             GalleryDownloaderManager entry = DownloadQueue.fetch();
-            if (entry != null) {
+            while (entry != null && !isStopped()) {
                 LogUtility.d("Downloading: " + entry.downloader().getId());
-                if (entry.downloader().downloadGalleryData()) {
-                    entry.downloader().download();
-                }
+                currentDownload = entry.downloader();
+                if (isStopped()) break;
+                currentDownload.runDownload();
+                currentDownload = null;
+                entry = DownloadQueue.fetch();
             }
         } finally {
+            currentDownload = null;
             lock.unlock();
         }
         return Result.success();
     }
 
-    private void obtainData() {
-        GalleryDownloaderV2 downloader = DownloadQueue.fetchForData();
-        while (downloader != null) {
-            downloader.downloadGalleryData();
-            Utility.threadSleep(100);
-            downloader = DownloadQueue.fetchForData();
-        }
-    }
 
 
 }
