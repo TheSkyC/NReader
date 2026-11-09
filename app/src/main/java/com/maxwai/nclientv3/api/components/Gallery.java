@@ -1,3 +1,4 @@
+// NReader modifications by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api.components;
 
 import android.content.Context;
@@ -309,6 +310,7 @@ public class Gallery extends GenericGallery {
         writer.name("media_id").value(getMediaId());
         writer.name("upload_date").value(getUploadDate().getTime() / 1000);
         writer.name("num_favorites").value(getFavoriteCount());
+        writer.name("num_pages").value(getPageCount());
         toJsonTitle(writer);
         toJsonTags(writer);
 
