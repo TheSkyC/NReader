@@ -5,9 +5,11 @@ import android.app.Application;
 import android.content.Context;
 
 import com.maxwai.nclientv3.api.components.Gallery;
+import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
+import com.maxwai.nclientv3.files.LocalDownloadState;
 import com.maxwai.nclientv3.settings.Global;
 
 import org.junit.After;
@@ -17,10 +19,12 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -137,6 +141,24 @@ public class DownloadLifecycleTest {
             assertEquals(1, Queries.ResumeTable.pageFromId(123));
             assertNotNull(Queries.ReadingProgressTable.fromId(123));
         }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void downloadMetadataPreservesExpectedPagesForLocalVerification() throws Exception {
+        Gallery gallery = new Gallery(null, "{\"id\":125,\"num_pages\":2,\"title\":{\"pretty\":\"Metadata test\"},"
+            + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1},"
+            + "{\"path\":\"galleries/1/2.png\",\"width\":1,\"height\":1}]}", null, false);
+        GalleryDownloaderV2 downloader = new GalleryDownloaderV2(context, gallery, 0, 1);
+        downloader.initDownload();
+        byte[] image = Base64.getDecoder().decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9ZkAAAAASUVORK5CYII=");
+        Files.write(new File(downloader.getFolder(), "001.png").toPath(), image);
+        assertEquals(2, new LocalGallery(downloader.getFolder()).getPageCount());
+        assertEquals(LocalDownloadState.PARTIAL, LocalDownloadState.inspect(downloader.getFolder()));
+        Files.write(new File(downloader.getFolder(), "002.png").toPath(), image);
+        assertEquals(LocalDownloadState.COMPLETE, LocalDownloadState.inspect(downloader.getFolder()));
     }
 
     @Test
