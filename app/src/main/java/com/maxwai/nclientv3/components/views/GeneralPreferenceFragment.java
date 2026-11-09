@@ -30,6 +30,7 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SeekBarPreference;
+import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.BuildConfig;
@@ -47,6 +48,7 @@ import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
+import com.maxwai.nclientv3.utility.DebugImageMask;
 import com.maxwai.nclientv3.utility.Utility;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -171,6 +173,20 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     @SuppressLint("ApplySharedPref")
     private void mainMenu() {
         addPreferencesFromResource(R.xml.settings);
+
+        if (BuildConfig.DEBUG) {
+            SwitchPreferenceCompat mask = new SwitchPreferenceCompat(requireContext());
+            mask.setTitle(R.string.debug_mask_images);
+            mask.setSummary(R.string.debug_mask_images_summary);
+            mask.setIconSpaceReserved(false);
+            mask.setPersistent(false);
+            mask.setChecked(DebugImageMask.isEnabled(requireContext()));
+            mask.setOnPreferenceChangeListener((preference, value) -> {
+                DebugImageMask.setEnabled(requireContext(), (Boolean) value);
+                return true;
+            });
+            getPreferenceScreen().addPreference(mask);
+        }
 
         Preference updateSettings = Objects.requireNonNull(findPreference(getString(R.string.preference_key_update_settings)));
         updateSettings.setVisible(!BuildConfig.UPDATE_REPOSITORY.isEmpty());

@@ -36,6 +36,14 @@ before installation or distribution. Keep the same private signing key for futur
 NReader releases. Keystores, passwords, local SDK configuration, build outputs, and
 IDE caches were not imported from the source working directory and must not be committed.
 
+Debug builds mask gallery covers and reader images with an opaque checkerboard
+by default. The Settings switch **Mask images for debugging** applies when a screen
+is reopened. It preserves image dimensions for layout and reading-position checks;
+it does not change downloaded files. Its preference is separate from user backups.
+Release builds always display images normally and omit this switch.
+Sharing or saving the displayed reader image is unavailable while masked;
+use the synthetic fixtures with masking disabled to check those actions.
+
 ## Data and updates
 
 NReader installs alongside NClientV3. App-private settings, databases, favorites,

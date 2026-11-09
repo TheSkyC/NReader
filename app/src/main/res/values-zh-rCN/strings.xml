@@ -348,4 +348,6 @@
     <string name="state_download_partial">部分下载</string>
     <string name="state_download_damaged">下载已损坏</string>
     <string name="state_download_unverified">本地文件未验证</string>
+    <string name="debug_mask_images">调试图片遮罩</string>
+    <string name="debug_mask_images_summary">用不透明棋盘格遮住封面和阅读页。重新打开页面后生效，不修改下载文件。</string>
 </resources>

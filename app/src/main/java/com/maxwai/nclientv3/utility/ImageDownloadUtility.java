@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.utility;
 
 import android.app.Activity;
@@ -17,7 +18,6 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.components.GlideX;
@@ -46,7 +46,7 @@ public class ImageDownloadUtility {
         RequestManager glide = GlideX.with(context);
         if (glide == null) return;
         Drawable logo = Global.getLogo(context.getResources());
-        glide.load(file).transform(new Rotate(angle)).error(logo).placeholder(logo).into(view);
+        glide.load(file).transform(new Rotate(angle)).error(logo).placeholder(logo).into(DebugImageMask.target(view));
         LogUtility.d("Requested file glide: " + file);
     }
 
@@ -104,12 +104,7 @@ public class ImageDownloadUtility {
                     }
                 })
                 .placeholder(logo)
-                .into(new ImageViewTarget<Drawable>(view) {
-                    @Override
-                    protected void setResource(@Nullable Drawable resource) {
-                        new Handler(context.getMainLooper()).post(() -> this.view.setImageDrawable(resource));
-                    }
-                });
+                .into(DebugImageMask.target(view));
         });
         if (newGallery) {
             //noinspection DataFlowIssue
