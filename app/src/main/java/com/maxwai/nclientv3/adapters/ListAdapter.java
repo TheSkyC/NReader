@@ -1,8 +1,8 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.content.Intent;
 import android.text.Layout;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
-    private final SparseIntArray statuses = new SparseIntArray();
     private final List<SimpleGallery> mDataset;
     private final BaseActivity context;
     private final String queryString;
@@ -70,8 +69,8 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
 
     @Override
     public void onBindViewHolder(@NonNull final GenericAdapter.ViewHolder holder, int position) {
-        int holderPos = holder.getBindingAdapterPosition();
-        if (holderPos >= mDataset.size()) return;
+        int holderPos = position;
+        if (holderPos < 0 || holderPos >= mDataset.size()) return;
         final SimpleGallery ent = mDataset.get(holderPos);
         if (ent == null) return;
         if (!Global.showTitles()) {
@@ -119,22 +118,16 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             holder.pages.animate().alpha(holder.pages.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
             return true;
         });
-        int statusColor = statuses.get(ent.getId(), 0);
-        if (statusColor == 0) {
-            statusColor = Queries.StatusMangaTable.getStatus(ent.getId()).color;
-            statuses.put(ent.getId(), statusColor);
-        }
-        holder.title.setBackgroundColor(statusColor);
+        holder.stateBadge.bind(ent);
     }
 
     public void updateColor(int id) {
         if (id < 0) return;
         int position = -1;
-        statuses.put(id, Queries.StatusMangaTable.getStatus(id).color);
         for (int i = 0; i < mDataset.size(); i++) {
             SimpleGallery gallery= mDataset.get(i);
             if (gallery != null && gallery.getId() == id) {
-                position = id;
+                position = i;
                 break;
             }
         }
@@ -211,6 +204,6 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
 
 
     public void resetStatuses() {
-        statuses.clear();
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
     }
 }

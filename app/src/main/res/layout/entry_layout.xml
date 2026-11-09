@@ -63,6 +63,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/gallery_state"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@color/entry_background"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
         <View
             android:id="@+id/overlay"
             android:layout_width="0dp"

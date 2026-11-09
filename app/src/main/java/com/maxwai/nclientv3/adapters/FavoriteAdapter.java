@@ -1,10 +1,10 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
 import android.text.Layout;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.Filter;
@@ -31,7 +31,6 @@ import java.util.Locale;
 
 public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> implements Filterable {
     private final int perPage = FavoriteActivity.getEntryPerPage();
-    private final SparseIntArray statuses = new SparseIntArray();
     private final FavoriteActivity activity;
     private Gallery[] galleries;
     private CharSequence lastQuery;
@@ -77,7 +76,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
 
     @Override
     public void onBindViewHolder(@NonNull final GenericAdapter.ViewHolder holder, int position) {
-        final Gallery ent = galleryFromPosition(holder.getBindingAdapterPosition());
+        final Gallery ent = galleryFromPosition(position);
         if (ent == null) return;
         ImageDownloadUtility.loadImage(activity, ent.getThumbnail(), holder.imgView);
         holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
@@ -100,12 +99,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
             holder.pages.animate().alpha(holder.pages.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
             return true;
         });
-        int statusColor = statuses.get(ent.getId(), 0);
-        if (statusColor == 0) {
-            statusColor = Queries.StatusMangaTable.getStatus(ent.getId()).color;
-            statuses.put(ent.getId(), statusColor);
-        }
-        holder.title.setBackgroundColor(statusColor);
+        holder.stateBadge.bind(ent);
     }
 
     private void startGallery(Gallery ent) {
@@ -181,7 +175,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         if (cursor != null) cursor.close();
         galleries = new Gallery[c == null ? 0 : c.getCount()];
         cursor = c;
-        statuses.clear();
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
     }
 
     public Collection<Gallery> getAllGalleries() {

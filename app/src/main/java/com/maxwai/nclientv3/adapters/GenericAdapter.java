@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.view.LayoutInflater;
@@ -88,6 +89,7 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
         final View overlay;
         final TextView title, pages, flag;
         final View layout;
+        final GalleryStateBadge stateBadge;
 
         ViewHolder(View v) {
             super(v);
@@ -97,6 +99,7 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
             layout = v.findViewById(R.id.master_layout);
             flag = v.findViewById(R.id.flag);
             overlay = v.findViewById(R.id.overlay);
+            stateBadge = new GalleryStateBadge(v, title);
         }
     }
 
