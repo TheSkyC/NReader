@@ -47,6 +47,10 @@ unavailable storage means unverified. This lightweight check does not replace a
 full image integrity scan. State is resolved off the UI thread and refreshed on
 returning to a screen and after local mutations.
 
+New download metadata preserves the original total in `num_pages`. Legacy
+metadata without that field remains readable, but local file count must not be
+used as evidence of the original total or of a complete download.
+
 Cards display local favorites, custom status names, automatic page positions and
 local file state independently. Truncated labels keep their full accessibility
 description. State callbacks must not update a recycled card bound to another
