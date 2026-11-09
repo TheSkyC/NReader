@@ -7,15 +7,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DownloadQueue {
     private static final List<GalleryDownloaderManager> downloadQueue = new CopyOnWriteArrayList<>();
 
-    public static synchronized void add(GalleryDownloaderManager x) {
+    public static synchronized boolean add(GalleryDownloaderManager x) {
         for (GalleryDownloaderManager manager : downloadQueue)
             if (x.downloader().getId() == manager.downloader().getId()) {
+                if (!manager.downloader().coversRequest(x.downloader())) return false;
                 manager.downloader().retry();
                 givePriority(manager.downloader());
-                return;
+                return true;
             }
         x.downloader().persist();
         downloadQueue.add(x);
+        return true;
     }
 
     public static GalleryDownloaderV2 fetchForData() {

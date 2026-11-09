@@ -340,4 +340,5 @@
     <string name="download_error_not_found">请求的作品或页面已不可用。</string>
     <string name="download_error_invalid_data">服务器返回了不支持或无效的作品数据。</string>
     <string name="download_error_network">已达到重试次数上限，下载已停止。请检查网络后重试。</string>
+    <string name="download_conflicting_task">该作品已有排队或正在停止的任务。请先在下载列表中完成或停止原任务，再选择其他范围。</string>
 </resources>

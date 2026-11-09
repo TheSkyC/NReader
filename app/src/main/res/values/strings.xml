@@ -437,4 +437,5 @@
     <string name="download_error_not_found">The requested gallery or page is no longer available.</string>
     <string name="download_error_invalid_data">The server returned unsupported or invalid gallery data.</string>
     <string name="download_error_network">The download stopped after a limited number of attempts. Check your connection and retry.</string>
+    <string name="download_conflicting_task">Another task for this gallery is queued or stopping. Finish or stop it in Downloads before requesting a different range.</string>
 </resources>

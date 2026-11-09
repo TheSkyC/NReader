@@ -190,6 +190,14 @@ public class GalleryDownloaderV2 {
         return end;
     }
 
+    boolean coversRequest(GalleryDownloaderV2 request) {
+        if (status == Status.CANCELED || status == Status.FINISHED) return false;
+        int requestedStart = Math.max(0, request.start);
+        int requestedEnd = request.end >= 0 ? request.end
+            : gallery == null ? Integer.MAX_VALUE : gallery.getPageCount() - 1;
+        return Math.max(0, start) <= requestedStart && (end < 0 || end >= requestedEnd);
+    }
+
     @NonNull
     public String getPathTitle() {
         return title;
