@@ -182,5 +182,6 @@ class Importer {
             database.endTransaction();
         }
         for (SharedPreferences.Editor editor : preferences) editor.apply();
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
     }
 }

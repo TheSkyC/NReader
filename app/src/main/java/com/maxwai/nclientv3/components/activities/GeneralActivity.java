@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.activities;
 
 import android.content.SharedPreferences;
@@ -61,6 +62,7 @@ public abstract class GeneralActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         lastActivity = new WeakReference<>(this);
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         if (!isFastScrollerApplied) {
             isFastScrollerApplied = true;
             Global.applyFastScroller(findViewById(R.id.recycler));
