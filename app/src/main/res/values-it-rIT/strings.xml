@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">Continua a leggere</string>
+    <string name="open_manual_bookmark">Apri il segnalibro manuale</string>
+    <string name="pause_download">Sospendi download</string>
+    <string name="download_failed">Download non riuscito</string>
+    <string name="stop_download_options">Interrompi questa attività conservando le pagine scaricate oppure elimina i file. La sospensione mantiene l’attività in coda.</string>
+    <string name="stop_keep_files">Interrompi e conserva i file</string>
+    <string name="stop_delete_files">Interrompi ed elimina i file</string>
+    <string name="download_error_authentication">Accesso negato. Controlla la chiave API e le autorizzazioni dell’account.</string>
+    <string name="download_error_rate_limit">Troppe richieste. Attendi prima di riprovare.</string>
+    <string name="download_error_storage">Impossibile scrivere i file. Controlla lo spazio e le autorizzazioni di archiviazione.</string>
+    <string name="download_error_not_found">La galleria o la pagina richiesta non è più disponibile.</string>
+    <string name="download_error_invalid_data">Il server ha restituito dati della galleria non validi o non supportati.</string>
+    <string name="download_error_network">Download interrotto dopo più tentativi. Controlla la connessione e riprova.</string>
+    <string name="download_conflicting_task">Una richiesta per questa galleria è già in coda o in fase di arresto. Completala o interrompila in Download prima di richiedere un altro intervallo.</string>
+    <string name="state_local_favorite">Preferito locale</string>
+    <string name="state_custom_status">Stato: %1$s</string>
+    <string name="state_reading_page">Letto fino a pagina %1$d</string>
+    <string name="state_download_complete">Scaricato</string>
+    <string name="state_download_partial">Download parziale</string>
+    <string name="state_download_damaged">Download danneggiato</string>
+    <string name="state_download_unverified">File locali non verificati</string>
+    <string name="debug_mask_images">Oscura immagini per il debug</string>
+    <string name="debug_mask_images_summary">Copre copertine e pagine con una scacchiera opaca. Si applica alla riapertura della schermata; i file scaricati restano invariati.</string>
 </resources>
