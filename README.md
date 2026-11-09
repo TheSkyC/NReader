@@ -39,10 +39,22 @@ IDE caches were not imported from the source working directory and must not be c
 Debug builds mask gallery covers and reader images with an opaque checkerboard
 by default. The Settings switch **Mask images for debugging** applies when a screen
 is reopened. It preserves image dimensions for layout and reading-position checks;
-it does not change downloaded files. Its preference is separate from user backups.
+it does not change downloaded files. Its preference is separate from NReader’s
+exported ZIP backups.
 Release builds always display images normally and omit this switch.
 Sharing or saving the displayed reader image is unavailable while masked;
 use the synthetic fixtures with masking disabled to check those actions.
+
+Run the regression tests and shared debug packaging checks with:
+
+```powershell
+.\gradlew.bat :app:testPost28DebugUnitTest
+.\gradlew.bat assembleDebug bundleDebug :app:lintPost28Debug
+```
+
+The tests use Robolectric for migrations, backup rollback, reading positions,
+local file state and download lifecycle behavior. Inspect the lint report even
+when its task succeeds: the existing configuration does not fail on findings.
 
 ## Data and updates
 

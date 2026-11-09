@@ -10,6 +10,15 @@
   and allow explicit retry after failure. Write pages through temporary files.
 - Offer stopping downloads with files retained or deleted, after active requests
   stop, while preserving favorites, statuses and reading positions.
+- Show independent local favorite, custom status, automatic reading position and
+  verified local download state across gallery lists, with asynchronous refresh.
+- Preserve expected page totals in partial downloads; distinguish missing pages,
+  damaged images and unavailable storage. Recognize longer local site ID markers.
+- Reject conflicting queued download ranges without replacing the original task.
+- Reload the custom status catalog after successful backup restore.
+- Add an optional opaque debug image mask for covers and reader pages, enabled by
+  default in debug builds. Translate the new controls into the existing locales.
+- Replace named APKs on repeat Windows builds while retaining the canonical APK.
 
 ## 1.0.0 — 2026-11-09
 
