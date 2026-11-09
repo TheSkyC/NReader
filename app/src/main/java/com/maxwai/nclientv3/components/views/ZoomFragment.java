@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.views;
 
 import static com.bumptech.glide.request.target.Target.SIZE_ORIGINAL;
@@ -40,6 +41,7 @@ import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
+import com.maxwai.nclientv3.utility.DebugImageMask;
 
 public class ZoomFragment extends Fragment {
 
@@ -141,13 +143,13 @@ public class ZoomFragment extends Fragment {
 
             @Override
             protected void setResource(@Nullable Drawable resource) {
-                photoView.setImageDrawable(resource);
+                photoView.setImageDrawable(DebugImageMask.wrap(photoView.getContext(), resource));
             }
 
             void applyDrawable(ImageView toShow, ImageView toHide, Drawable drawable) {
                 toShow.setVisibility(View.VISIBLE);
                 toHide.setVisibility(View.GONE);
-                toShow.setImageDrawable(drawable);
+                toShow.setImageDrawable(toShow == photoView ? DebugImageMask.wrap(toShow.getContext(), drawable) : drawable);
                 if (toShow instanceof PhotoView)
                     scalePhoto(drawable);
             }
