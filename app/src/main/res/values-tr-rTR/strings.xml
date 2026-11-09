@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Elle eklenen yer imini aç</string>
     <string name="pause_download">İndirmeyi duraklat</string>
     <string name="download_failed">İndirme başarısız</string>
-    <string name="stop_download_options">Bu görevi durdurup indirilen sayfaları tutun veya dosyaları silin. Duraklatma görevi sırada tutar.</string>
-    <string name="stop_keep_files">Durdur ve dosyaları tut</string>
-    <string name="stop_delete_files">Durdur ve dosyaları sil</string>
     <string name="download_error_authentication">Erişim reddedildi. API anahtarını ve hesap izinlerini kontrol edin.</string>
     <string name="download_error_rate_limit">Çok fazla istek gönderildi. Yeniden denemeden önce bekleyin.</string>
     <string name="download_error_storage">Dosyalar yazılamadı. Boş alanı ve depolama izinlerini kontrol edin.</string>

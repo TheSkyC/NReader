@@ -10,12 +10,17 @@ public final class GalleryState {
     public final int statusColor;
     public final ReadingPosition position;
     public final LocalDownloadState local;
+    public final int expectedPages;
+    public final boolean hasLocalFiles;
 
-    GalleryState(boolean favorite, String statusName, int statusColor, ReadingPosition position, LocalDownloadState local) {
+    GalleryState(boolean favorite, String statusName, int statusColor, ReadingPosition position,
+                 LocalDownloadState local, int expectedPages, boolean hasLocalFiles) {
         this.favorite = favorite;
         this.statusName = statusName;
         this.statusColor = statusColor;
         this.position = position;
         this.local = local;
+        this.expectedPages = expectedPages;
+        this.hasLocalFiles = hasLocalFiles;
     }
 }

@@ -144,6 +144,38 @@ public class DownloadLifecycleTest {
     }
 
     @Test
+    public void undoingStopResumesRangeAndSkipsCompletedPages() throws Exception {
+        Gallery gallery = new Gallery(null, "{\"id\":126,\"num_pages\":2,\"title\":{\"pretty\":\"Resume test\"},"
+            + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1},"
+            + "{\"path\":\"galleries/1/2.png\",\"width\":1,\"height\":1}]}", null, false);
+        GalleryDownloaderV2 stopped = new GalleryDownloaderV2(context, gallery, 0, 1);
+        stopped.initDownload();
+        byte[] image = Base64.getDecoder().decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9ZkAAAAASUVORK5CYII=");
+        File completedPage = new File(stopped.getFolder(), "001.png");
+        Files.write(completedPage.toPath(), image);
+        CountDownLatch stoppedSignal = new CountDownLatch(1);
+        stopped.addObserver(new DownloadObserver() {
+            @Override public void triggerStartDownload(GalleryDownloaderV2 ignored) {}
+            @Override public void triggerUpdateProgress(GalleryDownloaderV2 ignored, int reach, int total) {}
+            @Override public void triggerEndDownload(GalleryDownloaderV2 ignored) {}
+            @Override public void triggerPauseDownload(GalleryDownloaderV2 ignored) {}
+            @Override public void triggerCancelDownload(GalleryDownloaderV2 ignored) { stoppedSignal.countDown(); }
+        });
+        stopped.cancel(false);
+        assertTrue(stoppedSignal.await(5, TimeUnit.SECONDS));
+        assertTrue(completedPage.exists());
+
+        GalleryDownloaderV2 resumed = new GalleryDownloaderV2(context, gallery, 0, 1);
+        resumed.initDownload();
+        assertEquals(50, resumed.getPercentage());
+        assertTrue(completedPage.exists());
+        assertEquals(0, resumed.getStart());
+        assertEquals(1, resumed.getEnd());
+    }
+
+    @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     public void downloadMetadataPreservesExpectedPagesForLocalVerification() throws Exception {
         Gallery gallery = new Gallery(null, "{\"id\":125,\"num_pages\":2,\"title\":{\"pretty\":\"Metadata test\"},"

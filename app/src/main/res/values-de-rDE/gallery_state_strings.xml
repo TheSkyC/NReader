@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">Bis Seite %1$d von %2$d gelesen</string>
+    <string name="state_reading_page_unknown">Bis Seite %1$d gelesen; Gesamtzahl unbekannt</string>
+    <string name="state_download_unverified_help">Die Vollständigkeit lässt sich ohne die ursprüngliche Seitenzahl oder Zugriff auf die lokalen Dateien nicht bestätigen. Vorhandene lesbare Seiten können weiterhin geöffnet werden.</string>
+</resources>

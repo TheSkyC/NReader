@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cover_add_favorite">Adicionar aos favoritos locais</string>
+    <string name="cover_remove_favorite">Remover dos favoritos locais</string>
+    <string name="cover_favorite_added">Adicionado aos favoritos</string>
+    <string name="cover_favorite_removed">Removido dos favoritos</string>
+    <string name="cover_undo">Desfazer</string>
+    <string name="cover_download_queued">Download na fila</string>
+    <string name="cover_download_running">Baixando: %1$d%%</string>
+    <string name="cover_download_paused">Download pausado</string>
+</resources>

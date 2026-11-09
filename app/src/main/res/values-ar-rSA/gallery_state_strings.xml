@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">وصلت القراءة إلى الصفحة %1$d من %2$d</string>
+    <string name="state_reading_page_unknown">وصلت القراءة إلى الصفحة %1$d؛ العدد الإجمالي غير معروف</string>
+    <string name="state_download_unverified_help">لا يمكن التأكد من اكتمال الملفات لعدم توفر عدد الصفحات الأصلي أو إمكانية الوصول إلى الملفات المحلية. لا يزال بالإمكان فتح الصفحات المتاحة والقابلة للقراءة.</string>
+</resources>

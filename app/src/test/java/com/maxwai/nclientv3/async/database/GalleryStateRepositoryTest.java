@@ -72,7 +72,10 @@ public class GalleryStateRepositoryTest {
     public void unavailableConfiguredStorageIsUnverified() throws Exception {
         Global.DOWNLOADFOLDER = new File(root, "unavailable-volume/Download");
         GalleryStateRepository.invalidateLocalFiles();
-        assertEquals(LocalDownloadState.UNVERIFIED, load(123, null).local);
+        GalleryState state = load(123, null);
+        assertEquals(LocalDownloadState.UNVERIFIED, state.local);
+        assertFalse(state.hasLocalFiles);
+        assertEquals(0, state.expectedPages);
     }
 
     private GalleryState load(int id, File directory) throws Exception {

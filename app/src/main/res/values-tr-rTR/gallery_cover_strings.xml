@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cover_add_favorite">Yerel favorilere ekle</string>
+    <string name="cover_remove_favorite">Yerel favorilerden kaldır</string>
+    <string name="cover_favorite_added">Favorilere eklendi</string>
+    <string name="cover_favorite_removed">Favorilerden kaldırıldı</string>
+    <string name="cover_undo">Geri al</string>
+    <string name="cover_download_queued">İndirme sırada</string>
+    <string name="cover_download_running">İndiriliyor: %1$d%%</string>
+    <string name="cover_download_paused">İndirme duraklatıldı</string>
+</resources>

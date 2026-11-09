@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">Leído hasta la página %1$d de %2$d</string>
+    <string name="state_reading_page_unknown">Leído hasta la página %1$d; total desconocido</string>
+    <string name="state_download_unverified_help">No se puede confirmar que esté completo porque falta el total original de páginas o el acceso a los archivos locales. Las páginas disponibles y legibles se pueden seguir abriendo.</string>
+</resources>

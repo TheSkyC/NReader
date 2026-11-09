@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Открыть ручную закладку</string>
     <string name="pause_download">Приостановить загрузку</string>
     <string name="download_failed">Ошибка загрузки</string>
-    <string name="stop_download_options">Остановите задание, сохранив загруженные страницы, или удалите файлы. Приостановка сохраняет задание в очереди.</string>
-    <string name="stop_keep_files">Остановить и сохранить файлы</string>
-    <string name="stop_delete_files">Остановить и удалить файлы</string>
     <string name="download_error_authentication">Доступ запрещён. Проверьте ключ API и права учётной записи.</string>
     <string name="download_error_rate_limit">Слишком много запросов. Подождите перед повторной попыткой.</string>
     <string name="download_error_storage">Не удалось записать файлы. Проверьте свободное место и разрешения хранилища.</string>

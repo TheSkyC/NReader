@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Apri il segnalibro manuale</string>
     <string name="pause_download">Sospendi download</string>
     <string name="download_failed">Download non riuscito</string>
-    <string name="stop_download_options">Interrompi questa attività conservando le pagine scaricate oppure elimina i file. La sospensione mantiene l’attività in coda.</string>
-    <string name="stop_keep_files">Interrompi e conserva i file</string>
-    <string name="stop_delete_files">Interrompi ed elimina i file</string>
     <string name="download_error_authentication">Accesso negato. Controlla la chiave API e le autorizzazioni dell’account.</string>
     <string name="download_error_rate_limit">Troppe richieste. Attendi prima di riprovare.</string>
     <string name="download_error_storage">Impossibile scrivere i file. Controlla lo spazio e le autorizzazioni di archiviazione.</string>

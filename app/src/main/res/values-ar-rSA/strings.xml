@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">فتح العلامة اليدوية</string>
     <string name="pause_download">إيقاف التنزيل مؤقتًا</string>
     <string name="download_failed">فشل التنزيل</string>
-    <string name="stop_download_options">أوقف هذه المهمة مع الاحتفاظ بالصفحات المنزلة أو احذف الملفات. الإيقاف المؤقت يبقي المهمة في قائمة الانتظار.</string>
-    <string name="stop_keep_files">إيقاف مع الاحتفاظ بالملفات</string>
-    <string name="stop_delete_files">إيقاف وحذف الملفات</string>
     <string name="download_error_authentication">تم رفض الوصول. تحقق من مفتاح API وأذونات الحساب.</string>
     <string name="download_error_rate_limit">طلبات كثيرة جدًا. انتظر قبل إعادة المحاولة.</string>
     <string name="download_error_storage">تعذرت كتابة الملفات. تحقق من المساحة المتاحة وأذونات التخزين.</string>

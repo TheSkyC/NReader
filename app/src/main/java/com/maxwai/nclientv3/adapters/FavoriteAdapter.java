@@ -57,6 +57,12 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         return new GenericAdapter.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.entry_layout, parent, false));
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recycler) {
+        super.onAttachedToRecyclerView(recycler);
+        GenericAdapter.prepareGalleryGrid(recycler);
+    }
+
     @Nullable
     private Gallery galleryFromPosition(int position) {
         if (galleries[position] != null) return galleries[position];

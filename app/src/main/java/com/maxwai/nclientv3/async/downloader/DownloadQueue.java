@@ -62,10 +62,15 @@ public class DownloadQueue {
     }
 
     public static synchronized void remove(GalleryDownloaderV2 downloader, boolean cancel, boolean deleteFiles) {
+        remove(downloader, cancel, deleteFiles, null);
+    }
+
+    public static synchronized void remove(GalleryDownloaderV2 downloader, boolean cancel, boolean deleteFiles,
+                                           Runnable afterCleanup) {
         GalleryDownloaderManager manager = findManagerFromDownloader(downloader);
         if (manager == null) return;
         if (cancel) {
-            downloader.cancel(deleteFiles);
+            downloader.cancel(deleteFiles, afterCleanup);
             return;
         }
         downloadQueue.remove(manager);

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">读到第 %1$d 页，共 %2$d 页</string>
+    <string name="state_reading_page_unknown">读到第 %1$d 页，总页数未知</string>
+    <string name="state_download_unverified_help">缺少原始总页数，或无法访问本地文件，暂时无法确认完整性。已有且可读取的页面仍可打开。</string>
+</resources>

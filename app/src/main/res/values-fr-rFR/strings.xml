@@ -331,9 +331,6 @@
     <string name="open_manual_bookmark">Ouvrir le marque-page manuel</string>
     <string name="pause_download">Suspendre le téléchargement</string>
     <string name="download_failed">Échec du téléchargement</string>
-    <string name="stop_download_options">Arrêtez cette tâche en conservant les pages téléchargées, ou supprimez les fichiers. La suspension garde la tâche dans la file.</string>
-    <string name="stop_keep_files">Arrêter et conserver les fichiers</string>
-    <string name="stop_delete_files">Arrêter et supprimer les fichiers</string>
     <string name="download_error_authentication">Accès refusé. Vérifiez la clé API et les autorisations du compte.</string>
     <string name="download_error_rate_limit">Trop de requêtes. Patientez avant de réessayer.</string>
     <string name="download_error_storage">Impossible d’écrire les fichiers. Vérifiez l’espace et les autorisations de stockage.</string>

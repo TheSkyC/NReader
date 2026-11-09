@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="state_reading_page_total">Lecture à la page %1$d sur %2$d</string>
+    <string name="state_reading_page_unknown">Lecture à la page %1$d ; total inconnu</string>
+    <string name="state_download_unverified_help">Impossible de confirmer que les fichiers sont complets : le nombre de pages original ou l’accès aux fichiers locaux est indisponible. Les pages présentes et lisibles peuvent toujours être ouvertes.</string>
+</resources>
