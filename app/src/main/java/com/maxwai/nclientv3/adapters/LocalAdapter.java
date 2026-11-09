@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.text.Layout;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,7 +49,6 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHolder> implements Filterable {
-    private final SparseIntArray statuses = new SparseIntArray();
     private final LocalActivity context;
     private final List<LocalGallery> dataset;
     private final List<GalleryDownloaderV2> galleryDownloaders;
@@ -315,17 +313,11 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             createContextualMenu(position);
             return true;
         });*/
-        int statusColor = statuses.get(ent.getId(), 0);
-        if (statusColor == 0) {
-            statusColor = Queries.StatusMangaTable.getStatus(ent.getId()).color;
-            statuses.put(ent.getId(), statusColor);
-        }
-        holder.title.setBackgroundColor(statusColor);
+        holder.stateBadge.bind(ent);
     }
 
     public void updateColor(int id) {
         if (id < 0) return;
-        statuses.put(id, Queries.StatusMangaTable.getStatus(id).color);
         for (int i = 0; i < filter.size(); i++) {
             Object o = filter.get(i);
             if (!(o instanceof LocalGallery)) continue;
@@ -454,6 +446,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                     DownloadQueue.remove((GalleryDownloaderV2) o, true);
                 }
             }
+            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
             context.runOnUiThread(this::notifyDataSetChanged);
         }).setNegativeButton(R.string.no, null).setCancelable(true);
         builder.show();
@@ -584,6 +577,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         final ViewGroup layout;
         final ImageButton playButton, cancelButton;
         final ProgressBar progressBar;
+        final GalleryStateBadge stateBadge;
 
         ViewHolder(View v) {
             super(v);
@@ -600,6 +594,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             progressBar = itemView.findViewById(R.id.progressBar);
             playButton = itemView.findViewById(R.id.playButton);
             cancelButton = itemView.findViewById(R.id.cancelButton);
+            stateBadge = v.findViewById(R.id.gallery_state) == null ? null : new GalleryStateBadge(v, title);
         }
     }
 }

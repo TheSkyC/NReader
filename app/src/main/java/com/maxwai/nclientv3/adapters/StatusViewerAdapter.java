@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.app.Activity;
@@ -49,12 +50,13 @@ public class StatusViewerAdapter extends RecyclerView.Adapter<GenericAdapter.Vie
 
     @Override
     public void onBindViewHolder(@NonNull GenericAdapter.ViewHolder holder, int position) {
-        Gallery ent = positionToGallery(holder.getBindingAdapterPosition());
+        Gallery ent = positionToGallery(position);
         if (ent == null) return;
         ImageDownloadUtility.loadImage(context, ent.getThumbnail(), holder.imgView);
         holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
         holder.title.setText(ent.getTitle());
         holder.flag.setText(Global.getLanguageFlag(ent.getLanguage()));
+        holder.stateBadge.bind(ent);
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
             if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)
