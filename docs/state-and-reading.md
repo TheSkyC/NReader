@@ -59,3 +59,6 @@ Failure details are in memory; restored legacy download tasks start paused.
 Pages are validated in a temporary sibling file before replacing the final
 filename. Stopping removes the queued download row only; retained files remain
 available in the local library.
+
+A second request is accepted only when the queued range covers it. A conflicting
+range is rejected with an explanation, preserving the original task and files.

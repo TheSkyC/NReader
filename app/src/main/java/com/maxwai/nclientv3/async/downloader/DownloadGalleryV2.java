@@ -55,8 +55,7 @@ public class DownloadGalleryV2 extends Worker {
 
     private static void downloadGallery(Context context, String title, Uri thumbnail, int id) {
         if (id < 1) return;
-        DownloadQueue.add(new GalleryDownloaderManager(context, title, thumbnail, id));
-        startWork(context);
+        enqueue(context, new GalleryDownloaderManager(context, title, thumbnail, id));
     }
 
     private static void downloadGallery(Context context, Gallery gallery) {
@@ -64,8 +63,14 @@ public class DownloadGalleryV2 extends Worker {
     }
 
     private static void downloadGallery(Context context, Gallery gallery, int start, int end) {
-        DownloadQueue.add(new GalleryDownloaderManager(context, gallery, start, end));
-        startWork(context);
+        enqueue(context, new GalleryDownloaderManager(context, gallery, start, end));
+    }
+
+    private static void enqueue(Context context, GalleryDownloaderManager manager) {
+        if (DownloadQueue.add(manager)) startWork(context);
+        else new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+            android.widget.Toast.makeText(context, com.maxwai.nclientv3.R.string.download_conflicting_task,
+                android.widget.Toast.LENGTH_LONG).show());
     }
 
     public static void loadDownloads(Context context) {
