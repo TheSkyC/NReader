@@ -348,4 +348,6 @@
     <string name="state_download_partial">部分下載</string>
     <string name="state_download_damaged">下載已損壞</string>
     <string name="state_download_unverified">本機檔案未驗證</string>
+    <string name="debug_mask_images">偵錯圖片遮罩</string>
+    <string name="debug_mask_images_summary">以不透明棋盤格遮住封面和閱讀頁。重新開啟畫面後生效，不修改下載檔案。</string>
 </resources>
