@@ -9,6 +9,7 @@ import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
+import com.maxwai.nclientv3.components.status.StatusManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -95,6 +96,24 @@ public class ImporterTest {
 
     private void restore(String json) throws IOException {
         Importer.importDB(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    public void successfulRestoreReplacesStatusCatalogAndFailureLeavesItIntact() throws IOException {
+        StatusManager.add("Removed status", 123);
+        restore("{\"Status\":[{\"name\":\"Restored status\",\"color\":456}]}");
+        assertFalse(StatusManager.getNames().contains("Removed status"));
+        assertTrue(StatusManager.getNames().contains("Restored status"));
+        assertEquals(0x7f000000 | 456, StatusManager.getByName("Restored status").color);
+        assertNull(StatusManager.getByName("New status name"));
+        database.execSQL("INSERT INTO StatusManga VALUES (123, 'Orphan status', 1)");
+        assertEquals(StatusManager.DEFAULT_STATUS, Queries.StatusMangaTable.getStatus(123).name);
+        try {
+            restore("{\"Status\":[],\"ReadingProgress\":[");
+            fail("Expected backup failure");
+        } catch (IOException expected) {
+            assertTrue(StatusManager.getNames().contains("Restored status"));
+        }
     }
 
     @Test
