@@ -327,4 +327,27 @@
     <string name="auth_error">Erreur d\'authentification</string>
     <string name="auth_title">Connexion biométrique pour NClient</string>
     <string name="auth_subtitle">Identifier à l\'aide des identifiants biométriques</string>
+    <string name="continue_reading">Reprendre la lecture</string>
+    <string name="open_manual_bookmark">Ouvrir le marque-page manuel</string>
+    <string name="pause_download">Suspendre le téléchargement</string>
+    <string name="download_failed">Échec du téléchargement</string>
+    <string name="stop_download_options">Arrêtez cette tâche en conservant les pages téléchargées, ou supprimez les fichiers. La suspension garde la tâche dans la file.</string>
+    <string name="stop_keep_files">Arrêter et conserver les fichiers</string>
+    <string name="stop_delete_files">Arrêter et supprimer les fichiers</string>
+    <string name="download_error_authentication">Accès refusé. Vérifiez la clé API et les autorisations du compte.</string>
+    <string name="download_error_rate_limit">Trop de requêtes. Patientez avant de réessayer.</string>
+    <string name="download_error_storage">Impossible d’écrire les fichiers. Vérifiez l’espace et les autorisations de stockage.</string>
+    <string name="download_error_not_found">La galerie ou la page demandée n’est plus disponible.</string>
+    <string name="download_error_invalid_data">Le serveur a renvoyé des données de galerie invalides ou non prises en charge.</string>
+    <string name="download_error_network">Le téléchargement a été arrêté après plusieurs tentatives. Vérifiez la connexion et réessayez.</string>
+    <string name="download_conflicting_task">Une tâche est déjà en attente ou en cours d’arrêt pour cette galerie. Terminez-la ou arrêtez-la dans Téléchargements avant de demander une autre plage.</string>
+    <string name="state_local_favorite">Favori local</string>
+    <string name="state_custom_status">Statut : %1$s</string>
+    <string name="state_reading_page">Lecture jusqu’à la page %1$d</string>
+    <string name="state_download_complete">Téléchargé</string>
+    <string name="state_download_partial">Téléchargement partiel</string>
+    <string name="state_download_damaged">Téléchargement endommagé</string>
+    <string name="state_download_unverified">Fichiers locaux non vérifiés</string>
+    <string name="debug_mask_images">Masquer les images pour le débogage</string>
+    <string name="debug_mask_images_summary">Recouvre les couvertures et les pages d’un damier opaque. Actif à la réouverture de l’écran ; les fichiers téléchargés restent inchangés.</string>
 </resources>

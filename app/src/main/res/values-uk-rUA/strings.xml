@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">Продовжити читання</string>
+    <string name="open_manual_bookmark">Відкрити ручну закладку</string>
+    <string name="pause_download">Призупинити завантаження</string>
+    <string name="download_failed">Помилка завантаження</string>
+    <string name="stop_download_options">Зупиніть завдання зі збереженням завантажених сторінок або видаліть файли. Призупинення залишає завдання в черзі.</string>
+    <string name="stop_keep_files">Зупинити й зберегти файли</string>
+    <string name="stop_delete_files">Зупинити й видалити файли</string>
+    <string name="download_error_authentication">Доступ заборонено. Перевірте ключ API та дозволи облікового запису.</string>
+    <string name="download_error_rate_limit">Забагато запитів. Зачекайте перед повторною спробою.</string>
+    <string name="download_error_storage">Не вдалося записати файли. Перевірте вільне місце та дозволи сховища.</string>
+    <string name="download_error_not_found">Запитана галерея або сторінка більше недоступна.</string>
+    <string name="download_error_invalid_data">Сервер повернув недійсні або непідтримувані дані галереї.</string>
+    <string name="download_error_network">Завантаження зупинено після кількох спроб. Перевірте з’єднання та повторіть.</string>
+    <string name="download_conflicting_task">Завдання для цієї галереї вже в черзі або зупиняється. Завершіть або зупиніть його в розділі завантажень перед запитом іншого діапазону.</string>
+    <string name="state_local_favorite">Локальне обране</string>
+    <string name="state_custom_status">Статус: %1$s</string>
+    <string name="state_reading_page">Прочитано до сторінки %1$d</string>
+    <string name="state_download_complete">Завантажено</string>
+    <string name="state_download_partial">Частково завантажено</string>
+    <string name="state_download_damaged">Завантаження пошкоджено</string>
+    <string name="state_download_unverified">Локальні файли не перевірено</string>
+    <string name="debug_mask_images">Приховувати зображення для налагодження</string>
+    <string name="debug_mask_images_summary">Закриває обкладинки та сторінки непрозорою шаховою сіткою. Діє після повторного відкриття екрана; завантажені файли не змінюються.</string>
 </resources>

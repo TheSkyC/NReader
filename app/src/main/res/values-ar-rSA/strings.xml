@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">متابعة القراءة</string>
+    <string name="open_manual_bookmark">فتح العلامة اليدوية</string>
+    <string name="pause_download">إيقاف التنزيل مؤقتًا</string>
+    <string name="download_failed">فشل التنزيل</string>
+    <string name="stop_download_options">أوقف هذه المهمة مع الاحتفاظ بالصفحات المنزلة أو احذف الملفات. الإيقاف المؤقت يبقي المهمة في قائمة الانتظار.</string>
+    <string name="stop_keep_files">إيقاف مع الاحتفاظ بالملفات</string>
+    <string name="stop_delete_files">إيقاف وحذف الملفات</string>
+    <string name="download_error_authentication">تم رفض الوصول. تحقق من مفتاح API وأذونات الحساب.</string>
+    <string name="download_error_rate_limit">طلبات كثيرة جدًا. انتظر قبل إعادة المحاولة.</string>
+    <string name="download_error_storage">تعذرت كتابة الملفات. تحقق من المساحة المتاحة وأذونات التخزين.</string>
+    <string name="download_error_not_found">المعرض أو الصفحة المطلوبة لم تعد متاحة.</string>
+    <string name="download_error_invalid_data">أعاد الخادم بيانات معرض غير صالحة أو غير مدعومة.</string>
+    <string name="download_error_network">توقف التنزيل بعد عدة محاولات. تحقق من الاتصال وأعد المحاولة.</string>
+    <string name="download_conflicting_task">توجد مهمة لهذا المعرض في قائمة الانتظار أو قيد الإيقاف. أكملها أو أوقفها من التنزيلات قبل طلب نطاق آخر.</string>
+    <string name="state_local_favorite">مفضلة محلية</string>
+    <string name="state_custom_status">الحالة: %1$s</string>
+    <string name="state_reading_page">تمت القراءة حتى الصفحة %1$d</string>
+    <string name="state_download_complete">تم التنزيل</string>
+    <string name="state_download_partial">تنزيل جزئي</string>
+    <string name="state_download_damaged">تنزيل تالف</string>
+    <string name="state_download_unverified">الملفات المحلية غير متحقق منها</string>
+    <string name="debug_mask_images">حجب الصور لتصحيح الأخطاء</string>
+    <string name="debug_mask_images_summary">يغطي الأغلفة وصفحات القراءة بنمط مربعات معتم. يسري عند إعادة فتح الشاشة؛ لا يغير الملفات المنزلة.</string>
 </resources>
