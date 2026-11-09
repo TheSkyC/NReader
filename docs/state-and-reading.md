@@ -6,6 +6,8 @@ NReader modifications by TheSkyC (2026); see NOTICE.
 
 - Site gallery IDs identify automatic positions. Unknown local IDs are excluded
   until a stable local identity model exists.
+  Local numeric ID markers accept one through nine digits, including legacy
+  six-digit markers; folder names do not establish a site identity.
 - `Resume` retains its released meaning: an explicit, one-based page bookmark.
 - Database version 14 adds `ReadingProgress` without changing existing tables
   or rows. Its page is one-based; scroll offset is a nonnegative fraction of the
@@ -44,6 +46,11 @@ Missing pages mean partial; unreadable images mean damaged; missing metadata or
 unavailable storage means unverified. This lightweight check does not replace a
 full image integrity scan. State is resolved off the UI thread and refreshed on
 returning to a screen and after local mutations.
+
+Cards display local favorites, custom status names, automatic page positions and
+local file state independently. Truncated labels keep their full accessibility
+description. State callbacks must not update a recycled card bound to another
+gallery. A complete copy in another indexed directory can establish completion.
 
 ## Download lifecycle
 
