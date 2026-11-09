@@ -137,6 +137,7 @@ public class GalleryDownloaderV2 {
     }
 
     private void onStart() {
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         for (DownloadObserver observer : observers) observer.triggerStartDownload(this);
     }
 
@@ -146,6 +147,7 @@ public class GalleryDownloaderV2 {
             status = Status.FINISHED;
         }
         Queries.DownloadTable.removeGallery(id);
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         for (DownloadObserver observer : observers) observer.triggerEndDownload(this);
     }
 
@@ -157,10 +159,12 @@ public class GalleryDownloaderV2 {
     }
 
     private void onCancel() {
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         for (DownloadObserver observer : observers) observer.triggerCancelDownload(this);
     }
 
     private void onPause() {
+        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         for (DownloadObserver observer : observers) observer.triggerPauseDownload(this);
     }
 

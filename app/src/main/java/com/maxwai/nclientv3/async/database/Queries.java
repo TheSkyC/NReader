@@ -874,10 +874,12 @@ public class Queries {
             values.put(ID_GALLERY, galleryId);
             values.put(TIME, new Date().getTime());
             db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            GalleryStateRepository.invalidate();
         }
 
         public static void removeFavorite(int id) {
             db.delete(TABLE_NAME, ID_GALLERY + "=?", new String[]{"" + id});
+            GalleryStateRepository.invalidate();
         }
 
         public static int countFavorite(@Nullable String text) {
@@ -912,6 +914,7 @@ public class Queries {
 
         public static void removeAllFavorite() {
             db.delete(TABLE_NAME, null, null);
+            GalleryStateRepository.invalidate();
         }
     }
 
@@ -931,6 +934,7 @@ public class Queries {
             values.put("offset", position.offset);
             values.put("updated_at", System.currentTimeMillis());
             db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+            GalleryStateRepository.invalidate();
         }
 
         @Nullable
@@ -1005,10 +1009,12 @@ public class Queries {
             values.put(GALLERY, gallery.getId());
             values.put(TIME, new Date().getTime());
             db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+            GalleryStateRepository.invalidate();
         }
 
         public static void remove(int id) {
             db.delete(TABLE_NAME, GALLERY + "=?", new String[]{"" + id});
+            GalleryStateRepository.invalidate();
         }
 
         @NonNull
@@ -1063,6 +1069,7 @@ public class Queries {
 
         public static void removeStatus(String name) {
             db.delete(TABLE_NAME, NAME + "=?", new String[]{name});
+            GalleryStateRepository.invalidate();
         }
     }
 
@@ -1110,6 +1117,7 @@ public class Queries {
             values.put(COLOR, newStatus.color);
             db.update(TABLE_NAME, values, NAME + "=?", new String[]{oldStatus.name});
             StatusMangaTable.update(oldStatus, newStatus);
+            GalleryStateRepository.invalidate();
         }
     }
 }
