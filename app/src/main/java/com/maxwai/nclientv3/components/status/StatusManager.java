@@ -1,4 +1,7 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.status;
+
+import android.graphics.Color;
 
 import androidx.annotation.Nullable;
 
@@ -7,11 +10,22 @@ import com.maxwai.nclientv3.async.database.Queries;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
 
 public class StatusManager {
     public static final String DEFAULT_STATUS = "None";
-    private static final HashMap<String, Status> statusMap = new HashMap<>();
+    private static volatile Map<String, Status> statusMap = Collections.singletonMap(
+        DEFAULT_STATUS, new Status(Color.BLACK, DEFAULT_STATUS));
 
+    public static synchronized void replaceAll(List<Status> statuses) {
+        Map<String, Status> replacement = new HashMap<>();
+        replacement.put(DEFAULT_STATUS, new Status(Color.BLACK, DEFAULT_STATUS));
+        for (Status status : statuses) replacement.put(status.name, status);
+        statusMap = replacement;
+    }
+
+    @Nullable
     public static Status getByName(String name) {
         return statusMap.get(name);
     }
@@ -22,13 +36,13 @@ public class StatusManager {
 
     static Status add(Status status) {
         Queries.StatusTable.insert(status);
-        statusMap.put(status.name, status);
+        changeCachedStatus(null, status);
         return status;
     }
 
     public static void remove(Status status) {
         Queries.StatusTable.remove(status.name);
-        statusMap.remove(status.name);
+        changeCachedStatus(status.name, null);
     }
 
     public static List<String> getNames() {
@@ -51,8 +65,14 @@ public class StatusManager {
             return add(newName, newColor);
         Status newStatus = new Status(newColor, newName);
         Queries.StatusTable.update(oldStatus, newStatus);
-        statusMap.remove(oldStatus.name);
-        statusMap.put(newStatus.name, newStatus);
+        changeCachedStatus(oldStatus.name, newStatus);
         return newStatus;
+    }
+
+    private static synchronized void changeCachedStatus(String oldName, Status status) {
+        Map<String, Status> replacement = new HashMap<>(statusMap);
+        if (oldName != null && !DEFAULT_STATUS.equals(oldName)) replacement.remove(oldName);
+        if (status != null) replacement.put(status.name, status);
+        statusMap = replacement;
     }
 }

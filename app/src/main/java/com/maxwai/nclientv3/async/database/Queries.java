@@ -1025,12 +1025,13 @@ public class Queries {
                     status = StatusManager.getByName(cursor.getString(cursor.getColumnIndex(NAME)));
                 else
                     status = StatusManager.getByName(StatusManager.DEFAULT_STATUS);
-                return status;
+                return status == null ? StatusManager.getByName(StatusManager.DEFAULT_STATUS) : status;
             }
         }
 
         public static void insert(GenericGallery gallery, String s) {
-            insert(gallery, StatusManager.getByName(s));
+            Status status = StatusManager.getByName(s);
+            if (status != null) insert(gallery, status);
         }
 
         public static void update(Status oldStatus, Status newStatus) {
@@ -1099,16 +1100,16 @@ public class Queries {
         }
 
         public static void initStatuses() {
+            List<Status> statuses = new ArrayList<>();
             try (Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null)) {
                 if (cursor.moveToFirst()) {
                     do {
-                        StatusManager.add(
-                            cursor.getString(cursor.getColumnIndex(NAME)),
-                            cursor.getInt(cursor.getColumnIndex(COLOR))
-                        );
+                        statuses.add(new Status(cursor.getInt(cursor.getColumnIndex(COLOR)),
+                            cursor.getString(cursor.getColumnIndex(NAME))));
                     } while (cursor.moveToNext());
                 }
             }
+            StatusManager.replaceAll(statuses);
         }
 
         public static void update(Status oldStatus, Status newStatus) {

@@ -73,7 +73,11 @@ class Importer {
     }
 
     static void importDB(InputStream stream) throws IOException {
-        ReadingProgress.restore(() -> importDBLocked(stream));
+        ReadingProgress.restore(() -> {
+            importDBLocked(stream);
+            Queries.StatusTable.initStatuses();
+            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+        });
     }
 
     private static void importDBLocked(InputStream stream) throws IOException {
@@ -182,6 +186,7 @@ class Importer {
             database.endTransaction();
         }
         for (SharedPreferences.Editor editor : preferences) editor.apply();
+        Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
     }
 }

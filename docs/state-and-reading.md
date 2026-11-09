@@ -31,6 +31,9 @@ importable; replacing the database clears automatic positions absent from the
 backup. Database restore is transactional, including failures and invalid rows.
 Unknown future tables are skipped. This is backward compatibility for existing
 data and backups; an older application cannot be assumed to understand new data.
+After successful restore, the in-memory custom status catalog is reloaded from
+the committed database. A failed archive leaves both the database and catalog
+unchanged. Orphaned status references fall back to the default status.
 
 ## Local and personal state
 
