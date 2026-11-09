@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api.components;
 
 import android.content.Context;
@@ -246,8 +247,8 @@ public class GalleryData implements Parcelable {
     }
 
     public void setPageInfo(GalleryFolder folder) {
-        this.pageCount = folder.getPageCount();
-        if (pageCount > 0) {
+        if (pageCount <= 0) this.pageCount = folder.getPageCount();
+        if (folder.getPageCount() > 0) {
             Uri firstPage = folder.getFirstPage().toUri();
             this.cover.setImagePath(firstPage);
             this.thumbnail.setImagePath(firstPage);
