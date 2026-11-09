@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api;
 
 import android.content.Context;
@@ -68,6 +69,24 @@ public class InspectorV3 extends Thread implements Parcelable {
     private InspectorResponse response;
     private WeakReference<Context> context;
     private String jsonResponse;
+    private int responseCode;
+    private String retryAfter;
+    private volatile okhttp3.Call activeCall;
+    private volatile boolean canceled;
+
+    public void cancelRequest() {
+        canceled = true;
+        okhttp3.Call call = activeCall;
+        if (call != null) call.cancel();
+    }
+
+    public int getResponseCode() {
+        return responseCode;
+    }
+
+    public String getRetryAfter() {
+        return retryAfter;
+    }
 
     protected InspectorV3(Parcel in) {
         sortType = SortType.values()[in.readByte()];
@@ -326,9 +345,16 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public boolean createDocument() throws IOException {
         if (jsonResponse != null) return true;
-        try (Response response = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build()).execute()) {
+        okhttp3.Call call = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build());
+        activeCall = call;
+        if (canceled) call.cancel();
+        try (Response response = call.execute()) {
+            responseCode = response.code();
+            retryAfter = response.header("Retry-After");
             jsonResponse = response.body().string();
             return response.code() == HttpURLConnection.HTTP_OK;
+        } finally {
+            activeCall = null;
         }
     }
 

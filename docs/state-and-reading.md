@@ -50,3 +50,12 @@ with an actionable reason. A failed task requires an explicit retry. Metadata
 failures obey the same bounded policy. Pausing retains the queued task; stopping
 can retain files or delete them after the active writer has stopped. Neither
 choice removes favorites, custom statuses or reading positions.
+
+Each metadata request and page has at most four attempts, with exponential
+backoff from one second and a 30-second delay ceiling. A valid `Retry-After`
+above that ceiling stops automatic retries instead of retrying early. This
+policy applies to the existing page downloader, not the API archive endpoint.
+Failure details are in memory; restored legacy download tasks start paused.
+Pages are validated in a temporary sibling file before replacing the final
+filename. Stopping removes the queued download row only; retained files remain
+available in the local library.

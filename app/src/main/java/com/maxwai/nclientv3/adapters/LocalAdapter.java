@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.annotation.SuppressLint;
@@ -122,8 +123,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     private String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
         private void updatePosition(GalleryDownloaderV2 downloader) {
-            final int id = filter.indexOf(downloader);
-            if (id >= 0) context.runOnUiThread(() -> notifyItemChanged(id));
+            context.runOnUiThread(() -> {
+                int position = filter.indexOf(downloader);
+                if (position >= 0) notifyItemChanged(position);
+            });
         }
 
         @Override
@@ -139,24 +142,34 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         @Override
         public void triggerEndDownload(GalleryDownloaderV2 downloader) {
             LocalGallery l = downloader.localGallery();
-            galleryDownloaders.remove(downloader);
-            if (l != null) {
-                dataset.remove(l);
-                dataset.add(l);
-                LogUtility.d(l);
+            context.runOnUiThread(() -> {
+                galleryDownloaders.remove(downloader);
+                if (l != null) {
+                    dataset.remove(l);
+                    dataset.add(l);
+                }
                 sortElements();
-            }
-            context.runOnUiThread(() -> notifyItemRangeChanged(0, getItemCount()));
+                notifyDataSetChanged();
+            });
         }
 
         @Override
         public void triggerCancelDownload(GalleryDownloaderV2 downloader) {
-            removeDownloader(downloader);
+            LocalGallery retained = downloader.localGallery();
+            context.runOnUiThread(() -> {
+                galleryDownloaders.remove(downloader);
+                if (retained != null && retained.getPageCount() > 0) {
+                    dataset.remove(retained);
+                    dataset.add(retained);
+                }
+                sortElements();
+                notifyDataSetChanged();
+            });
         }
 
         @Override
         public void triggerPauseDownload(GalleryDownloaderV2 downloader) {
-            context.runOnUiThread(() -> notifyItemChanged(filter.indexOf(downloader)));
+            updatePosition(downloader);
         }
     };
     private int colCount;
@@ -337,10 +350,14 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         holder.title.setText(downloader.getPathTitle());
         holder.cancelButton.setOnClickListener(v -> removeDownloader(downloader));
         switch (downloader.getStatus()) {
+            case FAILED:
+                holder.playButton.setImageResource(R.drawable.ic_play);
+                holder.playButton.setOnClickListener(v -> showFailure(downloader));
+                break;
             case PAUSED:
                 holder.playButton.setImageResource(R.drawable.ic_play);
                 holder.playButton.setOnClickListener(v -> {
-                    downloader.setStatus(GalleryDownloaderV2.Status.NOT_STARTED);
+                    downloader.retry();
                     DownloadGalleryV2.startWork(context);
                     notifyItemChanged(position);
                 });
@@ -358,6 +375,16 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                 break;
         }
         holder.progress.setText(context.getString(R.string.percentage_format, percentage));
+        if (downloader.getStatus() == GalleryDownloaderV2.Status.FAILED) {
+            holder.progress.setText(R.string.download_failed);
+            holder.progress.setContentDescription(context.getString(failureMessage(downloader)));
+            holder.progress.setOnClickListener(view -> showFailure(downloader));
+        } else {
+            holder.progress.setContentDescription(null);
+            holder.progress.setOnClickListener(null);
+        }
+        holder.playButton.setContentDescription(context.getString(downloader.getStatus() == GalleryDownloaderV2.Status.DOWNLOADING
+            ? R.string.pause_download : R.string.start_download));
         holder.progress.setVisibility(downloader.getStatus() == GalleryDownloaderV2.Status.NOT_STARTED ? View.GONE : View.VISIBLE);
         holder.progressBar.setProgress(percentage);
         holder.progressBar.setIndeterminate(downloader.getStatus() == GalleryDownloaderV2.Status.NOT_STARTED);
@@ -366,13 +393,37 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private void removeDownloader(GalleryDownloaderV2 downloader) {
-        int position = filter.indexOf(downloader);
-        if (position < 0) return;
-        filter.remove(position);
-        DownloadQueue.remove(downloader, true);
-        galleryDownloaders.remove(downloader);
-        context.runOnUiThread(() -> notifyItemRemoved(position));
+        new MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.stop_download)
+            .setMessage(R.string.stop_download_options)
+            .setPositiveButton(R.string.stop_keep_files, (dialog, which) -> DownloadQueue.remove(downloader, true, false))
+            .setNegativeButton(R.string.stop_delete_files, (dialog, which) -> DownloadQueue.remove(downloader, true, true))
+            .setNeutralButton(R.string.cancel, null)
+            .show();
+    }
 
+    private int failureMessage(GalleryDownloaderV2 downloader) {
+        switch (downloader.getFailure()) {
+            case AUTHENTICATION: return R.string.download_error_authentication;
+            case RATE_LIMIT: return R.string.download_error_rate_limit;
+            case STORAGE: return R.string.download_error_storage;
+            case NOT_FOUND: return R.string.download_error_not_found;
+            case INVALID_DATA: return R.string.download_error_invalid_data;
+            default: return R.string.download_error_network;
+        }
+    }
+
+    private void showFailure(GalleryDownloaderV2 downloader) {
+        new MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.download_failed)
+            .setMessage(failureMessage(downloader))
+            .setPositiveButton(R.string.retry, (dialog, which) -> {
+                downloader.retry();
+                DownloadGalleryV2.startWork(context);
+                notifyDataSetChanged();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
     }
 
     @Override
@@ -498,8 +549,8 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         for (Object o : getSelected()) {
             if (!(o instanceof GalleryDownloaderV2)) continue;
             GalleryDownloaderV2 d = (GalleryDownloaderV2) o;
-            if (d.getStatus() == GalleryDownloaderV2.Status.PAUSED)
-                d.setStatus(GalleryDownloaderV2.Status.NOT_STARTED);
+            if (d.getStatus() == GalleryDownloaderV2.Status.PAUSED || d.getStatus() == GalleryDownloaderV2.Status.FAILED)
+                d.retry();
             DownloadGalleryV2.startWork(context);
         }
         context.runOnUiThread(this::notifyDataSetChanged);
