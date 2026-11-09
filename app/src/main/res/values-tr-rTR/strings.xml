@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">Okumaya devam et</string>
+    <string name="open_manual_bookmark">Elle eklenen yer imini aç</string>
+    <string name="pause_download">İndirmeyi duraklat</string>
+    <string name="download_failed">İndirme başarısız</string>
+    <string name="stop_download_options">Bu görevi durdurup indirilen sayfaları tutun veya dosyaları silin. Duraklatma görevi sırada tutar.</string>
+    <string name="stop_keep_files">Durdur ve dosyaları tut</string>
+    <string name="stop_delete_files">Durdur ve dosyaları sil</string>
+    <string name="download_error_authentication">Erişim reddedildi. API anahtarını ve hesap izinlerini kontrol edin.</string>
+    <string name="download_error_rate_limit">Çok fazla istek gönderildi. Yeniden denemeden önce bekleyin.</string>
+    <string name="download_error_storage">Dosyalar yazılamadı. Boş alanı ve depolama izinlerini kontrol edin.</string>
+    <string name="download_error_not_found">İstenen galeri veya sayfa artık kullanılamıyor.</string>
+    <string name="download_error_invalid_data">Sunucu geçersiz veya desteklenmeyen galeri verileri döndürdü.</string>
+    <string name="download_error_network">Birkaç denemeden sonra indirme durduruldu. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="download_conflicting_task">Bu galeri için bir görev sırada veya durduruluyor. Farklı bir aralık istemeden önce İndirmeler bölümünde görevi tamamlayın veya durdurun.</string>
+    <string name="state_local_favorite">Yerel favori</string>
+    <string name="state_custom_status">Durum: %1$s</string>
+    <string name="state_reading_page">%1$d. sayfaya kadar okundu</string>
+    <string name="state_download_complete">İndirildi</string>
+    <string name="state_download_partial">Kısmi indirme</string>
+    <string name="state_download_damaged">Hasarlı indirme</string>
+    <string name="state_download_unverified">Yerel dosyalar doğrulanmadı</string>
+    <string name="debug_mask_images">Hata ayıklama için görselleri maskele</string>
+    <string name="debug_mask_images_summary">Kapakları ve okuma sayfalarını opak bir dama deseniyle örter. Ekran yeniden açıldığında uygulanır; indirilen dosyalar değişmez.</string>
 </resources>

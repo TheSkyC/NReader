@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">続きを読む</string>
+    <string name="open_manual_bookmark">手動しおりを開く</string>
+    <string name="pause_download">ダウンロードを一時停止</string>
+    <string name="download_failed">失敗</string>
+    <string name="stop_download_options">このタスクを停止してダウンロード済みのページを保持するか、ファイルを削除します。一時停止ではタスクを待機列に残します。</string>
+    <string name="stop_keep_files">停止してファイルを保持</string>
+    <string name="stop_delete_files">停止してファイルを削除</string>
+    <string name="download_error_authentication">アクセスが拒否されました。APIキーとアカウントの権限を確認してください。</string>
+    <string name="download_error_rate_limit">リクエストが多すぎます。時間をおいて再試行してください。</string>
+    <string name="download_error_storage">ファイルを書き込めませんでした。空き容量とストレージの権限を確認してください。</string>
+    <string name="download_error_not_found">指定したギャラリーまたはページは利用できなくなりました。</string>
+    <string name="download_error_invalid_data">サーバーから無効または未対応のギャラリーデータが返されました。</string>
+    <string name="download_error_network">複数回試行したためダウンロードを停止しました。接続を確認して再試行してください。</string>
+    <string name="download_conflicting_task">このギャラリーのタスクは待機中または停止処理中です。別のページ範囲を指定する前に、ダウンロード画面で完了または停止してください。</string>
+    <string name="state_local_favorite">ローカルお気に入り</string>
+    <string name="state_custom_status">状態: %1$s</string>
+    <string name="state_reading_page">%1$dページまで読書</string>
+    <string name="state_download_complete">ダウンロード済み</string>
+    <string name="state_download_partial">一部ダウンロード済み</string>
+    <string name="state_download_damaged">ダウンロード破損</string>
+    <string name="state_download_unverified">ローカルファイル未確認</string>
+    <string name="debug_mask_images">デバッグ用画像マスク</string>
+    <string name="debug_mask_images_summary">表紙と閲覧ページを不透明な格子で覆います。画面を開き直すと反映されます。ダウンロードしたファイルは変更しません。</string>
 </resources>

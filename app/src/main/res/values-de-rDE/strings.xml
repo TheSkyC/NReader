@@ -327,4 +327,27 @@
     <string name="auth_error">Problem bei Authentifizierung</string>
     <string name="auth_title">Biometrische Anmeldung für NClient</string>
     <string name="auth_subtitle">Anmelden mit Biometrischen Daten</string>
+    <string name="continue_reading">Weiterlesen</string>
+    <string name="open_manual_bookmark">Manuelles Lesezeichen öffnen</string>
+    <string name="pause_download">Download pausieren</string>
+    <string name="download_failed">Download fehlgeschlagen</string>
+    <string name="stop_download_options">Diese Aufgabe stoppen und heruntergeladene Seiten behalten oder die Dateien löschen. Beim Pausieren bleibt die Aufgabe in der Warteschlange.</string>
+    <string name="stop_keep_files">Stoppen und Dateien behalten</string>
+    <string name="stop_delete_files">Stoppen und Dateien löschen</string>
+    <string name="download_error_authentication">Zugriff verweigert. Prüfe den API-Schlüssel und die Kontoberechtigungen.</string>
+    <string name="download_error_rate_limit">Zu viele Anfragen. Warte vor einem erneuten Versuch.</string>
+    <string name="download_error_storage">Dateien konnten nicht geschrieben werden. Prüfe Speicherplatz und Zugriffsrechte.</string>
+    <string name="download_error_not_found">Die angeforderte Galerie oder Seite ist nicht mehr verfügbar.</string>
+    <string name="download_error_invalid_data">Der Server hat ungültige oder nicht unterstützte Galeriedaten geliefert.</string>
+    <string name="download_error_network">Der Download wurde nach mehreren Versuchen gestoppt. Prüfe die Verbindung und versuche es erneut.</string>
+    <string name="download_conflicting_task">Für diese Galerie ist bereits eine Aufgabe vorgemerkt oder wird gestoppt. Beende oder stoppe sie unter Downloads, bevor du einen anderen Seitenbereich anforderst.</string>
+    <string name="state_local_favorite">Lokaler Favorit</string>
+    <string name="state_custom_status">Status: %1$s</string>
+    <string name="state_reading_page">Bis Seite %1$d gelesen</string>
+    <string name="state_download_complete">Heruntergeladen</string>
+    <string name="state_download_partial">Teilweise heruntergeladen</string>
+    <string name="state_download_damaged">Beschädigter Download</string>
+    <string name="state_download_unverified">Lokale Dateien ungeprüft</string>
+    <string name="debug_mask_images">Bilder zum Debuggen verdecken</string>
+    <string name="debug_mask_images_summary">Verdeckt Titelbilder und Leseseiten mit einem undurchsichtigen Schachbrett. Wirkt nach erneutem Öffnen; heruntergeladene Dateien bleiben unverändert.</string>
 </resources>

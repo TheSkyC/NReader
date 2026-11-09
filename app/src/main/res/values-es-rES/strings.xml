@@ -327,4 +327,27 @@
     <string name="auth_error">Authentication error</string>
     <string name="auth_title">Biometric login for NClient</string>
     <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="continue_reading">Continuar leyendo</string>
+    <string name="open_manual_bookmark">Abrir marcador manual</string>
+    <string name="pause_download">Pausar descarga</string>
+    <string name="download_failed">Descarga fallida</string>
+    <string name="stop_download_options">Detén esta tarea y conserva las páginas descargadas, o elimina los archivos. Al pausarla, la tarea permanece en la cola.</string>
+    <string name="stop_keep_files">Detener y conservar archivos</string>
+    <string name="stop_delete_files">Detener y eliminar archivos</string>
+    <string name="download_error_authentication">Acceso denegado. Revisa la clave API y los permisos de la cuenta.</string>
+    <string name="download_error_rate_limit">Demasiadas solicitudes. Espera antes de volver a intentarlo.</string>
+    <string name="download_error_storage">No se pudieron escribir los archivos. Revisa el espacio y los permisos de almacenamiento.</string>
+    <string name="download_error_not_found">La galería o página solicitada ya no está disponible.</string>
+    <string name="download_error_invalid_data">El servidor devolvió datos de galería no válidos o no compatibles.</string>
+    <string name="download_error_network">La descarga se detuvo tras varios intentos. Revisa la conexión y vuelve a intentarlo.</string>
+    <string name="download_conflicting_task">Ya hay una tarea en cola o deteniéndose para esta galería. Finalízala o detenla en Descargas antes de solicitar otro intervalo.</string>
+    <string name="state_local_favorite">Favorito local</string>
+    <string name="state_custom_status">Estado: %1$s</string>
+    <string name="state_reading_page">Leído hasta la página %1$d</string>
+    <string name="state_download_complete">Descargado</string>
+    <string name="state_download_partial">Descarga parcial</string>
+    <string name="state_download_damaged">Descarga dañada</string>
+    <string name="state_download_unverified">Archivos locales sin verificar</string>
+    <string name="debug_mask_images">Ocultar imágenes para depuración</string>
+    <string name="debug_mask_images_summary">Cubre portadas y páginas con un tablero opaco. Se aplica al volver a abrir la pantalla; no modifica los archivos descargados.</string>
 </resources>
