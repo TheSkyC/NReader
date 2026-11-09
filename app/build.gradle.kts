@@ -181,7 +181,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:5.0.7") {
         exclude(group = "com.android.support")
     }
-    implementation("com.github.bumptech.glide:okhttp3-integration:5.0.7@aar")
+    implementation("com.github.bumptech.glide:okhttp3-integration:5.0.9@aar")
     annotationProcessor("com.github.bumptech.glide:compiler:5.0.7")
     // For Http Connection
     implementation("com.squareup.okhttp3:okhttp-urlconnection:5.4.0")
