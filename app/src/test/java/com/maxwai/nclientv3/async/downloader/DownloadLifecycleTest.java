@@ -138,4 +138,21 @@ public class DownloadLifecycleTest {
             assertNotNull(Queries.ReadingProgressTable.fromId(123));
         }
     }
+
+    @Test
+    public void conflictingRangeIsRejectedWithoutChangingTheQueuedTask() throws Exception {
+        Gallery gallery = new Gallery(null, "{\"id\":124,\"num_pages\":10,\"title\":{\"pretty\":\"Range test\"},"
+            + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+        GalleryDownloaderManager first = new GalleryDownloaderManager(context, gallery, 0, 4);
+        try {
+            assertTrue(DownloadQueue.add(first));
+            assertFalse(DownloadQueue.add(new GalleryDownloaderManager(context, gallery, 5, 9)));
+            assertEquals(0, first.downloader().getStart());
+            assertEquals(4, first.downloader().getEnd());
+            assertSame(first, DownloadQueue.fetch());
+        } finally {
+            DownloadQueue.remove(first.downloader(), false);
+        }
+    }
 }
