@@ -69,4 +69,13 @@ public class LocalDownloadStateTest {
     private static void metadata(File folder, int count) throws Exception {
         Files.write(new File(folder, ".nomedia").toPath(), ("{\"num_pages\":" + count + "}").getBytes(StandardCharsets.UTF_8));
     }
+
+    @Test
+    public void folderRecognizesLongSiteIdsWithoutChangingLegacyMarkers() throws Exception {
+        for (int id : new int[]{123456, 1234567, 999000001}) {
+            File folder = temporary.newFolder();
+            assertTrue(new File(folder, "." + id).createNewFile());
+            assertEquals(id, new GalleryFolder(folder).getId());
+        }
+    }
 }
