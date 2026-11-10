@@ -245,6 +245,7 @@ public class ImporterTest {
     @Test
     public void restoreSnapshotReturnsDatabaseToPreImportState() throws Exception {
         RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 11).commit();
+        RuntimeEnvironment.getApplication().getSharedPreferences("ScrapedTags", 0).edit().putString("snapshotTag", "before").commit();
         File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "snapshot-source.zip");
         try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
             zip.putNextEntry(new ZipEntry("Database.json"));
@@ -254,10 +255,14 @@ public class ImporterTest {
         Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
         assertEquals(-1, Queries.ResumeTable.pageFromId(123));
         assertTrue(Importer.snapshotFile(RuntimeEnvironment.getApplication()).isFile());
-        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 22).commit();
+        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 22).putBoolean("addedAfter", true).commit();
+        RuntimeEnvironment.getApplication().getSharedPreferences("ScrapedTags", 0).edit().putString("snapshotTag", "after").putBoolean("addedAfter", true).commit();
         Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
         assertEquals(7, Queries.ResumeTable.pageFromId(123));
         assertEquals(11, RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).getInt("snapshotSetting", -1));
+        assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).contains("addedAfter"));
+        assertEquals("before", RuntimeEnvironment.getApplication().getSharedPreferences("ScrapedTags", 0).getString("snapshotTag", null));
+        assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("ScrapedTags", 0).contains("addedAfter"));
     }
 
     @Test

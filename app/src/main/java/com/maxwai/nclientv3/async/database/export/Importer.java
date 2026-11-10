@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import org.json.JSONObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,12 +47,17 @@ public class Importer {
     private static final String PREVIOUS_TAGS_SNAPSHOT_NAME = "previous-restore-tags.json";
     private static final String SNAPSHOT_META_NAME = "last-restore-snapshot.json.meta";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
+        return importSharedPreferences(context, sharedName, stream, false);
+    }
+
+    private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream, boolean replace) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
             String[] names = sharedName.split("/");
             sharedName = names[names.length - 1];
         }
         SharedPreferences.Editor editor = context.getSharedPreferences(sharedName, 0).edit();
+        if (replace) editor.clear();
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
@@ -363,40 +367,63 @@ public class Importer {
     }
 
     public static void restoreLastSnapshot(Context context) throws IOException {
-        File snapshot = snapshotFile(context);
-        if (!hasUsableSnapshot(context) || !isSnapshotSetValid(context)) throw new IOException("No usable restore snapshot is available");
+        if (!hasUsableSnapshot(context)) throw new IOException("No usable restore snapshot is available");
+        SnapshotSet snapshot = readSnapshotSet(context);
+        SharedPreferences.Editor settings;
+        SharedPreferences.Editor tags;
+        try {
+            settings = importSharedPreferences(context, "Settings", new ByteArrayInputStream(snapshot.settings), true);
+            tags = importSharedPreferences(context, "ScrapedTags", new ByteArrayInputStream(snapshot.tags), true);
+        } catch (RuntimeException exception) {
+            throw new IOException("Invalid restore snapshot preferences", exception);
+        }
         DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
-            try (InputStream input = new java.io.FileInputStream(snapshot)) {
-                importDBLocked(input);
-            }
-            if (settingsSnapshotFile(context).isFile()) {
-                try (InputStream input = new java.io.FileInputStream(settingsSnapshotFile(context))) {
-                    importSharedPreferences(context, "Settings", input).apply();
-                }
-            }
-            if (tagsSnapshotFile(context).isFile()) {
-                try (InputStream input = new java.io.FileInputStream(tagsSnapshotFile(context))) {
-                    importSharedPreferences(context, "ScrapedTags", input).apply();
-                }
-            }
+            importDBLocked(new ByteArrayInputStream(snapshot.database));
+            settings.apply();
+            tags.apply();
             Queries.StatusTable.initStatuses();
             com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
         }));
     }
 
     private static boolean isSnapshotSetValid(Context context) {
+        try {
+            readSnapshotSet(context);
+            return true;
+        } catch (IOException exception) {
+            return false;
+        }
+    }
+
+    private static SnapshotSet readSnapshotSet(Context context) throws IOException {
         File snapshot = snapshotFile(context);
         File settings = settingsSnapshotFile(context);
         File tags = tagsSnapshotFile(context);
         File metadata = new File(context.getCacheDir(), SNAPSHOT_META_NAME);
-        if (!snapshot.isFile() || snapshot.length() == 0 || !settings.isFile() || !tags.isFile() || !metadata.isFile()) return false;
+        if (!snapshot.isFile() || snapshot.length() == 0 || !settings.isFile() || !tags.isFile() || !metadata.isFile())
+            throw new IOException("Incomplete restore snapshot");
         try {
             JSONObject meta = new JSONObject(new String(Files.readAllBytes(metadata.toPath()), StandardCharsets.UTF_8));
-            return Exporter.sha256(Files.readAllBytes(snapshot.toPath())).equalsIgnoreCase(meta.optString("database"))
-                && Exporter.sha256(Files.readAllBytes(settings.toPath())).equalsIgnoreCase(meta.optString("settings"))
-                && Exporter.sha256(Files.readAllBytes(tags.toPath())).equalsIgnoreCase(meta.optString("tags"));
-        } catch (Exception exception) {
-            return false;
+            SnapshotSet set = new SnapshotSet(Files.readAllBytes(snapshot.toPath()), Files.readAllBytes(settings.toPath()), Files.readAllBytes(tags.toPath()));
+            if (!Exporter.sha256(set.database).equalsIgnoreCase(meta.optString("database"))
+                || !Exporter.sha256(set.settings).equalsIgnoreCase(meta.optString("settings"))
+                || !Exporter.sha256(set.tags).equalsIgnoreCase(meta.optString("tags")))
+                throw new IOException("Restore snapshot integrity check failed");
+            return set;
+        } catch (JSONException exception) {
+            throw new IOException("Invalid restore snapshot metadata", exception);
+        }
+    }
+
+    private static final class SnapshotSet {
+        final byte[] database;
+        final byte[] settings;
+        final byte[] tags;
+
+        SnapshotSet(byte[] database, byte[] settings, byte[] tags) {
+            this.database = database;
+            this.settings = settings;
+            this.tags = tags;
         }
     }
 
