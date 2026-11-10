@@ -41,6 +41,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
     private final BaseActivity context;
     private final String queryString;
+    private RecyclerView attachedRecycler;
     private boolean loadedDownloadedOnly;
     private boolean loadedFavoriteOnly;
     private int loadedReadingFilter;
@@ -70,7 +71,14 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recycler) {
         super.onAttachedToRecyclerView(recycler);
+        attachedRecycler = recycler;
         GenericAdapter.prepareGalleryGrid(recycler);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recycler) {
+        if (attachedRecycler == recycler) attachedRecycler = null;
+        super.onDetachedFromRecyclerView(recycler);
     }
 
     private void loadGallery(final GenericAdapter.ViewHolder holder, SimpleGallery ent) {
@@ -99,7 +107,13 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         if (context instanceof GalleryActivity) {
             CardView card = (CardView) holder.layout.getParent();
             ViewGroup.LayoutParams params = card.getLayoutParams();
-            params.width = Global.getGalleryWidth();
+            RecyclerView parent = attachedRecycler;
+            if (parent != null) {
+                float density = parent.getResources().getDisplayMetrics().density;
+                int availableWidth = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();
+                if (availableWidth <= 0) availableWidth = parent.getResources().getDisplayMetrics().widthPixels;
+                params.width = relatedCardWidth(availableWidth, density);
+            }
             params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             card.setLayoutParams(params);
         }
@@ -129,6 +143,11 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         });
         holder.overlay.setOnClickListener(v -> holder.overlay.setVisibility(View.GONE));
         holder.stateBadge.bind(ent);
+    }
+
+    static int relatedCardWidth(int availableWidth, float density) {
+        int halfWidth = (availableWidth - Math.round(24 * density)) / 2;
+        return Math.max(Math.round(116 * density), Math.min(halfWidth, Math.round(200 * density)));
     }
 
     public void updateColor(int id) {

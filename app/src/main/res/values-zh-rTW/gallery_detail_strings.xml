@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">詳情</string>
+    <string name="gallery_tab_pages">預覽</string>
+    <string name="gallery_jump_page">跳轉頁碼</string>
+    <string name="gallery_start_reading">開始閱讀</string>
+    <string name="gallery_continue_page">繼續閱讀 · 第 %1$d 頁</string>
+    <string name="gallery_read_from_start">從頭閱讀</string>
+    <string name="gallery_cover">漫畫封面</string>
+    <string name="gallery_expand_tags">展開全部標籤</string>
+    <string name="gallery_collapse_tags">收起標籤</string>
+    <string name="gallery_comments_read_only">暫時無法發表評論。</string>
+    <string name="gallery_comments_unavailable">此漫畫的評論無法使用。</string>
+    <string name="gallery_comments_empty">暫無評論。</string>
+    <string name="gallery_comments_failed">評論載入失敗，請重試。</string>
+    <string name="gallery_comments_more">載入更多評論</string>
+    <string name="gallery_browser_unavailable">沒有可用的瀏覽器。</string>
+</resources>

@@ -29,6 +29,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SimpleGallery extends GenericGallery {
     public static final Creator<SimpleGallery> CREATOR = new Creator<>() {
@@ -48,6 +52,7 @@ public class SimpleGallery extends GenericGallery {
     private int pageCount;
     private Language language = Language.UNKNOWN;
     private TagList tags;
+    private final List<Integer> tagIds = new ArrayList<>();
 
     public SimpleGallery(Parcel in) {
         title = in.readString();
@@ -56,6 +61,12 @@ public class SimpleGallery extends GenericGallery {
         thumbnail = Uri.parse(in.readString());
         language = Language.values()[in.readByte()];
         pageCount = Math.max(0, in.readInt());
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            tags = in.readParcelable(TagList.class.getClassLoader(), TagList.class);
+        } else {
+            tags = in.readParcelable(TagList.class.getClassLoader());
+        }
+        in.readList(tagIds, Integer.class.getClassLoader());
     }
 
     @SuppressLint("Range")
@@ -82,6 +93,7 @@ public class SimpleGallery extends GenericGallery {
         thumbnail = gallery.getThumbnail();
         pageCount = gallery.getPageCount();
         tags = gallery.getTags();
+        if (tags != null) for (Tag tag : tags.getAllTagsList()) tagIds.add(tag.getId());
     }
 
     /**
@@ -112,11 +124,28 @@ public class SimpleGallery extends GenericGallery {
             title = !englishTitle.isEmpty() ? englishTitle : japaneseTitle;
         }
         String thumbPath = json.optString("thumbnail", "");
-        // Tags: v2 list items only have tag_ids, look them up from local DB
+        // Related detail items include full tags; prefer those credits over a possibly stale tag cache.
         JSONArray tagIdsArr = json.optJSONArray("tag_ids");
+        List<Integer> tagIds = new ArrayList<>();
+        if (tagIdsArr != null) for (int i = 0; i < tagIdsArr.length(); i++) tagIds.add(tagIdsArr.getInt(i));
+        JSONArray tagsArray = json.optJSONArray("tags");
         TagList tags;
         Language language = Language.UNKNOWN;
-        if (tagIdsArr != null && tagIdsArr.length() > 0) {
+        if (tagsArray != null && tagsArray.length() > 0) {
+            tags = new TagList();
+            for (int i = 0; i < tagsArray.length(); i++) {
+                JSONObject tagObj = tagsArray.getJSONObject(i);
+                Tag tag = new Tag(
+                    tagObj.getString("name"),
+                    tagObj.optInt("count", 0),
+                    tagObj.getInt("id"),
+                    TagType.typeByName(tagObj.getString("type")),
+                    TagStatus.DEFAULT
+                );
+                tags.addTag(tag);
+            }
+            language = Gallery.loadLanguage(tags);
+        } else if (tagIdsArr != null && tagIdsArr.length() > 0) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < tagIdsArr.length(); i++) {
                 if (i > 0) sb.append(',');
@@ -125,35 +154,29 @@ public class SimpleGallery extends GenericGallery {
             tags = Queries.TagTable.getTagsFromListOfInt(sb.toString());
             language = Gallery.loadLanguage(tags);
         } else {
-            // v2 detail related items may have full tag objects
-            JSONArray tagsArray = json.optJSONArray("tags");
-            if (tagsArray != null && tagsArray.length() > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < tagsArray.length(); i++) {
-                    JSONObject tagObj = tagsArray.getJSONObject(i);
-                    Tag tag = new Tag(
-                        tagObj.getString("name"),
-                        tagObj.optInt("count", 0),
-                        tagObj.getInt("id"),
-                        TagType.typeByName(tagObj.getString("type")),
-                        TagStatus.DEFAULT
-                    );
-                    Queries.TagTable.insert(tag);
-                    if (i > 0) sb.append(',');
-                    sb.append(tag.getId());
-                }
-                tags = Queries.TagTable.getTagsFromListOfInt(sb.toString());
-                language = Gallery.loadLanguage(tags);
-            } else {
-                tags = new TagList();
-            }
+            tags = new TagList();
         }
         if (context != null && id > Global.getMaxId()) Global.updateMaxId(context, id);
         SimpleGallery gallery = new SimpleGallery(title, id, mediaId,
             Uri.parse("https://t1." + Utility.getHost() + "/" + thumbPath), language, tags);
         gallery.pageCount = Math.max(0, json.optInt("num_pages", 0));
+        gallery.tagIds.addAll(tagIds);
         return gallery;
     }
+
+    public void replaceTagsFromLookup(Collection<Tag> fetchedTags) {
+        TagList resolved = new TagList();
+        Set<Integer> fetchedIds = new HashSet<>();
+        for (Tag tag : fetchedTags) {
+            if (tagIds.contains(tag.getId()) && fetchedIds.add(tag.getId())) resolved.addTag(tag);
+        }
+        if (tags != null) for (Tag tag : tags.getAllTagsList())
+            if (tagIds.contains(tag.getId()) && fetchedIds.add(tag.getId())) resolved.addTag(tag);
+        tags = resolved;
+        language = Gallery.loadLanguage(tags);
+    }
+
+    public List<Integer> getTagIds() { return new ArrayList<>(tagIds); }
 
     public TagList getTags() {
         return tags;
@@ -226,7 +249,8 @@ public class SimpleGallery extends GenericGallery {
         dest.writeString(thumbnail.toString());
         dest.writeByte((byte) language.ordinal());
         dest.writeInt(pageCount);
-        //TAGS AREN'T WRITTEN
+        dest.writeParcelable(tags, flags);
+        dest.writeList(tagIds);
     }
 
     public Uri getThumbnail() {

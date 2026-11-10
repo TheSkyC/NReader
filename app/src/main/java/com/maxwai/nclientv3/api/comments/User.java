@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api.comments;
 
 import android.net.Uri;
@@ -33,7 +34,7 @@ public class User implements Parcelable {
                 case "id":
                     id = reader.nextInt();
                     break;
-                case "post_date":
+                case "username":
                     username = reader.nextString();
                     break;
                 case "avatar_url":
@@ -70,7 +71,10 @@ public class User implements Parcelable {
     }
 
     public Uri getAvatarUrl() {
-        return Uri.parse(String.format(Locale.US, "https://i.%s/%s", Utility.getHost(), avatarUrl));
+        if (avatarUrl == null || avatarUrl.isEmpty()) return null;
+        Uri uri = Uri.parse(avatarUrl);
+        if (uri.isAbsolute()) return "https".equalsIgnoreCase(uri.getScheme()) ? uri : null;
+        return Uri.parse(String.format(Locale.US, "https://i.%s/%s", Utility.getHost(), avatarUrl.replaceFirst("^/+", "")));
     }
 
     public String getUsername() {

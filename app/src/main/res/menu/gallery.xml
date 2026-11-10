@@ -30,7 +30,7 @@
         android:icon="@drawable/ic_world"
         android:orderInCategory="500"
         android:title="@string/go_online"
-        app:showAsAction="ifRoom|collapseActionView" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/related"
         android:icon="@drawable/ic_burst_mode"
@@ -49,7 +49,7 @@
         android:icon="@drawable/ic_star"
         android:orderInCategory="500"
         android:title="@string/remove_from_online_favorites"
-        app:showAsAction="ifRoom|collapseActionView" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/manage_status"
         android:orderInCategory="550"
@@ -60,7 +60,7 @@
         android:icon="@drawable/ic_share"
         android:orderInCategory="600"
         android:title="@string/share"
-        app:showAsAction="ifRoom|collapseActionView" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/comments"
         android:icon="@drawable/ic_chat_bubble"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">Details</string>
+    <string name="gallery_tab_pages">Vorschau</string>
+    <string name="gallery_jump_page">Seite auswählen</string>
+    <string name="gallery_start_reading">Lesen beginnen</string>
+    <string name="gallery_continue_page">Weiterlesen · Seite %1$d</string>
+    <string name="gallery_read_from_start">Von Anfang an lesen</string>
+    <string name="gallery_cover">Galeriecover</string>
+    <string name="gallery_expand_tags">Alle Tags anzeigen</string>
+    <string name="gallery_collapse_tags">Weniger Tags anzeigen</string>
+    <string name="gallery_comments_read_only">Kommentare können derzeit nicht veröffentlicht werden.</string>
+    <string name="gallery_comments_unavailable">Für diese Galerie sind keine Kommentare verfügbar.</string>
+    <string name="gallery_comments_empty">Noch keine Kommentare.</string>
+    <string name="gallery_comments_failed">Kommentare konnten nicht geladen werden. Bitte erneut versuchen.</string>
+    <string name="gallery_comments_more">Weitere Kommentare laden</string>
+    <string name="gallery_browser_unavailable">Kein Browser verfügbar.</string>
+</resources>

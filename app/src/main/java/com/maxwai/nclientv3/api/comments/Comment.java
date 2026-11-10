@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.api.comments;
 
 import android.net.Uri;
@@ -49,6 +50,9 @@ public class Comment implements Parcelable {
             }
         }
         reader.endObject();
+        if (id <= 0 || poster == null || postDate == null || body == null) {
+            throw new IOException("Invalid comment");
+        }
     }
 
     protected Comment(Parcel in) {

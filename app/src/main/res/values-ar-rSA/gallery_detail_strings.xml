@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">التفاصيل</string>
+    <string name="gallery_tab_pages">المعاينة</string>
+    <string name="gallery_jump_page">الانتقال إلى صفحة</string>
+    <string name="gallery_start_reading">بدء القراءة</string>
+    <string name="gallery_continue_page">متابعة القراءة · الصفحة %1$d</string>
+    <string name="gallery_read_from_start">القراءة من البداية</string>
+    <string name="gallery_cover">غلاف المعرض</string>
+    <string name="gallery_expand_tags">إظهار جميع الوسوم</string>
+    <string name="gallery_collapse_tags">إظهار وسوم أقل</string>
+    <string name="gallery_comments_read_only">نشر التعليقات غير متاح حالياً.</string>
+    <string name="gallery_comments_unavailable">التعليقات غير متاحة لهذا المعرض.</string>
+    <string name="gallery_comments_empty">لا توجد تعليقات بعد.</string>
+    <string name="gallery_comments_failed">تعذر تحميل التعليقات. حاول مرة أخرى.</string>
+    <string name="gallery_comments_more">تحميل المزيد من التعليقات</string>
+    <string name="gallery_browser_unavailable">لا يوجد متصفح متاح.</string>
+</resources>

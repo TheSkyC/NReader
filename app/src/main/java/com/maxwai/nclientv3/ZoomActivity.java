@@ -92,7 +92,12 @@ public class ZoomActivity extends GeneralActivity {
             : savedInstanceState.getInt("readerPage", 1);
         final int page = new ReadingPosition(requestedPage, 0f).clamp(gallery.getPageCount()).page - 1;
         actualPage = page;
-        directory = gallery.getGalleryFolder();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            directory = getIntent().getParcelableExtra(getPackageName() + ".DIRECTORY", GalleryFolder.class);
+        } else {
+            directory = getIntent().getParcelableExtra(getPackageName() + ".DIRECTORY");
+        }
+        if (directory == null) directory = gallery.getGalleryFolder();
         //toolbar setup
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

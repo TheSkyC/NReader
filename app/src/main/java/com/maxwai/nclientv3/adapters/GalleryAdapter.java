@@ -60,10 +60,17 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private GalleryFolder directory = null;
     private Policy policy;
     private int colCount;
+    private final boolean details;
+    private final boolean[] expandedTags = new boolean[TagType.values.length];
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
+        this(cont, gallery, colCount, false);
+    }
+
+    public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount, boolean details) {
         this.context = cont;
         this.gallery = gallery;
+        this.details = details;
         setColCount(colCount);
         try {
             if (gallery instanceof LocalGallery) {
@@ -83,6 +90,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     public Type positionToType(int pos) {
+        if (details) return pos == 0 ? Type.HEADER : pos == 1 ? Type.TAG : Type.RELATED;
         if (pos == 0) return Type.TAG;
         if (pos > gallery.getPageCount()) return Type.RELATED;
         return Type.PAGE;
@@ -108,6 +116,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     public GalleryAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int id = 0;
         switch (Type.values()[viewType]) {
+            case HEADER:
+                id = R.layout.gallery_detail_header;
+                break;
             case TAG:
                 id = R.layout.tags_layout;
                 break;
@@ -132,7 +143,15 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     public void onBindViewHolder(@NonNull final GalleryAdapter.ViewHolder holder, int position) {
 
         switch (positionToType(holder.getBindingAdapterPosition())) {
+            case HEADER:
+                loadHeader(holder);
+                break;
             case TAG:
+                if (!details) {
+                    holder.itemView.setVisibility(View.GONE);
+                    holder.itemView.getLayoutParams().height = 0;
+                    break;
+                }
                 loadTagLayout(holder);
                 break;
             case PAGE:
@@ -142,6 +161,23 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 loadRelatedLayout(holder);
                 break;
         }
+    }
+
+    private void loadHeader(ViewHolder holder) {
+        TextView title = holder.master.findViewById(R.id.gallery_title);
+        title.setText(gallery.getTitle());
+        TextView pageCount = holder.master.findViewById(R.id.gallery_page_count);
+        pageCount.setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
+        ImageView cover = holder.master.findViewById(R.id.gallery_cover);
+        File firstPage = directory == null ? null : directory.getPage(1);
+        if (firstPage != null && firstPage.exists()) {
+            ImageDownloadUtility.loadImageOp(context, cover, firstPage, 0);
+        } else if (gallery instanceof Gallery && gallery.hasGalleryData()) {
+            ImageDownloadUtility.loadImage(context, ((Gallery) gallery).getCover(), cover);
+        } else {
+            ImageDownloadUtility.loadImage(R.drawable.ic_logo, cover);
+        }
+        context.bindReadingActions(holder.master);
     }
 
     private void loadRelatedLayout(ViewHolder holder) {
@@ -185,12 +221,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             tagCount = tagList.getCount(type);
             lay = (ViewGroup) vg.getChildAt(type.getId());
             cg = lay.findViewById(R.id.chip_group);
-            if (cg.getChildCount() != 0) continue;
             lay.setVisibility(tagCount == 0 ? View.GONE : View.VISIBLE);
             ((TextView) lay.findViewById(R.id.title)).setText(idStringTagName);
-            for (int a = 0; a < tagCount; a++) {
+            for (int a = cg.getChildCount(); a < tagCount; a++) {
                 final Tag tag = tagList.getTag(type, a);
-                Chip c = (Chip) inflater.inflate(R.layout.chip_layout, cg, false);
+                Chip c = (Chip) inflater.inflate(R.layout.gallery_tag_chip, cg, false);
                 c.setText(tag.getName());
                 c.setOnClickListener(v -> {
                     Intent intent = new Intent(context, MainActivity.class);
@@ -205,8 +240,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 });
                 cg.addView(c);
             }
-            addInfoLayout(holder, gallery.getGalleryData());
+            for (int index = 0; index < cg.getChildCount(); index++) {
+                cg.getChildAt(index).setVisibility(expandedTags[type.getId()] || index < 8 ? View.VISIBLE : View.GONE);
+            }
+            TextView expand = lay.findViewById(R.id.gallery_expand_category);
+            expand.setVisibility(tagCount > 8 ? View.VISIBLE : View.GONE);
+            expand.setText(expandedTags[type.getId()] ? R.string.gallery_collapse_tags : R.string.gallery_expand_tags);
+            expand.setOnClickListener(v -> {
+                expandedTags[type.getId()] = !expandedTags[type.getId()];
+                notifyItemChanged(1);
+            });
         }
+        addInfoLayout(holder, gallery.getGalleryData());
     }
 
     private void initializeIdContainer(TextView idContainer) {
@@ -318,7 +363,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void startGallery(int page) {
-        if (!gallery.isLocal() && Global.getDownloadPolicy() == Global.DataUsageType.NONE) {
+        if (!gallery.isLocal() && Global.getDownloadPolicy() == Global.DataUsageType.NONE
+            && (directory == null || directory.getPage(page) == null)) {
             context.runOnUiThread(() ->
                 Toast.makeText(context, R.string.enable_network_to_continue, Toast.LENGTH_SHORT).show()
             );
@@ -364,10 +410,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return gallery.getPageCount() + 2;
+        return details ? 3 : gallery.getPageCount() + 1;
     }
 
-    public enum Type {TAG, PAGE, RELATED}
+    public enum Type {TAG, PAGE, RELATED, HEADER}
 
     public enum Policy {PROPORTION, FULL}
 

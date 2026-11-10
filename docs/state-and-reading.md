@@ -4,6 +4,16 @@ NReader modifications by TheSkyC (2026); see NOTICE.
 
 ## Reading positions
 
+- Gallery details, page previews, and comments are separate tabs. The details
+  reading action opens the paged reader directly. The preview retains the
+  existing single-column continuous reading mode and its offset restoration.
+- Horizontal gestures drag between adjacent tabs and settle on release. Nested
+  horizontal galleries, zoomed images, and system back gestures retain priority;
+  tab selection and each page's scrolling state remain independent.
+- The comments tab loads independently; unavailable, empty, and failed results
+  are distinguished. Comment posting remains unavailable until the application
+  supports the required user authentication and verification flow.
+
 - Site gallery IDs identify automatic positions. Unknown local IDs are excluded
   until a stable local identity model exists.
   Local numeric ID markers accept one through nine digits, including legacy

@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -447,12 +448,56 @@ public class InspectorV3 extends Thread implements Parcelable {
             for (int i = 0; i < relatedArr.length(); i++) {
                 relatedList.add(SimpleGallery.fromV2ListItem(context.get(), relatedArr.getJSONObject(i)));
             }
+            hydrateRelatedTags(relatedList);
         }
 
         boolean isFavorite = v2.optBoolean("is_favorited", false);
 
         Gallery gallery = new Gallery(context.get(), v2.toString(), relatedList, isFavorite);
         galleries.add(gallery);
+    }
+
+    private void hydrateRelatedTags(List<SimpleGallery> related) {
+        Set<Integer> missingIds = new LinkedHashSet<>();
+        for (SimpleGallery gallery : related) missingIds.addAll(gallery.getTagIds());
+        if (missingIds.isEmpty() || context.get() == null) return;
+
+        ArrayList<Integer> batch = new ArrayList<>(100);
+        ArrayList<Tag> fetched = new ArrayList<>();
+        for (int id : missingIds) {
+            batch.add(id);
+            if (batch.size() == 100) {
+                fetchTagBatch(batch, fetched);
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) fetchTagBatch(batch, fetched);
+        for (SimpleGallery gallery : related) gallery.replaceTagsFromLookup(fetched);
+    }
+
+    private void fetchTagBatch(List<Integer> ids, List<Tag> destination) {
+        StringBuilder query = new StringBuilder();
+        for (int id : ids) {
+            if (query.length() > 0) query.append(',');
+            query.append(id);
+        }
+        String url = Utility.getBaseUrl() + "api/v2/tags/ids?ids=" + query;
+        try (Response response = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build()).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                LogUtility.w("Unable to load related gallery tags: HTTP " + response.code());
+                return;
+            }
+            JSONArray tags = new JSONArray(response.body().string());
+            for (int i = 0; i < tags.length(); i++) {
+                JSONObject json = tags.getJSONObject(i);
+                Tag tag = new Tag(json.getString("name"), json.optInt("count"), json.getInt("id"),
+                    TagType.typeByName(json.getString("type")), TagStatus.DEFAULT);
+                Queries.TagTable.insert(tag);
+                destination.add(tag);
+            }
+        } catch (IOException | JSONException e) {
+            LogUtility.w("Unable to load missing related gallery tags", e);
+        }
     }
 
     /**
