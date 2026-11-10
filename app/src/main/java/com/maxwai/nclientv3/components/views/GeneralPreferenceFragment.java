@@ -47,6 +47,7 @@ import com.maxwai.nclientv3.components.launcher.LauncherReal;
 import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
+import com.maxwai.nclientv3.settings.MainGridSettings;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.DebugImageMask;
 import com.maxwai.nclientv3.utility.Utility;
@@ -581,6 +582,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     }
 
     private void columnMenu() {
+        new MainGridSettings(requireContext());
+        MainGridSettings.forDownloads(requireContext());
         addPreferencesFromResource(R.xml.settings_column);
     }
 

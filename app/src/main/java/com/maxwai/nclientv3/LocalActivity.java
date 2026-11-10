@@ -22,7 +22,9 @@ import com.maxwai.nclientv3.async.converters.CreatePdfOrZip;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.classes.MultichoiceAdapter;
+import com.maxwai.nclientv3.components.widgets.GalleryListGrid;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.settings.MainGridSettings;
 import com.maxwai.nclientv3.utility.Utility;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -43,7 +45,7 @@ public class LocalActivity extends BaseActivity {
         }
     };
     private Toolbar toolbar;
-    private int colCount;
+    private GalleryListGrid listGrid;
     private int idGalleryPosition = -1;
     private File folder = Global.MAINFOLDER;
     private androidx.appcompat.widget.SearchView searchView;
@@ -82,7 +84,10 @@ public class LocalActivity extends BaseActivity {
     public void setAdapter(LocalAdapter adapter) {
         this.adapter = adapter;
         this.adapter.addListener(listener);
-        runOnUiThread(() -> recycler.setAdapter(adapter));
+        runOnUiThread(() -> {
+            recycler.setAdapter(adapter);
+            listGrid.refresh();
+        });
     }
 
     public void setIdGalleryPosition(int idGalleryPosition) {
@@ -95,6 +100,7 @@ public class LocalActivity extends BaseActivity {
         getMenuInflater().inflate(R.menu.download, menu);
         getMenuInflater().inflate(R.menu.local_multichoice, menu);
         this.optionMenu = menu;
+        listGrid.bindMenu(menu.findItem(R.id.list_columns));
         setMenuVisibility(menu);
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -127,6 +133,7 @@ public class LocalActivity extends BaseActivity {
         }
 
         menu.findItem(R.id.search).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
+        menu.findItem(R.id.list_columns).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.sort_by_name).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.folder_choose).setVisible(mode == MultichoiceAdapter.Mode.NORMAL && Global.getUsableFolders(this).size() > 1);
         menu.findItem(R.id.random_favorite).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
@@ -141,25 +148,22 @@ public class LocalActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        if (listGrid != null) listGrid.close();
         if (adapter != null) adapter.removeObserver();
         super.onDestroy();
     }
 
     @Override
     protected void changeLayout(boolean landscape) {
-        colCount = (landscape ? getLandscapeColumnCount() : getPortraitColumnCount());
-        if (adapter != null) adapter.setColCount(colCount);
-        super.changeLayout(landscape);
-    }
-
-    public int getColCount() {
-        return colCount;
+        if (listGrid == null) listGrid = new GalleryListGrid(recycler, MainGridSettings.forDownloads(this));
+        else listGrid.refresh();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (idGalleryPosition != -1) {
+        if (listGrid != null) listGrid.refresh();
+        if (idGalleryPosition != -1 && adapter != null) {
             adapter.updateColor(idGalleryPosition);
             idGalleryPosition = -1;
         }
@@ -168,6 +172,9 @@ public class LocalActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             getOnBackPressedDispatcher().onBackPressed();
+            return true;
+        } else if (item.getItemId() == R.id.list_columns) {
+            listGrid.cycle();
             return true;
         } else if (item.getItemId() == R.id.pause_all) {
             adapter.pauseSelected();

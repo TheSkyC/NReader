@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Popular diário</string>
     <string name="sort_popular_week">Popular semanal</string>
     <string name="sort_type_title_format" formatted="true">Selecione o tipo de classificação (%s)</string>
-    <string name="sort_select_type">Selecione o tipo de classificação:</string>
+    <string name="sort_select_type">Selecione o tipo de classificação</string>
     <string name="unable_to_connect_to_the_site">Não foi possível conectar-se ao site</string>
     <string name="no_entry_found">Nenhuma entrada encontrada</string>
     <string name="retry">Tentar novamente</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">Arquivos locais não verificados</string>
     <string name="debug_mask_images">Ocultar imagens para depuração</string>
     <string name="debug_mask_images_summary">Cobre capas e páginas com um padrão quadriculado opaco. Aplicado ao reabrir a tela; os arquivos baixados não são alterados.</string>
+    <string name="list_columns_action">Alternar colunas: %1$d → %2$d</string>
+    <string name="list_language_filter">Idioma: %1$s</string>
+    <string name="list_compact_columns">Colunas em janelas compactas</string>
+    <string name="list_wide_columns">Colunas em janelas largas</string>
+    <string name="list_columns_summary">Adapta-se à largura e ao tamanho do texto; 4 colunas exigem uma janela larga.</string>
 </resources>

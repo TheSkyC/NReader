@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -7,19 +8,21 @@
         app:iconSpaceReserved="false">
         <SeekBarPreference
             android:defaultValue="2"
-            android:key="@string/key_column_port_main"
-            android:max="4"
-            android:title="@string/use_column_port"
+            android:key="@string/key_main_grid_compact_columns"
+            android:max="3"
+            android:title="@string/list_compact_columns"
+            android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="1"
+            app:min="2"
             app:showSeekBarValue="true" />
         <SeekBarPreference
-            android:defaultValue="4"
-            android:key="@string/key_column_land_main"
+            android:defaultValue="2"
+            android:key="@string/key_main_grid_wide_columns"
             android:max="4"
-            android:title="@string/use_column_land"
+            android:title="@string/list_wide_columns"
+            android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="1"
+            app:min="2"
             app:showSeekBarValue="true" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
@@ -33,19 +36,21 @@
         app:iconSpaceReserved="false">
         <SeekBarPreference
             android:defaultValue="2"
-            android:key="@string/key_column_port_down"
-            android:max="4"
-            android:title="@string/use_column_port"
+            android:key="@string/key_download_grid_compact_columns"
+            android:max="3"
+            android:title="@string/list_compact_columns"
+            android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="1"
+            app:min="2"
             app:showSeekBarValue="true" />
         <SeekBarPreference
-            android:defaultValue="4"
-            android:key="@string/key_column_land_down"
+            android:defaultValue="2"
+            android:key="@string/key_download_grid_wide_columns"
             android:max="4"
-            android:title="@string/use_column_land"
+            android:title="@string/list_wide_columns"
+            android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="1"
+            app:min="2"
             app:showSeekBarValue="true" />
     </PreferenceCategory>
 

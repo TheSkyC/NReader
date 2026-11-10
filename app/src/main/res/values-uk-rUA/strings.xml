@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Популярні за день</string>
     <string name="sort_popular_week">Популярні за тиждень</string>
     <string name="sort_type_title_format" formatted="true">Виберіть тип сортування (%s)</string>
-    <string name="sort_select_type">Виберіть тип сортування:</string>
+    <string name="sort_select_type">Виберіть тип сортування</string>
     <string name="unable_to_connect_to_the_site">Не вдається підключитися до сайту</string>
     <string name="no_entry_found">Матеріалів не знайдено</string>
     <string name="retry">Спробувати знову</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">Локальні файли не перевірено</string>
     <string name="debug_mask_images">Приховувати зображення для налагодження</string>
     <string name="debug_mask_images_summary">Закриває обкладинки та сторінки непрозорою шаховою сіткою. Діє після повторного відкриття екрана; завантажені файли не змінюються.</string>
+    <string name="list_columns_action">Змінити кількість стовпців: %1$d → %2$d</string>
+    <string name="list_language_filter">Мова: %1$s</string>
+    <string name="list_compact_columns">Стовпці у компактних вікнах</string>
+    <string name="list_wide_columns">Стовпці у широких вікнах</string>
+    <string name="list_columns_summary">Залежить від ширини вікна та розміру тексту; 4 стовпці доступні в широкому вікні.</string>
 </resources>
