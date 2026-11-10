@@ -550,7 +550,6 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
                 String query = constraint.toString().toLowerCase(Locale.US);
-                if (lastQuery.equals(query)) return null;
                 FilterResults results = new FilterResults();
                 lastQuery = query;
                 results.values = createHash(galleryDownloaders, dataset);

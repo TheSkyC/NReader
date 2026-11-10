@@ -236,10 +236,10 @@ class Importer {
                     String name = entry.getName();
                     if (!seenEntries.add(name)) throw new IOException("Duplicate backup entry");
                     if (Exporter.DB_ZIP_FILE.equals(name)) {
-                        databaseBytes = readEntry(inputStream);
+                        databaseBytes = readEntry(inputStream, 64 * 1024 * 1024);
                         hasDatabase = true;
                     } else if (Exporter.MANIFEST_ZIP_FILE.equals(name)) {
-                        manifestBytes = readEntry(inputStream);
+                        manifestBytes = readEntry(inputStream, 64 * 1024);
                     } else if (name.equals("Settings.json") || name.equals("ScrapedTags.json")) {
                         String shared = name.substring(0, name.length() - 5);
                         preferences.add(importSharedPreferences(context, shared, inputStream));
@@ -261,11 +261,14 @@ class Importer {
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
     }
 
-    private static byte[] readEntry(InputStream stream) throws IOException {
+    private static byte[] readEntry(InputStream stream, int limit) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int count;
-        while ((count = stream.read(buffer)) != -1) output.write(buffer, 0, count);
+        while ((count = stream.read(buffer)) != -1) {
+            if (count > limit - output.size()) throw new IOException("Backup entry exceeds size limit");
+            output.write(buffer, 0, count);
+        }
         return output.toByteArray();
     }
 

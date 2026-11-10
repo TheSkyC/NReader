@@ -199,6 +199,27 @@ public class ImporterTest {
     }
 
     @Test
+    public void oversizedManifestDoesNotChangeExistingData() throws Exception {
+        File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "oversized-manifest.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+            zip.putNextEntry(new ZipEntry("Manifest.json"));
+            zip.write(new byte[65537]);
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        try {
+            Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
+            fail("Expected oversized manifest rejection");
+        } catch (IOException expected) {
+            assertEquals(7, Queries.ResumeTable.pageFromId(123));
+            assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+            assertFalse(database.inTransaction());
+        }
+    }
+
+    @Test
     public void invalidDownloadTaskRowsRollBackTheRestore() throws IOException {
         try {
             restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":3,\"range_end\":1,"
