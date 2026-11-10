@@ -1,7 +1,9 @@
 package com.maxwai.nclientv3;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.async.database.export.Exporter;
@@ -48,6 +51,7 @@ public class SettingsActivity extends GeneralActivity {
     private ActivityResultLauncher<String> SAVE_SETTINGS;
     private ActivityResultLauncher<Object> REQUEST_STORAGE_MANAGER;
     private ActivityResultLauncher<String> COPY_LOGS;
+    private ActivityResultLauncher<String> notificationPermission;
     private int selectedItem;
 
     @Override
@@ -70,6 +74,15 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void registerActivities() {
+        notificationPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            if (!granted && !isFinishing()) {
+                new MaterialAlertDialogBuilder(this)
+                    .setMessage(R.string.notification_permission_denied)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.notification_open_settings, (dialog, which) -> openNotificationSettings())
+                    .show();
+            }
+        });
         IMPORT_ZIP = registerForActivityResult(new ActivityResultContracts.GetContent(), selectedFile -> {
             if (selectedFile == null) return;
             importSettings(selectedFile);
@@ -134,6 +147,32 @@ public class SettingsActivity extends GeneralActivity {
                 Toast.makeText(this, getString(R.string.copy_logs_fail), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void manageNotifications() {
+        boolean permissionMissing = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED;
+        if (permissionMissing) {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.notification_permission_title)
+                .setMessage(R.string.notification_permission_explanation)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok, (dialog, which) -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS))
+                .setNeutralButton(R.string.notification_open_settings, (dialog, which) -> openNotificationSettings())
+                .show();
+        } else {
+            openNotificationSettings();
+        }
+    }
+
+    private void openNotificationSettings() {
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException exception) {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+        }
     }
 
     private void importSettings(Uri selectedFile) {

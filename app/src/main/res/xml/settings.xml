@@ -67,6 +67,11 @@
             android:title="@string/maximum_notification_count"
             app:iconSpaceReserved="false"
             app:showSeekBarValue="true" />
+        <Preference
+            android:key="@string/preference_key_notification_permission"
+            android:title="@string/notification_permission_title"
+            android:summary="@string/notification_permission_summary"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
