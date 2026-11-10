@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">Ayrıntılar</string>
+    <string name="gallery_tab_pages">Ön izleme</string>
+    <string name="gallery_jump_page">Sayfaya git</string>
+    <string name="gallery_start_reading">Okumaya başla</string>
+    <string name="gallery_continue_page">Okumaya devam et · sayfa %1$d</string>
+    <string name="gallery_read_from_start">Baştan oku</string>
+    <string name="gallery_cover">Galeri kapağı</string>
+    <string name="gallery_expand_tags">Tüm etiketleri göster</string>
+    <string name="gallery_collapse_tags">Etiketleri daralt</string>
+    <string name="gallery_comments_read_only">Yorum gönderme şu anda kullanılamıyor.</string>
+    <string name="gallery_comments_unavailable">Bu galeri için yorumlar kullanılamıyor.</string>
+    <string name="gallery_comments_empty">Henüz yorum yok.</string>
+    <string name="gallery_comments_failed">Yorumlar yüklenemedi. Tekrar deneyin.</string>
+    <string name="gallery_comments_more">Daha fazla yorum yükle</string>
+    <string name="gallery_browser_unavailable">Kullanılabilir tarayıcı yok.</string>
+</resources>

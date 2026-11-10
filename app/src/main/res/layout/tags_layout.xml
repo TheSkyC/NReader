@@ -50,4 +50,5 @@
 
         <include layout="@layout/info_layout" />
     </LinearLayout>
+
 </LinearLayout>

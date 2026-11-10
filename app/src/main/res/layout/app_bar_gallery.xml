@@ -1,49 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appbar"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="192dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" />
 
-        <com.google.android.material.appbar.CollapsingToolbarLayout
-            android:id="@+id/collapsing"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/gallery_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:tabIndicatorColor="@android:color/black"
+        app:tabSelectedTextColor="@android:color/black"
+        app:tabTextColor="@android:color/black"
+        app:tabMode="fixed" />
+
+    <com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout
+        android:id="@+id/gallery_tab_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/gallery_details"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <include layout="@layout/content_gallery" />
+
+        <LinearLayout
+            android:id="@+id/gallery_comments"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:contentScrim="?attr/colorPrimaryVariant"
-            app:layout_scrollFlags="scroll|enterAlways|enterAlwaysCollapsed"
-            app:titleEnabled="false"
-            app:toolbarId="@+id/toolbar">
+            android:orientation="vertical"
+            android:visibility="gone">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/gallery_header_title"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginBottom="20dp"
-                android:ellipsize="end"
-                android:focusable="true"
-                android:gravity="start"
-                android:maxLines="4"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="24sp"
-                app:layout_collapseMode="parallax"
-                app:layout_collapseParallaxMultiplier="0.7" />
+                android:padding="16dp"
+                android:text="@string/gallery_comments_read_only" />
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
+            <Button
+                android:id="@+id/comments_browser"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:text="@string/open_in_browser" />
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/comments_refresher"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:layout_collapseMode="pin" />
-        </com.google.android.material.appbar.CollapsingToolbarLayout>
-    </com.google.android.material.appbar.AppBarLayout>
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
-    <include layout="@layout/content_gallery" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/comments_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+            <TextView
+                android:id="@+id/comments_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp"
+                android:visibility="gone" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+            <Button
+                android:id="@+id/comments_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/retry"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/comments_more"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/gallery_comments_more"
+                android:visibility="gone" />
+        </LinearLayout>
+    </com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout>
+</LinearLayout>

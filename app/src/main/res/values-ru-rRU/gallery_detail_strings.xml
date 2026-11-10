@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">Описание</string>
+    <string name="gallery_tab_pages">Предпросмотр</string>
+    <string name="gallery_jump_page">Перейти к странице</string>
+    <string name="gallery_start_reading">Начать чтение</string>
+    <string name="gallery_continue_page">Продолжить чтение · стр. %1$d</string>
+    <string name="gallery_read_from_start">Читать с начала</string>
+    <string name="gallery_cover">Обложка галереи</string>
+    <string name="gallery_expand_tags">Показать все теги</string>
+    <string name="gallery_collapse_tags">Свернуть теги</string>
+    <string name="gallery_comments_read_only">Публикация комментариев пока недоступна.</string>
+    <string name="gallery_comments_unavailable">Комментарии к этой галерее недоступны.</string>
+    <string name="gallery_comments_empty">Комментариев пока нет.</string>
+    <string name="gallery_comments_failed">Не удалось загрузить комментарии. Попробуйте ещё раз.</string>
+    <string name="gallery_comments_more">Загрузить ещё комментарии</string>
+    <string name="gallery_browser_unavailable">Нет доступного браузера.</string>
+</resources>

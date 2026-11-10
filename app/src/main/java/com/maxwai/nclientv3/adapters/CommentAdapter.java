@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.view.LayoutInflater;
@@ -34,9 +35,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private final DateFormat format;
     private final int userId;
     private final AppCompatActivity context;
+    private final boolean readOnly;
 
     public CommentAdapter(AppCompatActivity context, List<Comment> comments) {
+        this(context, comments, false);
+    }
+
+    public CommentAdapter(AppCompatActivity context, List<Comment> comments, boolean readOnly) {
         this.context = context;
+        this.readOnly = readOnly;
         format = android.text.format.DateFormat.getDateFormat(context);
         this.comments = comments == null ? new ArrayList<>() : comments;
         if (Login.isLogged() && Login.getUser() != null) {
@@ -54,8 +61,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     public void onBindViewHolder(@NonNull CommentAdapter.ViewHolder holder, int pos) {
         int position = holder.getBindingAdapterPosition();
         Comment c = comments.get(position);
+        holder.body.setMaxLines(7);
         holder.layout.setOnClickListener(v1 -> context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7)));
-        holder.close.setVisibility(c.getPosterId() != userId ? View.GONE : View.VISIBLE);
+        holder.close.setVisibility(readOnly || c.getPosterId() != userId ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());
         holder.body.setText(c.getComment());
         holder.date.setText(format.format(c.getPostDate()));
@@ -78,10 +86,18 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                     }
                 });
         });
-        if (c.getAvatarUrl() == null || Global.getDownloadPolicy() != Global.DataUsageType.FULL)
+        boolean useDefaultAvatar = c.getAvatarUrl() == null || Global.getDownloadPolicy() != Global.DataUsageType.FULL;
+        holder.userImage.setScaleType(useDefaultAvatar ? ImageButton.ScaleType.FIT_CENTER : ImageButton.ScaleType.CENTER_CROP);
+        holder.userImage.setPadding(useDefaultAvatar ? dp(4) : 0, useDefaultAvatar ? dp(4) : 0,
+            useDefaultAvatar ? dp(4) : 0, useDefaultAvatar ? dp(4) : 0);
+        if (useDefaultAvatar)
             ImageDownloadUtility.loadImage(R.drawable.ic_person, holder.userImage);
         else
             ImageDownloadUtility.loadImage(context, c.getAvatarUrl(), holder.userImage);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
     @Override
@@ -92,6 +108,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     public void addComment(Comment c) {
         comments.add(0, c);
         context.runOnUiThread(() -> notifyItemInserted(0));
+    }
+
+    public void addComments(List<Comment> additional) {
+        int start = comments.size();
+        comments.addAll(additional);
+        notifyItemRangeInserted(start, additional.size());
+    }
+
+    public List<Comment> getComments() {
+        return new ArrayList<>(comments);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

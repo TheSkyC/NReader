@@ -278,6 +278,30 @@ public class GalleryStateBadgeTest {
     }
 
     @Test
+    public void relatedGalleryPrefersFullCreditsOverCachedTagIds() throws Exception {
+        SimpleGallery related = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":122,\"media_id\":\"1\",\"english_title\":\"Related test\","
+                + "\"tag_ids\":[999],\"tags\":["
+                + "{\"id\":901,\"name\":\"Circle from response\",\"type\":\"group\"},"
+                + "{\"id\":902,\"name\":\"Artist from response\",\"type\":\"artist\"}]}"));
+        assertEquals(1, related.getTags().getCount(TagType.GROUP));
+        assertEquals("Circle from response", related.getTags().getTag(TagType.GROUP, 0).getName());
+        assertEquals(1, related.getTags().getCount(TagType.ARTIST));
+        assertEquals("Artist from response", related.getTags().getTag(TagType.ARTIST, 0).getName());
+        Parcel parcel = Parcel.obtain();
+        try {
+            related.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            SimpleGallery restored = SimpleGallery.CREATOR.createFromParcel(parcel);
+            assertEquals(1, restored.getTags().getCount(TagType.GROUP));
+            assertEquals(1, restored.getTagIds().size());
+            assertEquals(Integer.valueOf(999), restored.getTagIds().get(0));
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    @Test
     public void favoriteMutationFinishesAfterItsCardIsRecycled() throws Exception {
         Gallery gallery = new Gallery(null, "{\"id\":117,\"num_pages\":1,\"title\":{\"pretty\":\"Favorite test\"},"
             + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"

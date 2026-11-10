@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">詳細</string>
+    <string name="gallery_tab_pages">プレビュー</string>
+    <string name="gallery_jump_page">ページに移動</string>
+    <string name="gallery_start_reading">読み始める</string>
+    <string name="gallery_continue_page">続きを読む · %1$d ページ</string>
+    <string name="gallery_read_from_start">最初から読む</string>
+    <string name="gallery_cover">作品の表紙</string>
+    <string name="gallery_expand_tags">すべてのタグを表示</string>
+    <string name="gallery_collapse_tags">タグを折りたたむ</string>
+    <string name="gallery_comments_read_only">現在コメントを投稿できません。</string>
+    <string name="gallery_comments_unavailable">この作品のコメントは利用できません。</string>
+    <string name="gallery_comments_empty">コメントはまだありません。</string>
+    <string name="gallery_comments_failed">コメントを読み込めませんでした。もう一度お試しください。</string>
+    <string name="gallery_comments_more">コメントをさらに読み込む</string>
+    <string name="gallery_browser_unavailable">利用できるブラウザがありません。</string>
+</resources>

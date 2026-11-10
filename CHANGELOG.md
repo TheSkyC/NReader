@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Split gallery details, page previews, and comments into separate tabs, with a
+  direct reading action and retained single-column reading. Load comments using
+  the paginated API and provide a browser entry while posting remains unavailable.
+- Make gallery tabs readable and swipeable, compact tag chips, and size related
+  gallery cards to show multiple covers on a phone screen.
+- Make gallery pages follow horizontal drags, with an animated transition or
+  return when released, while retaining nested scrolling and reading progress.
+- Expand long tag categories independently, prefer related-item credit metadata
+  from the API response, and fit the default comment avatar within its bounds.
+- Resolve related-gallery tag IDs through the batch tag API so author and group
+  credits are available even when those tags are absent from the local cache.
+
 - Replace gallery-list and random-gallery language flag emoji with local Tabler
   vector artwork, consistent dimensions and accessible language descriptions.
 

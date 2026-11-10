@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_tab_details">Деталі</string>
+    <string name="gallery_tab_pages">Перегляд</string>
+    <string name="gallery_jump_page">Перейти до сторінки</string>
+    <string name="gallery_start_reading">Почати читання</string>
+    <string name="gallery_continue_page">Продовжити читання · стор. %1$d</string>
+    <string name="gallery_read_from_start">Читати спочатку</string>
+    <string name="gallery_cover">Обкладинка галереї</string>
+    <string name="gallery_expand_tags">Показати всі теги</string>
+    <string name="gallery_collapse_tags">Згорнути теги</string>
+    <string name="gallery_comments_read_only">Публікація коментарів поки недоступна.</string>
+    <string name="gallery_comments_unavailable">Коментарі до цієї галереї недоступні.</string>
+    <string name="gallery_comments_empty">Коментарів ще немає.</string>
+    <string name="gallery_comments_failed">Не вдалося завантажити коментарі. Спробуйте ще раз.</string>
+    <string name="gallery_comments_more">Завантажити більше коментарів</string>
+    <string name="gallery_browser_unavailable">Немає доступного браузера.</string>
+</resources>
