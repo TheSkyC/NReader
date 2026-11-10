@@ -244,6 +244,7 @@ public class ImporterTest {
 
     @Test
     public void restoreSnapshotReturnsDatabaseToPreImportState() throws Exception {
+        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 11).commit();
         File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "snapshot-source.zip");
         try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
             zip.putNextEntry(new ZipEntry("Database.json"));
@@ -253,8 +254,10 @@ public class ImporterTest {
         Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
         assertEquals(-1, Queries.ResumeTable.pageFromId(123));
         assertTrue(Importer.snapshotFile(RuntimeEnvironment.getApplication()).isFile());
+        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 22).commit();
         Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
         assertEquals(7, Queries.ResumeTable.pageFromId(123));
+        assertEquals(11, RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).getInt("snapshotSetting", -1));
     }
 
     @Test
