@@ -242,6 +242,21 @@ public class ImporterTest {
     }
 
     @Test
+    public void restoreSnapshotReturnsDatabaseToPreImportState() throws Exception {
+        File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "snapshot-source.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
+        assertEquals(-1, Queries.ResumeTable.pageFromId(123));
+        assertTrue(Importer.snapshotFile(RuntimeEnvironment.getApplication()).isFile());
+        Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
+        assertEquals(7, Queries.ResumeTable.pageFromId(123));
+    }
+
+    @Test
     public void invalidDownloadTaskRowsRollBackTheRestore() throws IOException {
         try {
             restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":3,\"range_end\":1,"

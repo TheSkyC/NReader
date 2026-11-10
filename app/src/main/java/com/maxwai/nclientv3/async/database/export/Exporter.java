@@ -141,6 +141,12 @@ public class Exporter {
         }
     }
 
+    static byte[] currentDatabaseBytes() throws IOException {
+        ByteArrayOutputStream database = new ByteArrayOutputStream();
+        dumpDB(database);
+        return database.toByteArray();
+    }
+
     private static void exportSharedPreferences(Context context, String sharedName, OutputStream stream) throws IOException {
         JsonWriter writer = new JsonWriter(new OutputStreamWriter(stream));
         SharedPreferences pref = context.getSharedPreferences(sharedName, 0);
