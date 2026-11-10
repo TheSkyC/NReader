@@ -44,6 +44,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SearchActivity extends GeneralActivity {
     public static final int CUSTOM_ID_START = 100000000;
@@ -60,6 +62,7 @@ public class SearchActivity extends GeneralActivity {
     private Ranges.TimeUnit temporaryUnit;
     private InputMethodManager inputMethodManager;
     private AlertDialog alertDialog;
+    private final ExecutorService tagLoader = Executors.newSingleThreadExecutor();
 
     public void setQuery(String str, boolean submit) {
         runOnUiThread(() -> searchView.setQuery(str, submit));
@@ -257,30 +260,33 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void populateGroup() {
-        //add top tags
-        for (TagType type : new TagType[]{TagType.TAG, TagType.PARODY, TagType.CHARACTER, TagType.ARTIST, TagType.GROUP}) {
-            for (Tag t : Queries.TagTable.getTopTags(type, Global.getFavoriteLimit(this)))
-                addChipTag(t, true, true);
-        }
-        //add already filtered tags
-        for (Tag t : Queries.TagTable.getAllFiltered())
-            if (!tagAlreadyExist(t)) addChipTag(t, true, true);
-        //add categories
-        for (Tag t : Queries.TagTable.getTrueAllType(TagType.CATEGORY)) addChipTag(t, false, false);
-        //add languages
-        for (Tag t : Queries.TagTable.getTrueAllType(TagType.LANGUAGE)) {
-            if (t.getId() == SpecialTagIds.LANGUAGE_ENGLISH && Global.getOnlyLanguage() == Language.ENGLISH)
-                t.setStatus(TagStatus.ACCEPTED);
-            else if (t.getId() == SpecialTagIds.LANGUAGE_JAPANESE && Global.getOnlyLanguage() == Language.JAPANESE)
-                t.setStatus(TagStatus.ACCEPTED);
-            else if (t.getId() == SpecialTagIds.LANGUAGE_CHINESE && Global.getOnlyLanguage() == Language.CHINESE)
-                t.setStatus(TagStatus.ACCEPTED);
-            addChipTag(t, false, false);
-        }
-        //add online tags
-        if (Login.useAccountTag()) for (Tag t : Queries.TagTable.getAllOnlineBlacklisted())
-            if (!tagAlreadyExist(t))
-                addChipTag(t, true, true);
+        tagLoader.execute(() -> {
+            ArrayList<Tag> top = new ArrayList<>();
+            for (TagType type : new TagType[]{TagType.TAG, TagType.PARODY, TagType.CHARACTER, TagType.ARTIST, TagType.GROUP})
+                top.addAll(Queries.TagTable.getTopTags(type, Global.getFavoriteLimit(this)));
+            ArrayList<Tag> filtered = new ArrayList<>(Queries.TagTable.getAllFiltered());
+            ArrayList<Tag> categories = new ArrayList<>(Queries.TagTable.getTrueAllType(TagType.CATEGORY));
+            ArrayList<Tag> languages = new ArrayList<>(Queries.TagTable.getTrueAllType(TagType.LANGUAGE));
+            ArrayList<Tag> online = Login.useAccountTag()
+                ? new ArrayList<>(Queries.TagTable.getAllOnlineBlacklisted()) : new ArrayList<>();
+            runOnUiThread(() -> {
+                for (Tag t : top) addChipTag(t, true, true);
+                for (Tag t : filtered) if (!tagAlreadyExist(t)) addChipTag(t, true, true);
+                for (Tag t : categories) addChipTag(t, false, false);
+                for (Tag t : languages) {
+                    if ((t.getId() == SpecialTagIds.LANGUAGE_ENGLISH && Global.getOnlyLanguage() == Language.ENGLISH)
+                        || (t.getId() == SpecialTagIds.LANGUAGE_JAPANESE && Global.getOnlyLanguage() == Language.JAPANESE)
+                        || (t.getId() == SpecialTagIds.LANGUAGE_CHINESE && Global.getOnlyLanguage() == Language.CHINESE))
+                        t.setStatus(TagStatus.ACCEPTED);
+                    addChipTag(t, false, false);
+                }
+                for (Tag t : online) if (!tagAlreadyExist(t)) addChipTag(t, true, true);
+                addTagButtons();
+            });
+        });
+    }
+
+    private void addTagButtons() {
         //add + button
         for (TagType type : TagType.values) {
             //ignore these tags
@@ -293,6 +299,12 @@ public class SearchActivity extends GeneralActivity {
             addChip[type.getId()] = add;
             cg.addView(add);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        tagLoader.shutdownNow();
+        super.onDestroy();
     }
 
     private Chip createAddChip(TagType type, ChipGroup group) {
