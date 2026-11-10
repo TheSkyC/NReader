@@ -290,6 +290,7 @@ public class ImporterTest {
         Files.write(snapshot.toPath(), "{}".getBytes(StandardCharsets.UTF_8));
         snapshot.setLastModified(System.currentTimeMillis() - 31L * 24 * 60 * 60 * 1000);
         assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+        assertFalse(Importer.snapshotFile(RuntimeEnvironment.getApplication()).exists());
     }
 
     @Test
