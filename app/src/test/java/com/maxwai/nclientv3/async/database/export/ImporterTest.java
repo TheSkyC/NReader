@@ -199,6 +199,28 @@ public class ImporterTest {
     }
 
     @Test
+    public void backupPreviewCountsRowsWithoutChangingDatabase() throws Exception {
+        File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "preview.zip");
+        byte[] databaseBytes = "{\"Resume\":[{\"id_gallery\":123,\"page\":4}],\"Favorite\":[]}".getBytes(StandardCharsets.UTF_8);
+        JSONObject manifest = new JSONObject();
+        manifest.put("format_version", Exporter.BACKUP_FORMAT_VERSION);
+        manifest.put("database_length", databaseBytes.length);
+        manifest.put("database_sha256", Exporter.sha256(databaseBytes));
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+            zip.putNextEntry(new ZipEntry("Manifest.json"));
+            zip.write(manifest.toString().getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write(databaseBytes);
+            zip.closeEntry();
+        }
+        BackupPreview.Summary summary = BackupPreview.inspect(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
+        assertTrue(summary.integrityChecked);
+        assertEquals(1, summary.totalRows());
+        assertEquals(7, Queries.ResumeTable.pageFromId(123));
+    }
+
+    @Test
     public void oversizedManifestDoesNotChangeExistingData() throws Exception {
         File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "oversized-manifest.zip");
         try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
