@@ -468,6 +468,8 @@
     <string name="filter_reading_only">Reading in progress</string>
     <string name="filter_unread_only">Unread</string>
     <string name="filter_custom_status_only">Custom status assigned</string>
+    <string name="filter_loaded_results">Filter loaded results</string>
+    <string name="filter_downloaded_only">Downloaded locally</string>
     <string name="debug_mask_images">Mask images for debugging</string>
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
     <string name="cover_group_credit">Group: %1$s</string>
