@@ -20,6 +20,9 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.json.JSONObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -226,12 +230,16 @@ class Importer {
                 ZipEntry entry;
                 Set<String> seenEntries = new HashSet<>();
                 boolean hasDatabase = false;
+                byte[] databaseBytes = null;
+                byte[] manifestBytes = null;
                 while ((entry = inputStream.getNextEntry()) != null) {
                     String name = entry.getName();
                     if (!seenEntries.add(name)) throw new IOException("Duplicate backup entry");
                     if (Exporter.DB_ZIP_FILE.equals(name)) {
-                        importDBLocked(inputStream);
+                        databaseBytes = readEntry(inputStream);
                         hasDatabase = true;
+                    } else if (Exporter.MANIFEST_ZIP_FILE.equals(name)) {
+                        manifestBytes = readEntry(inputStream);
                     } else if (name.equals("Settings.json") || name.equals("ScrapedTags.json")) {
                         String shared = name.substring(0, name.length() - 5);
                         preferences.add(importSharedPreferences(context, shared, inputStream));
@@ -239,6 +247,8 @@ class Importer {
                     inputStream.closeEntry();
                 }
                 if (!hasDatabase) throw new IOException("Backup has no database");
+                if (manifestBytes != null) validateManifest(manifestBytes, databaseBytes);
+                importDBLocked(new ByteArrayInputStream(databaseBytes));
             }
             database.setTransactionSuccessful();
         } catch (RuntimeException exception) {
@@ -249,5 +259,25 @@ class Importer {
         for (SharedPreferences.Editor editor : preferences) editor.apply();
         Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+    }
+
+    private static byte[] readEntry(InputStream stream) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int count;
+        while ((count = stream.read(buffer)) != -1) output.write(buffer, 0, count);
+        return output.toByteArray();
+    }
+
+    static void validateManifest(byte[] manifestBytes, byte[] databaseBytes) throws IOException {
+        try {
+            JSONObject manifest = new JSONObject(new String(manifestBytes, StandardCharsets.UTF_8));
+            if (manifest.optInt("format_version", -1) != Exporter.BACKUP_FORMAT_VERSION
+                || manifest.optLong("database_length", -1) != databaseBytes.length
+                || !Exporter.sha256(databaseBytes).equalsIgnoreCase(manifest.optString("database_sha256", "")))
+                throw new IOException("Backup integrity or format check failed");
+        } catch (JSONException exception) {
+            throw new IOException("Invalid backup manifest", exception);
+        }
     }
 }
