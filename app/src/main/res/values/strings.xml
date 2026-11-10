@@ -23,6 +23,7 @@
     <string name="preference_key_max_history_size" translatable="false">max_history_size</string>
     <string name="preference_key_zoom_one_column" translatable="false">zoom_one_column</string>
     <string name="preference_key_maximum_notification" translatable="false">maximum_notification</string>
+    <string name="preference_key_instant_page_turn" translatable="false">instant_page_turn</string>
     <string name="preference_key_keep_history" translatable="false">keep_history</string>
     <string name="preference_key_override_volume" translatable="false">volume_override</string>
     <string name="preference_key_remove_ignored" translatable="false">remove_ignored</string>
@@ -300,6 +301,8 @@
     <string name="id_copied_to_clipboard">ID copied to clipboard</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="maximum_notification_count">Maximum notification count</string>
+    <string name="instant_page_turn">Instant page turning</string>
+    <string name="instant_page_turn_summary">Skip the page-turn animation for buttons and page jumps. Finger swipes are unchanged.</string>
     <string name="copy_settings_to_clipboard">Copy settings to clipboard</string>
     <string name="sort_popular_all_time">Popular</string>
     <string name="sort_recent">Recent</string>

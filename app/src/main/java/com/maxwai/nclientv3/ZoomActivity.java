@@ -54,6 +54,7 @@ public class ZoomActivity extends GeneralActivity {
     private final static int showFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
+    private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
     private GenericGallery gallery;
     private int actualPage = 0;
     private boolean isHidden = false;
@@ -282,7 +283,8 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changePage(int newPage) {
-        mViewPager.setCurrentItem(newPage);
+        boolean instant = getSharedPreferences("Settings", 0).getBoolean(INSTANT_PAGE_TURN_KEY, false);
+        mViewPager.setCurrentItem(newPage, !instant);
     }
 
     private void changeScrollTypeDialog() {
