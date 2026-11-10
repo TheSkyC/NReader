@@ -59,7 +59,8 @@ when reopened. Sort and page are restored separately. Database version 17 adds
 an independent search-plan table with stable row IDs, names, complete queries,
 sort, page and pinned state. Existing URL-keyed bookmarks remain intact. Plans
 are included in backups; restoring a legacy backup clears plans absent from it.
-The management interface for named and editable plans remains future work.
+Search results can be saved under a name and opened or deleted from the bookmark
+screen. Editing, copying, pinning and sharing plans remain future work.
 
 Favorite search query, page, sort and search expansion survive activity recreation.
 Collapsing search retains its query; clearing text explicitly while expanded resets

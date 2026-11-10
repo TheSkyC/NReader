@@ -9,8 +9,11 @@ import com.maxwai.nclientv3.settings.Database;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class SearchPlanStore {
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     public static final String TABLE_NAME = "SearchPlans";
     public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS SearchPlans ("
         + "id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, query TEXT NOT NULL,"
@@ -18,6 +21,10 @@ public final class SearchPlanStore {
         + "pinned INTEGER NOT NULL CHECK(pinned IN (0,1)));";
 
     private SearchPlanStore() {}
+
+    public static void execute(Runnable action) {
+        executor.execute(action);
+    }
 
     public static boolean isValid(ContentValues values, boolean requireId) {
         String name = values.getAsString("name");

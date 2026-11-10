@@ -4,6 +4,7 @@ package com.maxwai.nclientv3;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -17,6 +18,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -50,6 +53,7 @@ import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.async.ScrapeTags;
 import com.maxwai.nclientv3.async.VersionChecker;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
@@ -524,6 +528,7 @@ public class MainActivity extends BaseActivity
         menu.findItem(R.id.only_language).setVisible(modeType == ModeType.NORMAL);
         menu.findItem(R.id.filter_loaded_results).setVisible(modeType != ModeType.ID);
         menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
+        menu.findItem(R.id.save_search_plan).setVisible(inspector != null && inspector.getRequestType() == ApiRequestType.BYSEARCH);
 
         initializeSearchItem(menu.findItem(R.id.search));
 
@@ -628,6 +633,9 @@ public class MainActivity extends BaseActivity
                 showDialogDownloadAll();
         } else if (item.getItemId() == R.id.add_bookmark) {
             Queries.BookmarkTable.addBookmark(inspector);
+        } else if (item.getItemId() == R.id.save_search_plan) {
+            saveSearchPlan();
+            return true;
         } else if (item.getItemId() == R.id.tag_manager) {
             TagStatus ts = TagV2.updateStatus(inspector.getTag());
             updateTagStatus(item, ts);
@@ -635,6 +643,50 @@ public class MainActivity extends BaseActivity
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void saveSearchPlan() {
+        if (inspector == null || inspector.getRequestType() != ApiRequestType.BYSEARCH) return;
+        Uri url = Uri.parse(inspector.getUrl());
+        String query = url.getQueryParameter("query");
+        if (query == null) query = url.getQueryParameter("q");
+        String sort = url.getQueryParameter("sort");
+        ContentValues values = new ContentValues();
+        values.put("query", query == null ? "" : query);
+        values.put("sort", sort == null ? "" : sort);
+        values.put("page", inspector.getPage());
+        values.put("pinned", 0);
+        EditText name = new EditText(this);
+        name.setSingleLine(true);
+        name.setHint(R.string.search_plan_name);
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.save_search_plan).setView(name)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok, null).create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+            values.put("name", name.getText().toString().trim());
+            if (!SearchPlanStore.isValid(values, false)) {
+                name.setError(getString(R.string.search_plan_invalid));
+                return;
+            }
+            view.setEnabled(false);
+            SearchPlanStore.execute(() -> {
+                try {
+                    SearchPlanStore.insert(values);
+                    runOnUiThread(() -> {
+                        if (!isFinishing() && !isDestroyed()) dialog.dismiss();
+                    });
+                } catch (RuntimeException exception) {
+                    LogUtility.e("Unable to save search plan", exception);
+                    runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        view.setEnabled(true);
+                        Toast.makeText(this, R.string.search_plan_storage_error, Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
+        }));
+        dialog.show();
     }
 
     private void showLoadedFilterDialog(MenuItem item) {

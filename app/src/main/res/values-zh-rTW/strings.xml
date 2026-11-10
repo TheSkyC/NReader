@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="save_search_plan">儲存搜尋方案</string>
+    <string name="search_plan_name">方案名稱</string>
+    <string name="search_plan_invalid">請輸入不超過 200 個字元的名稱，並確認搜尋條件有效。</string>
+    <string name="delete_search_plan">刪除搜尋方案</string>
+    <string name="search_plan_storage_error">無法更新搜尋方案，請重試。</string>
     <string name="setting_on_ignore_tags">從圖庫功能表中選中一個標籤時不再查詢其它標籤（語言項除外）</string>
     <string name="setting_off_ignore_tags">從圖庫功能表中選中一個標籤時查詢其它標籤</string>
     <string name="setting_on_use_account_tag">帳戶標籤用於搜尋（本地標籤優先）</string>

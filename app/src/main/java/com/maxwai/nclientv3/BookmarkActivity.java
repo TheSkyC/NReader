@@ -6,8 +6,10 @@ import android.view.MenuItem;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ConcatAdapter;
 
 import com.maxwai.nclientv3.adapters.BookmarkAdapter;
+import com.maxwai.nclientv3.adapters.SearchPlanAdapter;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.widgets.CustomLinearLayoutManager;
 
@@ -32,7 +34,7 @@ public class BookmarkActivity extends GeneralActivity {
         recycler = findViewById(R.id.recycler);
         adapter = new BookmarkAdapter(this);
         recycler.setLayoutManager(new CustomLinearLayoutManager(this));
-        recycler.setAdapter(adapter);
+        recycler.setAdapter(new ConcatAdapter(new SearchPlanAdapter(this), adapter));
     }
 
     @Override
