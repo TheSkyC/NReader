@@ -190,6 +190,7 @@ public class Queries {
         public static void insert(GenericGallery gallery) {
             ContentValues values = new ContentValues(12);
             GalleryData data = gallery.getGalleryData();
+            if (data.isIncomplete()) return;
             values.put(IDGALLERY, gallery.getId());
             values.put(TITLE_ENG, data.getTitle(TitleType.ENGLISH));
             values.put(TITLE_JP, data.getTitle(TitleType.JAPANESE));
@@ -207,18 +208,17 @@ public class Queries {
             TagTable.insertTagsForGallery(data);
         }
 
-        static void insertMinimal(GenericGallery gallery) {
+        static void insertMinimal(SimpleGallery gallery) {
             ContentValues values = new ContentValues(12);
             String title = gallery.getTitle();
-            String thumbnail = gallery instanceof SimpleGallery
-                ? ((SimpleGallery) gallery).getThumbnail().toString() : "";
-            String pages = gallery.getPageCount() + ";" + thumbnail + ";" + thumbnail + ";";
+            String thumbnail = gallery.getThumbnail().toString();
+            String pages = "partial-v1;" + Math.max(0, gallery.getPageCount()) + ";" + android.net.Uri.encode(thumbnail);
             values.put(IDGALLERY, gallery.getId());
             values.put(TITLE_ENG, title);
             values.put(TITLE_JP, title);
             values.put(TITLE_PRETTY, title);
             values.put(FAVORITE_COUNT, 0);
-            values.put(MEDIAID, gallery instanceof SimpleGallery ? ((SimpleGallery) gallery).getMediaId() : 0);
+            values.put(MEDIAID, gallery.getMediaId());
             values.put(PAGES, pages);
             values.put(UPLOAD, 0L);
             values.put(MAX_WIDTH, 0);
@@ -841,7 +841,9 @@ public class Queries {
         }
 
         public static void addFavorite(GenericGallery gallery) {
-            if (!(gallery instanceof Gallery)) GalleryTable.insertMinimal(gallery);
+            if (gallery instanceof SimpleGallery) GalleryTable.insertMinimal((SimpleGallery) gallery);
+            else if (gallery.hasGalleryData()) GalleryTable.insert(gallery);
+            else throw new IllegalArgumentException("Gallery has no data for local favorite");
             FavoriteTable.insert(gallery.getId());
         }
 

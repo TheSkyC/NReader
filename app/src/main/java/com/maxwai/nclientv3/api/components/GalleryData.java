@@ -65,6 +65,7 @@ public class GalleryData implements Parcelable {
     private final Context context;
     private boolean changedInfo = false;
     private boolean isDeleted = false;
+    private boolean incomplete = false;
 
     private GalleryData(@Nullable Context context) {
         this.context = context;
@@ -87,7 +88,7 @@ public class GalleryData implements Parcelable {
 
         uploadDate = new Date(cursor.getLong(Queries.getColumnFromName(cursor, Queries.GalleryTable.UPLOAD)));
         readPagePath(cursor.getString(Queries.getColumnFromName(cursor, Queries.GalleryTable.PAGES)));
-        pageCount = pages.size();
+        if (!incomplete) pageCount = pages.size();
         this.tags = tagList;
     }
 
@@ -111,6 +112,7 @@ public class GalleryData implements Parcelable {
         }
         pages = Objects.requireNonNull(in.createTypedArrayList(Page.CREATOR));
         valid = in.readByte() != 0;
+        incomplete = in.readByte() != 0;
     }
 
     public static GalleryData fakeData() {
@@ -295,6 +297,10 @@ public class GalleryData implements Parcelable {
         return valid;
     }
 
+    public boolean isIncomplete() {
+        return incomplete;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -321,6 +327,7 @@ public class GalleryData implements Parcelable {
         dest.writeParcelable(thumbnail, flags);
         dest.writeTypedList(pages);
         dest.writeByte((byte) (valid ? 1 : 0));
+        dest.writeByte((byte) (incomplete ? 1 : 0));
     }
 
     private String truncateUrl(Uri uri) {
@@ -366,6 +373,38 @@ public class GalleryData implements Parcelable {
     }
 
     private void readPagePath(String path) {
+        if (path.startsWith("partial-v1;")) {
+            String[] parts = path.split(";", 3);
+            if (parts.length == 3) {
+                try {
+                    pageCount = Math.max(0, Integer.parseInt(parts[1]));
+                    Uri image = Uri.parse(Uri.decode(parts[2]));
+                    cover = new Page(ImageType.COVER, image);
+                    thumbnail = new Page(ImageType.THUMBNAIL, image);
+                    incomplete = true;
+                    return;
+                } catch (NumberFormatException ignored) {
+                    valid = false;
+                    return;
+                }
+            }
+            valid = false;
+            return;
+        }
+        String[] previous = path.split(";");
+        if (previous.length == 3 && previous[1].startsWith("http") && previous[1].equals(previous[2])) {
+            try {
+                pageCount = Math.max(0, Integer.parseInt(previous[0]));
+                Uri image = Uri.parse(previous[1]);
+                cover = new Page(ImageType.COVER, image);
+                thumbnail = new Page(ImageType.THUMBNAIL, image);
+                incomplete = true;
+                return;
+            } catch (NumberFormatException ignored) {
+                valid = false;
+                return;
+            }
+        }
         if (path.contains(";") && path.contains("/")) {
             readPagePathNew(path);
             return;
