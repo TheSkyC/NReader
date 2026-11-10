@@ -203,6 +203,19 @@ public class InspectorV3 extends Thread implements Parcelable {
         return inspector;
     }
 
+    public static InspectorV3 savedSearchInspector(Context context, String query, int page, SortType sortType, InspectorResponse response) {
+        InspectorV3 inspector = new InspectorV3(context, response);
+        inspector.custom = true;
+        inspector.tags = new HashSet<>();
+        inspector.page = page;
+        inspector.pageCount = 0;
+        inspector.query = query == null ? "" : query;
+        inspector.sortType = sortType;
+        inspector.requestType = ApiRequestType.BYSEARCH;
+        inspector.createUrl();
+        return inspector;
+    }
+
     @NonNull
     private static HashSet<Tag> getDefaultTags() {
         HashSet<Tag> tags = new HashSet<>(Queries.TagTable.getAllStatus(TagStatus.ACCEPTED));

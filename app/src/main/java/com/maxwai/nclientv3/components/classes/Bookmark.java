@@ -49,11 +49,11 @@ public class Bookmark {
         if (requestType == ApiRequestType.FAVORITE)
             return InspectorV3.favoriteInspector(context, query, page, response);
         if (requestType == ApiRequestType.BYSEARCH)
-            return InspectorV3.searchInspector(context, query, null, page, popular, null, response);
+            return InspectorV3.savedSearchInspector(context, query, page, popular, response);
         if (requestType == ApiRequestType.BYALL)
             return InspectorV3.searchInspector(context, "", null, page, SortType.RECENT_ALL_TIME, null, response);
         if (requestType == ApiRequestType.BYTAG) return InspectorV3.searchInspector(context, "",
-            Collections.singleton(tagVal), page, SortType.findFromAddition(this.url), null, response);
+            Collections.singleton(tagVal), page, popular, null, response);
         return null;
     }
 

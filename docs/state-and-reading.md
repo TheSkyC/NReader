@@ -48,6 +48,11 @@ be committed atomically together across process or device failure.
 
 ## Local and personal state
 
+Existing search bookmarks retain the complete query encoded in their saved URL,
+including tag and range terms, rather than adding the current default filters
+when reopened. Sort and page are restored separately. This preserves the existing
+bookmark format; named and editable search plans remain future work.
+
 Favorite search query, page, sort and search expansion survive activity recreation.
 Collapsing search retains its query; clearing text explicitly while expanded resets
 it. Favorite and tag queries run in the background. Only the latest requested

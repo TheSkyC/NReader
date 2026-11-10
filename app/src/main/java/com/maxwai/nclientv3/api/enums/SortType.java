@@ -28,7 +28,7 @@ public enum SortType {
 
         for (SortType t : SortType.values()) {
             String url = t.getUrlAddition();
-            if (url != null && addition.contains(url)) {
+            if (url != null && addition.equals(url)) {
                 return t;
             }
         }
