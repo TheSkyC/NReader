@@ -4,6 +4,8 @@ package com.maxwai.nclientv3.adapters;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import android.app.Application;
 import android.os.Parcel;
@@ -66,6 +68,7 @@ public class GalleryCardActionsTest {
         assertEquals(4, restored.getPageCount());
 
         Queries.FavoriteTable.removeFavorite(456);
+        helper.getWritableDatabase().delete("Gallery", "idGallery=?", new String[]{"456"});
         Queries.FavoriteTable.addFavorite((GenericGallery) stored);
         assertTrue(Queries.FavoriteTable.isFavorite(456));
         assertEquals(4, Queries.GalleryTable.galleryFromId(RuntimeEnvironment.getApplication(), 456).getPageCount());
@@ -96,5 +99,23 @@ public class GalleryCardActionsTest {
         assertTrue(stored.getGalleryData().isIncomplete());
         assertEquals(4, stored.getPageCount());
         assertFalse(stored.getGalleryData().hasUpdatedInfo());
+    }
+
+    @Test
+    public void failedFavoriteWriteRollsBackNewGallery() throws Exception {
+        SimpleGallery gallery = SimpleGallery.fromV2ListItem(RuntimeEnvironment.getApplication(), new JSONObject()
+            .put("id", 459).put("media_id", "789").put("thumbnail", "abc/1.jpg")
+            .put("english_title", "Rollback test").put("num_pages", 4));
+        helper.getWritableDatabase().execSQL("CREATE TRIGGER fail_favorite BEFORE INSERT ON Favorite "
+            + "BEGIN SELECT RAISE(ABORT, 'test failure'); END");
+        try {
+            Queries.FavoriteTable.addFavorite(gallery);
+            fail("Expected a failed favorite write");
+        } catch (android.database.SQLException expected) {
+            assertFalse(Queries.FavoriteTable.isFavorite(459));
+            assertNull(Queries.GalleryTable.galleryFromId(RuntimeEnvironment.getApplication(), 459));
+        } finally {
+            helper.getWritableDatabase().execSQL("DROP TRIGGER fail_favorite");
+        }
     }
 }
