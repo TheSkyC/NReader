@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
@@ -39,7 +40,8 @@ import org.json.JSONObject;
 
 public class Importer {
     private static final long SNAPSHOT_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000;
-    private static final String SNAPSHOT_NAME = "last-restore-snapshot.json";
+    private static final String SNAPSHOT_NAME = "last-restore-snapshot.zip";
+    private static final String LEGACY_SNAPSHOT_NAME = "last-restore-snapshot.json";
     private static final String PREVIOUS_SNAPSHOT_NAME = "previous-restore-snapshot.json";
     private static final String SETTINGS_SNAPSHOT_NAME = "last-restore-settings.json";
     private static final String TAGS_SNAPSHOT_NAME = "last-restore-tags.json";
@@ -275,6 +277,7 @@ public class Importer {
         } finally {
             database.endTransaction();
         }
+        clearLegacySnapshots(context);
         for (SharedPreferences.Editor editor : preferences) editor.apply();
         Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
@@ -289,7 +292,7 @@ public class Importer {
     }
 
     public static synchronized boolean hasUsableSnapshot(Context context) {
-        File snapshot = snapshotFile(context);
+        File snapshot = activeSnapshotFile(context);
         boolean usable = isSnapshotSetValid(context)
             && System.currentTimeMillis() - snapshot.lastModified() <= SNAPSHOT_MAX_AGE_MS;
         if (!usable && snapshot.isFile()) clearSnapshots(context);
@@ -297,8 +300,14 @@ public class Importer {
     }
 
     public static long snapshotAgeDays(Context context) {
-        if (!snapshotFile(context).isFile()) return -1;
-        return Math.max(0, (System.currentTimeMillis() - snapshotFile(context).lastModified()) / (24L * 60 * 60 * 1000));
+        File snapshot = activeSnapshotFile(context);
+        if (!snapshot.isFile()) return -1;
+        return Math.max(0, (System.currentTimeMillis() - snapshot.lastModified()) / (24L * 60 * 60 * 1000));
+    }
+
+    private static File activeSnapshotFile(Context context) {
+        File snapshot = snapshotFile(context);
+        return snapshot.isFile() ? snapshot : new File(context.getCacheDir(), LEGACY_SNAPSHOT_NAME);
     }
 
     private static File settingsSnapshotFile(Context context) { return new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME); }
@@ -307,63 +316,59 @@ public class Importer {
     private static File previousTagsSnapshotFile(Context context) { return new File(context.getCacheDir(), PREVIOUS_TAGS_SNAPSHOT_NAME); }
 
     private static void clearSnapshots(Context context) {
-        File[] files = {snapshotFile(context), previousSnapshotFile(context), settingsSnapshotFile(context),
+        File[] files = {snapshotFile(context), new File(context.getCacheDir(), LEGACY_SNAPSHOT_NAME), previousSnapshotFile(context), settingsSnapshotFile(context),
             tagsSnapshotFile(context), previousSettingsSnapshotFile(context), previousTagsSnapshotFile(context),
             new File(context.getCacheDir(), SNAPSHOT_META_NAME),
-            new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"),
+            new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"), new File(context.getCacheDir(), LEGACY_SNAPSHOT_NAME + ".part"),
             new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"),
             new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part"),
             new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part")};
         for (File file : files) if (file.exists() && !file.delete()) file.deleteOnExit();
     }
 
+    private static void clearLegacySnapshots(Context context) {
+        File[] files = {new File(context.getCacheDir(), LEGACY_SNAPSHOT_NAME), previousSnapshotFile(context),
+            settingsSnapshotFile(context), tagsSnapshotFile(context), previousSettingsSnapshotFile(context),
+            previousTagsSnapshotFile(context), new File(context.getCacheDir(), SNAPSHOT_META_NAME)};
+        for (File file : files) if (file.exists() && !file.delete()) file.deleteOnExit();
+    }
+
     private static void writeSnapshotCandidate(Context context) throws IOException {
-        byte[] bytes = Exporter.currentDatabaseBytes();
-        writeAtomic(new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"), bytes);
-        writeAtomic(new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "Settings"));
-        writeAtomic(new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "ScrapedTags"));
+        SnapshotSet set = new SnapshotSet(Exporter.currentDatabaseBytes(),
+            Exporter.sharedPreferencesBytes(context, "Settings"), Exporter.sharedPreferencesBytes(context, "ScrapedTags"));
+        if (set.database.length > 64 * 1024 * 1024 || set.settings.length > 16 * 1024 * 1024
+            || set.tags.length > 16 * 1024 * 1024) throw new IOException("Restore snapshot exceeds size limit");
         JSONObject meta = new JSONObject();
         try {
-            meta.put("database", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), SNAPSHOT_NAME + ".part").toPath())));
-            meta.put("settings", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part").toPath())));
-            meta.put("tags", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part").toPath())));
-        } catch (Exception exception) { throw new IOException("Unable to prepare snapshot metadata", exception); }
-        writeAtomic(new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part"), meta.toString().getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static void writeAtomic(File temporary, byte[] bytes) throws IOException {
-        try (FileOutputStream output = new FileOutputStream(temporary)) {
-            output.write(bytes);
+            meta.put("database", Exporter.sha256(set.database));
+            meta.put("settings", Exporter.sha256(set.settings));
+            meta.put("tags", Exporter.sha256(set.tags));
+        } catch (JSONException exception) {
+            throw new IOException("Unable to prepare snapshot metadata", exception);
+        }
+        File temporary = new File(context.getCacheDir(), SNAPSHOT_NAME + ".part");
+        try (FileOutputStream output = new FileOutputStream(temporary);
+             ZipOutputStream zip = new ZipOutputStream(output)) {
+            writeSnapshotEntry(zip, "Database.json", set.database);
+            writeSnapshotEntry(zip, "Settings.json", set.settings);
+            writeSnapshotEntry(zip, "ScrapedTags.json", set.tags);
+            writeSnapshotEntry(zip, "Manifest.json", meta.toString().getBytes(StandardCharsets.UTF_8));
+            zip.finish();
+            zip.flush();
             output.getFD().sync();
         }
     }
 
-    private static void promoteSnapshotFiles(Context context) throws IOException {
-        File settings = settingsSnapshotFile(context);
-        File tags = tagsSnapshotFile(context);
-        if (settings.isFile()) Files.copy(settings.toPath(), previousSettingsSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
-        if (tags.isFile()) Files.copy(tags.toPath(), previousTagsSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(new File(settings.getPath() + ".part").toPath(), settings.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(new File(tags.getPath() + ".part").toPath(), tags.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part").toPath(), new File(context.getCacheDir(), SNAPSHOT_META_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    private static void writeSnapshotCandidateLegacy(Context context) throws IOException {
-        byte[] bytes = Exporter.currentDatabaseBytes();
-        File target = snapshotFile(context);
-        File temporary = new File(target.getPath() + ".part");
-        try (FileOutputStream output = new FileOutputStream(temporary)) {
-            output.write(bytes);
-            output.getFD().sync();
-        }
+    private static void writeSnapshotEntry(ZipOutputStream zip, String name, byte[] bytes) throws IOException {
+        zip.putNextEntry(new ZipEntry(name));
+        zip.write(bytes);
+        zip.closeEntry();
     }
 
     private static void promoteSnapshot(Context context) throws IOException {
         File target = snapshotFile(context);
         File temporary = new File(target.getPath() + ".part");
-        if (target.isFile()) Files.copy(target.toPath(), previousSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        promoteSnapshotFiles(context);
+        Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static synchronized void restoreLastSnapshot(Context context) throws IOException {
@@ -396,7 +401,8 @@ public class Importer {
     }
 
     private static SnapshotSet readSnapshotSet(Context context) throws IOException {
-        File snapshot = snapshotFile(context);
+        File snapshot = activeSnapshotFile(context);
+        if (snapshot.equals(snapshotFile(context))) return readSnapshotBundle(snapshot);
         File settings = settingsSnapshotFile(context);
         File tags = tagsSnapshotFile(context);
         File metadata = new File(context.getCacheDir(), SNAPSHOT_META_NAME);
@@ -405,14 +411,47 @@ public class Importer {
         try {
             JSONObject meta = new JSONObject(new String(Files.readAllBytes(metadata.toPath()), StandardCharsets.UTF_8));
             SnapshotSet set = new SnapshotSet(Files.readAllBytes(snapshot.toPath()), Files.readAllBytes(settings.toPath()), Files.readAllBytes(tags.toPath()));
-            if (!Exporter.sha256(set.database).equalsIgnoreCase(meta.optString("database"))
-                || !Exporter.sha256(set.settings).equalsIgnoreCase(meta.optString("settings"))
-                || !Exporter.sha256(set.tags).equalsIgnoreCase(meta.optString("tags")))
-                throw new IOException("Restore snapshot integrity check failed");
+            validateSnapshotSet(set, meta);
             return set;
         } catch (JSONException exception) {
             throw new IOException("Invalid restore snapshot metadata", exception);
         }
+    }
+
+    private static SnapshotSet readSnapshotBundle(File file) throws IOException {
+        byte[] database = null, settings = null, tags = null, metadata = null;
+        Set<String> seen = new HashSet<>();
+        try (ZipInputStream zip = new ZipInputStream(new java.io.FileInputStream(file))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                String name = entry.getName();
+                if (!seen.add(name)) throw new IOException("Duplicate restore snapshot entry");
+                switch (name) {
+                    case "Database.json": database = readEntry(zip, 64 * 1024 * 1024); break;
+                    case "Settings.json": settings = readEntry(zip, 16 * 1024 * 1024); break;
+                    case "ScrapedTags.json": tags = readEntry(zip, 16 * 1024 * 1024); break;
+                    case "Manifest.json": metadata = readEntry(zip, 64 * 1024); break;
+                    default: throw new IOException("Unexpected restore snapshot entry");
+                }
+                zip.closeEntry();
+            }
+        }
+        if (database == null || settings == null || tags == null || metadata == null)
+            throw new IOException("Incomplete restore snapshot");
+        try {
+            SnapshotSet set = new SnapshotSet(database, settings, tags);
+            validateSnapshotSet(set, new JSONObject(new String(metadata, StandardCharsets.UTF_8)));
+            return set;
+        } catch (JSONException exception) {
+            throw new IOException("Invalid restore snapshot metadata", exception);
+        }
+    }
+
+    private static void validateSnapshotSet(SnapshotSet set, JSONObject meta) throws IOException {
+        if (!Exporter.sha256(set.database).equalsIgnoreCase(meta.optString("database"))
+            || !Exporter.sha256(set.settings).equalsIgnoreCase(meta.optString("settings"))
+            || !Exporter.sha256(set.tags).equalsIgnoreCase(meta.optString("tags")))
+            throw new IOException("Restore snapshot integrity check failed");
     }
 
     private static final class SnapshotSet {
