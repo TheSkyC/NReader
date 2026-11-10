@@ -41,6 +41,7 @@
     <string name="preference_key_copy_settings" translatable="false">copy_settings</string>
     <string name="preference_key_export" translatable="false">export</string>
     <string name="preference_key_import" translatable="false">import</string>
+    <string name="preference_key_restore_snapshot" translatable="false">restore_snapshot</string>
     <string name="preference_key_cookie" translatable="false">cookie</string>
     <string name="preference_key_change_page_buttons" translatable="false">change_page_buttons</string>
     <string name="preference_key_favorite_limit" translatable="false">favorite_limit</string>
@@ -474,6 +475,7 @@
     <string name="backup_restore_preview_message">This backup contains %1$d database rows. %2$s. Continue with restore?</string>
     <string name="backup_integrity_verified">Integrity verified</string>
     <string name="backup_legacy_format">Legacy format without an integrity manifest</string>
+    <string name="restore_snapshot">Undo last restore</string>
     <string name="debug_mask_images">Mask images for debugging</string>
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
     <string name="cover_group_credit">Group: %1$s</string>

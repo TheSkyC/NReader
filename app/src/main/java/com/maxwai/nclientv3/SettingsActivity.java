@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.async.database.export.Exporter;
 import com.maxwai.nclientv3.async.database.export.BackupPreview;
 import com.maxwai.nclientv3.async.database.export.Manager;
+import com.maxwai.nclientv3.async.database.export.Importer;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.views.GeneralPreferenceFragment;
 import com.maxwai.nclientv3.settings.Global;
@@ -165,6 +166,18 @@ public class SettingsActivity extends GeneralActivity {
         } else {
             importOldVersion();
         }
+    }
+
+    public void restoreLastSnapshot() {
+        new Thread(() -> {
+            try {
+                Importer.restoreLastSnapshot(this);
+                runOnUiThread(() -> Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show());
+            } catch (IOException exception) {
+                LogUtility.e("Unable to restore backup snapshot", exception);
+                runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
 
     private void importOldVersion() {

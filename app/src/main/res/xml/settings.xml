@@ -212,6 +212,10 @@
             android:key="@string/preference_key_import"
             android:title="@string/import_data"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="@string/preference_key_restore_snapshot"
+            android:title="@string/restore_snapshot"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
