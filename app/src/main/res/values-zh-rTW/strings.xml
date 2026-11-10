@@ -363,4 +363,5 @@
     <string name="list_wide_columns">寬螢幕視窗欄數</string>
     <string name="list_columns_summary">依可用寬度和文字大小調整；寬螢幕視窗可使用 4 欄。</string>
     <string name="cover_group_credit">社團：%1$s</string>
+    <string name="restore_snapshot_checking">正在檢查還原快照…</string>
 </resources>

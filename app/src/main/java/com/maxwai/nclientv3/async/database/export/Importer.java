@@ -231,7 +231,7 @@ public class Importer {
             throw new IOException("Terminal download task cannot be restored");
     }
 
-    public static void importData(@NonNull Context context, Uri selectedFile) throws IOException {
+    public static synchronized void importData(@NonNull Context context, Uri selectedFile) throws IOException {
         DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> importDataLocked(context, selectedFile)));
     }
 
@@ -288,7 +288,7 @@ public class Importer {
         return new File(context.getCacheDir(), PREVIOUS_SNAPSHOT_NAME);
     }
 
-    public static boolean hasUsableSnapshot(Context context) {
+    public static synchronized boolean hasUsableSnapshot(Context context) {
         File snapshot = snapshotFile(context);
         boolean usable = isSnapshotSetValid(context)
             && System.currentTimeMillis() - snapshot.lastModified() <= SNAPSHOT_MAX_AGE_MS;
@@ -366,7 +366,7 @@ public class Importer {
         promoteSnapshotFiles(context);
     }
 
-    public static void restoreLastSnapshot(Context context) throws IOException {
+    public static synchronized void restoreLastSnapshot(Context context) throws IOException {
         if (!hasUsableSnapshot(context)) throw new IOException("No usable restore snapshot is available");
         SnapshotSet snapshot = readSnapshotSet(context);
         SharedPreferences.Editor settings;

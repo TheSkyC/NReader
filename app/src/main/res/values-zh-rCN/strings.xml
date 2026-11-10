@@ -363,4 +363,5 @@
     <string name="list_wide_columns">宽屏窗口列数</string>
     <string name="list_columns_summary">根据可用宽度和文字大小调整；宽屏窗口可使用 4 列。</string>
     <string name="cover_group_credit">社团：%1$s</string>
+    <string name="restore_snapshot_checking">正在检查恢复快照…</string>
 </resources>

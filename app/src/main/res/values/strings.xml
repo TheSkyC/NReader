@@ -488,6 +488,7 @@
     <string name="restore_snapshot_message">Replace the current database and exported settings with the snapshot saved before the last import? Downloaded files are not changed.</string>
     <string name="restore_snapshot_summary">Snapshot age: %1$d days</string>
     <string name="restore_snapshot_unavailable">No recent restore snapshot is available.</string>
+    <string name="restore_snapshot_checking">Checking restore snapshot…</string>
     <string name="debug_mask_images">Mask images for debugging</string>
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
     <string name="cover_group_credit">Group: %1$s</string>
