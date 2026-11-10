@@ -41,13 +41,15 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int pos) {
-        final int position = holder.getBindingAdapterPosition();
-        Bookmark bookmark = bookmarks.get(position);
+        Bookmark bookmark = bookmarks.get(pos);
 
         holder.queryText.setText(bookmark.toString());
         holder.pageLabel.setText(bookmarkActivity.getString(R.string.bookmark_page_format, bookmark.page));
 
-        holder.deleteButton.setOnClickListener(v -> removeBookmarkAtPosition(position));
+        holder.deleteButton.setOnClickListener(v -> {
+            int position = holder.getBindingAdapterPosition();
+            if (position != RecyclerView.NO_POSITION) removeBookmarkAtPosition(position);
+        });
 
         holder.rootLayout.setOnClickListener(v -> loadBookmark(bookmark));
     }
@@ -70,7 +72,7 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
      * @param position index to delete
      */
     private void removeBookmarkAtPosition(int position) {
-        if (position >= bookmarks.size()) return;
+        if (position < 0 || position >= bookmarks.size()) return;
         Bookmark bookmark = bookmarks.get(position);
         bookmark.deleteBookmark();
         bookmarks.remove(bookmark);
