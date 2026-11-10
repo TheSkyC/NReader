@@ -447,6 +447,15 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+        {
+            Preference restore = Objects.requireNonNull(findPreference(getString(R.string.preference_key_restore_snapshot)));
+            restore.setEnabled(com.maxwai.nclientv3.async.database.export.Importer
+                .snapshotFile(act).isFile());
+            restore.setOnPreferenceClickListener(preference -> {
+                act.restoreLastSnapshot();
+                return true;
+            });
+        }
 
         {
             ListPreference mirror = Objects.requireNonNull(findPreference(getString(R.string.preference_key_site_mirror)));
