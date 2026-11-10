@@ -22,6 +22,7 @@ import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.AsyncCursorQuery;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
+import com.maxwai.nclientv3.utility.LanguageFlag;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
@@ -90,7 +91,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         ImageDownloadUtility.loadImage(activity, ent.getThumbnail(), holder.imgView);
         holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
         holder.title.setText(ent.getTitle());
-        holder.flag.setText(Global.getLanguageFlag(ent.getLanguage()));
+        LanguageFlag.bind(holder.flag, ent.getLanguage());
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
             if (layout.getEllipsisCount(layout.getLineCount() - 1) > 0)

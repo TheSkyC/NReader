@@ -102,9 +102,9 @@ public abstract class GenericAdapter<T extends GenericGallery> extends RecyclerV
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        final ImageView imgView;
+        final ImageView imgView, flag;
         final View overlay;
-        final TextView title, pages, flag;
+        final TextView title, pages;
         final View layout;
         final GalleryStateBadge stateBadge;
 

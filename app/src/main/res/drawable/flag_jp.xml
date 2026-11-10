@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tabler Flags (MIT), adapted for NReader; see NOTICE. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="14dp"
+    android:viewportWidth="30"
+    android:viewportHeight="24">
+    <group>
+        <clip-path android:pathData="M2,0.5H28A1.5,1.5 0,0 1,29.5 2V22A1.5,1.5 0,0 1,28 23.5H2A1.5,1.5 0,0 1,0.5 22V2A1.5,1.5 0,0 1,2 0.5Z" />
+        <path android:fillColor="#ffffff" android:pathData="M0 0h30v24H0z" />
+        <path android:fillColor="#ae232f" android:pathData="M15 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12" />
+    </group>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#66000000"
+        android:strokeWidth="0.75"
+        android:pathData="M2,0.5H28A1.5,1.5 0,0 1,29.5 2V22A1.5,1.5 0,0 1,28 23.5H2A1.5,1.5 0,0 1,0.5 22V2A1.5,1.5 0,0 1,2 0.5Z" />
+</vector>

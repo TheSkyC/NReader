@@ -24,6 +24,7 @@ import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.TagV2;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
+import com.maxwai.nclientv3.utility.LanguageFlag;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -108,7 +109,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         holder.title.setText(ent.getTitle());
         holder.flag.setVisibility(View.VISIBLE);
         if (Global.getOnlyLanguage() == Language.ALL || context instanceof GalleryActivity) {
-            holder.flag.setText(Global.getLanguageFlag(ent.getLanguage()));
+            LanguageFlag.bind(holder.flag, ent.getLanguage());
         } else holder.flag.setVisibility(View.GONE);
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
