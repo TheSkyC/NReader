@@ -169,6 +169,8 @@ class Importer {
         Long pageAttempts = values.getAsLong("page_attempts");
         Long retryAt = values.getAsLong("retry_at");
         String metadata = values.getAsString("metadata");
+        String target = values.getAsString("target_path");
+        String repairPages = values.getAsString("repair_pages");
         if (id == null || id <= 0 || id > Integer.MAX_VALUE || start == null || end == null
             || start < -1 || end < -1 || start >= 10000 || end >= 10000
             || (start >= 0 && end >= 0 && end < start) || title == null || state == null || failure == null
@@ -183,6 +185,20 @@ class Importer {
                     throw new IOException("Invalid download task metadata");
             } catch (JSONException exception) {
                 throw new IOException("Invalid download task metadata", exception);
+            }
+        }
+        if ((target == null) != (repairPages == null)) throw new IOException("Invalid repair task");
+        if (target != null) {
+            if (!new java.io.File(target).isAbsolute() || repairPages.isEmpty()) throw new IOException("Invalid repair target");
+            Set<Integer> pages = new HashSet<>();
+            try {
+                for (String value : repairPages.split(",", -1)) {
+                    int pageNumber = Integer.parseInt(value);
+                    if (pageNumber < 1 || pageNumber > 10000 || !pages.add(pageNumber))
+                        throw new IOException("Invalid repair page");
+                }
+            } catch (NumberFormatException exception) {
+                throw new IOException("Invalid repair page", exception);
             }
         }
         try {

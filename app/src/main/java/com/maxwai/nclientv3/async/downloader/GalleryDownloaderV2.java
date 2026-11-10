@@ -244,7 +244,7 @@ public class GalleryDownloaderV2 {
         try {
             Gallery saved = json == null ? Queries.GalleryTable.galleryFromId(context, id) : new Gallery(context, json, null, false);
             if (saved != null && saved.isValid() && saved.getId() == id
-                && saved.getPageCount() > 0 && saved.getPageCount() == saved.getGalleryData().getPageCount())
+                && saved.getPageCount() > 0 && saved.getPageCount() == saved.getGalleryData().getPages().size())
                 downloader.setGallery(saved);
             // Gallery.jsonWrite intentionally omits page URLs. Keep the task ID-only when
             // that compact metadata cannot resume page creation; the normal metadata fetch
@@ -262,7 +262,7 @@ public class GalleryDownloaderV2 {
         int pagesColumn = cursor.getColumnIndex("repair_pages");
         if (targetColumn >= 0 && !cursor.isNull(targetColumn)) {
             File target = new File(cursor.getString(targetColumn));
-            String encodedPages = cursor.getString(pagesColumn);
+            String encodedPages = pagesColumn >= 0 && !cursor.isNull(pagesColumn) ? cursor.getString(pagesColumn) : null;
             List<Integer> pages = new ArrayList<>();
             if (encodedPages != null && !encodedPages.isEmpty()) {
                 for (String value : encodedPages.split(",")) pages.add(Integer.parseInt(value));
@@ -505,7 +505,7 @@ public class GalleryDownloaderV2 {
     private void cleanupCanceled() {
         if (taskGeneration != DownloadTaskStore.generation()) return;
         if (folder == null) folder = Global.findGalleryFolder(context, id);
-        if (deleteOnCancel) {
+        if (deleteOnCancel && !isRepairTask()) {
             Global.recursiveDelete(folder);
         }
         DownloadTaskStore.remove(taskGeneration, id);
@@ -522,7 +522,7 @@ public class GalleryDownloaderV2 {
 
     public void deleteLocalFiles() {
         synchronized (lifecycleLock) {
-            if (status != Status.CANCELED) return;
+            if (status != Status.CANCELED || isRepairTask()) return;
             if (!cancelCleanupComplete) {
                 cancelCleanupCallbacks.add(this::deleteLocalFiles);
                 return;
@@ -667,7 +667,7 @@ public class GalleryDownloaderV2 {
             PageFile existing = new GalleryFolder(folder).getPage(page.page);
             if (existing != null) filePath = existing;
         }
-        if (filePath.exists() && !isCorrupted(filePath)) return true;
+        if (repairPages == null && filePath.exists() && !isCorrupted(filePath)) return true;
         File temporaryFile = new File(folder, filePath.getName() + ".part");
         Call call = Global.getClient(context).newCall(new Request.Builder().url(page.url.toString()).build());
         synchronized (lifecycleLock) {
