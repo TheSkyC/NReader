@@ -44,6 +44,8 @@ public class Importer {
     private static final String PREVIOUS_SNAPSHOT_NAME = "previous-restore-snapshot.json";
     private static final String SETTINGS_SNAPSHOT_NAME = "last-restore-settings.json";
     private static final String TAGS_SNAPSHOT_NAME = "last-restore-tags.json";
+    private static final String PREVIOUS_SETTINGS_SNAPSHOT_NAME = "previous-restore-settings.json";
+    private static final String PREVIOUS_TAGS_SNAPSHOT_NAME = "previous-restore-tags.json";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
@@ -283,8 +285,10 @@ public class Importer {
 
     public static boolean hasUsableSnapshot(Context context) {
         File snapshot = snapshotFile(context);
-        return snapshot.isFile() && snapshot.length() > 0
+        boolean usable = snapshot.isFile() && snapshot.length() > 0
             && System.currentTimeMillis() - snapshot.lastModified() <= SNAPSHOT_MAX_AGE_MS;
+        if (!usable && snapshot.isFile()) clearSnapshots(context);
+        return usable;
     }
 
     public static long snapshotAgeDays(Context context) {
@@ -294,6 +298,17 @@ public class Importer {
 
     private static File settingsSnapshotFile(Context context) { return new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME); }
     private static File tagsSnapshotFile(Context context) { return new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME); }
+    private static File previousSettingsSnapshotFile(Context context) { return new File(context.getCacheDir(), PREVIOUS_SETTINGS_SNAPSHOT_NAME); }
+    private static File previousTagsSnapshotFile(Context context) { return new File(context.getCacheDir(), PREVIOUS_TAGS_SNAPSHOT_NAME); }
+
+    private static void clearSnapshots(Context context) {
+        File[] files = {snapshotFile(context), previousSnapshotFile(context), settingsSnapshotFile(context),
+            tagsSnapshotFile(context), previousSettingsSnapshotFile(context), previousTagsSnapshotFile(context),
+            new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"),
+            new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"),
+            new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part")};
+        for (File file : files) if (file.exists() && !file.delete()) file.deleteOnExit();
+    }
 
     private static void writeSnapshotCandidate(Context context) throws IOException {
         byte[] bytes = Exporter.currentDatabaseBytes();
@@ -313,6 +328,8 @@ public class Importer {
     private static void promoteSnapshotFiles(Context context) throws IOException {
         File settings = settingsSnapshotFile(context);
         File tags = tagsSnapshotFile(context);
+        if (settings.isFile()) Files.copy(settings.toPath(), previousSettingsSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        if (tags.isFile()) Files.copy(tags.toPath(), previousTagsSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(new File(settings.getPath() + ".part").toPath(), settings.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(new File(tags.getPath() + ".part").toPath(), tags.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
