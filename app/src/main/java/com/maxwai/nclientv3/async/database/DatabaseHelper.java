@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 16;
+    private static final int DATABASE_VERSION = 17;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -49,6 +49,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(Queries.TagTable.CREATE_TABLE);
         db.execSQL(Queries.GalleryBridgeTable.CREATE_TABLE);
         db.execSQL(Queries.BookmarkTable.CREATE_TABLE);
+        db.execSQL(SearchPlanStore.CREATE_TABLE);
         db.execSQL(Queries.DownloadTable.CREATE_TABLE);
         db.execSQL(DownloadTaskStore.CREATE_TABLE);
         db.execSQL(Queries.HistoryTable.CREATE_TABLE);
@@ -102,6 +103,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DownloadTaskStore.migrateLegacy(db);
         }
         if (oldVersion <= 15) DownloadTaskStore.addRepairColumns(db);
+        if (oldVersion <= 16) db.execSQL(SearchPlanStore.CREATE_TABLE);
 
     }
 

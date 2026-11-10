@@ -55,8 +55,11 @@ successful detail fetch; complete existing records are not replaced by summaries
 
 Existing search bookmarks retain the complete query encoded in their saved URL,
 including tag and range terms, rather than adding the current default filters
-when reopened. Sort and page are restored separately. This preserves the existing
-bookmark format; named and editable search plans remain future work.
+when reopened. Sort and page are restored separately. Database version 17 adds
+an independent search-plan table with stable row IDs, names, complete queries,
+sort, page and pinned state. Existing URL-keyed bookmarks remain intact. Plans
+are included in backups; restoring a legacy backup clears plans absent from it.
+The management interface for named and editable plans remains future work.
 
 Favorite search query, page, sort and search expansion survive activity recreation.
 Collapsing search retains its query; clearing text explicitly while expanded resets
