@@ -1,0 +1,38 @@
+# Modified for NReader by TheSkyC (2026); see NOTICE.
+name: Update API changelog
+
+on:
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Update changelog snapshot
+        run: python scripts/update_api_changelog.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: Update API changelog snapshot
+          branch: ci/update-api-changelog
+          title: "Update API changelog snapshot"
+          body: "Automated snapshot of the official API changelog. Review endpoint and schema changes before merging."
+          delete-branch: true
