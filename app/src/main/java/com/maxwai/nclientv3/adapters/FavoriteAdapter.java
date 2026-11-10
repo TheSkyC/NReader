@@ -15,7 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.maxwai.nclientv3.FavoriteActivity;
 import com.maxwai.nclientv3.GalleryActivity;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.components.Gallery;
+import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.AsyncCursorQuery;
 import com.maxwai.nclientv3.settings.Global;
@@ -27,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.List;
+import android.widget.Toast;
 
 public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
     private final int perPage = FavoriteActivity.getEntryPerPage();
@@ -102,6 +106,29 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     }
 
     private void startGallery(Gallery ent) {
+        if (ent.getGalleryData().isIncomplete()) {
+            InspectorV3.galleryInspector(activity, ent.getId(), new InspectorV3.DefaultInspectorResponse() {
+                @Override
+                public void onSuccess(List<GenericGallery> galleries) {
+                    activity.runOnUiThread(() -> {
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        if (galleries.size() == 1 && galleries.get(0) instanceof Gallery)
+                            startGallery((Gallery) galleries.get(0));
+                        else Toast.makeText(activity, R.string.no_entry_found, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onFailure(Exception exception) {
+                    LogUtility.w("Unable to load favorite gallery details", exception);
+                    activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed())
+                            Toast.makeText(activity, R.string.unable_to_connect_to_the_site, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }).start();
+            return;
+        }
         Intent intent = new Intent(activity, GalleryActivity.class);
         LogUtility.d(ent + "");
         intent.putExtra(activity.getPackageName() + ".GALLERY", ent);

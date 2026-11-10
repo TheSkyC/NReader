@@ -84,7 +84,7 @@ final class GalleryCardActions {
             });
         } else if (gallery instanceof Gallery && gallery.isValid() && gallery.getPageCount() > 0) {
             saveFavorite(anchor, (Gallery) gallery, current, finished);
-        } else if (gallery != null && gallery.isValid() && gallery.getPageCount() >= 0) {
+        } else if (gallery instanceof com.maxwai.nclientv3.api.SimpleGallery && gallery.isValid()) {
             saveFavorite(anchor, gallery, current, finished);
         } else {
             resolve(anchor, gallery, current, resolved -> saveFavorite(anchor, resolved, current, finished), finished);
@@ -113,7 +113,7 @@ final class GalleryCardActions {
             try {
                 Gallery saved = gallery instanceof Gallery ? (Gallery) gallery
                     : Queries.GalleryTable.galleryFromId(anchor.getContext(), gallery.getId());
-                if (saved != null && saved.isValid() && saved.getPageCount() > 0) {
+                if (saved != null && saved.isValid() && saved.getPageCount() > 0 && !saved.getGalleryData().isIncomplete()) {
                     main.post(() -> {
                         result.accept(saved);
                     });

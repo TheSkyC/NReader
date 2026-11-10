@@ -48,6 +48,11 @@ be committed atomically together across process or device failure.
 
 ## Local and personal state
 
+Favoriting a loaded online list card stores its available summary locally without
+a network request. Summary-only records preserve their page count and thumbnail,
+but do not contain page URLs. Opening or downloading such a favorite requires a
+successful detail fetch; complete existing records are not replaced by summaries.
+
 Existing search bookmarks retain the complete query encoded in their saved URL,
 including tag and range terms, rather than adding the current default filters
 when reopened. Sort and page are restored separately. This preserves the existing

@@ -42,7 +42,7 @@ public class DownloadGalleryV2 extends Worker {
     }
 
     public static void downloadGallery(Context context, GenericGallery gallery) {
-        if (gallery.isValid() && gallery instanceof Gallery)
+        if (gallery.isValid() && gallery instanceof Gallery && !gallery.getGalleryData().isIncomplete())
         {
             downloadGallery(context, (Gallery) gallery);
             return;
