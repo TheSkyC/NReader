@@ -616,9 +616,9 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        final ImageView imgView;
+        final ImageView imgView, flag;
         final View overlay;
-        final TextView title, pages, flag, progress;
+        final TextView title, pages, progress;
         final ViewGroup layout;
         final ImageButton playButton, cancelButton;
         final ProgressBar progressBar;

@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.content.Intent;
@@ -6,6 +7,7 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -19,13 +21,14 @@ import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.settings.Favorites;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
+import com.maxwai.nclientv3.utility.LanguageFlag;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Objects;
 
 public class RandomActivity extends GeneralActivity {
     public static Gallery loadedGallery = null;
-    private TextView language;
+    private ImageView language;
     private ImageButton thumbnail;
     private ImageButton favorite;
     private TextView title;
@@ -125,7 +128,7 @@ public class RandomActivity extends GeneralActivity {
         loadedGallery = gallery;
         if (Global.isDestroyed(this)) return;
         ImageDownloadUtility.loadImage(this, gallery.getCover(), thumbnail);
-        language.setText(Global.getLanguageFlag(gallery.getLanguage()));
+        LanguageFlag.bind(language, gallery.getLanguage());
         isFavorite = Favorites.isFavorite(loadedGallery);
         favoriteUpdateButton();
         title.setText(gallery.getTitle());

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -34,26 +35,24 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="4"
         android:minLines="4"
-        app:layout_constraintBottom_toBottomOf="@+id/language"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/language"
-        app:layout_constraintTop_toTopOf="@+id/language" />
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/language"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:textSize="48dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="@+id/title"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        tools:ignore="SpUsage" />
+        app:layout_constraintTop_toTopOf="@+id/title" />
 
     <ImageButton
         android:id="@+id/thumbnail"

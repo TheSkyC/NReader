@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NReader modifications by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <string name="language_name_english">Inglese</string>
+    <string name="language_name_chinese">Cinese</string>
+    <string name="language_name_japanese">Giapponese</string>
+</resources>

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replace gallery-list and random-gallery language flag emoji with local Tabler
+  vector artwork, consistent dimensions and accessible language descriptions.
+
 - Retain favorite searches when closing the search field or recreating the screen.
   Discard stale favorite/tag query results and close their cursors with the view.
 
