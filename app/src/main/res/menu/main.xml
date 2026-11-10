@@ -45,6 +45,10 @@
         android:title="@string/add_bookmark"
         app:showAsAction="ifRoom|collapseActionView" />
     <item
+        android:id="@+id/save_search_plan"
+        android:title="@string/save_search_plan"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/download_page"
         android:icon="@drawable/ic_file"
         android:title="@string/download_all_galleries_in_this_page"

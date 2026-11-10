@@ -230,6 +230,11 @@
     <string name="copyURL">Copy URL</string>
     <string name="add_bookmark">Add bookmark</string>
     <string name="manage_bookmarks">Manage bookmarks</string>
+    <string name="save_search_plan">Save search plan</string>
+    <string name="search_plan_name">Plan name</string>
+    <string name="search_plan_invalid">Enter a name of at most 200 characters and a valid search.</string>
+    <string name="delete_search_plan">Delete search plan</string>
+    <string name="search_plan_storage_error">Unable to update search plans. Try again.</string>
     <string name="bookmark_page_format">Page %d</string>
     <string name="bookmark_description">Bookmark description</string>
     <string name="enable_right_to_left">Enable right to left</string>

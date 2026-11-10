@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="save_search_plan">保存搜索方案</string>
+    <string name="search_plan_name">方案名称</string>
+    <string name="search_plan_invalid">请输入不超过 200 个字符的名称，并确保搜索条件有效。</string>
+    <string name="delete_search_plan">删除搜索方案</string>
+    <string name="search_plan_storage_error">无法更新搜索方案，请重试。</string>
     <string name="setting_on_ignore_tags">从画廊菜单中选中一个标签时不再查询其它标签（语言项除外）</string>
     <string name="setting_off_ignore_tags">从画廊菜单中选中一个标签时查询其它标签</string>
     <string name="setting_on_use_account_tag">在搜索请求中使用账户标签（本地标签优先）</string>
