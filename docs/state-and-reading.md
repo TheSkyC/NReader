@@ -38,9 +38,10 @@ the committed database. A failed archive leaves both the database and catalog
 unchanged. Orphaned status references fall back to the default status.
 
 Before a successful archive import, a cache snapshot captures the database,
-Settings and ScrapedTags. Restoring it verifies and reads the complete set before
-changing state, then replaces those preference sets, including removing keys added
-after the snapshot. Downloaded files are not included. Cache eviction or a
+Settings and ScrapedTags in a single file published by an atomic rename. Existing
+multi-file snapshots remain readable. Restoring it verifies and reads the complete
+set before changing state, then replaces those preference sets, including removing
+keys added after the snapshot. Downloaded files are not included. Cache eviction or a
 30-day expiry can make the snapshot unavailable; it is not a substitute for an
 exported backup. Database and preferences are separate storage systems and cannot
 be committed atomically together across process or device failure.

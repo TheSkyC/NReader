@@ -290,12 +290,14 @@ public class ImporterTest {
     }
 
     @Test
-    public void snapshotPromotionFailureRollsBackDatabaseAndPreferences() throws Exception {
-        File metadata = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-snapshot.json.meta");
-        Files.deleteIfExists(metadata.toPath());
-        assertTrue(metadata.mkdir());
-        File marker = new File(metadata, "block-replacement");
-        assertTrue(marker.createNewFile());
+    public void snapshotWriteFailurePreservesPreviousSnapshotAndData() throws Exception {
+        createRestoreSnapshot();
+        byte[] priorSnapshot = Files.readAllBytes(Importer.snapshotFile(RuntimeEnvironment.getApplication()).toPath());
+        Queries.ResumeTable.insert(123, 7);
+        Queries.ReadingProgressTable.insert(123, new ReadingPosition(9, 0.5f));
+        File temporary = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-snapshot.zip.part");
+        Files.deleteIfExists(temporary.toPath());
+        assertTrue(temporary.mkdir());
         File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "promotion-failure.zip");
         try {
             try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
@@ -308,16 +310,39 @@ public class ImporterTest {
             }
             try {
                 Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
-                fail("Expected snapshot promotion failure");
+                fail("Expected snapshot write failure");
             } catch (IOException expected) {
                 assertEquals(7, Queries.ResumeTable.pageFromId(123));
                 assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
                 assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).contains("promotionTest"));
                 assertFalse(database.inTransaction());
+                assertArrayEquals(priorSnapshot, Files.readAllBytes(Importer.snapshotFile(RuntimeEnvironment.getApplication()).toPath()));
+                assertTrue(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+            }
+        } finally {
+            assertTrue(temporary.delete());
+        }
+    }
+
+    @Test
+    public void snapshotPromotionFailureRollsBackDatabase() throws Exception {
+        File target = Importer.snapshotFile(RuntimeEnvironment.getApplication());
+        Files.deleteIfExists(target.toPath());
+        assertTrue(target.mkdir());
+        File marker = new File(target, "block-replacement");
+        assertTrue(marker.createNewFile());
+        try {
+            try {
+                createRestoreSnapshot();
+                fail("Expected snapshot promotion failure");
+            } catch (IOException expected) {
+                assertEquals(7, Queries.ResumeTable.pageFromId(123));
+                assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+                assertFalse(database.inTransaction());
             }
         } finally {
             assertTrue(marker.delete());
-            assertTrue(metadata.delete());
+            assertTrue(target.delete());
         }
     }
 
@@ -331,26 +356,74 @@ public class ImporterTest {
     }
 
     @Test
-    public void tamperedSnapshotPreferencesDisableRestore() throws Exception {
+    public void tamperedSnapshotBundleDisablesRestore() throws Exception {
         createRestoreSnapshot();
-        File settings = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-settings.json");
-        Files.write(settings.toPath(), "{\"tampered\":true}".getBytes(StandardCharsets.UTF_8));
-        assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
-        assertFalse(Importer.snapshotFile(RuntimeEnvironment.getApplication()).exists());
-
-        createRestoreSnapshot();
-        File tags = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-tags.json");
-        Files.write(tags.toPath(), "{\"tampered\":true}".getBytes(StandardCharsets.UTF_8));
+        File snapshot = Importer.snapshotFile(RuntimeEnvironment.getApplication());
+        Files.write(snapshot.toPath(), "tampered".getBytes(StandardCharsets.UTF_8));
         assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
         assertFalse(Importer.snapshotFile(RuntimeEnvironment.getApplication()).exists());
     }
 
     @Test
-    public void missingSnapshotMetadataDisablesRestore() throws Exception {
-        createRestoreSnapshot();
-        File metadata = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-snapshot.json.meta");
-        assertTrue(metadata.delete());
+    public void snapshotBundleRejectsMismatchedMemberHash() throws Exception {
+        File snapshot = Importer.snapshotFile(RuntimeEnvironment.getApplication());
+        byte[] databaseBytes = Exporter.currentDatabaseBytes();
+        byte[] settings = Exporter.sharedPreferencesBytes(RuntimeEnvironment.getApplication(), "Settings");
+        byte[] tags = Exporter.sharedPreferencesBytes(RuntimeEnvironment.getApplication(), "ScrapedTags");
+        JSONObject metadata = new JSONObject();
+        metadata.put("database", Exporter.sha256(databaseBytes));
+        metadata.put("settings", Exporter.sha256(settings));
+        metadata.put("tags", Exporter.sha256(tags));
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(snapshot))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write(databaseBytes);
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Settings.json"));
+            zip.write("{\"tampered\":true}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("ScrapedTags.json"));
+            zip.write(tags);
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Manifest.json"));
+            zip.write(metadata.toString().getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
         assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+        assertEquals(7, Queries.ResumeTable.pageFromId(123));
+    }
+
+    @Test
+    public void laterImportReplacesSnapshotAsOneCompleteSet() throws Exception {
+        createRestoreSnapshot();
+        Queries.ResumeTable.insert(123, 3);
+        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 77).commit();
+        createRestoreSnapshot();
+        Queries.ResumeTable.insert(123, 5);
+        RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).edit().putInt("snapshotSetting", 99).commit();
+        Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
+        assertEquals(3, Queries.ResumeTable.pageFromId(123));
+        assertEquals(77, RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).getInt("snapshotSetting", -1));
+    }
+
+    @Test
+    public void legacySnapshotSetRemainsRestorable() throws Exception {
+        byte[] databaseBytes = Exporter.currentDatabaseBytes();
+        byte[] settings = Exporter.sharedPreferencesBytes(RuntimeEnvironment.getApplication(), "Settings");
+        byte[] tags = Exporter.sharedPreferencesBytes(RuntimeEnvironment.getApplication(), "ScrapedTags");
+        File cache = RuntimeEnvironment.getApplication().getCacheDir();
+        Files.deleteIfExists(Importer.snapshotFile(RuntimeEnvironment.getApplication()).toPath());
+        Files.write(new File(cache, "last-restore-snapshot.json").toPath(), databaseBytes);
+        Files.write(new File(cache, "last-restore-settings.json").toPath(), settings);
+        Files.write(new File(cache, "last-restore-tags.json").toPath(), tags);
+        JSONObject metadata = new JSONObject();
+        metadata.put("database", Exporter.sha256(databaseBytes));
+        metadata.put("settings", Exporter.sha256(settings));
+        metadata.put("tags", Exporter.sha256(tags));
+        Files.write(new File(cache, "last-restore-snapshot.json.meta").toPath(), metadata.toString().getBytes(StandardCharsets.UTF_8));
+        restore("{\"Resume\":[]}");
+        assertTrue(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+        Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
+        assertEquals(7, Queries.ResumeTable.pageFromId(123));
     }
 
     private void createRestoreSnapshot() throws Exception {
