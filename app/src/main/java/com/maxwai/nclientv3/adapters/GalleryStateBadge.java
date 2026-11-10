@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -54,6 +55,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private long binding;
     private long request;
     private boolean favoritePending;
+    private boolean compactProgressStyle;
     private final DownloadObserver observer = new DownloadObserver() {
         private void update(GalleryDownloaderV2 downloader) {
             main.post(() -> {
@@ -81,11 +83,25 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         localFiles = item.findViewById(R.id.gallery_local_files);
         customStatus = item.findViewById(R.id.gallery_custom_status);
         progress = item.findViewById(R.id.gallery_reading_progress);
+        item.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+            updateProgressStyle());
+        updateProgressStyle();
         author = item.findViewById(R.id.gallery_author);
         author.setCompoundDrawablePadding(Math.round(4 * item.getResources().getDisplayMetrics().density));
         TextViewCompat.setCompoundDrawableTintList(author, author.getTextColors());
         downloadProgress = item.findViewById(R.id.gallery_download_progress);
         item.addOnAttachStateChangeListener(this);
+    }
+
+    private void updateProgressStyle() {
+        float density = item.getResources().getDisplayMetrics().density;
+        boolean compact = item.getWidth() > 0 && item.getWidth() / density <= 140f;
+        if (compact == compactProgressStyle) return;
+        compactProgressStyle = compact;
+        int horizontal = Math.round((compact ? 4 : 6) * density);
+        int vertical = Math.round((compact ? 2 : 3) * density);
+        progress.setTextSize(TypedValue.COMPLEX_UNIT_SP, compact ? 10 : 11);
+        progress.setPaddingRelative(horizontal, vertical, horizontal, vertical);
     }
 
     void bind(GenericGallery gallery) {
