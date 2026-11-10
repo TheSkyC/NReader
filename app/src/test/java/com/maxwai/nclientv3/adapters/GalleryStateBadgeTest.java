@@ -15,6 +15,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.Gallery;
+import com.maxwai.nclientv3.api.components.Tag;
+import com.maxwai.nclientv3.api.components.TagList;
+import com.maxwai.nclientv3.api.enums.TagStatus;
+import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
@@ -73,6 +77,94 @@ public class GalleryStateBadgeTest {
         Global.recursiveDelete(root);
         Global.DOWNLOADFOLDER = null;
         GalleryStateRepository.invalidateLocalFiles();
+    }
+
+    @Test
+    public void creditsPreferArtistsAndClearGroupStateWhenRecycled() throws Exception {
+        for (int layout : new int[]{R.layout.entry_layout, R.layout.entry_layout_single}) {
+            View card = LayoutInflater.from(activity).inflate(layout, null);
+            GalleryStateBadge badge = new GalleryStateBadge(card);
+            TextView author = card.findViewById(R.id.gallery_author);
+            SimpleGallery gallery = SimpleGallery.fromV2ListItem(null, new JSONObject(
+                "{\"id\":119,\"media_id\":\"1\",\"english_title\":\"Credit test\"}"));
+            TagList tags = gallery.getTags();
+            tags.addTag(creditTag(1, TagType.GROUP, " Circle A "));
+            tags.addTag(creditTag(2, TagType.GROUP, "Circle A"));
+            tags.addTag(creditTag(3, TagType.GROUP, "Circle B"));
+            tags.addTag(creditTag(4, TagType.ARTIST, " \t\n"));
+            tags.addTag(creditTag(5, TagType.ARTIST, null));
+            badge.bind(gallery);
+            assertEquals("Circle A, Circle B", author.getText().toString());
+            assertEquals(View.VISIBLE, author.getVisibility());
+            assertNotNull(author.getCompoundDrawablesRelative()[0]);
+            assertNull(author.getCompoundDrawablesRelative()[2]);
+            assertEquals(activity.getString(R.string.cover_group_credit, "Circle A, Circle B"),
+                author.getContentDescription());
+            assertEquals(author.getContentDescription(), author.getTooltipText());
+            int iconSize = Math.round(14 * activity.getResources().getDisplayMetrics().density);
+            assertEquals(iconSize, author.getCompoundDrawablesRelative()[0].getBounds().width());
+
+            tags.addTag(creditTag(6, TagType.ARTIST, " Artist A "));
+            tags.addTag(creditTag(7, TagType.ARTIST, "Artist A"));
+            tags.addTag(creditTag(8, TagType.ARTIST, "Artist B"));
+            badge.bind(gallery);
+            assertEquals("Artist A, Artist B", author.getText().toString());
+            assertEquals(View.VISIBLE, author.getVisibility());
+            assertNull(author.getCompoundDrawablesRelative()[0]);
+            assertEquals("Artist A, Artist B", author.getContentDescription());
+            assertEquals(author.getContentDescription(), author.getTooltipText());
+
+            tags.retrieveForType(TagType.ARTIST).clear();
+            badge.bind(gallery);
+            assertNotNull(author.getCompoundDrawablesRelative()[0]);
+            tags.retrieveForType(TagType.GROUP).clear();
+            tags.addTag(creditTag(9, TagType.GROUP, " \t"));
+            badge.bind(gallery);
+            assertEmptyCredit(author);
+
+            Parcel parcel = Parcel.obtain();
+            try {
+                gallery.writeToParcel(parcel, 0);
+                parcel.setDataPosition(0);
+                badge.bind(SimpleGallery.CREATOR.createFromParcel(parcel));
+                assertEmptyCredit(author);
+            } finally {
+                parcel.recycle();
+            }
+        }
+    }
+
+    @Test
+    public void localCreditsUseTheSameFallbackAndPreserveRowHeight() throws Exception {
+        LocalGallery gallery = gallery(120, "{}");
+        gallery.getGalleryData().getTags().addTag(creditTag(10, TagType.GROUP, "Local Circle"));
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        GalleryStateBadge badge = new GalleryStateBadge(card);
+        TextView author = card.findViewById(R.id.gallery_author);
+        badge.bind(gallery);
+        assertEquals("Local Circle", author.getText().toString());
+        assertNotNull(author.getCompoundDrawablesRelative()[0]);
+        int width = Math.round(116 * activity.getResources().getDisplayMetrics().density);
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int height = card.getMeasuredHeight();
+        badge.bind(gallery(121, "{}"));
+        assertEmptyCredit(author);
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        assertEquals(height, card.getMeasuredHeight());
+    }
+
+    private static Tag creditTag(int id, TagType type, String name) {
+        return new Tag(name, 0, id, type, TagStatus.DEFAULT);
+    }
+
+    private static void assertEmptyCredit(TextView author) {
+        assertEquals("", author.getText().toString());
+        assertEquals(View.INVISIBLE, author.getVisibility());
+        assertNull(author.getCompoundDrawablesRelative()[0]);
+        assertNull(author.getContentDescription());
+        assertNull(author.getTooltipText());
     }
 
     @Test

@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.ImageViewCompat;
+import androidx.core.widget.TextViewCompat;
 
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.maxwai.nclientv3.R;
@@ -30,8 +31,8 @@ import com.maxwai.nclientv3.async.downloader.DownloadQueue;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private final View item;
@@ -81,6 +82,8 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         customStatus = item.findViewById(R.id.gallery_custom_status);
         progress = item.findViewById(R.id.gallery_reading_progress);
         author = item.findViewById(R.id.gallery_author);
+        author.setCompoundDrawablePadding(Math.round(4 * item.getResources().getDisplayMetrics().density));
+        TextViewCompat.setCompoundDrawableTintList(author, author.getTextColors());
         downloadProgress = item.findViewById(R.id.gallery_download_progress);
         item.addOnAttachStateChangeListener(this);
     }
@@ -129,15 +132,34 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     }
 
     private void bindAuthor(GenericGallery gallery) {
-        List<String> names = new ArrayList<>();
         TagList tags = gallery instanceof SimpleGallery ? ((SimpleGallery) gallery).getTags()
             : gallery != null && gallery.hasGalleryData() ? gallery.getGalleryData().getTags() : null;
-        if (tags != null) {
-            for (Tag tag : tags.retrieveForType(TagType.ARTIST)) names.add(tag.getName());
-        }
-        author.setText(TextUtils.join(", ", names));
-        author.setTooltipText(author.getText());
+        String names = creditNames(tags, TagType.ARTIST);
+        boolean group = names.isEmpty();
+        if (group) names = creditNames(tags, TagType.GROUP);
+        boolean visible = !names.isEmpty();
+        author.setText(names);
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(author,
+            visible && group ? R.drawable.ic_credit_group : 0, 0, 0, 0);
+        CharSequence description = !visible ? null : group
+            ? author.getContext().getString(R.string.cover_group_credit, names) : names;
+        author.setContentDescription(description);
+        author.setTooltipText(description);
+        // Keep the language flag and neighboring cards aligned when credits are absent.
+        author.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         author.setAlpha(item.findViewById(R.id.title).getAlpha());
+    }
+
+    private static String creditNames(TagList tags, TagType type) {
+        Set<String> names = new LinkedHashSet<>();
+        if (tags != null) {
+            for (Tag tag : tags.retrieveForType(type)) {
+                if (tag == null || tag.getName() == null) continue;
+                String name = tag.getName().trim();
+                if (!name.isEmpty()) names.add(name);
+            }
+        }
+        return TextUtils.join(", ", names);
     }
 
     private void refresh() {

@@ -352,4 +352,5 @@
     <string name="list_compact_columns">通常ウィンドウの列数</string>
     <string name="list_wide_columns">ワイドウィンドウの列数</string>
     <string name="list_columns_summary">表示幅と文字サイズに合わせて調整します。4列は広いウィンドウで利用できます。</string>
+    <string name="cover_group_credit">サークル: %1$s</string>
 </resources>

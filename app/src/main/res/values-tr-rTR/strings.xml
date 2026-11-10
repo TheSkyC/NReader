@@ -352,4 +352,5 @@
     <string name="list_compact_columns">Dar pencerelerde sütunlar</string>
     <string name="list_wide_columns">Geniş pencerelerde sütunlar</string>
     <string name="list_columns_summary">Genişliğe ve metin boyutuna uyarlanır; 4 sütun için geniş bir pencere gerekir.</string>
+    <string name="cover_group_credit">Grup: %1$s</string>
 </resources>
