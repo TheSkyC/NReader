@@ -24,6 +24,7 @@ import com.maxwai.nclientv3.GalleryActivity;
 import com.maxwai.nclientv3.LocalActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.enums.TagType;
+import com.maxwai.nclientv3.api.components.Tag;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.api.local.LocalSortType;
 import com.maxwai.nclientv3.async.converters.CreatePdfOrZip;
@@ -175,7 +176,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         this.context = cont;
         dataset = new CopyOnWriteArrayList<>(myDataset);
         galleryDownloaders = DownloadQueue.getDownloaders();
-        lastQuery = cont.getQuery();
+        lastQuery = cont.getQuery().toLowerCase(Locale.US);
         filter = new ArrayList<>(myDataset);
         filter.addAll(galleryDownloaders);
 
@@ -223,7 +224,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     private CopyOnWriteArrayList<Object> createHash(List<GalleryDownloaderV2> galleryDownloaders, List<LocalGallery> dataset) {
         HashMap<String, Object> hashMap = new HashMap<>(dataset.size() + galleryDownloaders.size());
         for (LocalGallery gall : dataset) {
-            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(lastQuery))
+            if (gall != null && matchesQuery(gall))
                 hashMap.put(gall.getTrueTitle(), gall);
         }
 
@@ -237,6 +238,14 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         sortItems(arr);
 
         return new CopyOnWriteArrayList<>(arr);
+    }
+
+    private boolean matchesQuery(LocalGallery gallery) {
+        if (lastQuery.isEmpty()) return true;
+        if (gallery.getTitle().toLowerCase(Locale.US).contains(lastQuery)) return true;
+        for (Tag tag : gallery.getGalleryData().getTags().getAllTagsList())
+            if (tag.getName().toLowerCase(Locale.US).contains(lastQuery)) return true;
+        return false;
     }
 
     private void sortItems(ArrayList<Object> arr) {
