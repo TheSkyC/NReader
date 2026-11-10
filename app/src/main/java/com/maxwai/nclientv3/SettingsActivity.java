@@ -169,15 +169,19 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     public void restoreLastSnapshot() {
-        new Thread(() -> {
-            try {
-                Importer.restoreLastSnapshot(this);
-                runOnUiThread(() -> Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show());
-            } catch (IOException exception) {
-                LogUtility.e("Unable to restore backup snapshot", exception);
-                runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
-            }
-        }).start();
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.restore_snapshot)
+            .setMessage(R.string.restore_snapshot_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok, (dialog, which) -> new Thread(() -> {
+                try {
+                    Importer.restoreLastSnapshot(this);
+                    runOnUiThread(() -> Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show());
+                } catch (IOException exception) {
+                    LogUtility.e("Unable to restore backup snapshot", exception);
+                    runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+                }
+            }).start()).show();
     }
 
     private void importOldVersion() {

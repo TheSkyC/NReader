@@ -255,7 +255,7 @@ public class Importer {
                 if (!hasDatabase) throw new IOException("Backup has no database");
                 if (manifestBytes != null) validateManifest(manifestBytes, databaseBytes);
                 BackupPreview.validateDatabaseBytes(databaseBytes);
-                writeSnapshot(context);
+                writeSnapshotCandidate(context);
                 importDBLocked(new ByteArrayInputStream(databaseBytes));
             }
             database.setTransactionSuccessful();
@@ -264,6 +264,7 @@ public class Importer {
         } finally {
             database.endTransaction();
         }
+        promoteSnapshot(context);
         for (SharedPreferences.Editor editor : preferences) editor.apply();
         Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
@@ -277,7 +278,7 @@ public class Importer {
         return new File(context.getCacheDir(), PREVIOUS_SNAPSHOT_NAME);
     }
 
-    private static void writeSnapshot(Context context) throws IOException {
+    private static void writeSnapshotCandidate(Context context) throws IOException {
         byte[] bytes = Exporter.currentDatabaseBytes();
         File target = snapshotFile(context);
         File temporary = new File(target.getPath() + ".part");
@@ -285,7 +286,12 @@ public class Importer {
             output.write(bytes);
             output.getFD().sync();
         }
-        if (target.isFile()) Files.move(target.toPath(), previousSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private static void promoteSnapshot(Context context) throws IOException {
+        File target = snapshotFile(context);
+        File temporary = new File(target.getPath() + ".part");
+        if (target.isFile()) Files.copy(target.toPath(), previousSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
@@ -296,6 +302,8 @@ public class Importer {
             try (InputStream input = new java.io.FileInputStream(snapshot)) {
                 importDBLocked(input);
             }
+            Queries.StatusTable.initStatuses();
+            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
         }));
     }
 
