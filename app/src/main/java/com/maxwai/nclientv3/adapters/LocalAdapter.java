@@ -36,6 +36,7 @@ import com.maxwai.nclientv3.async.downloader.DownloadQueue;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
 import com.maxwai.nclientv3.components.classes.MultichoiceAdapter;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.components.status.StatusManager;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
@@ -121,6 +122,9 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
 
     private List<Object> filter;
     private DownloadFilter downloadFilter = DownloadFilter.ALL;
+    private boolean favoriteOnly;
+    private int readingFilter;
+    private boolean customStatusOnly;
     @NonNull
     private String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
@@ -245,6 +249,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
 
     private boolean matchesQuery(LocalGallery gallery) {
         if (!matchesDownloadFilter(gallery)) return false;
+        if (!matchesPersonalFilters(gallery)) return false;
         if (lastQuery.isEmpty()) return true;
         if (gallery.getTitle().toLowerCase(Locale.US).contains(lastQuery)) return true;
         for (Tag tag : gallery.getGalleryData().getTags().getAllTagsList())
@@ -263,6 +268,27 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         if (downloadFilter == DownloadFilter.ALL) return true;
         LocalDownloadState state = LocalDownloadState.inspect(gallery.getDirectory());
         return state.name().equals(downloadFilter.name());
+    }
+
+    public void setPersonalFilters(boolean favoriteOnly, int readingFilter, boolean customStatusOnly) {
+        this.favoriteOnly = favoriteOnly;
+        this.readingFilter = readingFilter;
+        this.customStatusOnly = customStatusOnly;
+        getFilter().filter(lastQuery);
+    }
+
+    public boolean isFavoriteOnly() { return favoriteOnly; }
+    public int getReadingFilter() { return readingFilter; }
+    public boolean isCustomStatusOnly() { return customStatusOnly; }
+
+    private boolean matchesPersonalFilters(LocalGallery gallery) {
+        int id = gallery.getId();
+        if (favoriteOnly && !Queries.FavoriteTable.isFavorite(id)) return false;
+        boolean reading = Queries.ReadingProgressTable.fromId(id) != null;
+        if (readingFilter == 1 && !reading) return false;
+        if (readingFilter == 2 && reading) return false;
+        if (customStatusOnly && StatusManager.DEFAULT_STATUS.equals(Queries.StatusMangaTable.getStatus(id).name)) return false;
+        return true;
     }
 
     private void sortItems(ArrayList<Object> arr) {
