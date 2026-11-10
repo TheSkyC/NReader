@@ -4,6 +4,7 @@ package com.maxwai.nclientv3.async.downloader;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 
 import androidx.core.app.NotificationCompat;
@@ -68,6 +69,17 @@ public class GalleryDownloaderManager {
         this.context = context;
         this.downloaderV2 = new GalleryDownloaderV2(context, title, thumbnail, id);
         this.downloaderV2.addObserver(observer);
+    }
+
+    private GalleryDownloaderManager(Context context, GalleryDownloaderV2 downloader) {
+        this.context = context.getApplicationContext();
+        this.downloaderV2 = downloader;
+        this.gallery = downloader.getGallery();
+        downloader.addObserver(observer);
+    }
+
+    public static GalleryDownloaderManager restore(Context context, Cursor cursor) {
+        return new GalleryDownloaderManager(context, GalleryDownloaderV2.restore(context, cursor));
     }
 
     private void cancelNotification() {

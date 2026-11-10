@@ -16,6 +16,7 @@ import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.DownloadTaskStore;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
@@ -67,19 +68,34 @@ public class DownloadGalleryV2 extends Worker {
     }
 
     private static void enqueue(Context context, GalleryDownloaderManager manager) {
-        if (DownloadQueue.add(manager)) startWork(context);
-        else new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
-            android.widget.Toast.makeText(context, com.maxwai.nclientv3.R.string.download_conflicting_task,
-                android.widget.Toast.LENGTH_LONG).show());
+        Context application = context.getApplicationContext();
+        DownloadTaskStore.execute(() -> {
+            int error = 0;
+            try {
+                if (DownloadQueue.add(manager)) startWork(application);
+                else error = com.maxwai.nclientv3.R.string.download_conflicting_task;
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to enqueue download", exception);
+                error = com.maxwai.nclientv3.R.string.download_error_storage;
+            }
+            if (error != 0) {
+                int message = error;
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                    android.widget.Toast.makeText(application, message, android.widget.Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     public static void loadDownloads(Context context) {
-        List<GalleryDownloaderManager> g = Queries.DownloadTable.getAllDownloads(context);
-        for (GalleryDownloaderManager gg : g) {
-            gg.downloader().setStatus(GalleryDownloaderV2.Status.PAUSED);
-            DownloadQueue.add(gg);
-        }
-        startWork(context);
+        Context application = context.getApplicationContext();
+        DownloadTaskStore.execute(() -> {
+            try {
+                DownloadTaskStore.loadIntoQueue(application);
+                startWork(application);
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to restore download queue", exception);
+            }
+        });
     }
 
     public static void downloadRange(Context context, Gallery gallery, int start, int end) {
