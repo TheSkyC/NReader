@@ -65,6 +65,10 @@ public final class BackupPreview {
         return counts;
     }
 
+    static void validateDatabaseBytes(byte[] database) throws IOException {
+        countRows(database);
+    }
+
     public static final class Summary {
         public final Map<String, Integer> rowCounts;
         public final boolean integrityChecked;

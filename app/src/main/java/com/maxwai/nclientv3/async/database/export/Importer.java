@@ -40,6 +40,7 @@ import org.json.JSONObject;
 
 public class Importer {
     private static final String SNAPSHOT_NAME = "last-restore-snapshot.json";
+    private static final String PREVIOUS_SNAPSHOT_NAME = "previous-restore-snapshot.json";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
@@ -227,7 +228,6 @@ public class Importer {
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
         SQLiteDatabase database = Database.getDatabase();
         if (database == null) throw new IOException("Database is not available");
-        writeSnapshot(context);
         database.beginTransaction();
         List<SharedPreferences.Editor> preferences = new ArrayList<>();
         try {
@@ -254,6 +254,8 @@ public class Importer {
                 }
                 if (!hasDatabase) throw new IOException("Backup has no database");
                 if (manifestBytes != null) validateManifest(manifestBytes, databaseBytes);
+                BackupPreview.validateDatabaseBytes(databaseBytes);
+                writeSnapshot(context);
                 importDBLocked(new ByteArrayInputStream(databaseBytes));
             }
             database.setTransactionSuccessful();
@@ -271,6 +273,10 @@ public class Importer {
         return new File(context.getCacheDir(), SNAPSHOT_NAME);
     }
 
+    public static File previousSnapshotFile(Context context) {
+        return new File(context.getCacheDir(), PREVIOUS_SNAPSHOT_NAME);
+    }
+
     private static void writeSnapshot(Context context) throws IOException {
         byte[] bytes = Exporter.currentDatabaseBytes();
         File target = snapshotFile(context);
@@ -279,6 +285,7 @@ public class Importer {
             output.write(bytes);
             output.getFD().sync();
         }
+        if (target.isFile()) Files.move(target.toPath(), previousSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 

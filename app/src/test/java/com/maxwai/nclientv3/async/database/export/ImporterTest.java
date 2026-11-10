@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -254,6 +255,30 @@ public class ImporterTest {
         assertTrue(Importer.snapshotFile(RuntimeEnvironment.getApplication()).isFile());
         Importer.restoreLastSnapshot(RuntimeEnvironment.getApplication());
         assertEquals(7, Queries.ResumeTable.pageFromId(123));
+    }
+
+    @Test
+    public void invalidArchiveDoesNotReplaceExistingSnapshot() throws Exception {
+        File valid = new File(RuntimeEnvironment.getApplication().getCacheDir(), "valid-snapshot.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(valid))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(valid));
+        byte[] snapshot = Files.readAllBytes(Importer.snapshotFile(RuntimeEnvironment.getApplication()).toPath());
+        File invalid = new File(RuntimeEnvironment.getApplication().getCacheDir(), "invalid-snapshot.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(invalid))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        try {
+            Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(invalid));
+            fail("Expected invalid archive failure");
+        } catch (IOException expected) {
+            assertArrayEquals(snapshot, Files.readAllBytes(Importer.snapshotFile(RuntimeEnvironment.getApplication()).toPath()));
+        }
     }
 
     @Test
