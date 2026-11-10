@@ -20,6 +20,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.async.database.export.Exporter;
+import com.maxwai.nclientv3.async.database.export.BackupPreview;
 import com.maxwai.nclientv3.async.database.export.Manager;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.views.GeneralPreferenceFragment;
@@ -135,9 +136,22 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void importSettings(Uri selectedFile) {
-        new Manager(selectedFile, this, false, () -> {
-            Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show();
-            finish();
+        new Thread(() -> {
+            try {
+                BackupPreview.Summary summary = BackupPreview.inspect(this, selectedFile);
+                runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.backup_restore_preview)
+                    .setMessage(getString(R.string.backup_restore_preview_message, summary.totalRows(),
+                        summary.integrityChecked ? getString(R.string.backup_integrity_verified) : getString(R.string.backup_legacy_format)))
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> new Manager(selectedFile, this, false, () -> {
+                        Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show();
+                        finish();
+                    }).start()).show());
+            } catch (IOException exception) {
+                LogUtility.e("Unable to preview backup", exception);
+                runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+            }
         }).start();
     }
 
