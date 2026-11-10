@@ -15,6 +15,8 @@ import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.local.LocalGallery;
+import com.maxwai.nclientv3.files.GalleryFolder;
+import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.DownloadTaskStore;
 import com.maxwai.nclientv3.settings.Global;
@@ -77,6 +79,8 @@ public class GalleryDownloaderV2 {
     private int pageAttempts;
     private long retryAt;
     private long revision;
+    private File repairFolder;
+    private List<Integer> repairPages;
 
     public GalleryDownloaderV2(Context context, @Nullable String title, @Nullable Uri thumbnail, int id) {
         this.context = context.getApplicationContext();
@@ -121,6 +125,22 @@ public class GalleryDownloaderV2 {
 
     public File getFolder() {
         return folder;
+    }
+
+    public void configureRepair(File folder, List<Integer> pages) {
+        synchronized (lifecycleLock) {
+            if (folder == null || pages == null || pages.isEmpty()) throw new IllegalArgumentException("Invalid repair target");
+            repairFolder = folder;
+            repairPages = new ArrayList<>(pages);
+        }
+    }
+
+    public boolean isRepairTask() { return repairFolder != null && repairPages != null; }
+
+    public File getRepairFolder() { return repairFolder; }
+
+    public List<Integer> getRepairPages() {
+        return repairPages == null ? null : new ArrayList<>(repairPages);
     }
 
     public Gallery getGallery() {
@@ -199,6 +219,8 @@ public class GalleryDownloaderV2 {
             values.put("title", title);
             values.put("thumbnail", thumbnail == null ? null : thumbnail.toString());
             values.put("metadata", metadata);
+            values.put("target_path", repairFolder == null ? null : repairFolder.getAbsolutePath());
+            values.put("repair_pages", repairPages == null ? null : android.text.TextUtils.join(",", repairPages));
             values.put("state", status.name());
             values.put("failure", failure.name());
             values.put("queue_order", queueOrder);
@@ -236,6 +258,17 @@ public class GalleryDownloaderV2 {
         downloader.queueOrder = cursor.getLong(cursor.getColumnIndexOrThrow("queue_order"));
         int revisionColumn = cursor.getColumnIndex("revision");
         downloader.revision = revisionColumn < 0 ? 0 : cursor.getLong(revisionColumn);
+        int targetColumn = cursor.getColumnIndex("target_path");
+        int pagesColumn = cursor.getColumnIndex("repair_pages");
+        if (targetColumn >= 0 && !cursor.isNull(targetColumn)) {
+            File target = new File(cursor.getString(targetColumn));
+            String encodedPages = cursor.getString(pagesColumn);
+            List<Integer> pages = new ArrayList<>();
+            if (encodedPages != null && !encodedPages.isEmpty()) {
+                for (String value : encodedPages.split(",")) pages.add(Integer.parseInt(value));
+            }
+            downloader.configureRepair(target, pages);
+        }
         downloader.metadataAttempts = cursor.getInt(cursor.getColumnIndexOrThrow("metadata_attempts"));
         downloader.retryPage = cursor.getInt(cursor.getColumnIndexOrThrow("page_number"));
         downloader.pageAttempts = cursor.getInt(cursor.getColumnIndexOrThrow("page_attempts"));
@@ -328,6 +361,7 @@ public class GalleryDownloaderV2 {
 
     boolean coversRequest(GalleryDownloaderV2 request) {
         if (status == Status.CANCELED || status == Status.FINISHED) return false;
+        if (!Objects.equals(repairFolder, request.repairFolder) || !Objects.equals(repairPages, request.repairPages)) return false;
         int requestedStart = Math.max(0, request.start);
         int requestedEnd = request.end >= 0 ? request.end
             : gallery == null ? Integer.MAX_VALUE : gallery.getPageCount() - 1;
@@ -629,8 +663,12 @@ public class GalleryDownloaderV2 {
         if (page == null) return true;
         retryAfter = null;
         File filePath = new File(folder, page.getPageName());
+        if (repairPages != null) {
+            PageFile existing = new GalleryFolder(folder).getPage(page.page);
+            if (existing != null) filePath = existing;
+        }
         if (filePath.exists() && !isCorrupted(filePath)) return true;
-        File temporaryFile = new File(folder, page.getPageName() + ".part");
+        File temporaryFile = new File(folder, filePath.getName() + ".part");
         Call call = Global.getClient(context).newCall(new Request.Builder().url(page.url.toString()).build());
         synchronized (lifecycleLock) {
             if (!isRunning()) return false;
@@ -702,6 +740,7 @@ public class GalleryDownloaderV2 {
     }
 
     private void checkPages() {
+        if (repairPages != null) return;
         File filePath;
         for (int i = 0; i < urls.size(); i++) {
             if (urls.get(i) == null) {
@@ -715,13 +754,25 @@ public class GalleryDownloaderV2 {
     }
 
     private void createPages() {
-        for (int i = start; i <= end && i < gallery.getPageCount(); i++)
-            urls.add(new PageContainer(i + 1, gallery.getHighPage(i)));
+        if (repairPages != null) {
+            for (Integer page : repairPages) {
+                if (page != null && page >= 1 && page <= gallery.getPageCount())
+                    urls.add(new PageContainer(page, gallery.getHighPage(page - 1)));
+            }
+            return;
+        }
+        for (int i = start; i <= end && i < gallery.getPageCount(); i++) urls.add(new PageContainer(i + 1, gallery.getHighPage(i)));
     }
 
     private void createFolder() throws IOException {
         if (Global.DOWNLOADFOLDER == null) throw new IOException("Download storage is unavailable");
-        folder = findFolder(Global.DOWNLOADFOLDER, title, id);
+        if (repairFolder != null) {
+            String root = Global.DOWNLOADFOLDER.getCanonicalPath() + File.separator;
+            String target = repairFolder.getCanonicalPath();
+            if (!target.startsWith(root) || !repairFolder.isDirectory()
+                || !new File(repairFolder, "." + id).isFile()) throw new IOException("Repair target is unavailable");
+            folder = repairFolder;
+        } else folder = findFolder(Global.DOWNLOADFOLDER, title, id);
         if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Unable to create download folder");
         writeNoMedia();
         createIdFile();

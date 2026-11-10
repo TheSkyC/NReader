@@ -452,6 +452,10 @@
     <string name="state_download_partial">Missing pages</string>
     <string name="state_download_damaged">Damaged images</string>
     <string name="state_download_unverified">Completeness unknown</string>
+    <string name="download_repair">Check and repair pages</string>
+    <string name="download_repair_start">Repair pages</string>
+    <string name="download_repair_pages">Missing (%1$d): %2$s\nDamaged (%3$d): %4$s</string>
+    <string name="download_repair_unavailable">Page repair is unavailable because the gallery identity, saved folder, metadata, or source cannot be verified.</string>
     <string name="debug_mask_images">Mask images for debugging</string>
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
     <string name="cover_group_credit">Group: %1$s</string>

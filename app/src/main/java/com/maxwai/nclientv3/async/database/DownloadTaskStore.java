@@ -25,7 +25,7 @@ public final class DownloadTaskStore {
         + "id_gallery INTEGER NOT NULL PRIMARY KEY CHECK(id_gallery > 0),"
         + "range_start INTEGER NOT NULL CHECK(range_start >= -1 AND range_start < 10000),"
         + "range_end INTEGER NOT NULL CHECK(range_end >= -1 AND range_end < 10000),"
-        + "title TEXT NOT NULL, thumbnail TEXT, metadata TEXT,"
+        + "title TEXT NOT NULL, thumbnail TEXT, metadata TEXT, target_path TEXT, repair_pages TEXT,"
         + "state TEXT NOT NULL CHECK(state IN ('NOT_STARTED','DOWNLOADING','PAUSED','FAILED')),"
         + "failure TEXT NOT NULL, queue_order INTEGER NOT NULL,"
         + "revision INTEGER NOT NULL DEFAULT 0 CHECK(revision >= 0),"
@@ -116,6 +116,11 @@ public final class DownloadTaskStore {
             + "(id_gallery,range_start,range_end,title,state,failure,queue_order) "
             + "SELECT Downloads.id_gallery," + rangeStart + "," + rangeEnd + ",COALESCE(title_pretty,''),'PAUSED','NONE',Downloads.id_gallery "
             + "FROM Downloads LEFT JOIN Gallery ON id_gallery=idGallery");
+    }
+
+    public static void addRepairColumns(SQLiteDatabase db) {
+        if (!hasColumn(db, TABLE_NAME, "target_path")) db.execSQL("ALTER TABLE DownloadTasks ADD COLUMN target_path TEXT");
+        if (!hasColumn(db, TABLE_NAME, "repair_pages")) db.execSQL("ALTER TABLE DownloadTasks ADD COLUMN repair_pages TEXT");
     }
 
     private static boolean hasColumn(SQLiteDatabase db, String table, String column) {
