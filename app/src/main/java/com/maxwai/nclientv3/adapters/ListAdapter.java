@@ -118,12 +118,6 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             holder.overlay.setVisibility((queryString != null && ent.hasIgnoredTags(queryString)) ? View.VISIBLE : View.GONE);
         });
         holder.overlay.setOnClickListener(v -> holder.overlay.setVisibility(View.GONE));
-        holder.layout.setOnLongClickListener(v -> {
-            holder.title.animate().alpha(holder.title.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            holder.flag.animate().alpha(holder.flag.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            holder.pages.animate().alpha(holder.pages.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            return true;
-        });
         holder.stateBadge.bind(ent);
     }
 

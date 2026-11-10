@@ -99,12 +99,6 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
             if (ent.getGalleryData().isValid())
                 startGallery(ent);
         });
-        holder.layout.setOnLongClickListener(v -> {
-            holder.title.animate().alpha(holder.title.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            holder.flag.animate().alpha(holder.flag.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            holder.pages.animate().alpha(holder.pages.getAlpha() == 0f ? 1f : 0f).setDuration(100).start();
-            return true;
-        });
         holder.stateBadge.bind(ent);
     }
 
