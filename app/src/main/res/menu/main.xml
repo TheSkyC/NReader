@@ -55,4 +55,10 @@
         android:title="@string/sort_by_title"
         android:visible="false"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/filter_loaded_results"
+        android:icon="@drawable/ic_filter_list"
+        android:title="@string/filter_loaded_results"
+        android:visible="false"
+        app:showAsAction="never" />
 </menu>

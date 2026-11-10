@@ -18,6 +18,7 @@ import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.api.enums.Language;
+import com.maxwai.nclientv3.files.LocalDownloadState;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.settings.Global;
@@ -30,11 +31,19 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
     private final List<SimpleGallery> mDataset;
+    private final List<SimpleGallery> allDataset = new ArrayList<>();
+    private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
     private final BaseActivity context;
     private final String queryString;
+    private boolean loadedDownloadedOnly;
+    private boolean loadedFavoriteOnly;
+    private int loadedReadingFilter;
+    private boolean loadedCustomStatusOnly;
 
     public ListAdapter(BaseActivity cont) {
         this.context = cont;
@@ -176,15 +185,58 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         return mDataset == null ? 0 : mDataset.size();
     }
 
+    public void setLoadedFilters(boolean downloadedOnly, boolean favoriteOnly, int readingFilter, boolean customStatusOnly) {
+        loadedDownloadedOnly = downloadedOnly;
+        loadedFavoriteOnly = favoriteOnly;
+        loadedReadingFilter = readingFilter;
+        loadedCustomStatusOnly = customStatusOnly;
+        applyLoadedFilters();
+    }
+
+    public boolean isLoadedDownloadedOnly() { return loadedDownloadedOnly; }
+    public boolean isLoadedFavoriteOnly() { return loadedFavoriteOnly; }
+    public int getLoadedReadingFilter() { return loadedReadingFilter; }
+    public boolean isLoadedCustomStatusOnly() { return loadedCustomStatusOnly; }
+
+    private void applyLoadedFilters() {
+        List<SimpleGallery> snapshot = new ArrayList<>(allDataset);
+        filterExecutor.execute(() -> {
+            ArrayList<SimpleGallery> result = new ArrayList<>();
+            for (SimpleGallery gallery : snapshot) if (matchesLoadedFilters(gallery)) result.add(gallery);
+            context.runOnUiThread(() -> {
+                mDataset.clear();
+                mDataset.addAll(result);
+                notifyDataSetChanged();
+            });
+        });
+    }
+
+    private boolean matchesLoadedFilters(SimpleGallery gallery) {
+        int id = gallery.getId();
+        File folder = Global.findGalleryFolder(context, id);
+        if (loadedDownloadedOnly && folder == null) return false;
+        if (loadedFavoriteOnly && !Queries.FavoriteTable.isFavorite(id)) return false;
+        boolean reading = Queries.ReadingProgressTable.fromId(id) != null;
+        if (loadedReadingFilter == 1 && !reading) return false;
+        if (loadedReadingFilter == 2 && reading) return false;
+        if (loadedCustomStatusOnly && com.maxwai.nclientv3.components.status.StatusManager.DEFAULT_STATUS
+            .equals(Queries.StatusMangaTable.getStatus(id).name)) return false;
+        return true;
+    }
+
     public void addGalleries(List<GenericGallery> galleries) {
         int c = mDataset.size();
         for (GenericGallery g : galleries) {
-            mDataset.add((SimpleGallery) g);
+            SimpleGallery gallery = (SimpleGallery) g;
+            allDataset.add(gallery);
+            if (!loadedDownloadedOnly && !loadedFavoriteOnly && loadedReadingFilter == 0 && !loadedCustomStatusOnly)
+                mDataset.add(gallery);
 
             LogUtility.d("Simple: " + g);
         }
         LogUtility.d(String.format(Locale.US, "%s,old:%d,new:%d,len%d", this, c, mDataset.size(), galleries.size()));
-        context.runOnUiThread(() -> notifyItemRangeInserted(c, galleries.size()));
+        if (loadedDownloadedOnly || loadedFavoriteOnly || loadedReadingFilter != 0 || loadedCustomStatusOnly) applyLoadedFilters();
+        else context.runOnUiThread(() -> notifyItemRangeInserted(c, galleries.size()));
     }
 
     public void restartDataset(List<GenericGallery> galleries) {
@@ -196,14 +248,24 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         mDataset.addAll(galleries);
         context.runOnUiThread(()->notifyItemRangeInserted(0,galleries.size()));*/
         mDataset.clear();
+        allDataset.clear();
         for (GenericGallery g : galleries)
             if (g instanceof SimpleGallery)
-                mDataset.add((SimpleGallery) g);
+                allDataset.add((SimpleGallery) g);
+        if (loadedDownloadedOnly || loadedFavoriteOnly || loadedReadingFilter != 0 || loadedCustomStatusOnly) {
+            applyLoadedFilters();
+            return;
+        }
+        mDataset.addAll(allDataset);
         context.runOnUiThread(this::notifyDataSetChanged);
     }
 
 
     public void resetStatuses() {
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+    }
+
+    public void close() {
+        filterExecutor.shutdownNow();
     }
 }

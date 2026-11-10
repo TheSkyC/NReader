@@ -259,6 +259,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onDestroy() {
         if (listGrid != null) listGrid.close();
+        if (adapter != null) adapter.close();
         super.onDestroy();
     }
 
@@ -506,6 +507,7 @@ public class MainActivity extends BaseActivity
         if (listGrid != null) listGrid.refresh();
     }
 
+
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -520,6 +522,7 @@ public class MainActivity extends BaseActivity
         listGrid.bindMenu(menu.findItem(R.id.list_columns));
 
         menu.findItem(R.id.only_language).setVisible(modeType == ModeType.NORMAL);
+        menu.findItem(R.id.filter_loaded_results).setVisible(modeType != ModeType.ID);
         menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
 
         initializeSearchItem(menu.findItem(R.id.search));
@@ -615,6 +618,8 @@ public class MainActivity extends BaseActivity
                 i = new Intent(Intent.ACTION_VIEW, Uri.parse(inspector.getUrl()));
                 startActivity(i);
             }
+        } else if (item.getItemId() == R.id.filter_loaded_results) {
+            showLoadedFilterDialog(item);
         } else if (item.getItemId() == R.id.random_favorite) {
             inspector = InspectorV3.randomInspector(this, startGallery, true);
             inspector.start();
@@ -630,6 +635,28 @@ public class MainActivity extends BaseActivity
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showLoadedFilterDialog(MenuItem item) {
+        if (adapter == null) return;
+        String[] labels = {
+            getString(R.string.filter_downloaded_only), getString(R.string.filter_favorite_only),
+            getString(R.string.filter_reading_only), getString(R.string.filter_unread_only),
+            getString(R.string.filter_custom_status_only)
+        };
+        boolean[] checked = {
+            adapter.isLoadedDownloadedOnly(), adapter.isLoadedFavoriteOnly(),
+            adapter.getLoadedReadingFilter() == 1, adapter.getLoadedReadingFilter() == 2,
+            adapter.isLoadedCustomStatusOnly()
+        };
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.filter_loaded_results)
+            .setMultiChoiceItems(labels, checked, (dialog, which, value) -> checked[which] = value)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                int reading = checked[2] ? 1 : checked[3] ? 2 : 0;
+                adapter.setLoadedFilters(checked[0], checked[1], reading, checked[4]);
+            }).show();
     }
 
     private void updateSortType(MenuItem item) {
