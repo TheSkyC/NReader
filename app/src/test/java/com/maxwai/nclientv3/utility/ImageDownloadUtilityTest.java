@@ -10,12 +10,15 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.net.Uri;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
+import com.bumptech.glide.request.Request;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.settings.Global;
@@ -28,11 +31,12 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
+import org.robolectric.Shadows;
 import org.robolectric.util.ReflectionHelpers;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -166,21 +170,97 @@ public class ImageDownloadUtilityTest {
     }
 
     @Test
-    public void queuedPageShowsLoadingLogoBeforeItsRequestStarts() {
-        Application application = RuntimeEnvironment.getApplication();
-        Global.initFromShared(application);
-        Gallery gallery = Gallery.emptyGallery();
-        assertFalse(gallery.getGalleryData().getCheckedExt());
-        Map<Gallery, List<Runnable>> queue = ReflectionHelpers.getStaticField(ImageDownloadUtility.class, "imageDownloadQueue");
-        queue.put(gallery, new LinkedList<>());
-        try {
-            ImageView image = new ImageView(application);
-            image.setImageResource(R.mipmap.ic_launcher);
-            ImageDownloadUtility.loadImageOp(application, image, gallery, 0, 0, true);
-            assertEquals(1, queue.get(gallery).size());
-            assertTrue(image.getDrawable().getIntrinsicWidth() > image.getDrawable().getIntrinsicHeight() * 2);
-        } finally {
-            queue.remove(gallery);
+    public void failedFirstPageDoesNotBlockLaterPages() throws Exception {
+        try (ActivityController<AppCompatActivity> controller = imageActivity()) {
+            AppCompatActivity activity = controller.get();
+            Gallery gallery = imageGallery(activity);
+            ImageView first = imageView(activity);
+            ImageDownloadUtility.loadImageOp(activity, first, gallery, 0, 0, true);
+            awaitTerminal(first);
+            assertFalse(DebugImageMask.target(first).getRequest().isComplete());
+            ImageView second = imageView(activity);
+            ImageDownloadUtility.loadImageOp(activity, second, gallery, 1, 0, true);
+            awaitTerminal(second);
+            assertTrue(DebugImageMask.target(second).getRequest().isComplete());
+            assertTrue(gallery.getGalleryData().getCheckedExt());
         }
+    }
+
+    @Test
+    public void replacingFirstPageAndDestroyingActivityClearRequests() throws Exception {
+        ActivityController<AppCompatActivity> controller = imageActivity();
+        AppCompatActivity activity = controller.get();
+        Gallery gallery = imageGallery(activity);
+        ImageView image = new ImageView(activity);
+        // No measured size: the first request waits for layout until it is replaced.
+        ImageDownloadUtility.loadImageOp(activity, image, gallery, 0, 0, true);
+        Request previous = DebugImageMask.target(image).getRequest();
+        image.layout(0, 0, 100, 100);
+        ImageDownloadUtility.loadImageOp(activity, image, gallery, 1, 0, true);
+        assertTrue(previous.isCleared());
+        awaitTerminal(image);
+        Request current = DebugImageMask.target(image).getRequest();
+        assertTrue(current.isComplete());
+        controller.pause().stop().destroy();
+        assertTrue(current.isCleared());
+        assertNull(DebugImageMask.target(image).getRequest());
+    }
+
+    private ActivityController<AppCompatActivity> imageActivity() {
+        ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class);
+        controller.get().setTheme(R.style.AppTheme);
+        Global.initFromShared(controller.get());
+        return controller.setup();
+    }
+
+    @Test
+    public void disablingImageLoadingClearsThePreviousBinding() throws Exception {
+        try (ActivityController<AppCompatActivity> controller = imageActivity()) {
+            AppCompatActivity activity = controller.get();
+            ImageView image = imageView(activity);
+            Gallery gallery = imageGallery(activity);
+            ImageDownloadUtility.loadImageOp(activity, image, gallery, 1, 0, true);
+            awaitTerminal(image);
+            Request previous = DebugImageMask.target(image).getRequest();
+            ReflectionHelpers.setStaticField(Global.class, "usageMobile", Global.DataUsageType.NONE);
+            ReflectionHelpers.setStaticField(Global.class, "usageWifi", Global.DataUsageType.NONE);
+            try {
+                ImageDownloadUtility.loadImageOp(activity, image, gallery, 0, 0, true);
+                assertTrue(previous.isCleared());
+                assertNull(DebugImageMask.target(image).getRequest());
+                assertTrue(image.getDrawable().getIntrinsicWidth() > image.getDrawable().getIntrinsicHeight() * 2);
+            } finally {
+                Global.initFromShared(activity);
+            }
+        }
+    }
+
+    private ImageView imageView(AppCompatActivity activity) {
+        ImageView image = new ImageView(activity);
+        image.layout(0, 0, 100, 100);
+        return image;
+    }
+
+    private Gallery imageGallery(AppCompatActivity activity) throws Exception {
+        File valid = File.createTempFile("reader-image", ".png", activity.getCacheDir());
+        try (FileOutputStream output = new FileOutputStream(valid)) {
+            Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, output);
+        }
+        Gallery gallery = new Gallery(null, "{\"id\":123,\"num_pages\":2,\"pages\":[{\"path\":\"missing.png\"},{\"path\":\"valid.png\"}]}", null, false);
+        gallery.getGalleryData().getPage(0).setImagePath(Uri.fromFile(new File(activity.getCacheDir(), "missing-reader-page.png")));
+        gallery.getGalleryData().getPage(1).setImagePath(Uri.fromFile(valid));
+        return gallery;
+    }
+
+    private void awaitTerminal(ImageView image) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        Request request = DebugImageMask.target(image).getRequest();
+        assertNotNull(request);
+        while (request.isRunning() && System.nanoTime() < deadline) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            Thread.sleep(10);
+        }
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertFalse("Image request did not finish", request.isRunning());
     }
 }

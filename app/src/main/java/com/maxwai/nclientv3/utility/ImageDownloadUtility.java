@@ -6,7 +6,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
-import android.os.Handler;
 import android.view.Gravity;
 import android.widget.ImageView;
 
@@ -26,16 +25,8 @@ import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.settings.Global;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
 
 public class ImageDownloadUtility {
-
-    private static final Map<Gallery, List<Runnable>> imageDownloadQueue = new HashMap<>();
 
     public static void preloadImage(Context context, Uri url) {
         if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) return;
@@ -62,64 +53,38 @@ public class ImageDownloadUtility {
     }
 
     public static void loadImageOp(Context context, ImageView imageView, Gallery gallery, int page, int angle, boolean shouldFull) {
-        loadImageOp(context, imageView, gallery, () -> getUrlForGallery(gallery, page, shouldFull), angle, false);
+        loadImageOp(context, imageView, gallery, getUrlForGallery(gallery, page, shouldFull), angle);
     }
 
-    private static void loadImageOp(Context context, ImageView view, @Nullable Gallery gallery, Supplier<Uri> url, int angle, boolean priority) {
-        loadLogo(view);
-        if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) {
+    private static void loadImageOp(Context context, ImageView view, @Nullable Gallery gallery, Uri url, int angle) {
+        if (context instanceof Activity && (((Activity) context).isDestroyed() || ((Activity) context).isFinishing())) {
+            loadLogo(view);
             return;
         }
-        boolean newGallery = false;
-        if (!imageDownloadQueue.containsKey(gallery)) {
-            imageDownloadQueue.put(gallery, new LinkedList<>());
-            newGallery = true;
+        RequestManager glide = GlideX.with(context);
+        if (glide == null) {
+            loadLogo(view);
+            return;
         }
-        //noinspection DataFlowIssue
-        imageDownloadQueue.get(gallery).add(() -> {
-            LogUtility.d("Requested url glide: " + url.get());
-            RequestManager glide = GlideX.with(context);
-            if (glide == null) return;
-            Drawable logo = placeholder(view);
-            RequestBuilder<Drawable> dra = glide.load(url.get());
-            if (angle != 0)
-                dra = dra.transform(new Rotate(angle));
-            dra.error(logo)
-                .addListener(new RequestListener<>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                        return false;
-                    }
+        // Clear the previous binding even when network loading has been disabled.
+        glide.clear(view);
+        loadLogo(view);
+        if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) return;
+        Drawable logo = placeholder(view);
+        RequestBuilder<Drawable> request = glide.load(url);
+        if (angle != 0) request = request.transform(new Rotate(angle));
+        request.error(logo).placeholder(logo).addListener(new RequestListener<>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException exception, Object model, @NonNull Target<Drawable> target, boolean firstResource) {
+                return false;
+            }
 
-                    @Override
-                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                        if (gallery != null && !gallery.getGalleryData().getCheckedExt())
-                            gallery.getGalleryData().setCheckedExt();
-                        new Handler(context.getMainLooper()).post(() -> {
-                            //noinspection DataFlowIssue
-                            while (imageDownloadQueue.containsKey(gallery) && !imageDownloadQueue.get(gallery).isEmpty()) {
-                                //noinspection DataFlowIssue
-                                imageDownloadQueue.get(gallery).remove(0).run();
-                            }
-                        });
-                        return false;
-                    }
-                })
-                .placeholder(logo)
-                .into(DebugImageMask.target(view));
-        });
-        if (newGallery) {
-            //noinspection DataFlowIssue
-            imageDownloadQueue.get(gallery).remove(0).run();
-        } else if (priority) {
-            //noinspection DataFlowIssue
-            imageDownloadQueue.get(gallery).remove(imageDownloadQueue.get(gallery).size() - 1).run();
-        } else if (gallery == null || gallery.getGalleryData().getCheckedExt()) {
-            //noinspection DataFlowIssue
-            while (!imageDownloadQueue.get(gallery).isEmpty())
-                //noinspection DataFlowIssue
-                imageDownloadQueue.get(gallery).remove(0).run();
-        }
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource source, boolean firstResource) {
+                if (gallery != null) gallery.getGalleryData().setCheckedExt();
+                return false;
+            }
+        }).into(DebugImageMask.target(view));
     }
 
     private static Uri getUrlForGallery(Gallery gallery, int page, boolean shouldFull) {
@@ -146,7 +111,7 @@ public class ImageDownloadUtility {
     }
 
     public static void loadImage(Activity activity, Uri url, ImageView imageView) {
-        loadImageOp(activity, imageView, null, () -> url, 0, false);
+        loadImageOp(activity, imageView, null, url, 0);
     }
 
     public static void loadImage(Activity activity, File file, ImageView imageView) {
