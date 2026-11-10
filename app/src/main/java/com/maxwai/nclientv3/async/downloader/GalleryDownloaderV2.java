@@ -2,6 +2,8 @@
 package com.maxwai.nclientv3.async.downloader;
 
 import android.content.Context;
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -14,12 +16,14 @@ import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.DownloadTaskStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.StringWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -64,9 +68,18 @@ public class GalleryDownloaderV2 {
     private Gallery gallery;
     private File folder;
     private boolean initialized = false;
+    private final long taskGeneration = DownloadTaskStore.generation();
+    private boolean persistenceEnabled;
+    private String metadata;
+    private long queueOrder = System.currentTimeMillis();
+    private int metadataAttempts;
+    private int retryPage = -1;
+    private int pageAttempts;
+    private long retryAt;
+    private long revision;
 
     public GalleryDownloaderV2(Context context, @Nullable String title, @Nullable Uri thumbnail, int id) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         this.id = id;
         this.thumbnail = thumbnail;
         this.title = Gallery.getPathTitle(title, context.getString(R.string.download_gallery));
@@ -115,18 +128,135 @@ public class GalleryDownloaderV2 {
     }
 
     private void setGallery(Gallery gallery) {
-        this.gallery = gallery;
-        title = gallery.getPathTitle();
-        thumbnail = gallery.getThumbnail();
-        if (start == -1) start = 0;
-        if (end == -1) end = gallery.getPageCount() - 1;
-        start = Math.max(0, Math.min(start, gallery.getPageCount() - 1));
-        end = Math.max(start, Math.min(end, gallery.getPageCount() - 1));
-        if (working) persist();
+        synchronized (lifecycleLock) {
+            this.gallery = gallery;
+            title = gallery.getPathTitle();
+            thumbnail = gallery.getThumbnail();
+            if (start == -1) start = 0;
+            if (end == -1) end = gallery.getPageCount() - 1;
+            start = Math.max(0, Math.min(start, gallery.getPageCount() - 1));
+            end = Math.max(start, Math.min(end, gallery.getPageCount() - 1));
+            StringWriter writer = new StringWriter();
+            try {
+                gallery.jsonWrite(writer);
+            } catch (IOException exception) {
+                throw new IllegalArgumentException("Unable to serialize download metadata", exception);
+            }
+            metadata = writer.toString();
+            if (working) persist();
+        }
     }
 
     void persist() {
-        if (gallery != null) Queries.DownloadTable.addGallery(this);
+        synchronized (lifecycleLock) {
+            if (!persistenceEnabled) return;
+            if (status == Status.CANCELED || status == Status.FINISHED) {
+                DownloadTaskStore.remove(taskGeneration, id);
+                return;
+            }
+            ContentValues values = snapshot();
+            DownloadTaskStore.execute(() -> {
+                try {
+                    DownloadTaskStore.saveNow(taskGeneration, values);
+                } catch (RuntimeException exception) {
+                    persistenceFailed(exception);
+                }
+            });
+        }
+    }
+
+    void enablePersistence() {
+        persistenceEnabled = true;
+    }
+
+    boolean persistNow() {
+        if (!persistenceEnabled) return true;
+        try {
+            return DownloadTaskStore.saveNow(taskGeneration, snapshot());
+        } catch (RuntimeException exception) {
+            persistenceFailed(exception);
+            return false;
+        }
+    }
+
+    private void persistenceFailed(RuntimeException exception) {
+        synchronized (lifecycleLock) {
+            if (status == Status.FINISHED || status == Status.CANCELED) return;
+            status = Status.FAILED;
+            failure = DownloadFailure.STORAGE;
+            cancelRequests();
+        }
+        LogUtility.e("Unable to save download task state", exception);
+        onPause();
+    }
+
+    public ContentValues snapshot() {
+        synchronized (lifecycleLock) {
+            ContentValues values = new ContentValues();
+            values.put("id_gallery", id);
+            values.put("range_start", start);
+            values.put("range_end", end);
+            values.put("title", title);
+            values.put("thumbnail", thumbnail == null ? null : thumbnail.toString());
+            values.put("metadata", metadata);
+            values.put("state", status.name());
+            values.put("failure", failure.name());
+            values.put("queue_order", queueOrder);
+            values.put("revision", ++revision);
+            values.put("metadata_attempts", metadataAttempts);
+            values.put("page_number", retryPage);
+            values.put("page_attempts", pageAttempts);
+            values.put("retry_at", retryAt);
+            return values;
+        }
+    }
+
+    static GalleryDownloaderV2 restore(Context context, Cursor cursor) {
+        int id = cursor.getInt(cursor.getColumnIndexOrThrow("id_gallery"));
+        String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
+        String thumbnail = cursor.getString(cursor.getColumnIndexOrThrow("thumbnail"));
+        GalleryDownloaderV2 downloader = new GalleryDownloaderV2(context, title, thumbnail == null ? null : Uri.parse(thumbnail), id);
+        downloader.start = cursor.getInt(cursor.getColumnIndexOrThrow("range_start"));
+        downloader.end = cursor.getInt(cursor.getColumnIndexOrThrow("range_end"));
+        String json = cursor.getString(cursor.getColumnIndexOrThrow("metadata"));
+        try {
+            Gallery saved = json == null ? Queries.GalleryTable.galleryFromId(context, id) : new Gallery(context, json, null, false);
+            if (saved != null && saved.isValid() && saved.getId() == id
+                && saved.getPageCount() > 0 && saved.getPageCount() == saved.getGalleryData().getPageCount())
+                downloader.setGallery(saved);
+            // Gallery.jsonWrite intentionally omits page URLs. Keep the task ID-only when
+            // that compact metadata cannot resume page creation; the normal metadata fetch
+            // will repopulate the full Gallery before downloading.
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("Invalid saved download metadata", exception);
+        }
+        Status savedStatus = Status.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("state")));
+        downloader.status = savedStatus == Status.DOWNLOADING ? Status.NOT_STARTED : savedStatus;
+        downloader.failure = DownloadFailure.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("failure")));
+        downloader.queueOrder = cursor.getLong(cursor.getColumnIndexOrThrow("queue_order"));
+        int revisionColumn = cursor.getColumnIndex("revision");
+        downloader.revision = revisionColumn < 0 ? 0 : cursor.getLong(revisionColumn);
+        downloader.metadataAttempts = cursor.getInt(cursor.getColumnIndexOrThrow("metadata_attempts"));
+        downloader.retryPage = cursor.getInt(cursor.getColumnIndexOrThrow("page_number"));
+        downloader.pageAttempts = cursor.getInt(cursor.getColumnIndexOrThrow("page_attempts"));
+        downloader.retryAt = cursor.getLong(cursor.getColumnIndexOrThrow("retry_at"));
+        downloader.enablePersistence();
+        return downloader;
+    }
+
+    void prioritize() {
+        synchronized (lifecycleLock) {
+            queueOrder = -System.currentTimeMillis();
+            persist();
+        }
+    }
+
+    void abandon() {
+        synchronized (lifecycleLock) {
+            status = Status.PAUSED;
+            restartRequested = false;
+            cancelRequests();
+        }
     }
 
     private int getTotalPage() {
@@ -147,8 +277,8 @@ public class GalleryDownloaderV2 {
         synchronized (lifecycleLock) {
             if (!isRunning()) return;
             status = Status.FINISHED;
+            persist();
         }
-        Queries.DownloadTable.removeGallery(id);
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
         for (DownloadObserver observer : observers) observer.triggerEndDownload(this);
     }
@@ -219,7 +349,9 @@ public class GalleryDownloaderV2 {
      */
     public boolean downloadGalleryData() {
         if (this.gallery != null) return true;
-        for (int attempt = 1; attempt <= DownloadRetryPolicy.MAX_ATTEMPTS && isRunning(); attempt++) {
+        while (metadataAttempts < DownloadRetryPolicy.MAX_ATTEMPTS && isRunning()) {
+            metadataAttempts++;
+            if (!persistNow()) return false;
             InspectorV3 inspector = InspectorV3.galleryInspector(context, id, null);
             retryAfter = null;
             synchronized (lifecycleLock) {
@@ -250,7 +382,7 @@ public class GalleryDownloaderV2 {
             } finally {
                 activeInspector = null;
             }
-            if (!retryAfterFailure(attempt)) break;
+            if (!retryAfterFailure(metadataAttempts)) break;
         }
         fail();
         return false;
@@ -280,6 +412,7 @@ public class GalleryDownloaderV2 {
                 restartRequested = false;
                 cancelRequests();
             }
+            persist();
         }
         if (status == Status.PAUSED) {
             onPause();
@@ -295,10 +428,15 @@ public class GalleryDownloaderV2 {
             if (status == Status.CANCELED || status == Status.FINISHED || status == Status.DOWNLOADING) return;
             if (working) {
                 restartRequested = true;
+                persist();
                 return;
             }
             failure = DownloadFailure.NONE;
             status = Status.NOT_STARTED;
+            metadataAttempts = 0;
+            pageAttempts = 0;
+            retryAt = 0;
+            persist();
         }
     }
 
@@ -318,6 +456,7 @@ public class GalleryDownloaderV2 {
             status = Status.CANCELED;
             restartRequested = false;
             cancelRequests();
+            persist();
             if (!working) cleanupExecutor.execute(this::cleanupCanceled);
         }
     }
@@ -330,11 +469,12 @@ public class GalleryDownloaderV2 {
     }
 
     private void cleanupCanceled() {
+        if (taskGeneration != DownloadTaskStore.generation()) return;
         if (folder == null) folder = Global.findGalleryFolder(context, id);
         if (deleteOnCancel) {
             Global.recursiveDelete(folder);
         }
-        Queries.DownloadTable.removeGallery(id);
+        DownloadTaskStore.remove(taskGeneration, id);
         DownloadQueue.remove(this, false);
         onCancel();
         List<Runnable> callbacks;
@@ -355,6 +495,7 @@ public class GalleryDownloaderV2 {
             }
         }
         cleanupExecutor.execute(() -> {
+            if (taskGeneration != DownloadTaskStore.generation()) return;
             if (folder == null) folder = Global.findGalleryFolder(context, id);
             Global.recursiveDelete(folder);
             com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidateLocalFiles();
@@ -368,7 +509,7 @@ public class GalleryDownloaderV2 {
             status = Status.DOWNLOADING;
         }
         try {
-            if (downloadGalleryData() && isRunning()) download();
+            if (persistNow() && awaitRetry() && downloadGalleryData() && isRunning()) download();
         } catch (RuntimeException exception) {
             failure = DownloadFailure.STORAGE;
             fail();
@@ -382,6 +523,10 @@ public class GalleryDownloaderV2 {
                     restartRequested = false;
                     failure = DownloadFailure.NONE;
                     status = Status.NOT_STARTED;
+                    metadataAttempts = 0;
+                    pageAttempts = 0;
+                    retryAt = 0;
+                    persist();
                 }
             }
             if (canceled) cleanupCanceled();
@@ -390,13 +535,14 @@ public class GalleryDownloaderV2 {
     }
 
     private boolean isRunning() {
-        return status == Status.DOWNLOADING && !Thread.currentThread().isInterrupted();
+        return status == Status.DOWNLOADING && taskGeneration == DownloadTaskStore.generation() && !Thread.currentThread().isInterrupted();
     }
 
     private void fail() {
         synchronized (lifecycleLock) {
             if (!isRunning()) return;
             status = Status.FAILED;
+            persist();
         }
         onPause();
     }
@@ -405,7 +551,14 @@ public class GalleryDownloaderV2 {
         if (!isRunning() || !failure.retryable || attempt >= DownloadRetryPolicy.MAX_ATTEMPTS) return false;
         long delay = DownloadRetryPolicy.delayMillis(attempt, retryAfter, System.currentTimeMillis());
         if (delay < 0) return false;
-        long deadline = android.os.SystemClock.elapsedRealtime() + delay;
+        retryAt = System.currentTimeMillis() + delay;
+        if (!persistNow()) return false;
+        return awaitRetry();
+    }
+
+    private boolean awaitRetry() {
+        long remaining = Math.max(0, Math.min(30000, retryAt - System.currentTimeMillis()));
+        long deadline = android.os.SystemClock.elapsedRealtime() + remaining;
         while (isRunning() && android.os.SystemClock.elapsedRealtime() < deadline) {
             try {
                 Thread.sleep(Math.min(100, Math.max(1, deadline - android.os.SystemClock.elapsedRealtime())));
@@ -415,6 +568,7 @@ public class GalleryDownloaderV2 {
                 return false;
             }
         }
+        retryAt = 0;
         return isRunning();
     }
 
@@ -430,13 +584,19 @@ public class GalleryDownloaderV2 {
         onStart();
         while (!urls.isEmpty() && isRunning()) {
             PageContainer page = urls.get(0);
+            if (retryPage != page.page) {
+                retryPage = page.page;
+                pageAttempts = 0;
+            }
             boolean saved = false;
-            for (int attempt = 1; attempt <= DownloadRetryPolicy.MAX_ATTEMPTS && isRunning(); attempt++) {
+            while (pageAttempts < DownloadRetryPolicy.MAX_ATTEMPTS && isRunning()) {
+                pageAttempts++;
+                if (!persistNow()) return;
                 if (savePage(page)) {
                     saved = true;
                     break;
                 }
-                if (!retryAfterFailure(attempt)) break;
+                if (!retryAfterFailure(pageAttempts)) break;
             }
             if (!isRunning()) return;
             if (!saved) {
@@ -444,6 +604,8 @@ public class GalleryDownloaderV2 {
                 return;
             }
             urls.remove(page);
+            pageAttempts = 0;
+            persist();
             onUpdate();
         }
         if (isRunning()) onEnd();

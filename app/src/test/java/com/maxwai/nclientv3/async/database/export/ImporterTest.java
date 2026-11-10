@@ -179,4 +179,26 @@ public class ImporterTest {
             assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).contains("testPreference"));
         }
     }
+
+    @Test
+    public void invalidDownloadTaskRowsRollBackTheRestore() throws IOException {
+        try {
+            restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":3,\"range_end\":1,"
+                + "\"title\":\"bad\",\"state\":\"PAUSED\",\"failure\":\"NONE\","
+                + "\"queue_order\":1,\"metadata_attempts\":0,\"page_number\":-1,\"page_attempts\":0,\"retry_at\":0}]}");
+            fail("Expected invalid task failure");
+        } catch (IOException expected) {
+            assertEquals(7, Queries.ResumeTable.pageFromId(123));
+            assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+        }
+        try {
+            restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":0,\"range_end\":0,"
+                + "\"title\":\"bad metadata\",\"metadata\":\"{}\",\"state\":\"PAUSED\",\"failure\":\"NONE\","
+                + "\"queue_order\":1,\"metadata_attempts\":0,\"page_number\":-1,\"page_attempts\":0,\"retry_at\":0}]}");
+            fail("Expected invalid metadata failure");
+        } catch (IOException expected) {
+            assertEquals(7, Queries.ResumeTable.pageFromId(123));
+            assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+        }
+    }
 }

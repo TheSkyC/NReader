@@ -1,6 +1,9 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.downloader;
 
+import android.content.Context;
+import com.maxwai.nclientv3.async.database.DownloadTaskStore;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -15,9 +18,22 @@ public class DownloadQueue {
                 givePriority(manager.downloader());
                 return true;
             }
-        x.downloader().persist();
+        x.downloader().enablePersistence();
+        if (!x.downloader().persistNow()) throw new IllegalStateException("Unable to persist queued download");
         downloadQueue.add(x);
         return true;
+    }
+
+    public static synchronized void addRestored(GalleryDownloaderManager task) {
+        for (GalleryDownloaderManager current : downloadQueue)
+            if (current.downloader().getId() == task.downloader().getId()) return;
+        downloadQueue.add(task);
+    }
+
+    public static synchronized void replaceAfterRestore(Context context) {
+        for (GalleryDownloaderManager task : downloadQueue) task.downloader().abandon();
+        downloadQueue.clear();
+        if (context != null) DownloadGalleryV2.loadDownloads(context);
     }
 
     public static GalleryDownloaderV2 fetchForData() {
@@ -81,6 +97,7 @@ public class DownloadQueue {
         if (manager == null) return;
         downloadQueue.remove(manager);
         downloadQueue.add(0, manager);
+        downloader.prioritize();
     }
 
 }

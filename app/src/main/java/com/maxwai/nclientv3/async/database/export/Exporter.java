@@ -11,6 +11,7 @@ import android.util.JsonWriter;
 
 import com.maxwai.nclientv3.SettingsActivity;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.DownloadTaskStore;
 import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.utility.LogUtility;
 
@@ -36,6 +37,7 @@ public class Exporter {
         Queries.GalleryBridgeTable.TABLE_NAME,
         Queries.BookmarkTable.TABLE_NAME,
         Queries.DownloadTable.TABLE_NAME,
+        DownloadTaskStore.TABLE_NAME,
         Queries.HistoryTable.TABLE_NAME,
         Queries.FavoriteTable.TABLE_NAME,
         Queries.ResumeTable.TABLE_NAME,

@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.async.database.DownloadTaskStore;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.IOException;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 class Importer {
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
@@ -73,11 +76,11 @@ class Importer {
     }
 
     static void importDB(InputStream stream) throws IOException {
-        ReadingProgress.restore(() -> {
+        DownloadTaskStore.restore(null, () -> ReadingProgress.restore(() -> {
             importDBLocked(stream);
             Queries.StatusTable.initStatuses();
             com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
-        });
+        }));
     }
 
     private static void importDBLocked(InputStream stream) throws IOException {
@@ -89,6 +92,7 @@ class Importer {
             JsonReader reader = new JsonReader(new InputStreamReader(stream));
             reader.beginObject();
             db.delete(Queries.ReadingProgressTable.TABLE_NAME, null, null);
+            db.delete(DownloadTaskStore.TABLE_NAME, null, null);
             Set<String> seenTables = new HashSet<>();
             while (reader.hasNext()) {
                 String tableName = reader.nextName();
@@ -124,6 +128,7 @@ class Importer {
                         }
                     }
                     if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME)) validateReadingPosition(values);
+                    if (tableName.equals(DownloadTaskStore.TABLE_NAME)) validateDownloadTask(values);
                     if (db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE) == -1)
                         throw new IOException("Unable to restore backup row");
                     reader.endObject();
@@ -132,6 +137,7 @@ class Importer {
             }
             reader.endObject();
             if (reader.peek() != JsonToken.END_DOCUMENT) throw new IOException("Trailing database backup data");
+            if (!seenTables.contains(DownloadTaskStore.TABLE_NAME)) DownloadTaskStore.migrateLegacy(db);
             db.setTransactionSuccessful();
         } catch (RuntimeException exception) {
             throw new IOException("Invalid database backup", exception);
@@ -150,8 +156,47 @@ class Importer {
             throw new IOException("Invalid reading position values");
     }
 
+    private static void validateDownloadTask(ContentValues values) throws IOException {
+        Long id = values.getAsLong("id_gallery");
+        Long start = values.getAsLong("range_start");
+        Long end = values.getAsLong("range_end");
+        String title = values.getAsString("title");
+        String state = values.getAsString("state");
+        String failure = values.getAsString("failure");
+        Long order = values.getAsLong("queue_order");
+        Long metadataAttempts = values.getAsLong("metadata_attempts");
+        Long page = values.getAsLong("page_number");
+        Long pageAttempts = values.getAsLong("page_attempts");
+        Long retryAt = values.getAsLong("retry_at");
+        String metadata = values.getAsString("metadata");
+        if (id == null || id <= 0 || id > Integer.MAX_VALUE || start == null || end == null
+            || start < -1 || end < -1 || start >= 10000 || end >= 10000
+            || (start >= 0 && end >= 0 && end < start) || title == null || state == null || failure == null
+            || order == null || metadataAttempts == null || metadataAttempts < 0 || metadataAttempts > 4
+            || page == null || page < -1 || page > 10000 || pageAttempts == null || pageAttempts < 0 || pageAttempts > 4
+            || retryAt == null || retryAt < 0) throw new IOException("Invalid download task values");
+        if (metadata != null) {
+            try {
+                JSONObject json = new JSONObject(metadata);
+                if (json.optInt("id", -1) != id.intValue()
+                    || json.optInt("num_pages", 0) <= 0 || json.optInt("num_pages", 0) > 10000)
+                    throw new IOException("Invalid download task metadata");
+            } catch (JSONException exception) {
+                throw new IOException("Invalid download task metadata", exception);
+            }
+        }
+        try {
+            com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2.Status.valueOf(state);
+            com.maxwai.nclientv3.async.downloader.DownloadFailure.valueOf(failure);
+        } catch (IllegalArgumentException exception) {
+            throw new IOException("Invalid download task state", exception);
+        }
+        if ("FINISHED".equals(state) || "CANCELED".equals(state))
+            throw new IOException("Terminal download task cannot be restored");
+    }
+
     public static void importData(@NonNull Context context, Uri selectedFile) throws IOException {
-        ReadingProgress.restore(() -> importDataLocked(context, selectedFile));
+        DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> importDataLocked(context, selectedFile)));
     }
 
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {

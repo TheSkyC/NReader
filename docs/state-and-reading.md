@@ -102,6 +102,16 @@ completion.
 
 ## Download lifecycle
 
+Database version 15 adds DownloadTasks independently of Gallery metadata. Enqueue
+is persisted before work is scheduled, including ID-only requests. State, failure,
+range, metadata, queue order and bounded attempt counters survive process death.
+Waiting/running tasks resume as waiting; paused/failed tasks require explicit user
+action. Legacy Downloads rows migrate as paused. Completed/canceled tasks are
+removed without altering personal state. Retry-After deadlines survive restart.
+New backups include tasks; old backups reconstruct paused tasks from Downloads.
+Successful restore invalidates old task writers and replaces the in-memory queue;
+failed restore leaves the existing queue and task data unchanged.
+
 Reader image requests are submitted independently to Glide, which owns request
 cancellation and activity cleanup. A failed or canceled first image must never
 block later pages. Rebinding an image clears its previous request, including when
@@ -120,7 +130,7 @@ Each metadata request and page has at most four attempts, with exponential
 backoff from one second and a 30-second delay ceiling. A valid `Retry-After`
 above that ceiling stops automatic retries instead of retrying early. This
 policy applies to the existing page downloader, not the API archive endpoint.
-Failure details are in memory; restored legacy download tasks start paused.
+Legacy download tasks without saved intent start paused.
 Pages are validated in a temporary sibling file before replacing the final
 filename. Stopping removes the queued download row; if Undo is not used, its
 local gallery folder is deleted after the Snackbar is dismissed.
