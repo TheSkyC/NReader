@@ -20,12 +20,15 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class StatusViewerActivity extends GeneralActivity {
     private boolean sortByTitle = false;
     private String query;
     private ViewPager2 viewPager;
     private SectionsPagerAdapter sectionsPagerAdapter;
+    private final ExecutorService countLoader = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,17 +56,38 @@ public class StatusViewerActivity extends GeneralActivity {
 
         TabLayout tabs = findViewById(R.id.tabs);
         new TabLayoutMediator(tabs, viewPager, true, (tab, position) -> tab.setText(sectionsPagerAdapter.getPageTitle(position))).attach();
+        loadStatusCounts();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        TabLayout tabs = findViewById(R.id.tabs);
-        for (int i = 0; i < tabs.getTabCount(); i++) {
-            Objects.requireNonNull(tabs.getTabAt(i)).setText(sectionsPagerAdapter.getPageTitle(i));
-        }
+        loadStatusCounts();
         PlaceholderFragment fragment = getActualFragment();
         if (fragment != null) fragment.reload(query, sortByTitle);
+    }
+
+    private void loadStatusCounts() {
+        countLoader.execute(() -> {
+            int[] counts = new int[sectionsPagerAdapter.getItemCount()];
+            for (int i = 0; i < counts.length; i++)
+                counts[i] = com.maxwai.nclientv3.async.database.Queries.StatusMangaTable
+                    .getCountPerStatus(sectionsPagerAdapter.getStatus(i));
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                TabLayout tabs = findViewById(R.id.tabs);
+                for (int i = 0; i < counts.length && i < tabs.getTabCount(); i++) {
+                    sectionsPagerAdapter.setCount(i, counts[i]);
+                    Objects.requireNonNull(tabs.getTabAt(i)).setText(sectionsPagerAdapter.getPageTitle(i));
+                }
+            });
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        countLoader.shutdownNow();
+        super.onDestroy();
     }
 
     @Override
