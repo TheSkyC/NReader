@@ -135,6 +135,7 @@ public class LocalActivity extends BaseActivity {
         menu.findItem(R.id.search).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.list_columns).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.sort_by_name).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
+        menu.findItem(R.id.filter_download_state).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.folder_choose).setVisible(mode == MultichoiceAdapter.Mode.NORMAL && Global.getUsableFolders(this).size() > 1);
         menu.findItem(R.id.random_favorite).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
 
@@ -194,8 +195,28 @@ public class LocalActivity extends BaseActivity {
             if (adapter != null) adapter.viewRandom();
         } else if (item.getItemId() == R.id.sort_by_name) {
             dialogSortType();
+        } else if (item.getItemId() == R.id.filter_download_state) {
+            dialogDownloadFilter();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void dialogDownloadFilter() {
+        if (adapter == null) return;
+        LocalAdapter.DownloadFilter[] values = LocalAdapter.DownloadFilter.values();
+        String[] labels = {
+            getString(R.string.filter_all), getString(R.string.filter_complete),
+            getString(R.string.filter_partial), getString(R.string.filter_damaged),
+            getString(R.string.filter_unverified), getString(R.string.filter_absent)
+        };
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.filter_download_state)
+            .setSingleChoiceItems(labels, adapter.getDownloadFilter().ordinal(), (dialog, which) -> {
+                adapter.setDownloadFilter(values[which]);
+                dialog.dismiss();
+            })
+            .setNegativeButton(R.string.cancel, null);
+        builder.show();
     }
 
     private void showDialogFolderChoose() {
