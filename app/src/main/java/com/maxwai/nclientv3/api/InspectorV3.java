@@ -480,6 +480,11 @@ public class InspectorV3 extends Thread implements Parcelable {
         createUrl();
     }
 
+    @Nullable
+    public SortType getSortType() {
+        return sortType;
+    }
+
     public int getPage() {
         return page;
     }

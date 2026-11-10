@@ -48,6 +48,7 @@ public class BookmarkTest {
             .appendQueryParameter("page", "3").appendQueryParameter("sort", "popular-week").build().toString();
         Bookmark bookmark = new Bookmark(savedUrl, 3, ApiRequestType.BYSEARCH, 0);
         InspectorV3 inspector = bookmark.createInspector(RuntimeEnvironment.getApplication(), null);
+        assertEquals(SortType.POPULAR_WEEKLY, inspector.getSortType());
         Uri restored = Uri.parse(inspector.getUrl());
         assertEquals(query, restored.getQueryParameter("query"));
         assertEquals("popular-week", restored.getQueryParameter("sort"));

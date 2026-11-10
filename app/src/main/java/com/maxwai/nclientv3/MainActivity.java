@@ -537,7 +537,7 @@ public class MainActivity extends BaseActivity
         menu.findItem(R.id.only_language).setVisible(modeType == ModeType.NORMAL);
         menu.findItem(R.id.filter_loaded_results).setVisible(modeType != ModeType.ID);
         menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
-        menu.findItem(R.id.save_search_plan).setVisible(inspector != null && inspector.getRequestType() == ApiRequestType.BYSEARCH);
+        menu.findItem(R.id.save_search_plan).setVisible(canSaveSearchPlan());
 
         initializeSearchItem(menu.findItem(R.id.search));
 
@@ -574,8 +574,12 @@ public class MainActivity extends BaseActivity
     }
 
     private void popularItemDispay(MenuItem item) {
-        item.setTitle(getString(R.string.sort_type_title_format, getString(Global.getSortType().getNameId())));
+        item.setTitle(getString(R.string.sort_type_title_format, getString(currentSortType().getNameId())));
         Global.setTint(this, item.getIcon());
+    }
+
+    private SortType currentSortType() {
+        return inspector != null && inspector.getSortType() != null ? inspector.getSortType() : Global.getSortType();
     }
 
     private void showLanguageIcon(MenuItem item) {
@@ -655,7 +659,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void saveSearchPlan() {
-        if (inspector == null || inspector.getRequestType() != ApiRequestType.BYSEARCH) return;
+        if (!canSaveSearchPlan()) return;
         Uri url = Uri.parse(inspector.getUrl());
         String query = url.getQueryParameter("query");
         if (query == null) query = url.getQueryParameter("q");
@@ -698,6 +702,12 @@ public class MainActivity extends BaseActivity
         dialog.show();
     }
 
+    private boolean canSaveSearchPlan() {
+        if (inspector == null) return false;
+        ApiRequestType type = inspector.getRequestType();
+        return type == ApiRequestType.BYSEARCH || type == ApiRequestType.BYTAG;
+    }
+
     private void showLoadedFilterDialog(MenuItem item) {
         if (adapter == null) return;
         String[] labels = {
@@ -725,7 +735,7 @@ public class MainActivity extends BaseActivity
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         for (SortType type : SortType.values())
             adapter.add(getString(type.getNameId()));
-        temporaryType = Global.getSortType();
+        temporaryType = currentSortType();
         builder.setIcon(R.drawable.ic_sort).setTitle(R.string.sort_select_type);
         builder.setSingleChoiceItems(adapter, temporaryType.ordinal(), (dialog, which) -> temporaryType = SortType.values()[which]);
         builder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -741,9 +751,9 @@ public class MainActivity extends BaseActivity
         });
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
             Global.updateSortType(MainActivity.this, temporaryType);
-            popularItemDispay(item);
             inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
             inspector.setSortType(temporaryType);
+            popularItemDispay(item);
             inspector.start();
         });
         builder.setNegativeButton(R.string.cancel, null);
