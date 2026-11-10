@@ -7,8 +7,6 @@ import android.database.Cursor;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import android.widget.Filter;
-import android.widget.Filterable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +17,7 @@ import com.maxwai.nclientv3.GalleryActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.AsyncCursorQuery;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
 import com.maxwai.nclientv3.utility.LogUtility;
@@ -29,13 +28,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
 
-public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> implements Filterable {
+public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
     private final int perPage = FavoriteActivity.getEntryPerPage();
     private final FavoriteActivity activity;
     private Gallery[] galleries;
-    private CharSequence lastQuery;
+    private String lastQuery;
     private Cursor cursor;
-    private boolean force = false;
+    private final AsyncCursorQuery queryLoader = new AsyncCursorQuery();
     private boolean sortByTitle = false;
 
     public FavoriteAdapter(FavoriteActivity activity) {
@@ -119,42 +118,9 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         return cursor == null ? 0 : cursor.getCount();
     }
 
-    @Override
-    public Filter getFilter() {
-        return new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                constraint = constraint.toString().toLowerCase(Locale.US);
-                if ((!force && lastQuery.equals(constraint))) return null;
-                LogUtility.d("FILTERING");
-                setRefresh(true);
-                FilterResults results = new FilterResults();
-                lastQuery = constraint.toString();
-                LogUtility.d(lastQuery + "LASTQERY");
-                force = false;
-                Cursor c = Queries.FavoriteTable.getAllFavoriteGalleriesCursor(lastQuery, sortByTitle, perPage, (activity.getActualPage() - 1) * perPage);
-                results.count = c.getCount();
-                results.values = c;
-                LogUtility.d("FILTERING3");
-                LogUtility.d(results.count + ";" + results.values);
-                setRefresh(false);
-                return results;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                if (results == null) return;
-                setRefresh(true);
-                final int oldSize = getItemCount(), newSize = results.count;
-                updateCursor((Cursor) results.values);
-                //not in runOnUIThread because is always executed on UI
-                if (oldSize > newSize) notifyItemRangeRemoved(newSize, oldSize - newSize);
-                else notifyItemRangeInserted(oldSize, newSize - oldSize);
-                notifyItemRangeChanged(0, Math.min(newSize, oldSize));
-
-                setRefresh(false);
-            }
-        };
+    public void filter(String query) {
+        lastQuery = query == null ? "" : query.toLowerCase(Locale.US);
+        forceReload();
     }
 
     public void setSortByTitle(boolean sortByTitle) {
@@ -163,19 +129,36 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     }
 
     public void forceReload() {
-        force = true;
-        activity.runOnUiThread(() -> getFilter().filter(lastQuery));
+        String query = lastQuery;
+        boolean sort = sortByTitle;
+        int requestedPage = Math.max(1, activity.getActualPage());
+        int[] pages = new int[2];
+        setRefresh(true);
+        queryLoader.load(() -> {
+            int count = Queries.FavoriteTable.countFavorite(query);
+            pages[0] = Math.max(1, count / perPage + (count % perPage == 0 ? 0 : 1));
+            pages[1] = Math.min(requestedPage, pages[0]);
+            return Queries.FavoriteTable.getAllFavoriteGalleriesCursor(query, sort, perPage, (pages[1] - 1) * perPage);
+        }, result -> {
+            int oldSize = getItemCount(), newSize = result.getCount();
+            cursor = result;
+            galleries = new Gallery[newSize];
+            activity.onFavoritesLoaded(pages[0], pages[1]);
+            if (oldSize > newSize) notifyItemRangeRemoved(newSize, oldSize - newSize);
+            else if (newSize > oldSize) notifyItemRangeInserted(oldSize, newSize - oldSize);
+            notifyItemRangeChanged(0, Math.min(newSize, oldSize));
+            setRefresh(false);
+        }, () -> setRefresh(false));
     }
 
     public void setRefresh(boolean refresh) {
         activity.runOnUiThread(() -> activity.getRefresher().setRefreshing(refresh));
     }
 
-    private void updateCursor(@Nullable Cursor c) {
-        if (cursor != null) cursor.close();
-        galleries = new Gallery[c == null ? 0 : c.getCount()];
-        cursor = c;
-        com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+    public void close() {
+        cursor = null;
+        galleries = new Gallery[0];
+        queryLoader.close();
     }
 
     public Collection<Gallery> getAllGalleries() {

@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.content.res.Configuration;
@@ -40,10 +41,12 @@ public class TagFilterActivity extends GeneralActivity {
 
     private SearchView searchView;
     private ViewPager2 mViewPager;
+    private String query = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) query = savedInstanceState.getString("tag_query", "");
         //Global.initActivity(this);
         setContentView(R.layout.activity_tag_filter);
 
@@ -66,9 +69,7 @@ public class TagFilterActivity extends GeneralActivity {
             @Override
             public void onPageSelected(int position) {
                 TagTypePage page = getFragment(position);
-                if (page != null) {
-                    ((TagsAdapter) Objects.requireNonNull(page.getRecyclerView().getAdapter())).addItem();
-                }
+                if (page != null) page.refilter(query);
             }
         });
 
@@ -101,6 +102,16 @@ public class TagFilterActivity extends GeneralActivity {
             tab.setText(id);
         }).attach();
         mViewPager.setCurrentItem(getPage());
+    }
+
+    public String getSearchQuery() {
+        return query;
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("tag_query", query);
     }
 
     @Nullable
@@ -148,6 +159,7 @@ public class TagFilterActivity extends GeneralActivity {
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
         updateSortItem(menu.findItem(R.id.sort_by_name));
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
+        Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -156,6 +168,7 @@ public class TagFilterActivity extends GeneralActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                query = newText;
                 TagTypePage page = getActualFragment();
                 if (page != null) {
                     page.refilter(newText);
@@ -192,7 +205,7 @@ public class TagFilterActivity extends GeneralActivity {
             TagV2.updateSortByName(this);
             updateSortItem(item);
             if (page != null)
-                page.refilter(searchView.getQuery().toString());
+                page.refilter(query);
         }
 
         return super.onOptionsItemSelected(item);

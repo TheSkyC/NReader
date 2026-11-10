@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.widgets;
 
 import android.app.Activity;
@@ -75,6 +76,8 @@ public class TagTypePage extends Fragment {
     }
 
     public void loadTags() {
+        if (adapter != null) adapter.close();
+        query = activity.getSearchQuery();
         recyclerView.setLayoutManager(new CustomGridLayoutManager(activity, getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2));
         if (type.equals(TagType.UNKNOWN)) adapter = new TagsAdapter(activity, query, false);
         else if (type.equals(TagType.CATEGORY)) adapter = new TagsAdapter(activity, query, true);
@@ -83,7 +86,17 @@ public class TagTypePage extends Fragment {
     }
 
     public void refilter(String newText) {
-        if (activity != null) activity.runOnUiThread(() -> adapter.getFilter().filter(newText));
+        query = newText;
+        if (activity != null && adapter != null) adapter.filter(query);
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (adapter != null) adapter.close();
+        if (recyclerView != null) recyclerView.setAdapter(null);
+        adapter = null;
+        recyclerView = null;
+        super.onDestroyView();
     }
 
     public void reset() {

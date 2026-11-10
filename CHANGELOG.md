@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Retain favorite searches when closing the search field or recreating the screen.
+  Discard stale favorite/tag query results and close their cursors with the view.
+
 - Prevent a failed or canceled first reader image from blocking later pages and
   release image requests through Glide's activity lifecycle.
 
