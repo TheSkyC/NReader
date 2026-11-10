@@ -268,13 +268,13 @@ public class Importer {
                 writeSnapshotCandidate(context);
                 importDBLocked(new ByteArrayInputStream(databaseBytes));
             }
+            promoteSnapshot(context);
             database.setTransactionSuccessful();
         } catch (RuntimeException exception) {
             throw new IOException("Invalid backup archive", exception);
         } finally {
             database.endTransaction();
         }
-        promoteSnapshot(context);
         for (SharedPreferences.Editor editor : preferences) editor.apply();
         Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();

@@ -290,6 +290,38 @@ public class ImporterTest {
     }
 
     @Test
+    public void snapshotPromotionFailureRollsBackDatabaseAndPreferences() throws Exception {
+        File metadata = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-snapshot.json.meta");
+        Files.deleteIfExists(metadata.toPath());
+        assertTrue(metadata.mkdir());
+        File marker = new File(metadata, "block-replacement");
+        assertTrue(marker.createNewFile());
+        File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "promotion-failure.zip");
+        try {
+            try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+                zip.putNextEntry(new ZipEntry("Database.json"));
+                zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+                zip.putNextEntry(new ZipEntry("Settings.json"));
+                zip.write("{\"promotionTest\":{\"INT\":42}}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+            try {
+                Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
+                fail("Expected snapshot promotion failure");
+            } catch (IOException expected) {
+                assertEquals(7, Queries.ResumeTable.pageFromId(123));
+                assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+                assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).contains("promotionTest"));
+                assertFalse(database.inTransaction());
+            }
+        } finally {
+            assertTrue(marker.delete());
+            assertTrue(metadata.delete());
+        }
+    }
+
+    @Test
     public void expiredSnapshotIsUnavailableForRestore() throws Exception {
         File snapshot = Importer.snapshotFile(RuntimeEnvironment.getApplication());
         Files.write(snapshot.toPath(), "{}".getBytes(StandardCharsets.UTF_8));
