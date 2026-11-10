@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.adapters;
 
 import android.database.Cursor;
@@ -5,8 +6,6 @@ import android.util.JsonWriter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Filter;
-import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +21,7 @@ import com.maxwai.nclientv3.api.components.Tag;
 import com.maxwai.nclientv3.api.enums.TagStatus;
 import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.async.database.AsyncCursorQuery;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.settings.TagV2;
@@ -40,7 +40,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> implements Filterable {
+public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     @NonNull
     private final TagFilterActivity context;
     private final boolean logged = Login.isLogged();
@@ -48,50 +48,38 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
     private final TagMode tagMode;
     private String lastQuery = null;
     private Cursor cursor = null;
+    private final AsyncCursorQuery queryLoader = new AsyncCursorQuery();
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online) {
         this.context = cont;
         this.type = null;
         this.tagMode = online ? TagMode.ONLINE : TagMode.OFFLINE;
-        getFilter().filter(query);
+        filter(query);
     }
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, TagType type) {
         this.context = cont;
         this.type = type;
         this.tagMode = TagMode.TYPE;
-        getFilter().filter(query);
+        filter(query);
     }
 
-    @Override
-    public Filter getFilter() {
-        return new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults results = new FilterResults();
-                if (constraint == null) constraint = "";
+    public void filter(String query) {
+        lastQuery = query == null ? "" : query;
+        String requestedQuery = lastQuery;
+        boolean sortedByName = TagV2.isSortedByName();
+        queryLoader.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName), result -> {
+            int oldCount = getItemCount(), newCount = result.getCount();
+            cursor = result;
+            if (newCount > oldCount) notifyItemRangeInserted(oldCount, newCount - oldCount);
+            else if (oldCount > newCount) notifyItemRangeRemoved(newCount, oldCount - newCount);
+            notifyItemRangeChanged(0, Math.min(newCount, oldCount));
+        }, () -> {});
+    }
 
-                lastQuery = constraint.toString();
-                Cursor tags = Queries.TagTable.getFilterCursor(lastQuery, type, tagMode == TagMode.ONLINE, TagV2.isSortedByName());
-                results.count = tags.getCount();
-                results.values = tags;
-
-                LogUtility.d(results.count + "," + results.values);
-                return results;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                if (results.count == -1) return;
-                Cursor newCursor = (Cursor) results.values;
-                int oldCount = getItemCount(), newCount = results.count;
-                if (cursor != null) cursor.close();
-                cursor = newCursor;
-                if (newCount > oldCount) notifyItemRangeInserted(oldCount, newCount - oldCount);
-                else notifyItemRangeRemoved(newCount, oldCount - newCount);
-                notifyItemRangeChanged(0, Math.min(newCount, oldCount));
-            }
-        };
+    public void close() {
+        cursor = null;
+        queryLoader.close();
     }
 
     @NonNull
@@ -205,7 +193,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
     }
 
     public void addItem() {
-        getFilter().filter(lastQuery);
+        filter(lastQuery);
     }
 
     private enum TagMode {ONLINE, OFFLINE, TYPE}

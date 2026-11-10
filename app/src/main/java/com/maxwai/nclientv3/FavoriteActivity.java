@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.content.Intent;
@@ -8,13 +9,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 
 import com.maxwai.nclientv3.adapters.FavoriteAdapter;
 import com.maxwai.nclientv3.api.components.Gallery;
-import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
@@ -31,6 +32,10 @@ public class FavoriteActivity extends BaseActivity {
     private boolean sortByTitle = false;
     private PageSwitcher pageSwitcher;
     private SearchView searchView;
+    private String query = "";
+    private boolean searchExpanded;
+    private boolean applyingPages;
+    private boolean restoringQuery;
 
     public static int getEntryPerPage() {
         return Global.isInfiniteScrollFavorite() ? Integer.MAX_VALUE : ENTRY_PER_PAGE;
@@ -39,6 +44,11 @@ public class FavoriteActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            query = savedInstanceState.getString("favorite_query", "");
+            searchExpanded = savedInstanceState.getBoolean("favorite_search_expanded");
+            sortByTitle = savedInstanceState.getBoolean("favorite_sort_title");
+        }
         //Global.initActivity(this);
 
         setContentView(R.layout.app_bar_main);
@@ -58,11 +68,12 @@ public class FavoriteActivity extends BaseActivity {
         refresher.setOnRefreshListener(adapter::forceReload);
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.setAdapter(adapter);
-        pageSwitcher.setPages(1, 1);
+        int page = savedInstanceState == null ? 1 : Math.max(1, savedInstanceState.getInt("favorite_page", 1));
+        pageSwitcher.setPages(page, page);
         pageSwitcher.setChanger(new PageSwitcher.DefaultPageChanger() {
             @Override
             public void pageChanged() {
-                if (adapter != null) adapter.changePage();
+                if (adapter != null && !applyingPages) adapter.changePage();
             }
         });
 
@@ -82,22 +93,34 @@ public class FavoriteActivity extends BaseActivity {
         return Global.getColPortFavorite();
     }
 
-    private int calculatePages(@Nullable String text) {
-        int perPage = getEntryPerPage();
-        int totalEntries = Queries.FavoriteTable.countFavorite(text);
-        int div = totalEntries / perPage;
-        int mod = totalEntries % perPage;
-        return div + (mod == 0 ? 0 : 1);
+    public void onFavoritesLoaded(int totalPages, int page) {
+        applyingPages = true;
+        pageSwitcher.setPages(totalPages, page);
+        applyingPages = false;
     }
 
     @Override
     protected void onResume() {
         refresher.setEnabled(true);
         refresher.setRefreshing(true);
-        String query = searchView == null ? null : searchView.getQuery().toString();
-        pageSwitcher.setTotalPage(calculatePages(query));
-        adapter.forceReload();
+        adapter.filter(query);
         super.onResume();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("favorite_query", query);
+        state.putBoolean("favorite_search_expanded", searchExpanded);
+        state.putBoolean("favorite_sort_title", sortByTitle);
+        state.putInt("favorite_page", getActualPage());
+    }
+
+    @Override
+    protected void onDestroy() {
+        recycler.setAdapter(null);
+        adapter.close();
+        super.onDestroy();
     }
 
     @Override
@@ -109,21 +132,46 @@ public class FavoriteActivity extends BaseActivity {
         menu.findItem(R.id.only_language).setVisible(false);
         menu.findItem(R.id.add_bookmark).setVisible(false);
 
-        searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
+        menu.findItem(R.id.sort_by_name).setTitle(sortByTitle ? R.string.sort_by_latest : R.string.sort_by_title);
+        adapter.setSortByTitle(sortByTitle);
+        MenuItem searchItem = menu.findItem(R.id.search);
+        searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+        boolean restoreExpanded = searchExpanded;
+        searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override public boolean onMenuItemActionExpand(@NonNull MenuItem item) {
+                searchExpanded = true;
+                restoringQuery = true;
+                String retainedQuery = query;
+                searchView.post(() -> {
+                    searchView.setQuery(retainedQuery, false);
+                    restoringQuery = false;
+                });
+                return true;
+            }
+            @Override public boolean onMenuItemActionCollapse(@NonNull MenuItem item) {
+                searchExpanded = false;
+                return true;
+            }
+        });
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                searchView.clearFocus();
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                pageSwitcher.setTotalPage(calculatePages(newText));
-                if (adapter != null)
-                    adapter.getFilter().filter(newText);
+                if (!searchExpanded || restoringQuery || query.equals(newText)) return true;
+                query = newText;
+                applyingPages = true;
+                pageSwitcher.setActualPage(1);
+                applyingPages = false;
+                adapter.filter(query);
                 return true;
             }
         });
+        if (restoreExpanded) searchItem.expandActionView();
         Utility.tintMenu(this, menu);
 
         return true;

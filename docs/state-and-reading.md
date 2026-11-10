@@ -39,6 +39,11 @@ unchanged. Orphaned status references fall back to the default status.
 
 ## Local and personal state
 
+Favorite search query, page, sort and search expansion survive activity recreation.
+Collapsing search retains its query; clearing text explicitly while expanded resets
+it. Favorite and tag queries run in the background. Only the latest requested
+query may publish, and its cursor is closed on replacement or view destruction.
+
 Local files, favorites, manual reading status and automatic position are separate
 facts. A directory alone never proves a complete download. Completion requires
 known expected page count and a readable, nonempty image for every expected page.
