@@ -46,6 +46,7 @@ public class Importer {
     private static final String TAGS_SNAPSHOT_NAME = "last-restore-tags.json";
     private static final String PREVIOUS_SETTINGS_SNAPSHOT_NAME = "previous-restore-settings.json";
     private static final String PREVIOUS_TAGS_SNAPSHOT_NAME = "previous-restore-tags.json";
+    private static final String SNAPSHOT_META_NAME = "last-restore-snapshot.json.meta";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
@@ -285,7 +286,7 @@ public class Importer {
 
     public static boolean hasUsableSnapshot(Context context) {
         File snapshot = snapshotFile(context);
-        boolean usable = snapshot.isFile() && snapshot.length() > 0
+        boolean usable = isSnapshotSetValid(context)
             && System.currentTimeMillis() - snapshot.lastModified() <= SNAPSHOT_MAX_AGE_MS;
         if (!usable && snapshot.isFile()) clearSnapshots(context);
         return usable;
@@ -304,9 +305,11 @@ public class Importer {
     private static void clearSnapshots(Context context) {
         File[] files = {snapshotFile(context), previousSnapshotFile(context), settingsSnapshotFile(context),
             tagsSnapshotFile(context), previousSettingsSnapshotFile(context), previousTagsSnapshotFile(context),
+            new File(context.getCacheDir(), SNAPSHOT_META_NAME),
             new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"),
             new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"),
-            new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part")};
+            new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part"),
+            new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part")};
         for (File file : files) if (file.exists() && !file.delete()) file.deleteOnExit();
     }
 
@@ -315,10 +318,16 @@ public class Importer {
         writeAtomic(new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"), bytes);
         writeAtomic(new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "Settings"));
         writeAtomic(new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "ScrapedTags"));
+        JSONObject meta = new JSONObject();
+        try {
+            meta.put("database", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), SNAPSHOT_NAME + ".part").toPath())));
+            meta.put("settings", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part").toPath())));
+            meta.put("tags", Exporter.sha256(Files.readAllBytes(new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part").toPath())));
+        } catch (Exception exception) { throw new IOException("Unable to prepare snapshot metadata", exception); }
+        writeAtomic(new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part"), meta.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private static void writeAtomic(File temporary, byte[] bytes) throws IOException {
-        File target = new File(temporary.getPath().substring(0, temporary.getPath().length() - 5));
         try (FileOutputStream output = new FileOutputStream(temporary)) {
             output.write(bytes);
             output.getFD().sync();
@@ -332,6 +341,7 @@ public class Importer {
         if (tags.isFile()) Files.copy(tags.toPath(), previousTagsSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(new File(settings.getPath() + ".part").toPath(), settings.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(new File(tags.getPath() + ".part").toPath(), tags.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.move(new File(context.getCacheDir(), SNAPSHOT_META_NAME + ".part").toPath(), new File(context.getCacheDir(), SNAPSHOT_META_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private static void writeSnapshotCandidateLegacy(Context context) throws IOException {
@@ -354,7 +364,7 @@ public class Importer {
 
     public static void restoreLastSnapshot(Context context) throws IOException {
         File snapshot = snapshotFile(context);
-        if (!hasUsableSnapshot(context)) throw new IOException("No usable restore snapshot is available");
+        if (!hasUsableSnapshot(context) || !isSnapshotSetValid(context)) throw new IOException("No usable restore snapshot is available");
         DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
             try (InputStream input = new java.io.FileInputStream(snapshot)) {
                 importDBLocked(input);
@@ -372,6 +382,22 @@ public class Importer {
             Queries.StatusTable.initStatuses();
             com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
         }));
+    }
+
+    private static boolean isSnapshotSetValid(Context context) {
+        File snapshot = snapshotFile(context);
+        File settings = settingsSnapshotFile(context);
+        File tags = tagsSnapshotFile(context);
+        File metadata = new File(context.getCacheDir(), SNAPSHOT_META_NAME);
+        if (!snapshot.isFile() || snapshot.length() == 0 || !settings.isFile() || !tags.isFile() || !metadata.isFile()) return false;
+        try {
+            JSONObject meta = new JSONObject(new String(Files.readAllBytes(metadata.toPath()), StandardCharsets.UTF_8));
+            return Exporter.sha256(Files.readAllBytes(snapshot.toPath())).equalsIgnoreCase(meta.optString("database"))
+                && Exporter.sha256(Files.readAllBytes(settings.toPath())).equalsIgnoreCase(meta.optString("settings"))
+                && Exporter.sha256(Files.readAllBytes(tags.toPath())).equalsIgnoreCase(meta.optString("tags"));
+        } catch (Exception exception) {
+            return false;
+        }
     }
 
     private static byte[] readEntry(InputStream stream, int limit) throws IOException {

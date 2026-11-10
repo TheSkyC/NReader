@@ -476,7 +476,7 @@
     <string name="backup_integrity_verified">Integrity verified</string>
     <string name="backup_legacy_format">Legacy format without an integrity manifest</string>
     <string name="restore_snapshot">Restore previous database</string>
-    <string name="restore_snapshot_message">Replace the current database with the snapshot saved before the last import? Settings and downloaded files are not changed.</string>
+    <string name="restore_snapshot_message">Replace the current database and exported settings with the snapshot saved before the last import? Downloaded files are not changed.</string>
     <string name="restore_snapshot_summary">Snapshot age: %1$d days</string>
     <string name="restore_snapshot_unavailable">No recent restore snapshot is available.</string>
     <string name="debug_mask_images">Mask images for debugging</string>
