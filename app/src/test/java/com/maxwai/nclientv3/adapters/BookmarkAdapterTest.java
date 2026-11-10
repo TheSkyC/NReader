@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Looper;
 import android.view.View;
+import android.widget.EditText;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.maxwai.nclientv3.BookmarkActivity;
@@ -29,6 +31,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowDialog;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -106,5 +109,77 @@ public class BookmarkAdapterTest {
         assertEquals("artist:example -tag:other", url.getQueryParameter("query"));
         assertEquals("popular-week", url.getQueryParameter("sort"));
         assertEquals("3", url.getQueryParameter("page"));
+    }
+
+    @Test
+    public void planActionsEditCopyPinAndShare() throws Exception {
+        ContentValues plan = new ContentValues();
+        plan.put("name", "Original");
+        plan.put("query", "tag:one");
+        plan.put("sort", "popular-week");
+        plan.put("page", 3);
+        plan.put("pinned", 0);
+        SearchPlanStore.insert(plan);
+        BookmarkActivity activity = Robolectric.buildActivity(BookmarkActivity.class).setup().get();
+        awaitPlans();
+        RecyclerView list = activity.findViewById(R.id.recycler);
+        layout(list);
+        openPlanActions(list);
+        chooseAction(0);
+        shadowOf(Looper.getMainLooper()).idle();
+        AlertDialog editor = (AlertDialog) ShadowDialog.getLatestDialog();
+        ((EditText) editor.findViewById(R.id.plan_name)).setText("Changed");
+        ((EditText) editor.findViewById(R.id.plan_query)).setText("artist:two -tag:x");
+        ((EditText) editor.findViewById(R.id.plan_page)).setText("7");
+        editor.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        awaitPlans();
+        assertEquals("Changed", SearchPlanStore.list().get(0).getAsString("name"));
+        assertEquals("artist:two -tag:x", SearchPlanStore.list().get(0).getAsString("query"));
+        assertEquals(7, SearchPlanStore.list().get(0).getAsInteger("page").intValue());
+        layout(list);
+        openPlanActions(list);
+        chooseAction(1);
+        awaitPlans();
+        assertEquals(2, SearchPlanStore.list().size());
+        layout(list);
+        openPlanActions(list);
+        chooseAction(2);
+        awaitPlans();
+        assertEquals(1, SearchPlanStore.list().get(0).getAsInteger("pinned").intValue());
+        layout(list);
+        openPlanActions(list);
+        chooseAction(3);
+        Intent chooser = shadowOf(activity).getNextStartedActivity();
+        Intent shared = chooser.getParcelableExtra(Intent.EXTRA_INTENT);
+        Uri link = Uri.parse(shared.getStringExtra(Intent.EXTRA_TEXT));
+        assertEquals("artist:two -tag:x", link.getQueryParameter("q"));
+        assertEquals("popular-week", link.getQueryParameter("sort"));
+        assertEquals("7", link.getQueryParameter("page"));
+    }
+
+    private void awaitPlans() throws Exception {
+        for (int index = 0; index < 2; index++) {
+            CountDownLatch pending = new CountDownLatch(1);
+            SearchPlanStore.execute(pending::countDown);
+            assertTrue(pending.await(10, TimeUnit.SECONDS));
+            shadowOf(Looper.getMainLooper()).idle();
+        }
+    }
+
+    private void layout(RecyclerView list) {
+        list.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+        list.layout(0, 0, 1080, 1920);
+    }
+
+    private void openPlanActions(RecyclerView list) {
+        RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        holder.itemView.findViewById(R.id.plan_actions).performClick();
+    }
+
+    private void chooseAction(int position) {
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        dialog.getListView().performItemClick(dialog.getListView().getChildAt(position), position, position);
     }
 }

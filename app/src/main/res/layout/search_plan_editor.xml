@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+        <EditText android:id="@+id/plan_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_name" android:inputType="textCapSentences" android:maxLength="200" />
+        <EditText android:id="@+id/plan_query" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_query" android:inputType="textMultiLine" android:maxLength="8192" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/plan_sort" android:text="@string/search_plan_sort" />
+        <Spinner android:id="@+id/plan_sort" android:layout_width="match_parent" android:layout_height="48dp" />
+        <EditText android:id="@+id/plan_page" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_page" android:inputType="number" />
+    </LinearLayout>
+</ScrollView>
