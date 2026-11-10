@@ -60,3 +60,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Third-party icons: Material Design Icons
+https://github.com/Templarian/MaterialDesign-SVG
+Icons: mdi-book-open, mdi-calendar-clock, and mdi-heart, converted to Android
+VectorDrawable resources for the gallery metadata row. These icons are
+distributed under the Apache License 2.0 as stated by the upstream icon
+collection. See LICENSE for the full Apache License 2.0 text.

@@ -1,31 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/gallery_metadata"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginTop="8dp"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="6dp">
 
     <TextView
-        android:id="@+id/upload_date"
-        style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:id="@+id/page_stat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp" />
+        android:drawablePadding="5dp"
+        android:drawableStart="@drawable/mdi_book_open"
+        android:drawableTint="?android:attr/textColorSecondary"
+        android:gravity="center_vertical"
+        android:textColor="?android:attr/textColorSecondary"
+        style="@style/TextAppearance.MaterialComponents.Body2" />
 
     <TextView
-        android:id="@+id/page_count"
-        style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:id="@+id/favorite_stat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp" />
+        android:drawablePadding="5dp"
+        android:drawableStart="@drawable/mdi_heart"
+        android:drawableTint="?android:attr/textColorSecondary"
+        android:gravity="center_vertical"
+        android:textColor="?android:attr/textColorSecondary"
+        style="@style/TextAppearance.MaterialComponents.Body2" />
 
     <TextView
-        android:id="@+id/favorite_count"
-        style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:id="@+id/upload_stat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp" />
-</LinearLayout>
+        android:drawablePadding="5dp"
+        android:drawableStart="@drawable/mdi_calendar_clock"
+        android:drawableTint="?android:attr/textColorSecondary"
+        android:gravity="center_vertical"
+        android:textColor="?android:attr/textColorSecondary"
+        style="@style/TextAppearance.MaterialComponents.Body2" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="page_stat,favorite_stat,upload_stat"
+        app:flow_horizontalGap="16dp"
+        app:flow_verticalGap="4dp"
+        app:flow_wrapMode="chain"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
