@@ -93,7 +93,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         if (useDefaultAvatar)
             ImageDownloadUtility.loadImage(R.drawable.ic_person, holder.userImage);
         else
-            ImageDownloadUtility.loadImage(context, c.getAvatarUrl(), holder.userImage);
+            ImageDownloadUtility.loadAvatarImage(context, c.getAvatarUrl(), holder.userImage);
     }
 
     private int dp(int value) {
