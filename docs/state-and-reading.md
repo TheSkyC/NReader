@@ -62,6 +62,8 @@ are included in backups; restoring a legacy backup clears plans absent from it.
 Search results can be saved under a name and opened from the bookmark screen.
 Plans can be edited, copied, pinned, shared as search links, or deleted after
 confirmation. Sharing includes the query, sort and page, not the private name.
+Opening a search link preserves its encoded query without adding local default
+tags. Missing, invalid or nonpositive page parameters fall back to page one.
 
 Favorite search query, page, sort and search expansion survive activity recreation.
 Collapsing search retains its query; clearing text explicitly while expanded resets

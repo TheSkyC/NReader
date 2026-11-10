@@ -5,6 +5,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -430,13 +431,8 @@ public class MainActivity extends BaseActivity
     }
 
     private void useDataSearchMode(Uri data, List<String> datas) {
-        String query = data.getQueryParameter("q");
-        String pageParam = data.getQueryParameter("page");
         boolean favorite = "favorites".equals(datas.get(0));
-        SortType type = SortType.findFromAddition(data.getQueryParameter("sort"));
-        int page = 1;
-
-        if (pageParam != null) page = Integer.parseInt(pageParam);
+        int page = searchLinkPage(data);
 
         if (favorite) {
             if (AuthStore.hasValidApiKey(this)) useFavoriteMode(page);
@@ -448,8 +444,21 @@ public class MainActivity extends BaseActivity
             return;
         }
 
-        inspector = InspectorV3.searchInspector(this, query, null, page, type, null, resetDataset);
+        inspector = searchLinkInspector(this, data, resetDataset);
         modeType = ModeType.SEARCH;
+    }
+
+    static int searchLinkPage(Uri data) {
+        try {
+            return Math.max(1, Integer.parseInt(data.getQueryParameter("page")));
+        } catch (NumberFormatException exception) {
+            return 1;
+        }
+    }
+
+    static InspectorV3 searchLinkInspector(Context context, Uri data, InspectorV3.InspectorResponse response) {
+        return InspectorV3.savedSearchInspector(context, data.getQueryParameter("q"), searchLinkPage(data),
+            SortType.findFromAddition(data.getQueryParameter("sort")), response);
     }
 
     private void useDataTagMode(List<String> datas, TagType type) {
