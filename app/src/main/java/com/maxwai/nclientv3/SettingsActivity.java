@@ -256,7 +256,7 @@ public class SettingsActivity extends GeneralActivity {
             return;
         }
         Date actualTime = new Date();
-        COPY_LOGS.launch(String.format("NClientv3_Log_%s.log", new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(actualTime)));
+        COPY_LOGS.launch(String.format("NReader_Log_%s.log", new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(actualTime)));
     }
 
     @Override
