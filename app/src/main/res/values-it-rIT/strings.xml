@@ -352,4 +352,5 @@
     <string name="list_compact_columns">Colonne nelle finestre compatte</string>
     <string name="list_wide_columns">Colonne nelle finestre ampie</string>
     <string name="list_columns_summary">Si adatta alla larghezza e al testo; 4 colonne richiedono una finestra ampia.</string>
+    <string name="cover_group_credit">Gruppo: %1$s</string>
 </resources>

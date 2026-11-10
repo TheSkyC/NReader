@@ -54,7 +54,12 @@ used as evidence of the original total or of a complete download.
 Cards use a consistent rounded cover with favorite and download controls at the
 bottom corners and the automatic page position / total at the top right. Unstarted
 galleries show only the known total. A bottom gradient keeps controls legible.
-Titles reserve two lines below the cover, followed by a single author line.
+Titles reserve two lines below the cover, followed by a single credit line.
+Credits prefer nonblank artist names, falling back to group names with the
+Bootstrap Icons outline people glyph. Blank and duplicate names are omitted.
+Missing credits hide the text and glyph while preserving the row height and
+language-flag alignment. Group credits retain a localized group label for
+accessibility and tooltips; recycled cards clear all previous credit state.
 The selected column count is an upper bound: cards require at least 116dp per
 column, including margins, so the two 48dp action targets do not overlap.
 Online and downloaded gallery lists offer two or three columns from the toolbar. Four columns
