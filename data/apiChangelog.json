@@ -1,1 +1,163 @@
-[]
+[
+  {
+    "date": "2026-10-21",
+    "entries": [
+      "8e39231ad7079c8a6758dbef11edb3e54d14835f0e7fee7a4abc6669a32657bc",
+      "eed82945a5b396b53b53d1a86d5c8a14551e95f8761149b0f639a74002179aeb"
+    ]
+  },
+  {
+    "date": "2026-10-12",
+    "entries": [
+      "e3da26181176bdcb5fe1aa716f3ce79d2bc42603375c332f6904f9124f5353f5"
+    ]
+  },
+  {
+    "date": "2026-10-06",
+    "entries": [
+      "e9fe7ed6900ad4b7b73f8c1dea6bfddb3fafd10c55291201abc293abeac88d1f",
+      "0f410e070c900e0ea5d500ac81400c61cc08b5018dcbaa904f46cb99a8f62496",
+      "3e0e989e45c01a68e1aa2a54b5a031e5abe61f9e837e70710768557de0334551",
+      "85b5c0193fc160f16b696890fe59eadc72ef5b00dc860794a82715e1ba773f2f",
+      "30332902588ce95d8edf55648634c2e18c34401e17782f43cee673814b0633c5",
+      "69eed70a583ce631e3982c4e711a4d6261759cd9b82c65d368b1d4c0d39c36b2",
+      "19034ec31115fd73924579f2bf26f0571d396f3905868913b0557f5927878d57",
+      "e37cf4c773a4c0735bb28a9b74f5c3b227e48235ded4129ce0564c8e4bbe4bfe"
+    ]
+  },
+  {
+    "date": "2026-10-02",
+    "entries": [
+      "83cdb7b913a0df7d8fdc79ce2b08066266189d010da095c9a62a3da279cf6b78",
+      "4f8758d4845c240eface0e36267949423be6d5463811662af81673e916839342",
+      "8164702bdb6acdae815485c3c381206561f609a266df38630b0c6a8be9f1bb0b"
+    ]
+  },
+  {
+    "date": "2026-09-14",
+    "entries": [
+      "5f4cffd02cb84888ccffbab1480b4ad664fc4ae95c137cbd65ca2103a81ea2f4",
+      "1d5231eea352fbc7627bf43ab68c66470ac7efc604303faab1f62d807af3ea59"
+    ]
+  },
+  {
+    "date": "2026-07-16",
+    "entries": [
+      "ca06d50af677061f0e840ee5fa6a4c54a2de4e57c434988313cf01ee21000c07",
+      "0543a742df86c6e27c42c9b0ce174bd1586b78faf486416116c2c49f68edcd48",
+      "1c5c97727f122ff1d669cf162042d9d39e1265cc2d9d2ba86daf0d690bf03b44"
+    ]
+  },
+  {
+    "date": "2026-05-21",
+    "entries": [
+      "c9d1b29edc44d1d2b7fcbf597c6c8fa731f8283103eb55b83cae7de3c8bad44f",
+      "d064bfbe768fc5947a11d3c19b62ca4dcedefca2f36dfcc0c0e6fee2354106c2"
+    ]
+  },
+  {
+    "date": "2026-05-13",
+    "entries": [
+      "dd55067d24ee83ea9bfc0b46aef27b1623cb236d3f49489437afbba2f55150e5"
+    ]
+  },
+  {
+    "date": "2026-05-12",
+    "entries": [
+      "d7f5fc2a5699326d0efe37da11d4c56fbc286821bcb857d22a2bddf0acc8e7b5"
+    ]
+  },
+  {
+    "date": "2026-05-09",
+    "entries": [
+      "fbe80338002bff246bfb42aef264512f33e691b17991aabd79e72e3f9ae0e494",
+      "f9a9f4010e4184140e87e03ecbb1ef83ebc473799a34aaa1c9f19eb1407682bd",
+      "de8657f2962932f1fa5c82fe587ba4e357fefaeacba2322e1608c9dd3566a631",
+      "5d103f9c29968288eef92b39f0fbaf0ef689145d6439c0fd0d6330ab38a83e0b",
+      "588c3dff868952a6f209db366ffc9106e9c19cd338ad85d439840beffa4851f5",
+      "63ccadc070391170a7ea192bf87e55900453b7e4741364bd62c29cd03df43b1d"
+    ]
+  },
+  {
+    "date": "2026-05-04",
+    "entries": [
+      "9783bef58e52c5143cc1d5d03d71d6957801aa7e01b6506e644a3556ff416ff2"
+    ]
+  },
+  {
+    "date": "2026-05-01",
+    "entries": [
+      "22546f37537bf3bed85ca0b39e93915ef902439cf085af8dafb272b99fa1353a",
+      "9ac1f65a2d92e02a4f14ca97eed16bd014567f5b40c97c1703922c18bc3a3fe3",
+      "9a86b5e6182523108cf95f28b3f9cb08deac58a0cb174e73557513aedc506e06",
+      "9209850f467fe5631ed42d8d4a3ea34414bc08ad8f30f3b28210b7079e7660f5"
+    ]
+  },
+  {
+    "date": "2026-04-27",
+    "entries": [
+      "1530cffd88a665930138945424a8af3bba42fa67743625b2f27a37a3675808cf"
+    ]
+  },
+  {
+    "date": "2026-04-26",
+    "entries": [
+      "9d54ce5242f7c54936edc02e8bc251ad7432143838b5d7c45c2333acc6048110",
+      "cbc45390d26f69aecf2fdf15b5e85921654e101c853b36e261f60a226c545a0a"
+    ]
+  },
+  {
+    "date": "2026-04-04",
+    "entries": [
+      "c78e7dae125e96a66be12448a10620da6927c78a4ddb4405a8d56793bde271c3",
+      "8991fe2813b84cbf34e5dbe493bf58c5c5408e96f70072d8a9b54fc06a8b486a",
+      "e0e7903109163d45e0d16df4a3944e089721f8196118f978f2408dcc287cd322"
+    ]
+  },
+  {
+    "date": "2026-04-03",
+    "entries": [
+      "27e04b04b9ccbf490f9111b37e2c5a40c4253e8292a83c386f33582df6bf7504",
+      "4dfb0d3c2ec7b78842b4acc42a04cfd6bafb036d076a63465a7f6f41fa3bfd72",
+      "86b981f2c98a7afd67b3ca3dafc23b969363f8d3e7ce218d0b149c3a8119d21b",
+      "42d5fbe04a53a865fef3cb069651d65da376aa6e8c7bb565c9a97cc8d081e675",
+      "a62d96dae21e72bf2597dc21da210e7828da1262fb1ec684dc7a0b520c2738e6"
+    ]
+  },
+  {
+    "date": "2026-04-02",
+    "entries": [
+      "b10bc2460f2118a496e21f22b361cc12ed47801fb9138aa343454e07ade4d5a4",
+      "4db6aeafacd963bea340dece619442c72d6ce34fb0c05a718417a6fb1f8b95b4",
+      "bf77c58bd43f45a19b475d7a7be5924353bc9e4f88309fb16ae81b95f340021a",
+      "4d25b1394c55e6f3b98bb90136fab1a400307c1c8346583e4835ca34491bec0e",
+      "467e83b4bc22e091a81a49b8296590c1e487e0790f1052e4a9fdef6cb848b9e4"
+    ]
+  },
+  {
+    "date": "2026-04-01",
+    "entries": [
+      "66ebbdfd2119e30f4996e4bf9e4ecb53534e7c711c20dab9039b1d0dcc4a4aa9",
+      "6f33f9612c916ce33a381166a5629b9a227ca166f8b9deb89a4a7f8b8408a47f"
+    ]
+  },
+  {
+    "date": "2026-03-31",
+    "entries": [
+      "562ca6d07488aa728a47bca689f0d398df7edd48086f9e3985f325b4a01bc058",
+      "9f55faf47816603bc204064558cfee89256b8a3fe79c321756af1f6aaa6a8fb4",
+      "d47c13ffb9932d4221d1d881718ae991c18815cef6ac863f87e959ce48fdebe9",
+      "793af4f06dfc86a9862de01ea2ded5c87cc89c4600ca12092895a0585218b730",
+      "3b70ce463559cc43804ec96cb9f2fe8395c1a18716e41a09728370b73153abf1"
+    ]
+  },
+  {
+    "date": "2026-03-30",
+    "entries": [
+      "6a0b60fda7462ac81140608504e5085c2cf1f595c8ed6ab708a39ea1a29770a6",
+      "f8821b4ca41c73b2d6828f06c7a0bd53489cc753b9810d8c3c723ea5d9002fb1",
+      "ef53f347e3580eb18eb70b5d6967d5be44828abdcb385c7c67bac0314887770b",
+      "ee218fe85bdbeeaca5268d63099c3761357c7664acf0a00f0f72b0a72e68415e"
+    ]
+  }
+]
