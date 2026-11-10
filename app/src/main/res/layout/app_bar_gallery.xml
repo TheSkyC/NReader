@@ -14,11 +14,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:contentScrim="?attr/colorPrimaryVariant"
-            app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Large"
             app:layout_scrollFlags="scroll|enterAlways|enterAlwaysCollapsed"
-            app:maxLines="4"
+            app:titleEnabled="false"
             app:toolbarId="@+id/toolbar">
 
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/gallery_header_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="20dp"
+                android:ellipsize="end"
+                android:focusable="true"
+                android:gravity="start"
+                android:maxLines="4"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="24sp"
+                app:layout_collapseMode="parallax"
+                app:layout_collapseParallaxMultiplier="0.7" />
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
