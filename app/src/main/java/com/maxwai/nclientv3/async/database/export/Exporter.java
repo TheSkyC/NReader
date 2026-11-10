@@ -147,6 +147,12 @@ public class Exporter {
         return database.toByteArray();
     }
 
+    static byte[] sharedPreferencesBytes(Context context, String sharedName) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        exportSharedPreferences(context, sharedName, output);
+        return output.toByteArray();
+    }
+
     private static void exportSharedPreferences(Context context, String sharedName, OutputStream stream) throws IOException {
         JsonWriter writer = new JsonWriter(new OutputStreamWriter(stream));
         SharedPreferences pref = context.getSharedPreferences(sharedName, 0);

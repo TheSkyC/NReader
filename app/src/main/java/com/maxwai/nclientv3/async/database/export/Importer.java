@@ -41,6 +41,8 @@ import org.json.JSONObject;
 public class Importer {
     private static final String SNAPSHOT_NAME = "last-restore-snapshot.json";
     private static final String PREVIOUS_SNAPSHOT_NAME = "previous-restore-snapshot.json";
+    private static final String SETTINGS_SNAPSHOT_NAME = "last-restore-settings.json";
+    private static final String TAGS_SNAPSHOT_NAME = "last-restore-tags.json";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
@@ -278,7 +280,32 @@ public class Importer {
         return new File(context.getCacheDir(), PREVIOUS_SNAPSHOT_NAME);
     }
 
+    private static File settingsSnapshotFile(Context context) { return new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME); }
+    private static File tagsSnapshotFile(Context context) { return new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME); }
+
     private static void writeSnapshotCandidate(Context context) throws IOException {
+        byte[] bytes = Exporter.currentDatabaseBytes();
+        writeAtomic(new File(context.getCacheDir(), SNAPSHOT_NAME + ".part"), bytes);
+        writeAtomic(new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "Settings"));
+        writeAtomic(new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME + ".part"), Exporter.sharedPreferencesBytes(context, "ScrapedTags"));
+    }
+
+    private static void writeAtomic(File temporary, byte[] bytes) throws IOException {
+        File target = new File(temporary.getPath().substring(0, temporary.getPath().length() - 5));
+        try (FileOutputStream output = new FileOutputStream(temporary)) {
+            output.write(bytes);
+            output.getFD().sync();
+        }
+    }
+
+    private static void promoteSnapshotFiles(Context context) throws IOException {
+        File settings = settingsSnapshotFile(context);
+        File tags = tagsSnapshotFile(context);
+        Files.move(new File(settings.getPath() + ".part").toPath(), settings.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.move(new File(tags.getPath() + ".part").toPath(), tags.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private static void writeSnapshotCandidateLegacy(Context context) throws IOException {
         byte[] bytes = Exporter.currentDatabaseBytes();
         File target = snapshotFile(context);
         File temporary = new File(target.getPath() + ".part");
@@ -293,6 +320,7 @@ public class Importer {
         File temporary = new File(target.getPath() + ".part");
         if (target.isFile()) Files.copy(target.toPath(), previousSnapshotFile(context).toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        promoteSnapshotFiles(context);
     }
 
     public static void restoreLastSnapshot(Context context) throws IOException {
@@ -301,6 +329,16 @@ public class Importer {
         DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
             try (InputStream input = new java.io.FileInputStream(snapshot)) {
                 importDBLocked(input);
+            }
+            if (settingsSnapshotFile(context).isFile()) {
+                try (InputStream input = new java.io.FileInputStream(settingsSnapshotFile(context))) {
+                    importSharedPreferences(context, "Settings", input).apply();
+                }
+            }
+            if (tagsSnapshotFile(context).isFile()) {
+                try (InputStream input = new java.io.FileInputStream(tagsSnapshotFile(context))) {
+                    importSharedPreferences(context, "ScrapedTags", input).apply();
+                }
             }
             Queries.StatusTable.initStatuses();
             com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
