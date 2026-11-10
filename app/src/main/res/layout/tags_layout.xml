@@ -26,6 +26,8 @@
             android:layout_margin="8dp" />
     </LinearLayout>
 
+    <include layout="@layout/info_layout" />
+
     <LinearLayout
         android:id="@+id/tag_master"
         android:layout_width="match_parent"
@@ -48,7 +50,6 @@
 
         <include layout="@layout/sub_tag_layout" />
 
-        <include layout="@layout/info_layout" />
     </LinearLayout>
 
 </LinearLayout>

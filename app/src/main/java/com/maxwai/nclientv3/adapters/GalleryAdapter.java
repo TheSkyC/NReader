@@ -166,8 +166,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private void loadHeader(ViewHolder holder) {
         TextView title = holder.master.findViewById(R.id.gallery_title);
         title.setText(gallery.getTitle());
-        TextView pageCount = holder.master.findViewById(R.id.gallery_page_count);
-        pageCount.setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
         ImageView cover = holder.master.findViewById(R.id.gallery_cover);
         File firstPage = directory == null ? null : directory.getPage(1);
         if (firstPage != null && firstPage.exists()) {
@@ -271,15 +269,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void addInfoLayout(ViewHolder holder, GalleryData gallery) {
-        TextView text = holder.master.findViewById(R.id.page_count);
+        TextView text = holder.master.findViewById(R.id.page_stat);
         text.setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
-        text = holder.master.findViewById(R.id.upload_date);
-        text.setText(
-            context.getString(R.string.upload_date_format,
-                android.text.format.DateFormat.getDateFormat(context).format(gallery.getUploadDate()),
-                android.text.format.DateFormat.getTimeFormat(context).format(gallery.getUploadDate())
-            ));
-        text = holder.master.findViewById(R.id.favorite_count);
+        text = holder.master.findViewById(R.id.upload_stat);
+        String date = android.text.format.DateFormat.getDateFormat(context).format(gallery.getUploadDate());
+        text.setText(date);
+        text.setContentDescription(context.getString(R.string.upload_date_format, date,
+            android.text.format.DateFormat.getTimeFormat(context).format(gallery.getUploadDate())));
+        text = holder.master.findViewById(R.id.favorite_stat);
         text.setText(context.getString(R.string.favorite_count_format, gallery.getFavoriteCount()));
 
     }

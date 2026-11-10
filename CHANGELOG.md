@@ -13,6 +13,8 @@
   from the API response, and fit the default comment avatar within its bounds.
 - Resolve related-gallery tag IDs through the batch tag API so author and group
   credits are available even when those tags are absent from the local cache.
+- Move gallery page count, favorites, and upload date below the ID into a
+  compact icon row using Material Design Icons with recorded attribution.
 
 - Replace gallery-list and random-gallery language flag emoji with local Tabler
   vector artwork, consistent dimensions and accessible language descriptions.

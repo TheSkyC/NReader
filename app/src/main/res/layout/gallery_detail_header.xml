@@ -32,11 +32,6 @@
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
 
-            <TextView
-                android:id="@+id/gallery_page_count"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
         </LinearLayout>
     </LinearLayout>
 
