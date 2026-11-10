@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prevent a failed or canceled first reader image from blocking later pages and
+  release image requests through Glide's activity lifecycle.
+
 - Switch online list columns from the toolbar, with separate compact/wide
   choices, width-aware four-column availability and preserved scroll position.
   Move language filtering into the overflow menu.

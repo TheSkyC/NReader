@@ -97,6 +97,11 @@ completion.
 
 ## Download lifecycle
 
+Reader image requests are submitted independently to Glide, which owns request
+cancellation and activity cleanup. A failed or canceled first image must never
+block later pages. Rebinding an image clears its previous request, including when
+the image loading policy is disabled.
+
 Transient network/server/rate-limit failures have a finite retry budget and
 backoff. Authentication, missing resources and storage failures stop the task
 with an actionable reason. A failed task requires an explicit retry. Metadata
