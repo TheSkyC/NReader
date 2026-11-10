@@ -136,6 +136,7 @@ public class LocalActivity extends BaseActivity {
         menu.findItem(R.id.list_columns).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.sort_by_name).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.filter_download_state).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
+        menu.findItem(R.id.filter_personal_state).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
         menu.findItem(R.id.folder_choose).setVisible(mode == MultichoiceAdapter.Mode.NORMAL && Global.getUsableFolders(this).size() > 1);
         menu.findItem(R.id.random_favorite).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
 
@@ -197,6 +198,8 @@ public class LocalActivity extends BaseActivity {
             dialogSortType();
         } else if (item.getItemId() == R.id.filter_download_state) {
             dialogDownloadFilter();
+        } else if (item.getItemId() == R.id.filter_personal_state) {
+            dialogPersonalFilter();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -216,6 +219,27 @@ public class LocalActivity extends BaseActivity {
                 dialog.dismiss();
             })
             .setNegativeButton(R.string.cancel, null);
+        builder.show();
+    }
+
+    private void dialogPersonalFilter() {
+        if (adapter == null) return;
+        String[] labels = {
+            getString(R.string.filter_favorite_only), getString(R.string.filter_reading_only),
+            getString(R.string.filter_unread_only), getString(R.string.filter_custom_status_only)
+        };
+        boolean[] checked = {
+            adapter.isFavoriteOnly(), adapter.getReadingFilter() == 1,
+            adapter.getReadingFilter() == 2, adapter.isCustomStatusOnly()
+        };
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.filter_personal_state)
+            .setMultiChoiceItems(labels, checked, (dialog, which, isChecked) -> checked[which] = isChecked)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                int reading = checked[1] ? 1 : checked[2] ? 2 : 0;
+                adapter.setPersonalFilters(checked[0], reading, checked[3]);
+            });
         builder.show();
     }
 
