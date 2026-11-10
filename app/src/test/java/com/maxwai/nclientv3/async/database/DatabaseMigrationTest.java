@@ -18,6 +18,24 @@ import static org.junit.Assert.assertEquals;
 @Config(sdk = 28, application = Application.class)
 public class DatabaseMigrationTest {
     @Test
+    public void version16UpgradeKeepsSearchBookmarks() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("INSERT INTO Bookmark VALUES ('https://example.org/?q=test',2,0,0)");
+            database.execSQL("DROP TABLE SearchPlans");
+            database.setVersion(16);
+        }
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertEquals(17, database.getVersion());
+            assertEquals(1, scalar(database, "SELECT COUNT(*) FROM Bookmark WHERE page=2"));
+            assertEquals(0, scalar(database, "SELECT COUNT(*) FROM SearchPlans"));
+        }
+    }
+
+    @Test
     public void version13UpgradePreservesExistingRowsAndManualBookmark() {
         Context context = RuntimeEnvironment.getApplication();
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
@@ -44,7 +62,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(16, database.getVersion());
+            assertEquals(17, database.getVersion());
             assertEquals(7, scalar(database, "SELECT page FROM Resume WHERE id_gallery=123"));
             assertEquals(99, scalar(database, "SELECT time FROM Favorite WHERE id_gallery=123"));
             assertEquals(12345, scalar(database, "SELECT color FROM Status WHERE name='Custom'"));
@@ -56,6 +74,7 @@ public class DatabaseMigrationTest {
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM DownloadTasks WHERE state='PAUSED'"));
             assertEquals(77, scalar(database, "SELECT time FROM History WHERE id=123"));
             assertEquals(2, scalar(database, "SELECT page FROM Bookmark"));
+            assertEquals(0, scalar(database, "SELECT COUNT(*) FROM SearchPlans"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));
         }
     }
@@ -96,7 +115,7 @@ public class DatabaseMigrationTest {
             }
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                assertEquals(16, database.getVersion());
+            assertEquals(17, database.getVersion());
                 assertEquals(0, scalar(database, "SELECT COUNT(time) FROM Favorite"));
                 assertEquals(0, scalar(database, "SELECT COUNT(range_start) FROM Downloads"));
                 assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));

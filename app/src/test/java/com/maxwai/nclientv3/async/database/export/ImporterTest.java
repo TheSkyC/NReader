@@ -2,12 +2,14 @@
 package com.maxwai.nclientv3.async.database.export;
 
 import android.app.Application;
+import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.status.StatusManager;
 
@@ -98,6 +100,46 @@ public class ImporterTest {
 
     private void restore(String json) throws IOException {
         Importer.importDB(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    public void plansRoundTripAndLegacyRestoreClearsThem() throws IOException {
+        ContentValues plan = new ContentValues();
+        plan.put("name", "Artists");
+        plan.put("query", "artist:example -tag:excluded");
+        plan.put("sort", "popular-week");
+        plan.put("page", 3);
+        plan.put("pinned", 1);
+        long first = SearchPlanStore.insert(plan);
+        long second = SearchPlanStore.insert(plan);
+        assertNotEquals(first, second);
+        plan.put("pinned", 0);
+        assertTrue(SearchPlanStore.update(first, plan));
+        assertEquals(second, SearchPlanStore.list().get(0).getAsLong("id").longValue());
+        byte[] backup = Exporter.currentDatabaseBytes();
+        assertTrue(SearchPlanStore.delete(first));
+        Importer.importDB(new ByteArrayInputStream(backup));
+        assertEquals(2, SearchPlanStore.list().size());
+        assertEquals("artist:example -tag:excluded", SearchPlanStore.list().get(0).getAsString("query"));
+        restore("{\"Bookmark\":[]}");
+        assertTrue(SearchPlanStore.list().isEmpty());
+    }
+
+    @Test
+    public void invalidPlanRestoreRollsBackPreviousData() throws IOException {
+        ContentValues plan = new ContentValues();
+        plan.put("name", "Keep");
+        plan.put("query", "tag:example");
+        plan.put("sort", "");
+        plan.put("page", 1);
+        plan.put("pinned", 0);
+        SearchPlanStore.insert(plan);
+        try {
+            restore("{\"SearchPlans\":[{\"id\":1,\"name\":\"bad\",\"query\":\"x\",\"sort\":\"other\",\"page\":1,\"pinned\":0}]}");
+            fail("Expected invalid plan to fail");
+        } catch (IOException expected) {
+            assertEquals("Keep", SearchPlanStore.list().get(0).getAsString("name"));
+        }
     }
 
     @Test

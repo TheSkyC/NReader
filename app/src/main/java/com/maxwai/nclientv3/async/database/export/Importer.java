@@ -15,6 +15,7 @@ import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.async.database.DownloadTaskStore;
+import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.IOException;
@@ -115,6 +116,7 @@ public class Importer {
             reader.beginObject();
             db.delete(Queries.ReadingProgressTable.TABLE_NAME, null, null);
             db.delete(DownloadTaskStore.TABLE_NAME, null, null);
+            db.delete(SearchPlanStore.TABLE_NAME, null, null);
             Set<String> seenTables = new HashSet<>();
             while (reader.hasNext()) {
                 String tableName = reader.nextName();
@@ -151,6 +153,8 @@ public class Importer {
                     }
                     if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME)) validateReadingPosition(values);
                     if (tableName.equals(DownloadTaskStore.TABLE_NAME)) validateDownloadTask(values);
+                    if (tableName.equals(SearchPlanStore.TABLE_NAME) && !SearchPlanStore.isValid(values, true))
+                        throw new IOException("Invalid search plan");
                     if (db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE) == -1)
                         throw new IOException("Unable to restore backup row");
                     reader.endObject();
