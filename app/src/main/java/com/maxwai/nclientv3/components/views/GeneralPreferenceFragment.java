@@ -449,8 +449,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
         {
             Preference restore = Objects.requireNonNull(findPreference(getString(R.string.preference_key_restore_snapshot)));
-            restore.setEnabled(com.maxwai.nclientv3.async.database.export.Importer
-                .snapshotFile(act).isFile());
+            boolean usable = com.maxwai.nclientv3.async.database.export.Importer.hasUsableSnapshot(act);
+            restore.setEnabled(usable);
+            if (usable) restore.setSummary(getString(R.string.restore_snapshot_summary,
+                com.maxwai.nclientv3.async.database.export.Importer.snapshotAgeDays(act)));
+            else restore.setSummary(R.string.restore_snapshot_unavailable);
             restore.setOnPreferenceClickListener(preference -> {
                 act.restoreLastSnapshot();
                 return true;
