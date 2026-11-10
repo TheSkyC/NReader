@@ -41,6 +41,7 @@ import com.maxwai.nclientv3.SettingsActivity;
 import com.maxwai.nclientv3.StatusManagerActivity;
 import com.maxwai.nclientv3.async.MetadataFetcher;
 import com.maxwai.nclientv3.async.VersionChecker;
+import com.maxwai.nclientv3.async.database.export.Importer;
 import com.maxwai.nclientv3.components.activities.CrashApplication;
 import com.maxwai.nclientv3.components.launcher.LauncherCalculator;
 import com.maxwai.nclientv3.components.launcher.LauncherReal;
@@ -67,9 +68,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private SettingsActivity act;
+    private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
 
     public void setAct(SettingsActivity act) {
         this.act = act;
@@ -455,15 +458,13 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
         {
             Preference restore = Objects.requireNonNull(findPreference(getString(R.string.preference_key_restore_snapshot)));
-            boolean usable = com.maxwai.nclientv3.async.database.export.Importer.hasUsableSnapshot(act);
-            restore.setEnabled(usable);
-            if (usable) restore.setSummary(getString(R.string.restore_snapshot_summary,
-                com.maxwai.nclientv3.async.database.export.Importer.snapshotAgeDays(act)));
-            else restore.setSummary(R.string.restore_snapshot_unavailable);
+            restore.setEnabled(false);
+            restore.setSummary(R.string.restore_snapshot_checking);
             restore.setOnPreferenceClickListener(preference -> {
                 act.restoreLastSnapshot();
                 return true;
             });
+            updateSnapshotAvailability(restore);
         }
 
         {
@@ -497,6 +498,32 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         if (act == null) return;
         Preference apiKey = findPreference(getString(R.string.preference_key_api_key));
         if (apiKey != null) updateApiKeySummary(apiKey);
+        Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
+        if (restore != null) updateSnapshotAvailability(restore);
+    }
+
+    @Override
+    public void onDestroy() {
+        snapshotCheckGeneration.incrementAndGet();
+        super.onDestroy();
+    }
+
+    private void updateSnapshotAvailability(@NonNull Preference restore) {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        int generation = snapshotCheckGeneration.incrementAndGet();
+        restore.setEnabled(false);
+        restore.setSummary(R.string.restore_snapshot_checking);
+        new Thread(() -> {
+            boolean usable = Importer.hasUsableSnapshot(activity.getApplicationContext());
+            long age = usable ? Importer.snapshotAgeDays(activity.getApplicationContext()) : -1;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || getActivity() != activity || snapshotCheckGeneration.get() != generation) return;
+                restore.setEnabled(usable);
+                if (usable) restore.setSummary(getString(R.string.restore_snapshot_summary, age));
+                else restore.setSummary(R.string.restore_snapshot_unavailable);
+            });
+        }).start();
     }
 
     private void updateApiKeySummary(@NonNull Preference preference) {
