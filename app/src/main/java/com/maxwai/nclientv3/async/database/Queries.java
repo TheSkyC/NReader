@@ -209,16 +209,24 @@ public class Queries {
         }
 
         static void insertMinimal(SimpleGallery gallery) {
+            insertMinimal(gallery.getId(), gallery.getTitle(), gallery.getPageCount(),
+                gallery.getMediaId(), gallery.getThumbnail().toString());
+        }
+
+        static void insertMinimal(Gallery gallery) {
+            insertMinimal(gallery.getId(), gallery.getTitle(TitleType.PRETTY), gallery.getPageCount(),
+                gallery.getMediaId(), gallery.getThumbnail().toString());
+        }
+
+        private static void insertMinimal(int id, String title, int pageCount, int mediaId, String thumbnail) {
             ContentValues values = new ContentValues(12);
-            String title = gallery.getTitle();
-            String thumbnail = gallery.getThumbnail().toString();
-            String pages = "partial-v1;" + Math.max(0, gallery.getPageCount()) + ";" + android.net.Uri.encode(thumbnail);
-            values.put(IDGALLERY, gallery.getId());
+            String pages = "partial-v1;" + Math.max(0, pageCount) + ";" + android.net.Uri.encode(thumbnail);
+            values.put(IDGALLERY, id);
             values.put(TITLE_ENG, title);
             values.put(TITLE_JP, title);
             values.put(TITLE_PRETTY, title);
             values.put(FAVORITE_COUNT, 0);
-            values.put(MEDIAID, gallery.getMediaId());
+            values.put(MEDIAID, mediaId);
             values.put(PAGES, pages);
             values.put(UPLOAD, 0L);
             values.put(MAX_WIDTH, 0);
@@ -836,15 +844,29 @@ public class Queries {
         );
 
         public static void addFavorite(Gallery gallery) {
-            GalleryTable.insert(gallery);
-            FavoriteTable.insert(gallery.getId());
+            addFavorite((GenericGallery) gallery);
         }
 
         public static void addFavorite(GenericGallery gallery) {
-            if (gallery instanceof SimpleGallery) GalleryTable.insertMinimal((SimpleGallery) gallery);
-            else if (gallery.hasGalleryData()) GalleryTable.insert(gallery);
-            else throw new IllegalArgumentException("Gallery has no data for local favorite");
-            FavoriteTable.insert(gallery.getId());
+            if (gallery == null || gallery.getId() <= 0) throw new IllegalArgumentException("Invalid gallery for local favorite");
+            db.beginTransaction();
+            try {
+                if (gallery instanceof SimpleGallery) GalleryTable.insertMinimal((SimpleGallery) gallery);
+                else if (gallery instanceof Gallery && gallery.getGalleryData().isIncomplete())
+                    GalleryTable.insertMinimal((Gallery) gallery);
+                else if (gallery.hasGalleryData()) GalleryTable.insert(gallery);
+                else throw new IllegalArgumentException("Gallery has no data for local favorite");
+                try (Cursor cursor = db.query(GalleryTable.TABLE_NAME, new String[]{GalleryTable.IDGALLERY},
+                    GalleryTable.IDGALLERY + "=?", new String[]{Integer.toString(gallery.getId())}, null, null, null)) {
+                    if (!cursor.moveToFirst()) throw new android.database.SQLException("Unable to save favorite gallery");
+                }
+                FavoriteTable.insert(gallery.getId());
+                if (!FavoriteTable.isFavorite(gallery.getId()))
+                    throw new android.database.SQLException("Unable to save local favorite");
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         }
 
 
