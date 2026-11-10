@@ -84,12 +84,14 @@ final class GalleryCardActions {
             });
         } else if (gallery instanceof Gallery && gallery.isValid() && gallery.getPageCount() > 0) {
             saveFavorite(anchor, (Gallery) gallery, current, finished);
+        } else if (gallery != null && gallery.isValid() && gallery.getPageCount() >= 0) {
+            saveFavorite(anchor, gallery, current, finished);
         } else {
             resolve(anchor, gallery, current, resolved -> saveFavorite(anchor, resolved, current, finished), finished);
         }
     }
 
-    private static void saveFavorite(View anchor, Gallery gallery, BooleanSupplier current, Runnable finished) {
+    private static void saveFavorite(View anchor, GenericGallery gallery, BooleanSupplier current, Runnable finished) {
         View feedback = feedbackAnchor(anchor);
         executor.execute(() -> {
             try {
