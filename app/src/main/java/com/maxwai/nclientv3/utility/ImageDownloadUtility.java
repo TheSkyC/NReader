@@ -57,20 +57,25 @@ public class ImageDownloadUtility {
     }
 
     private static void loadImageOp(Context context, ImageView view, @Nullable Gallery gallery, Uri url, int angle) {
+        loadImageOp(context, view, gallery, url, angle, 0);
+    }
+
+    private static void loadImageOp(Context context, ImageView view, @Nullable Gallery gallery, Uri url, int angle,
+                                    int placeholderWidthDp) {
         if (context instanceof Activity && (((Activity) context).isDestroyed() || ((Activity) context).isFinishing())) {
-            loadLogo(view);
+            loadLogo(view, placeholderWidthDp);
             return;
         }
         RequestManager glide = GlideX.with(context);
         if (glide == null) {
-            loadLogo(view);
+            loadLogo(view, placeholderWidthDp);
             return;
         }
         // Clear the previous binding even when network loading has been disabled.
         glide.clear(view);
-        loadLogo(view);
+        loadLogo(view, placeholderWidthDp);
         if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) return;
-        Drawable logo = placeholder(view);
+        Drawable logo = placeholder(view, placeholderWidthDp);
         RequestBuilder<Drawable> request = glide.load(url);
         if (angle != 0) request = request.transform(new Rotate(angle));
         request.error(logo).placeholder(logo).addListener(new RequestListener<>() {
@@ -95,10 +100,20 @@ public class ImageDownloadUtility {
         imageView.setImageDrawable(placeholder(imageView));
     }
 
+    private static void loadLogo(ImageView imageView, int placeholderWidthDp) {
+        imageView.setImageDrawable(placeholder(imageView, placeholderWidthDp));
+    }
+
     static Drawable placeholder(ImageView imageView) {
+        return placeholder(imageView, 0);
+    }
+
+    private static Drawable placeholder(ImageView imageView, int placeholderWidthDp) {
         Drawable logo = Global.getLogo(imageView.getResources());
-        if (logo == null || imageView.getScaleType() != ImageView.ScaleType.CENTER_CROP) return logo;
-        int width = Math.round(72 * imageView.getResources().getDisplayMetrics().density);
+        if (logo == null) return null;
+        if (placeholderWidthDp <= 0 && imageView.getScaleType() != ImageView.ScaleType.CENTER_CROP) return logo;
+        int width = Math.round((placeholderWidthDp > 0 ? placeholderWidthDp : 72)
+            * imageView.getResources().getDisplayMetrics().density);
         int height = Math.round(width * (float) logo.getIntrinsicHeight() / logo.getIntrinsicWidth());
         // Unspecified intrinsic dimensions keep ImageView from cropping the placeholder.
         LayerDrawable placeholder = new LayerDrawable(new Drawable[]{logo}) {
@@ -112,6 +127,10 @@ public class ImageDownloadUtility {
 
     public static void loadImage(Activity activity, Uri url, ImageView imageView) {
         loadImageOp(activity, imageView, null, url, 0);
+    }
+
+    public static void loadAvatarImage(Activity activity, Uri url, ImageView imageView) {
+        loadImageOp(activity, imageView, null, url, 0, 24);
     }
 
     public static void loadImage(Activity activity, File file, ImageView imageView) {
