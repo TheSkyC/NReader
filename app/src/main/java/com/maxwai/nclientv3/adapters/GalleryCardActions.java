@@ -172,7 +172,14 @@ final class GalleryCardActions {
             action(dialog, R.string.download_repair, false, () -> {
                 resolve(anchor, gallery, current, resolved -> {
                     File folder = Global.findGalleryFolder(anchor.getContext(), resolved.getId());
-                    if (folder == null || Global.DOWNLOADFOLDER == null) {
+                    boolean insideDownloadRoot = false;
+                    try {
+                        insideDownloadRoot = folder != null && Global.DOWNLOADFOLDER != null
+                            && folder.getCanonicalPath().startsWith(Global.DOWNLOADFOLDER.getCanonicalPath() + File.separator);
+                    } catch (java.io.IOException ignored) {
+                        insideDownloadRoot = false;
+                    }
+                    if (!insideDownloadRoot) {
                         ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(R.string.download_repair_unavailable);
                         return;
                     }
