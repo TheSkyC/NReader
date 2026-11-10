@@ -170,12 +170,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             updatePosition(downloader);
         }
     };
-    private int colCount;
 
     public LocalAdapter(LocalActivity cont, ArrayList<LocalGallery> myDataset) {
         this.context = cont;
         dataset = new CopyOnWriteArrayList<>(myDataset);
-        colCount = cont.getColCount();
         galleryDownloaders = DownloadQueue.getDownloaders();
         lastQuery = cont.getQuery();
         filter = new ArrayList<>(myDataset);
@@ -271,10 +269,6 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         return comparatorByName;
     }
 
-    public void setColCount(int colCount) {
-        this.colCount = colCount;
-    }
-
     private void sortElements() {
         filter = createHash(galleryDownloaders, dataset);
     }
@@ -282,16 +276,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     @NonNull
     @Override
     protected ViewHolder onCreateMultichoiceViewHolder(@NonNull ViewGroup parent, int viewType) {
-        int id = 0;
-        switch (viewType) {
-            case 0:
-                id = colCount == 1 ? R.layout.entry_layout_single : R.layout.entry_layout;
-                break;
-            case 1:
-                id = colCount == 1 ? R.layout.entry_download_layout : R.layout.entry_layout;
-                break;
-        }
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(id, parent, false));
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.entry_layout, parent, false));
     }
 
     @Override
@@ -303,9 +288,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         if (holder.flag != null) holder.flag.setVisibility(View.GONE);
         ImageDownloadUtility.loadImage(context, ent.getPage(ent.getMin()), holder.imgView);
         holder.title.setText(ent.getTitle());
-        if (colCount == 1)
-            holder.pages.setText(context.getString(R.string.page_count_format, ent.getPageCount()));
-        else holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
+        holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
 
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();

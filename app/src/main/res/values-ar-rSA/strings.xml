@@ -220,7 +220,7 @@
     <string name="sort_popular_day">رائجة على مدار اليوم</string>
     <string name="sort_popular_week">رائجة على مدار الأسبوع</string>
     <string name="sort_type_title_format" formatted="true">اِختر نوع الفرز (%s)</string>
-    <string name="sort_select_type">اِختر نوع الفرز:</string>
+    <string name="sort_select_type">اِختر نوع الفرز</string>
     <string name="unable_to_connect_to_the_site">تعذر الاتصال بالموقع</string>
     <string name="no_entry_found">لم يُعثر على أي مُدخلَة</string>
     <string name="retry">أَعدِ المحاولة</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">الملفات المحلية غير متحقق منها</string>
     <string name="debug_mask_images">حجب الصور لتصحيح الأخطاء</string>
     <string name="debug_mask_images_summary">يغطي الأغلفة وصفحات القراءة بنمط مربعات معتم. يسري عند إعادة فتح الشاشة؛ لا يغير الملفات المنزلة.</string>
+    <string name="list_columns_action">تبديل الأعمدة: %1$d → %2$d</string>
+    <string name="list_language_filter">اللغة: %1$s</string>
+    <string name="list_compact_columns">الأعمدة في النوافذ الضيقة</string>
+    <string name="list_wide_columns">الأعمدة في النوافذ العريضة</string>
+    <string name="list_columns_summary">يتكيف مع العرض وحجم النص؛ تتطلب 4 أعمدة نافذة عريضة.</string>
 </resources>

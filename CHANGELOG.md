@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Switch online list columns from the toolbar, with separate compact/wide
+  choices, width-aware four-column availability and preserved scroll position.
+  Move language filtering into the overflow menu.
+- Add the same toolbar column control to downloaded galleries, remembering
+  independent compact/wide choices and keeping search and selection behavior.
 - Use one consistent single-column page placeholder while requests wait or fail,
   with balanced logo padding in light and dark themes.
 - Keep cover loading and error placeholders centered at a bounded size while

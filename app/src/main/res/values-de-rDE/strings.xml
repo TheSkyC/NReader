@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Täglich beliebt</string>
     <string name="sort_popular_week">Wöchentlich beliebt</string>
     <string name="sort_type_title_format" formatted="true">Wähle Sortiertyp (%s)</string>
-    <string name="sort_select_type">Wähle Sortiertyp:</string>
+    <string name="sort_select_type">Wähle Sortiertyp</string>
     <string name="unable_to_connect_to_the_site">Kann sich nicht mit der Seite verbinden</string>
     <string name="no_entry_found">Kein Eintrag gefunden</string>
     <string name="retry">Wiederholen</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">Lokale Dateien ungeprüft</string>
     <string name="debug_mask_images">Bilder zum Debuggen verdecken</string>
     <string name="debug_mask_images_summary">Verdeckt Titelbilder und Leseseiten mit einem undurchsichtigen Schachbrett. Wirkt nach erneutem Öffnen; heruntergeladene Dateien bleiben unverändert.</string>
+    <string name="list_columns_action">Spalten wechseln: %1$d → %2$d</string>
+    <string name="list_language_filter">Sprache: %1$s</string>
+    <string name="list_compact_columns">Spalten in schmalen Fenstern</string>
+    <string name="list_wide_columns">Spalten in breiten Fenstern</string>
+    <string name="list_columns_summary">Passt sich an Breite und Textgröße an; 4 Spalten erfordern ein breites Fenster.</string>
 </resources>

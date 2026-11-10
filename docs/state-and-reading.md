@@ -57,6 +57,25 @@ galleries show only the known total. A bottom gradient keeps controls legible.
 Titles reserve two lines below the cover, followed by a single author line.
 The selected column count is an upper bound: cards require at least 116dp per
 column, including margins, so the two 48dp action targets do not overlap.
+Online and downloaded gallery lists offer two or three columns from the toolbar. Four columns
+are available when the list's usable width is at least 600dp. Large font sizes
+increase the minimum column width; an unusually narrow window can temporarily
+fall back to one column to preserve action targets. Compact and wide window
+choices are stored separately and restored when the window grows again.
+Online and downloaded lists store their choices independently. The old
+portrait/landscape preferences seed each list's new choices once, without
+changing their keys or meaning. The main-list and download settings now edit
+these window choices; other screens retain their existing column settings.
+Downloaded lists keep search, sort order and download tasks when changing
+columns. Their column action is hidden during multi-selection, and temporary
+one-column fallback keeps the same card layout. Changing columns
+preserves the visible gallery and its vertical offset without replacing the
+adapter. If a deeply clipped row becomes too short to remain visible, that
+gallery is anchored at the top instead. Language filtering remains available
+in the overflow menu.
+Three- and four-column lists reduce visible action glyphs to 16dp and the
+download ring to 34dp with 40dp touch targets to reduce accidental taps;
+two-column lists keep their existing centered glyphs, 48dp targets and 36dp ring.
 API list cards retain `num_pages`, including their in-app Parcelable transfer;
 legacy history without a known total continues to show `page/?` when started.
 Custom status names appear at the top of the cover with their own label color.

@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Popolarità giornaliera</string>
     <string name="sort_popular_week">Popolarità settimanale</string>
     <string name="sort_type_title_format" formatted="true">Scegli tipo ordinamento (%s)</string>
-    <string name="sort_select_type">Seleziona tipo di ordinamento:</string>
+    <string name="sort_select_type">Seleziona tipo di ordinamento</string>
     <string name="unable_to_connect_to_the_site">Impossibile connettersi al sito</string>
     <string name="no_entry_found">Nessuna galleria trovata</string>
     <string name="retry">Riprova</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">File locali non verificati</string>
     <string name="debug_mask_images">Oscura immagini per il debug</string>
     <string name="debug_mask_images_summary">Copre copertine e pagine con una scacchiera opaca. Si applica alla riapertura della schermata; i file scaricati restano invariati.</string>
+    <string name="list_columns_action">Cambia colonne: %1$d → %2$d</string>
+    <string name="list_language_filter">Lingua: %1$s</string>
+    <string name="list_compact_columns">Colonne nelle finestre compatte</string>
+    <string name="list_wide_columns">Colonne nelle finestre ampie</string>
+    <string name="list_columns_summary">Si adatta alla larghezza e al testo; 4 colonne richiedono una finestra ampia.</string>
 </resources>

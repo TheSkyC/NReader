@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.Manifest;
@@ -53,6 +54,7 @@ import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
+import com.maxwai.nclientv3.components.widgets.GalleryListGrid;
 import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
@@ -122,6 +124,7 @@ public class MainActivity extends BaseActivity
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
     private boolean setting = false;
+    private GalleryListGrid listGrid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -245,6 +248,18 @@ public class MainActivity extends BaseActivity
      **/
     private boolean lastGalleryReached(CustomGridLayoutManager manager) {
         return recycler.getAdapter() != null && manager.findLastVisibleItemPosition() >= (recycler.getAdapter().getItemCount() - 1 - manager.getSpanCount());
+    }
+
+    @Override
+    protected void changeLayout(boolean landscape) {
+        if (listGrid == null) listGrid = new GalleryListGrid(recycler);
+        else listGrid.refresh();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (listGrid != null) listGrid.close();
+        super.onDestroy();
     }
 
     private void initializeNavigationView() {
@@ -488,6 +503,7 @@ public class MainActivity extends BaseActivity
             filteringTag = false;
         }
         invalidateOptionsMenu();
+        if (listGrid != null) listGrid.refresh();
     }
 
     @Override
@@ -501,6 +517,7 @@ public class MainActivity extends BaseActivity
         popularItemDispay(menu.findItem(R.id.by_popular));
 
         showLanguageIcon(menu.findItem(R.id.only_language));
+        listGrid.bindMenu(menu.findItem(R.id.list_columns));
 
         menu.findItem(R.id.only_language).setVisible(modeType == ModeType.NORMAL);
         menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
@@ -563,6 +580,7 @@ public class MainActivity extends BaseActivity
                 item.setIcon(R.drawable.ic_world);
                 break;
         }
+        item.setTitle(getString(R.string.list_language_filter, item.getTitle()));
         Global.setTint(this, item.getIcon());
     }
 
@@ -582,6 +600,9 @@ public class MainActivity extends BaseActivity
         LogUtility.d("Pressed item: " + item.getItemId());
         if (item.getItemId() == R.id.by_popular) {
             updateSortType(item);
+        } else if (item.getItemId() == R.id.list_columns) {
+            listGrid.cycle();
+            return true;
         } else if (item.getItemId() == R.id.only_language) {
             updateLanguageAndIcon(item);
         } else if (item.getItemId() == R.id.search) {

@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Populares por día</string>
     <string name="sort_popular_week">Populares por semana</string>
     <string name="sort_type_title_format" formatted="true">Ordenar por (%s)</string>
-    <string name="sort_select_type">Ordenar por:</string>
+    <string name="sort_select_type">Ordenar por</string>
     <string name="unable_to_connect_to_the_site">No se puede conectar con el sitio</string>
     <string name="no_entry_found">No se han encontrado entradas</string>
     <string name="retry">Reintentar</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">Archivos locales sin verificar</string>
     <string name="debug_mask_images">Ocultar imágenes para depuración</string>
     <string name="debug_mask_images_summary">Cubre portadas y páginas con un tablero opaco. Se aplica al volver a abrir la pantalla; no modifica los archivos descargados.</string>
+    <string name="list_columns_action">Cambiar columnas: %1$d → %2$d</string>
+    <string name="list_language_filter">Idioma: %1$s</string>
+    <string name="list_compact_columns">Columnas en ventanas compactas</string>
+    <string name="list_wide_columns">Columnas en ventanas amplias</string>
+    <string name="list_columns_summary">Se adapta al ancho y al tamaño del texto; 4 columnas requieren una ventana amplia.</string>
 </resources>

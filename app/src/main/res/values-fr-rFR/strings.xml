@@ -220,7 +220,7 @@
     <string name="sort_popular_day">Populaire du jour</string>
     <string name="sort_popular_week">Populaire de la semaine</string>
     <string name="sort_type_title_format" formatted="true">Choisissez le type de tri (%s)</string>
-    <string name="sort_select_type">Choisissez le type de tri :</string>
+    <string name="sort_select_type">Choisissez le type de tri</string>
     <string name="unable_to_connect_to_the_site">Impossible de se connecter au site</string>
     <string name="no_entry_found">Aucune entrée trouvée</string>
     <string name="retry">Réessayer</string>
@@ -347,4 +347,9 @@
     <string name="state_download_unverified">Fichiers locaux non vérifiés</string>
     <string name="debug_mask_images">Masquer les images pour le débogage</string>
     <string name="debug_mask_images_summary">Recouvre les couvertures et les pages d’un damier opaque. Actif à la réouverture de l’écran ; les fichiers téléchargés restent inchangés.</string>
+    <string name="list_columns_action">Changer les colonnes : %1$d → %2$d</string>
+    <string name="list_language_filter">Langue : %1$s</string>
+    <string name="list_compact_columns">Colonnes dans les fenêtres compactes</string>
+    <string name="list_wide_columns">Colonnes dans les fenêtres larges</string>
+    <string name="list_columns_summary">Selon la largeur et la taille du texte ; 4 colonnes nécessitent une fenêtre large.</string>
 </resources>

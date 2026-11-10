@@ -24,6 +24,11 @@ public class CustomGridLayoutManager extends GridLayoutManager {
         requestLayout();
     }
 
+    public void setRequestedColumnCount(int columns) {
+        requestedColumns = Math.max(1, columns);
+        setSpanCount(requestedColumns);
+    }
+
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
         if (minimumColumnWidth > 0 && getOrientation() == VERTICAL && getWidth() > 0) {

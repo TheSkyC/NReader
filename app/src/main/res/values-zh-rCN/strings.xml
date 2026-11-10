@@ -220,7 +220,7 @@
     <string name="sort_popular_day">日榜</string>
     <string name="sort_popular_week">周榜</string>
     <string name="sort_type_title_format" formatted="true">选择排序类型（%s）</string>
-    <string name="sort_select_type">选择排序类型：</string>
+    <string name="sort_select_type">选择排序类型</string>
     <string name="unable_to_connect_to_the_site">无法连接站点</string>
     <string name="no_entry_found">找不到条目</string>
     <string name="retry">重试</string>
@@ -348,4 +348,9 @@
     <string name="state_download_unverified">完整性未知</string>
     <string name="debug_mask_images">调试图片遮罩</string>
     <string name="debug_mask_images_summary">用不透明棋盘格遮住封面和阅读页。重新打开页面后生效，不修改下载文件。</string>
+    <string name="list_columns_action">切换列数：%1$d → %2$d</string>
+    <string name="list_language_filter">语言：%1$s</string>
+    <string name="list_compact_columns">普通窗口列数</string>
+    <string name="list_wide_columns">宽屏窗口列数</string>
+    <string name="list_columns_summary">根据可用宽度和文字大小调整；宽屏窗口可使用 4 列。</string>
 </resources>
