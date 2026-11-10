@@ -169,7 +169,7 @@ final class GalleryCardActions {
         BottomSheetDialog dialog = sheet(anchor.getContext(), gallery.getTitle(), anchor.getContext().getString(label));
         if (detail != 0) ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(detail);
         if (repair && gallery.getId() > 0) {
-            action(dialog, R.string.download_repair, () -> {
+            action(dialog, R.string.download_repair, false, () -> {
                 resolve(anchor, gallery, current, resolved -> {
                     File folder = Global.findGalleryFolder(anchor.getContext(), resolved.getId());
                     if (folder == null || Global.DOWNLOADFOLDER == null) {
@@ -179,7 +179,7 @@ final class GalleryCardActions {
                     executor.execute(() -> {
                         DownloadIntegrity.Result result = DownloadIntegrity.inspect(folder);
                         main.post(() -> {
-                            if (!active(anchor) || !current.getAsBoolean()) return;
+                            if (!dialog.isShowing() || !active(anchor) || !current.getAsBoolean()) return;
                             if (result.state == com.maxwai.nclientv3.files.LocalDownloadState.UNVERIFIED) {
                                 ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(R.string.download_repair_unavailable);
                                 return;
@@ -284,13 +284,17 @@ final class GalleryCardActions {
     }
 
     private static void action(BottomSheetDialog dialog, int label, Runnable callback) {
+        action(dialog, label, true, callback);
+    }
+
+    private static void action(BottomSheetDialog dialog, int label, boolean dismiss, Runnable callback) {
         LinearLayout actions = dialog.findViewById(R.id.sheet_actions);
         MaterialButton button = new MaterialButton(dialog.getContext());
         button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
         button.setTextColor(MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary));
         button.setText(label);
         button.setOnClickListener(view -> {
-            dialog.dismiss();
+            if (dismiss) dialog.dismiss();
             callback.run();
         });
         actions.addView(button, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,

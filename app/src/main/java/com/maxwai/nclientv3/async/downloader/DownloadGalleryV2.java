@@ -111,8 +111,12 @@ public class DownloadGalleryV2 extends Worker {
 
     public static void restart(Context context, GalleryDownloaderV2 downloader) {
         Gallery gallery = downloader.getGallery();
-        if (downloader.isRepairTask() && gallery != null) {
-            repair(context, gallery, downloader.getRepairFolder(), downloader.getRepairPages());
+        if (downloader.isRepairTask()) {
+            GalleryDownloaderManager manager = gallery == null
+                ? new GalleryDownloaderManager(context, downloader.getPathTitle(), downloader.getThumbnail(), downloader.getId())
+                : new GalleryDownloaderManager(context, gallery, downloader.getStart(), downloader.getEnd());
+            manager.downloader().configureRepair(downloader.getRepairFolder(), downloader.getRepairPages());
+            enqueue(context, manager);
             return;
         }
         if (gallery != null) {
