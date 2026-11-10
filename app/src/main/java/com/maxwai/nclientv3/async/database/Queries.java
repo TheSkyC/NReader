@@ -207,6 +207,27 @@ public class Queries {
             TagTable.insertTagsForGallery(data);
         }
 
+        static void insertMinimal(GenericGallery gallery) {
+            ContentValues values = new ContentValues(12);
+            String title = gallery.getTitle();
+            String thumbnail = gallery instanceof SimpleGallery
+                ? ((SimpleGallery) gallery).getThumbnail().toString() : "";
+            String pages = gallery.getPageCount() + ";" + thumbnail + ";" + thumbnail + ";";
+            values.put(IDGALLERY, gallery.getId());
+            values.put(TITLE_ENG, title);
+            values.put(TITLE_JP, title);
+            values.put(TITLE_PRETTY, title);
+            values.put(FAVORITE_COUNT, 0);
+            values.put(MEDIAID, gallery instanceof SimpleGallery ? ((SimpleGallery) gallery).getMediaId() : 0);
+            values.put(PAGES, pages);
+            values.put(UPLOAD, 0L);
+            values.put(MAX_WIDTH, 0);
+            values.put(MAX_HEIGHT, 0);
+            values.put(MIN_WIDTH, 0);
+            values.put(MIN_HEIGHT, 0);
+            db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        }
+
         /**
          * Convert a cursor pointing to galleries to a list of galleries, cursor not closed
          *
@@ -816,6 +837,11 @@ public class Queries {
 
         public static void addFavorite(Gallery gallery) {
             GalleryTable.insert(gallery);
+            FavoriteTable.insert(gallery.getId());
+        }
+
+        public static void addFavorite(GenericGallery gallery) {
+            if (!(gallery instanceof Gallery)) GalleryTable.insertMinimal(gallery);
             FavoriteTable.insert(gallery.getId());
         }
 
