@@ -294,6 +294,40 @@ public class ImporterTest {
     }
 
     @Test
+    public void tamperedSnapshotPreferencesDisableRestore() throws Exception {
+        createRestoreSnapshot();
+        File settings = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-settings.json");
+        Files.write(settings.toPath(), "{\"tampered\":true}".getBytes(StandardCharsets.UTF_8));
+        assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+        assertFalse(Importer.snapshotFile(RuntimeEnvironment.getApplication()).exists());
+
+        createRestoreSnapshot();
+        File tags = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-tags.json");
+        Files.write(tags.toPath(), "{\"tampered\":true}".getBytes(StandardCharsets.UTF_8));
+        assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+        assertFalse(Importer.snapshotFile(RuntimeEnvironment.getApplication()).exists());
+    }
+
+    @Test
+    public void missingSnapshotMetadataDisablesRestore() throws Exception {
+        createRestoreSnapshot();
+        File metadata = new File(RuntimeEnvironment.getApplication().getCacheDir(), "last-restore-snapshot.json.meta");
+        assertTrue(metadata.delete());
+        assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+    }
+
+    private void createRestoreSnapshot() throws Exception {
+        File backup = new File(RuntimeEnvironment.getApplication().getCacheDir(), "snapshot-source-" + System.nanoTime() + ".zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        Importer.importData(RuntimeEnvironment.getApplication(), Uri.fromFile(backup));
+        assertTrue(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+    }
+
+    @Test
     public void invalidDownloadTaskRowsRollBackTheRestore() throws IOException {
         try {
             restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":3,\"range_end\":1,"
