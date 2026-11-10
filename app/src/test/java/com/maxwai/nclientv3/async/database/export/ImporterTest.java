@@ -285,6 +285,14 @@ public class ImporterTest {
     }
 
     @Test
+    public void expiredSnapshotIsUnavailableForRestore() throws Exception {
+        File snapshot = Importer.snapshotFile(RuntimeEnvironment.getApplication());
+        Files.write(snapshot.toPath(), "{}".getBytes(StandardCharsets.UTF_8));
+        snapshot.setLastModified(System.currentTimeMillis() - 31L * 24 * 60 * 60 * 1000);
+        assertFalse(Importer.hasUsableSnapshot(RuntimeEnvironment.getApplication()));
+    }
+
+    @Test
     public void invalidDownloadTaskRowsRollBackTheRestore() throws IOException {
         try {
             restore("{\"DownloadTasks\":[{\"id_gallery\":123,\"range_start\":3,\"range_end\":1,"

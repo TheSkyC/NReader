@@ -39,6 +39,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Importer {
+    private static final long SNAPSHOT_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000;
     private static final String SNAPSHOT_NAME = "last-restore-snapshot.json";
     private static final String PREVIOUS_SNAPSHOT_NAME = "previous-restore-snapshot.json";
     private static final String SETTINGS_SNAPSHOT_NAME = "last-restore-settings.json";
@@ -280,6 +281,17 @@ public class Importer {
         return new File(context.getCacheDir(), PREVIOUS_SNAPSHOT_NAME);
     }
 
+    public static boolean hasUsableSnapshot(Context context) {
+        File snapshot = snapshotFile(context);
+        return snapshot.isFile() && snapshot.length() > 0
+            && System.currentTimeMillis() - snapshot.lastModified() <= SNAPSHOT_MAX_AGE_MS;
+    }
+
+    public static long snapshotAgeDays(Context context) {
+        if (!snapshotFile(context).isFile()) return -1;
+        return Math.max(0, (System.currentTimeMillis() - snapshotFile(context).lastModified()) / (24L * 60 * 60 * 1000));
+    }
+
     private static File settingsSnapshotFile(Context context) { return new File(context.getCacheDir(), SETTINGS_SNAPSHOT_NAME); }
     private static File tagsSnapshotFile(Context context) { return new File(context.getCacheDir(), TAGS_SNAPSHOT_NAME); }
 
@@ -325,7 +337,7 @@ public class Importer {
 
     public static void restoreLastSnapshot(Context context) throws IOException {
         File snapshot = snapshotFile(context);
-        if (!snapshot.isFile()) throw new IOException("No restore snapshot is available");
+        if (!hasUsableSnapshot(context)) throw new IOException("No usable restore snapshot is available");
         DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
             try (InputStream input = new java.io.FileInputStream(snapshot)) {
                 importDBLocked(input);
