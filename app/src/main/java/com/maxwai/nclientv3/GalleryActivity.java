@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +22,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,6 +32,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -71,6 +74,11 @@ public class GalleryActivity extends BaseActivity {
     private int zoom;
     private boolean isLocalFavorite;
     private Toolbar toolbar;
+    private AppBarLayout appBar;
+    private TextView headerTitle;
+    private String fullTitle = "";
+    private boolean titleExpanded;
+    private AppBarLayout.OnOffsetChangedListener titleOffsetListener;
     private MenuItem onlineFavoriteItem;
     private String statusString;
 
@@ -92,6 +100,8 @@ public class GalleryActivity extends BaseActivity {
         if (Global.isLockScreen())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         toolbar = findViewById(R.id.toolbar);
+        appBar = findViewById(R.id.appbar);
+        headerTitle = findViewById(R.id.gallery_header_title);
         setSupportActionBar(toolbar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -345,10 +355,10 @@ public class GalleryActivity extends BaseActivity {
     private void applyTitle() {
         CollapsingToolbarLayout collapsing = findViewById(R.id.collapsing);
         ActionBar actionBar = getSupportActionBar();
-        final String title = gallery.getTitle();
-        if (collapsing == null || actionBar == null) return;
+        fullTitle = gallery.getTitle();
+        if (collapsing == null || actionBar == null || headerTitle == null || appBar == null) return;
         View.OnLongClickListener listener = v -> {
-            CopyToClipboardActivity.copyTextToClipboard(GalleryActivity.this, title);
+            CopyToClipboardActivity.copyTextToClipboard(GalleryActivity.this, fullTitle);
             GalleryActivity.this.runOnUiThread(
                 () -> Toast.makeText(GalleryActivity.this, R.string.title_copied_to_clipboard, Toast.LENGTH_SHORT).show()
             );
@@ -356,16 +366,56 @@ public class GalleryActivity extends BaseActivity {
         };
 
         collapsing.setOnLongClickListener(listener);
-        findViewById(R.id.toolbar).setOnLongClickListener(listener);
-        if (title.length() > 100) {
-            collapsing.setExpandedTitleTextAppearance(android.R.style.TextAppearance_DeviceDefault_Medium);
-            collapsing.setMaxLines(5);
-        } else {
-            collapsing.setExpandedTitleTextAppearance(android.R.style.TextAppearance_DeviceDefault_Large);
-            collapsing.setMaxLines(4);
-        }
-        actionBar.setTitle(title);
+        toolbar.setOnLongClickListener(listener);
+        headerTitle.setOnLongClickListener(listener);
+        headerTitle.setText(fullTitle);
+        headerTitle.setContentDescription(fullTitle);
+        headerTitle.setTooltipText(fullTitle);
+        headerTitle.setOnClickListener(v -> setTitleExpanded(!titleExpanded));
+        setTitleExpanded(false);
 
+        actionBar.setTitle("");
+        if (titleOffsetListener != null) appBar.removeOnOffsetChangedListener(titleOffsetListener);
+        titleOffsetListener = (layout, verticalOffset) -> {
+            boolean collapsed = Math.abs(verticalOffset) >= layout.getTotalScrollRange();
+            toolbar.setTitle(collapsed ? fullTitle : "");
+        };
+        appBar.addOnOffsetChangedListener(titleOffsetListener);
+
+    }
+
+    private void setTitleExpanded(boolean expanded) {
+        if (headerTitle == null || appBar == null) return;
+        titleExpanded = expanded;
+        headerTitle.setMaxLines(expanded ? Integer.MAX_VALUE : 4);
+        headerTitle.setEllipsize(expanded ? null : TextUtils.TruncateAt.END);
+        headerTitle.setSelected(expanded);
+        headerTitle.post(() -> {
+            ViewGroup.MarginLayoutParams titleParams = (ViewGroup.MarginLayoutParams) headerTitle.getLayoutParams();
+            int collapsedHeight = Math.round(192f * appBar.getResources().getDisplayMetrics().density);
+            if (!titleExpanded || appBar.getWidth() <= 0) {
+                setAppBarHeight(collapsedHeight);
+                return;
+            }
+            int titleWidth = appBar.getWidth() - titleParams.leftMargin - titleParams.rightMargin;
+            headerTitle.measure(
+                View.MeasureSpec.makeMeasureSpec(titleWidth, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            );
+            int toolbarHeight = toolbar == null ? 0 : toolbar.getMeasuredHeight();
+            int bottomMargin = titleParams.bottomMargin;
+            int expandedHeight = toolbarHeight + headerTitle.getMeasuredHeight() + bottomMargin + 16;
+            setAppBarHeight(Math.max(collapsedHeight, expandedHeight));
+        });
+    }
+
+    private void setAppBarHeight(int height) {
+        ViewGroup.LayoutParams appBarParams = appBar.getLayoutParams();
+        appBarParams.height = height;
+        appBar.setLayoutParams(appBarParams);
+        ViewGroup.LayoutParams collapsingParams = findViewById(R.id.collapsing).getLayoutParams();
+        collapsingParams.height = height;
+        findViewById(R.id.collapsing).setLayoutParams(collapsingParams);
     }
 
     @Override
