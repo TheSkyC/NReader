@@ -27,6 +27,7 @@ import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.api.components.Tag;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.api.local.LocalSortType;
+import com.maxwai.nclientv3.files.LocalDownloadState;
 import com.maxwai.nclientv3.async.converters.CreatePdfOrZip;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
@@ -50,6 +51,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHolder> implements Filterable {
+    public enum DownloadFilter { ALL, COMPLETE, PARTIAL, DAMAGED, UNVERIFIED, ABSENT }
     private final LocalActivity context;
     private final List<LocalGallery> dataset;
     private final List<GalleryDownloaderV2> galleryDownloaders;
@@ -118,6 +120,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     };
 
     private List<Object> filter;
+    private DownloadFilter downloadFilter = DownloadFilter.ALL;
     @NonNull
     private String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
@@ -241,11 +244,25 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private boolean matchesQuery(LocalGallery gallery) {
+        if (!matchesDownloadFilter(gallery)) return false;
         if (lastQuery.isEmpty()) return true;
         if (gallery.getTitle().toLowerCase(Locale.US).contains(lastQuery)) return true;
         for (Tag tag : gallery.getGalleryData().getTags().getAllTagsList())
             if (tag.getName().toLowerCase(Locale.US).contains(lastQuery)) return true;
         return false;
+    }
+
+    public void setDownloadFilter(DownloadFilter value) {
+        downloadFilter = value == null ? DownloadFilter.ALL : value;
+        getFilter().filter(lastQuery);
+    }
+
+    public DownloadFilter getDownloadFilter() { return downloadFilter; }
+
+    private boolean matchesDownloadFilter(LocalGallery gallery) {
+        if (downloadFilter == DownloadFilter.ALL) return true;
+        LocalDownloadState state = LocalDownloadState.inspect(gallery.getDirectory());
+        return state.name().equals(downloadFilter.name());
     }
 
     private void sortItems(ArrayList<Object> arr) {
