@@ -175,6 +175,12 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private void mainMenu() {
         addPreferencesFromResource(R.xml.settings);
 
+        Preference notifications = Objects.requireNonNull(findPreference(getString(R.string.preference_key_notification_permission)));
+        notifications.setOnPreferenceClickListener(preference -> {
+            act.manageNotifications();
+            return true;
+        });
+
         if (BuildConfig.DEBUG) {
             SwitchPreferenceCompat mask = new SwitchPreferenceCompat(requireContext());
             mask.setTitle(R.string.debug_mask_images);

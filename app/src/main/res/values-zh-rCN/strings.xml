@@ -214,6 +214,11 @@
     <string name="id_copied_to_clipboard">ID 已复制至剪贴板</string>
     <string name="copied_to_clipboard">复制至剪贴板</string>
     <string name="maximum_notification_count">最大通知数</string>
+    <string name="notification_permission_title">通知</string>
+    <string name="notification_permission_summary">管理下载和导出通知</string>
+    <string name="notification_permission_explanation">允许通知后，可以查看下载和导出的进度及结果。通知可能包含作品标题。</string>
+    <string name="notification_permission_denied">通知不可用。你可以在系统设置中启用通知。</string>
+    <string name="notification_open_settings">打开设置</string>
     <string name="copy_settings_to_clipboard">复制设置到剪贴板</string>
     <string name="sort_popular_all_time">热门</string>
     <string name="sort_recent">最近</string>
