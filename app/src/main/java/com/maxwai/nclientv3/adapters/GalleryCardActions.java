@@ -24,11 +24,13 @@ import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.async.downloader.DownloadQueue;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
+import com.maxwai.nclientv3.files.DownloadIntegrity;
 import com.maxwai.nclientv3.components.views.RangeSelector;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.util.List;
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BooleanSupplier;
@@ -166,10 +168,47 @@ final class GalleryCardActions {
                       boolean repair, BooleanSupplier current, Runnable finished) {
         BottomSheetDialog dialog = sheet(anchor.getContext(), gallery.getTitle(), anchor.getContext().getString(label));
         if (detail != 0) ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(detail);
-        if (repair && gallery.getId() > 0) action(dialog, R.string.download_gallery,
-            () -> download(anchor, gallery, current, finished));
+        if (repair && gallery.getId() > 0) {
+            action(dialog, R.string.download_repair, () -> {
+                resolve(anchor, gallery, current, resolved -> {
+                    File folder = Global.findGalleryFolder(anchor.getContext(), resolved.getId());
+                    if (folder == null || Global.DOWNLOADFOLDER == null) {
+                        ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(R.string.download_repair_unavailable);
+                        return;
+                    }
+                    executor.execute(() -> {
+                        DownloadIntegrity.Result result = DownloadIntegrity.inspect(folder);
+                        main.post(() -> {
+                            if (!active(anchor) || !current.getAsBoolean()) return;
+                            if (result.state == com.maxwai.nclientv3.files.LocalDownloadState.UNVERIFIED) {
+                                ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(R.string.download_repair_unavailable);
+                                return;
+                            }
+                            String message = anchor.getContext().getString(R.string.download_repair_pages,
+                                result.missing.size(), pageList(result.missing), result.damaged.size(), pageList(result.damaged));
+                            ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(message);
+                            if (result.needsRepair()) action(dialog, R.string.download_repair_start,
+                                () -> DownloadGalleryV2.repair(anchor.getContext(), resolved, folder,
+                                    mergePages(result.missing, result.damaged)));
+                        });
+                    });
+                }, finished);
+            });
+        }
         action(dialog, android.R.string.ok, () -> {});
         dialog.show();
+    }
+
+    private static List<Integer> mergePages(List<Integer> missing, List<Integer> damaged) {
+        java.util.ArrayList<Integer> pages = new java.util.ArrayList<>(missing);
+        for (Integer page : damaged) if (!pages.contains(page)) pages.add(page);
+        java.util.Collections.sort(pages);
+        return pages;
+    }
+
+    private static String pageList(List<Integer> pages) {
+        if (pages.isEmpty()) return "-";
+        return android.text.TextUtils.join(", ", pages);
     }
 
     static void task(View anchor, GalleryDownloaderV2 downloader) {
@@ -201,7 +240,7 @@ final class GalleryCardActions {
             snackbar.addCallback(new Snackbar.Callback() {
                 @Override
                 public void onDismissed(Snackbar transientBottomBar, int event) {
-                    if (!undone[0]) downloader.deleteLocalFiles();
+                    if (!undone[0] && !downloader.isRepairTask()) downloader.deleteLocalFiles();
                 }
             });
             snackbar.show();

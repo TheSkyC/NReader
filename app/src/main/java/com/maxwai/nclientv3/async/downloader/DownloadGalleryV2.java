@@ -24,6 +24,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
+import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DownloadGalleryV2 extends Worker {
@@ -102,8 +103,18 @@ public class DownloadGalleryV2 extends Worker {
         downloadGallery(context, gallery, start, end);
     }
 
+    public static void repair(Context context, Gallery gallery, File folder, List<Integer> pages) {
+        GalleryDownloaderManager manager = new GalleryDownloaderManager(context, gallery, 0, gallery.getPageCount() - 1);
+        manager.downloader().configureRepair(folder, pages);
+        enqueue(context, manager);
+    }
+
     public static void restart(Context context, GalleryDownloaderV2 downloader) {
         Gallery gallery = downloader.getGallery();
+        if (downloader.isRepairTask() && gallery != null) {
+            repair(context, gallery, downloader.getRepairFolder(), downloader.getRepairPages());
+            return;
+        }
         if (gallery != null) {
             downloadRange(context, gallery, downloader.getStart(), downloader.getEnd());
         } else if (downloader.getId() > 0) {
