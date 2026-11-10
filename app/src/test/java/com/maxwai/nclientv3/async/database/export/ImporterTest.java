@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.json.JSONObject;
 
 import static org.junit.Assert.*;
 
@@ -177,6 +178,23 @@ public class ImporterTest {
             assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
             assertFalse(database.inTransaction());
             assertFalse(RuntimeEnvironment.getApplication().getSharedPreferences("Settings", 0).contains("testPreference"));
+        }
+    }
+
+    @Test
+    public void backupManifestRejectsTamperedDatabaseBytes() throws Exception {
+        byte[] database = "{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8);
+        JSONObject manifest = new JSONObject();
+        manifest.put("format_version", Exporter.BACKUP_FORMAT_VERSION);
+        manifest.put("database_length", database.length);
+        manifest.put("database_sha256", Exporter.sha256(database));
+        Importer.validateManifest(manifest.toString().getBytes(StandardCharsets.UTF_8), database);
+        database[0] = '[';
+        try {
+            Importer.validateManifest(manifest.toString().getBytes(StandardCharsets.UTF_8), database);
+            fail("Expected integrity failure");
+        } catch (IOException expected) {
+            // expected
         }
     }
 

@@ -18,6 +18,9 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +30,8 @@ import java.util.zip.ZipOutputStream;
 
 public class Exporter {
     static final String DB_ZIP_FILE = "Database.json";
+    static final String MANIFEST_ZIP_FILE = "Manifest.json";
+    static final int BACKUP_FORMAT_VERSION = 2;
     private static final String[] SHARED_FILES = new String[]{
         "Settings",
         "ScrapedTags",
@@ -103,8 +108,17 @@ public class Exporter {
         try (ZipOutputStream zip = new ZipOutputStream(outputStream)) {
             zip.setLevel(Deflater.BEST_COMPRESSION);
 
+            ByteArrayOutputStream database = new ByteArrayOutputStream();
+            dumpDB(database);
+            byte[] databaseBytes = database.toByteArray();
+            zip.putNextEntry(new ZipEntry(MANIFEST_ZIP_FILE));
+            JsonWriter manifest = new JsonWriter(new OutputStreamWriter(zip, StandardCharsets.UTF_8));
+            manifest.beginObject().name("format_version").value(BACKUP_FORMAT_VERSION)
+                .name("database_length").value(databaseBytes.length)
+                .name("database_sha256").value(sha256(databaseBytes)).endObject().flush();
+            zip.closeEntry();
             zip.putNextEntry(new ZipEntry(DB_ZIP_FILE));
-            dumpDB(zip);
+            zip.write(databaseBytes);
             zip.closeEntry();
 
             for (String shared : SHARED_FILES) {
@@ -114,6 +128,17 @@ public class Exporter {
             }
         }
 
+    }
+
+    static String sha256(byte[] bytes) throws IOException {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder result = new StringBuilder(digest.length * 2);
+            for (byte value : digest) result.append(String.format("%02x", value & 0xff));
+            return result.toString();
+        } catch (Exception exception) {
+            throw new IOException("Unable to hash backup data", exception);
+        }
     }
 
     private static void exportSharedPreferences(Context context, String sharedName, OutputStream stream) throws IOException {
