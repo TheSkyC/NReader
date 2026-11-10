@@ -7,7 +7,7 @@ import java.util.function.BiConsumer;
 
 public class LogUtility {
 
-    public static final String LOGTAG = "NCLIENTLOG";
+    public static final String LOGTAG = "NReader";
 
     public static void d(Object... message) {
         common(Log::d, message);
