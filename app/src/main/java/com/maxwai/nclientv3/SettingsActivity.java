@@ -215,7 +215,10 @@ public class SettingsActivity extends GeneralActivity {
             .setPositiveButton(R.string.ok, (dialog, which) -> new Thread(() -> {
                 try {
                     Importer.restoreLastSnapshot(this);
-                    runOnUiThread(() -> Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
                 } catch (IOException exception) {
                     LogUtility.e("Unable to restore backup snapshot", exception);
                     runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
