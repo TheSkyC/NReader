@@ -30,11 +30,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 class Importer {
+    private static final String SNAPSHOT_NAME = "last-restore-snapshot.json";
     private static SharedPreferences.Editor importSharedPreferences(Context context, String sharedName, InputStream stream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(stream));
         if (sharedName.contains("/")) {
@@ -222,6 +227,7 @@ class Importer {
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
         SQLiteDatabase database = Database.getDatabase();
         if (database == null) throw new IOException("Database is not available");
+        writeSnapshot(context);
         database.beginTransaction();
         List<SharedPreferences.Editor> preferences = new ArrayList<>();
         try {
@@ -259,6 +265,31 @@ class Importer {
         for (SharedPreferences.Editor editor : preferences) editor.apply();
         Queries.StatusTable.initStatuses();
         com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+    }
+
+    static File snapshotFile(Context context) {
+        return new File(context.getCacheDir(), SNAPSHOT_NAME);
+    }
+
+    private static void writeSnapshot(Context context) throws IOException {
+        byte[] bytes = Exporter.currentDatabaseBytes();
+        File target = snapshotFile(context);
+        File temporary = new File(target.getPath() + ".part");
+        try (FileOutputStream output = new FileOutputStream(temporary)) {
+            output.write(bytes);
+            output.getFD().sync();
+        }
+        Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    static void restoreLastSnapshot(Context context) throws IOException {
+        File snapshot = snapshotFile(context);
+        if (!snapshot.isFile()) throw new IOException("No restore snapshot is available");
+        DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
+            try (InputStream input = new java.io.FileInputStream(snapshot)) {
+                importDBLocked(input);
+            }
+        }));
     }
 
     private static byte[] readEntry(InputStream stream, int limit) throws IOException {
