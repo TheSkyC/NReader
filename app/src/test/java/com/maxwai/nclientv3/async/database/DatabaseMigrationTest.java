@@ -44,7 +44,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(15, database.getVersion());
+            assertEquals(16, database.getVersion());
             assertEquals(7, scalar(database, "SELECT page FROM Resume WHERE id_gallery=123"));
             assertEquals(99, scalar(database, "SELECT time FROM Favorite WHERE id_gallery=123"));
             assertEquals(12345, scalar(database, "SELECT color FROM Status WHERE name='Custom'"));
@@ -64,7 +64,7 @@ public class DatabaseMigrationTest {
     public void version12CreatesStatusesBeforeInitializingThem() {
         Context context = RuntimeEnvironment.getApplication();
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
-            new DatabaseHelper(context).onUpgrade(database, 12, 15);
+            new DatabaseHelper(context).onUpgrade(database, 12, 16);
             assertEquals(6, scalar(database, "SELECT COUNT(*) FROM Status"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));
         }
@@ -96,7 +96,7 @@ public class DatabaseMigrationTest {
             }
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                assertEquals(15, database.getVersion());
+                assertEquals(16, database.getVersion());
                 assertEquals(0, scalar(database, "SELECT COUNT(time) FROM Favorite"));
                 assertEquals(0, scalar(database, "SELECT COUNT(range_start) FROM Downloads"));
                 assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));
