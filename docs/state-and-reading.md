@@ -53,6 +53,9 @@ to 64 MiB, the manifest to 64 KiB, and each preference entry to 16 MiB after
 decompression. Unknown entries remain compatible up to 16 MiB in total. These
 limits apply before restoration; they do not guarantee that every structurally
 valid preview can be imported, since row and preference validation also applies.
+Skipped database JSON values may contain up to 64 nested arrays or objects;
+deeper values are rejected in both preview and restore. The same limit applies
+to unrecognized fields in a backup manifest.
 
 Before a successful archive import, a cache snapshot captures the database,
 Settings and ScrapedTags in a single file published by an atomic rename. Existing
