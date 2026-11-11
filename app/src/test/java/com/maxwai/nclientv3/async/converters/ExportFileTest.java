@@ -7,10 +7,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 
 import java.io.File;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -21,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
@@ -91,6 +94,19 @@ public class ExportFileTest {
                 while ((entry = zip.getNextEntry()) != null) names.add(entry.getName());
             }
             assertEquals(java.util.Arrays.asList("002.jpg", "010.png"), names);
+        } finally {
+            delete(directory);
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void pdfRejectsCorruptPageBeforeCreatingDocumentPage() throws Exception {
+        File directory = Files.createTempDirectory("nreader-pdf-export").toFile();
+        try {
+            File invalid = new File(directory, "corrupt.png");
+            Files.write(invalid.toPath(), new byte[]{1, 2, 3});
+            assertThrows(IOException.class, () -> CreatePdfOrZip.appendPdfPage(null, invalid, 1));
         } finally {
             delete(directory);
         }
