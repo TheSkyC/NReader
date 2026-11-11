@@ -18,6 +18,10 @@ import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import java.util.concurrent.Executor;
 
 public class PINActivity extends GeneralActivity {
+    private static final int FORWARDED_URI_GRANT_FLAGS = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+        | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
     private SharedPreferences preferences;
     private boolean authSuccess = false;
 
@@ -80,10 +84,16 @@ public class PINActivity extends GeneralActivity {
 
     @Override
     public void finish() {
-        Intent i = new Intent(getIntent());
-        i.setClass(this, MainActivity.class);
+        Intent i = createMainIntent(getIntent(), this);
         if (!hasPin() || authSuccess) startActivity(i);
         authSuccess = false;
         super.finish();
+    }
+
+    static Intent createMainIntent(Intent source, android.content.Context context) {
+        Intent target = new Intent(source);
+        target.setClass(context, MainActivity.class);
+        target.setFlags(source.getFlags() & FORWARDED_URI_GRANT_FLAGS);
+        return target;
     }
 }
