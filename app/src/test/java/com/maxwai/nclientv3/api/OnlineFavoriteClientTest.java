@@ -78,6 +78,34 @@ public class OnlineFavoriteClientTest {
         assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 201));
     }
 
+    @Test public void restoredStateIsAccountScopedAndRecheckedBeforeToggle() throws Exception {
+        OnlineFavoriteClient.sessionIdentity(context);
+        OnlineFavoriteClient.rememberState(context, 99001, true);
+        awaitStorage();
+        AuthStore.saveApiKey(context, "another-cache-account", true);
+        assertNull(OnlineFavoriteClient.cachedState(context, 99001));
+        AuthStore.saveApiKey(context, "synthetic-key", true);
+        OnlineFavoriteClient.sessionIdentity(context);
+        awaitStorage();
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 99001));
+        List<String> methods = Collections.synchronizedList(new ArrayList<>());
+        Outcome outcome = new Outcome();
+        OnlineFavoriteClient.toggle(context, 99001, client(chain -> {
+            methods.add(chain.request().method());
+            return response(chain, 200, methods.size() == 1
+                ? "{\"favorited\":false}" : "{\"favorited\":true}");
+        }), outcome);
+        outcome.await();
+        assertEquals(java.util.Arrays.asList("GET", "POST"), methods);
+        assertEquals(Boolean.TRUE, outcome.value);
+    }
+
+    private void awaitStorage() throws Exception {
+        java.lang.reflect.Field field = OnlineFavoriteClient.class.getDeclaredField("storage");
+        field.setAccessible(true);
+        ((java.util.concurrent.ExecutorService) field.get(null)).submit(() -> {}).get(5, TimeUnit.SECONDS);
+    }
+
     @Test public void favoriteListSnapshotRespectsAccountAndSubsequentChanges() {
         OnlineFavoriteClient.FavoriteListSnapshot first = OnlineFavoriteClient.beginFavoriteList(context);
         OnlineFavoriteClient.acceptFavoriteList(context, first, java.util.Arrays.asList(301, 302));
