@@ -28,7 +28,7 @@ public final class BackupPreview {
                 String table = reader.nextName();
                 int count = 0;
                 reader.beginArray();
-                while (reader.hasNext()) { reader.skipValue(); count++; }
+                while (reader.hasNext()) { BackupJson.skipValue(reader, 1); count++; }
                 reader.endArray();
                 counts.put(table, count);
             }

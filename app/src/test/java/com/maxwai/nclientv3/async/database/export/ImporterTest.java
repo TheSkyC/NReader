@@ -68,6 +68,29 @@ public class ImporterTest {
     }
 
     @Test
+    public void deeplyNestedUnknownDatabaseValuesFailSafely() throws Exception {
+        String accepted = nestedUnknownTable(63);
+        BackupPreview.validateDatabaseBytes(accepted.getBytes(StandardCharsets.UTF_8));
+        restore(accepted);
+        Queries.ResumeTable.insert(123, 7);
+        Queries.ReadingProgressTable.insert(123, new ReadingPosition(9, 0.5f));
+        String rejected = nestedUnknownTable(64);
+        assertThrows(IOException.class, () -> BackupPreview.validateDatabaseBytes(rejected.getBytes(StandardCharsets.UTF_8)));
+        assertThrows(IOException.class, () -> restore(rejected));
+        assertEquals(7, Queries.ResumeTable.pageFromId(123));
+        assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+        assertFalse(database.inTransaction());
+    }
+
+    private static String nestedUnknownTable(int depth) {
+        StringBuilder json = new StringBuilder("{\"Resume\":[],\"Future\":[");
+        for (int index = 0; index < depth; index++) json.append('[');
+        json.append("null");
+        for (int index = 0; index < depth; index++) json.append(']');
+        return json.append("]}").toString();
+    }
+
+    @Test
     public void automaticOffsetRoundTripsWithoutChangingManualBookmark() throws IOException {
         restore("{\"ReadingProgress\":[{\"id_gallery\":123,\"page\":11,\"offset\":0.625,\"updated_at\":99}]}");
         assertEquals(7, Queries.ResumeTable.pageFromId(123));
@@ -239,6 +262,56 @@ public class ImporterTest {
             fail("Expected integrity failure");
         } catch (IOException expected) {
             // expected
+        }
+    }
+
+    @Test
+    public void manifestRejectsDeepUnknownFieldsAndTrailingData() throws Exception {
+        byte[] databaseBytes = "{}".getBytes(StandardCharsets.UTF_8);
+        String prefix = "{\"format_version\":" + Exporter.BACKUP_FORMAT_VERSION
+            + ",\"database_length\":" + databaseBytes.length
+            + ",\"database_sha256\":\"" + Exporter.sha256(databaseBytes) + "\",\"future\":";
+        for (int depth : new int[]{63, 64}) {
+            StringBuilder manifest = new StringBuilder(prefix);
+            for (int index = 0; index < depth; index++) manifest.append('[');
+            manifest.append("{\"nested\":true}");
+            for (int index = 0; index < depth; index++) manifest.append(']');
+            manifest.append('}');
+            byte[] bytes = manifest.toString().getBytes(StandardCharsets.UTF_8);
+            if (depth == 63) {
+                Importer.validateManifest(bytes, databaseBytes);
+            } else {
+                assertThrows(IOException.class, () -> Importer.validateManifest(bytes, databaseBytes));
+            }
+        }
+        String valid = prefix + "[null,{\"nested\":true}]}";
+        Importer.validateManifest(valid.getBytes(StandardCharsets.UTF_8), databaseBytes);
+        assertThrows(IOException.class, () -> Importer.validateManifest((valid + "{}").getBytes(StandardCharsets.UTF_8), databaseBytes));
+    }
+
+    @Test
+    public void previewAndImportAgreeOnUnknownTableDepth() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        for (int depth : new int[]{63, 64}) {
+            File backup = new File(application.getCacheDir(), "depth-" + depth + ".zip");
+            try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+                zip.putNextEntry(new ZipEntry("Database.json"));
+                zip.write(nestedUnknownTable(depth).getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+            Uri uri = Uri.fromFile(backup);
+            if (depth == 63) {
+                BackupPreview.inspect(application, uri);
+                Importer.importData(application, uri);
+                Queries.ResumeTable.insert(123, 7);
+                Queries.ReadingProgressTable.insert(123, new ReadingPosition(9, 0.5f));
+            } else {
+                assertThrows(IOException.class, () -> BackupPreview.inspect(application, uri));
+                assertThrows(IOException.class, () -> Importer.importData(application, uri));
+                assertEquals(7, Queries.ResumeTable.pageFromId(123));
+                assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+                assertFalse(database.inTransaction());
+            }
         }
     }
 

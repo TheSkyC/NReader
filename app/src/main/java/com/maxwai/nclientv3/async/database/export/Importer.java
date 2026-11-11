@@ -121,7 +121,7 @@ public class Importer {
             while (reader.hasNext()) {
                 String tableName = reader.nextName();
                 if (!Arrays.asList(Exporter.SCHEMAS).contains(tableName)) {
-                    reader.skipValue();
+                    BackupJson.skipValue(reader);
                     continue;
                 }
                 if (!seenTables.add(tableName)) throw new IOException("Duplicate backup table");
@@ -461,13 +461,25 @@ public class Importer {
     }
 
     static void validateManifest(byte[] manifestBytes, byte[] databaseBytes) throws IOException {
-        try {
-            JSONObject manifest = new JSONObject(new String(manifestBytes, StandardCharsets.UTF_8));
-            if (manifest.optInt("format_version", -1) != Exporter.BACKUP_FORMAT_VERSION
-                || manifest.optLong("database_length", -1) != databaseBytes.length
-                || !Exporter.sha256(databaseBytes).equalsIgnoreCase(manifest.optString("database_sha256", "")))
+        try (JsonReader reader = new JsonReader(new InputStreamReader(
+            new ByteArrayInputStream(manifestBytes), StandardCharsets.UTF_8))) {
+            int version = -1;
+            long length = -1;
+            String hash = "";
+            reader.beginObject();
+            while (reader.hasNext()) {
+                switch (reader.nextName()) {
+                    case "format_version": version = reader.nextInt(); break;
+                    case "database_length": length = reader.nextLong(); break;
+                    case "database_sha256": hash = reader.nextString(); break;
+                    default: BackupJson.skipValue(reader); break;
+                }
+            }
+            reader.endObject();
+            if (reader.peek() != JsonToken.END_DOCUMENT || version != Exporter.BACKUP_FORMAT_VERSION
+                || length != databaseBytes.length || !Exporter.sha256(databaseBytes).equalsIgnoreCase(hash))
                 throw new IOException("Backup integrity or format check failed");
-        } catch (JSONException exception) {
+        } catch (IllegalStateException | NumberFormatException exception) {
             throw new IOException("Invalid backup manifest", exception);
         }
     }
