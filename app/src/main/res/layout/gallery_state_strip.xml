@@ -41,11 +41,12 @@
         app:srcCompat="@drawable/ic_cover_heart"
         app:tint="@color/cover_favorite" />
 
+    <!-- Reserve the badge size before asynchronous state is rendered. -->
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/gallery_online_favorite"
         android:layout_width="12dp"
         android:layout_height="12dp"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:importantForAccessibility="no"
         app:layout_constraintStart_toStartOf="@id/gallery_favorite"
         app:layout_constraintEnd_toEndOf="@id/gallery_favorite"

@@ -283,7 +283,7 @@ public class GalleryStateBadgeTest {
         awaitProgress(card, activity.getString(R.string.page_count_format, 4));
         View local = card.findViewById(R.id.gallery_favorite);
         View online = card.findViewById(R.id.gallery_online_favorite);
-        assertEquals(View.GONE, online.getVisibility());
+        assertEquals(View.INVISIBLE, online.getVisibility());
 
         AuthStore.saveApiKey(activity, "synthetic-test-key", true);
         badge.bind(gallery);
@@ -291,6 +291,11 @@ public class GalleryStateBadgeTest {
         assertEquals(View.VISIBLE, online.getVisibility());
         assertFalse(online.isClickable());
         assertFalse(online.isSelected());
+        assertTrue(online.getTranslationY() > 0);
+        assertEquals(.55f, online.getAlpha(), .001f);
+        OnlineFavoriteClient.rememberState(activity, 123, false);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(1f, online.getAlpha(), .001f);
         local.performClick();
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (!Queries.FavoriteTable.isFavorite(123) && System.nanoTime() < deadline) {
@@ -376,8 +381,99 @@ public class GalleryStateBadgeTest {
         AuthStore.clear(activity);
         badge.bind(gallery);
         awaitProgress(card, activity.getString(R.string.page_count_format, 2));
-        assertEquals(View.GONE, secondary.getVisibility());
+        assertEquals(View.INVISIBLE, secondary.getVisibility());
         assertEquals(activity.getString(R.string.cover_remove_favorite), primary.getContentDescription());
+    }
+
+    @Test
+    public void secondaryFavoriteScalesWithCardWidth() {
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        new GalleryStateBadge(card);
+        float density = activity.getResources().getDisplayMetrics().density;
+        View secondary = card.findViewById(R.id.gallery_online_favorite);
+        for (int width : new int[]{116, 180}) {
+            int pixels = Math.round(width * density);
+            card.measure(View.MeasureSpec.makeMeasureSpec(pixels, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+            assertEquals(width == 116 ? 1f : 14f / 12f, secondary.getScaleX(), .001f);
+            assertEquals(secondary.getScaleX(), secondary.getScaleY(), .001f);
+            assertEquals((width == 116 ? 6 : 9) * density, secondary.getTranslationX(), .001f);
+            assertEquals(secondary.getTranslationX(), secondary.getTranslationY(), .001f);
+        }
+    }
+
+    @Test
+    public void secondaryFavoriteKeepsItsSizeBeforeStateLoads() throws Exception {
+        AuthStore.saveApiKey(activity, "layout-test-key", true);
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        GalleryStateBadge badge = new GalleryStateBadge(card);
+        int width = Math.round(116 * activity.getResources().getDisplayMetrics().density);
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+        View secondary = card.findViewById(R.id.gallery_online_favorite);
+        assertEquals(View.INVISIBLE, secondary.getVisibility());
+        assertTrue(secondary.getWidth() > 0);
+        badge.bind(SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":131,\"media_id\":\"1\",\"english_title\":\"Layout test\",\"num_pages\":2}")));
+        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        assertEquals(View.VISIBLE, secondary.getVisibility());
+        assertTrue(secondary.getWidth() > 0);
+    }
+
+    @Test
+    public void downloadedGalleryWithIdShowsBothFavoriteStatesInEitherMode() throws Exception {
+        AuthStore.saveApiKey(activity, "local-card-test-key", true);
+        LocalGallery local = gallery(129, "{\"num_pages\":1}");
+        OnlineFavoriteClient.rememberState(activity, 129, true);
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        GalleryStateBadge badge = new GalleryStateBadge(card);
+        for (String mode : new String[]{"local", "online"}) {
+            activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
+                .putString(activity.getString(R.string.preference_key_favorite_action_mode), mode).apply();
+            badge.bind(local);
+            awaitProgress(card, activity.getString(R.string.page_count_format, 1));
+            View primary = card.findViewById(R.id.gallery_favorite);
+            View secondary = card.findViewById(R.id.gallery_online_favorite);
+            assertEquals(View.VISIBLE, secondary.getVisibility());
+            assertTrue(secondary.getTranslationY() > 0);
+            assertEquals("online".equals(mode), primary.isSelected());
+            assertEquals("local".equals(mode), secondary.isSelected());
+        }
+    }
+
+    @Test
+    public void downloadedGalleryCanChangeOnlineFavoriteWithoutChangingLocalFavorite() throws Exception {
+        AuthStore.saveApiKey(activity, "local-online-action-key", true);
+        activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
+            .putString(activity.getString(R.string.preference_key_favorite_action_mode), "local").apply();
+        LocalGallery local = gallery(130, "{\"num_pages\":1}");
+        OnlineFavoriteClient.rememberState(activity, 130, false);
+        okhttp3.OkHttpClient previous = Global.client;
+        try {
+            Global.client = new okhttp3.OkHttpClient.Builder()
+                .addInterceptor(new com.maxwai.nclientv3.settings.ApiAuthInterceptor(activity))
+                .addInterceptor(chain -> new okhttp3.Response.Builder().request(chain.request())
+                    .protocol(okhttp3.Protocol.HTTP_1_1).code(200).message("OK")
+                    .body(okhttp3.ResponseBody.create("{\"favorited\":true}", null)).build()).build();
+            View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+            activity.setContentView(card);
+            new GalleryStateBadge(card).bind(local);
+            awaitProgress(card, activity.getString(R.string.page_count_format, 1));
+            assertTrue(card.findViewById(R.id.gallery_favorite).performLongClick());
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (!Boolean.TRUE.equals(OnlineFavoriteClient.cachedState(activity, 130)) && System.nanoTime() < deadline) {
+                shadowOf(Looper.getMainLooper()).idle();
+                Thread.sleep(10);
+            }
+            assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(activity, 130));
+            assertFalse(Queries.FavoriteTable.isFavorite(130));
+        } finally {
+            Global.client = previous;
+        }
     }
 
     @Test
@@ -432,15 +528,15 @@ public class GalleryStateBadgeTest {
         assertTrue(firstStar.isSelected());
         AuthStore.setApiKeyValidation(activity, false);
         shadowOf(Looper.getMainLooper()).idle();
-        assertEquals(View.GONE, firstStar.getVisibility());
-        assertEquals(View.GONE, secondStar.getVisibility());
+        assertEquals(View.INVISIBLE, firstStar.getVisibility());
+        assertEquals(View.INVISIBLE, secondStar.getVisibility());
         AuthStore.saveApiKey(activity, "third-observer-key", true);
         shadowOf(Looper.getMainLooper()).idle();
         assertEquals(View.VISIBLE, firstStar.getVisibility());
         assertFalse(firstStar.isSelected());
         AuthStore.clear(activity);
         shadowOf(Looper.getMainLooper()).idle();
-        assertEquals(View.GONE, firstStar.getVisibility());
+        assertEquals(View.INVISIBLE, firstStar.getVisibility());
     }
 
     @Test
