@@ -121,7 +121,11 @@ public final class GalleryListGrid implements View.OnLayoutChangeListener, Recyc
                 }
                 ImageView.ScaleType scaleType = dense ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER;
                 if (button.getScaleType() != scaleType) button.setScaleType(scaleType);
-                if (button.getPaddingLeft() != padding) button.setPadding(padding, padding, padding, padding);
+                int buttonPadding = buttonId == R.id.gallery_favorite && dense
+                    && Boolean.TRUE.equals(button.getTag(R.id.gallery_online_favorite))
+                    ? Math.round(10 * density) : padding;
+                if (button.getPaddingLeft() != buttonPadding)
+                    button.setPadding(buttonPadding, buttonPadding, buttonPadding, buttonPadding);
                 if (button.getWidth() != targetSize || button.getHeight() != targetSize) {
                     button.forceLayout();
                     card.requestLayout();

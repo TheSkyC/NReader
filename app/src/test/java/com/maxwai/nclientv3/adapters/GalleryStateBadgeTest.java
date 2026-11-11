@@ -417,6 +417,39 @@ public class GalleryStateBadgeTest {
     }
 
     @Test
+    public void heartBadgeUsesSmallerScaleThanStarBadgeAcrossCardWidths() throws Exception {
+        AuthStore.saveApiKey(activity, "badge-scale-test-key", true);
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        GalleryStateBadge badge = new GalleryStateBadge(card);
+        SimpleGallery gallery = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":132,\"media_id\":\"1\",\"english_title\":\"Badge scale\",\"num_pages\":2}"));
+        View secondary = card.findViewById(R.id.gallery_online_favorite);
+        float density = activity.getResources().getDisplayMetrics().density;
+        for (int width : new int[]{116, 145, 180}) {
+            int pixels = Math.round(width * density);
+            card.measure(View.MeasureSpec.makeMeasureSpec(pixels, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+            for (String mode : new String[]{"online", "local"}) {
+                activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
+                    .putString(activity.getString(R.string.preference_key_favorite_action_mode), mode).apply();
+                badge.bind(gallery);
+                awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+                card.measure(View.MeasureSpec.makeMeasureSpec(pixels, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+                float expected = "online".equals(mode) ? (width <= 160 ? 8f : 11f) / 12f
+                    : (width <= 140 ? 1f : 14f / 12f);
+                assertEquals(expected, secondary.getScaleX(), .001f);
+                assertEquals(expected, secondary.getScaleY(), .001f);
+                int padding = Math.round(16 * density);
+                assertEquals(padding, card.findViewById(R.id.gallery_favorite).getPaddingLeft());
+            }
+        }
+    }
+
+    @Test
     public void secondaryFavoriteKeepsItsSizeBeforeStateLoads() throws Exception {
         AuthStore.saveApiKey(activity, "layout-test-key", true);
         View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);

@@ -72,6 +72,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private Boolean onlineFavoriteState;
     private String onlineFavoriteIdentity;
     private boolean compactProgressStyle;
+    private boolean onlinePrimaryStyle;
     private final DownloadObserver observer = new DownloadObserver() {
         private void update(GalleryDownloaderV2 downloader) {
             main.post(() -> {
@@ -138,10 +139,17 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private void updateCardStyle() {
         float density = item.getResources().getDisplayMetrics().density;
         boolean compact = item.getWidth() > 0 && item.getWidth() / density <= 140f;
-        float badgeScale = compact ? 1f : 14f / 12f;
+        boolean compactBadge = item.getWidth() > 0 && item.getWidth() / density <= 160f;
+        int buttonWidth = favorite.getLayoutParams().width;
+        boolean denseButton = buttonWidth > 0 && buttonWidth <= Math.round(40 * density);
+        int favoritePadding = Math.round((denseButton ? (onlinePrimaryStyle ? 10 : 12) : 16) * density);
+        if (favorite.getPaddingLeft() != favoritePadding)
+            favorite.setPadding(favoritePadding, favoritePadding, favoritePadding, favoritePadding);
+        float badgeScale = onlinePrimaryStyle ? (compactBadge ? 8f : 11f) / 12f
+            : (compact ? 1f : 14f / 12f);
         onlineFavorite.setScaleX(badgeScale);
         onlineFavorite.setScaleY(badgeScale);
-        float badgeOffset = (compact ? 6 : 9) * density;
+        float badgeOffset = ((onlinePrimaryStyle ? compactBadge : compact) ? 6 : 9) * density;
         onlineFavorite.setTranslationX(badgeOffset);
         onlineFavorite.setTranslationY(badgeOffset);
         if (compact == compactProgressStyle) return;
@@ -266,6 +274,9 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         long renderedBinding = binding;
         synchronizeOnlineFavoriteIdentity(context);
         boolean onlinePrimary = onlinePrimaryPreference() && onlineFavoriteAvailable();
+        onlinePrimaryStyle = onlinePrimary;
+        favorite.setTag(R.id.gallery_online_favorite, onlinePrimary);
+        updateCardStyle();
         favorite.setVisibility(View.VISIBLE);
         boolean onlineSelected = Boolean.TRUE.equals(onlineFavoriteState);
         favorite.setSelected(onlinePrimary ? onlineSelected : state.favorite);
