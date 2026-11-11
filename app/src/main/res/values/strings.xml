@@ -211,9 +211,9 @@
     <string name="miscellaneous">Miscellaneous</string>
     <string name="update_settings">Update settings</string>
     <string name="online_favorite_manga">Online favorite galleries</string>
-    <string name="favorite_action_mode_title">Favorite card action</string>
-    <string name="favorite_action_local_primary">Heart primary</string>
-    <string name="favorite_action_online_primary">Star primary</string>
+    <string name="favorite_action_mode_title">Favorite button actions</string>
+    <string name="favorite_action_local_primary">Tap: local favorite; touch and hold: online favorite</string>
+    <string name="favorite_action_online_primary">Tap: online favorite; touch and hold: local favorite (when online is available)</string>
     <string name="favorite_action_online_unavailable">Set a valid API key to use online favorites</string>
     <string name="favorite_action_local_accessibility">Toggle local favorite</string>
     <string name="favorite_action_online_accessibility">Toggle online favorite</string>

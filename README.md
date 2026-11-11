@@ -102,7 +102,8 @@ State definitions, database upgrades and backup compatibility are documented in
 [state and reading contracts](docs/state-and-reading.md).
 
 For favorite-card interaction checks, configure a valid API key and open Settings
-to switch **Favorite card action** between **Heart primary** and **Star primary**.
+to switch **Favorite button actions** between local and online favorites as the
+preferred tap action.
 Verify short press, long press, and `Shift+Enter` on a focused card; moving a
 pressed finger cancels the long action. With no valid key, local favorites stay
 available and online actions open the API-key settings. Test local-only, online-

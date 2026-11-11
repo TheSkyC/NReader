@@ -139,9 +139,9 @@
     <string name="miscellaneous">其它设置</string>
     <string name="update_settings">更新设置</string>
     <string name="online_favorite_manga">在线收藏漫画</string>
-    <string name="favorite_action_mode_title">收藏卡片操作方式</string>
-    <string name="favorite_action_local_primary">心形优先</string>
-    <string name="favorite_action_online_primary">星形优先</string>
+    <string name="favorite_action_mode_title">收藏按钮操作方式</string>
+    <string name="favorite_action_local_primary">短按本地收藏；长按在线收藏</string>
+    <string name="favorite_action_online_primary">短按在线收藏；长按本地收藏（在线可用时）</string>
     <string name="favorite_action_online_unavailable">请先设置有效 API Key 才能使用在线收藏</string>
     <string name="favorite_action_local_accessibility">切换本地收藏</string>
     <string name="favorite_action_online_accessibility">切换在线收藏</string>
