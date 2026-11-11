@@ -21,6 +21,7 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -204,14 +205,7 @@ public class Importer {
             || page == null || page < -1 || page > 10000 || pageAttempts == null || pageAttempts < 0 || pageAttempts > 4
             || retryAt == null || retryAt < 0) throw new IOException("Invalid download task values");
         if (metadata != null) {
-            try {
-                JSONObject json = new JSONObject(metadata);
-                if (json.optInt("id", -1) != id.intValue()
-                    || json.optInt("num_pages", 0) <= 0 || json.optInt("num_pages", 0) > 10000)
-                    throw new IOException("Invalid download task metadata");
-            } catch (JSONException exception) {
-                throw new IOException("Invalid download task metadata", exception);
-            }
+            validateDownloadMetadata(metadata, id.intValue());
         }
         if ((target == null) != (repairPages == null)) throw new IOException("Invalid repair task");
         if (target != null) {
@@ -235,6 +229,26 @@ public class Importer {
         }
         if ("FINISHED".equals(state) || "CANCELED".equals(state))
             throw new IOException("Terminal download task cannot be restored");
+    }
+
+    private static void validateDownloadMetadata(String metadata, int expectedId) throws IOException {
+        try (JsonReader reader = new JsonReader(new StringReader(metadata))) {
+            int id = -1;
+            int pages = 0;
+            reader.beginObject();
+            while (reader.hasNext()) {
+                switch (reader.nextName()) {
+                    case "id": id = reader.nextInt(); break;
+                    case "num_pages": pages = reader.nextInt(); break;
+                    default: BackupJson.skipValue(reader, 1); break;
+                }
+            }
+            reader.endObject();
+            if (reader.peek() != JsonToken.END_DOCUMENT || id != expectedId || pages <= 0 || pages > 10000)
+                throw new IOException("Invalid download task metadata");
+        } catch (IllegalStateException | NumberFormatException exception) {
+            throw new IOException("Invalid download task metadata", exception);
+        }
     }
 
     public static synchronized void importData(@NonNull Context context, Uri selectedFile) throws IOException {
