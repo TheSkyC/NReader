@@ -6,45 +6,18 @@ import android.net.Uri;
 import android.util.JsonReader;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public final class BackupPreview {
     private BackupPreview() {}
 
     public static Summary inspect(Context context, Uri file) throws IOException {
-        byte[] database = null;
-        byte[] manifest = null;
-        try (InputStream source = context.getContentResolver().openInputStream(file);
-             ZipInputStream zip = new ZipInputStream(source)) {
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                if (Exporter.DB_ZIP_FILE.equals(entry.getName())) database = read(zip, 64 * 1024 * 1024);
-                else if (Exporter.MANIFEST_ZIP_FILE.equals(entry.getName())) manifest = read(zip, 64 * 1024);
-                zip.closeEntry();
-            }
-        }
-        if (database == null) throw new IOException("Backup has no database");
-        if (manifest != null) Importer.validateManifest(manifest, database);
-        return new Summary(countRows(database), manifest != null);
-    }
-
-    private static byte[] read(InputStream source, int limit) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        byte[] buffer = new byte[8192];
-        int count;
-        while ((count = source.read(buffer)) != -1) {
-            if (count > limit - output.size()) throw new IOException("Backup entry exceeds size limit");
-            output.write(buffer, 0, count);
-        }
-        return output.toByteArray();
+        BackupArchive archive = BackupArchive.read(context.getContentResolver().openInputStream(file), null);
+        return new Summary(countRows(archive.database), archive.manifest != null);
     }
 
     private static Map<String, Integer> countRows(byte[] database) throws IOException {

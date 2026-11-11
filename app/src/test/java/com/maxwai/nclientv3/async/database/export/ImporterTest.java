@@ -22,6 +22,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -281,6 +282,134 @@ public class ImporterTest {
             assertEquals(7, Queries.ResumeTable.pageFromId(123));
             assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
             assertFalse(database.inTransaction());
+        }
+    }
+
+    @Test
+    public void archiveLimitsApplyToPreviewAndImportWithoutChangingData() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        for (String name : new String[]{"Settings.json", "ScrapedTags.json", "future-data"}) {
+            File backup = new File(application.getCacheDir(), "large-" + name + ".zip");
+            try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+                zip.putNextEntry(new ZipEntry("Database.json"));
+                zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+                zip.putNextEntry(new ZipEntry(name));
+                byte[] block = new byte[8192];
+                if (!"future-data".equals(name)) {
+                    java.util.Arrays.fill(block, (byte) ' ');
+                    zip.write("{}".getBytes(StandardCharsets.UTF_8));
+                    zip.write(block, 0, block.length - 2);
+                    for (int index = 0; index < 2047; index++) zip.write(block);
+                } else {
+                    for (int index = 0; index < 2048; index++) zip.write(block);
+                }
+                zip.write(0);
+                zip.closeEntry();
+            }
+            Uri uri = Uri.fromFile(backup);
+            assertThrows(IOException.class, () -> BackupPreview.inspect(application, uri));
+            assertThrows(IOException.class, () -> Importer.importData(application, uri));
+            assertEquals(7, Queries.ResumeTable.pageFromId(123));
+            assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+            assertFalse(database.inTransaction());
+        }
+    }
+
+    @Test
+    public void rejectsTooManyAndDuplicateArchiveEntriesInPreviewAndImport() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File tooMany = new File(application.getCacheDir(), "many-entries.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(tooMany))) {
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            for (int index = 0; index < 128; index++) {
+                zip.putNextEntry(new ZipEntry("future-" + index));
+                zip.closeEntry();
+            }
+        }
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+            for (String name : new String[]{"Database.json", "Databasf.json"}) {
+                zip.putNextEntry(new ZipEntry(name));
+                zip.write("{}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+        }
+        byte[] duplicateBytes = bytes.toByteArray();
+        byte[] oldName = "Databasf.json".getBytes(StandardCharsets.UTF_8);
+        byte[] newName = "Database.json".getBytes(StandardCharsets.UTF_8);
+        for (int index = 0; index <= duplicateBytes.length - oldName.length; index++) {
+            boolean matches = true;
+            for (int position = 0; position < oldName.length; position++)
+                if (duplicateBytes[index + position] != oldName[position]) matches = false;
+            if (matches) System.arraycopy(newName, 0, duplicateBytes, index, newName.length);
+        }
+        File duplicate = new File(application.getCacheDir(), "duplicate-entries.zip");
+        Files.write(duplicate.toPath(), duplicateBytes);
+        for (File file : new File[]{tooMany, duplicate}) {
+            Uri uri = Uri.fromFile(file);
+            assertThrows(IOException.class, () -> BackupPreview.inspect(application, uri));
+            assertThrows(IOException.class, () -> Importer.importData(application, uri));
+            assertEquals(7, Queries.ResumeTable.pageFromId(123));
+            assertFalse(database.inTransaction());
+        }
+    }
+
+    @Test
+    public void boundedUnknownEntriesRemainCompatible() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File backup = new File(application.getCacheDir(), "future-entry.zip");
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+            zip.putNextEntry(new ZipEntry("Future.json"));
+            zip.write("future data".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Database.json"));
+            zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        Uri uri = Uri.fromFile(backup);
+        assertEquals(0, BackupPreview.inspect(application, uri).totalRows());
+        Importer.importData(application, uri);
+        assertEquals(-1, Queries.ResumeTable.pageFromId(123));
+    }
+
+    @Test
+    public void unknownEntriesUseAggregateLimitAndPreserveStagedPreferencesOnFailure() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("Settings", 0).edit().putInt("archiveBoundary", 11).commit();
+        application.getSharedPreferences("ScrapedTags", 0).edit().putString("archiveBoundary", "before").commit();
+        for (int extra : new int[]{0, 1}) {
+            File backup = new File(application.getCacheDir(), "aggregate-" + extra + ".zip");
+            try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(backup))) {
+                zip.putNextEntry(new ZipEntry("Database.json"));
+                zip.write("{\"Resume\":[]}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+                zip.putNextEntry(new ZipEntry("Settings.json"));
+                zip.write("{\"archiveBoundary\":{\"INT\":42}}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+                zip.putNextEntry(new ZipEntry("ScrapedTags.json"));
+                zip.write("{\"archiveBoundary\":{\"STRING\":\"after\"}}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+                byte[] block = new byte[8192];
+                for (int part = 0; part < 2; part++) {
+                    zip.putNextEntry(new ZipEntry("future-" + part));
+                    for (int index = 0; index < 1024; index++) zip.write(block);
+                    if (part == 1 && extra != 0) zip.write(0);
+                    zip.closeEntry();
+                }
+            }
+            Uri uri = Uri.fromFile(backup);
+            if (extra == 0) {
+                assertEquals(0, BackupPreview.inspect(application, uri).totalRows());
+            } else {
+                assertThrows(IOException.class, () -> BackupPreview.inspect(application, uri));
+                assertThrows(IOException.class, () -> Importer.importData(application, uri));
+                assertEquals(7, Queries.ResumeTable.pageFromId(123));
+                assertEquals(11, application.getSharedPreferences("Settings", 0).getInt("archiveBoundary", -1));
+                assertEquals("before", application.getSharedPreferences("ScrapedTags", 0).getString("archiveBoundary", null));
+            }
         }
     }
 

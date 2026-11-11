@@ -247,33 +247,12 @@ public class Importer {
         database.beginTransaction();
         List<SharedPreferences.Editor> preferences = new ArrayList<>();
         try {
-            try (InputStream stream = context.getContentResolver().openInputStream(selectedFile);
-                 ZipInputStream inputStream = new ZipInputStream(stream)) {
-                ZipEntry entry;
-                Set<String> seenEntries = new HashSet<>();
-                boolean hasDatabase = false;
-                byte[] databaseBytes = null;
-                byte[] manifestBytes = null;
-                while ((entry = inputStream.getNextEntry()) != null) {
-                    String name = entry.getName();
-                    if (!seenEntries.add(name)) throw new IOException("Duplicate backup entry");
-                    if (Exporter.DB_ZIP_FILE.equals(name)) {
-                        databaseBytes = readEntry(inputStream, 64 * 1024 * 1024);
-                        hasDatabase = true;
-                    } else if (Exporter.MANIFEST_ZIP_FILE.equals(name)) {
-                        manifestBytes = readEntry(inputStream, 64 * 1024);
-                    } else if (name.equals("Settings.json") || name.equals("ScrapedTags.json")) {
-                        String shared = name.substring(0, name.length() - 5);
-                        preferences.add(importSharedPreferences(context, shared, inputStream));
-                    }
-                    inputStream.closeEntry();
-                }
-                if (!hasDatabase) throw new IOException("Backup has no database");
-                if (manifestBytes != null) validateManifest(manifestBytes, databaseBytes);
-                BackupPreview.validateDatabaseBytes(databaseBytes);
-                writeSnapshotCandidate(context);
-                importDBLocked(new ByteArrayInputStream(databaseBytes));
-            }
+            BackupArchive archive = BackupArchive.read(context.getContentResolver().openInputStream(selectedFile),
+                (name, source) -> preferences.add(importSharedPreferences(context,
+                    name.substring(0, name.length() - 5), source)));
+            BackupPreview.validateDatabaseBytes(archive.database);
+            writeSnapshotCandidate(context);
+            importDBLocked(new ByteArrayInputStream(archive.database));
             promoteSnapshot(context);
             database.setTransactionSuccessful();
         } catch (RuntimeException exception) {
