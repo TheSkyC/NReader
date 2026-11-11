@@ -9,6 +9,12 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 
@@ -57,6 +63,34 @@ public class ExportFileTest {
             assertTrue(restored != null && restored.isValid());
             assertEquals(214, restored.getId());
             assertEquals(1, restored.getPageCount());
+        } finally {
+            delete(directory);
+        }
+    }
+
+    @Test
+    public void sparseGalleryExportsAllExistingPagesInNumericOrder() throws Exception {
+        File directory = Files.createTempDirectory("nreader-sparse-export").toFile();
+        try {
+            Files.write(new File(directory, ".214").toPath(), new byte[0]);
+            Files.write(new File(directory, ".nomedia").toPath(), "{\"num_pages\":2}".getBytes(StandardCharsets.UTF_8));
+            Files.write(new File(directory, "010.png").toPath(), new byte[]{10});
+            Files.write(new File(directory, "002.jpg").toPath(), new byte[]{2});
+            LocalGallery gallery = CreatePdfOrZip.loadGallery(directory.getAbsolutePath());
+            List<com.maxwai.nclientv3.files.PageFile> pages = CreatePdfOrZip.exportPages(gallery);
+            assertEquals(2, pages.size());
+            assertEquals("002.jpg", pages.get(0).getName());
+            assertEquals("010.png", pages.get(1).getName());
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+                for (File page : pages) CreatePdfOrZip.writeZipPage(zip, page);
+            }
+            List<String> names = new ArrayList<>();
+            try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = zip.getNextEntry()) != null) names.add(entry.getName());
+            }
+            assertEquals(java.util.Arrays.asList("002.jpg", "010.png"), names);
         } finally {
             delete(directory);
         }

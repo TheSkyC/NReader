@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async.converters;
 
 import android.app.PendingIntent;
@@ -20,6 +21,7 @@ import androidx.work.WorkerParameters;
 
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.local.LocalGallery;
+import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.NotificationSettings;
 import com.maxwai.nclientv3.utility.LogUtility;
@@ -28,6 +30,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -86,15 +90,14 @@ public class CreatePdfOrZip extends Worker {
         if (gallery == null) {
             return Result.failure();
         }
-        totalPage = gallery.getPageCount();
+        List<PageFile> pages = exportPages(gallery);
+        totalPage = pages.size();
         preExecute(gallery.getDirectory(), pdf);
         if (pdf) {
             PdfDocument document = new PdfDocument();
             try {
-                File page;
-                for (int a = 1; a <= gallery.getPageCount(); a++) {
-                    page = gallery.getPage(a);
-                    if (page == null) continue;
+                for (int a = 1; a <= pages.size(); a++) {
+                    File page = pages.get(a - 1);
                     Bitmap bitmap = BitmapFactory.decodeFile(page.getAbsolutePath());
                     if (bitmap != null) {
                         PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), a).create();
@@ -103,7 +106,7 @@ public class CreatePdfOrZip extends Worker {
                         document.finishPage(p);
                         bitmap.recycle();
                     }
-                    notification.setProgress(totalPage - 1, a + 1, false);
+                    notification.setProgress(totalPage, a, false);
                     NotificationSettings.notify(getApplicationContext(), notId, notification.build());
 
                 }
@@ -139,21 +142,10 @@ public class CreatePdfOrZip extends Worker {
                 try (FileOutputStream output = new FileOutputStream(export.getTemporaryFile());
                      ZipOutputStream out = new ZipOutputStream(output)) {
                     out.setLevel(Deflater.BEST_COMPRESSION);
-                    File actual;
-                    int read;
-                    byte[] buffer = new byte[1024];
-                    for (int i = 1; i <= gallery.getPageCount(); i++) {
-                        actual = gallery.getPage(i);
-                        if (actual == null) continue;
-                        ZipEntry entry = new ZipEntry(actual.getName());
-                        try (FileInputStream in = new FileInputStream(actual)) {
-                            out.putNextEntry(entry);
-                            while ((read = in.read(buffer)) != -1) {
-                                out.write(buffer, 0, read);
-                            }
-                        }
-                        out.closeEntry();
-                        notification.setProgress(gallery.getPageCount(), i, false);
+                    int completed = 0;
+                    for (File page : pages) {
+                        writeZipPage(out, page);
+                        notification.setProgress(totalPage, ++completed, false);
                         NotificationSettings.notify(getApplicationContext(), notId, notification.build());
                     }
                     out.flush();
@@ -177,6 +169,22 @@ public class CreatePdfOrZip extends Worker {
             return gallery.isValid() && gallery.getPageCount() > 0 ? gallery : null;
         } catch (IOException | RuntimeException exception) {
             return null;
+        }
+    }
+
+    static List<PageFile> exportPages(LocalGallery gallery) {
+        List<PageFile> pages = new ArrayList<>();
+        for (PageFile page : gallery.getGalleryFolder()) pages.add(page);
+        return pages;
+    }
+
+    static void writeZipPage(ZipOutputStream out, File page) throws IOException {
+        try (FileInputStream in = new FileInputStream(page)) {
+            out.putNextEntry(new ZipEntry(page.getName()));
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            out.closeEntry();
         }
     }
 
@@ -215,7 +223,7 @@ public class CreatePdfOrZip extends Worker {
             .setOnlyAlertOnce(true)
             .setContentText(pdf ? getApplicationContext().getString(R.string.parsing_pages) : file.getName())
             .setContentTitle(getApplicationContext().getString(pdf ? R.string.channel2_title : R.string.channel3_title))
-            .setProgress(pdf ? (totalPage - 1) : 1, 0, false)
+            .setProgress(totalPage, 0, false)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS);
         if (pdf) {
