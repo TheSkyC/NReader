@@ -68,4 +68,11 @@ public class SearchLinkTest {
         assertFalse(MainActivity.isTrustedLink(Uri.parse("https://user@nhentai.net/search/?q=test")));
         assertFalse(MainActivity.isTrustedLink(Uri.parse("https://nhentai.net:8443/search/?q=test")));
     }
+
+    @Test
+    public void sharedTextExtractsUniqueGalleryLinks() {
+        assertEquals(2, MainActivity.extractSharedGalleryLinks(
+            "See https://nhentai.net/g/123/ and https://nhentai.net/g/456/1/ then https://nhentai.net/g/123/").size());
+        assertEquals(0, MainActivity.extractSharedGalleryLinks("ordinary text").size());
+    }
 }

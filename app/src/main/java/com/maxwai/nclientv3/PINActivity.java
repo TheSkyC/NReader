@@ -80,7 +80,8 @@ public class PINActivity extends GeneralActivity {
 
     @Override
     public void finish() {
-        Intent i = new Intent(this, MainActivity.class);
+        Intent i = new Intent(getIntent());
+        i.setClass(this, MainActivity.class);
         if (!hasPin() || authSuccess) startActivity(i);
         authSuccess = false;
         super.finish();
