@@ -20,6 +20,7 @@ import java.util.Objects;
 
 import okhttp3.Request;
 import okhttp3.OkHttpClient;
+import okhttp3.Call;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -35,32 +36,77 @@ public class CommentsFetcher extends Thread {
         void onResult(List<Comment> comments, int pages, boolean success);
     }
 
-    public static void fetch(Context context, int id, int page, Callback callback) {
-        Context application = context.getApplicationContext();
-        fetch(application, id, page, null, callback);
+    public static final class RequestHandle {
+        private Callback callback;
+        private Call call;
+        private boolean canceled;
+
+        private RequestHandle(Callback callback) {
+            this.callback = callback;
+        }
+
+        public void cancel() {
+            Call active;
+            synchronized (this) {
+                canceled = true;
+                callback = null;
+                active = call;
+            }
+            if (active != null) active.cancel();
+        }
+
+        private synchronized boolean attach(Call active) {
+            if (canceled) {
+                active.cancel();
+                return false;
+            }
+            call = active;
+            return true;
+        }
+
+        private synchronized boolean isCanceled() {
+            return canceled;
+        }
+
+        private synchronized void complete(List<Comment> result, int pages, boolean success) {
+            call = null;
+            Callback recipient = callback;
+            callback = null;
+            if (recipient != null) recipient.onResult(result, pages, success);
+        }
     }
 
-    static void fetch(Context context, int id, int page, OkHttpClient client, Callback callback) {
+    public static RequestHandle fetch(Context context, int id, int page, Callback callback) {
+        Context application = context.getApplicationContext();
+        return fetch(application, id, page, null, callback);
+    }
+
+    static RequestHandle fetch(Context context, int id, int page, OkHttpClient client, Callback callback) {
+        RequestHandle handle = new RequestHandle(callback);
         new Thread(() -> {
             List<Comment> result = new ArrayList<>();
             boolean success = false;
             int pages = 0;
-            try (Response response = (client == null ? Global.getClient(context) : client)
-                .newCall(createRequest(id, page)).execute()) {
-                ResponseBody body = response.body();
-                if (!response.isSuccessful() || body == null) throw new IOException("Comment request failed");
-                if (body.contentLength() > MAX_RESPONSE_BYTES || body.source().request(MAX_RESPONSE_BYTES + 1))
-                    throw new IOException("Comment response too large");
-                try (JsonReader reader = new JsonReader(body.charStream())) {
-                    pages = readPage(reader, result);
+            try {
+                Call call = (client == null ? Global.getClient(context) : client).newCall(createRequest(id, page));
+                if (!handle.attach(call)) return;
+                try (Response response = call.execute()) {
+                    ResponseBody body = response.body();
+                    if (!response.isSuccessful() || body == null) throw new IOException("Comment request failed");
+                    if (body.contentLength() > MAX_RESPONSE_BYTES || body.source().request(MAX_RESPONSE_BYTES + 1))
+                        throw new IOException("Comment response too large");
+                    try (JsonReader reader = new JsonReader(body.charStream())) {
+                        pages = readPage(reader, result);
+                    }
+                    success = true;
                 }
-                success = true;
             } catch (IOException | RuntimeException e) {
-                LogUtility.w("Failed to load comments", e);
+                if (!handle.isCanceled()) LogUtility.w("Failed to load comments", e);
                 result.clear();
             }
-            callback.onResult(result, pages, success);
+            handle.complete(result, pages, success);
         }).start();
+        return handle;
     }
 
     static Request createRequest(int id, int page) {

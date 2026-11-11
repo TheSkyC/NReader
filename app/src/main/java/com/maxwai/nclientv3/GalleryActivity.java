@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -63,6 +65,7 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -93,6 +96,8 @@ public class GalleryActivity extends BaseActivity {
     private int commentsPage;
     private int commentsPages;
     private int commentsRequestedPage = 1;
+    private int commentsRestoredPendingPage;
+    @Nullable private CommentsFetcher.RequestHandle commentsRequest;
     private CommentAdapter commentsAdapter;
     private MenuItem onlineFavoriteItem;
     private boolean onlineFavoritePending;
@@ -113,12 +118,14 @@ public class GalleryActivity extends BaseActivity {
         final List<Comment> comments;
         final int page;
         final int pages;
+        final int pendingPage;
         final Parcelable layoutState;
 
-        RetainedComments(List<Comment> comments, int page, int pages, Parcelable layoutState) {
+        RetainedComments(List<Comment> comments, int page, int pages, int pendingPage, Parcelable layoutState) {
             this.comments = comments;
             this.page = page;
             this.pages = pages;
+            this.pendingPage = pendingPage;
             this.layoutState = layoutState;
         }
     }
@@ -340,6 +347,7 @@ public class GalleryActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        if (commentsRequest != null) commentsRequest.cancel();
         stopRestoringPosition();
         super.onDestroy();
     }
@@ -392,6 +400,7 @@ public class GalleryActivity extends BaseActivity {
     public Object onRetainCustomNonConfigurationInstance() {
         if (!commentsLoaded || commentsAdapter == null || commentsList.getLayoutManager() == null) return null;
         return new RetainedComments(commentsAdapter.getComments(), commentsPage, commentsPages,
+            commentsLoading ? commentsRequestedPage : commentsRestoredPendingPage,
             commentsList.getLayoutManager().onSaveInstanceState());
     }
 
@@ -443,6 +452,7 @@ public class GalleryActivity extends BaseActivity {
             commentsLoaded = true;
             commentsPage = previous.page;
             commentsPages = previous.pages;
+            commentsRestoredPendingPage = previous.pendingPage;
             TextView message = findViewById(R.id.comments_message);
             message.setText(R.string.gallery_comments_empty);
             message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
@@ -504,7 +514,13 @@ public class GalleryActivity extends BaseActivity {
     private void showTab(int index) {
         displayedTab = index;
         ((GalleryTabSwipeLayout) findViewById(R.id.gallery_tab_content)).setCurrentPage(index);
-        if (index == 2 && !commentsLoaded && !commentsLoading) loadComments(1);
+        if (index == 2 && !commentsLoading) {
+            if (commentsRestoredPendingPage > 0) {
+                int pending = commentsRestoredPendingPage;
+                commentsRestoredPendingPage = 0;
+                loadComments(pending);
+            } else if (!commentsLoaded) loadComments(1);
+        }
         supportInvalidateOptionsMenu();
     }
 
@@ -526,29 +542,53 @@ public class GalleryActivity extends BaseActivity {
         message.setVisibility(View.GONE);
         View more = findViewById(R.id.comments_more);
         more.setVisibility(View.GONE);
-        CommentsFetcher.fetch(this, gallery.getId(), page, (comments, pages, success) -> runOnUiThread(() -> {
-            if (isFinishing() || isDestroyed()) return;
-            commentsLoading = false;
-            commentsRefresher.setRefreshing(false);
-            if (success) {
-                commentsLoaded = true;
-                commentsPage = page;
-                commentsPages = pages;
-                if (page == 1 || commentsAdapter == null) {
-                    commentsAdapter = new CommentAdapter(this, comments, true);
-                    commentsList.setAdapter(commentsAdapter);
-                } else {
-                    commentsAdapter.addComments(comments);
-                }
-                message.setText(R.string.gallery_comments_empty);
-                message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
-                more.setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
+        commentsRequest = CommentsFetcher.fetch(this, gallery.getId(), page, new CommentsResultCallback(this, page));
+    }
+
+    private static final class CommentsResultCallback implements CommentsFetcher.Callback {
+        private final WeakReference<GalleryActivity> activity;
+        private final int page;
+
+        CommentsResultCallback(GalleryActivity activity, int page) {
+            this.activity = new WeakReference<>(activity);
+            this.page = page;
+        }
+
+        @Override
+        public void onResult(List<Comment> comments, int pages, boolean success) {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                GalleryActivity target = activity.get();
+                if (target != null && !target.isFinishing() && !target.isDestroyed())
+                    target.applyCommentsResult(page, comments, pages, success);
+            });
+        }
+    }
+
+    private void applyCommentsResult(int page, List<Comment> comments, int pages, boolean success) {
+        commentsRequest = null;
+        commentsLoading = false;
+        commentsRefresher.setRefreshing(false);
+        TextView message = findViewById(R.id.comments_message);
+        View retry = findViewById(R.id.comments_retry);
+        View more = findViewById(R.id.comments_more);
+        if (success) {
+            commentsLoaded = true;
+            commentsPage = page;
+            commentsPages = pages;
+            if (page == 1 || commentsAdapter == null) {
+                commentsAdapter = new CommentAdapter(this, comments, true);
+                commentsList.setAdapter(commentsAdapter);
             } else {
-                message.setText(R.string.gallery_comments_failed);
-                message.setVisibility(View.VISIBLE);
-                retry.setVisibility(View.VISIBLE);
+                commentsAdapter.addComments(comments);
             }
-        }));
+            message.setText(R.string.gallery_comments_empty);
+            message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+            more.setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
+        } else {
+            message.setText(R.string.gallery_comments_failed);
+            message.setVisibility(View.VISIBLE);
+            retry.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
