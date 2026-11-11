@@ -15,6 +15,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import java.nio.file.Files;
@@ -97,6 +101,74 @@ public class ExportFileTest {
         } finally {
             delete(directory);
         }
+    }
+
+    @Test
+    public void stoppedZipCopyRemovesUnpublishedOutput() throws Exception {
+        File directory = Files.createTempDirectory("nreader-stopped-export").toFile();
+        try {
+            File page = new File(directory, "page.png");
+            Files.write(page.toPath(), new byte[32768]);
+            AtomicInteger checks = new AtomicInteger();
+            File output;
+            File temporary;
+            try (ExportFile export = ExportFile.create(directory, "stopped", 1, ".zip")) {
+                output = export.getOutputFile();
+                temporary = export.getTemporaryFile();
+                try (ZipOutputStream zip = new ZipOutputStream(new java.io.FileOutputStream(temporary))) {
+                    assertThrows(IOException.class, () -> CreatePdfOrZip.writeZipPage(zip, page,
+                        () -> checks.incrementAndGet() >= 3));
+                }
+            }
+            assertFalse(output.exists());
+            assertFalse(temporary.exists());
+        } finally {
+            delete(directory);
+        }
+    }
+
+    @Test
+    public void stoppedPublicationGateRejectsCommitWithoutBlockingInFlightCommit() throws Exception {
+        CreatePdfOrZip.PublicationGate stopped = new CreatePdfOrZip.PublicationGate();
+        stopped.stop(() -> {});
+        assertThrows(IOException.class, () -> stopped.commit(() -> false, () -> { throw new AssertionError(); }));
+        assertThrows(IOException.class, () -> new CreatePdfOrZip.PublicationGate().commit(() -> true, () -> { throw new AssertionError(); }));
+
+        CreatePdfOrZip.PublicationGate gate = new CreatePdfOrZip.PublicationGate();
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch stoppedAfterCommit = new CountDownLatch(1);
+        AtomicBoolean committed = new AtomicBoolean();
+        Thread writer = new Thread(() -> {
+            try {
+                gate.commit(() -> false, () -> {
+                    entered.countDown();
+                    try {
+                        if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(exception);
+                    }
+                    committed.set(true);
+                });
+            } catch (IOException exception) {
+                throw new AssertionError(exception);
+            }
+        });
+        Thread stopper = new Thread(() -> gate.stop(stoppedAfterCommit::countDown));
+        writer.start();
+        assertTrue(entered.await(5, TimeUnit.SECONDS));
+        stopper.start();
+        try {
+            assertTrue(stoppedAfterCommit.await(5, TimeUnit.SECONDS));
+        } finally {
+            release.countDown();
+            writer.join(5000);
+            stopper.join(5000);
+        }
+        assertTrue(committed.get());
+        assertEquals(0, stoppedAfterCommit.getCount());
+        assertThrows(IOException.class, () -> gate.commit(() -> false, () -> { throw new AssertionError(); }));
     }
 
     @Test

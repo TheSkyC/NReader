@@ -30,8 +30,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -42,7 +45,8 @@ public class CreatePdfOrZip extends Worker {
     private static final String PDF_OR_ZIP_KEY = "PDF_OR_ZIP";
     private int notId;
     private int totalPage;
-    private NotificationCompat.Builder notification;
+    private volatile NotificationCompat.Builder notification;
+    private final PublicationGate publication = new PublicationGate();
 
     public CreatePdfOrZip(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -73,6 +77,14 @@ public class CreatePdfOrZip extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+        try {
+            return export();
+        } finally {
+            if (isStopped() && notification != null) NotificationSettings.cancel(notId);
+        }
+    }
+
+    private Result export() {
         notId = NotificationSettings.getNotificationId();
         System.gc();
         if (!getInputData().hasKeyWithValueOfType(PDF_OR_ZIP_KEY, Boolean.class)) {
@@ -97,12 +109,14 @@ public class CreatePdfOrZip extends Worker {
             PdfDocument document = new PdfDocument();
             try {
                 for (int a = 1; a <= pages.size(); a++) {
+                    checkStopped(this::isStopped);
                     File page = pages.get(a - 1);
                     appendPdfPage(document, page, a);
                     notification.setProgress(totalPage, a, false);
                     NotificationSettings.notify(getApplicationContext(), notId, notification.build());
 
                 }
+                checkStopped(this::isStopped);
                 notification.setContentText(getApplicationContext().getString(R.string.writing_pdf));
                 notification.setProgress(totalPage, 0, true);
                 NotificationSettings.notify(getApplicationContext(), notId, notification.build());
@@ -112,14 +126,20 @@ public class CreatePdfOrZip extends Worker {
                     try (FileOutputStream out = new FileOutputStream(export.getTemporaryFile())) {
                         document.writeTo(out);
                     }
-                    export.publish();
-                    notification.setProgress(0, 0, false);
-                    notification.setContentTitle(getApplicationContext().getString(R.string.created_pdf));
-                    notification.setContentText(gallery.getTitle());
-                    createIntentOpen(finalPath, true);
-                    NotificationSettings.notify(getApplicationContext(), notId, notification.build());
+                    publication.commit(this::isStopped, () -> {
+                        export.publish();
+                        notification.setProgress(0, 0, false);
+                        notification.setContentTitle(getApplicationContext().getString(R.string.created_pdf));
+                        notification.setContentText(gallery.getTitle());
+                        createIntentOpen(finalPath, true);
+                        NotificationSettings.notify(getApplicationContext(), notId, notification.build());
+                    });
                 }
             } catch (IOException e) {
+                if (isStopped()) {
+                    NotificationSettings.cancel(notId);
+                    return Result.failure();
+                }
                 notification.setContentTitle(getApplicationContext().getString(R.string.error_pdf));
                 notification.setContentText(getApplicationContext().getString(R.string.failed));
                 notification.setProgress(0, 0, false);
@@ -137,15 +157,21 @@ public class CreatePdfOrZip extends Worker {
                     out.setLevel(Deflater.BEST_COMPRESSION);
                     int completed = 0;
                     for (File page : pages) {
-                        writeZipPage(out, page);
+                        writeZipPage(out, page, this::isStopped);
                         notification.setProgress(totalPage, ++completed, false);
                         NotificationSettings.notify(getApplicationContext(), notId, notification.build());
                     }
                     out.flush();
                 }
-                export.publish();
-                postExecutePdf(true, gallery, null, file);
+                publication.commit(this::isStopped, () -> {
+                    export.publish();
+                    postExecutePdf(true, gallery, null, file);
+                });
             } catch (IOException e) {
+                if (isStopped()) {
+                    NotificationSettings.cancel(notId);
+                    return Result.failure();
+                }
                 LogUtility.e(e.getLocalizedMessage(), e);
                 postExecutePdf(false, gallery, e.getLocalizedMessage(), null);
                 return Result.failure();
@@ -185,12 +211,56 @@ public class CreatePdfOrZip extends Worker {
     }
 
     static void writeZipPage(ZipOutputStream out, File page) throws IOException {
+        writeZipPage(out, page, () -> false);
+    }
+
+    static void writeZipPage(ZipOutputStream out, File page, BooleanSupplier stopped) throws IOException {
+        checkStopped(stopped);
         try (FileInputStream in = new FileInputStream(page)) {
             out.putNextEntry(new ZipEntry(page.getName()));
             byte[] buffer = new byte[8192];
             int read;
-            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            while ((read = in.read(buffer)) != -1) {
+                checkStopped(stopped);
+                out.write(buffer, 0, read);
+            }
+            checkStopped(stopped);
             out.closeEntry();
+        }
+    }
+
+    private static void checkStopped(BooleanSupplier stopped) throws InterruptedIOException {
+        if (stopped.getAsBoolean()) throw new InterruptedIOException("Export stopped");
+    }
+
+    @Override
+    public void onStopped() {
+        publication.stop(() -> {
+            if (notification != null) NotificationSettings.cancel(notId);
+        });
+    }
+
+    static final class PublicationGate {
+        private static final int RUNNING = 0;
+        private static final int COMMITTING = 1;
+        private static final int STOPPED = 2;
+        private final AtomicInteger state = new AtomicInteger(RUNNING);
+
+        interface CommitAction {
+            void run() throws IOException;
+        }
+
+        void commit(BooleanSupplier workerStopped, CommitAction action) throws IOException {
+            if (workerStopped.getAsBoolean() || !state.compareAndSet(RUNNING, COMMITTING))
+                throw new InterruptedIOException("Export stopped");
+            if (workerStopped.getAsBoolean() || state.get() == STOPPED)
+                throw new InterruptedIOException("Export stopped");
+            action.run();
+        }
+
+        void stop(Runnable cleanup) {
+            state.set(STOPPED);
+            cleanup.run();
         }
     }
 

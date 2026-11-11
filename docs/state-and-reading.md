@@ -67,6 +67,11 @@ keys added after the snapshot. Downloaded files are not included. Cache eviction
 exported backup. Database and preferences are separate storage systems and cannot
 be committed atomically together across process or device failure.
 
+PDF and ZIP export workers check for stops while processing and before publishing.
+When stopping wins before publication starts, temporary output is discarded; a
+publication already in progress may finish. Abrupt process termination can leave
+temporary or reserved files, and automatic recovery of those files is not promised.
+
 ## Local and personal state
 
 Favoriting a loaded online list card stores its available summary locally without
