@@ -119,7 +119,14 @@ public class ZoomActivity extends GeneralActivity {
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(this);
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setOrientation(preferences.getInt(SCROLL_TYPE_KEY, ScrollType.HORIZONTAL.ordinal()));
+        int orientation;
+        try {
+            orientation = preferences.getInt(SCROLL_TYPE_KEY, ScrollType.HORIZONTAL.ordinal());
+        } catch (ClassCastException exception) {
+            orientation = ViewPager2.ORIENTATION_HORIZONTAL;
+        }
+        mViewPager.setOrientation(orientation == ViewPager2.ORIENTATION_VERTICAL
+            ? ViewPager2.ORIENTATION_VERTICAL : ViewPager2.ORIENTATION_HORIZONTAL);
         mViewPager.setOffscreenPageLimit(Global.getOffscreenLimit());
         pageSwitcher = findViewById(R.id.page_switcher);
         pageManagerLabel = findViewById(R.id.pages);

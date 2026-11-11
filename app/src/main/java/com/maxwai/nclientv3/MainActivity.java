@@ -326,16 +326,21 @@ public class MainActivity extends BaseActivity
     }
 
     private void selectStartMode(Intent intent, String packageName) {
-        Uri data = intent.getData();
-        if (intent.getBooleanExtra(packageName + ".ISBYTAG", false))
-            useTagMode(intent, packageName);
-        else if (intent.getBooleanExtra(packageName + ".SEARCHMODE", false))
-            useSearchMode(intent, packageName);
-        else if (intent.getBooleanExtra(packageName + ".FAVORITE", false)) useFavoriteMode(1);
-        else if (intent.getBooleanExtra(packageName + ".BYBOOKMARK", false))
-            useBookmarkMode(intent, packageName);
-        else if (data != null) manageDataStart(data);
-        else useNormalMode();
+        try {
+            Uri data = intent.getData();
+            if (intent.getBooleanExtra(packageName + ".ISBYTAG", false))
+                useTagMode(intent, packageName);
+            else if (intent.getBooleanExtra(packageName + ".SEARCHMODE", false))
+                useSearchMode(intent, packageName);
+            else if (intent.getBooleanExtra(packageName + ".FAVORITE", false)) useFavoriteMode(1);
+            else if (intent.getBooleanExtra(packageName + ".BYBOOKMARK", false))
+                useBookmarkMode(intent, packageName);
+            else if (data != null) manageDataStart(data);
+            else useNormalMode();
+        } catch (RuntimeException exception) {
+            LogUtility.w("Ignoring invalid launch intent", exception);
+            useNormalMode();
+        }
     }
 
     private void useNormalMode() {
@@ -349,7 +354,10 @@ public class MainActivity extends BaseActivity
         } else {
             inspector = intent.getParcelableExtra(packageName + ".INSPECTOR");
         }
-        assert inspector != null;
+        if (inspector == null) {
+            useNormalMode();
+            return;
+        }
         inspector.initialize(this, resetDataset);
         modeType = ModeType.BOOKMARK;
         ApiRequestType type = inspector.getRequestType();
@@ -368,6 +376,10 @@ public class MainActivity extends BaseActivity
 
     private void useSearchMode(Intent intent, String packageName) {
         String query = intent.getStringExtra(packageName + ".QUERY");
+        if (query == null) {
+            useNormalMode();
+            return;
+        }
         boolean ok = tryOpenId(query);
         if (!ok) createSearchInspector(intent, packageName, query);
     }
@@ -381,10 +393,17 @@ public class MainActivity extends BaseActivity
         } else {
             ranges = intent.getParcelableExtra(getPackageName() + ".RANGES");
         }
+        if (query == null) {
+            useNormalMode();
+            return;
+        }
         HashSet<Tag> tags = null;
         query = query.trim();
         if (advanced) {
-            assert tagArrayList != null;//tags is always not null when advanced is set
+            if (tagArrayList == null) {
+                useNormalMode();
+                return;
+            }
             tags = new HashSet<>(tagArrayList);
         }
         inspector = InspectorV3.searchInspector(this, query, tags, 1, Global.getSortType(), ranges, resetDataset);
@@ -394,6 +413,7 @@ public class MainActivity extends BaseActivity
     private boolean tryOpenId(String query) {
         try {
             int id = Integer.parseInt(query);
+            if (id <= 0) return false;
             inspector = InspectorV3.galleryInspector(this, id, startGallery);
             modeType = ModeType.ID;
             return true;
@@ -409,6 +429,10 @@ public class MainActivity extends BaseActivity
         } else {
             t = intent.getParcelableExtra(packageName + ".TAG");
         }
+        if (t == null) {
+            useNormalMode();
+            return;
+        }
         inspector = InspectorV3.tagInspector(this, t, 1, Global.getSortType(), resetDataset);
         modeType = ModeType.TAG;
     }
@@ -417,6 +441,10 @@ public class MainActivity extends BaseActivity
      * Load inspector from an URL, it can be either a tag or a search
      */
     private void manageDataStart(Uri data) {
+        if (!isTrustedLink(data)) {
+            useNormalMode();
+            return;
+        }
         List<String> datas = data.getPathSegments();
         TagType dataType;
 
@@ -432,6 +460,10 @@ public class MainActivity extends BaseActivity
 
     private void useDataSearchMode(Uri data, List<String> datas) {
         boolean favorite = "favorites".equals(datas.get(0));
+        if (!favorite && (data.getQueryParameter("q") == null || data.getQueryParameter("q").trim().isEmpty())) {
+            useNormalMode();
+            return;
+        }
         int page = searchLinkPage(data);
 
         if (favorite) {
@@ -450,10 +482,21 @@ public class MainActivity extends BaseActivity
 
     static int searchLinkPage(Uri data) {
         try {
-            return Math.max(1, Integer.parseInt(data.getQueryParameter("page")));
+            int page = Integer.parseInt(data.getQueryParameter("page"));
+            return page > 0 ? page : 1;
         } catch (NumberFormatException exception) {
             return 1;
         }
+    }
+
+    static boolean isTrustedLink(Uri data) {
+        if (data == null || data.getUserInfo() != null) return false;
+        String scheme = data.getScheme();
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) return false;
+        if (!"nhentai.net".equalsIgnoreCase(data.getHost())) return false;
+        int port = data.getPort();
+        return port == -1 || ("https".equalsIgnoreCase(scheme) && port == 443)
+            || ("http".equalsIgnoreCase(scheme) && port == 80);
     }
 
     static InspectorV3 searchLinkInspector(Context context, Uri data, InspectorV3.InspectorResponse response) {
@@ -462,6 +505,10 @@ public class MainActivity extends BaseActivity
     }
 
     private void useDataTagMode(List<String> datas, TagType type) {
+        if (datas.size() < 2 || datas.get(1).trim().isEmpty()) {
+            useNormalMode();
+            return;
+        }
         String query = datas.get(1);
         Tag tag = Queries.TagTable.getTagFromTagName(query);
         if (tag == null)
