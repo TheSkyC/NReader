@@ -215,7 +215,14 @@ public class Global {
 
 
     private static void initTitleType(@NonNull Context context) {
-        String s = context.getSharedPreferences("Settings", 0).getString(context.getString(R.string.preference_key_title_type), "pretty");
+        SharedPreferences settings = context.getSharedPreferences("Settings", 0);
+        String s;
+        try {
+            s = settings.getString(context.getString(R.string.preference_key_title_type), "pretty");
+        } catch (ClassCastException exception) {
+            s = "pretty";
+        }
+        if (s == null) s = "pretty";
         switch (s) {
             case "pretty":
                 titleType = TitleType.PRETTY;
@@ -226,6 +233,8 @@ public class Global {
             case "japanese":
                 titleType = TitleType.JAPANESE;
                 break;
+            default:
+                titleType = TitleType.PRETTY;
         }
     }
 
@@ -247,46 +256,48 @@ public class Global {
     public static void initFromShared(@NonNull Context context) {
         SharedPreferences shared = context.getSharedPreferences("Settings", 0);
         shared.edit().remove("local_sort").apply();
-        localSortType = new LocalSortType(shared.getInt(context.getString(R.string.key_local_sort), 0));
-        useRtl = shared.getBoolean(context.getString(R.string.preference_key_use_rtl), false);
-        mirror = shared.getString(context.getString(R.string.preference_key_site_mirror), Utility.ORIGINAL_URL);
-        keepHistory = shared.getBoolean(context.getString(R.string.preference_key_keep_history), true);
-        removeAvoidedGalleries = shared.getBoolean(context.getString(R.string.preference_key_remove_ignored), true);
-        onlyTag = shared.getBoolean(context.getString(R.string.key_ignore_tags), true);
-        volumeOverride = shared.getBoolean(context.getString(R.string.preference_key_override_volume), true);
-        enableBeta = shared.getBoolean(context.getString(R.string.preference_key_enable_beta), true);
-        columnCount = shared.getInt(context.getString(R.string.key_column_count), 2);
-        showTitles = shared.getBoolean(context.getString(R.string.preference_key_show_titles), true);
-        exactTagMatch = shared.getBoolean(context.getString(R.string.preference_key_exact_title_match), false);
-        buttonChangePage = shared.getBoolean(context.getString(R.string.preference_key_change_page_buttons), true);
-        lockScreen = shared.getBoolean(context.getString(R.string.preference_key_disable_lock), false);
-        hideMultitask = shared.getBoolean(context.getString(R.string.preference_key_hide_multitasking), true);
-        infiniteScrollFavorite = shared.getBoolean(context.getString(R.string.key_infinite_scroll_favo), false);
-        infiniteScrollMain = shared.getBoolean(context.getString(R.string.key_infinite_scroll_main), false);
-        maxId = shared.getInt(context.getString(R.string.key_max_id), 300000);
-        offscreenLimit = Math.max(1, shared.getInt(context.getString(R.string.preference_key_offscreen_limit), 5));
-        maxHistory = shared.getInt(context.getString(R.string.preference_key_max_history_size), 2);
-        defaultZoom = shared.getInt(context.getString(R.string.preference_key_default_zoom), 100);
-        colPortMain = shared.getInt(context.getString(R.string.key_column_port_main), 2);
-        colLandMain = shared.getInt(context.getString(R.string.key_column_land_main), 4);
-        colPortDownload = shared.getInt(context.getString(R.string.key_column_port_down), 2);
-        colLandDownload = shared.getInt(context.getString(R.string.key_column_land_down), 4);
-        colPortFavorite = shared.getInt(context.getString(R.string.key_column_port_favo), 2);
-        colLandFavorite = shared.getInt(context.getString(R.string.key_column_land_favo), 4);
-        colPortHist = shared.getInt(context.getString(R.string.key_column_port_hist), 2);
-        colLandHist = shared.getInt(context.getString(R.string.key_column_land_hist), 4);
-        colPortStat = shared.getInt(context.getString(R.string.key_column_port_stat), 2);
-        colLandStat = shared.getInt(context.getString(R.string.key_column_land_stat), 4);
-        zoomOneColumn = shared.getBoolean(context.getString(R.string.preference_key_zoom_one_column), false);
-        int x = Math.max(0, shared.getInt(context.getString(R.string.key_only_language), Language.ALL.ordinal()));
-        sortType = SortType.values()[shared.getInt(context.getString(R.string.key_by_popular), SortType.RECENT_ALL_TIME.ordinal())];
-        usageMobile = DataUsageType.values()[shared.getInt(context.getString(R.string.key_mobile_usage), DataUsageType.FULL.ordinal())];
-        usageWifi = DataUsageType.values()[shared.getInt(context.getString(R.string.key_wifi_usage), DataUsageType.FULL.ordinal())];
-        if (Language.values()[x] == Language.UNKNOWN) {
-            updateOnlyLanguage(context, Language.ALL);
-            x = Language.ALL.ordinal();
+        localSortType = new LocalSortType(getIntPreference(shared, context.getString(R.string.key_local_sort), 0));
+        useRtl = getBooleanPreference(shared, context.getString(R.string.preference_key_use_rtl), false);
+        try {
+            mirror = shared.getString(context.getString(R.string.preference_key_site_mirror), Utility.ORIGINAL_URL);
+        } catch (ClassCastException exception) {
+            mirror = Utility.ORIGINAL_URL;
         }
-        onlyLanguage = Language.values()[x];
+        keepHistory = getBooleanPreference(shared, context.getString(R.string.preference_key_keep_history), true);
+        removeAvoidedGalleries = getBooleanPreference(shared, context.getString(R.string.preference_key_remove_ignored), true);
+        onlyTag = getBooleanPreference(shared, context.getString(R.string.key_ignore_tags), true);
+        volumeOverride = getBooleanPreference(shared, context.getString(R.string.preference_key_override_volume), true);
+        enableBeta = getBooleanPreference(shared, context.getString(R.string.preference_key_enable_beta), true);
+        columnCount = getIntPreference(shared, context.getString(R.string.key_column_count), 2);
+        showTitles = getBooleanPreference(shared, context.getString(R.string.preference_key_show_titles), true);
+        exactTagMatch = getBooleanPreference(shared, context.getString(R.string.preference_key_exact_title_match), false);
+        buttonChangePage = getBooleanPreference(shared, context.getString(R.string.preference_key_change_page_buttons), true);
+        lockScreen = getBooleanPreference(shared, context.getString(R.string.preference_key_disable_lock), false);
+        hideMultitask = getBooleanPreference(shared, context.getString(R.string.preference_key_hide_multitasking), true);
+        infiniteScrollFavorite = getBooleanPreference(shared, context.getString(R.string.key_infinite_scroll_favo), false);
+        infiniteScrollMain = getBooleanPreference(shared, context.getString(R.string.key_infinite_scroll_main), false);
+        maxId = getIntPreference(shared, context.getString(R.string.key_max_id), 300000);
+        offscreenLimit = Math.max(1, getIntPreference(shared, context.getString(R.string.preference_key_offscreen_limit), 5));
+        maxHistory = getIntPreference(shared, context.getString(R.string.preference_key_max_history_size), 2);
+        defaultZoom = getIntPreference(shared, context.getString(R.string.preference_key_default_zoom), 100);
+        colPortMain = getIntPreference(shared, context.getString(R.string.key_column_port_main), 2);
+        colLandMain = getIntPreference(shared, context.getString(R.string.key_column_land_main), 4);
+        colPortDownload = getIntPreference(shared, context.getString(R.string.key_column_port_down), 2);
+        colLandDownload = getIntPreference(shared, context.getString(R.string.key_column_land_down), 4);
+        colPortFavorite = getIntPreference(shared, context.getString(R.string.key_column_port_favo), 2);
+        colLandFavorite = getIntPreference(shared, context.getString(R.string.key_column_land_favo), 4);
+        colPortHist = getIntPreference(shared, context.getString(R.string.key_column_port_hist), 2);
+        colLandHist = getIntPreference(shared, context.getString(R.string.key_column_land_hist), 4);
+        colPortStat = getIntPreference(shared, context.getString(R.string.key_column_port_stat), 2);
+        colLandStat = getIntPreference(shared, context.getString(R.string.key_column_land_stat), 4);
+        zoomOneColumn = getBooleanPreference(shared, context.getString(R.string.preference_key_zoom_one_column), false);
+        onlyLanguage = getEnumPreference(shared, context.getString(R.string.key_only_language), Language.values(), Language.ALL);
+        sortType = getEnumPreference(shared, context.getString(R.string.key_by_popular), SortType.values(), SortType.RECENT_ALL_TIME);
+        usageMobile = getEnumPreference(shared, context.getString(R.string.key_mobile_usage), DataUsageType.values(), DataUsageType.FULL);
+        usageWifi = getEnumPreference(shared, context.getString(R.string.key_wifi_usage), DataUsageType.values(), DataUsageType.FULL);
+        if (onlyLanguage == Language.UNKNOWN) {
+            updateOnlyLanguage(context, Language.ALL);
+        }
 
         Login.initLogin(context);
         initHttpClient(context);
@@ -294,6 +305,27 @@ public class Global {
         loadNotificationChannel(context);
         NotificationSettings.initializeNotificationManager(context);
         Global.initStorage(context);
+    }
+
+    static int getIntPreference(SharedPreferences preferences, String key, int fallback) {
+        try {
+            return preferences.getInt(key, fallback);
+        } catch (ClassCastException exception) {
+            return fallback;
+        }
+    }
+
+    static boolean getBooleanPreference(SharedPreferences preferences, String key, boolean fallback) {
+        try {
+            return preferences.getBoolean(key, fallback);
+        } catch (ClassCastException exception) {
+            return fallback;
+        }
+    }
+
+    static <T> T getEnumPreference(SharedPreferences preferences, String key, T[] values, T fallback) {
+        int index = getIntPreference(preferences, key, -1);
+        return index >= 0 && index < values.length ? values[index] : fallback;
     }
 
     public static boolean isButtonChangePage() {

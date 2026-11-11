@@ -2,6 +2,8 @@
 package com.maxwai.nclientv3;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.net.Uri;
@@ -55,5 +57,15 @@ public class SearchLinkTest {
             assertEquals(1, MainActivity.searchLinkPage(link));
         }
         assertEquals(1, MainActivity.searchLinkPage(Uri.parse("https://nhentai.net/search/?q=test")));
+    }
+
+    @Test
+    public void sharedLinksRequireTheSiteOrigin() {
+        assertTrue(MainActivity.isTrustedLink(Uri.parse("https://nhentai.net/search/?q=test")));
+        assertTrue(MainActivity.isTrustedLink(Uri.parse("http://nhentai.net/search/?q=test")));
+        assertFalse(MainActivity.isTrustedLink(Uri.parse("https://nhentai.net.attacker.example/search/?q=test")));
+        assertFalse(MainActivity.isTrustedLink(Uri.parse("https://attacker.example/search/?q=test")));
+        assertFalse(MainActivity.isTrustedLink(Uri.parse("https://user@nhentai.net/search/?q=test")));
+        assertFalse(MainActivity.isTrustedLink(Uri.parse("https://nhentai.net:8443/search/?q=test")));
     }
 }
