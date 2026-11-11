@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comment_feature_unavailable">留言功能無法使用</string>
+    <string name="instant_page_turn">立即翻頁</string>
+    <string name="instant_page_turn_summary">使用按鈕或跳轉頁面時略過翻頁動畫。手指滑動不受影響。</string>
+    <string name="filter_download_state">篩選下載狀態</string>
+    <string name="filter_all">所有下載狀態</string>
+    <string name="filter_complete">完整</string>
+    <string name="filter_partial">不完整</string>
+    <string name="filter_damaged">已損壞</string>
+    <string name="filter_unverified">未驗證</string>
+    <string name="filter_absent">無本機副本</string>
+    <string name="filter_personal_state">篩選個人狀態</string>
+    <string name="filter_favorite_only">僅收藏</string>
+    <string name="filter_reading_only">正在閱讀</string>
+    <string name="filter_unread_only">未閱讀</string>
+    <string name="filter_custom_status_only">已設定自訂狀態</string>
+    <string name="filter_loaded_results">篩選已載入結果</string>
+    <string name="filter_downloaded_only">已下載至本機</string>
+    <string name="backup_restore_preview">檢查備份還原內容</string>
+    <string name="backup_restore_preview_message">此備份包含 %1$d 筆資料庫紀錄。%2$s。是否繼續還原？</string>
+    <string name="backup_integrity_verified">完整性已驗證</string>
+    <string name="backup_legacy_format">無完整性資訊清單的舊版格式</string>
+    <string name="restore_snapshot">還原先前的資料庫</string>
+    <string name="restore_snapshot_message">是否使用上次匯入前儲存的快照取代目前的資料庫和匯出設定？已下載的檔案不會變更。</string>
+    <string name="restore_snapshot_summary">快照時間：%1$d 天前</string>
+    <string name="restore_snapshot_unavailable">沒有可用的近期還原快照。</string>
+</resources>

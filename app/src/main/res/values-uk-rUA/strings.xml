@@ -36,23 +36,23 @@
     <string name="all_languages">Усі мови</string>
     <string name="unknown_language">Невідома мова</string>
     <string name="setting_api_key_title">API key</string>
-    <string name="setting_api_key_summary_missing">Create an API key on the website account settings page, then paste it into the app.</string>
-    <string name="setting_api_key_summary_valid">Saved and validated. Open this entry if you want to replace or remove it.</string>
-    <string name="setting_api_key_summary_invalid">A saved API key exists, but it is no longer valid. Open this entry to replace or remove it.</string>
-    <string name="login_api_key_intro_title">Use an API key</string>
-    <string name="login_api_key_intro_message">The nhentai site now uses API keys for app access. To log in, open the account settings page in your browser, create an API key there, then come back and paste the key value here.</string>
-    <string name="login_open_api_key_page">Open API key page</string>
-    <string name="login_api_key_input_title">Paste your API key</string>
-    <string name="login_api_key_input_message">The key is validated against the v2 API before it is saved.</string>
-    <string name="login_api_key_hint">API key</string>
-    <string name="login_validate_and_save">Validate and save</string>
-    <string name="login_api_key_saved">API key saved</string>
-    <string name="login_api_key_invalid">Invalid API key</string>
-    <string name="login_api_key_empty">Paste an API key first</string>
-    <string name="login_api_key_removed">Saved API key removed</string>
-    <string name="login_status_api_key_saved">A validated API key is currently saved on this device.</string>
-    <string name="login_status_api_key_invalid">A saved API key exists, but it needs to be replaced or removed.</string>
-    <string name="remove_api_key">Remove API key</string>
+    <string name="setting_api_key_summary_missing">Створіть ключ API на сторінці налаштувань облікового запису сайту та вставте його в застосунок.</string>
+    <string name="setting_api_key_summary_valid">Збережено й перевірено. Відкрийте цей пункт, щоб замінити або видалити ключ.</string>
+    <string name="setting_api_key_summary_invalid">Збережений ключ API більше не дійсний. Відкрийте цей пункт, щоб замінити або видалити його.</string>
+    <string name="login_api_key_intro_title">Використати ключ API</string>
+    <string name="login_api_key_intro_message">Тепер для доступу застосунку до сайту nhentai використовується ключ API. Щоб увійти, відкрийте налаштування облікового запису в браузері, створіть ключ API та вставте його тут.</string>
+    <string name="login_open_api_key_page">Відкрити сторінку ключів API</string>
+    <string name="login_api_key_input_title">Вставте ключ API</string>
+    <string name="login_api_key_input_message">Перед збереженням ключ перевіряється через API v2.</string>
+    <string name="login_api_key_hint">Ключ API</string>
+    <string name="login_validate_and_save">Перевірити й зберегти</string>
+    <string name="login_api_key_saved">Ключ API збережено</string>
+    <string name="login_api_key_invalid">Недійсний ключ API</string>
+    <string name="login_api_key_empty">Спочатку вставте ключ API</string>
+    <string name="login_api_key_removed">Збережений ключ API видалено</string>
+    <string name="login_status_api_key_saved">На цьому пристрої збережено перевірений ключ API.</string>
+    <string name="login_status_api_key_invalid">Збережений ключ API потрібно замінити або видалити.</string>
+    <string name="remove_api_key">Видалити ключ API</string>
     <string name="favorite_online_manga">Уподобанні онлайн галереї</string>
     <string name="online_tags">Онлайн теги</string>
     <string name="add_to_online_favorite">Додати до онлайн уподобань</string>
@@ -95,7 +95,7 @@
     <string name="random_manga">Випадкова галерея</string>
     <string name="save_page">Зберегти сторінку</string>
     <string name="page_count_format" formatted="true">%d сторінок</string>
-    <string name="upload_date_format" formatted="true">Завантажено %s о %s</string>
+    <string name="upload_date_format" formatted="true">Завантажено %1$s о %2$s</string>
     <string name="favorite_count_format" formatted="true">%d уподобань</string>
     <string name="favorite_manga">Уподобані галереї</string>
     <string name="setting_on_remove_ignored">Галереї з ігнорованими мітками не будуть показані</string>
@@ -107,7 +107,7 @@
     <string name="no_updates_found">Оновлення не знайдені</string>
     <string name="error_retrieving">Помилка під час отримання останньої версії</string>
     <string name="new_version_found">Знайдена нова версія</string>
-    <string name="update_version_format" formatted="true">Оновити з версії %s до версії %s?\n\nЖурнал змін:\n%s</string>
+    <string name="update_version_format" formatted="true">Оновити з версії %1$s до версії %2$s?\n\nЖурнал змін:\n%3$s</string>
     <string name="clear_this_list">Очистити цей список?</string>
     <string name="set_minimum_count">Встановити мінімальну кількість</string>
     <string name="sort_by_title">Впорядковувати за назвою</string>

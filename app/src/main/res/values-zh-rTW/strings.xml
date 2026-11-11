@@ -53,23 +53,23 @@
     <string name="all_languages">所有語言</string>
     <string name="unknown_language">未知語言</string>
     <string name="setting_api_key_title">API key</string>
-    <string name="setting_api_key_summary_missing">Create an API key on the website account settings page, then paste it into the app.</string>
-    <string name="setting_api_key_summary_valid">Saved and validated. Open this entry if you want to replace or remove it.</string>
-    <string name="setting_api_key_summary_invalid">A saved API key exists, but it is no longer valid. Open this entry to replace or remove it.</string>
-    <string name="login_api_key_intro_title">Use an API key</string>
-    <string name="login_api_key_intro_message">The nhentai site now uses API keys for app access. To log in, open the account settings page in your browser, create an API key there, then come back and paste the key value here.</string>
-    <string name="login_open_api_key_page">Open API key page</string>
-    <string name="login_api_key_input_title">Paste your API key</string>
-    <string name="login_api_key_input_message">The key is validated against the v2 API before it is saved.</string>
-    <string name="login_api_key_hint">API key</string>
-    <string name="login_validate_and_save">Validate and save</string>
-    <string name="login_api_key_saved">API key saved</string>
-    <string name="login_api_key_invalid">Invalid API key</string>
-    <string name="login_api_key_empty">Paste an API key first</string>
-    <string name="login_api_key_removed">Saved API key removed</string>
-    <string name="login_status_api_key_saved">A validated API key is currently saved on this device.</string>
-    <string name="login_status_api_key_invalid">A saved API key exists, but it needs to be replaced or removed.</string>
-    <string name="remove_api_key">Remove API key</string>
+    <string name="setting_api_key_summary_missing">在網站的帳號設定頁面建立 API 金鑰，然後貼到應用程式中。</string>
+    <string name="setting_api_key_summary_valid">已儲存並驗證。點選此項可更換或移除金鑰。</string>
+    <string name="setting_api_key_summary_invalid">已儲存的 API 金鑰已失效。點選此項可更換或移除金鑰。</string>
+    <string name="login_api_key_intro_title">使用 API 金鑰</string>
+    <string name="login_api_key_intro_message">nhentai 網站現在使用 API 金鑰供應用程式存取。若要登入，請在瀏覽器中開啟帳號設定頁面並建立 API 金鑰，然後返回此處貼上金鑰。</string>
+    <string name="login_open_api_key_page">開啟 API 金鑰頁面</string>
+    <string name="login_api_key_input_title">貼上 API 金鑰</string>
+    <string name="login_api_key_input_message">儲存前會透過 v2 API 驗證金鑰。</string>
+    <string name="login_api_key_hint">API 金鑰</string>
+    <string name="login_validate_and_save">驗證並儲存</string>
+    <string name="login_api_key_saved">API 金鑰已儲存</string>
+    <string name="login_api_key_invalid">API 金鑰無效</string>
+    <string name="login_api_key_empty">請先貼上 API 金鑰</string>
+    <string name="login_api_key_removed">已移除儲存的 API 金鑰</string>
+    <string name="login_status_api_key_saved">此裝置已儲存經過驗證的 API 金鑰。</string>
+    <string name="login_status_api_key_invalid">已儲存的 API 金鑰需要更換或移除。</string>
+    <string name="remove_api_key">移除 API 金鑰</string>
     <string name="favorite_online_manga">線上收藏漫畫</string>
     <string name="online_tags">線上標籤</string>
     <string name="add_to_online_favorite">添加至線上收藏</string>
@@ -112,7 +112,7 @@
     <string name="random_manga">隨機漫畫</string>
     <string name="save_page">保存頁數</string>
     <string name="page_count_format" formatted="true">%d 頁</string>
-    <string name="upload_date_format" formatted="true">上傳於 %s 在 %s</string>
+    <string name="upload_date_format" formatted="true">上傳於 %1$s %2$s</string>
     <string name="favorite_count_format" formatted="true">%d 收藏</string>
     <string name="favorite_manga">收藏漫畫</string>
     <string name="setting_on_remove_ignored">不顯示帶有已忽略標籤的圖庫</string>
@@ -124,7 +124,7 @@
     <string name="no_updates_found">未發現更新</string>
     <string name="error_retrieving">檢索最新版本出錯</string>
     <string name="new_version_found">發現新版本</string>
-    <string name="update_version_format" formatted="true">從V %s 更新至V %s？\n\nChangelog:\n%s</string>
+    <string name="update_version_format" formatted="true">從 V %1$s 更新至 V %2$s？\n\n更新日誌：\n%3$s</string>
     <string name="clear_this_list">清空此列表？</string>
     <string name="set_minimum_count">設定最小值</string>
     <string name="sort_by_title">按標題排列</string>

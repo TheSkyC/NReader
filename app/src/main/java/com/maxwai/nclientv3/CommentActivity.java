@@ -92,7 +92,7 @@ public class CommentActivity extends BaseActivity {
         findViewById(R.id.sendButton).setClickable(false);
         findViewById(R.id.sendButton).setEnabled(false);
         commentText.setEnabled(false);
-        commentText.setHint("Deactivated feature");
+        commentText.setHint(R.string.comment_feature_unavailable);
         // TODO: end
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));

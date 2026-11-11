@@ -36,23 +36,23 @@
     <string name="all_languages">Todos os idiomas</string>
     <string name="unknown_language">Idioma desconhecido</string>
     <string name="setting_api_key_title">API key</string>
-    <string name="setting_api_key_summary_missing">Create an API key on the website account settings page, then paste it into the app.</string>
-    <string name="setting_api_key_summary_valid">Saved and validated. Open this entry if you want to replace or remove it.</string>
-    <string name="setting_api_key_summary_invalid">A saved API key exists, but it is no longer valid. Open this entry to replace or remove it.</string>
-    <string name="login_api_key_intro_title">Use an API key</string>
-    <string name="login_api_key_intro_message">The nhentai site now uses API keys for app access. To log in, open the account settings page in your browser, create an API key there, then come back and paste the key value here.</string>
-    <string name="login_open_api_key_page">Open API key page</string>
-    <string name="login_api_key_input_title">Paste your API key</string>
-    <string name="login_api_key_input_message">The key is validated against the v2 API before it is saved.</string>
-    <string name="login_api_key_hint">API key</string>
-    <string name="login_validate_and_save">Validate and save</string>
-    <string name="login_api_key_saved">API key saved</string>
-    <string name="login_api_key_invalid">Invalid API key</string>
-    <string name="login_api_key_empty">Paste an API key first</string>
-    <string name="login_api_key_removed">Saved API key removed</string>
-    <string name="login_status_api_key_saved">A validated API key is currently saved on this device.</string>
-    <string name="login_status_api_key_invalid">A saved API key exists, but it needs to be replaced or removed.</string>
-    <string name="remove_api_key">Remove API key</string>
+    <string name="setting_api_key_summary_missing">Crie uma chave de API na página de configurações da conta no site e cole-a no aplicativo.</string>
+    <string name="setting_api_key_summary_valid">Salva e validada. Abra esta opção para substituir ou remover a chave.</string>
+    <string name="setting_api_key_summary_invalid">Há uma chave de API salva, mas ela não é mais válida. Abra esta opção para substituí-la ou removê-la.</string>
+    <string name="login_api_key_intro_title">Usar uma chave de API</string>
+    <string name="login_api_key_intro_message">O site nhentai agora usa chaves de API para acesso pelo aplicativo. Para entrar, abra as configurações da conta no navegador, crie uma chave de API e volte aqui para colá-la.</string>
+    <string name="login_open_api_key_page">Abrir página de chaves de API</string>
+    <string name="login_api_key_input_title">Cole sua chave de API</string>
+    <string name="login_api_key_input_message">A chave é validada pela API v2 antes de ser salva.</string>
+    <string name="login_api_key_hint">Chave de API</string>
+    <string name="login_validate_and_save">Validar e salvar</string>
+    <string name="login_api_key_saved">Chave de API salva</string>
+    <string name="login_api_key_invalid">Chave de API inválida</string>
+    <string name="login_api_key_empty">Cole uma chave de API primeiro</string>
+    <string name="login_api_key_removed">Chave de API salva removida</string>
+    <string name="login_status_api_key_saved">Uma chave de API validada está salva neste dispositivo.</string>
+    <string name="login_status_api_key_invalid">A chave de API salva precisa ser substituída ou removida.</string>
+    <string name="remove_api_key">Remover chave de API</string>
     <string name="favorite_online_manga">Galerias favoritas online</string>
     <string name="online_tags">Tags online</string>
     <string name="add_to_online_favorite">Adicionar aos favoritos online</string>
@@ -95,7 +95,7 @@
     <string name="random_manga">Galeria aleatória</string>
     <string name="save_page">Salvar página</string>
     <string name="page_count_format" formatted="true">%d páginas</string>
-    <string name="upload_date_format" formatted="true">Enviado em %s as %s</string>
+    <string name="upload_date_format" formatted="true">Enviado em %1$s as %2$s</string>
     <string name="favorite_count_format" formatted="true">%d favoritos</string>
     <string name="favorite_manga">Galerias favoritas</string>
     <string name="setting_on_remove_ignored">As galerias com tags ignoradas não serão exibidas</string>
@@ -107,7 +107,7 @@
     <string name="no_updates_found">Nenhuma atualização encontrada</string>
     <string name="error_retrieving">Erro ao procurar versão mais recente</string>
     <string name="new_version_found">Nova versão encontrada</string>
-    <string name="update_version_format" formatted="true">Atualizar da versão %s para a versão %s?\n\nNotas de atualização:\n%s</string>
+    <string name="update_version_format" formatted="true">Atualizar da versão %1$s para a versão %2$s?\n\nNotas de atualização:\n%3$s</string>
     <string name="clear_this_list">Limpar essa lista?</string>
     <string name="set_minimum_count">Definir contagem mínima</string>
     <string name="sort_by_title">Classificar por título</string>
