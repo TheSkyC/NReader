@@ -200,25 +200,36 @@ public class GalleryActivity extends BaseActivity {
         loadAutomaticPosition();
     }
 
+    static int galleryIdFromLink(@Nullable Uri data) {
+        if (!MainActivity.isTrustedLink(data)) return -1;
+        List<String> segments = data.getPathSegments();
+        if (segments.size() < 2 || !"g".equalsIgnoreCase(segments.get(0))) return -1;
+        try {
+            int id = Integer.parseInt(segments.get(1));
+            return id > 0 ? id : -1;
+        } catch (NumberFormatException exception) {
+            return -1;
+        }
+    }
+
+    static int galleryPageFromLink(@Nullable Uri data) {
+        if (galleryIdFromLink(data) < 0) return -1;
+        List<String> segments = data.getPathSegments();
+        if (segments.size() < 3) return 0;
+        try {
+            int page = Integer.parseInt(segments.get(2));
+            return page > 0 ? page : -1;
+        } catch (NumberFormatException exception) {
+            return -1;
+        }
+    }
+
     private boolean tryLoadFromURL() {
         Uri data = getIntent().getData();
-        if (data != null && data.getPathSegments().size() >= 2) {//if using an URL
-            List<String> params = data.getPathSegments();
-            LogUtility.d(params.size() + ": " + params);
-            int id;
-            try {//if not an id return
-                id = Integer.parseInt(params.get(1));
-            } catch (NumberFormatException ignore) {
-                return false;
-            }
-            if (params.size() > 2) {//check if it has a specific page
-                try {
-                    zoom = Integer.parseInt(params.get(2));
-                } catch (NumberFormatException e) {
-                    LogUtility.e(e.getLocalizedMessage(), e);
-                    zoom = 0;
-                }
-            }
+        int id = galleryIdFromLink(data);
+        int page = galleryPageFromLink(data);
+        if (id > 0 && page >= 0) {
+            zoom = page;
             InspectorV3.galleryInspector(this, id, new InspectorV3.DefaultInspectorResponse() {
                 @Override
                 public void onSuccess(List<GenericGallery> galleries) {
