@@ -48,6 +48,7 @@
     <string name="preference_key_change_page_buttons" translatable="false">change_page_buttons</string>
     <string name="preference_key_favorite_limit" translatable="false">favorite_limit</string>
     <string name="preference_key_copy_logs" translatable="false">key_copy_logs</string>
+    <string name="preference_key_favorite_action_mode" translatable="false">favorite_action_mode</string>
     <string name="key_default_value" translatable="false">default_value</string>
     <string name="key_local_sort" translatable="false">local_sort_type</string>
     <string name="key_by_popular" translatable="false">is_by_popular</string>
@@ -210,6 +211,12 @@
     <string name="miscellaneous">Miscellaneous</string>
     <string name="update_settings">Update settings</string>
     <string name="online_favorite_manga">Online favorite galleries</string>
+    <string name="favorite_action_mode_title">Favorite card action</string>
+    <string name="favorite_action_local_primary">Heart primary</string>
+    <string name="favorite_action_online_primary">Star primary</string>
+    <string name="favorite_action_online_unavailable">Set a valid API key to use online favorites</string>
+    <string name="favorite_action_local_accessibility">Toggle local favorite</string>
+    <string name="favorite_action_online_accessibility">Toggle online favorite</string>
     <string name="cache_size_formatted">Cache size: %.2f MB</string>
     <string name="cache_cleared">Cache cleared</string>
     <string name="sort_by_latest">Sort by latest</string>
@@ -439,6 +446,16 @@
 
     <string-array name="site_mirrors" translatable="false">
         <item>nhentai.net</item>
+    </string-array>
+
+    <string-array name="favorite_action_modes">
+        <item>@string/favorite_action_local_primary</item>
+        <item>@string/favorite_action_online_primary</item>
+    </string-array>
+
+    <string-array name="favorite_action_mode_values" translatable="false">
+        <item>local</item>
+        <item>online</item>
     </string-array>
 
     <string-array name="title_type_array">

@@ -4,6 +4,11 @@
     <string name="cover_remove_favorite">取消本地收藏</string>
     <string name="cover_favorite_added">已加入收藏</string>
     <string name="cover_favorite_removed">已取消收藏</string>
+    <string name="cover_online_favorite_add">加入在线收藏</string>
+    <string name="cover_online_favorite_remove">取消在线收藏</string>
+    <string name="cover_online_favorite_unknown">在线收藏状态未知</string>
+    <string name="cover_online_favorite_added">已加入在线收藏</string>
+    <string name="cover_online_favorite_removed">已取消在线收藏</string>
     <string name="cover_undo">撤销</string>
     <string name="cover_download_queued">等待下载</string>
     <string name="cover_download_running">正在下载：%1$d%%</string>

@@ -40,6 +40,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.adapters.GalleryAdapter;
 import com.maxwai.nclientv3.adapters.CommentAdapter;
+import com.maxwai.nclientv3.api.OnlineFavoriteClient;
 import com.maxwai.nclientv3.api.comments.CommentsFetcher;
 import com.maxwai.nclientv3.api.comments.Comment;
 import com.maxwai.nclientv3.api.InspectorV3;
@@ -61,9 +62,6 @@ import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -83,6 +81,7 @@ public class GalleryActivity extends BaseActivity {
     private GalleryAdapter adapter;
     private int zoom;
     private boolean isLocalFavorite;
+    @Nullable private Boolean onlineFavoriteState;
     private Toolbar toolbar;
     private RecyclerView detailsList;
     private GalleryAdapter detailsAdapter;
@@ -163,6 +162,9 @@ public class GalleryActivity extends BaseActivity {
             detailsList.setRotationY(180);
         }
         isLocal = gallery.isLocal() || getIntent().getBooleanExtra(getPackageName() + ".ISLOCAL", false);
+        if (!isLocal && gallery instanceof Gallery) {
+            onlineFavoriteState = OnlineFavoriteClient.cachedState(this, gallery.getId());
+        }
         zoom = getIntent().getIntExtra(getPackageName() + ".ZOOM", 0);
         refresher.setEnabled(false);
         recycler.setLayoutManager(new CustomGridLayoutManager(this, Global.getColumnCount()));
@@ -561,13 +563,13 @@ public class GalleryActivity extends BaseActivity {
 
 
     public void initFavoriteIcon(Menu menu) {
-        boolean onlineFavorite = !isLocal && ((Gallery) gallery).isOnlineFavorite();
-        boolean unknown = getIntent().getBooleanExtra(getPackageName() + ".UNKNOWN", false);
+        if (gallery != null) onlineFavoriteState = OnlineFavoriteClient.cachedState(this, gallery.getId());
+        boolean onlineFavorite = !isLocal && Boolean.TRUE.equals(onlineFavoriteState);
         MenuItem item = menu.findItem(R.id.add_online_gallery);
 
         item.setIcon(onlineFavorite ? R.drawable.ic_star : R.drawable.ic_star_border);
 
-        if (unknown) item.setTitle(R.string.toggle_online_favorite);
+        if (onlineFavoriteState == null) item.setTitle(R.string.toggle_online_favorite);
         else if (onlineFavorite) item.setTitle(R.string.remove_from_online_favorites);
         else item.setTitle(R.string.add_to_online_favorite);
     }
@@ -717,27 +719,13 @@ public class GalleryActivity extends BaseActivity {
         builder.show();
     }
 
-    private void updateIcon(boolean nowIsFavorite) {
+    private void updateIcon() {
         GalleryActivity.this.runOnUiThread(() -> {
             if (isFinishing() || isDestroyed() || onlineFavoriteItem == null) return;
             onlineFavoritePending = false;
             onlineFavoriteItem.setEnabled(true);
-            onlineFavoriteItem.setIcon(!nowIsFavorite ? R.drawable.ic_star_border : R.drawable.ic_star);
-            onlineFavoriteItem.setTitle(!nowIsFavorite ? R.string.add_to_online_favorite : R.string.remove_from_online_favorites);
+            supportInvalidateOptionsMenu();
         });
-    }
-
-    @Nullable
-    static Boolean parseFavoriteResponse(String body) {
-        if (body == null || body.trim().isEmpty()) return null;
-        try {
-            JSONObject response = new JSONObject(body);
-            if (!response.has("favorited")) return null;
-            Object value = response.get("favorited");
-            return value instanceof Boolean ? (Boolean) value : null;
-        } catch (JSONException exception) {
-            return null;
-        }
     }
 
     private void finishOnlineFavoriteRequest() {
@@ -745,42 +733,27 @@ public class GalleryActivity extends BaseActivity {
             if (isFinishing() || isDestroyed()) return;
             onlineFavoritePending = false;
             if (onlineFavoriteItem != null) onlineFavoriteItem.setEnabled(true);
+            supportInvalidateOptionsMenu();
             Toast.makeText(this, R.string.unable_to_connect_to_the_site, Toast.LENGTH_LONG).show();
         });
     }
 
     private void addToFavorite() {
         if (onlineFavoritePending || onlineFavoriteItem == null || !(gallery instanceof Gallery)) return;
-        boolean wasFavorite = Objects.equals(onlineFavoriteItem.getTitle(), getString(R.string.remove_from_online_favorites));
-        String url = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/favorite", gallery.getId());
         onlineFavoritePending = true;
         onlineFavoriteItem.setEnabled(false);
-        try {
-            Global.getClient(this)
-                .newCall(new Request.Builder().url(url).method(wasFavorite ? "DELETE" : "POST", RequestBody.EMPTY).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException exception) {
-                        finishOnlineFavoriteRequest();
-                    }
+        onlineFavoriteState = OnlineFavoriteClient.cachedState(this, gallery.getId());
+        OnlineFavoriteClient.toggle(this, gallery.getId(), new OnlineFavoriteClient.Result() {
+            @Override
+            public void onSuccess(boolean favorited) {
+                updateIcon();
+            }
 
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        try (Response result = response) {
-                            if (!result.isSuccessful() || result.body() == null) {
-                                finishOnlineFavoriteRequest();
-                                return;
-                            }
-                            Boolean favorited = parseFavoriteResponse(result.body().string());
-                            if (favorited == null) finishOnlineFavoriteRequest();
-                            else updateIcon(favorited);
-                        }
-                    }
-                });
-        } catch (RuntimeException exception) {
-            LogUtility.w("Unable to update online favorite", exception);
-            finishOnlineFavoriteRequest();
-        }
+            @Override
+            public void onFailure() {
+                finishOnlineFavoriteRequest();
+            }
+        });
     }
 
     private void updateColumnCount(boolean increase) {

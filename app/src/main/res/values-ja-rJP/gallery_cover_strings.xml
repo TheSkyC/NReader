@@ -4,6 +4,11 @@
     <string name="cover_remove_favorite">ローカルのお気に入りから削除</string>
     <string name="cover_favorite_added">お気に入りに追加しました</string>
     <string name="cover_favorite_removed">お気に入りから削除しました</string>
+    <string name="cover_online_favorite_add">オンラインのお気に入りに追加</string>
+    <string name="cover_online_favorite_remove">オンラインのお気に入りから削除</string>
+    <string name="cover_online_favorite_unknown">オンラインのお気に入り状態は不明です</string>
+    <string name="cover_online_favorite_added">オンラインのお気に入りに追加しました</string>
+    <string name="cover_online_favorite_removed">オンラインのお気に入りから削除しました</string>
     <string name="cover_undo">元に戻す</string>
     <string name="cover_download_queued">ダウンロード待機中</string>
     <string name="cover_download_running">ダウンロード中：%1$d%%</string>

@@ -120,6 +120,12 @@
     <string name="global_settings">全体の設定</string>
     <string name="images_settings">画像の設定</string>
     <string name="miscellaneous">その他の設定</string>
+    <string name="favorite_action_mode_title">カードのお気に入り操作</string>
+    <string name="favorite_action_local_primary">ハートを優先</string>
+    <string name="favorite_action_online_primary">星を優先</string>
+    <string name="favorite_action_online_unavailable">オンラインのお気に入りには有効な API キーを設定してください</string>
+    <string name="favorite_action_local_accessibility">ローカルのお気に入りを切り替える</string>
+    <string name="favorite_action_online_accessibility">オンラインのお気に入りを切り替える</string>
     <string name="update_settings">アップデートの設定</string>
     <string name="online_favorite_manga">オンラインのお気に入りのギャラリー</string>
     <string name="cache_size_formatted">キャッシュサイズ：%.2f MB</string>

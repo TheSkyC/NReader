@@ -120,6 +120,12 @@
     <string name="global_settings">Глобальные настройки</string>
     <string name="images_settings">Настройки изображений</string>
     <string name="miscellaneous">Разное</string>
+    <string name="favorite_action_mode_title">Действие избранного на карточке</string>
+    <string name="favorite_action_local_primary">Сначала сердце</string>
+    <string name="favorite_action_online_primary">Сначала звезда</string>
+    <string name="favorite_action_online_unavailable">Настройте действующий ключ API для онлайн-избранного</string>
+    <string name="favorite_action_local_accessibility">Переключить локальное избранное</string>
+    <string name="favorite_action_online_accessibility">Переключить онлайн-избранное</string>
     <string name="update_settings">Настройки обновлений</string>
     <string name="online_favorite_manga">Онлайн избранная манга</string>
     <string name="cache_size_formatted">Размер кэша: %.2f MB</string>

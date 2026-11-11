@@ -41,6 +41,19 @@
         app:srcCompat="@drawable/ic_cover_heart"
         app:tint="@color/cover_favorite" />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/gallery_online_favorite"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:visibility="gone"
+        android:importantForAccessibility="no"
+        app:layout_constraintStart_toStartOf="@id/gallery_favorite"
+        app:layout_constraintEnd_toEndOf="@id/gallery_favorite"
+        app:layout_constraintTop_toTopOf="@id/gallery_favorite"
+        app:layout_constraintBottom_toBottomOf="@id/gallery_favorite"
+        app:srcCompat="@drawable/ic_star_border"
+        app:tint="@color/cover_unknown" />
+
     <TextView
         android:id="@+id/gallery_reading_progress"
         android:layout_width="wrap_content"

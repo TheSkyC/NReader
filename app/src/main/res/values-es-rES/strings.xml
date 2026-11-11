@@ -120,6 +120,12 @@
     <string name="global_settings">Configuración Global</string>
     <string name="images_settings">Configuración de Imágenes</string>
     <string name="miscellaneous">Misceláneo</string>
+    <string name="favorite_action_mode_title">Acción de favoritos en tarjetas</string>
+    <string name="favorite_action_local_primary">Corazón principal</string>
+    <string name="favorite_action_online_primary">Estrella principal</string>
+    <string name="favorite_action_online_unavailable">Configura una clave API válida para usar favoritos en línea</string>
+    <string name="favorite_action_local_accessibility">Cambiar favorito local</string>
+    <string name="favorite_action_online_accessibility">Cambiar favorito en línea</string>
     <string name="update_settings">Configuración de Actualizacion</string>
     <string name="online_favorite_manga">Manga favorito en línea</string>
     <string name="cache_size_formatted">Tamaño de caché: %.2f MB</string>

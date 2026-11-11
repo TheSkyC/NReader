@@ -139,6 +139,12 @@
     <string name="miscellaneous">其它设置</string>
     <string name="update_settings">更新设置</string>
     <string name="online_favorite_manga">在线收藏漫画</string>
+    <string name="favorite_action_mode_title">收藏卡片操作方式</string>
+    <string name="favorite_action_local_primary">心形优先</string>
+    <string name="favorite_action_online_primary">星形优先</string>
+    <string name="favorite_action_online_unavailable">请先设置有效 API Key 才能使用在线收藏</string>
+    <string name="favorite_action_local_accessibility">切换本地收藏</string>
+    <string name="favorite_action_online_accessibility">切换在线收藏</string>
     <string name="cache_size_formatted">缓存大小：%.2f MB</string>
     <string name="cache_cleared">缓存已清理</string>
     <string name="sort_by_latest">按更新排列</string>

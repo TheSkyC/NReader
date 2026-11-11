@@ -52,12 +52,18 @@ public class Gallery extends GenericGallery {
     private final GalleryData galleryData;
     @Nullable
     private final GalleryFolder folder;
-    private final boolean onlineFavorite;
+    @Nullable
+    private final Boolean onlineFavorite;
     private List<SimpleGallery> related = new ArrayList<>();
     private Language language = Language.UNKNOWN;
     private Size maxSize = new Size(0, 0), minSize = new Size(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     public Gallery(Context context, String json, List<SimpleGallery> relatedList, boolean isFavorite) throws IOException {
+        this(context, json, relatedList, Boolean.valueOf(isFavorite));
+    }
+
+    public Gallery(Context context, String json, List<SimpleGallery> relatedList,
+                   @Nullable Boolean isFavorite) throws IOException {
         LogUtility.d("Found JSON: " + json);
         JsonReader reader = new JsonReader(new StringReader(json));
         this.related = relatedList != null ? relatedList : new ArrayList<>();
@@ -76,12 +82,12 @@ public class Gallery extends GenericGallery {
         galleryData = new GalleryData(context, cursor, tags);
         folder = GalleryFolder.fromId(null, galleryData.getId());
         this.language = loadLanguage(tags);
-        onlineFavorite = false;
+        onlineFavorite = null;
         LogUtility.d(toString());
     }
 
     private Gallery() {
-        onlineFavorite = false;
+        onlineFavorite = null;
         galleryData = GalleryData.fakeData();
         folder = null;
     }
@@ -99,7 +105,8 @@ public class Gallery extends GenericGallery {
             folder = in.readParcelable(GalleryFolder.class.getClassLoader());
         }
         in.readTypedList(related, SimpleGallery.CREATOR);
-        onlineFavorite = in.readByte() == 1;
+        byte favoriteState = in.readByte();
+        onlineFavorite = favoriteState < 0 ? null : favoriteState == 1;
         language = loadLanguage(getTags());
     }
 
@@ -146,7 +153,8 @@ public class Gallery extends GenericGallery {
         }
     }
 
-    public boolean isOnlineFavorite() {
+    @Nullable
+    public Boolean isOnlineFavorite() {
         return onlineFavorite;
     }
 
@@ -351,7 +359,7 @@ public class Gallery extends GenericGallery {
         dest.writeParcelable(galleryData, flags);
         dest.writeParcelable(folder, flags);
         dest.writeTypedList(related);
-        dest.writeByte((byte) (onlineFavorite ? 1 : 0));
+        dest.writeByte((byte) (onlineFavorite == null ? -1 : onlineFavorite ? 1 : 0));
     }
 
     @NonNull

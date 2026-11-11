@@ -18,6 +18,7 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.snackbar.Snackbar;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.InspectorV3;
+import com.maxwai.nclientv3.api.OnlineFavoriteClient;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
@@ -89,6 +90,30 @@ final class GalleryCardActions {
         } else {
             resolve(anchor, gallery, current, resolved -> saveFavorite(anchor, resolved, current, finished), finished);
         }
+    }
+
+    static void onlineFavorite(View anchor, int galleryId,
+                               BooleanSupplier current,
+                               Runnable finished, Consumer<Boolean> updated) {
+        OnlineFavoriteClient.toggle(anchor.getContext(), galleryId,
+            new OnlineFavoriteClient.Result() {
+            @Override
+            public void onSuccess(boolean favorited) {
+                main.post(() -> {
+                    if (!active(anchor) || !current.getAsBoolean()) return;
+                    updated.accept(favorited);
+                    finished.run();
+                    Snackbar.make(feedbackAnchor(anchor), favorited
+                        ? R.string.cover_online_favorite_added : R.string.cover_online_favorite_removed,
+                        Snackbar.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onFailure() {
+                fail(anchor, current, finished, null);
+            }
+            });
     }
 
     private static void saveFavorite(View anchor, GenericGallery gallery, BooleanSupplier current, Runnable finished) {

@@ -451,7 +451,8 @@ public class InspectorV3 extends Thread implements Parcelable {
             hydrateRelatedTags(relatedList);
         }
 
-        boolean isFavorite = v2.optBoolean("is_favorited", false);
+        Object favoriteValue = v2.opt("is_favorited");
+        Boolean isFavorite = favoriteValue instanceof Boolean ? (Boolean) favoriteValue : null;
 
         Gallery gallery = new Gallery(context.get(), v2.toString(), relatedList, isFavorite);
         galleries.add(gallery);
