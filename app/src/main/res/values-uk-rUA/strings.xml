@@ -120,6 +120,12 @@
     <string name="global_settings">Загальні параметри</string>
     <string name="images_settings">Параметри зображень</string>
     <string name="miscellaneous">Різне</string>
+    <string name="favorite_action_mode_title">Дія обраного на картці</string>
+    <string name="favorite_action_local_primary">Спочатку серце</string>
+    <string name="favorite_action_online_primary">Спочатку зірка</string>
+    <string name="favorite_action_online_unavailable">Налаштуйте дійсний ключ API для онлайн-обраного</string>
+    <string name="favorite_action_local_accessibility">Перемкнути локальне обране</string>
+    <string name="favorite_action_online_accessibility">Перемкнути онлайн-обране</string>
     <string name="update_settings">Параметри оновлення</string>
     <string name="online_favorite_manga">Уподобанні онлайн галереї</string>
     <string name="cache_size_formatted">Розмір кешу %.2f MB</string>

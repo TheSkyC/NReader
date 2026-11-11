@@ -4,6 +4,11 @@
     <string name="cover_remove_favorite">إزالة من المفضلة المحلية</string>
     <string name="cover_favorite_added">تمت الإضافة إلى المفضلة</string>
     <string name="cover_favorite_removed">تمت الإزالة من المفضلة</string>
+    <string name="cover_online_favorite_add">إضافة إلى المفضلة عبر الإنترنت</string>
+    <string name="cover_online_favorite_remove">إزالة من المفضلة عبر الإنترنت</string>
+    <string name="cover_online_favorite_unknown">حالة المفضلة عبر الإنترنت غير معروفة</string>
+    <string name="cover_online_favorite_added">تمت الإضافة إلى المفضلة عبر الإنترنت</string>
+    <string name="cover_online_favorite_removed">تمت الإزالة من المفضلة عبر الإنترنت</string>
     <string name="cover_undo">تراجع</string>
     <string name="cover_download_queued">التنزيل في قائمة الانتظار</string>
     <string name="cover_download_running">جارٍ التنزيل: %1$d%%</string>

@@ -4,6 +4,11 @@
     <string name="cover_remove_favorite">Rimuovi dai preferiti locali</string>
     <string name="cover_favorite_added">Aggiunto ai preferiti</string>
     <string name="cover_favorite_removed">Rimosso dai preferiti</string>
+    <string name="cover_online_favorite_add">Aggiungi ai preferiti online</string>
+    <string name="cover_online_favorite_remove">Rimuovi dai preferiti online</string>
+    <string name="cover_online_favorite_unknown">Stato del preferito online sconosciuto</string>
+    <string name="cover_online_favorite_added">Aggiunto ai preferiti online</string>
+    <string name="cover_online_favorite_removed">Rimosso dai preferiti online</string>
     <string name="cover_undo">Annulla</string>
     <string name="cover_download_queued">Download in coda</string>
     <string name="cover_download_running">Download: %1$d%%</string>

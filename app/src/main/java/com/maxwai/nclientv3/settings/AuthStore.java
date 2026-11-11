@@ -20,7 +20,7 @@ public final class AuthStore {
         return context.getSharedPreferences(AUTH_PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    public static void saveApiKey(@NonNull Context context, @NonNull String apiKey, boolean valid) {
+    public static synchronized void saveApiKey(@NonNull Context context, @NonNull String apiKey, boolean valid) {
         String normalized = apiKey.trim();
         getPreferences(context).edit()
             .putString(KEY_TYPE, AuthCredentials.Type.API_KEY.name())
@@ -29,7 +29,7 @@ public final class AuthStore {
             .apply();
     }
 
-    public static void clear(@NonNull Context context) {
+    public static synchronized void clear(@NonNull Context context) {
         getPreferences(context).edit().clear().apply();
     }
 
@@ -65,9 +65,14 @@ public final class AuthStore {
         return preferences.getBoolean(KEY_VALID, false);
     }
 
-    public static void setApiKeyValidation(@NonNull Context context, boolean valid) {
+    public static synchronized void setApiKeyValidation(@NonNull Context context, boolean valid) {
         if (!hasApiKey(context)) return;
         getPreferences(context).edit().putBoolean(KEY_VALID, valid).apply();
+    }
+
+    public static synchronized void setApiKeyValidationIfCurrent(@NonNull Context context,
+                                                                  @NonNull String apiKey, boolean valid) {
+        if (apiKey.equals(getApiKey(context))) setApiKeyValidation(context, valid);
     }
 
     @Nullable

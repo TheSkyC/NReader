@@ -84,6 +84,11 @@ Crowdin project.
 - Browse and search galleries by query or tags.
 - Include, exclude, blur, or hide tags.
 - Download manga and manage favorites and bookmarks.
+- Keep local and online favorites independent from gallery cards. The card
+  supports a configurable heart or star primary action; online favorite status
+  is shown only with a valid API key, and unknown states are confirmed through
+  the v2 API before changing them. Explicit server rejection keeps the last
+  confirmed state; transport or timeout failures mark it unknown.
 - Save reading positions automatically in paged and single-column reading,
   with a separate Continue action and preserved manual page bookmarks.
 - Share galleries or open them in a browser.
@@ -95,6 +100,16 @@ multitasking previews are no longer hidden by `FLAG_SECURE`.
 
 State definitions, database upgrades and backup compatibility are documented in
 [state and reading contracts](docs/state-and-reading.md).
+
+For favorite-card interaction checks, configure a valid API key and open Settings
+to switch **Favorite card action** between **Heart primary** and **Star primary**.
+Verify short press, long press, and `Shift+Enter` on a focused card; moving a
+pressed finger cancels the long action. With no valid key, local favorites stay
+available and online actions open the API-key settings. Test local-only, online-
+only, both, and unknown states; explicit rejection keeps confirmed state while
+ambiguous transport failures return to unknown. Online state is held in a bounded
+in-memory cache separated by API-key fingerprint and is cleared when the key
+changes or is removed.
 
 ## Upstream screenshots
 

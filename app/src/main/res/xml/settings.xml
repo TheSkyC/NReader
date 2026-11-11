@@ -32,6 +32,14 @@
             android:key="@string/preference_key_api_key"
             android:title="@string/setting_api_key_title"
             app:iconSpaceReserved="false" />
+        <ListPreference
+            android:defaultValue="local"
+            android:entries="@array/favorite_action_modes"
+            android:entryValues="@array/favorite_action_mode_values"
+            android:key="@string/preference_key_favorite_action_mode"
+            android:title="@string/favorite_action_mode_title"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="@string/preference_key_fake_icon"

@@ -120,6 +120,12 @@
     <string name="global_settings">Général</string>
     <string name="images_settings">Images</string>
     <string name="miscellaneous">Divers</string>
+    <string name="favorite_action_mode_title">Action des favoris sur les cartes</string>
+    <string name="favorite_action_local_primary">Cœur en premier</string>
+    <string name="favorite_action_online_primary">Étoile en premier</string>
+    <string name="favorite_action_online_unavailable">Configurez une clé API valide pour les favoris en ligne</string>
+    <string name="favorite_action_local_accessibility">Modifier le favori local</string>
+    <string name="favorite_action_online_accessibility">Modifier le favori en ligne</string>
     <string name="update_settings">Mise à jour</string>
     <string name="online_favorite_manga">Galeries favorites en ligne</string>
     <string name="cache_size_formatted">Taille du cache : %.2f Mo</string>

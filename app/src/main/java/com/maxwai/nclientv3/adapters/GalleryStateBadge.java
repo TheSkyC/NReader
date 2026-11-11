@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -9,17 +10,24 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
+import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.core.widget.TextViewCompat;
 
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
+import com.maxwai.nclientv3.ApiKeyActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.SimpleGallery;
+import com.maxwai.nclientv3.api.OnlineFavoriteClient;
+import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.api.components.Tag;
 import com.maxwai.nclientv3.api.components.TagList;
@@ -30,15 +38,18 @@ import com.maxwai.nclientv3.async.database.GalleryStateRepository;
 import com.maxwai.nclientv3.async.downloader.DownloadObserver;
 import com.maxwai.nclientv3.async.downloader.DownloadQueue;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
+import com.maxwai.nclientv3.settings.AuthStore;
 
 import java.io.File;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private final View item;
     private final View strip;
     private final ImageButton favorite;
+    private final ImageView onlineFavorite;
     private final ImageButton localFiles;
     private final TextView customStatus;
     private final TextView progress;
@@ -55,6 +66,9 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private long binding;
     private long request;
     private boolean favoritePending;
+    private boolean onlineFavoritePending;
+    private Boolean onlineFavoriteState;
+    private String onlineFavoriteIdentity;
     private boolean compactProgressStyle;
     private final DownloadObserver observer = new DownloadObserver() {
         private void update(GalleryDownloaderV2 downloader) {
@@ -80,6 +94,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         this.item = item;
         strip = item.findViewById(R.id.gallery_state);
         favorite = item.findViewById(R.id.gallery_favorite);
+        onlineFavorite = item.findViewById(R.id.gallery_online_favorite);
         localFiles = item.findViewById(R.id.gallery_local_files);
         customStatus = item.findViewById(R.id.gallery_custom_status);
         progress = item.findViewById(R.id.gallery_reading_progress);
@@ -91,6 +106,30 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         TextViewCompat.setCompoundDrawableTintList(author, author.getTextColors());
         downloadProgress = item.findViewById(R.id.gallery_download_progress);
         item.addOnAttachStateChangeListener(this);
+        ViewCompat.addAccessibilityAction(favorite,
+            item.getContext().getString(R.string.favorite_action_local_accessibility),
+            (view, arguments) -> {
+                toggleLocalFavorite();
+                return true;
+            });
+        ViewCompat.addAccessibilityAction(favorite,
+            item.getContext().getString(R.string.favorite_action_online_accessibility),
+            (view, arguments) -> {
+                toggleOnlineFavorite();
+                return true;
+            });
+        favorite.setOnLongClickListener(view -> {
+            performSecondaryFavoriteAction();
+            return true;
+        });
+        favorite.setOnKeyListener((view, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.isShiftPressed()) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0)
+                    performSecondaryFavoriteAction();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void updateProgressStyle() {
@@ -131,6 +170,9 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         state = null;
         gallery = null;
         favoritePending = false;
+        onlineFavoritePending = false;
+        onlineFavoriteState = null;
+        onlineFavoriteIdentity = null;
         follow(null);
         strip.setVisibility(View.INVISIBLE);
         customStatus.setVisibility(View.GONE);
@@ -139,6 +181,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         favorite.setOnClickListener(null);
         localFiles.setOnClickListener(null);
         favorite.setEnabled(false);
+        onlineFavorite.setVisibility(View.GONE);
         localFiles.setEnabled(false);
         item.findViewById(R.id.pages).setVisibility(View.GONE);
         TextView title = item.findViewById(R.id.title);
@@ -207,23 +250,30 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private void render(GalleryState state) {
         Context context = strip.getContext();
         long renderedBinding = binding;
+        synchronizeOnlineFavoriteIdentity(context);
+        boolean onlinePrimary = onlinePrimaryPreference() && onlineFavoriteAvailable();
         favorite.setVisibility(View.VISIBLE);
-        favorite.setSelected(state.favorite);
-        favorite.setImageResource(state.favorite ? R.drawable.ic_cover_heart_fill : R.drawable.ic_cover_heart);
-        tint(favorite, state.favorite ? R.color.cover_favorite : android.R.color.white);
-        favorite.setEnabled(id > 0 && gallery != null && !favoritePending);
+        boolean onlineSelected = Boolean.TRUE.equals(onlineFavoriteState);
+        favorite.setSelected(onlinePrimary ? onlineSelected : state.favorite);
+        favorite.setImageResource(onlinePrimary
+            ? (onlineSelected ? R.drawable.ic_star : R.drawable.ic_star_border)
+            : (state.favorite ? R.drawable.ic_cover_heart_fill : R.drawable.ic_cover_heart));
+        tint(favorite, onlinePrimary ? (onlineSelected ? R.color.cover_favorite
+            : onlineFavoriteState == null ? R.color.cover_unknown : android.R.color.white)
+            : (state.favorite ? R.color.cover_favorite : android.R.color.white));
+        favorite.setEnabled(id > 0 && gallery != null && !favoritePending && !onlineFavoritePending);
         favorite.setAlpha(id > 0 && gallery != null ? 1f : .5f);
         String favoriteLabel = context.getString(state.favorite ? R.string.cover_remove_favorite : R.string.cover_add_favorite);
-        favorite.setContentDescription(favoriteLabel);
-        favorite.setTooltipText(favoriteLabel);
-        favorite.setOnClickListener(view -> {
-            favoritePending = true;
-            favorite.setEnabled(false);
-            GalleryCardActions.favorite(item, gallery, state.favorite, () -> binding == renderedBinding, () -> {
-                favoritePending = false;
-                refresh();
-            });
-        });
+        String primaryLabel = onlinePrimary
+            ? context.getString(Boolean.TRUE.equals(onlineFavoriteState)
+                ? R.string.cover_online_favorite_remove
+                : onlineFavoriteState == null ? R.string.cover_online_favorite_unknown
+                    : R.string.cover_online_favorite_add)
+            : favoriteLabel;
+        favorite.setContentDescription(primaryLabel);
+        favorite.setTooltipText(primaryLabel);
+        favorite.setOnClickListener(view -> performPrimaryFavoriteAction());
+        renderOnlineFavorite(context, state.favorite, onlinePrimary);
 
         customStatus.setVisibility(state.statusName == null ? View.GONE : View.VISIBLE);
         if (state.statusName != null) {
@@ -256,6 +306,100 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
 
         renderFiles(state, renderedBinding);
         strip.setVisibility(View.VISIBLE);
+    }
+
+    private void renderOnlineFavorite(Context context, boolean localSelected, boolean onlinePrimary) {
+        boolean available = id > 0 && gallery != null && !gallery.isLocal()
+            && AuthStore.hasValidApiKey(context);
+        onlineFavorite.setVisibility(available ? View.VISIBLE : View.GONE);
+        if (!available) return;
+        boolean confirmed = onlineFavoriteState != null;
+        boolean selected = Boolean.TRUE.equals(onlineFavoriteState);
+        onlineFavorite.setSelected(onlinePrimary ? localSelected : selected);
+        onlineFavorite.setImageResource(onlinePrimary
+            ? (localSelected ? R.drawable.ic_cover_heart_fill : R.drawable.ic_cover_heart)
+            : (selected ? R.drawable.ic_star : R.drawable.ic_star_border));
+        tint(onlineFavorite, onlinePrimary ? (localSelected ? R.color.cover_favorite : android.R.color.white)
+            : (selected ? R.color.cover_favorite : confirmed ? android.R.color.white : R.color.cover_unknown));
+        float offset = 8 * context.getResources().getDisplayMetrics().density;
+        onlineFavorite.setTranslationX(offset);
+        onlineFavorite.setTranslationY(onlinePrimary ? offset : -offset);
+    }
+
+    private void synchronizeOnlineFavoriteIdentity(Context context) {
+        String identity = OnlineFavoriteClient.sessionIdentity(context);
+        onlineFavoriteIdentity = identity;
+        onlineFavoriteState = identity == null ? null : OnlineFavoriteClient.cachedState(context, id);
+    }
+
+    private boolean onlinePrimaryPreference() {
+        Context context = item.getContext();
+        String key = context.getString(R.string.preference_key_favorite_action_mode);
+        try {
+            return "online".equals(context.getSharedPreferences("Settings", Context.MODE_PRIVATE)
+                .getString(key, "local"));
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
+
+    private boolean onlineFavoriteAvailable() {
+        return id > 0 && gallery != null && !gallery.isLocal()
+            && AuthStore.hasValidApiKey(item.getContext());
+    }
+
+    private void performPrimaryFavoriteAction() {
+        if (onlinePrimaryPreference() && onlineFavoriteAvailable()) toggleOnlineFavorite();
+        else toggleLocalFavorite();
+    }
+
+    private void performSecondaryFavoriteAction() {
+        if (onlinePrimaryPreference() && !onlineFavoriteAvailable()) {
+            toggleOnlineFavorite();
+        } else if (onlinePrimaryPreference()) {
+            toggleLocalFavorite();
+        } else {
+            toggleOnlineFavorite();
+        }
+    }
+
+    private void toggleLocalFavorite() {
+        if (state == null || favoritePending || gallery == null || id <= 0) return;
+        long actionBinding = binding;
+        favoritePending = true;
+        favorite.setEnabled(false);
+        GalleryCardActions.favorite(item, gallery, state.favorite,
+            () -> binding == actionBinding, () -> {
+                favoritePending = false;
+                refresh();
+            });
+    }
+
+    private void toggleOnlineFavorite() {
+        if (!onlineFavoriteAvailable()) {
+            Snackbar.make(item, R.string.favorite_action_online_unavailable, Snackbar.LENGTH_LONG)
+                .setAction(R.string.setting_api_key_title,
+                    view -> item.getContext().startActivity(new Intent(item.getContext(), ApiKeyActivity.class)))
+                .show();
+            return;
+        }
+        if (onlineFavoritePending) return;
+        synchronizeOnlineFavoriteIdentity(item.getContext());
+        long actionBinding = binding;
+        String actionIdentity = onlineFavoriteIdentity;
+        onlineFavoritePending = true;
+        favorite.setEnabled(false);
+        GalleryCardActions.onlineFavorite(item, id,
+            () -> binding == actionBinding,
+            () -> {
+                onlineFavoritePending = false;
+                onlineFavoriteIdentity = OnlineFavoriteClient.sessionIdentity(item.getContext());
+                onlineFavoriteState = OnlineFavoriteClient.cachedState(item.getContext(), id);
+                refresh();
+            }, favorited -> {
+                if (Objects.equals(actionIdentity, OnlineFavoriteClient.sessionIdentity(item.getContext())))
+                    onlineFavoriteState = favorited;
+            });
     }
 
     private void renderFiles(GalleryState state, long renderedBinding) {
@@ -337,7 +481,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         localFiles.setTooltipText(description);
     }
 
-    private static void tint(ImageButton button, int color) {
+    private static void tint(ImageView button, int color) {
         ImageViewCompat.setImageTintList(button, ColorStateList.valueOf(button.getContext().getColor(color)));
     }
 
@@ -353,6 +497,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         binding++;
         request++;
         favoritePending = false;
+        onlineFavoritePending = false;
         if (task != null) task.removeObserver(observer);
         main.removeCallbacksAndMessages(null);
         GalleryStateRepository.removeObserver(refresh);

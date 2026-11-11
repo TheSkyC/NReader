@@ -120,6 +120,12 @@
     <string name="global_settings">إعدادات عامة</string>
     <string name="images_settings">إعدادات الصور</string>
     <string name="miscellaneous">مُنوَّعات</string>
+    <string name="favorite_action_mode_title">إجراء بطاقة المفضلة</string>
+    <string name="favorite_action_local_primary">القلب أولاً</string>
+    <string name="favorite_action_online_primary">النجمة أولاً</string>
+    <string name="favorite_action_online_unavailable">اضبط مفتاح API صالحاً لاستخدام المفضلة عبر الإنترنت</string>
+    <string name="favorite_action_local_accessibility">تبديل المفضلة المحلية</string>
+    <string name="favorite_action_online_accessibility">تبديل المفضلة عبر الإنترنت</string>
     <string name="update_settings">إعدادات التحديثات</string>
     <string name="online_favorite_manga">الأعمال المُفضَّلة عبر الشابكة</string>
     <string name="cache_size_formatted">حجم الخبيئة: %.2f MB</string>

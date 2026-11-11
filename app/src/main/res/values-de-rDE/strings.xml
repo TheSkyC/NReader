@@ -120,6 +120,12 @@
     <string name="global_settings">Globale Einstellungen</string>
     <string name="images_settings">Bilder Einstellungen</string>
     <string name="miscellaneous">Sonstiges</string>
+    <string name="favorite_action_mode_title">Favoritenaktion auf Karten</string>
+    <string name="favorite_action_local_primary">Herz als Hauptaktion</string>
+    <string name="favorite_action_online_primary">Stern als Hauptaktion</string>
+    <string name="favorite_action_online_unavailable">Für Online-Favoriten einen gültigen API-Schlüssel einrichten</string>
+    <string name="favorite_action_local_accessibility">Lokalen Favoriten umschalten</string>
+    <string name="favorite_action_online_accessibility">Online-Favoriten umschalten</string>
     <string name="update_settings">Update Einstellungen</string>
     <string name="online_favorite_manga">Online Lieblingsgalerien</string>
     <string name="cache_size_formatted">Cache Größe: %.2f MB</string>

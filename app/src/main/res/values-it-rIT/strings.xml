@@ -120,6 +120,12 @@
     <string name="global_settings">Impostazioni globali</string>
     <string name="images_settings">Impostazioni sulle immagini</string>
     <string name="miscellaneous">Miscellanea</string>
+    <string name="favorite_action_mode_title">Azione preferiti sulle schede</string>
+    <string name="favorite_action_local_primary">Cuore principale</string>
+    <string name="favorite_action_online_primary">Stella principale</string>
+    <string name="favorite_action_online_unavailable">Configura una chiave API valida per usare i preferiti online</string>
+    <string name="favorite_action_local_accessibility">Cambia preferito locale</string>
+    <string name="favorite_action_online_accessibility">Cambia preferito online</string>
     <string name="update_settings">Impostazioni di aggiornamento</string>
     <string name="online_favorite_manga">Manga preferiti online</string>
     <string name="cache_size_formatted">Grandezza cache: %.2f MB</string>

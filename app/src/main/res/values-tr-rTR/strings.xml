@@ -120,6 +120,12 @@
     <string name="global_settings">Uygulama ayarları</string>
     <string name="images_settings">Okuma ayarları</string>
     <string name="miscellaneous">Çeşitli</string>
+    <string name="favorite_action_mode_title">Kart favori işlemi</string>
+    <string name="favorite_action_local_primary">Kalp öncelikli</string>
+    <string name="favorite_action_online_primary">Yıldız öncelikli</string>
+    <string name="favorite_action_online_unavailable">Çevrimiçi favoriler için geçerli bir API anahtarı ayarlayın</string>
+    <string name="favorite_action_local_accessibility">Yerel favoriyi değiştir</string>
+    <string name="favorite_action_online_accessibility">Çevrimiçi favoriyi değiştir</string>
     <string name="update_settings">Güncelleme ayarları</string>
     <string name="online_favorite_manga">Online favori galeri</string>
     <string name="cache_size_formatted">Önbellek boyutu: %.2f MB</string>

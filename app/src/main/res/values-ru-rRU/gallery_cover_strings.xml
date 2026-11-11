@@ -4,6 +4,11 @@
     <string name="cover_remove_favorite">Удалить из локального избранного</string>
     <string name="cover_favorite_added">Добавлено в избранное</string>
     <string name="cover_favorite_removed">Удалено из избранного</string>
+    <string name="cover_online_favorite_add">Добавить в онлайн-избранное</string>
+    <string name="cover_online_favorite_remove">Удалить из онлайн-избранного</string>
+    <string name="cover_online_favorite_unknown">Статус онлайн-избранного неизвестен</string>
+    <string name="cover_online_favorite_added">Добавлено в онлайн-избранное</string>
+    <string name="cover_online_favorite_removed">Удалено из онлайн-избранного</string>
     <string name="cover_undo">Отменить</string>
     <string name="cover_download_queued">Загрузка в очереди</string>
     <string name="cover_download_running">Загрузка: %1$d%%</string>
