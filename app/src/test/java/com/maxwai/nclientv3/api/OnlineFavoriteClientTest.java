@@ -119,7 +119,7 @@ public class OnlineFavoriteClientTest {
             assertTrue(entered.await(5, TimeUnit.SECONDS));
             OnlineFavoriteClient.FavoriteListSnapshot snapshot = OnlineFavoriteClient.beginFavoriteList(context);
             OnlineFavoriteClient.acceptFavoriteList(context, snapshot, Collections.singletonList(306));
-            assertNull(OnlineFavoriteClient.cachedState(context, 306));
+            assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 306));
             release.countDown();
             outcome.await();
             OnlineFavoriteClient.acceptFavoriteList(context, snapshot, Collections.singletonList(305));
@@ -127,6 +127,22 @@ public class OnlineFavoriteClientTest {
         } finally {
             release.countDown();
         }
+    }
+
+    @Test public void favoriteListKeepsUnaffectedItemsAfterAnOverlappingChange() {
+        OnlineFavoriteClient.FavoriteListSnapshot snapshot = OnlineFavoriteClient.beginFavoriteList(context);
+        OnlineFavoriteClient.rememberState(context, 307, false);
+        OnlineFavoriteClient.acceptFavoriteList(context, snapshot, java.util.Arrays.asList(307, 308));
+        assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 307));
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 308));
+    }
+
+    @Test public void oldFavoriteListIsRejectedWhenChangeHistoryIsEvicted() {
+        OnlineFavoriteClient.FavoriteListSnapshot snapshot = OnlineFavoriteClient.beginFavoriteList(context);
+        for (int id = 10000; id < 10513; id++) OnlineFavoriteClient.rememberState(context, id, false);
+        OnlineFavoriteClient.acceptFavoriteList(context, snapshot, java.util.Arrays.asList(10000, 20000));
+        assertNull(OnlineFavoriteClient.cachedState(context, 10000));
+        assertNull(OnlineFavoriteClient.cachedState(context, 20000));
     }
 
     @Test public void authenticatedFavoriteListSeedsOnlySuccessfulCurrentAccountResults() throws Exception {

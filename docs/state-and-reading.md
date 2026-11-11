@@ -146,8 +146,11 @@ with a positive site ID, including a downloaded gallery, can also use online
 favorites with a validated API key. The secondary icon appears at the lower right
 of the primary icon. An unknown online state is dimmed, distinct from a confirmed
 unselected state. Successful authenticated favorite-list results seed confirmed
-online state for their returned IDs; account changes and overlapping mutations
-invalidate stale list results. List membership is not inferred for absent IDs.
+online state for their returned IDs; account changes invalidate stale list results,
+and overlapping changes prevent only affected IDs from being overwritten when
+change history is available. List membership is not inferred for absent IDs.
+The favorite action exposes the secondary state to accessibility services,
+including when the online state is unknown.
 Download controls use both icon shape and color, including verified completion in the local
 library, and open task actions or a file-state explanation. Removing local files
 is a separate, explicit action. Progress uses `page/total`

@@ -7,6 +7,10 @@
     <string name="cover_online_favorite_add">加入線上收藏</string>
     <string name="cover_online_favorite_remove">取消線上收藏</string>
     <string name="cover_online_favorite_unknown">線上收藏狀態未知</string>
+    <string name="cover_local_favorite_selected">已加入本機收藏</string>
+    <string name="cover_local_favorite_unselected">未加入本機收藏</string>
+    <string name="cover_online_favorite_selected">已加入線上收藏</string>
+    <string name="cover_online_favorite_unselected">未加入線上收藏</string>
     <string name="cover_online_favorite_added">已加入線上收藏</string>
     <string name="cover_online_favorite_removed">已取消線上收藏</string>
     <string name="cover_undo">復原</string>

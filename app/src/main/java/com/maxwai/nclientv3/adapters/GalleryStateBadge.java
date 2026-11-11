@@ -286,6 +286,14 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
             : favoriteLabel;
         favorite.setContentDescription(primaryLabel);
         favorite.setTooltipText(primaryLabel);
+        CharSequence secondaryState = null;
+        if (onlineFavoriteAvailable()) {
+            secondaryState = context.getString(onlinePrimary
+                ? (state.favorite ? R.string.cover_local_favorite_selected : R.string.cover_local_favorite_unselected)
+                : (onlineFavoriteState == null ? R.string.cover_online_favorite_unknown
+                    : onlineSelected ? R.string.cover_online_favorite_selected : R.string.cover_online_favorite_unselected));
+        }
+        ViewCompat.setStateDescription(favorite, secondaryState);
         favorite.setOnClickListener(view -> performPrimaryFavoriteAction());
         renderOnlineFavorite(context, state.favorite, onlinePrimary);
 

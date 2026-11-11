@@ -7,6 +7,10 @@
     <string name="cover_online_favorite_add">加入在线收藏</string>
     <string name="cover_online_favorite_remove">取消在线收藏</string>
     <string name="cover_online_favorite_unknown">在线收藏状态未知</string>
+    <string name="cover_local_favorite_selected">已加入本地收藏</string>
+    <string name="cover_local_favorite_unselected">未加入本地收藏</string>
+    <string name="cover_online_favorite_selected">已加入在线收藏</string>
+    <string name="cover_online_favorite_unselected">未加入在线收藏</string>
     <string name="cover_online_favorite_added">已加入在线收藏</string>
     <string name="cover_online_favorite_removed">已取消在线收藏</string>
     <string name="cover_undo">撤销</string>
