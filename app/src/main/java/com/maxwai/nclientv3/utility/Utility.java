@@ -2,8 +2,6 @@ package com.maxwai.nclientv3.utility;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -27,7 +25,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.List;
 import java.util.Random;
 
 public class Utility {
@@ -159,11 +156,6 @@ public class Utility {
             shareIntent.setType("image/jpeg");
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-            List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
-            for (ResolveInfo resolveInfo : resInfoList) {
-                String packageName = resolveInfo.activityInfo.packageName;
-                context.grantUriPermission(packageName, x, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            }
             shareIntent = Intent.createChooser(shareIntent, context.getString(R.string.share_with));
             shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(shareIntent);

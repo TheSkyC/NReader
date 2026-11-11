@@ -90,18 +90,13 @@ public class GalleryDownloaderManager {
         Intent notifyIntent = new Intent(context, GalleryActivity.class);
         notifyIntent.putExtra(context.getPackageName() + ".GALLERY", downloaderV2.localGallery());
         notifyIntent.putExtra(context.getPackageName() + ".ISLOCAL", true);
+        notifyIntent.setAction(context.getPackageName() + ".DOWNLOAD_COMPLETE." + downloaderV2.getId());
         // Create the PendingIntent
 
-        PendingIntent notifyPendingIntent;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            notifyPendingIntent = PendingIntent.getActivity(
-                context, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
-            );
-        } else {
-            notifyPendingIntent = PendingIntent.getActivity(
-                context, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT
-            );
-        }
+        PendingIntent notifyPendingIntent = PendingIntent.getActivity(
+            context, notificationId, notifyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
         notification.setContentIntent(notifyPendingIntent);
     }
 

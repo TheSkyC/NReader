@@ -3,8 +3,6 @@ package com.maxwai.nclientv3.async.converters;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.pdf.PdfDocument;
@@ -30,19 +28,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class CreatePdfOrZip extends Worker {
-    private static final String GALLERY_ID_KEY = "GALLERY_ID";
+    private static final int MAX_GALLERY_PATH_LENGTH = 2048;
+    private static final String GALLERY_PATH_KEY = "GALLERY_PATH";
     private static final String PDF_OR_ZIP_KEY = "PDF_OR_ZIP";
-    private static final Map<Integer, LocalGallery> galleryMap = Collections.synchronizedMap(new HashMap<>());
     private int notId;
     private int totalPage;
     private NotificationCompat.Builder notification;
@@ -52,14 +45,12 @@ public class CreatePdfOrZip extends Worker {
     }
 
     public static void startWork(Context context, LocalGallery gallery, boolean pdf) {
-        int id;
-        do {
-            id = new Random().nextInt(Integer.MAX_VALUE);
-        } while (galleryMap.containsKey(id));
-        galleryMap.put(id, gallery);
+        if (gallery == null || !gallery.isValid()) return;
+        String galleryPath = gallery.getDirectory().getAbsolutePath();
+        if (galleryPath.length() > MAX_GALLERY_PATH_LENGTH) return;
         WorkRequest createPdfOrZipWorkRequest = new OneTimeWorkRequest.Builder(CreatePdfOrZip.class)
             .setInputData(new Data.Builder()
-                .putInt(GALLERY_ID_KEY, id)
+                .putString(GALLERY_PATH_KEY, galleryPath)
                 .putBoolean(PDF_OR_ZIP_KEY, pdf)
                 .build())
             .build();
@@ -87,11 +78,11 @@ public class CreatePdfOrZip extends Worker {
         if (pdf && !hasPDFCapabilities()) {
             return Result.failure();
         }
-        int galleryId = getInputData().getInt(GALLERY_ID_KEY, -1);
-        if (galleryId == -1) {
+        String galleryPath = getInputData().getString(GALLERY_PATH_KEY);
+        if (galleryPath == null || galleryPath.isEmpty() || galleryPath.length() > MAX_GALLERY_PATH_LENGTH) {
             return Result.failure();
         }
-        LocalGallery gallery = galleryMap.remove(galleryId);
+        LocalGallery gallery = loadGallery(galleryPath);
         if (gallery == null) {
             return Result.failure();
         }
@@ -119,23 +110,18 @@ public class CreatePdfOrZip extends Worker {
                 notification.setContentText(getApplicationContext().getString(R.string.writing_pdf));
                 notification.setProgress(totalPage, 0, true);
                 NotificationSettings.notify(getApplicationContext(), notId, notification.build());
-                try {
-                    File finalPath = Global.PDFFOLDER;
-                    //noinspection ResultOfMethodCallIgnored
-                    finalPath.mkdirs();
-                    finalPath = new File(finalPath, gallery.getTitle() + ".pdf");
-                    //noinspection ResultOfMethodCallIgnored
-                    finalPath.createNewFile();
-                    LogUtility.d("Generating PDF at: " + finalPath);
-                    try (FileOutputStream out = new FileOutputStream(finalPath)) {
+                try (ExportFile export = ExportFile.create(Global.PDFFOLDER, gallery.getTitle(), gallery.getId(), ".pdf")) {
+                    File finalPath = export.getOutputFile();
+                    LogUtility.d("Generating PDF at: " + finalPath.getName());
+                    try (FileOutputStream out = new FileOutputStream(export.getTemporaryFile())) {
                         document.writeTo(out);
                     }
+                    export.publish();
                     notification.setProgress(0, 0, false);
                     notification.setContentTitle(getApplicationContext().getString(R.string.created_pdf));
                     notification.setContentText(gallery.getTitle());
                     createIntentOpen(finalPath, true);
                     NotificationSettings.notify(getApplicationContext(), notId, notification.build());
-                    LogUtility.d(finalPath.getAbsolutePath());
                 } catch (IOException e) {
                     notification.setContentTitle(getApplicationContext().getString(R.string.error_pdf));
                     notification.setContentText(getApplicationContext().getString(R.string.failed));
@@ -148,10 +134,10 @@ public class CreatePdfOrZip extends Worker {
                 document.close();
             }
         } else {
-            try {
-                File file = new File(Global.ZIPFOLDER, gallery.getTitle() + ".zip");
-                FileOutputStream o = new FileOutputStream(file);
-                try (ZipOutputStream out = new ZipOutputStream(o)) {
+            try (ExportFile export = ExportFile.create(Global.ZIPFOLDER, gallery.getTitle(), gallery.getId(), ".zip")) {
+                File file = export.getOutputFile();
+                try (FileOutputStream output = new FileOutputStream(export.getTemporaryFile());
+                     ZipOutputStream out = new ZipOutputStream(output)) {
                     out.setLevel(Deflater.BEST_COMPRESSION);
                     File actual;
                     int read;
@@ -172,6 +158,7 @@ public class CreatePdfOrZip extends Worker {
                     }
                     out.flush();
                 }
+                export.publish();
                 postExecutePdf(true, gallery, null, file);
             } catch (IOException e) {
                 LogUtility.e(e.getLocalizedMessage(), e);
@@ -180,6 +167,17 @@ public class CreatePdfOrZip extends Worker {
             }
         }
         return Result.success();
+    }
+
+    static LocalGallery loadGallery(String path) {
+        try {
+            File directory = new File(path).getCanonicalFile();
+            if (!directory.isDirectory()) return null;
+            LocalGallery gallery = new LocalGallery(directory);
+            return gallery.isValid() && gallery.getPageCount() > 0 ? gallery : null;
+        } catch (IOException | RuntimeException exception) {
+            return null;
+        }
     }
 
     private void postExecutePdf(boolean success, LocalGallery gallery, String localizedMessage, File file) {
@@ -202,17 +200,12 @@ public class CreatePdfOrZip extends Worker {
                 getApplicationContext(), getApplicationContext().getPackageName() + ".provider", finalPath);
             i.setDataAndType(apkURI, pdf ? "application/pdf" : "application/zip");
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            i.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            List<ResolveInfo> resInfoList = getApplicationContext().getPackageManager().queryIntentActivities(i, PackageManager.MATCH_DEFAULT_ONLY);
-            for (ResolveInfo resolveInfo : resInfoList) {
-                String packageName = resolveInfo.activityInfo.packageName;
-                getApplicationContext().grantUriPermission(packageName, apkURI, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            }
+            i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
-            notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_MUTABLE));
-            LogUtility.d(apkURI.toString());
-        } catch (IllegalArgumentException ignore) {//sometimes the uri isn't available
-
+            notification.setContentIntent(PendingIntent.getActivity(getApplicationContext(), notId, i,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        } catch (IllegalArgumentException exception) {
+            LogUtility.w("Unable to prepare export notification action", exception);
         }
     }
 
