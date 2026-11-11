@@ -44,6 +44,7 @@ import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.IntConsumer;
 
 final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private final View item;
@@ -57,6 +58,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private final CircularProgressIndicator downloadProgress;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable refresh = this::refresh;
+    private final IntConsumer onlineStateChanged = this::onOnlineStateChanged;
     private GenericGallery gallery;
     private GalleryDownloaderV2 task;
     private GalleryState state;
@@ -106,6 +108,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         TextViewCompat.setCompoundDrawableTintList(author, author.getTextColors());
         downloadProgress = item.findViewById(R.id.gallery_download_progress);
         item.addOnAttachStateChangeListener(this);
+        if (item.isAttachedToWindow()) onViewAttachedToWindow(item);
         ViewCompat.addAccessibilityAction(favorite,
             item.getContext().getString(R.string.favorite_action_local_accessibility),
             (view, arguments) -> {
@@ -238,6 +241,11 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
             follow(found);
             render(resolved);
         });
+    }
+
+    private void onOnlineStateChanged(int galleryId) {
+        if (item.isAttachedToWindow() && (galleryId == 0 || galleryId == id) && state != null)
+            render(state);
     }
 
     private void follow(GalleryDownloaderV2 downloader) {
@@ -488,6 +496,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     @Override
     public void onViewAttachedToWindow(View view) {
         GalleryStateRepository.observe(refresh);
+        OnlineFavoriteClient.observe(item.getContext(), onlineStateChanged);
         if (task != null) task.addObserver(observer);
         refresh();
     }
@@ -501,5 +510,6 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         if (task != null) task.removeObserver(observer);
         main.removeCallbacksAndMessages(null);
         GalleryStateRepository.removeObserver(refresh);
+        OnlineFavoriteClient.removeObserver(onlineStateChanged);
     }
 }

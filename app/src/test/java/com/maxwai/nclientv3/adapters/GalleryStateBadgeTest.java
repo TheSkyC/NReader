@@ -381,6 +381,90 @@ public class GalleryStateBadgeTest {
     }
 
     @Test
+    public void onlineChangesRefreshVisibleCopiesAndReattachedCards() throws Exception {
+        activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
+            .putString(activity.getString(R.string.preference_key_favorite_action_mode), "local").apply();
+        AuthStore.saveApiKey(activity, "observer-test-key", true);
+        SimpleGallery gallery = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":127,\"media_id\":\"1\",\"english_title\":\"Duplicate card\",\"num_pages\":2}"));
+        android.widget.LinearLayout container = new android.widget.LinearLayout(activity);
+        View first = LayoutInflater.from(activity).inflate(R.layout.entry_layout, container, false);
+        View second = LayoutInflater.from(activity).inflate(R.layout.entry_layout, container, false);
+        GalleryStateBadge firstBadge = new GalleryStateBadge(first);
+        GalleryStateBadge secondBadge = new GalleryStateBadge(second);
+        container.addView(first);
+        container.addView(second);
+        activity.setContentView(container);
+        firstBadge.bind(gallery);
+        secondBadge.bind(gallery);
+        awaitProgress(first, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(second, activity.getString(R.string.page_count_format, 2));
+        View firstStar = first.findViewById(R.id.gallery_online_favorite);
+        View secondStar = second.findViewById(R.id.gallery_online_favorite);
+        OnlineFavoriteClient.rememberState(activity, 127, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(firstStar.isSelected());
+        assertTrue(secondStar.isSelected());
+
+        container.removeView(second);
+        OnlineFavoriteClient.rememberState(activity, 127, false);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertFalse(firstStar.isSelected());
+        assertTrue(secondStar.isSelected());
+        container.addView(second);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (secondStar.isSelected() && System.nanoTime() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle();
+            Thread.sleep(10);
+        }
+        assertFalse(secondStar.isSelected());
+
+        OnlineFavoriteClient.rememberState(activity, 127, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(firstStar.isSelected());
+        assertTrue(secondStar.isSelected());
+        AuthStore.saveApiKey(activity, "another-observer-key", true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertFalse(firstStar.isSelected());
+        assertFalse(secondStar.isSelected());
+        OnlineFavoriteClient.rememberState(activity, 127, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(firstStar.isSelected());
+        AuthStore.setApiKeyValidation(activity, false);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(View.GONE, firstStar.getVisibility());
+        assertEquals(View.GONE, secondStar.getVisibility());
+        AuthStore.saveApiKey(activity, "third-observer-key", true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(View.VISIBLE, firstStar.getVisibility());
+        assertFalse(firstStar.isSelected());
+        AuthStore.clear(activity);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(View.GONE, firstStar.getVisibility());
+    }
+
+    @Test
+    public void evictedOnlineStateReturnsVisibleCardToUnknown() throws Exception {
+        activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
+            .putString(activity.getString(R.string.preference_key_favorite_action_mode), "local").apply();
+        AuthStore.saveApiKey(activity, "eviction-test-key", true);
+        SimpleGallery gallery = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":128,\"media_id\":\"1\",\"english_title\":\"Evicted card\",\"num_pages\":2}"));
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        new GalleryStateBadge(card).bind(gallery);
+        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        View star = card.findViewById(R.id.gallery_online_favorite);
+        OnlineFavoriteClient.rememberState(activity, 128, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(star.isSelected());
+        for (int id = 1000; id < 1512; id++) OnlineFavoriteClient.rememberState(activity, id, false);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertNull(OnlineFavoriteClient.cachedState(activity, 128));
+        assertFalse(star.isSelected());
+    }
+
+    @Test
     public void absentOnlineFavoriteFieldRemainsUnknownAcrossParcelTransfer() throws Exception {
         Gallery gallery = new Gallery(activity,
             "{\"id\":125,\"num_pages\":2,\"title\":{\"pretty\":\"Unknown favorite\"},"

@@ -2,11 +2,15 @@
 package com.maxwai.nclientv3.api;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
+import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
@@ -15,11 +19,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.IntConsumer;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -32,7 +39,11 @@ public final class OnlineFavoriteClient {
     private static final int MAX_CACHED_STATES = 512;
     private static final Map<String, Boolean> confirmedStates = new LinkedHashMap<>(128, 0.75f, true);
     private static final Set<String> inFlight = new HashSet<>();
+    private static final CopyOnWriteArrayList<WeakReference<IntConsumer>> listeners = new CopyOnWriteArrayList<>();
+    private static final Handler main = new Handler(Looper.getMainLooper());
     private static String activeIdentity;
+    private static SharedPreferences.OnSharedPreferenceChangeListener authObserver;
+    private static Context authContext;
 
     public interface Result {
         void onSuccess(boolean favorited);
@@ -41,6 +52,33 @@ public final class OnlineFavoriteClient {
     }
 
     private OnlineFavoriteClient() {
+    }
+
+    public static void observe(@NonNull Context context, @NonNull IntConsumer listener) {
+        synchronized (confirmedStates) {
+            Context application = context.getApplicationContext();
+            if (authContext != application) {
+                if (authContext != null) AuthStore.removeChangesObserver(authContext, authObserver);
+                authContext = application;
+                authObserver = (preferences, key) -> identity(application);
+                AuthStore.observeChanges(application, authObserver);
+            }
+        }
+        listeners.add(new WeakReference<>(listener));
+    }
+
+    public static void removeObserver(@NonNull IntConsumer listener) {
+        listeners.removeIf(reference -> reference.get() == null || reference.get() == listener);
+    }
+
+    private static void notifyStateChanged(int galleryId) {
+        main.post(() -> {
+            for (WeakReference<IntConsumer> reference : listeners) {
+                IntConsumer listener = reference.get();
+                if (listener == null) listeners.remove(reference);
+                else listener.accept(galleryId);
+            }
+        });
     }
 
     @Nullable
@@ -143,9 +181,11 @@ public final class OnlineFavoriteClient {
             }
             @Override public void onFailure() { result.onFailure(); }
             @Override public void onUncertain() {
+                boolean removed;
                 synchronized (confirmedStates) {
-                    confirmedStates.remove(cacheKey(identity, galleryId));
+                    removed = confirmedStates.remove(cacheKey(identity, galleryId)) != null;
                 }
+                if (removed) notifyStateChanged(galleryId);
                 result.onFailure();
             }
             });
@@ -200,22 +240,28 @@ public final class OnlineFavoriteClient {
     @Nullable
     private static String identity(Context context) {
         if (!com.maxwai.nclientv3.settings.AuthStore.hasValidApiKey(context)) {
+            boolean changed;
             synchronized (confirmedStates) {
+                changed = activeIdentity != null;
                 activeIdentity = null;
                 confirmedStates.clear();
             }
+            if (changed) notifyStateChanged(0);
             return null;
         }
         String apiKey = com.maxwai.nclientv3.settings.AuthStore.getApiKey(context);
         if (apiKey == null) return null;
         try {
             String identity = ApiAuthInterceptor.fingerprint(apiKey);
+            boolean changed;
             synchronized (confirmedStates) {
-                if (!identity.equals(activeIdentity)) {
+                changed = !identity.equals(activeIdentity);
+                if (changed) {
                     confirmedStates.clear();
                     activeIdentity = identity;
                 }
             }
+            if (changed) notifyStateChanged(0);
             return identity;
         } catch (IllegalStateException exception) {
             return null;
@@ -223,14 +269,20 @@ public final class OnlineFavoriteClient {
     }
 
     private static void remember(String identity, int galleryId, boolean favorited) {
+        boolean changed;
+        boolean evicted = false;
         synchronized (confirmedStates) {
             if (!identity.equals(activeIdentity)) return;
-            confirmedStates.put(cacheKey(identity, galleryId), favorited);
+            Boolean previous = confirmedStates.put(cacheKey(identity, galleryId), favorited);
+            changed = previous == null || previous != favorited;
             while (confirmedStates.size() > MAX_CACHED_STATES) {
                 String oldest = confirmedStates.keySet().iterator().next();
                 confirmedStates.remove(oldest);
+                evicted = true;
             }
         }
+        if (evicted) notifyStateChanged(0);
+        else if (changed) notifyStateChanged(galleryId);
     }
 
     private static String cacheKey(String identity, int galleryId) {

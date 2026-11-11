@@ -20,6 +20,16 @@ public final class AuthStore {
         return context.getSharedPreferences(AUTH_PREFERENCES, Context.MODE_PRIVATE);
     }
 
+    public static void observeChanges(@NonNull Context context,
+                                      @NonNull SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getPreferences(context).registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public static void removeChangesObserver(@NonNull Context context,
+                                             @NonNull SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getPreferences(context).unregisterOnSharedPreferenceChangeListener(listener);
+    }
+
     public static synchronized void saveApiKey(@NonNull Context context, @NonNull String apiKey, boolean valid) {
         String normalized = apiKey.trim();
         getPreferences(context).edit()
@@ -30,7 +40,10 @@ public final class AuthStore {
     }
 
     public static synchronized void clear(@NonNull Context context) {
-        getPreferences(context).edit().clear().apply();
+        SharedPreferences preferences = getPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()) editor.remove(key);
+        editor.apply();
     }
 
     @Nullable
