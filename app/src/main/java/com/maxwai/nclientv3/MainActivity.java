@@ -247,7 +247,6 @@ public class MainActivity extends BaseActivity
     private void initializeRecyclerView() {
         adapter = new ListAdapter(this);
         recycler.setAdapter(adapter);
-        recycler.setHasFixedSize(true);
         //recycler.setItemViewCacheSize(24);
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
