@@ -19,6 +19,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiAuthInterceptor implements Interceptor {
+    static final class RefreshRequest {
+    }
     public static final class ExpectedIdentity {
         private final String fingerprint;
 
@@ -49,7 +51,64 @@ public class ApiAuthInterceptor implements Interceptor {
     @Override
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
+        if (request.tag(RefreshRequest.class) != null) {
+            if (!isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)
+                || !"/api/v2/auth/refresh".equals(request.url().encodedPath())
+                || !"POST".equals(request.method()) || request.header("Authorization") != null)
+                throw new IOException("Invalid refresh request");
+            return chain.proceed(request);
+        }
         ExpectedIdentity expected = request.tag(ExpectedIdentity.class);
+        String session = AuthSessionStore.identity(context);
+        if (session != null && request.header("Authorization") == null
+            && isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)) {
+            if (expected != null && !expected.fingerprint.equals(session)) throw new IOException("API identity changed");
+            String token = SessionRefresh.access(context, session, null);
+            if (token == null && expected == null && isPublicGet(request)) return chain.proceed(request);
+            if (token == null || !session.equals(AuthSessionStore.identity(context)))
+                throw new IOException("Account session is unavailable");
+            Request authenticated = request.newBuilder()
+                .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
+                .header("Authorization", "User " + token).build();
+            Response response = chain.proceed(authenticated);
+            if (!session.equals(AuthSessionStore.identity(context))) {
+                response.close();
+                throw new IOException("API identity changed");
+            }
+            if (response.code() == 401 && "GET".equals(request.method())
+                && session.equals(AuthSessionStore.identity(context))) {
+                response.close();
+                String refreshed = SessionRefresh.access(context, session, token);
+                if (refreshed == null && expected == null && isPublicGet(request)
+                    && session.equals(AuthSessionStore.identity(context))) return chain.proceed(request);
+                if (refreshed == null || !session.equals(AuthSessionStore.identity(context)))
+                    throw new IOException("Account session refresh failed");
+                Response retried = chain.proceed(authenticated.newBuilder()
+                    .header("Authorization", "User " + refreshed).build());
+                if (!session.equals(AuthSessionStore.identity(context))) {
+                    retried.close();
+                    throw new IOException("API identity changed");
+                }
+                return retried;
+            }
+            if (response.code() == 401 && !"GET".equals(request.method())) {
+                SessionRefresh.access(context, session, token);
+                if (!session.equals(AuthSessionStore.identity(context))) {
+                    response.close();
+                    throw new IOException("API identity changed");
+                }
+            }
+            return response;
+        }
+        if (session != null && request.header("Authorization") == null) {
+            if (expected != null) throw new IOException("API identity is unavailable");
+            return chain.proceed(request);
+        }
+        if (session == null && AuthSessionStore.hasStoredSession(context)
+            && isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)) {
+            if (expected != null) throw new IOException("Account session expired");
+            return chain.proceed(request);
+        }
         if (expected != null) {
             if (request.header("Authorization") != null || !isTrustedApiRequest(request.url(), Utility.getHost())
                 || !AuthStore.hasValidApiKey(context)) throw new IOException("API identity is unavailable");
@@ -75,18 +134,28 @@ public class ApiAuthInterceptor implements Interceptor {
 
         if (!AuthStore.hasValidApiKey(context)) return chain.proceed(r.build());
 
-        String authorization = AuthStore.getAuthorizationHeader(context);
-        if (authorization == null) return chain.proceed(r.build());
+        String key = AuthStore.getApiKey(context);
+        if (key == null) return chain.proceed(r.build());
+        String authorization = new AuthCredentials(AuthCredentials.Type.API_KEY, key).toAuthorizationHeader();
 
         Request authenticated =r.header("Authorization", authorization)
             .build();
         Response response = chain.proceed(authenticated);
         if (response.code() == 401 || response.code() == 403) {
-            AuthStore.setApiKeyValidation(context, false);
+            AuthStore.setApiKeyValidationIfCurrent(context, key, false);
         } else if (response.isSuccessful()) {
-            AuthStore.setApiKeyValidation(context, true);
+            AuthStore.setApiKeyValidationIfCurrent(context, key, true);
         }
         return response;
+    }
+
+    private static boolean isPublicGet(@NonNull Request request) {
+        if (!"GET".equals(request.method())) return false;
+        String path = request.url().encodedPath();
+        if (path.endsWith("/favorite") || path.endsWith("/download")) return false;
+        return path.equals("/api/v2/search") || path.equals("/api/v2/cdn")
+            || path.equals("/api/v2/config") || path.equals("/api/v2/galleries")
+            || path.startsWith("/api/v2/galleries/") || path.startsWith("/api/v2/tags/");
     }
 
     static boolean isTrustedApiRequest(@NonNull okhttp3.HttpUrl url, @NonNull String trustedHost) {

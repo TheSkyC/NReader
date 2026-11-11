@@ -292,7 +292,7 @@ public class MainActivity extends BaseActivity
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setNavigationOnClickListener(v -> finish());
         navigationView.setNavigationItemSelectedListener(this);
-        onlineFavoriteManager.setVisible(AuthStore.hasValidApiKey(this));
+        onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
     }
 
     public void setIdOpenedGallery(int idOpenedGallery) {
@@ -521,7 +521,7 @@ public class MainActivity extends BaseActivity
         int page = searchLinkPage(data);
 
         if (favorite) {
-            if (AuthStore.hasValidApiKey(this)) useFavoriteMode(page);
+            if (AuthStore.hasOnlineIdentity(this)) useFavoriteMode(page);
             else {
                 Intent intent = new Intent(this, FavoriteActivity.class);
                 startActivity(intent);
@@ -597,7 +597,7 @@ public class MainActivity extends BaseActivity
             adapter.updateColor(idOpenedGallery);
             idOpenedGallery = -1;
         }
-        onlineFavoriteManager.setVisible(AuthStore.hasValidApiKey(this));
+        onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
         SharedPreferences settings = getSharedPreferences("Settings", 0);
         LocaleListCompat setLocaleList = AppCompatDelegate.getApplicationLocales();
         settings.edit().putString(getString(R.string.preference_key_language),

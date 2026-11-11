@@ -32,6 +32,11 @@
             android:key="@string/preference_key_api_key"
             android:title="@string/setting_api_key_title"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="@string/preference_key_account_login"
+            android:title="@string/account_title"
+            android:summary="@string/account_setting_summary"
+            app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="local"
             android:entries="@array/favorite_action_modes"

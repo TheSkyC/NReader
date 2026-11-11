@@ -16,7 +16,7 @@ public final class AuthStore {
     }
 
     @NonNull
-    private static SharedPreferences getPreferences(@NonNull Context context) {
+    static SharedPreferences getPreferences(@NonNull Context context) {
         return context.getSharedPreferences(AUTH_PREFERENCES, Context.MODE_PRIVATE);
     }
 
@@ -40,10 +40,7 @@ public final class AuthStore {
     }
 
     public static synchronized void clear(@NonNull Context context) {
-        SharedPreferences preferences = getPreferences(context);
-        SharedPreferences.Editor editor = preferences.edit();
-        for (String key : preferences.getAll().keySet()) editor.remove(key);
-        editor.apply();
+        getPreferences(context).edit().remove(KEY_TYPE).remove(KEY_SECRET).remove(KEY_VALID).apply();
     }
 
     @Nullable
@@ -76,6 +73,19 @@ public final class AuthStore {
         SharedPreferences preferences = getPreferences(context);
         if (!preferences.contains(KEY_VALID)) return true;
         return preferences.getBoolean(KEY_VALID, false);
+    }
+
+    @Nullable
+    public static String activeIdentity(@NonNull Context context) {
+        String session = AuthSessionStore.identity(context);
+        if (session != null) return session;
+        if (AuthSessionStore.hasStoredSession(context)) return null;
+        String key = hasValidApiKey(context) ? getApiKey(context) : null;
+        return key == null ? null : ApiAuthInterceptor.fingerprint(key);
+    }
+
+    public static boolean hasOnlineIdentity(@NonNull Context context) {
+        return activeIdentity(context) != null;
     }
 
     public static synchronized void setApiKeyValidation(@NonNull Context context, boolean valid) {

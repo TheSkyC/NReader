@@ -86,8 +86,8 @@ Crowdin project.
 - Download manga and manage favorites and bookmarks.
 - Keep local and online favorites independent from gallery cards. The card
   supports a configurable heart or star primary action; online favorite status
-  is shown only with a valid API key, and unknown states are confirmed through
-  the v2 API before changing them. Explicit server rejection keeps the last
+  requires a saved account session or valid API key. Unknown states are confirmed
+  through the v2 API before changing them. Explicit server rejection keeps the last
   confirmed state; transport or timeout failures mark it unknown.
   A bounded, account-scoped cache restores recent confirmed states after restart;
   restored states are checked with the server before an online favorite is changed.
@@ -103,15 +103,18 @@ multitasking previews are no longer hidden by `FLAG_SECURE`.
 State definitions, database upgrades and backup compatibility are documented in
 [state and reading contracts](docs/state-and-reading.md).
 
-For favorite-card interaction checks, configure a valid API key and open Settings
-to switch **Favorite button actions** between local and online favorites as the
-preferred tap action.
+For favorite-card interaction checks, sign in to an nhentai account or configure a
+valid API key and open Settings to switch **Favorite button actions** between local and online favorites as the
+preferred tap action. Account sessions take priority when both are present; signing
+out removes the session without deleting the saved API key. Passwords are not stored.
+Account sign-in currently enables v2 online favorites; the legacy account-tag
+and profile-dependent features remain unavailable while an account session is active.
 Verify short press, long press, and `Shift+Enter` on a focused card; moving a
-pressed finger cancels the long action. With no valid key, local favorites stay
-available and online actions open the API-key settings. Test local-only, online-
+pressed finger cancels the long action. With no account session or valid key, local favorites stay
+available and online actions offer account sign-in. Test local-only, online-
 only, both, and unknown states; explicit rejection keeps confirmed state while
 ambiguous transport failures return to unknown. Online state is held in a bounded
-in-memory cache separated by API-key fingerprint and is cleared when the key
+cache separated by the active account identity and is cleared when that identity
 changes or is removed.
 
 ## Upstream screenshots
