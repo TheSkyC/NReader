@@ -36,23 +36,23 @@
     <string name="all_languages">Alle Sprachen</string>
     <string name="unknown_language">Unbekannte Sprache</string>
     <string name="setting_api_key_title">API key</string>
-    <string name="setting_api_key_summary_missing">Create an API key on the website account settings page, then paste it into the app.</string>
-    <string name="setting_api_key_summary_valid">Saved and validated. Open this entry if you want to replace or remove it.</string>
-    <string name="setting_api_key_summary_invalid">A saved API key exists, but it is no longer valid. Open this entry to replace or remove it.</string>
-    <string name="login_api_key_intro_title">Use an API key</string>
-    <string name="login_api_key_intro_message">The nhentai site now uses API keys for app access. To log in, open the account settings page in your browser, create an API key there, then come back and paste the key value here.</string>
-    <string name="login_open_api_key_page">Open API key page</string>
-    <string name="login_api_key_input_title">Paste your API key</string>
-    <string name="login_api_key_input_message">The key is validated against the v2 API before it is saved.</string>
-    <string name="login_api_key_hint">API key</string>
-    <string name="login_validate_and_save">Validate and save</string>
-    <string name="login_api_key_saved">API key saved</string>
-    <string name="login_api_key_invalid">Invalid API key</string>
-    <string name="login_api_key_empty">Paste an API key first</string>
-    <string name="login_api_key_removed">Saved API key removed</string>
-    <string name="login_status_api_key_saved">A validated API key is currently saved on this device.</string>
-    <string name="login_status_api_key_invalid">A saved API key exists, but it needs to be replaced or removed.</string>
-    <string name="remove_api_key">Remove API key</string>
+    <string name="setting_api_key_summary_missing">Erstelle auf der Kontoeinstellungsseite der Website einen API-Schlüssel und füge ihn anschließend in die App ein.</string>
+    <string name="setting_api_key_summary_valid">Gespeichert und überprüft. Öffne diesen Eintrag, um den Schlüssel zu ersetzen oder zu entfernen.</string>
+    <string name="setting_api_key_summary_invalid">Ein gespeicherter API-Schlüssel ist nicht mehr gültig. Öffne diesen Eintrag, um ihn zu ersetzen oder zu entfernen.</string>
+    <string name="login_api_key_intro_title">API-Schlüssel verwenden</string>
+    <string name="login_api_key_intro_message">nhentai verwendet jetzt API-Schlüssel für den App-Zugriff. Öffne zum Anmelden die Kontoeinstellungen im Browser, erstelle dort einen API-Schlüssel und füge ihn anschließend hier ein.</string>
+    <string name="login_open_api_key_page">API-Schlüssel-Seite öffnen</string>
+    <string name="login_api_key_input_title">API-Schlüssel einfügen</string>
+    <string name="login_api_key_input_message">Der Schlüssel wird vor dem Speichern über die v2-API überprüft.</string>
+    <string name="login_api_key_hint">API-Schlüssel</string>
+    <string name="login_validate_and_save">Überprüfen und speichern</string>
+    <string name="login_api_key_saved">API-Schlüssel gespeichert</string>
+    <string name="login_api_key_invalid">Ungültiger API-Schlüssel</string>
+    <string name="login_api_key_empty">Füge zuerst einen API-Schlüssel ein</string>
+    <string name="login_api_key_removed">Gespeicherter API-Schlüssel entfernt</string>
+    <string name="login_status_api_key_saved">Auf diesem Gerät ist ein überprüfter API-Schlüssel gespeichert.</string>
+    <string name="login_status_api_key_invalid">Ein gespeicherter API-Schlüssel muss ersetzt oder entfernt werden.</string>
+    <string name="remove_api_key">API-Schlüssel entfernen</string>
     <string name="favorite_online_manga">Online Manga Favoriten</string>
     <string name="online_tags">Online Tag</string>
     <string name="add_to_online_favorite">Zu online Favoriten hinzufügen</string>
@@ -95,7 +95,7 @@
     <string name="random_manga">Zufallsgalerie</string>
     <string name="save_page">Seite speichern</string>
     <string name="page_count_format" formatted="true">%d Seiten</string>
-    <string name="upload_date_format" formatted="true">Am %s um %s hochgeladen</string>
+    <string name="upload_date_format" formatted="true">Am %1$s um %2$s hochgeladen</string>
     <string name="favorite_count_format" formatted="true">%d Favoriten</string>
     <string name="favorite_manga">Lieblingsgalerien</string>
     <string name="setting_on_remove_ignored">Die Galerie mit ignorierten Tags wird nicht gezeigt</string>
@@ -107,7 +107,7 @@
     <string name="no_updates_found">Keine Updates gefunden</string>
     <string name="error_retrieving">Fehler beim Update suchen</string>
     <string name="new_version_found">Neue Version gefunden</string>
-    <string name="update_version_format" formatted="true">Von Version %s auf Version %s updaten?\n\nÄnderungsprotokoll:\n%s</string>
+    <string name="update_version_format" formatted="true">Von Version %1$s auf Version %2$s updaten?\n\nÄnderungsprotokoll:\n%3$s</string>
     <string name="clear_this_list">Diese Liste leeren?</string>
     <string name="set_minimum_count">Setze Minimalanzahl</string>
     <string name="sort_by_title">Ordne nach Titeln</string>

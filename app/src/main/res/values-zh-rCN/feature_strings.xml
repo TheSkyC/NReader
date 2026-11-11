@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <string name="comment_feature_unavailable">评论功能不可用</string>
+    <string name="instant_page_turn">关闭翻页动画</string>
+    <string name="instant_page_turn_summary">使用按钮翻页或跳转页码时，直接显示目标页。滑动翻页不受影响。</string>
+    <string name="filter_download_state">筛选下载状态</string>
+    <string name="filter_all">所有下载状态</string>
+    <string name="filter_complete">已完整下载</string>
+    <string name="filter_partial">缺页</string>
+    <string name="filter_damaged">图片损坏</string>
+    <string name="filter_unverified">完整性未知</string>
+    <string name="filter_absent">无本地副本</string>
+    <string name="filter_personal_state">筛选个人状态</string>
+    <string name="filter_favorite_only">仅本地收藏</string>
+    <string name="filter_reading_only">已开始阅读</string>
+    <string name="filter_unread_only">未开始阅读</string>
+    <string name="filter_custom_status_only">已设置自定义状态</string>
+    <string name="filter_loaded_results">筛选已加载结果</string>
+    <string name="filter_downloaded_only">已下载到本地</string>
+    <string name="backup_restore_preview">确认备份恢复</string>
+    <string name="backup_restore_preview_message">此备份包含 %1$d 条数据库记录。%2$s。要继续恢复吗？</string>
+    <string name="backup_integrity_verified">完整性已验证</string>
+    <string name="backup_legacy_format">旧版备份不含完整性清单</string>
+    <string name="restore_snapshot">恢复导入前的快照</string>
+    <string name="restore_snapshot_message">要使用上次导入前保存的快照，替换当前数据库及备份所含的设置吗？已下载的文件不受影响。</string>
+    <string name="restore_snapshot_summary">快照创建于 %1$d 天前</string>
+    <string name="restore_snapshot_unavailable">暂无可用的近期恢复快照。</string>
+</resources>

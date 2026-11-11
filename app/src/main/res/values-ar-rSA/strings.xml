@@ -36,23 +36,23 @@
     <string name="all_languages">كل اللغات</string>
     <string name="unknown_language">لغة غير معروفة</string>
     <string name="setting_api_key_title">API key</string>
-    <string name="setting_api_key_summary_missing">Create an API key on the website account settings page, then paste it into the app.</string>
-    <string name="setting_api_key_summary_valid">Saved and validated. Open this entry if you want to replace or remove it.</string>
-    <string name="setting_api_key_summary_invalid">A saved API key exists, but it is no longer valid. Open this entry to replace or remove it.</string>
-    <string name="login_api_key_intro_title">Use an API key</string>
-    <string name="login_api_key_intro_message">The nhentai site now uses API keys for app access. To log in, open the account settings page in your browser, create an API key there, then come back and paste the key value here.</string>
-    <string name="login_open_api_key_page">Open API key page</string>
-    <string name="login_api_key_input_title">Paste your API key</string>
-    <string name="login_api_key_input_message">The key is validated against the v2 API before it is saved.</string>
-    <string name="login_api_key_hint">API key</string>
-    <string name="login_validate_and_save">Validate and save</string>
-    <string name="login_api_key_saved">API key saved</string>
-    <string name="login_api_key_invalid">Invalid API key</string>
-    <string name="login_api_key_empty">Paste an API key first</string>
-    <string name="login_api_key_removed">Saved API key removed</string>
-    <string name="login_status_api_key_saved">A validated API key is currently saved on this device.</string>
-    <string name="login_status_api_key_invalid">A saved API key exists, but it needs to be replaced or removed.</string>
-    <string name="remove_api_key">Remove API key</string>
+    <string name="setting_api_key_summary_missing">أنشئ مفتاح API من صفحة إعدادات الحساب على الموقع، ثم الصقه في التطبيق.</string>
+    <string name="setting_api_key_summary_valid">تم الحفظ والتحقق. افتح هذا الخيار لاستبدال المفتاح أو إزالته.</string>
+    <string name="setting_api_key_summary_invalid">يوجد مفتاح API محفوظ، لكنه لم يعد صالحاً. افتح هذا الخيار لاستبداله أو إزالته.</string>
+    <string name="login_api_key_intro_title">استخدام مفتاح API</string>
+    <string name="login_api_key_intro_message">يستخدم موقع nhentai الآن مفاتيح API لإتاحة الوصول للتطبيق. لتسجيل الدخول، افتح صفحة إعدادات الحساب في المتصفح وأنشئ مفتاح API، ثم عد إلى هنا والصق المفتاح.</string>
+    <string name="login_open_api_key_page">فتح صفحة مفاتيح API</string>
+    <string name="login_api_key_input_title">الصق مفتاح API</string>
+    <string name="login_api_key_input_message">يُتحقق من المفتاح عبر واجهة API v2 قبل حفظه.</string>
+    <string name="login_api_key_hint">مفتاح API</string>
+    <string name="login_validate_and_save">التحقق والحفظ</string>
+    <string name="login_api_key_saved">تم حفظ مفتاح API</string>
+    <string name="login_api_key_invalid">مفتاح API غير صالح</string>
+    <string name="login_api_key_empty">الصق مفتاح API أولاً</string>
+    <string name="login_api_key_removed">تمت إزالة مفتاح API المحفوظ</string>
+    <string name="login_status_api_key_saved">يوجد مفتاح API تم التحقق منه ومحفوظ على هذا الجهاز.</string>
+    <string name="login_status_api_key_invalid">يجب استبدال مفتاح API المحفوظ أو إزالته.</string>
+    <string name="remove_api_key">إزالة مفتاح API</string>
     <string name="favorite_online_manga">الأعمال المُفضَّلة عبر الشابكة</string>
     <string name="online_tags">الوسوم عبر الشابكة</string>
     <string name="add_to_online_favorite">أَضف إلى مفضَّلاتك عبر الشابكة</string>
@@ -95,7 +95,7 @@
     <string name="random_manga">عمل عشوائي</string>
     <string name="save_page">اِحفظ الصفحة</string>
     <string name="page_count_format" formatted="true">%d صفحةً(صفحاتٍ)</string>
-    <string name="upload_date_format" formatted="true">رُفِع بتاريخ %s عند الـ %s</string>
+    <string name="upload_date_format" formatted="true">رُفِع بتاريخ %1$s عند الـ %2$s</string>
     <string name="favorite_count_format" formatted="true">مُفضَّل عند %d أشخاص(شخصًا)</string>
     <string name="favorite_manga">الأعمال المُفضَّلة</string>
     <string name="setting_on_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة لن تُعرض</string>
@@ -107,7 +107,7 @@
     <string name="no_updates_found">لا يوجد تحديث مُتوفِّر</string>
     <string name="error_retrieving">طرأ خطأٌ أثناء استرجاع الإصدار الأخير</string>
     <string name="new_version_found">وُجد إصدار جديد</string>
-    <string name="update_version_format" formatted="true">أتود التحديث من الإصدار %s إلى الإصدار %s ؟\n\n سِجل التغييرات: \n%s</string>
+    <string name="update_version_format" formatted="true">أتود التحديث من الإصدار %1$s إلى الإصدار %2$s ؟\n\n سِجل التغييرات: \n%3$s</string>
     <string name="clear_this_list">أتود محو هذه القائمة؟</string>
     <string name="set_minimum_count">عيِّن حدًّا أدنى للعدِّ</string>
     <string name="sort_by_title">ِاِفرِز حسب العنوان</string>

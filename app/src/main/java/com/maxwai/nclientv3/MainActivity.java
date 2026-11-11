@@ -220,7 +220,7 @@ public class MainActivity extends BaseActivity
                 actionBar.setTitle(R.string.app_name);
                 break;
             default:
-                actionBar.setTitle("WTF");
+                actionBar.setTitle(R.string.app_name);
                 break;
         }
     }
