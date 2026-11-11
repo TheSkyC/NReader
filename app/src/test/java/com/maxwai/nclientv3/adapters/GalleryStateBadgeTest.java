@@ -293,9 +293,19 @@ public class GalleryStateBadgeTest {
         assertFalse(online.isSelected());
         assertTrue(online.getTranslationY() > 0);
         assertEquals(.55f, online.getAlpha(), .001f);
+        assertEquals(activity.getString(R.string.cover_online_favorite_unknown),
+            androidx.core.view.ViewCompat.getStateDescription(local));
         OnlineFavoriteClient.rememberState(activity, 123, false);
         shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(activity.getString(R.string.cover_online_favorite_unselected),
+            androidx.core.view.ViewCompat.getStateDescription(local));
         assertEquals(1f, online.getAlpha(), .001f);
+        OnlineFavoriteClient.rememberState(activity, 123, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(activity.getString(R.string.cover_online_favorite_selected),
+            androidx.core.view.ViewCompat.getStateDescription(local));
+        OnlineFavoriteClient.rememberState(activity, 123, false);
+        shadowOf(Looper.getMainLooper()).idle();
         local.performClick();
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (!Queries.FavoriteTable.isFavorite(123) && System.nanoTime() < deadline) {
@@ -369,6 +379,8 @@ public class GalleryStateBadgeTest {
         assertFalse(secondary.isSelected());
         assertTrue(secondary.getTranslationY() > 0);
         assertEquals(activity.getString(R.string.cover_online_favorite_remove), primary.getContentDescription());
+        assertEquals(activity.getString(R.string.cover_local_favorite_unselected),
+            androidx.core.view.ViewCompat.getStateDescription(primary));
         assertTrue(primary.performLongClick());
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (!Queries.FavoriteTable.isFavorite(126) && System.nanoTime() < deadline) {
@@ -382,6 +394,7 @@ public class GalleryStateBadgeTest {
         badge.bind(gallery);
         awaitProgress(card, activity.getString(R.string.page_count_format, 2));
         assertEquals(View.INVISIBLE, secondary.getVisibility());
+        assertNull(androidx.core.view.ViewCompat.getStateDescription(primary));
         assertEquals(activity.getString(R.string.cover_remove_favorite), primary.getContentDescription());
     }
 

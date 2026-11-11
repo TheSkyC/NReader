@@ -7,6 +7,10 @@
     <string name="cover_online_favorite_add">Add to online favorites</string>
     <string name="cover_online_favorite_remove">Remove from online favorites</string>
     <string name="cover_online_favorite_unknown">Online favorite status unknown</string>
+    <string name="cover_local_favorite_selected">In local favorites</string>
+    <string name="cover_local_favorite_unselected">Not in local favorites</string>
+    <string name="cover_online_favorite_selected">In online favorites</string>
+    <string name="cover_online_favorite_unselected">Not in online favorites</string>
     <string name="cover_online_favorite_added">Added to online favorites</string>
     <string name="cover_online_favorite_removed">Removed from online favorites</string>
     <string name="cover_undo">Undo</string>
