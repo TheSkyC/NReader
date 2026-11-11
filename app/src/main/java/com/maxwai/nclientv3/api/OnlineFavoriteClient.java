@@ -27,6 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.IntConsumer;
 
 import okhttp3.Call;
@@ -40,6 +42,10 @@ public final class OnlineFavoriteClient {
     private static final int MAX_CACHED_STATES = 512;
     private static final Map<String, Boolean> confirmedStates = new LinkedHashMap<>(128, 0.75f, true);
     private static final Set<String> inFlight = new HashSet<>();
+    private static final Set<String> restoredStates = new HashSet<>();
+    private static final ExecutorService storage = Executors.newSingleThreadExecutor();
+    private static final String CACHE_PREFERENCES = "online_favorite_cache";
+    private static boolean saveQueued;
     private static long mutationVersion;
     private static long identityVersion;
     private static long discardedVersion;
@@ -120,7 +126,7 @@ public final class OnlineFavoriteClient {
         synchronized (confirmedStates) {
             started = inFlight.add(key);
             if (started) markChanged(key);
-            currentFavorite = confirmedStates.get(key);
+            currentFavorite = restoredStates.contains(key) ? null : confirmedStates.get(key);
         }
         if (!started) {
             result.onFailure();
@@ -221,13 +227,17 @@ public final class OnlineFavoriteClient {
                 if (snapshot.inFlightAtStart.contains(key) || inFlight.contains(key)
                     || (changedAt != null && changedAt > snapshot.version)) continue;
                 Boolean previous = confirmedStates.put(key, true);
+                restoredStates.remove(key);
                 changed |= !Boolean.TRUE.equals(previous);
                 while (confirmedStates.size() > MAX_CACHED_STATES) {
-                    confirmedStates.remove(confirmedStates.keySet().iterator().next());
+                    String oldest = confirmedStates.keySet().iterator().next();
+                    confirmedStates.remove(oldest);
+                    restoredStates.remove(oldest);
                     changed = true;
                 }
             }
         }
+        if (changed) persist(context);
         if (changed) notifyStateChanged(0);
     }
 
@@ -244,7 +254,9 @@ public final class OnlineFavoriteClient {
                 boolean removed;
                 synchronized (confirmedStates) {
                     removed = confirmedStates.remove(cacheKey(identity, galleryId)) != null;
+                    restoredStates.remove(cacheKey(identity, galleryId));
                 }
+                if (removed) persist(context);
                 if (removed) notifyStateChanged(galleryId);
                 result.onFailure();
             }
@@ -299,6 +311,7 @@ public final class OnlineFavoriteClient {
 
     @Nullable
     private static String identity(Context context) {
+        observeAuthChanges(context);
         if (!com.maxwai.nclientv3.settings.AuthStore.hasValidApiKey(context)) {
             boolean changed;
             synchronized (confirmedStates) {
@@ -306,6 +319,7 @@ public final class OnlineFavoriteClient {
                 activeIdentity = null;
                 if (changed) resetIdentityChanges();
                 confirmedStates.clear();
+                restoredStates.clear();
             }
             if (changed) notifyStateChanged(0);
             return null;
@@ -319,8 +333,10 @@ public final class OnlineFavoriteClient {
                 changed = !identity.equals(activeIdentity);
                 if (changed) {
                     confirmedStates.clear();
+                    restoredStates.clear();
                     activeIdentity = identity;
                     resetIdentityChanges();
+                    load(context.getApplicationContext(), identity, identityVersion, mutationVersion);
                 }
             }
             if (changed) notifyStateChanged(0);
@@ -336,14 +352,17 @@ public final class OnlineFavoriteClient {
         synchronized (confirmedStates) {
             if (!identity.equals(activeIdentity)) return;
             Boolean previous = confirmedStates.put(cacheKey(identity, galleryId), favorited);
+            restoredStates.remove(cacheKey(identity, galleryId));
             changed = previous == null || previous != favorited;
             if (changed) markChanged(cacheKey(identity, galleryId));
             while (confirmedStates.size() > MAX_CACHED_STATES) {
                 String oldest = confirmedStates.keySet().iterator().next();
                 confirmedStates.remove(oldest);
+                restoredStates.remove(oldest);
                 evicted = true;
             }
         }
+        if (changed || evicted) persist(authContext);
         if (evicted) notifyStateChanged(0);
         else if (changed) notifyStateChanged(galleryId);
     }
@@ -365,5 +384,63 @@ public final class OnlineFavoriteClient {
         identityVersion++;
         changedVersions.clear();
         discardedVersion = mutationVersion;
+    }
+
+    private static void load(Context context, String identity, long generation, long version) {
+        storage.execute(() -> {
+            SharedPreferences preferences = context.getSharedPreferences(CACHE_PREFERENCES, Context.MODE_PRIVATE);
+            if (!identity.equals(preferences.getString("identity", null))) return;
+            try {
+                JSONObject states = new JSONObject(preferences.getString("states", "{}"));
+                boolean changed = false;
+                synchronized (confirmedStates) {
+                    if (!identity.equals(activeIdentity) || generation != identityVersion) return;
+                    java.util.Iterator<String> keys = states.keys();
+                    while (keys.hasNext() && confirmedStates.size() < MAX_CACHED_STATES) {
+                        String id = keys.next();
+                        int galleryId;
+                        try { galleryId = Integer.parseInt(id); } catch (NumberFormatException ignored) { continue; }
+                        Object value = states.opt(id);
+                        String key = cacheKey(identity, galleryId);
+                        Long changedAt = changedVersions.get(key);
+                        if (galleryId <= 0 || !(value instanceof Boolean) || confirmedStates.containsKey(key)
+                            || inFlight.contains(key) || (changedAt != null && changedAt > version)
+                            || version < discardedVersion) continue;
+                        confirmedStates.put(key, (Boolean) value);
+                        restoredStates.add(key);
+                        changed = true;
+                    }
+                }
+                if (changed) notifyStateChanged(0);
+            } catch (JSONException | ClassCastException exception) {
+                LogUtility.w("Unable to read online favorite cache", exception);
+            }
+        });
+    }
+
+    private static void persist(@Nullable Context context) {
+        if (context == null) return;
+        Context application = context.getApplicationContext();
+        synchronized (confirmedStates) {
+            if (saveQueued) return;
+            saveQueued = true;
+        }
+        storage.execute(() -> {
+            synchronized (confirmedStates) {
+                saveQueued = false;
+                if (activeIdentity == null) return;
+                JSONObject states = new JSONObject();
+                try {
+                    for (Map.Entry<String, Boolean> entry : confirmedStates.entrySet()) {
+                        states.put(entry.getKey().substring(activeIdentity.length() + 1), entry.getValue());
+                    }
+                } catch (JSONException exception) {
+                    LogUtility.w("Unable to save online favorite cache", exception);
+                    return;
+                }
+                application.getSharedPreferences(CACHE_PREFERENCES, Context.MODE_PRIVATE).edit()
+                    .putString("identity", activeIdentity).putString("states", states.toString()).apply();
+            }
+        });
     }
 }

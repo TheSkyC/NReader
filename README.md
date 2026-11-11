@@ -89,6 +89,8 @@ Crowdin project.
   is shown only with a valid API key, and unknown states are confirmed through
   the v2 API before changing them. Explicit server rejection keeps the last
   confirmed state; transport or timeout failures mark it unknown.
+  A bounded, account-scoped cache restores recent confirmed states after restart;
+  restored states are checked with the server before an online favorite is changed.
 - Save reading positions automatically in paged and single-column reading,
   with a separate Continue action and preserved manual page bookmarks.
 - Share galleries or open them in a browser.
