@@ -47,6 +47,13 @@ After successful restore, the in-memory custom status catalog is reloaded from
 the committed database. A failed archive leaves both the database and catalog
 unchanged. Orphaned status references fall back to the default status.
 
+Backup preview and import reject duplicate ZIP entry names and archives with more
+than 128 entries or names longer than 1024 characters. Database data is limited
+to 64 MiB, the manifest to 64 KiB, and each preference entry to 16 MiB after
+decompression. Unknown entries remain compatible up to 16 MiB in total. These
+limits apply before restoration; they do not guarantee that every structurally
+valid preview can be imported, since row and preference validation also applies.
+
 Before a successful archive import, a cache snapshot captures the database,
 Settings and ScrapedTags in a single file published by an atomic rename. Existing
 multi-file snapshots remain readable. Restoring it verifies and reads the complete
