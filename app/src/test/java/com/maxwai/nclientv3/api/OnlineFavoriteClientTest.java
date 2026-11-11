@@ -78,6 +78,88 @@ public class OnlineFavoriteClientTest {
         assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 201));
     }
 
+    @Test public void favoriteListSnapshotRespectsAccountAndSubsequentChanges() {
+        OnlineFavoriteClient.FavoriteListSnapshot first = OnlineFavoriteClient.beginFavoriteList(context);
+        OnlineFavoriteClient.acceptFavoriteList(context, first, java.util.Arrays.asList(301, 302));
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 301));
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 302));
+        assertNull(OnlineFavoriteClient.cachedState(context, 303));
+
+        OnlineFavoriteClient.FavoriteListSnapshot stale = OnlineFavoriteClient.beginFavoriteList(context);
+        OnlineFavoriteClient.rememberState(context, 301, false);
+        OnlineFavoriteClient.acceptFavoriteList(context, stale, Collections.singletonList(301));
+        assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 301));
+
+        OnlineFavoriteClient.FavoriteListSnapshot oldAccount = OnlineFavoriteClient.beginFavoriteList(context);
+        AuthStore.saveApiKey(context, "other-account", true);
+        OnlineFavoriteClient.acceptFavoriteList(context, oldAccount, Collections.singletonList(304));
+        assertNull(OnlineFavoriteClient.cachedState(context, 304));
+        AuthStore.saveApiKey(context, "synthetic-key", true);
+        OnlineFavoriteClient.sessionIdentity(context);
+        OnlineFavoriteClient.acceptFavoriteList(context, oldAccount, Collections.singletonList(304));
+        assertNull(OnlineFavoriteClient.cachedState(context, 304));
+    }
+
+    @Test public void favoriteListDoesNotOverwriteAnInFlightMutation() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        OnlineFavoriteClient.rememberState(context, 305, true);
+        Outcome outcome = new Outcome();
+        OnlineFavoriteClient.toggle(context, 305, client(chain -> {
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Timed out waiting for test");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IOException(exception);
+            }
+            return response(chain, 200, "{\"favorited\":false}");
+        }), outcome);
+        try {
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            OnlineFavoriteClient.FavoriteListSnapshot snapshot = OnlineFavoriteClient.beginFavoriteList(context);
+            OnlineFavoriteClient.acceptFavoriteList(context, snapshot, Collections.singletonList(306));
+            assertNull(OnlineFavoriteClient.cachedState(context, 306));
+            release.countDown();
+            outcome.await();
+            OnlineFavoriteClient.acceptFavoriteList(context, snapshot, Collections.singletonList(305));
+            assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 305));
+        } finally {
+            release.countDown();
+        }
+    }
+
+    @Test public void authenticatedFavoriteListSeedsOnlySuccessfulCurrentAccountResults() throws Exception {
+        OkHttpClient previous = Global.client;
+        try {
+            Global.client = client(chain -> response(chain, 200,
+                "{\"num_pages\":1,\"result\":[{\"id\":401,\"media_id\":\"1\",\"num_pages\":1}]}"));
+            InspectorV3 list = InspectorV3.favoriteInspector(context, null, 1, null);
+            assertTrue(list.createDocument());
+            list.parseDocument();
+            assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, 401));
+
+            Global.client = client(chain -> response(chain, 500,
+                "{\"num_pages\":1,\"result\":[{\"id\":402,\"media_id\":\"1\",\"num_pages\":1}]}"));
+            list = InspectorV3.favoriteInspector(context, null, 1, null);
+            assertFalse(list.createDocument());
+            list.parseDocument();
+            assertNull(OnlineFavoriteClient.cachedState(context, 402));
+
+            Global.client = client(chain -> {
+                AuthStore.saveApiKey(context, "new-list-account", true);
+                return response(chain, 200,
+                    "{\"num_pages\":1,\"result\":[{\"id\":403,\"media_id\":\"1\",\"num_pages\":1}]}");
+            });
+            list = InspectorV3.favoriteInspector(context, null, 1, null);
+            assertTrue(list.createDocument());
+            list.parseDocument();
+            assertNull(OnlineFavoriteClient.cachedState(context, 403));
+        } finally {
+            Global.client = previous;
+        }
+    }
+
     @Test public void rejectedWriteKeepsConfirmedState() throws Exception {
         OnlineFavoriteClient.rememberState(context, 202, true);
         List<String> methods = Collections.synchronizedList(new ArrayList<>());

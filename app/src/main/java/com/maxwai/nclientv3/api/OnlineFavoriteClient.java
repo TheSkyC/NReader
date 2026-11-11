@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -39,6 +40,7 @@ public final class OnlineFavoriteClient {
     private static final int MAX_CACHED_STATES = 512;
     private static final Map<String, Boolean> confirmedStates = new LinkedHashMap<>(128, 0.75f, true);
     private static final Set<String> inFlight = new HashSet<>();
+    private static long mutationVersion;
     private static final CopyOnWriteArrayList<WeakReference<IntConsumer>> listeners = new CopyOnWriteArrayList<>();
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static String activeIdentity;
@@ -55,6 +57,11 @@ public final class OnlineFavoriteClient {
     }
 
     public static void observe(@NonNull Context context, @NonNull IntConsumer listener) {
+        observeAuthChanges(context);
+        listeners.add(new WeakReference<>(listener));
+    }
+
+    private static void observeAuthChanges(Context context) {
         synchronized (confirmedStates) {
             Context application = context.getApplicationContext();
             if (authContext != application) {
@@ -64,7 +71,6 @@ public final class OnlineFavoriteClient {
                 AuthStore.observeChanges(application, authObserver);
             }
         }
-        listeners.add(new WeakReference<>(listener));
     }
 
     public static void removeObserver(@NonNull IntConsumer listener) {
@@ -110,6 +116,7 @@ public final class OnlineFavoriteClient {
         boolean started;
         synchronized (confirmedStates) {
             started = inFlight.add(key);
+            if (started) mutationVersion++;
             currentFavorite = confirmedStates.get(key);
         }
         if (!started) {
@@ -118,7 +125,9 @@ public final class OnlineFavoriteClient {
         }
         Result finished = new Result() {
             private void release() {
-                synchronized (confirmedStates) { inFlight.remove(key); }
+                synchronized (confirmedStates) {
+                    if (inFlight.remove(key)) mutationVersion++;
+                }
             }
             @Override public void onSuccess(boolean favorited) {
                 release();
@@ -169,6 +178,44 @@ public final class OnlineFavoriteClient {
     @Nullable
     public static String sessionIdentity(@NonNull Context context) {
         return identity(context);
+    }
+
+    static final class FavoriteListSnapshot {
+        final String identity;
+        final long version;
+
+        FavoriteListSnapshot(String identity, long version) {
+            this.identity = identity;
+            this.version = version;
+        }
+    }
+
+    @Nullable
+    static FavoriteListSnapshot beginFavoriteList(Context context) {
+        observeAuthChanges(context);
+        String identity = identity(context);
+        if (identity == null) return null;
+        synchronized (confirmedStates) {
+            return identity.equals(activeIdentity) ? new FavoriteListSnapshot(identity, mutationVersion) : null;
+        }
+    }
+
+    static void acceptFavoriteList(Context context, FavoriteListSnapshot snapshot, Collection<Integer> ids) {
+        if (snapshot == null || !snapshot.identity.equals(identity(context))) return;
+        boolean changed = false;
+        synchronized (confirmedStates) {
+            if (!snapshot.identity.equals(activeIdentity) || snapshot.version != mutationVersion || !inFlight.isEmpty()) return;
+            for (int id : ids) {
+                if (id <= 0) continue;
+                Boolean previous = confirmedStates.put(cacheKey(snapshot.identity, id), true);
+                changed |= !Boolean.TRUE.equals(previous);
+                while (confirmedStates.size() > MAX_CACHED_STATES) {
+                    confirmedStates.remove(confirmedStates.keySet().iterator().next());
+                    changed = true;
+                }
+            }
+        }
+        if (changed) notifyStateChanged(0);
     }
 
     private static void mutate(Context context, int galleryId, boolean remove,
@@ -244,6 +291,7 @@ public final class OnlineFavoriteClient {
             synchronized (confirmedStates) {
                 changed = activeIdentity != null;
                 activeIdentity = null;
+                if (changed) mutationVersion++;
                 confirmedStates.clear();
             }
             if (changed) notifyStateChanged(0);
@@ -259,6 +307,7 @@ public final class OnlineFavoriteClient {
                 if (changed) {
                     confirmedStates.clear();
                     activeIdentity = identity;
+                    mutationVersion++;
                 }
             }
             if (changed) notifyStateChanged(0);
@@ -275,6 +324,7 @@ public final class OnlineFavoriteClient {
             if (!identity.equals(activeIdentity)) return;
             Boolean previous = confirmedStates.put(cacheKey(identity, galleryId), favorited);
             changed = previous == null || previous != favorited;
+            if (changed) mutationVersion++;
             while (confirmedStates.size() > MAX_CACHED_STATES) {
                 String oldest = confirmedStates.keySet().iterator().next();
                 confirmedStates.remove(oldest);

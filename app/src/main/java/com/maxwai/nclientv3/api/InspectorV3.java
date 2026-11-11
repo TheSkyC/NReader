@@ -21,6 +21,7 @@ import com.maxwai.nclientv3.api.enums.TagStatus;
 import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
@@ -74,6 +75,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     private String retryAfter;
     private volatile okhttp3.Call activeCall;
     private volatile boolean canceled;
+    private OnlineFavoriteClient.FavoriteListSnapshot favoriteListSnapshot;
 
     public void cancelRequest() {
         canceled = true;
@@ -359,7 +361,16 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public boolean createDocument() throws IOException {
         if (jsonResponse != null) return true;
-        okhttp3.Call call = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build());
+        Context requestContext = context.get();
+        if (requestContext == null) throw new IOException("Request context unavailable");
+        Request.Builder builder = new Request.Builder().url(url);
+        if (requestType == ApiRequestType.FAVORITE) {
+            favoriteListSnapshot = OnlineFavoriteClient.beginFavoriteList(requestContext);
+            if (favoriteListSnapshot != null)
+                builder.tag(ApiAuthInterceptor.ExpectedIdentity.class,
+                    new ApiAuthInterceptor.ExpectedIdentity(favoriteListSnapshot.identity));
+        }
+        okhttp3.Call call = Global.getClient(requestContext).newCall(builder.build());
         activeCall = call;
         if (canceled) call.cancel();
         try (Response response = call.execute()) {
@@ -513,6 +524,13 @@ public class InspectorV3 extends Thread implements Parcelable {
         galleries = new ArrayList<>(results.length());
         for (int i = 0; i < results.length(); i++) {
             galleries.add(SimpleGallery.fromV2ListItem(context.get(), results.getJSONObject(i)));
+        }
+        Context resultContext = context.get();
+        if (requestType == ApiRequestType.FAVORITE && responseCode == HttpURLConnection.HTTP_OK
+            && !canceled && resultContext != null) {
+            List<Integer> ids = new ArrayList<>(galleries.size());
+            for (GenericGallery gallery : galleries) ids.add(gallery.getId());
+            OnlineFavoriteClient.acceptFavoriteList(resultContext, favoriteListSnapshot, ids);
         }
         pageCount = json.optInt("num_pages", Math.max(1, page));
         if (Global.isExactTagMatch())

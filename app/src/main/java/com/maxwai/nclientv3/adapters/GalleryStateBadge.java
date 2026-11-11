@@ -101,8 +101,8 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         customStatus = item.findViewById(R.id.gallery_custom_status);
         progress = item.findViewById(R.id.gallery_reading_progress);
         item.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
-            updateProgressStyle());
-        updateProgressStyle();
+            updateCardStyle());
+        updateCardStyle();
         author = item.findViewById(R.id.gallery_author);
         author.setCompoundDrawablePadding(Math.round(4 * item.getResources().getDisplayMetrics().density));
         TextViewCompat.setCompoundDrawableTintList(author, author.getTextColors());
@@ -135,9 +135,15 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         });
     }
 
-    private void updateProgressStyle() {
+    private void updateCardStyle() {
         float density = item.getResources().getDisplayMetrics().density;
         boolean compact = item.getWidth() > 0 && item.getWidth() / density <= 140f;
+        float badgeScale = compact ? 1f : 14f / 12f;
+        onlineFavorite.setScaleX(badgeScale);
+        onlineFavorite.setScaleY(badgeScale);
+        float badgeOffset = (compact ? 6 : 9) * density;
+        onlineFavorite.setTranslationX(badgeOffset);
+        onlineFavorite.setTranslationY(badgeOffset);
         if (compact == compactProgressStyle) return;
         compactProgressStyle = compact;
         int horizontal = Math.round((compact ? 4 : 6) * density);
@@ -184,7 +190,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         favorite.setOnClickListener(null);
         localFiles.setOnClickListener(null);
         favorite.setEnabled(false);
-        onlineFavorite.setVisibility(View.GONE);
+        onlineFavorite.setVisibility(View.INVISIBLE);
         localFiles.setEnabled(false);
         item.findViewById(R.id.pages).setVisibility(View.GONE);
         TextView title = item.findViewById(R.id.title);
@@ -270,7 +276,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
             : onlineFavoriteState == null ? R.color.cover_unknown : android.R.color.white)
             : (state.favorite ? R.color.cover_favorite : android.R.color.white));
         favorite.setEnabled(id > 0 && gallery != null && !favoritePending && !onlineFavoritePending);
-        favorite.setAlpha(id > 0 && gallery != null ? 1f : .5f);
+        favorite.setAlpha(id <= 0 || gallery == null || (onlinePrimary && onlineFavoriteState == null) ? .55f : 1f);
         String favoriteLabel = context.getString(state.favorite ? R.string.cover_remove_favorite : R.string.cover_add_favorite);
         String primaryLabel = onlinePrimary
             ? context.getString(Boolean.TRUE.equals(onlineFavoriteState)
@@ -317,9 +323,9 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     }
 
     private void renderOnlineFavorite(Context context, boolean localSelected, boolean onlinePrimary) {
-        boolean available = id > 0 && gallery != null && !gallery.isLocal()
+        boolean available = id > 0 && gallery != null
             && AuthStore.hasValidApiKey(context);
-        onlineFavorite.setVisibility(available ? View.VISIBLE : View.GONE);
+        onlineFavorite.setVisibility(available ? View.VISIBLE : View.INVISIBLE);
         if (!available) return;
         boolean confirmed = onlineFavoriteState != null;
         boolean selected = Boolean.TRUE.equals(onlineFavoriteState);
@@ -329,9 +335,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
             : (selected ? R.drawable.ic_star : R.drawable.ic_star_border));
         tint(onlineFavorite, onlinePrimary ? (localSelected ? R.color.cover_favorite : android.R.color.white)
             : (selected ? R.color.cover_favorite : confirmed ? android.R.color.white : R.color.cover_unknown));
-        float offset = 8 * context.getResources().getDisplayMetrics().density;
-        onlineFavorite.setTranslationX(offset);
-        onlineFavorite.setTranslationY(onlinePrimary ? offset : -offset);
+        onlineFavorite.setAlpha(!onlinePrimary && !confirmed ? .55f : 1f);
     }
 
     private void synchronizeOnlineFavoriteIdentity(Context context) {
@@ -352,7 +356,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     }
 
     private boolean onlineFavoriteAvailable() {
-        return id > 0 && gallery != null && !gallery.isLocal()
+        return id > 0 && gallery != null
             && AuthStore.hasValidApiKey(item.getContext());
     }
 

@@ -141,8 +141,14 @@ two-column lists keep their existing centered glyphs, 48dp targets and 36dp ring
 API list cards retain `num_pages`, including their in-app Parcelable transfer;
 legacy history without a known total continues to show `page/?` when started.
 Custom status names appear at the top of the cover with their own label color.
-Favorite controls toggle local favorites and offer Undo after removal. Download
-controls use both icon shape and color, including verified completion in the local
+Favorite controls toggle local favorites and offer Undo after removal. A gallery
+with a positive site ID, including a downloaded gallery, can also use online
+favorites with a validated API key. The secondary icon appears at the lower right
+of the primary icon. An unknown online state is dimmed, distinct from a confirmed
+unselected state. Successful authenticated favorite-list results seed confirmed
+online state for their returned IDs; account changes and overlapping mutations
+invalidate stale list results. List membership is not inferred for absent IDs.
+Download controls use both icon shape and color, including verified completion in the local
 library, and open task actions or a file-state explanation. Removing local files
 is a separate, explicit action. Progress uses `page/total`
 with an original metadata total, or `page/?` when that total is unknown. Unknown
