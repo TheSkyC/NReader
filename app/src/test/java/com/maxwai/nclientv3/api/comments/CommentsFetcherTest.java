@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Call;
 import okhttp3.Protocol;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -137,5 +138,37 @@ public class CommentsFetcherTest {
             assertFalse(success.get());
             assertTrue(returned.get().isEmpty());
         }
+    }
+
+    @Test
+    public void cancelStopsActiveCallAndSuppressesItsResult() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        Global.initFromShared(context);
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch callback = new CountDownLatch(1);
+        AtomicReference<Call> active = new AtomicReference<>();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            active.set(chain.call());
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IOException(exception);
+            }
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200)
+                .message("OK").body(ResponseBody.create("{\"num_pages\":0,\"result\":[]}", null)).build();
+        }).build();
+        CommentsFetcher.RequestHandle handle = CommentsFetcher.fetch(context, 1, 1, client,
+            (comments, pages, success) -> callback.countDown());
+        try {
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            handle.cancel();
+            assertTrue(active.get().isCanceled());
+        } finally {
+            release.countDown();
+        }
+        assertFalse(callback.await(500, TimeUnit.MILLISECONDS));
     }
 }
