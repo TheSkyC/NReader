@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="cover_favorite">#F45135</color>
+    <color name="cover_online_favorite">#FFD54F</color>
     <color name="cover_complete">#83DDB0</color>
     <color name="cover_partial">#FFD07A</color>
     <color name="cover_error">#FF9B99</color>

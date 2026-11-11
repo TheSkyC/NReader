@@ -272,7 +272,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         favorite.setImageResource(onlinePrimary
             ? (onlineSelected ? R.drawable.ic_star : R.drawable.ic_star_border)
             : (state.favorite ? R.drawable.ic_cover_heart_fill : R.drawable.ic_cover_heart));
-        tint(favorite, onlinePrimary ? (onlineSelected ? R.color.cover_favorite
+        tint(favorite, onlinePrimary ? (onlineSelected ? R.color.cover_online_favorite
             : onlineFavoriteState == null ? R.color.cover_unknown : android.R.color.white)
             : (state.favorite ? R.color.cover_favorite : android.R.color.white));
         favorite.setEnabled(id > 0 && gallery != null && !favoritePending && !onlineFavoritePending);
@@ -342,7 +342,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
             ? (localSelected ? R.drawable.ic_cover_heart_fill : R.drawable.ic_cover_heart)
             : (selected ? R.drawable.ic_star : R.drawable.ic_star_border));
         tint(onlineFavorite, onlinePrimary ? (localSelected ? R.color.cover_favorite : android.R.color.white)
-            : (selected ? R.color.cover_favorite : confirmed ? android.R.color.white : R.color.cover_unknown));
+            : (selected ? R.color.cover_online_favorite : confirmed ? android.R.color.white : R.color.cover_unknown));
         onlineFavorite.setAlpha(!onlinePrimary && !confirmed ? .55f : 1f);
     }
 
