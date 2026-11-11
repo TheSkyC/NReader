@@ -229,6 +229,10 @@ public class GalleryStateBadgeTest {
         card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+        shadowOf(Looper.getMainLooper()).idle();
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
         View strip = card.findViewById(R.id.gallery_state);
         for (int id : new int[]{R.id.gallery_favorite, R.id.gallery_local_files, R.id.gallery_reading_progress}) {
             View child = card.findViewById(id);
@@ -237,7 +241,9 @@ public class GalleryStateBadgeTest {
             assertTrue(child.getBottom() <= strip.getHeight());
         }
         TextView progress = card.findViewById(R.id.gallery_reading_progress);
-        assertTrue(progress.getLayout().getHeight() <= progress.getHeight());
+        assertEquals(1, progress.getMaxLines());
+        assertEquals(15f, progress.getTextSize(), 0f);
+        assertTrue(progress.getHeight() <= Math.round(48 * activity.getResources().getDisplayMetrics().density));
         View cover = card.findViewById(R.id.gallery_cover);
         assertTrue(card.findViewById(R.id.title).getTop() >= cover.getBottom());
         assertTrue(progress.getBottom() <= card.findViewById(R.id.gallery_favorite).getTop());
