@@ -98,14 +98,7 @@ public class CreatePdfOrZip extends Worker {
             try {
                 for (int a = 1; a <= pages.size(); a++) {
                     File page = pages.get(a - 1);
-                    Bitmap bitmap = BitmapFactory.decodeFile(page.getAbsolutePath());
-                    if (bitmap != null) {
-                        PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), a).create();
-                        PdfDocument.Page p = document.startPage(info);
-                        p.getCanvas().drawBitmap(bitmap, 0f, 0f, null);
-                        document.finishPage(p);
-                        bitmap.recycle();
-                    }
+                    appendPdfPage(document, page, a);
                     notification.setProgress(totalPage, a, false);
                     NotificationSettings.notify(getApplicationContext(), notId, notification.build());
 
@@ -125,14 +118,14 @@ public class CreatePdfOrZip extends Worker {
                     notification.setContentText(gallery.getTitle());
                     createIntentOpen(finalPath, true);
                     NotificationSettings.notify(getApplicationContext(), notId, notification.build());
-                } catch (IOException e) {
-                    notification.setContentTitle(getApplicationContext().getString(R.string.error_pdf));
-                    notification.setContentText(getApplicationContext().getString(R.string.failed));
-                    notification.setProgress(0, 0, false);
-                    NotificationSettings.notify(getApplicationContext(), notId, notification.build());
-                    LogUtility.e(new RuntimeException("Error generating file", e));
-                    return Result.failure();
                 }
+            } catch (IOException e) {
+                notification.setContentTitle(getApplicationContext().getString(R.string.error_pdf));
+                notification.setContentText(getApplicationContext().getString(R.string.failed));
+                notification.setProgress(0, 0, false);
+                NotificationSettings.notify(getApplicationContext(), notId, notification.build());
+                LogUtility.e(new RuntimeException("Error generating file", e));
+                return Result.failure();
             } finally {
                 document.close();
             }
@@ -176,6 +169,19 @@ public class CreatePdfOrZip extends Worker {
         List<PageFile> pages = new ArrayList<>();
         for (PageFile page : gallery.getGalleryFolder()) pages.add(page);
         return pages;
+    }
+
+    static void appendPdfPage(PdfDocument document, File page, int pageNumber) throws IOException {
+        Bitmap bitmap = BitmapFactory.decodeFile(page.getAbsolutePath());
+        if (bitmap == null) throw new IOException("Unable to decode export page");
+        try {
+            PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), pageNumber).create();
+            PdfDocument.Page pdfPage = document.startPage(info);
+            pdfPage.getCanvas().drawBitmap(bitmap, 0f, 0f, null);
+            document.finishPage(pdfPage);
+        } finally {
+            bitmap.recycle();
+        }
     }
 
     static void writeZipPage(ZipOutputStream out, File page) throws IOException {
