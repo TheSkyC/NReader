@@ -6,7 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.maxwai.nclientv3.BuildConfig;
-import com.maxwai.nclientv3.utility.LogUtility;
+import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
 
@@ -15,22 +15,18 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiAuthInterceptor implements Interceptor {
-    private final boolean logRequests;
     @NonNull
     private final Context context;
 
-    public ApiAuthInterceptor(@NonNull Context context, boolean logRequests) {
+    public ApiAuthInterceptor(@NonNull Context context) {
         this.context = context.getApplicationContext();
-        this.logRequests = logRequests;
     }
 
     @NonNull
     @Override
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
-        if (logRequests)
-            LogUtility.d("Requested url: " + request.url());
-        if (request.header("Authorization") != null || !request.url().encodedPath().startsWith("/api/v2/")) {
+        if (request.header("Authorization") != null || !isTrustedApiRequest(request.url(), Utility.getHost())) {
             return chain.proceed(request);
         }
 
@@ -51,5 +47,12 @@ public class ApiAuthInterceptor implements Interceptor {
             AuthStore.setApiKeyValidation(context, true);
         }
         return response;
+    }
+
+    static boolean isTrustedApiRequest(@NonNull okhttp3.HttpUrl url, @NonNull String trustedHost) {
+        return "https".equals(url.scheme())
+            && url.host().equalsIgnoreCase(trustedHost)
+            && url.port() == 443
+            && url.encodedPath().startsWith("/api/v2/");
     }
 }

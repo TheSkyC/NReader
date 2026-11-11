@@ -345,13 +345,10 @@ public class Global {
                     new SharedPrefsCookiePersistor(preferences)
                 )
             );
-        builder.addInterceptor(new ApiAuthInterceptor(context.getApplicationContext(), true));
+        builder.addInterceptor(new ApiAuthInterceptor(context.getApplicationContext()));
         client = builder.build();
         client.dispatcher().setMaxRequests(25);
         client.dispatcher().setMaxRequestsPerHost(25);
-        for (Cookie cookie : client.cookieJar().loadForRequest(Login.BASE_HTTP_URL)) {
-            LogUtility.d("Cookie: " + cookie);
-        }
         Login.isLogged(context);
     }
 

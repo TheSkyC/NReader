@@ -9,4 +9,6 @@
         domain="sharedpref"
         path="." />
     <exclude domain="sharedpref" path="DebugDisplay.xml" />
+    <exclude domain="sharedpref" path="Auth.xml" />
+    <exclude domain="sharedpref" path="Login.xml" />
 </full-backup-content>
