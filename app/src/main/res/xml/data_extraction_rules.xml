@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="Auth.xml" />
+        <exclude domain="sharedpref" path="Login.xml" />
+        <exclude domain="sharedpref" path="DebugDisplay.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="Auth.xml" />
+        <exclude domain="sharedpref" path="Login.xml" />
+        <exclude domain="sharedpref" path="DebugDisplay.xml" />
+    </device-transfer>
+</data-extraction-rules>
