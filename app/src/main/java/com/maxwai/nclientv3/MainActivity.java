@@ -70,10 +70,13 @@ import com.maxwai.nclientv3.utility.Utility;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends BaseActivity
     implements NavigationView.OnNavigationItemSelectedListener {
@@ -130,6 +133,9 @@ public class MainActivity extends BaseActivity
     private Toolbar toolbar;
     private boolean setting = false;
     private GalleryListGrid listGrid;
+    private List<Uri> pendingSharedLinks;
+    private static final Pattern SHARED_GALLERY_LINK = Pattern.compile(
+        "https?://nhentai\\.net/g/\\d+(?:/\\d+)?/?", Pattern.CASE_INSENSITIVE);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +158,21 @@ public class MainActivity extends BaseActivity
 
         manageDrawer();
         setActivityTitle();
+        if (pendingSharedLinks != null) {
+            List<Uri> links = pendingSharedLinks;
+            pendingSharedLinks = null;
+            String[] labels = new String[links.size()];
+            for (int i = 0; i < links.size(); i++) labels[i] = links.get(i).toString();
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.title_activity_gallery)
+                .setItems(labels, (dialog, which) -> {
+                    Intent selected = new Intent(this, MainActivity.class).setData(links.get(which));
+                    startActivity(selected);
+                    finish();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        }
         if (firstTime) checkUpdate();
         if (inspector != null) {
             inspector.start();
@@ -328,7 +349,9 @@ public class MainActivity extends BaseActivity
     private void selectStartMode(Intent intent, String packageName) {
         try {
             Uri data = intent.getData();
-            if (intent.getBooleanExtra(packageName + ".ISBYTAG", false))
+            if (Intent.ACTION_SEND.equals(intent.getAction()))
+                useSharedTextMode(intent);
+            else if (intent.getBooleanExtra(packageName + ".ISBYTAG", false))
                 useTagMode(intent, packageName);
             else if (intent.getBooleanExtra(packageName + ".SEARCHMODE", false))
                 useSearchMode(intent, packageName);
@@ -346,6 +369,38 @@ public class MainActivity extends BaseActivity
     private void useNormalMode() {
         inspector = InspectorV3.basicInspector(this, 1, resetDataset);
         modeType = ModeType.NORMAL;
+    }
+
+    private void useSharedTextMode(Intent intent) {
+        String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+        List<Uri> links = extractSharedGalleryLinks(text);
+        if (links.size() == 1) {
+            manageDataStart(links.get(0));
+            return;
+        }
+        if (links.size() > 1) {
+            pendingSharedLinks = links;
+            useNormalMode();
+            return;
+        }
+        if (text == null || text.trim().isEmpty()) {
+            useNormalMode();
+            return;
+        }
+        inspector = InspectorV3.searchInspector(this, text.trim(), null, 1,
+            Global.getSortType(), null, resetDataset);
+        modeType = ModeType.SEARCH;
+    }
+
+    static List<Uri> extractSharedGalleryLinks(String text) {
+        LinkedHashSet<String> unique = new LinkedHashSet<>();
+        if (text != null) {
+            Matcher matcher = SHARED_GALLERY_LINK.matcher(text);
+            while (matcher.find()) unique.add(matcher.group());
+        }
+        ArrayList<Uri> result = new ArrayList<>();
+        for (String link : unique) result.add(Uri.parse(link));
+        return result;
     }
 
     private void useBookmarkMode(Intent intent, String packageName) {
