@@ -19,11 +19,14 @@ import java.util.Locale;
 import java.util.Objects;
 
 import okhttp3.Request;
+import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class CommentsFetcher extends Thread {
-    private static final String COMMENT_API_URL = Utility.getApiBaseUrl() + "galleries/%d/comments";
+    private static final int MAX_PAGE = 2000;
+    private static final int COMMENTS_PER_PAGE = 50;
+    private static final long MAX_RESPONSE_BYTES = 2L * 1024 * 1024;
     private final int id;
     private final CommentActivity commentActivity;
     private final List<Comment> comments = new ArrayList<>();
@@ -34,24 +37,37 @@ public class CommentsFetcher extends Thread {
 
     public static void fetch(Context context, int id, int page, Callback callback) {
         Context application = context.getApplicationContext();
+        fetch(application, id, page, null, callback);
+    }
+
+    static void fetch(Context context, int id, int page, OkHttpClient client, Callback callback) {
         new Thread(() -> {
             List<Comment> result = new ArrayList<>();
             boolean success = false;
             int pages = 0;
-            String url = String.format(Locale.US, COMMENT_API_URL + "?page=%d&per_page=50", id, page);
-            try (Response response = Global.getClient(application)
-                .newCall(new Request.Builder().url(url).build()).execute()) {
+            try (Response response = (client == null ? Global.getClient(context) : client)
+                .newCall(createRequest(id, page)).execute()) {
                 ResponseBody body = response.body();
                 if (!response.isSuccessful() || body == null) throw new IOException("Comment request failed");
+                if (body.contentLength() > MAX_RESPONSE_BYTES || body.source().request(MAX_RESPONSE_BYTES + 1))
+                    throw new IOException("Comment response too large");
                 try (JsonReader reader = new JsonReader(body.charStream())) {
                     pages = readPage(reader, result);
                 }
                 success = true;
             } catch (IOException | RuntimeException e) {
                 LogUtility.w("Failed to load comments", e);
+                result.clear();
             }
             callback.onResult(result, pages, success);
         }).start();
+    }
+
+    static Request createRequest(int id, int page) {
+        if (id <= 0 || page <= 0 || page > MAX_PAGE) throw new IllegalArgumentException("Invalid comment request");
+        String url = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/comments?page=%d&per_page=%d",
+            id, page, COMMENTS_PER_PAGE);
+        return new Request.Builder().url(url).build();
     }
 
     static int readPage(JsonReader reader, List<Comment> result) throws IOException {
@@ -62,7 +78,10 @@ public class CommentsFetcher extends Thread {
             switch (reader.nextName()) {
                 case "result":
                     reader.beginArray();
-                    while (reader.hasNext()) result.add(new Comment(reader));
+                    while (reader.hasNext()) {
+                        if (result.size() >= COMMENTS_PER_PAGE) throw new IOException("Too many comments");
+                        result.add(new Comment(reader));
+                    }
                     reader.endArray();
                     hasResult = true;
                     break;
@@ -74,7 +93,7 @@ public class CommentsFetcher extends Thread {
             }
         }
         reader.endObject();
-        if (!hasResult || pages < 0 || pages > 2000) throw new IOException("Invalid comment page");
+        if (!hasResult || pages < 0 || pages > MAX_PAGE) throw new IOException("Invalid comment page");
         return pages;
     }
 
@@ -99,7 +118,7 @@ public class CommentsFetcher extends Thread {
     }
 
     private void populateComments() {
-        String url = String.format(Locale.US, COMMENT_API_URL, id);
+        String url = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/comments", id);
         try (Response response = Objects.requireNonNull(Global.getClient()).newCall(new Request.Builder().url(url).build()).execute()) {
 
             ResponseBody body = response.body();
