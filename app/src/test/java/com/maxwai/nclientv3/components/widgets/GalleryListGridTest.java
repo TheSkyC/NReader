@@ -134,6 +134,26 @@ public class GalleryListGridTest {
     }
 
     @Test
+    public void denseGridPreservesLargerOnlinePrimaryIconAcrossRefreshes() {
+        grid.cycle();
+        layout(412);
+        ImageView favorite = recycler.getChildAt(0).findViewById(R.id.gallery_favorite);
+        favorite.setTag(R.id.gallery_online_favorite, true);
+        grid.refresh();
+        assertEquals(pixels(10), favorite.getPaddingLeft());
+        assertEquals(pixels(40), favorite.getWidth());
+        layout(412);
+        assertEquals(pixels(10), favorite.getPaddingLeft());
+        RectF artwork = new RectF(0, 0, favorite.getDrawable().getIntrinsicWidth(),
+            favorite.getDrawable().getIntrinsicHeight());
+        favorite.getImageMatrix().mapRect(artwork);
+        assertEquals(pixels(20), artwork.width(), 1);
+        favorite.setTag(R.id.gallery_online_favorite, false);
+        grid.refresh();
+        assertEquals(pixels(12), favorite.getPaddingLeft());
+    }
+
+    @Test
     public void shrinkingADeeplyClippedRowKeepsTheGalleryVisible() {
         CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
         manager.scrollToPositionWithOffset(44, -pixels(260));
