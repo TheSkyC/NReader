@@ -22,6 +22,7 @@ import com.bumptech.glide.request.Request;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.network.NetworkUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -210,6 +211,7 @@ public class ImageDownloadUtilityTest {
         ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class);
         controller.get().setTheme(R.style.AppTheme);
         Global.initFromShared(controller.get());
+            NetworkUtil.setType(NetworkUtil.ConnectionType.WIFI);
         return controller.setup();
     }
 

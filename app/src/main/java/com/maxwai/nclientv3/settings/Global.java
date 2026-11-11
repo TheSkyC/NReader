@@ -351,13 +351,20 @@ public class Global {
     }
 
     public static DataUsageType getDownloadPolicy() {
-        switch (NetworkUtil.getType()) {
+        return getDownloadPolicy(NetworkUtil.getType(), usageWifi, usageMobile);
+    }
+
+    static DataUsageType getDownloadPolicy(NetworkUtil.ConnectionType type, DataUsageType wifi, DataUsageType mobile) {
+        switch (type) {
             case WIFI:
-                return usageWifi;
+                return wifi;
             case CELLULAR:
-                return usageMobile;
+            case METERED:
+                return mobile;
+            case UNKNOWN:
+            default:
+                return DataUsageType.NONE;
         }
-        return usageWifi;
     }
 
     public static boolean volumeOverride() {
