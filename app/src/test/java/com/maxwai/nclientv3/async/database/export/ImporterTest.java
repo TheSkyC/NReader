@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
+import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.async.database.SearchPlanStore;
@@ -26,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
@@ -700,6 +702,52 @@ public class ImporterTest {
         } catch (IOException expected) {
             assertEquals(7, Queries.ResumeTable.pageFromId(123));
             assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+        }
+    }
+
+    @Test
+    public void downloadMetadataNestingIsBoundedAndFailureRollsBack() throws Exception {
+        for (int depth : new int[]{63, 64}) {
+            StringBuilder metadata = new StringBuilder("{\"id\":123,\"num_pages\":1,\"future\":");
+            for (int index = 0; index < depth; index++) metadata.append('[');
+            metadata.append("null");
+            for (int index = 0; index < depth; index++) metadata.append(']');
+            metadata.append('}');
+            JSONObject row = new JSONObject();
+            row.put("id_gallery", 123).put("range_start", 0).put("range_end", 0)
+                .put("title", "test").put("metadata", metadata.toString()).put("state", "PAUSED")
+                .put("failure", "NONE").put("queue_order", 1).put("metadata_attempts", 0)
+                .put("page_number", -1).put("page_attempts", 0).put("retry_at", 0);
+            String backup = "{\"Resume\":[],\"DownloadTasks\":[" + row + "]}";
+            if (depth == 63) {
+                restore(backup);
+                Queries.ResumeTable.insert(123, 7);
+                Queries.ReadingProgressTable.insert(123, new ReadingPosition(9, 0.5f));
+            } else {
+                assertThrows(IOException.class, () -> restore(backup));
+                assertEquals(7, Queries.ResumeTable.pageFromId(123));
+                assertEquals(9, Queries.ReadingProgressTable.fromId(123).page);
+                assertFalse(database.inTransaction());
+            }
+        }
+    }
+
+    @Test
+    public void serializedGalleryMetadataRemainsRestorable() throws Exception {
+        Gallery gallery = new Gallery(null, "{\"id\":123,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+            + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+        StringWriter metadata = new StringWriter();
+        gallery.jsonWrite(metadata);
+        JSONObject row = new JSONObject();
+        row.put("id_gallery", 123).put("range_start", 0).put("range_end", 0)
+            .put("title", "test").put("metadata", metadata.toString()).put("state", "PAUSED")
+            .put("failure", "NONE").put("queue_order", 1).put("metadata_attempts", 0)
+            .put("page_number", -1).put("page_attempts", 0).put("retry_at", 0);
+        restore("{\"DownloadTasks\":[" + row + "]}");
+        try (android.database.Cursor cursor = database.rawQuery("SELECT metadata FROM DownloadTasks WHERE id_gallery=123", null)) {
+            assertTrue(cursor.moveToFirst());
+            assertEquals(metadata.toString(), cursor.getString(0));
         }
     }
 }
