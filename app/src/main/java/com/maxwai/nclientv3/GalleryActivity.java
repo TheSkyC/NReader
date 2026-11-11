@@ -630,7 +630,7 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void menuItemsVisible(Menu menu) {
-        boolean hasValidApiKey = AuthStore.hasValidApiKey(this);
+        boolean hasValidApiKey = AuthStore.hasOnlineIdentity(this);
         boolean isValidOnline = gallery.isValid() && !isLocal;
         onlineFavoriteItem = menu.findItem(R.id.add_online_gallery);
         onlineFavoriteItem.setVisible(isValidOnline && hasValidApiKey);

@@ -162,6 +162,7 @@
                 android:value="com.maxwai.nclientv3.MainActivity" />
         </activity>
         <activity android:name=".SettingsActivity" />
+        <activity android:name=".AccountLoginActivity" android:exported="false" />
         <activity
             android:name=".RandomActivity"
             android:exported="true">

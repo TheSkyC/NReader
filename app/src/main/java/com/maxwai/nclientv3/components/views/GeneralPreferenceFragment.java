@@ -36,6 +36,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.CopyToClipboardActivity;
 import com.maxwai.nclientv3.ApiKeyActivity;
+import com.maxwai.nclientv3.AccountLoginActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.SettingsActivity;
 import com.maxwai.nclientv3.StatusManagerActivity;
@@ -202,6 +203,12 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         updateSettings.setVisible(!BuildConfig.UPDATE_REPOSITORY.isEmpty());
 
         fillRoba();
+
+        Preference accountLogin = Objects.requireNonNull(findPreference(getString(R.string.preference_key_account_login)));
+        accountLogin.setOnPreferenceClickListener(preference -> {
+            act.startActivity(new Intent(act, AccountLoginActivity.class));
+            return true;
+        });
 
         {
             Preference apiKey = Objects.requireNonNull(findPreference(getString(R.string.preference_key_api_key)));

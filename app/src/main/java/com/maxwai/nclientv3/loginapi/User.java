@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
+import com.maxwai.nclientv3.settings.AuthStore;
+import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
@@ -47,8 +49,11 @@ public class User {
     }
 
     public static void createUser(@NonNull Context context, final CreateUser createUser) {
+        String identity = AuthStore.activeIdentity(context);
+        if (identity == null) return;
         Global.getClient(context)
-            .newCall(new Request.Builder().url(Utility.getApiBaseUrl() + "user").build())
+            .newCall(new Request.Builder().url(Utility.getApiBaseUrl() + "user")
+                .tag(ApiAuthInterceptor.ExpectedIdentity.class, new ApiAuthInterceptor.ExpectedIdentity(identity)).build())
             .enqueue(new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -56,10 +61,14 @@ public class User {
 
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    JsonReader json = new JsonReader(response.body().charStream());
-                    User user = new User(json);
-                    Login.updateUser(user);
-                    if (createUser != null) createUser.onCreateUser(Login.getUser());
+                    try (Response received = response) {
+                        if (!received.isSuccessful() || received.body() == null) return;
+                        User user = new User(new JsonReader(received.body().charStream()));
+                        if (Login.updateUserIfCurrent(context, identity, user) && createUser != null)
+                            createUser.onCreateUser(user);
+                    } catch (RuntimeException exception) {
+                        throw new IOException("Invalid user response", exception);
+                    }
                 }
             });
     }

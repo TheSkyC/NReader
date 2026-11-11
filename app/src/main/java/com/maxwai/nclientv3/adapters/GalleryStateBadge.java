@@ -23,7 +23,7 @@ import androidx.core.widget.TextViewCompat;
 
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
-import com.maxwai.nclientv3.ApiKeyActivity;
+import com.maxwai.nclientv3.AccountLoginActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.OnlineFavoriteClient;
@@ -343,7 +343,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
 
     private void renderOnlineFavorite(Context context, boolean localSelected, boolean onlinePrimary) {
         boolean available = id > 0 && gallery != null
-            && AuthStore.hasValidApiKey(context);
+            && AuthStore.hasOnlineIdentity(context);
         onlineFavorite.setVisibility(available ? View.VISIBLE : View.INVISIBLE);
         if (!available) return;
         boolean confirmed = onlineFavoriteState != null;
@@ -376,7 +376,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
 
     private boolean onlineFavoriteAvailable() {
         return id > 0 && gallery != null
-            && AuthStore.hasValidApiKey(item.getContext());
+            && AuthStore.hasOnlineIdentity(item.getContext());
     }
 
     private void performPrimaryFavoriteAction() {
@@ -408,9 +408,9 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
 
     private void toggleOnlineFavorite() {
         if (!onlineFavoriteAvailable()) {
-            Snackbar.make(item, R.string.favorite_action_online_unavailable, Snackbar.LENGTH_LONG)
-                .setAction(R.string.setting_api_key_title,
-                    view -> item.getContext().startActivity(new Intent(item.getContext(), ApiKeyActivity.class)))
+            Snackbar.make(item, R.string.account_online_favorite_unavailable, Snackbar.LENGTH_LONG)
+                .setAction(R.string.account_title,
+                    view -> item.getContext().startActivity(new Intent(item.getContext(), AccountLoginActivity.class)))
                 .show();
             return;
         }

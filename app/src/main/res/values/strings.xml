@@ -2,6 +2,28 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 
 <resources>
+    <string name="preference_key_account_login" translatable="false">account_login</string>
+    <string name="account_title">nhentai account</string>
+    <string name="account_setting_summary">Sign in with your username and password</string>
+    <string name="account_description">Sign in to use online favorites. Your password is not saved. Your API key remains separate.</string>
+    <string name="account_username">Username or email</string>
+    <string name="account_password">Password</string>
+    <string name="account_sign_in">Sign in</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_sign_out_message">Remove the account session from this device? If an API key is saved, the app will use it for online actions.</string>
+    <string name="account_signed_out">No account session is saved.</string>
+    <string name="account_session_saved">An account session is saved on this device.</string>
+    <string name="account_session_expired">The saved account session has expired. Sign in again or remove it to use a saved API key.</string>
+    <string name="account_enter_username">Enter your username or email.</string>
+    <string name="account_enter_password">Enter your password.</string>
+    <string name="account_preparing_verification">Preparing verification…</string>
+    <string name="account_signing_in">Signing in…</string>
+    <string name="account_verification_error">Unable to load verification. Check your connection and try again.</string>
+    <string name="account_login_error">Sign-in could not be completed. Check your details and try again.</string>
+    <string name="account_protection_error">The site blocked this sign-in request after verification. Try again later.</string>
+    <string name="account_verify_title">Verify your sign-in</string>
+    <string name="account_verify_message">Complete the verification to continue.</string>
+    <string name="account_online_favorite_unavailable">Sign in or configure an API key to use online favorites.</string>
     <string name="comment_feature_unavailable">Commenting is unavailable</string>
     <string name="preference_key_offscreen_limit" translatable="false">offscreen_limit</string>
     <string name="preference_key_enable_beta" translatable="false">enable_beta</string>

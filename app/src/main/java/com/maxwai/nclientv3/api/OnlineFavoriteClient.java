@@ -312,38 +312,21 @@ public final class OnlineFavoriteClient {
     @Nullable
     private static String identity(Context context) {
         observeAuthChanges(context);
-        if (!com.maxwai.nclientv3.settings.AuthStore.hasValidApiKey(context)) {
-            boolean changed;
-            synchronized (confirmedStates) {
-                changed = activeIdentity != null;
-                activeIdentity = null;
-                if (changed) resetIdentityChanges();
+        String identity;
+        boolean changed;
+        synchronized (confirmedStates) {
+            identity = AuthStore.activeIdentity(context);
+            changed = !java.util.Objects.equals(identity, activeIdentity);
+            if (changed) {
                 confirmedStates.clear();
                 restoredStates.clear();
+                activeIdentity = identity;
+                resetIdentityChanges();
+                if (identity != null) load(context.getApplicationContext(), identity, identityVersion, mutationVersion);
             }
-            if (changed) notifyStateChanged(0);
-            return null;
         }
-        String apiKey = com.maxwai.nclientv3.settings.AuthStore.getApiKey(context);
-        if (apiKey == null) return null;
-        try {
-            String identity = ApiAuthInterceptor.fingerprint(apiKey);
-            boolean changed;
-            synchronized (confirmedStates) {
-                changed = !identity.equals(activeIdentity);
-                if (changed) {
-                    confirmedStates.clear();
-                    restoredStates.clear();
-                    activeIdentity = identity;
-                    resetIdentityChanges();
-                    load(context.getApplicationContext(), identity, identityVersion, mutationVersion);
-                }
-            }
-            if (changed) notifyStateChanged(0);
-            return identity;
-        } catch (IllegalStateException exception) {
-            return null;
-        }
+        if (changed) notifyStateChanged(0);
+        return identity;
     }
 
     private static void remember(String identity, int galleryId, boolean favorited) {
