@@ -123,6 +123,29 @@ public class SessionRefreshTest {
         }
     }
 
+    @Test public void unauthorizedPublicReadDoesNotRetryAfterSessionReplacement() throws Exception {
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            assertTrue(AuthSessionStore.replace(context, cookies("replacement"), null));
+            AuthSessionStore.rejectIfCurrent(context, AuthSessionStore.identity(context));
+            return response(chain.request());
+        }).build();
+        int[] requests = {0};
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(context))
+            .addInterceptor(chain -> {
+                requests[0]++;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build();
+            }).build();
+        try {
+            client.newCall(new Request.Builder().url("https://nhentai.net/api/v2/galleries").build()).execute();
+            org.junit.Assert.fail("A request from the previous session must not be retried");
+        } catch (java.io.IOException expected) {
+            assertEquals(1, requests[0]);
+            assertNull(AuthSessionStore.identity(context));
+            assertTrue(AuthSessionStore.hasStoredSession(context));
+        }
+    }
+
     @Test public void rejectedWriteRefreshesButIsNotReplayed() throws Exception {
         String identity = AuthSessionStore.identity(context);
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> response(chain.request())).build();
