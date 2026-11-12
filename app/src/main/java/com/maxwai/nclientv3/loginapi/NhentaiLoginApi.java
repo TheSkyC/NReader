@@ -259,14 +259,18 @@ public final class NhentaiLoginApi {
                 || ((String) rawName).length() > 256) throw new IOException("Invalid account profile");
             name = (String) rawName;
         }
-        if (rawAvatar instanceof String && ((String) rawAvatar).length() <= 2048) {
-            HttpUrl url = HttpUrl.parse((String) rawAvatar);
-            if (url != null && url.isHttps() && url.port() == 443 && url.username().isEmpty()
-                && url.password().isEmpty()
-                && (url.host().equals("nhentai.net") || url.host().endsWith(".nhentai.net")))
-                avatar = url.toString();
-        }
+        if (rawAvatar instanceof String) avatar = trustedAvatarUrl((String) rawAvatar);
         return new LoginResult(cookies, id, name, avatar);
+    }
+
+    @Nullable
+    public static String trustedAvatarUrl(@Nullable String avatar) {
+        if (avatar == null || avatar.length() > 2048) return null;
+        HttpUrl url = HttpUrl.parse(avatar);
+        return url != null && url.isHttps() && url.port() == 443 && url.username().isEmpty()
+            && url.password().isEmpty()
+            && (url.host().equals("nhentai.net") || url.host().endsWith(".nhentai.net"))
+            ? url.toString() : null;
     }
 
     static List<Cookie> parseTokens(@NonNull JSONObject body) throws IOException {

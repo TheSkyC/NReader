@@ -24,10 +24,12 @@ import okhttp3.ResponseBody;
 public class User {
     private final String username;
     private final int id;
+    @androidx.annotation.Nullable private final String avatarUrl;
 
     User(JsonReader jr) throws IOException {
         int id = -1;
         String username = null;
+        String avatarUrl = null;
         jr.beginObject();
         while (jr.peek() != JsonToken.END_OBJECT) {
             switch (jr.nextName()) {
@@ -36,6 +38,10 @@ public class User {
                     break;
                 case "username":
                     username = jr.nextString();
+                    break;
+                case "avatar_url":
+                    if (jr.peek() == JsonToken.STRING) avatarUrl = NhentaiLoginApi.trustedAvatarUrl(jr.nextString());
+                    else jr.skipValue();
                     break;
                 default:
                     jr.skipValue();
@@ -48,6 +54,7 @@ public class User {
         }
         this.username = username;
         this.id = id;
+        this.avatarUrl = avatarUrl;
     }
 
     public static void createUser(@NonNull Context context, final CreateUser createUser) {
@@ -71,8 +78,18 @@ public class User {
                     try (Response received = response) {
                         if (!received.isSuccessful() || received.body() == null) return;
                         User user = readResponse(received.body());
-                        if (Login.updateUserIfCurrent(appContext, identity, generation, user) && createUser != null)
-                            createUser.onCreateUser(user);
+                        if (Login.updateUserIfCurrent(appContext, identity, generation, user)) {
+                            com.maxwai.nclientv3.settings.AccountRepository repository =
+                                com.maxwai.nclientv3.settings.AccountRuntime.repository();
+                            if (repository != null) {
+                                synchronized (repository) {
+                                    if (generation == AuthStore.identityGeneration()
+                                        && repository.updateProfile(identity, repository.identityGeneration(),
+                                            user.id, user.username, user.avatarUrl)) AuthStore.notifyAccountProfileChanged();
+                                }
+                            }
+                            if (createUser != null) createUser.onCreateUser(user);
+                        }
                     } catch (IOException | RuntimeException exception) {
                         LogUtility.w("Unable to read account profile: " + exception.getClass().getSimpleName());
                     }
@@ -98,6 +115,11 @@ public class User {
 
     public int getId() {
         return id;
+    }
+
+    @androidx.annotation.Nullable
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
     public interface CreateUser {

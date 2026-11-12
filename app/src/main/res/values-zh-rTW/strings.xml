@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="account_remember_password">在此裝置記住密碼</string>
+    <string name="account_storage_error">無法儲存帳戶，請重試。</string>
+    <string name="account_login_description">登入後即可使用線上收藏和標籤。你可以選擇是否在此裝置記住密碼。</string>
+    <string name="account_remove_message">要從此裝置移除此帳戶及其儲存的登入資訊嗎？</string>
+    <string name="accounts_title">帳戶</string>
+    <string name="accounts_add">新增帳戶</string>
+    <string name="accounts_use_guest">不使用帳戶</string>
+    <string name="accounts_manage">管理</string>
+    <string name="accounts_manage_named">管理 %1$s</string>
+    <string name="accounts_empty">新增帳戶後即可使用線上收藏和標籤。下載和閱讀記錄在此裝置上共用。</string>
+    <string name="accounts_loading">正在載入帳戶…</string>
+    <string name="accounts_choose_method">選擇登入方式</string>
+    <string name="accounts_password_method">使用者名稱與密碼</string>
+    <string name="accounts_key_method">API 金鑰</string>
+    <string name="accounts_current">目前帳戶</string>
+    <string name="accounts_needs_sign_in">需要重新登入</string>
+    <string name="accounts_key_invalid">API 金鑰需要驗證</string>
+    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_unnamed_key">API 金鑰帳戶</string>
+    <string name="accounts_reauthenticate">重新登入</string>
+    <string name="accounts_revalidate_key">重新驗證 API 金鑰</string>
+    <string name="accounts_key_mismatch">此金鑰與所選帳戶不同，請將其新增為新帳戶。</string>
+    <string name="accounts_remove">移除帳戶</string>
+    <string name="accounts_switch">切換帳戶</string>
+    <string name="accounts_guest">尚未登入</string>
+    <string name="accounts_shared_data">下載、本機收藏和閱讀記錄在此裝置上共用。</string>
     <string name="account_title">nhentai 帳號</string>
     <string name="account_setting_summary">使用使用者名稱與密碼登入</string>
     <string name="account_description">登入後即可使用線上收藏和標籤。密碼不會儲存，API 金鑰則獨立管理。</string>

@@ -34,8 +34,8 @@
             app:iconSpaceReserved="false" />
         <Preference
             android:key="@string/preference_key_account_login"
-            android:title="@string/account_title"
-            android:summary="@string/account_setting_summary"
+            android:title="@string/accounts_title"
+            android:summary="@string/accounts_shared_data"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="local"
