@@ -30,6 +30,42 @@ import static org.junit.Assert.assertFalse;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class OnlineTagsIdentityTest {
+    @Test public void restoreWaitsForInFlightMutationAndRejectsOldLoads() {
+        Application context = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(context);
+        AuthStore.clear(context);
+        Global.initFromShared(context);
+        Login.initLogin(context);
+        AuthStore.saveApiKey(context, "restore-mutation-fixture", true);
+        try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
+            Queries.setDb(database);
+            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            String identity = AuthStore.activeIdentity(context);
+            Tag tag = new Tag("fixture", 1, 4242, TagType.TAG, TagStatus.DEFAULT);
+            assertTrue(Login.replaceOnlineTags(context, identity, Login.beginOnlineTagsLoad(context, identity),
+                Collections.singletonList(tag)));
+            long oldLoad = Login.beginOnlineTagsLoad(context, identity);
+            long mutation = Login.beginOnlineTagMutation(context, identity);
+            assertTrue(mutation > 0);
+            Login.beginOnlineTagsRestore();
+            try {
+                assertTrue(Login.isOnlineTagMutationPending());
+                assertEquals(-1, Login.beginOnlineTagsLoad(context, identity));
+                assertFalse(Login.replaceOnlineTags(context, identity, oldLoad, Collections.singletonList(tag)));
+            } finally {
+                Login.endOnlineTagsRestore();
+            }
+            assertTrue(Login.isOnlineTagMutationPending());
+            assertFalse(Login.finishOnlineTagMutation(context, identity, mutation, tag, false));
+            assertFalse(Login.isOnlineTagMutationPending());
+            assertFalse(Login.hasCurrentOnlineTags());
+            assertTrue(Login.beginOnlineTagsLoad(context, identity) > oldLoad);
+        } finally {
+            Queries.setDb(null);
+            AuthStore.clear(context);
+            Login.updateUser(null);
+        }
+    }
     @Test public void blacklistChangesNotifyObserversAndRemovalStopsNotifications() {
         Application context = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(context);

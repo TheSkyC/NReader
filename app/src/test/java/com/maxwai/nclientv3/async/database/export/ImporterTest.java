@@ -48,6 +48,34 @@ public class ImporterTest {
     private SQLiteDatabase database;
 
     @Test
+    public void restoringTagsInvalidatesInstalledOnlineBlacklist() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        com.maxwai.nclientv3.settings.AuthSessionStore.clear(app);
+        com.maxwai.nclientv3.settings.AuthStore.clear(app);
+        com.maxwai.nclientv3.settings.Global.initFromShared(app);
+        com.maxwai.nclientv3.settings.Login.initLogin(app);
+        com.maxwai.nclientv3.settings.AuthStore.saveApiKey(app, "import-identity-fixture", true);
+        String identity = com.maxwai.nclientv3.settings.AuthStore.activeIdentity(app);
+        com.maxwai.nclientv3.api.components.Tag tag = new com.maxwai.nclientv3.api.components.Tag(
+            "fixture", 1, 4242, com.maxwai.nclientv3.api.enums.TagType.TAG,
+            com.maxwai.nclientv3.api.enums.TagStatus.DEFAULT);
+        try {
+            assertTrue(com.maxwai.nclientv3.settings.Login.replaceOnlineTags(app, identity,
+                com.maxwai.nclientv3.settings.Login.beginOnlineTagsLoad(app, identity),
+                java.util.Collections.singletonList(tag)));
+            long oldLoad = com.maxwai.nclientv3.settings.Login.beginOnlineTagsLoad(app, identity);
+            restore("{\"Tags\":[{\"idTag\":4242,\"name\":\"fixture\",\"type\":3,\"count\":1,\"status\":0,\"online\":1}]}");
+            assertFalse(com.maxwai.nclientv3.settings.Login.hasCurrentOnlineTags());
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertFalse(com.maxwai.nclientv3.settings.Login.replaceOnlineTags(app, identity, oldLoad,
+                java.util.Collections.singletonList(tag)));
+        } finally {
+            com.maxwai.nclientv3.settings.AuthStore.clear(app);
+            com.maxwai.nclientv3.settings.Login.updateUser(null);
+        }
+    }
+
+    @Test
     public void archiveDoesNotImportAuthenticationPreferences() throws Exception {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(bytes)) {

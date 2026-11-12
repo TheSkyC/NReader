@@ -100,11 +100,16 @@ public class Importer {
     }
 
     static void importDB(InputStream stream) throws IOException {
-        DownloadTaskStore.restore(null, () -> ReadingProgress.restore(() -> {
-            importDBLocked(stream);
-            Queries.StatusTable.initStatuses();
-            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
-        }));
+        com.maxwai.nclientv3.settings.Login.beginOnlineTagsRestore();
+        try {
+            DownloadTaskStore.restore(null, () -> ReadingProgress.restore(() -> {
+                importDBLocked(stream);
+                Queries.StatusTable.initStatuses();
+                com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+            }));
+        } finally {
+            com.maxwai.nclientv3.settings.Login.endOnlineTagsRestore();
+        }
     }
 
     private static void importDBLocked(InputStream stream) throws IOException {
@@ -252,7 +257,12 @@ public class Importer {
     }
 
     public static synchronized void importData(@NonNull Context context, Uri selectedFile) throws IOException {
-        DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> importDataLocked(context, selectedFile)));
+        com.maxwai.nclientv3.settings.Login.beginOnlineTagsRestore();
+        try {
+            DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> importDataLocked(context, selectedFile)));
+        } finally {
+            com.maxwai.nclientv3.settings.Login.endOnlineTagsRestore();
+        }
     }
 
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
@@ -379,13 +389,18 @@ public class Importer {
         } catch (RuntimeException exception) {
             throw new IOException("Invalid restore snapshot preferences", exception);
         }
-        DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
-            importDBLocked(new ByteArrayInputStream(snapshot.database));
-            settings.apply();
-            tags.apply();
-            Queries.StatusTable.initStatuses();
-            com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
-        }));
+        com.maxwai.nclientv3.settings.Login.beginOnlineTagsRestore();
+        try {
+            DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
+                importDBLocked(new ByteArrayInputStream(snapshot.database));
+                settings.apply();
+                tags.apply();
+                Queries.StatusTable.initStatuses();
+                com.maxwai.nclientv3.async.database.GalleryStateRepository.invalidate();
+            }));
+        } finally {
+            com.maxwai.nclientv3.settings.Login.endOnlineTagsRestore();
+        }
     }
 
     private static boolean isSnapshotSetValid(Context context) {
