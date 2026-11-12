@@ -30,6 +30,8 @@ import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -110,6 +112,49 @@ public class AccountManagementUiTest {
             ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("unsaved-key-fixture");
             controller.recreate();
             assertEquals("", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
+    @Test public void leavingApiKeyPageCancelsPendingValidation() throws Exception {
+        String originalKey = "original-key-fixture";
+        String originalId = ApiAuthInterceptor.fingerprint(originalKey);
+        repository.putAndSelect(new AccountVault.Account(originalId, AccountVault.Type.API_KEY, "Original",
+            null, originalKey, null, null, 0, 0, false, 1), repository.identityGeneration());
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch returned = new CountDownLatch(1);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+                return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(okhttp3.ResponseBody.create("", null)).build();
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            } finally {
+                returned.countDown();
+            }
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup();
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("new-key-fixture");
+            controller.get().findViewById(R.id.validate_api_key).performClick();
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            controller.pause().stop().destroy();
+            release.countDown();
+            assertTrue(returned.await(5, TimeUnit.SECONDS));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+            assertEquals(0, client.dispatcher().runningCallsCount());
+            assertEquals(originalId, repository.snapshot().activeId);
+            assertEquals(1, repository.snapshot().accounts.size());
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
         }
     }
 }

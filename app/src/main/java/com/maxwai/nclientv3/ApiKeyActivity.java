@@ -28,6 +28,9 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -48,6 +51,9 @@ public class ApiKeyActivity extends GeneralActivity {
     private boolean validationInFlight = false;
     private boolean addAccount;
     @Nullable private String targetAccountId;
+    private final AtomicBoolean stopped = new AtomicBoolean();
+    private final AtomicReference<Call> validationCall = new AtomicReference<>();
+    private final AtomicInteger validationState = new AtomicInteger();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -193,11 +199,18 @@ public class ApiKeyActivity extends GeneralActivity {
             .url(Utility.getApiBaseUrl() + "favorites")
             .header("Authorization", "Key " + apiKey)
             .build();
-        Global.getClient(this).newCall(request).enqueue(new Callback() {
+        Call pending = Global.getClient(this).newCall(request);
+        validationState.set(1);
+        validationCall.set(pending);
+        pending.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                validationCall.compareAndSet(call, null);
+                validationState.compareAndSet(1, 0);
+                if (stopped.get()) return;
                 LogUtility.e("API key validation failed", e);
                 runOnUiThread(() -> {
+                    if (stopped.get() || isFinishing() || isDestroyed()) return;
                     setLoading(false);
                     Toast.makeText(ApiKeyActivity.this, R.string.unable_to_connect_to_the_site, Toast.LENGTH_SHORT).show();
                 });
@@ -206,7 +219,10 @@ public class ApiKeyActivity extends GeneralActivity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (response) {
+                    validationCall.compareAndSet(call, null);
+                    if (stopped.get()) return;
                     if (response.isSuccessful()) {
+                        if (!validationState.compareAndSet(1, 2)) return;
                         if (repository == null) {
                             AuthStore.saveApiKey(ApiKeyActivity.this, apiKey, true);
                         } else {
@@ -222,6 +238,7 @@ public class ApiKeyActivity extends GeneralActivity {
                                     previous == null ? "" : previous.username, null, apiKey, null, null, 0, 0,
                                     false, previous == null ? 0 : previous.userId, null,
                                     previous == null ? null : previous.avatarUrl);
+                                if (stopped.get()) return;
                                 if (!repository.putAndSelect(account, generation)) throw new IOException("Account changed");
                             } catch (IOException | IllegalArgumentException exception) {
                                 runOnUiThread(() -> {
@@ -235,6 +252,7 @@ public class ApiKeyActivity extends GeneralActivity {
                         Login.updateUser(null);
                         Login.isLogged(ApiKeyActivity.this);
                         runOnUiThread(() -> {
+                            if (stopped.get() || isFinishing() || isDestroyed()) return;
                             setLoading(false);
                             Toast.makeText(ApiKeyActivity.this, R.string.login_api_key_saved, Toast.LENGTH_SHORT).show();
                             finish();
@@ -243,13 +261,24 @@ public class ApiKeyActivity extends GeneralActivity {
                     }
 
                     LogUtility.w("API key validation rejected: " + response.code());
+                    validationState.compareAndSet(1, 0);
                     runOnUiThread(() -> {
+                        if (stopped.get() || isFinishing() || isDestroyed()) return;
                         setLoading(false);
                         Toast.makeText(ApiKeyActivity.this, R.string.login_api_key_invalid, Toast.LENGTH_SHORT).show();
                     });
                 }
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopped.set(true);
+        validationState.compareAndSet(1, 3);
+        Call call = validationCall.getAndSet(null);
+        if (call != null) call.cancel();
+        super.onDestroy();
     }
 
     @Override
