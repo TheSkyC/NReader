@@ -1,10 +1,13 @@
 package com.maxwai.nclientv3.settings;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
+import android.os.Looper;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -25,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -92,6 +96,39 @@ public class AccountManagementUiTest {
             assertTrue(((CheckBox) activity.findViewById(R.id.account_remember_password)).isChecked());
             assertEquals(View.GONE, activity.findViewById(R.id.account_sign_out).getVisibility());
         }
+    }
+
+    @Test public void selectingAccountsAndGuestUpdatesTheList() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        repository.putAndSelect(passwordAccount("second", true), repository.identityGeneration());
+        try (ActivityController<AccountsActivity> controller = Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity activity = controller.get();
+            LinearLayout list = activity.findViewById(R.id.accounts_list);
+            list.getChildAt(0).findViewById(R.id.account_select).performClick();
+            awaitAccountOperations();
+            assertEquals("first", repository.snapshot().activeId);
+            String firstDetail = ((TextView) list.getChildAt(0).findViewById(R.id.account_detail)).getText().toString();
+            assertTrue(firstDetail.contains(activity.getString(R.string.accounts_current)));
+
+            activity.findViewById(R.id.accounts_guest).performClick();
+            awaitAccountOperations();
+            assertNull(repository.snapshot().activeId);
+            assertEquals(2, list.getChildCount());
+            assertFalse(activity.findViewById(R.id.accounts_guest).isEnabled());
+
+            list.getChildAt(1).findViewById(R.id.account_select).performClick();
+            awaitAccountOperations();
+            assertEquals("second", repository.snapshot().activeId);
+            String secondDetail = ((TextView) list.getChildAt(1).findViewById(R.id.account_detail)).getText().toString();
+            assertTrue(secondDetail.contains(activity.getString(R.string.accounts_current)));
+        }
+    }
+
+    private void awaitAccountOperations() throws InterruptedException {
+        CountDownLatch completed = new CountDownLatch(1);
+        AccountRuntime.execute(store -> completed.countDown(), error -> { });
+        assertTrue(completed.await(5, TimeUnit.SECONDS));
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
     }
 
     @Test public void addingApiKeyDoesNotPrefillOrOfferToRemoveExistingKey() throws Exception {
