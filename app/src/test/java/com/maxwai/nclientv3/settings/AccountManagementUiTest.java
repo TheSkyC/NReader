@@ -240,6 +240,46 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void validatedApiKeyIsAddedAndSelectedWithoutRemovingExistingAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        String newKey = "validated-key-fixture";
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch validated = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            boolean validation = chain.request().url().encodedPath().endsWith("/favorites");
+            if (validation) {
+                assertEquals("Key " + newKey, chain.request().header("Authorization"));
+                validated.countDown();
+            }
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(validation ? 200 : 503).message("fixture")
+                .body(okhttp3.ResponseBody.create("{}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ((EditText) controller.get().findViewById(R.id.api_key_input)).setText(newKey);
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(validated.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                String newId = ApiAuthInterceptor.fingerprint(newKey);
+                while (!newId.equals(repository.snapshot().activeId) && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(newId, repository.snapshot().activeId);
+                assertEquals(2, repository.snapshot().accounts.size());
+                assertEquals(newKey, repository.snapshot().activeAccount().apiKey);
+                assertEquals("existing", repository.snapshot().accounts.get(0).id);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(controller.get().isFinishing());
+            }
+        } finally {
+            Global.client = originalClient;
+            Login.updateUser(null);
+        }
+    }
+
     @Test public void leavingApiKeyPageCancelsPendingValidation() throws Exception {
         String originalKey = "original-key-fixture";
         String originalId = ApiAuthInterceptor.fingerprint(originalKey);
