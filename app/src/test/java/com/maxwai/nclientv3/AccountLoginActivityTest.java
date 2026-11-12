@@ -173,4 +173,36 @@ public class AccountLoginActivityTest {
             AuthStore.clear(app);
         }
     }
+
+    @Test public void signOutRequiresConfirmationAndRemovesSession() {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        Global.initFromShared(app);
+        assertTrue(AuthSessionStore.replace(app,
+            AuthSessionStore.tokenCookies("fixture-access", "fixture-refresh"), null));
+        String identity = AuthSessionStore.identity(app);
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class).setup()) {
+            AccountLoginActivity activity = controller.get();
+            activity.findViewById(R.id.account_sign_out).performClick();
+            androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
+                org.robolectric.shadows.ShadowDialog.getLatestDialog();
+            assertNotNull(dialog);
+            dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(identity, AuthSessionStore.identity(app));
+
+            activity.findViewById(R.id.account_sign_out).performClick();
+            dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            org.junit.Assert.assertFalse(AuthSessionStore.hasStoredSession(app));
+            assertEquals(View.GONE, activity.findViewById(R.id.account_sign_out).getVisibility());
+            assertEquals(activity.getString(R.string.account_signed_out),
+                ((TextView) activity.findViewById(R.id.account_status)).getText().toString());
+        } finally {
+            AuthSessionStore.clear(app);
+            AuthStore.clear(app);
+        }
+    }
 }
