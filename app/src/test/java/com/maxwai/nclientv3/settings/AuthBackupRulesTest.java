@@ -32,6 +32,7 @@ public class AuthBackupRulesTest {
         }
         assertTrue(exclusions.contains("Auth.xml"));
         assertTrue(exclusions.contains("Login.xml"));
+        assertTrue(exclusions.contains("online_favorite_cache.xml"));
 
         Set<String> modernExclusions = new HashSet<>();
         String mode = null;
@@ -48,6 +49,7 @@ public class AuthBackupRulesTest {
         for (String section : new String[]{"cloud-backup", "device-transfer"}) {
             assertTrue(modernExclusions.contains(section + ":Auth.xml"));
             assertTrue(modernExclusions.contains(section + ":Login.xml"));
+            assertTrue(modernExclusions.contains(section + ":online_favorite_cache.xml"));
         }
     }
 }
