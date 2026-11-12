@@ -68,6 +68,43 @@ public class SessionRefreshTest {
         assertEquals(1, calls[0]);
     }
 
+    @Test public void concurrentRefreshCallsShareOneNetworkRequest() throws Exception {
+        String identity = AuthSessionStore.identity(context);
+        java.util.concurrent.CountDownLatch entered = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicInteger calls = new java.util.concurrent.atomic.AtomicInteger();
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            calls.incrementAndGet();
+            entered.countDown();
+            try {
+                if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                    throw new java.io.IOException("Refresh fixture timed out");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            }
+            return response(chain.request());
+        }).build();
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            java.util.concurrent.Future<String> first = executor.submit(() -> SessionRefresh.access(context, identity, "old"));
+            assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS));
+            java.util.concurrent.CountDownLatch secondStarted = new java.util.concurrent.CountDownLatch(1);
+            java.util.concurrent.Future<String> second = executor.submit(() -> {
+                secondStarted.countDown();
+                return SessionRefresh.access(context, identity, "old");
+            });
+            assertTrue(secondStarted.await(5, java.util.concurrent.TimeUnit.SECONDS));
+            release.countDown();
+            assertEquals("new", first.get(5, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals("new", second.get(5, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, calls.get());
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+    }
+
     @Test public void transientRefreshFailurePreservesSessionAndRetriesAfterCooldown() {
         String identity = AuthSessionStore.identity(context);
         int[] calls = {0};
