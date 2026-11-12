@@ -189,15 +189,22 @@ public final class NhentaiLoginApi {
             JSONObject body;
             try {
                 body = new JSONObject(source.readUtf8());
-                if (body.optJSONObject("user") == null) throw new IOException("Login was not confirmed");
             } catch (JSONException exception) {
                 throw new IOException("Invalid login response", exception);
             }
-            String access = body.optString("access_token", "");
-            String refresh = body.optString("refresh_token", "");
-            List<Cookie> cookies = AuthSessionStore.tokenCookies(access, refresh);
+            List<Cookie> cookies = parseTokens(body);
             if (!AuthSessionStore.completeAttempt(context, cookies, attempt)) throw new IOException("Login not completed");
         } finally { handle.detach(call); }
+    }
+
+    static List<Cookie> parseTokens(@NonNull JSONObject body) throws IOException {
+        if (body.optJSONObject("user") == null || Boolean.FALSE.equals(body.opt("success")))
+            throw new IOException("Login was not confirmed");
+        Object access = body.opt("access_token");
+        Object refresh = body.opt("refresh_token");
+        if (!(access instanceof String) || !(refresh instanceof String))
+            throw new IOException("Invalid login credentials response");
+        return AuthSessionStore.tokenCookies((String) access, (String) refresh);
     }
 
 }

@@ -123,6 +123,17 @@ public class SessionRefreshTest {
         assertEquals(2, calls[0]);
     }
 
+    @Test public void malformedRefreshTokensCannotReplaceSession() {
+        String identity = AuthSessionStore.identity(context);
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain ->
+            new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("OK")
+                .body(ResponseBody.create("{\"access_token\":123,\"refresh_token\":\"fixture\"}", null)).build()).build();
+        assertNull(SessionRefresh.access(context, identity, "old"));
+        assertEquals(identity, AuthSessionStore.identity(context));
+        assertNull(AuthSessionStore.accessToken(context));
+    }
+
     @Test public void refreshCannotOverwriteReplacementAccount() {
         String identity = AuthSessionStore.identity(context);
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
