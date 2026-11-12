@@ -23,6 +23,7 @@ import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
 @RunWith(RobolectricTestRunner.class)
+@org.robolectric.annotation.Config(sdk = 28, application = android.app.Application.class)
 public class AuthSessionStoreTest {
     private static final HttpUrl ORIGIN = HttpUrl.get("https://nhentai.net/");
     private Context context;

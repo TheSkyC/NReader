@@ -27,12 +27,21 @@ public final class AuthSessionStore {
     }
 
     public static boolean hasStoredSession(@NonNull Context context) {
+        if (AccountRuntime.repository() != null) {
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            return account != null && account.type == AccountVault.Type.PASSWORD;
+        }
         return AuthStore.getPreferences(context).contains(ID);
     }
 
     static boolean isStoredIdentity(@NonNull Context context, @NonNull String expectedIdentity) {
         long generation = AuthStore.identityGeneration();
         if (generation < 0) return false;
+        if (AccountRuntime.repository() != null) {
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            return account != null && account.type == AccountVault.Type.PASSWORD
+                && expectedIdentity.equals(account.id) && generation == AuthStore.identityGeneration();
+        }
         Object storedIdentity = AuthStore.getPreferences(context).getAll().get(ID);
         return expectedIdentity.equals(storedIdentity) && generation == AuthStore.identityGeneration();
     }
@@ -53,6 +62,47 @@ public final class AuthSessionStore {
         return saved;
     }
 
+    public static synchronized boolean completeAccountAttempt(@NonNull List<Cookie> cookies, long id,
+                                                               long generation, @NonNull String loginName,
+                                                               @NonNull String username, @Nullable String avatarUrl,
+                                                               @Nullable String password, long userId,
+                                                               @Nullable String targetId) throws java.io.IOException {
+        if (id != attempt) return false;
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository == null || !repository.isOpen()) throw new java.io.IOException("Account storage is unavailable");
+        Cookie access = null;
+        Cookie refresh = null;
+        for (Cookie cookie : cookies) {
+            if (!cookie.secure() || !cookie.persistent() || !cookie.matches(ORIGIN)
+                || !cookie.domain().equals("nhentai.net") || cookie.value().isEmpty()
+                || cookie.expiresAt() <= System.currentTimeMillis()) continue;
+            if (cookie.name().equals("access_token")) access = cookie;
+            if (cookie.name().equals("refresh_token")) refresh = cookie;
+        }
+        if (access == null || refresh == null) return false;
+        synchronized (repository) {
+            if (generation < 0 || generation != repository.identityGeneration() || id != attempt) return false;
+            AccountVault.State state = repository.snapshot();
+            if (state == null) return false;
+            AccountVault.Account existing = null;
+            for (AccountVault.Account account : state.accounts) {
+                if (targetId != null && account.id.equals(targetId)) existing = account;
+                else if (targetId == null && userId > 0 && account.userId == userId
+                    && account.type == AccountVault.Type.PASSWORD) existing = account;
+            }
+            if (targetId != null && (existing == null || existing.type != AccountVault.Type.PASSWORD
+                || (existing.userId > 0 && (userId <= 0 || existing.userId != userId))))
+                throw new java.io.IOException("Login does not match the selected account");
+            String accountId = existing == null ? "user:" + UUID.randomUUID() : existing.id;
+            AccountVault.Account account = new AccountVault.Account(accountId, AccountVault.Type.PASSWORD,
+                username, password, null, access.value(), refresh.value(), access.expiresAt(),
+                refresh.expiresAt(), false, userId, loginName, avatarUrl);
+            boolean saved = repository.putAndSelect(account, generation);
+            attempt++;
+            return saved;
+        }
+    }
+
     public static List<Cookie> tokenCookies(@NonNull String access, @NonNull String refresh) {
         if (!validToken(access) || !validToken(refresh)) return java.util.Collections.emptyList();
         long now = System.currentTimeMillis();
@@ -69,6 +119,12 @@ public final class AuthSessionStore {
 
     @Nullable
     public static String identity(@NonNull Context context) {
+        if (AccountRuntime.repository() != null) {
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            return account == null || account.type != AccountVault.Type.PASSWORD || account.rejected
+                || account.refreshExpiry <= System.currentTimeMillis() || account.refreshToken == null
+                ? null : account.id;
+        }
         java.util.Map<String, ?> values = AuthStore.getPreferences(context).getAll();
         Object expiry = values.get(REFRESH_EXPIRY);
         Object refresh = values.get(REFRESH);
@@ -87,6 +143,15 @@ public final class AuthSessionStore {
 
     @Nullable
     static String accessTokenIfCurrent(@NonNull Context context, @NonNull String expectedIdentity) {
+        if (AccountRuntime.repository() != null) {
+            long generation = AuthStore.identityGeneration();
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            if (generation < 0 || account == null || !expectedIdentity.equals(account.id)
+                || account.type != AccountVault.Type.PASSWORD || account.rejected || account.refreshToken == null
+                || account.refreshExpiry <= System.currentTimeMillis() || account.accessExpiry <= System.currentTimeMillis()
+                || account.accessToken == null || generation != AuthStore.identityGeneration()) return null;
+            return account.accessToken;
+        }
         java.util.Map<String, ?> values = AuthStore.getPreferences(context).getAll();
         Object accessExpiry = values.get(ACCESS_EXPIRY);
         Object refreshExpiry = values.get(REFRESH_EXPIRY);
@@ -101,26 +166,99 @@ public final class AuthSessionStore {
 
     @Nullable
     static synchronized String refreshTokenIfCurrent(@NonNull Context context, @NonNull String expectedIdentity) {
+        if (AccountRuntime.repository() != null) {
+            long generation = AuthStore.identityGeneration();
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            return generation >= 0 && account != null && expectedIdentity.equals(identity(context))
+                && generation == AuthStore.identityGeneration() ? account.refreshToken : null;
+        }
         return expectedIdentity.equals(identity(context))
             ? AuthStore.getPreferences(context).getString(REFRESH, null) : null;
     }
 
     static synchronized void invalidateAccessIfCurrent(@NonNull Context context,
                                                        @NonNull String expectedIdentity,
-                                                       @NonNull String expectedValue) {
-        if (expectedIdentity.equals(identity(context))
+                                                       @NonNull String expectedValue,
+                                                       long expectedGeneration) {
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository != null) {
+            synchronized (repository) {
+                if (expectedGeneration < 0 || expectedGeneration != AuthStore.identityGeneration()
+                    || !expectedIdentity.equals(identity(context))) return;
+                try {
+                    repository.invalidateAccess(expectedIdentity, repository.identityGeneration(), expectedValue);
+                } catch (java.io.IOException exception) {
+                    com.maxwai.nclientv3.utility.LogUtility.w("Unable to invalidate account access: "
+                        + exception.getClass().getSimpleName());
+                }
+            }
+            return;
+        }
+        if (expectedGeneration >= 0 && expectedGeneration == AuthStore.identityGeneration()
+            && expectedIdentity.equals(identity(context))
             && expectedValue.equals(accessTokenIfCurrent(context, expectedIdentity))) {
             AuthStore.getPreferences(context).edit().remove(ACCESS).remove(ACCESS_EXPIRY).apply();
         }
     }
 
     static synchronized void rejectIfCurrent(@NonNull Context context, @NonNull String expectedIdentity) {
+        rejectIfCurrent(context, expectedIdentity, AuthStore.identityGeneration());
+    }
+
+    static synchronized void rejectIfCurrent(@NonNull Context context, @NonNull String expectedIdentity,
+                                             long expectedGeneration) {
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository != null) {
+            synchronized (repository) {
+                if (expectedGeneration < 0 || expectedGeneration != AuthStore.identityGeneration()
+                    || !expectedIdentity.equals(identity(context))) return;
+                try {
+                    repository.reject(expectedIdentity, repository.identityGeneration());
+                } catch (java.io.IOException exception) {
+                    com.maxwai.nclientv3.utility.LogUtility.w("Unable to update account status: "
+                        + exception.getClass().getSimpleName());
+                }
+            }
+            return;
+        }
+        if (expectedGeneration < 0 || expectedGeneration != AuthStore.identityGeneration()) return;
         if (expectedIdentity.equals(identity(context))) {
             AuthStore.beginIdentityChange();
             try {
                 AuthStore.getPreferences(context).edit().putBoolean(REJECTED, true).apply();
             } finally {
                 AuthStore.endIdentityChange();
+            }
+        }
+    }
+
+    static synchronized boolean replaceIfCurrent(@NonNull Context context, @NonNull List<Cookie> cookies,
+                                                  @NonNull String expectedIdentity, long expectedGeneration,
+                                                  @NonNull String expectedRefresh) {
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository == null) {
+            if (expectedGeneration < 0 || expectedGeneration != AuthStore.identityGeneration()) return false;
+            return replace(context, cookies, expectedIdentity);
+        }
+        Cookie access = null;
+        Cookie refresh = null;
+        for (Cookie cookie : cookies) {
+            if (!cookie.secure() || !cookie.persistent() || !cookie.matches(ORIGIN)
+                || !cookie.domain().equals("nhentai.net") || cookie.value().isEmpty()
+                || cookie.expiresAt() <= System.currentTimeMillis()) continue;
+            if (cookie.name().equals("access_token")) access = cookie;
+            if (cookie.name().equals("refresh_token")) refresh = cookie;
+        }
+        if (access == null || refresh == null) return false;
+        synchronized (repository) {
+            if (expectedGeneration < 0 || expectedGeneration != AuthStore.identityGeneration()) return false;
+            try {
+                return repository.updateSession(expectedIdentity, repository.identityGeneration(), expectedRefresh,
+                    access.value(), refresh.value(), access.expiresAt(), refresh.expiresAt());
+            } catch (java.io.IOException exception) {
+                com.maxwai.nclientv3.utility.LogUtility.w("Unable to save refreshed account session: "
+                    + exception.getClass().getSimpleName());
+                return false;
             }
         }
     }
