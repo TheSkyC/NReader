@@ -91,7 +91,8 @@ public class ApiAuthInterceptor implements Interceptor {
             if (token == null && expected == null && isPublicGet(request)
                 && AuthSessionStore.isStoredIdentity(context, session))
                 return proceedPublicForSession(chain, request, session);
-            if (token == null || !session.equals(AuthSessionStore.identity(context)))
+            if (token == null || credentialGeneration != AuthStore.identityGeneration()
+                || !session.equals(AuthSessionStore.identity(context)))
                 throw new IOException("Account session is unavailable");
             Request authenticated = request.newBuilder()
                 .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
@@ -114,7 +115,8 @@ public class ApiAuthInterceptor implements Interceptor {
                 if (refreshed == null && expected == null && isPublicGet(request)
                     && AuthSessionStore.isStoredIdentity(context, session))
                     return proceedPublicForSession(chain, request, session);
-                if (refreshed == null || !session.equals(AuthSessionStore.identity(context)))
+                if (refreshed == null || credentialGeneration != AuthStore.identityGeneration()
+                    || !session.equals(AuthSessionStore.identity(context)))
                     throw new IOException("Account session refresh failed");
                 if (expected != null) expected.checkCurrent();
                 Response retried = chain.proceed(authenticated.newBuilder()
@@ -129,7 +131,8 @@ public class ApiAuthInterceptor implements Interceptor {
             }
             if (response.code() == 401 && !"GET".equals(request.method())) {
                 SessionRefresh.access(context, session, token);
-                if (!session.equals(AuthSessionStore.identity(context))) {
+                if (credentialGeneration != AuthStore.identityGeneration()
+                    || !session.equals(AuthSessionStore.identity(context))) {
                     response.close();
                     throw new IOException("API identity changed");
                 }
@@ -150,7 +153,8 @@ public class ApiAuthInterceptor implements Interceptor {
             if (request.header("Authorization") != null || !isTrustedApiRequest(request.url(), Utility.getHost())
                 || !AuthStore.hasValidApiKey(context)) throw new IOException("API identity is unavailable");
             String key = AuthStore.getApiKey(context);
-            if (key == null || !expected.fingerprint.equals(fingerprint(key)))
+            if (key == null || credentialGeneration != AuthStore.identityGeneration()
+                || !expected.fingerprint.equals(fingerprint(key)))
                 throw new IOException("API identity changed");
             Request authenticated = request.newBuilder()
                 .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
