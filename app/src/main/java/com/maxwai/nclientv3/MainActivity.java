@@ -298,6 +298,10 @@ public class MainActivity extends BaseActivity
         AuthStore.removeIdentityObserver(accountFilterObserver);
         AuthStore.removeIdentityObserver(favoriteIdentityObserver);
         AuthStore.removeIdentityObserver(accountHeaderObserver);
+        if (Login.getUser() == null) {
+            headerProfileIdentity = null;
+            headerProfileGeneration = -1;
+        }
         super.onStop();
     }
 
