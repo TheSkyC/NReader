@@ -79,7 +79,10 @@ public class ApiAuthInterceptor implements Interceptor {
             && isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)) {
             if (expected != null && !expected.fingerprint.equals(session)) throw new IOException("API identity changed");
             String token = SessionRefresh.access(context, session, null);
-            if (token == null && expected == null && isPublicGet(request)) return chain.proceed(request);
+            if (token == null && expected == null && isPublicGet(request)
+                && (session.equals(AuthSessionStore.identity(context))
+                    || (AuthSessionStore.hasStoredSession(context) && AuthSessionStore.identity(context) == null)))
+                return chain.proceed(request);
             if (token == null || !session.equals(AuthSessionStore.identity(context)))
                 throw new IOException("Account session is unavailable");
             Request authenticated = request.newBuilder()
