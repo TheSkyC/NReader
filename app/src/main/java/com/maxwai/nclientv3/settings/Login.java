@@ -35,6 +35,8 @@ public class Login {
     private static long pendingOnlineTagOperation;
     private static long onlineTagOperationSequence;
     private static long onlineTagsAuthGeneration = -1;
+    private static int onlineTagsRestores;
+    private static long onlineTagsRestoreGeneration;
     private static final java.util.concurrent.CopyOnWriteArrayList<Runnable> onlineTagsObservers =
         new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final Handler main = new Handler(Looper.getMainLooper());
@@ -71,7 +73,7 @@ public class Login {
 
     public static synchronized boolean hasCurrentOnlineTags() {
         synchronizeOnlineTagsGeneration();
-        return onlineTagsAuthGeneration >= 0 && pendingOnlineTagIdentity == null
+        return onlineTagsAuthGeneration >= 0 && onlineTagsRestores == 0 && pendingOnlineTagIdentity == null
             && appContext != null && onlineTagsIdentity != null
             && onlineTagsIdentity.equals(AuthStore.activeIdentity(appContext));
     }
@@ -84,7 +86,7 @@ public class Login {
     public static synchronized long beginOnlineTagsLoad(@NonNull Context context, @NonNull String identity) {
         synchronizeOnlineTagsGeneration();
         releaseStaleMutation(context);
-        if (onlineTagsAuthGeneration < 0 || pendingOnlineTagIdentity != null || !identity.equals(AuthStore.activeIdentity(context))) return -1;
+        if (onlineTagsAuthGeneration < 0 || onlineTagsRestores != 0 || pendingOnlineTagIdentity != null || !identity.equals(AuthStore.activeIdentity(context))) return -1;
         return ++onlineTagsLoadSequence;
     }
 
@@ -94,13 +96,32 @@ public class Login {
 
     public static synchronized boolean isOnlineTagMutationPending() {
         synchronizeOnlineTagsGeneration();
-        return pendingOnlineTagIdentity != null;
+        return onlineTagsRestores != 0 || pendingOnlineTagIdentity != null;
+    }
+
+    public static synchronized void beginOnlineTagsRestore() {
+        onlineTagsRestores++;
+        onlineTagsRestoreGeneration++;
+        onlineTagsIdentity = null;
+        onlineTagsRevision++;
+        onlineTagsMinimumSequence = ++onlineTagsLoadSequence;
+        notifyOnlineTagsChanged();
+    }
+
+    public static synchronized long onlineTagsRestoreGeneration() {
+        return onlineTagsRestoreGeneration;
+    }
+
+    public static synchronized void endOnlineTagsRestore() {
+        if (onlineTagsRestores <= 0) throw new IllegalStateException("Unbalanced online tag restore");
+        onlineTagsRestores--;
+        notifyOnlineTagsChanged();
     }
 
     public static synchronized boolean replaceOnlineTags(@NonNull Context context, @NonNull String identity,
                                                           long revision, @NonNull List<Tag> tags) {
         synchronizeOnlineTagsGeneration();
-        if (onlineTagsAuthGeneration < 0 || revision < onlineTagsMinimumSequence || revision <= onlineTagsInstalledSequence
+        if (onlineTagsAuthGeneration < 0 || onlineTagsRestores != 0 || revision < onlineTagsMinimumSequence || revision <= onlineTagsInstalledSequence
             || pendingOnlineTagIdentity != null
             || !identity.equals(AuthStore.activeIdentity(context))) return false;
         onlineTagsIdentity = null;
@@ -158,6 +179,7 @@ public class Login {
         if (operation != pendingOnlineTagOperation || !identity.equals(pendingOnlineTagIdentity)) return false;
         if (!identity.equals(AuthStore.activeIdentity(context)) || !identity.equals(onlineTagsIdentity)) {
             pendingOnlineTagIdentity = null;
+            notifyOnlineTagsChanged();
             return false;
         }
         if (add) Queries.TagTable.insert(tag);

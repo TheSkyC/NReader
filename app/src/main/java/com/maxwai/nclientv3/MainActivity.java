@@ -292,6 +292,7 @@ public class MainActivity extends BaseActivity
         if (blacklistLoadingInspector == pendingInspector) return;
         blacklistLoadingInspector = pendingInspector;
         long generation = AuthStore.identityGeneration();
+        long restoreGeneration = Login.onlineTagsRestoreGeneration();
         refresher.setRefreshing(true);
         new LoadTags(this, successful -> runOnUiThread(() -> {
             if (blacklistLoadingInspector == pendingInspector) blacklistLoadingInspector = null;
@@ -299,7 +300,7 @@ public class MainActivity extends BaseActivity
             refresher.setRefreshing(false);
             long currentGeneration = AuthStore.identityGeneration();
             if (currentGeneration < 0) return;
-            if (generation != currentGeneration) {
+            if (generation != currentGeneration || restoreGeneration != Login.onlineTagsRestoreGeneration()) {
                 startInspector();
                 return;
             }

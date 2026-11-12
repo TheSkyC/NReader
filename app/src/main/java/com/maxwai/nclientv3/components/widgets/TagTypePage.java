@@ -34,9 +34,18 @@ public class TagTypePage extends Fragment {
     private TagsAdapter adapter;
     private String adapterIdentity;
     private long refreshSequence;
+    private long observedRestoreGeneration;
     private final Runnable onlineTagsObserver = () -> {
         View root = getView();
         if (root == null || adapter == null) return;
+        long restoreGeneration = Login.onlineTagsRestoreGeneration();
+        if (restoreGeneration != observedRestoreGeneration && !Login.isOnlineTagMutationPending()) {
+            observedRestoreGeneration = restoreGeneration;
+            if (!Login.hasCurrentOnlineTags() && AuthStore.activeIdentity(requireContext()) != null) {
+                refreshOnlineTags(root);
+                return;
+            }
+        }
         TextView status = root.findViewById(R.id.online_tag_status);
         status.setText(Login.isOnlineTagMutationPending() ? R.string.online_blacklist_loading
             : Login.hasCurrentOnlineTags() ? R.string.online_blacklist_loaded : R.string.online_blacklist_load_error);
@@ -107,6 +116,7 @@ public class TagTypePage extends Fragment {
         Global.applyFastScroller(recyclerView);
         loadTags();
         if (type.equals(TagType.CATEGORY)) {
+            observedRestoreGeneration = Login.onlineTagsRestoreGeneration();
             Login.observeOnlineTags(onlineTagsObserver);
             AuthStore.observeIdentityChanges(authObserver);
             rootView.findViewById(R.id.online_tag_sync).setVisibility(View.VISIBLE);

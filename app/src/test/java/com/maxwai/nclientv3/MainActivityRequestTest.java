@@ -29,6 +29,65 @@ import static org.junit.Assert.*;
 @Config(sdk = 28, application = Application.class)
 @LooperMode(LooperMode.Mode.PAUSED)
 public class MainActivityRequestTest {
+    @Test public void restoreDuringBlacklistLoadRetriesAfterOldRequestFinishes() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(app.getString(R.string.preference_key_use_account_tag), true).commit();
+        Global.initFromShared(app);
+        AuthStore.saveApiKey(app, "restore-load-fixture", true);
+        com.maxwai.nclientv3.settings.Login.initLogin(app);
+        OkHttpClient previous = Global.client;
+        CountDownLatch first = new CountDownLatch(1), release = new CountDownLatch(1), second = new CountDownLatch(1);
+        AtomicInteger blacklistCalls = new AtomicInteger();
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            boolean blacklist = chain.request().url().encodedPath().endsWith("/blacklist");
+            if (blacklist && blacklistCalls.incrementAndGet() == 1) {
+                first.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("fixture timeout");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new java.io.IOException(exception);
+                }
+            } else if (blacklist) second.countDown();
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(ResponseBody.create(blacklist
+                    ? "{\"count\":0,\"tags\":[]}" : "{\"num_pages\":1,\"result\":[]}", null)).build();
+        }).build();
+        java.lang.reflect.Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean oldFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            try (org.robolectric.android.controller.ActivityController<MainActivity> controller =
+                     Robolectric.buildActivity(MainActivity.class).setup()) {
+                assertTrue(first.await(5, TimeUnit.SECONDS));
+                com.maxwai.nclientv3.settings.Login.beginOnlineTagsRestore();
+                com.maxwai.nclientv3.settings.Login.endOnlineTagsRestore();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                release.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (second.getCount() != 0 && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.yield();
+                }
+                assertEquals(0, second.getCount());
+            }
+        } finally {
+            release.countDown();
+            Global.client = previous;
+            firstTime.setBoolean(null, oldFirstTime);
+            AuthStore.clear(app);
+            com.maxwai.nclientv3.settings.Login.updateUser(null);
+            app.getSharedPreferences("Settings", 0).edit()
+                .remove(app.getString(R.string.preference_key_use_account_tag)).commit();
+            com.maxwai.nclientv3.settings.Login.initLogin(app);
+        }
+    }
+
     @Test public void staleBlacklistLoadWaitsForConcurrentMutation() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);

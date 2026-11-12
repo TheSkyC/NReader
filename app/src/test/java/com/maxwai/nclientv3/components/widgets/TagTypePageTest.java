@@ -75,6 +75,52 @@ public class TagTypePageTest {
             Login.updateUser(null);
         }
     }
+    @Test public void restoreReloadsOnceAfterPendingMutationFinishes() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        AuthStore.saveApiKey(app, "restore-fixture", true);
+        try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
+            Queries.setDb(db);
+            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
+            schema.setAccessible(true);
+            db.execSQL((String) schema.get(null));
+            String identity = AuthStore.activeIdentity(app);
+            assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity), java.util.Collections.emptyList()));
+            try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
+                     Robolectric.buildActivity(TagFilterActivity.class).setup()) {
+                ControlledPage page = new ControlledPage();
+                android.os.Bundle args = new android.os.Bundle();
+                args.putInt("TAGTYPE", com.maxwai.nclientv3.api.enums.TagType.CATEGORY.getId());
+                page.setArguments(args);
+                controller.get().getSupportFragmentManager().beginTransaction().add(android.R.id.content, page).commitNow();
+                long operation = Login.beginOnlineTagMutation(app, identity);
+                assertTrue(operation > 0);
+                Login.beginOnlineTagsRestore();
+                Login.beginOnlineTagsRestore();
+                Login.endOnlineTagsRestore();
+                Login.endOnlineTagsRestore();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(page.completions.size() == 1);
+                com.maxwai.nclientv3.api.components.Tag tag = new com.maxwai.nclientv3.api.components.Tag(
+                    "fixture", 1, 4251, com.maxwai.nclientv3.api.enums.TagType.TAG, com.maxwai.nclientv3.api.enums.TagStatus.DEFAULT);
+                Login.finishOnlineTagMutation(app, identity, operation, tag, true);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(page.completions.size() == 2);
+                page.completions.get(1).onComplete(false);
+                page.completions.get(0).onComplete(false);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(page.completions.size() == 2);
+            }
+        } finally {
+            Queries.setDb(null);
+            AuthStore.clear(app);
+            Login.updateUser(null);
+        }
+    }
+
     @Test public void authChangeRecreatesAdapterAndDestroyedViewIgnoresChanges() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);
