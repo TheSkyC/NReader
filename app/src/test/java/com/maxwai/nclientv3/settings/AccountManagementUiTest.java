@@ -98,6 +98,45 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void recreatedReauthenticationDoesNotReplaceEditedPasswordWithSavedPassword() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            AccountLoginActivity activity = controller.get();
+            ((EditText) activity.findViewById(R.id.account_username)).setText("different-login");
+            ((EditText) activity.findViewById(R.id.account_password)).setText("unsaved-password");
+            ((CheckBox) activity.findViewById(R.id.account_remember_password)).setChecked(false);
+            controller.recreate();
+            activity = controller.get();
+            assertEquals("different-login", ((EditText) activity.findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) activity.findViewById(R.id.account_password)).getText().toString());
+            assertFalse(((CheckBox) activity.findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void recreatedReauthenticationRetainsAnUnchangedRememberedPassword() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            controller.recreate();
+            assertEquals("fixture-password", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+        }
+    }
+
+    @Test public void recreatedReauthenticationDoesNotPairSavedPasswordWithEditedUsername() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.account_username)).setText("different-login");
+            controller.recreate();
+            assertEquals("different-login", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+        }
+    }
+
     @Test public void selectingAccountsAndGuestUpdatesTheList() throws Exception {
         repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
         repository.putAndSelect(passwordAccount("second", true), repository.identityGeneration());
