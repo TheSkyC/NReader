@@ -93,7 +93,8 @@ public class ApiAuthInterceptor implements Interceptor {
                 response.close();
                 throw new IOException("API operation expired");
             }
-            if (!session.equals(AuthSessionStore.identity(context))) {
+            if (credentialGeneration < 0 || credentialGeneration != AuthStore.identityGeneration()
+                || !session.equals(AuthSessionStore.identity(context))) {
                 response.close();
                 throw new IOException("API identity changed");
             }
@@ -109,7 +110,8 @@ public class ApiAuthInterceptor implements Interceptor {
                 if (expected != null) expected.checkCurrent();
                 Response retried = chain.proceed(authenticated.newBuilder()
                     .header("Authorization", "User " + refreshed).build());
-                if (!session.equals(AuthSessionStore.identity(context))
+                if (credentialGeneration < 0 || credentialGeneration != AuthStore.identityGeneration()
+                    || !session.equals(AuthSessionStore.identity(context))
                     || (expected != null && !expected.current.getAsBoolean())) {
                     retried.close();
                     throw new IOException("API identity changed");
@@ -171,11 +173,17 @@ public class ApiAuthInterceptor implements Interceptor {
 
         String key = AuthStore.getApiKey(context);
         if (key == null) return chain.proceed(r.build());
+        if (credentialGeneration < 0 || credentialGeneration != AuthStore.identityGeneration())
+            throw new IOException("API identity changed");
         String authorization = new AuthCredentials(AuthCredentials.Type.API_KEY, key).toAuthorizationHeader();
 
         Request authenticated =r.header("Authorization", authorization)
             .build();
         Response response = chain.proceed(authenticated);
+        if (credentialGeneration != AuthStore.identityGeneration()) {
+            response.close();
+            throw new IOException("API identity changed");
+        }
         if (response.code() == 401 || response.code() == 403) {
             AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, false);
         } else if (response.isSuccessful()) {
