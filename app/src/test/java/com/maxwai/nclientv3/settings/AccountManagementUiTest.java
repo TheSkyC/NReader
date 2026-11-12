@@ -17,7 +17,9 @@ import android.widget.TextView;
 import com.maxwai.nclientv3.AccountLoginActivity;
 import com.maxwai.nclientv3.AccountsActivity;
 import com.maxwai.nclientv3.ApiKeyActivity;
+import com.maxwai.nclientv3.MainActivity;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.async.database.DatabaseHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -168,6 +170,53 @@ public class AccountManagementUiTest {
         AccountRuntime.execute(store -> completed.countDown(), error -> { });
         assertTrue(completed.await(5, TimeUnit.SECONDS));
         Shadows.shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    @Test public void profileLoadRetriesWhenReturningAfterFailure() throws Exception {
+        String key = "profile-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "", null, key,
+            null, null, 0, 0, false, 0), repository.identityGeneration());
+        Login.updateUser(null);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        java.util.concurrent.atomic.AtomicInteger profileCalls = new java.util.concurrent.atomic.AtomicInteger();
+        CountDownLatch failed = new CountDownLatch(1);
+        CountDownLatch retried = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            boolean profile = chain.request().url().encodedPath().endsWith("/user");
+            int call = profile ? profileCalls.incrementAndGet() : 0;
+            if (call == 1) failed.countDown();
+            if (call == 2) retried.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(call == 1 ? 503 : 200).message("fixture")
+                .body(okhttp3.ResponseBody.create(profile ? "{\"id\":42,\"username\":\"Profile\"}"
+                    : "{\"num_pages\":1,\"result\":[]}", null)).build();
+        }).build();
+        Global.client = client;
+        Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean originalFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+                assertTrue(failed.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                controller.pause().stop().restart().start().resume().visible();
+                assertTrue(retried.await(5, TimeUnit.SECONDS));
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!"Profile".equals(repository.snapshot().activeAccount().username) && System.nanoTime() < deadline)
+                    Thread.yield();
+                assertEquals("Profile", repository.snapshot().activeAccount().username);
+                controller.pause().stop().restart().start().resume().visible();
+                assertEquals(2, profileCalls.get());
+            }
+        } finally {
+            firstTime.setBoolean(null, originalFirstTime);
+            Global.client = originalClient;
+            Login.updateUser(null);
+        }
     }
 
     @Test public void addingApiKeyDoesNotPrefillOrOfferToRemoveExistingKey() throws Exception {
