@@ -44,6 +44,7 @@
     <string name="account_signing_in">正在登录…</string>
     <string name="account_verification_error">验证未完成，请检查网络后重试。</string>
     <string name="account_login_error">无法完成登录，请检查账号信息后重试。</string>
+    <string name="account_identity_unconfirmed">无法确认这是所选账户。请检查账号信息，或移除该账户后重新添加。</string>
     <string name="account_protection_error">验证完成后，网站仍阻止了登录请求。请稍后重试。</string>
     <string name="account_verify_title">验证登录</string>
     <string name="account_verify_message">请完成验证以继续。</string>

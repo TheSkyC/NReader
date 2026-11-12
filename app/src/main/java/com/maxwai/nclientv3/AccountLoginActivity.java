@@ -236,7 +236,8 @@ public final class AccountLoginActivity extends GeneralActivity {
             } catch (IOException | RuntimeException exception) {
                 LogUtility.w("Account sign-in failed: " + exception.getClass().getSimpleName());
                 int message = exception instanceof NhentaiLoginApi.ProtectionException
-                    ? R.string.account_protection_error : R.string.account_login_error;
+                    ? R.string.account_protection_error : exception instanceof AuthSessionStore.AccountMismatchException
+                    ? R.string.account_identity_unconfirmed : R.string.account_login_error;
                 postIfActive(() -> fail(message));
             }
         });
