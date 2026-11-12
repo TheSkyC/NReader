@@ -148,6 +148,7 @@ public class ApiKeyActivity extends GeneralActivity {
                     if (response.isSuccessful()) {
                         AuthStore.saveApiKey(ApiKeyActivity.this, apiKey, true);
                         Login.updateUser(null);
+                        Login.isLogged(ApiKeyActivity.this);
                         runOnUiThread(() -> {
                             setLoading(false);
                             Toast.makeText(ApiKeyActivity.this, R.string.login_api_key_saved, Toast.LENGTH_SHORT).show();

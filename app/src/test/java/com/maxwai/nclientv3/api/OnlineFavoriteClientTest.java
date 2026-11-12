@@ -5,6 +5,8 @@ import android.app.Application;
 
 import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
 import com.maxwai.nclientv3.settings.AuthStore;
+import com.maxwai.nclientv3.settings.AuthSessionStore;
+import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.settings.Global;
 
 import org.junit.Before;
@@ -62,6 +64,39 @@ public class OnlineFavoriteClientTest {
         @Override public void onSuccess(boolean favorited) { value = favorited; done.countDown(); }
         @Override public void onFailure() { failed = true; done.countDown(); }
         void await() throws InterruptedException { assertTrue(done.await(5, TimeUnit.SECONDS)); }
+    }
+
+    @Test public void sessionFavoritesUseOfficialHostWhenMirrorIsConfigured() throws Exception {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putString(context.getString(R.string.preference_key_site_mirror), "mirror.example").commit();
+        Global.initFromShared(context);
+        assertTrue(AuthSessionStore.replace(context,
+            AuthSessionStore.tokenCookies("fixture-access", "fixture-refresh"), null));
+        OkHttpClient previous = Global.client;
+        try {
+            OkHttpClient fake = client(chain -> {
+                assertEquals("nhentai.net", chain.request().url().host());
+                assertEquals("User fixture-access", chain.request().header("Authorization"));
+                String path = chain.request().url().encodedPath();
+                return response(chain, 200, path.endsWith("/favorites")
+                    ? "{\"num_pages\":1,\"result\":[]}"
+                    : "{\"favorited\":" + (!"GET".equals(chain.request().method())) + "}");
+            });
+            Outcome outcome = new Outcome();
+            OnlineFavoriteClient.toggle(context, 512, fake, outcome);
+            outcome.await();
+            assertFalse(outcome.failed);
+            Global.client = fake;
+            InspectorV3 favorites = InspectorV3.favoriteInspector(context, null, 1, null);
+            assertTrue(favorites.createDocument());
+            favorites.parseDocument();
+        } finally {
+            Global.client = previous;
+            AuthSessionStore.clear(context);
+            context.getSharedPreferences("Settings", 0).edit()
+                .remove(context.getString(R.string.preference_key_site_mirror)).commit();
+            Global.initFromShared(context);
+        }
     }
 
     @Test public void unknownStateIsFetchedBeforeMutationAndCached() throws Exception {
@@ -196,9 +231,28 @@ public class OnlineFavoriteClientTest {
                     "{\"num_pages\":1,\"result\":[{\"id\":403,\"media_id\":\"1\",\"num_pages\":1}]}");
             });
             list = InspectorV3.favoriteInspector(context, null, 1, null);
-            assertTrue(list.createDocument());
-            list.parseDocument();
+            try {
+                list.createDocument();
+                org.junit.Assert.fail("A response from a previous account must be rejected");
+            } catch (IOException expected) {
+                assertEquals("API operation expired", expected.getMessage());
+            }
             assertNull(OnlineFavoriteClient.cachedState(context, 403));
+
+            AuthStore.saveApiKey(context, "first-list-account", true);
+            Global.client = client(chain -> {
+                AuthStore.saveApiKey(context, "other-list-account", true);
+                AuthStore.saveApiKey(context, "first-list-account", true);
+                return response(chain, 200, "{\"num_pages\":1,\"result\":[]}");
+            });
+            list = InspectorV3.favoriteInspector(context, null, 1, null);
+            try {
+                list.createDocument();
+                org.junit.Assert.fail("An earlier generation of the same identity must be rejected");
+            } catch (IOException expected) {
+                assertEquals("API operation expired", expected.getMessage());
+                assertFalse(list.isFavoriteIdentityCurrent());
+            }
         } finally {
             Global.client = previous;
         }
@@ -225,6 +279,89 @@ public class OnlineFavoriteClientTest {
         outcome.await();
         assertTrue(outcome.failed);
         assertNull(OnlineFavoriteClient.cachedState(context, 203));
+    }
+
+    @Test public void contradictoryWriteResultInvalidatesState() throws Exception {
+        int galleryId = 8372;
+        OnlineFavoriteClient.rememberState(context, galleryId, true);
+        Outcome outcome = new Outcome();
+        OnlineFavoriteClient.toggle(context, galleryId,
+            client(chain -> response(chain, 200, "{\"favorited\":true}")), outcome);
+        outcome.await();
+        assertTrue(outcome.failed);
+        assertNull(OnlineFavoriteClient.cachedState(context, galleryId));
+    }
+
+    @Test public void ambiguousWriteResponsesInvalidatePreviouslyConfirmedState() throws Exception {
+        int[] statuses = {302, 408, 503};
+        for (int status : statuses) {
+            int galleryId = 3000 + status;
+            OnlineFavoriteClient.rememberState(context, galleryId, true);
+            List<String> methods = Collections.synchronizedList(new ArrayList<>());
+            Outcome outcome = new Outcome();
+            OnlineFavoriteClient.toggle(context, galleryId, client(chain -> {
+                methods.add(chain.request().method());
+                return response(chain, status, "");
+            }), outcome);
+            outcome.await();
+            assertTrue(outcome.failed);
+            assertEquals(Collections.singletonList("DELETE"), methods);
+            assertNull(OnlineFavoriteClient.cachedState(context, galleryId));
+        }
+    }
+
+    @Test public void oversizedWriteResponseLeavesStateUnknown() throws Exception {
+        int galleryId = 8123;
+        OnlineFavoriteClient.rememberState(context, galleryId, true);
+        char[] payload = new char[65537];
+        java.util.Arrays.fill(payload, ' ');
+        Outcome outcome = new Outcome();
+        OnlineFavoriteClient.toggle(context, galleryId,
+            client(chain -> response(chain, 200, new String(payload))), outcome);
+        outcome.await();
+        assertTrue(outcome.failed);
+        assertNull(OnlineFavoriteClient.cachedState(context, galleryId));
+    }
+
+    @Test public void writeDoesNotFollowRedirect() throws Exception {
+        try (java.net.ServerSocket server = new java.net.ServerSocket(0)) {
+            server.setSoTimeout(3000);
+            java.util.concurrent.atomic.AtomicInteger requests = new java.util.concurrent.atomic.AtomicInteger();
+            Thread responder = new Thread(() -> {
+                try {
+                    while (requests.get() < 2) {
+                        try (java.net.Socket socket = server.accept()) {
+                            requests.incrementAndGet();
+                            java.io.BufferedReader reader = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(socket.getInputStream(), java.nio.charset.StandardCharsets.US_ASCII));
+                            String line;
+                            while ((line = reader.readLine()) != null && !line.isEmpty()) { }
+                            String reply = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /redirected\r\n"
+                                + "Content-Length: 0\r\nConnection: close\r\n\r\n";
+                            socket.getOutputStream().write(reply.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+                            socket.getOutputStream().flush();
+                        }
+                    }
+                } catch (IOException ignored) {
+                    // The accept timeout ends the test after the first response.
+                }
+            });
+            responder.start();
+            OkHttpClient local = new OkHttpClient.Builder().addInterceptor(chain -> {
+                okhttp3.HttpUrl localUrl = chain.request().url().newBuilder()
+                    .scheme("http").host("127.0.0.1").port(server.getLocalPort()).build();
+                return chain.proceed(chain.request().newBuilder().url(localUrl).build());
+            }).build();
+            OnlineFavoriteClient.rememberState(context, 8124, true);
+            Outcome outcome = new Outcome();
+            OnlineFavoriteClient.toggle(context, 8124, local, outcome);
+            outcome.await();
+            responder.join(5000);
+            assertFalse(responder.isAlive());
+            assertTrue(outcome.failed);
+            assertEquals(1, requests.get());
+            assertNull(OnlineFavoriteClient.cachedState(context, 8124));
+        }
     }
 
     @Test public void accountChangeAfterLookupPreventsMutation() throws Exception {
@@ -272,5 +409,76 @@ public class OnlineFavoriteClientTest {
         first.await();
         assertEquals(Collections.singletonList("POST"), methods);
         assertEquals(Boolean.TRUE, first.value);
+    }
+
+    @Test public void staleFailureDoesNotClearStateAfterSwitchingAwayAndBack() throws Exception {
+        int galleryId = 9135;
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        OnlineFavoriteClient.rememberState(context, galleryId, false);
+        Outcome outcome = new Outcome();
+        try {
+            OnlineFavoriteClient.toggle(context, galleryId, client(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Timed out waiting for test");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(exception);
+                }
+                throw new IOException("Synthetic uncertain result");
+            }), outcome);
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            AuthStore.saveApiKey(context, "different-fixture-key", true);
+            OnlineFavoriteClient.sessionIdentity(context);
+            AuthStore.saveApiKey(context, "synthetic-key", true);
+            OnlineFavoriteClient.sessionIdentity(context);
+            OnlineFavoriteClient.rememberState(context, galleryId, true);
+            release.countDown();
+            outcome.await();
+            assertTrue(outcome.failed);
+            assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, galleryId));
+        } finally {
+            release.countDown();
+        }
+    }
+
+    @Test public void queuedMutationIsRejectedAfterSwitchingAwayAndBack() throws Exception {
+        int galleryId = 9136;
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicInteger dispatched = new java.util.concurrent.atomic.AtomicInteger();
+        OkHttpClient delayed = new OkHttpClient.Builder().addInterceptor(chain -> {
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Timed out waiting for test");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IOException(exception);
+            }
+            return chain.proceed(chain.request());
+        }).addInterceptor(new ApiAuthInterceptor(context)).addInterceptor(chain -> {
+            dispatched.incrementAndGet();
+            return response(chain, 200, "{\"favorited\":true}");
+        }).build();
+        OnlineFavoriteClient.rememberState(context, galleryId, false);
+        Outcome outcome = new Outcome();
+        try {
+            OnlineFavoriteClient.toggle(context, galleryId, delayed, outcome);
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            Thread switcher = new Thread(() -> {
+                AuthStore.saveApiKey(context, "different-fixture-key", true);
+                AuthStore.saveApiKey(context, "synthetic-key", true);
+            });
+            switcher.start();
+            switcher.join(5000);
+            assertFalse(switcher.isAlive());
+            release.countDown();
+            outcome.await();
+            assertTrue(outcome.failed);
+            assertEquals(0, dispatched.get());
+        } finally {
+            release.countDown();
+        }
     }
 }

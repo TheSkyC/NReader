@@ -1,6 +1,7 @@
 package com.maxwai.nclientv3;
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,10 +20,12 @@ import com.maxwai.nclientv3.components.views.TurnstileDialog;
 import com.maxwai.nclientv3.loginapi.NhentaiLoginApi;
 import com.maxwai.nclientv3.loginapi.PowSolver;
 import com.maxwai.nclientv3.settings.AuthSessionStore;
+import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,6 +44,10 @@ public final class AccountLoginActivity extends GeneralActivity {
     private long attempt;
     private boolean busy;
     private boolean stopped;
+    private boolean displayedSession;
+    @Nullable private String displayedIdentity;
+    private final SharedPreferences.OnSharedPreferenceChangeListener authObserver = (preferences, key) ->
+        postIfActive(this::refreshSessionStatusIfChanged);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,14 +65,31 @@ public final class AccountLoginActivity extends GeneralActivity {
         signIn.setOnClickListener(view -> start());
         signOut.setOnClickListener(view -> confirmSignOut());
         showIdle();
+        AuthStore.observeChanges(this, authObserver);
     }
 
     private void showIdle() {
         setBusy(false);
         boolean stored = AuthSessionStore.hasStoredSession(this);
+        String identity = AuthSessionStore.identity(this);
+        displayedSession = stored;
+        displayedIdentity = identity;
         status.setText(!stored ? R.string.account_signed_out
-            : AuthSessionStore.identity(this) != null ? R.string.account_session_saved : R.string.account_session_expired);
+            : identity != null ? R.string.account_session_saved : R.string.account_session_expired);
         signOut.setVisibility(stored ? View.VISIBLE : View.GONE);
+    }
+
+    private void refreshSessionStatusIfChanged() {
+        if (busy) return;
+        boolean stored = AuthSessionStore.hasStoredSession(this);
+        String identity = AuthSessionStore.identity(this);
+        if (stored != displayedSession || !Objects.equals(identity, displayedIdentity)) showIdle();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshSessionStatusIfChanged();
     }
 
     private void start() {
@@ -119,6 +143,7 @@ public final class AccountLoginActivity extends GeneralActivity {
                     currentAttempt, requestHandle, userAgent, protectionCookies);
                 postIfActive(() -> {
                     Login.updateUser(null);
+                    Login.isLogged(this);
                     showIdle();
                 });
             } catch (IOException | RuntimeException exception) {
@@ -132,7 +157,7 @@ public final class AccountLoginActivity extends GeneralActivity {
 
     private void fail(int message) {
         AuthSessionStore.cancelAttempt(attempt);
-        setBusy(false);
+        showIdle();
         status.setText(message);
     }
 
@@ -151,6 +176,7 @@ public final class AccountLoginActivity extends GeneralActivity {
             .setPositiveButton(R.string.account_sign_out, (dialog, which) -> {
                 AuthSessionStore.clear(this);
                 Login.updateUser(null);
+                Login.isLogged(this);
                 showIdle();
             }).show();
     }
@@ -173,6 +199,7 @@ public final class AccountLoginActivity extends GeneralActivity {
     @Override
     protected void onDestroy() {
         stopped = true;
+        AuthStore.removeChangesObserver(this, authObserver);
         cancelled.set(true);
         if (requestHandle != null) requestHandle.cancel();
         AuthSessionStore.cancelAttempt(attempt);

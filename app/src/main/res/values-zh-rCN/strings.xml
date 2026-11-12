@@ -3,7 +3,7 @@
 <resources>
     <string name="account_title">nhentai 账号</string>
     <string name="account_setting_summary">使用用户名和密码登录</string>
-    <string name="account_description">登录后可使用在线收藏。密码不会保存，API 密钥独立管理。</string>
+    <string name="account_description">登录后可使用在线收藏和标签。密码不会保存，API 密钥独立管理。</string>
     <string name="account_username">用户名或邮箱</string>
     <string name="account_password">密码</string>
     <string name="account_sign_in">登录</string>
@@ -16,7 +16,7 @@
     <string name="account_enter_password">请输入密码。</string>
     <string name="account_preparing_verification">正在准备验证…</string>
     <string name="account_signing_in">正在登录…</string>
-    <string name="account_verification_error">无法加载验证，请检查网络后重试。</string>
+    <string name="account_verification_error">验证未完成，请检查网络后重试。</string>
     <string name="account_login_error">无法完成登录，请检查账号信息后重试。</string>
     <string name="account_protection_error">验证完成后，网站仍阻止了登录请求。请稍后重试。</string>
     <string name="account_verify_title">验证登录</string>
@@ -409,4 +409,12 @@
     <string name="list_columns_summary">根据可用宽度和字体大小自动调整；仅宽屏窗口支持 4 列。</string>
     <string name="cover_group_credit">社团：%1$s</string>
     <string name="restore_snapshot_checking">正在检查恢复快照…</string>
+    <string name="online_blacklist_update_error">无法更新在线屏蔽列表，请重试。</string>
+    <string name="online_blacklist_refresh">刷新</string>
+    <string name="online_blacklist_loading">正在加载在线屏蔽列表…</string>
+    <string name="online_blacklist_loaded">在线屏蔽列表已更新</string>
+    <string name="online_blacklist_load_error">无法加载在线屏蔽列表，请尝试刷新。</string>
+    <string name="online_blacklist_search_unavailable">在线屏蔽列表尚未加载。请刷新，或不使用这些标签继续搜索。</string>
+    <string name="online_blacklist_search_without">继续搜索</string>
+    <string name="online_blacklist_sign_in_required">请重新登录或检查 API 密钥，然后刷新在线屏蔽列表。</string>
 </resources>

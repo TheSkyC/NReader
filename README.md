@@ -107,8 +107,9 @@ For favorite-card interaction checks, sign in to an nhentai account or configure
 valid API key and open Settings to switch **Favorite button actions** between local and online favorites as the
 preferred tap action. Account sessions take priority when both are present; signing
 out removes the session without deleting the saved API key. Passwords are not stored.
-Account sign-in currently enables v2 online favorites; the legacy account-tag
-and profile-dependent features remain unavailable while an account session is active.
+Account sessions also support the online blacklist and account-tag search option.
+Blacklist data is loaded for the active identity and is hidden until a complete
+response is available. The online tags screen offers refresh and retry controls.
 Verify short press, long press, and `Shift+Enter` on a focused card; moving a
 pressed finger cancels the long action. With no account session or valid key, local favorites stay
 available and online actions offer account sign-in. Test local-only, online-

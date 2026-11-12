@@ -2,6 +2,7 @@ package com.maxwai.nclientv3;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,7 +33,9 @@ import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.widgets.ChipTag;
 import com.maxwai.nclientv3.components.widgets.CustomLinearLayoutManager;
+import com.maxwai.nclientv3.loginapi.LoadTags;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
+import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
@@ -44,6 +47,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +56,12 @@ public class SearchActivity extends GeneralActivity {
     private static int customId = CUSTOM_ID_START;
     private final Ranges ranges = new Ranges();
     private final ArrayList<ChipTag> tags = new ArrayList<>();
+    private final ArrayList<ChipTag> onlineChips = new ArrayList<>();
+    private final ArrayList<ChipTag> onlineMergedChips = new ArrayList<>();
+    private String onlineChipsIdentity;
+    private long onlineChipsRevision = -1;
+    private String onlineTagsLoadingIdentity;
+    private final Runnable authObserver = () -> runOnUiThread(this::synchronizeOnlineSearchTags);
     private final Chip[] addChip = new Chip[TagType.values.length];
     private ChipGroup[] groups;
     private SearchView searchView;
@@ -117,24 +127,20 @@ public class SearchActivity extends GeneralActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                removeStaleOnlineTags();
                 query = query.trim();
                 if (query.isEmpty() && !advanced) return true;
-                if (!query.isEmpty()) adapter.addHistory(query);
-                final Intent i = new Intent(SearchActivity.this, MainActivity.class);
-                i.putExtra(getPackageName() + ".SEARCHMODE", true);
-                i.putExtra(getPackageName() + ".QUERY", query);
-                i.putExtra(getPackageName() + ".ADVANCED", advanced);
-                if (advanced) {
-                    ArrayList<Tag> tt = new ArrayList<>(tags.size());
-                    for (ChipTag t : tags)
-                        if (t.getTag().getStatus() == TagStatus.ACCEPTED) tt.add(t.getTag());
-                    i.putParcelableArrayListExtra(getPackageName() + ".TAGS", tt);
-                    i.putExtra(getPackageName() + ".RANGES", ranges);
+                String submittedQuery = query;
+                if (Login.wantsAccountTag() && !onlineTagsReady(onlineChipsIdentity, onlineChipsRevision,
+                    Login.currentOnlineTagsIdentity(), Login.currentOnlineTagsRevision())) {
+                    new MaterialAlertDialogBuilder(SearchActivity.this)
+                        .setMessage(R.string.online_blacklist_search_unavailable)
+                        .setPositiveButton(R.string.online_blacklist_refresh, (dialog, which) -> loadOnlineSearchTags())
+                        .setNegativeButton(R.string.online_blacklist_search_without, (dialog, which) -> submitSearch(submittedQuery, true))
+                        .setNeutralButton(R.string.cancel, null).show();
+                    return true;
                 }
-                SearchActivity.this.runOnUiThread(() -> {
-                    startActivity(i);
-                    finish();
-                });
+                submitSearch(submittedQuery, false);
                 return true;
             }
 
@@ -145,7 +151,99 @@ public class SearchActivity extends GeneralActivity {
         });
 
         populateGroup();
+        AuthStore.observeIdentityChanges(authObserver);
+        Login.observeOnlineTags(authObserver);
+        synchronizeOnlineSearchTags();
+        if (Login.wantsAccountTag() && !Login.hasCurrentOnlineTags()) loadOnlineSearchTags();
         searchView.requestFocus();
+    }
+
+    static boolean onlineTagsReady(String appliedIdentity, long appliedRevision,
+                                   String currentIdentity, long currentRevision) {
+        return currentIdentity != null && currentRevision >= 0 && currentRevision == appliedRevision
+            && currentIdentity.equals(appliedIdentity);
+    }
+
+    private void submitSearch(String query, boolean withoutOnlineTags) {
+        removeStaleOnlineTags();
+        boolean useAdvanced = withoutOnlineTags || advanced || (Login.wantsAccountTag()
+            && (!onlineChips.isEmpty() || !onlineMergedChips.isEmpty()));
+        if (!query.isEmpty()) adapter.addHistory(query);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra(getPackageName() + ".SEARCHMODE", true);
+        intent.putExtra(getPackageName() + ".QUERY", query);
+        intent.putExtra(getPackageName() + ".ADVANCED", useAdvanced);
+        if (useAdvanced) {
+            ArrayList<Tag> selected = new ArrayList<>(tags.size());
+            for (ChipTag chip : tags)
+                if ((!withoutOnlineTags || (!onlineChips.contains(chip) && !onlineMergedChips.contains(chip)))
+                    && chip.getTag().getStatus() != TagStatus.DEFAULT) selected.add(chip.getTag());
+            intent.putParcelableArrayListExtra(getPackageName() + ".TAGS", selected);
+            intent.putExtra(getPackageName() + ".RANGES", ranges);
+        }
+        startActivity(intent);
+        finish();
+    }
+
+    private void loadOnlineSearchTags() {
+        String requestedIdentity = AuthStore.activeIdentity(this);
+        if (requestedIdentity == null) {
+            android.widget.Toast.makeText(this, R.string.online_blacklist_sign_in_required,
+                android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (Objects.equals(requestedIdentity, onlineTagsLoadingIdentity)) return;
+        onlineTagsLoadingIdentity = requestedIdentity;
+        new LoadTags(this, successful -> {
+            runOnUiThread(() -> {
+                if (Objects.equals(requestedIdentity, onlineTagsLoadingIdentity)) onlineTagsLoadingIdentity = null;
+                if (!successful && !isFinishing() && !isDestroyed())
+                    android.widget.Toast.makeText(this, R.string.online_blacklist_load_error,
+                        android.widget.Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
+
+    private void synchronizeOnlineSearchTags() {
+        if (isFinishing() || isDestroyed()) return;
+        removeStaleOnlineTags();
+        String identity = Login.currentOnlineTagsIdentity();
+        long revision = Login.currentOnlineTagsRevision();
+        if (!Login.useAccountTag() || identity == null || revision < 0
+            || onlineTagsReady(onlineChipsIdentity, onlineChipsRevision, identity, revision)) return;
+        try {
+            tagLoader.execute(() -> {
+                List<Tag> online = Queries.TagTable.getAllOnlineBlacklisted();
+                runOnUiThread(() -> addOnlineSearchTags(identity, revision, online));
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ignored) {
+            // The activity was destroyed before the result was delivered.
+        }
+    }
+
+    private void addOnlineSearchTags(String identity, long revision, List<Tag> online) {
+        if (isFinishing() || isDestroyed() || !Login.useAccountTag()
+            || !identity.equals(Login.currentOnlineTagsIdentity())
+            || revision != Login.currentOnlineTagsRevision()) return;
+        if (onlineTagsReady(onlineChipsIdentity, onlineChipsRevision, identity, revision)) return;
+        removeStaleOnlineTags();
+        onlineChipsIdentity = identity;
+        onlineChipsRevision = revision;
+        for (Tag tag : online) {
+            ChipTag existing = findTagChip(tag);
+            if (existing != null) {
+                if (existing.getTag().getStatus() == TagStatus.DEFAULT) {
+                    existing.changeStatus(TagStatus.AVOIDED);
+                    onlineMergedChips.add(existing);
+                }
+                continue;
+            }
+            ChipGroup group = getGroup(tag.getType());
+            Chip add = addChip[tag.getType().getId()];
+            if (add != null) group.removeView(add);
+            onlineChips.add(addChipTag(tag, true, true));
+            if (add != null) group.addView(add);
+        }
     }
 
     private void createPageBuilder(int title, int min, int max, int actual, DefaultDialogs.DialogResults results) {
@@ -267,7 +365,9 @@ public class SearchActivity extends GeneralActivity {
             ArrayList<Tag> filtered = new ArrayList<>(Queries.TagTable.getAllFiltered());
             ArrayList<Tag> categories = new ArrayList<>(Queries.TagTable.getTrueAllType(TagType.CATEGORY));
             ArrayList<Tag> languages = new ArrayList<>(Queries.TagTable.getTrueAllType(TagType.LANGUAGE));
-            ArrayList<Tag> online = Login.useAccountTag()
+            String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
+            long revision = Login.currentOnlineTagsRevision();
+            ArrayList<Tag> online = identity != null
                 ? new ArrayList<>(Queries.TagTable.getAllOnlineBlacklisted()) : new ArrayList<>();
             runOnUiThread(() -> {
                 for (Tag t : top) addChipTag(t, true, true);
@@ -280,7 +380,7 @@ public class SearchActivity extends GeneralActivity {
                         t.setStatus(TagStatus.ACCEPTED);
                     addChipTag(t, false, false);
                 }
-                for (Tag t : online) if (!tagAlreadyExist(t)) addChipTag(t, true, true);
+                if (identity != null) addOnlineSearchTags(identity, revision, online);
                 addTagButtons();
             });
         });
@@ -303,6 +403,8 @@ public class SearchActivity extends GeneralActivity {
 
     @Override
     protected void onDestroy() {
+        AuthStore.removeIdentityObserver(authObserver);
+        Login.removeOnlineTagsObserver(authObserver);
         tagLoader.shutdownNow();
         super.onDestroy();
     }
@@ -318,27 +420,51 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private boolean tagAlreadyExist(Tag tag) {
-        for (ChipTag t : tags) {
-            if (t.getTag().getName().equals(tag.getName())) return true;
-        }
-        return false;
+        return findTagChip(tag) != null;
     }
 
-    private void addChipTag(Tag t, boolean close, boolean canBeAvoided) {
+    private ChipTag findTagChip(Tag tag) {
+        for (ChipTag t : tags) {
+            if (t.getTag().getType().equals(tag.getType())
+                && (t.getTag().getId() == tag.getId() || t.getTag().getName().equals(tag.getName()))) return t;
+        }
+        return null;
+    }
+
+    private ChipTag addChipTag(Tag t, boolean close, boolean canBeAvoided) {
         ChipGroup cg = getGroup(t.getType());
         ChipTag c = (ChipTag) getLayoutInflater().inflate(R.layout.chip_layout_entry, cg, false);
         c.init(t, close, canBeAvoided);
         c.setOnCloseIconClickListener(v -> {
             cg.removeView(c);
             tags.remove(c);
+            onlineChips.remove(c);
+            onlineMergedChips.remove(c);
             advanced = true;
         });
         c.setOnClickListener(v -> {
+            onlineChips.remove(c);
+            onlineMergedChips.remove(c);
             c.updateStatus();
             advanced = true;
         });
         cg.addView(c);
         tags.add(c);
+        return c;
+    }
+
+    private void removeStaleOnlineTags() {
+        if (onlineChipsIdentity == null || (Objects.equals(onlineChipsIdentity, Login.currentOnlineTagsIdentity())
+            && onlineChipsRevision == Login.currentOnlineTagsRevision())) return;
+        for (ChipTag chip : onlineChips) {
+            getGroup(chip.getTag().getType()).removeView(chip);
+            tags.remove(chip);
+        }
+        for (ChipTag chip : onlineMergedChips) chip.changeStatus(TagStatus.DEFAULT);
+        onlineChips.clear();
+        onlineMergedChips.clear();
+        onlineChipsIdentity = null;
+        onlineChipsRevision = -1;
     }
 
     private void loadDropdown(TagType type) {

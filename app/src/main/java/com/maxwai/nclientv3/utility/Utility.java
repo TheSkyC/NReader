@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.settings.AuthSessionStore;
 import com.maxwai.nclientv3.settings.Global;
 
 import java.io.File;
@@ -37,6 +38,11 @@ public class Utility {
 
     public static String getApiBaseUrl() {
         return getBaseUrl() + "api/v2/";
+    }
+
+    public static String getAuthenticatedApiBaseUrl(@NonNull Context context) {
+        return AuthSessionStore.hasStoredSession(context)
+            ? "https://" + ORIGINAL_URL + "/api/v2/" : getApiBaseUrl();
     }
 
     public static String getHost() {

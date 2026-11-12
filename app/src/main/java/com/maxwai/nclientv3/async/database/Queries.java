@@ -29,6 +29,7 @@ import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.status.Status;
 import com.maxwai.nclientv3.components.status.StatusManager;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.settings.TagV2;
 import com.maxwai.nclientv3.utility.LogUtility;
 
@@ -345,13 +346,15 @@ public class Queries {
             //create query
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(TABLE_NAME);
             sql.append(" WHERE ");
-            sql.append(COUNT).append(">=? ");                                        //min tag count
+            if (online) sql.append("1=1 ");
+            else sql.append(COUNT).append(">=? ");
             if (!query.isEmpty())
                 sql.append("AND ").append(NAME).append(" LIKE ?");  //query if is used
             if (type != null)
                 sql.append("AND ").append(TYPE).append("=? ");            //type if is used
             if (online)
                 sql.append("AND ").append(ONLINE).append("=1 ");              //retrieve only online tags
+            if (online && !Login.hasCurrentOnlineTags()) sql.append("AND 0 ");
             if (!online && type == null)
                 sql.append("AND ").append(STATUS).append("!=0 ");//retrieve only used tags
 
@@ -361,7 +364,7 @@ public class Queries {
 
             //create parameter list
             ArrayList<String> list = new ArrayList<>();
-            list.add("" + TagV2.getMinCount());               //minium tags (always provided)
+            if (!online) list.add("" + TagV2.getMinCount());
             if (!query.isEmpty()) list.add('%' + query + '%');    //query
             if (type != null) list.add("" + type.getId());      //type of the tag
             LogUtility.d("FILTER URL: " + sql + ", ARGS: " + list);
@@ -418,8 +421,13 @@ public class Queries {
          * Returns a List of all tags which have been blacklisted from the site
          */
         public static List<Tag> getAllOnlineBlacklisted() {
+            String identity = Login.currentOnlineTagsIdentity();
+            long revision = Login.currentOnlineTagsRevision();
+            if (identity == null || revision < 0) return new ArrayList<>();
             String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + ONLINE + " = 1";
             List<Tag> t = getTagsFromCursor(db.rawQuery(query, null));
+            if (!identity.equals(Login.currentOnlineTagsIdentity())
+                || revision != Login.currentOnlineTagsRevision()) return new ArrayList<>();
             for (Tag t1 : t) t1.setStatus(TagStatus.AVOIDED);
             return t;
         }
@@ -490,6 +498,20 @@ public class Queries {
             ContentValues values = new ContentValues(1);
             values.put(ONLINE, 0);
             db.updateWithOnConflict(TABLE_NAME, values, null, null, SQLiteDatabase.CONFLICT_IGNORE);
+        }
+
+        public static void replaceOnlineTags(@NonNull List<Tag> tags) {
+            db.beginTransaction();
+            try {
+                removeAllBlacklisted();
+                for (Tag tag : tags) {
+                    insert(tag);
+                    updateBlacklistedTag(tag, true);
+                }
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         }
 
         public static void resetAllStatus() {

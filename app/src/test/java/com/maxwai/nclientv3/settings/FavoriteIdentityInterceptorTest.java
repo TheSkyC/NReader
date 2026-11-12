@@ -82,6 +82,53 @@ public class FavoriteIdentityInterceptorTest {
         }
     }
 
+    @Test public void rejectedSessionDoesNotSendSavedKeyToConfiguredMirror() throws Exception {
+        HttpUrl origin = HttpUrl.get("https://nhentai.net/");
+        assertTrue(AuthSessionStore.replace(application, Arrays.asList(
+            Cookie.parse(origin, "access_token=test-access; Max-Age=3600; Secure; Path=/"),
+            Cookie.parse(origin, "refresh_token=test-refresh; Max-Age=7200; Secure; Path=/")), null));
+        AuthSessionStore.rejectIfCurrent(application, AuthSessionStore.identity(application));
+        String previous = Global.getMirror();
+        try {
+            java.lang.reflect.Field mirror = Global.class.getDeclaredField("mirror");
+            mirror.setAccessible(true);
+            mirror.set(null, "mirror.example");
+            OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+                .addInterceptor(chain -> {
+                    assertEquals(null, chain.request().header("Authorization"));
+                    return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                        .code(200).message("OK").body(ResponseBody.create("", null)).build();
+                }).build();
+            try (Response response = client.newCall(new Request.Builder()
+                .url("https://mirror.example/api/v2/galleries").build()).execute()) {
+                assertEquals(200, response.code());
+            }
+        } finally {
+            java.lang.reflect.Field mirror = Global.class.getDeclaredField("mirror");
+            mirror.setAccessible(true);
+            mirror.set(null, previous);
+        }
+    }
+
+    @Test public void boundRequestRejectsExplicitAuthorization() throws Exception {
+        String identity = AuthStore.activeIdentity(application);
+        AtomicBoolean reachedServer = new AtomicBoolean();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                reachedServer.set(true);
+                throw new IOException("Unexpected request");
+            }).build();
+        Request request = new Request.Builder().url("https://" + Global.getMirror() + "/api/v2/favorites")
+            .header("Authorization", "Key other-test-key")
+            .tag(ApiAuthInterceptor.ExpectedIdentity.class, new ApiAuthInterceptor.ExpectedIdentity(identity)).build();
+        try {
+            client.newCall(request).execute();
+            fail("A bound request must not use an explicit authorization header");
+        } catch (IOException expected) {
+            assertFalse(reachedServer.get());
+        }
+    }
+
     @Test public void responseFromPreviousSessionIsRejected() throws Exception {
         HttpUrl origin = HttpUrl.get("https://nhentai.net/");
         assertTrue(AuthSessionStore.replace(application, Arrays.asList(
@@ -136,8 +183,41 @@ public class FavoriteIdentityInterceptorTest {
                 return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                     .code(403).message("Forbidden").body(ResponseBody.create("", null)).build();
             }).build();
-        try (Response ignored = client.newCall(request()).execute()) {
+        try {
+            client.newCall(request()).execute();
+            fail("A response from an old API key must be discarded");
+        } catch (IOException expected) {
             assertTrue(AuthStore.hasValidApiKey(application));
+            assertEquals("second-test-key", AuthStore.getApiKey(application));
+        }
+    }
+
+    @Test public void unboundOldKeyRejectionDoesNotInvalidateReaddedKey() throws Exception {
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                AuthStore.saveApiKey(application, "second-test-key", true);
+                AuthStore.saveApiKey(application, "first-test-key", true);
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build();
+            }).build();
+        try (Response response = client.newCall(new Request.Builder()
+            .url("https://" + Global.getMirror() + "/api/v2/galleries").build()).execute()) {
+            assertEquals(401, response.code());
+            assertTrue(AuthStore.hasValidApiKey(application));
+        }
+    }
+
+    @Test public void successfulResponseFromPreviousApiKeyIsRejected() throws Exception {
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                AuthStore.saveApiKey(application, "second-test-key", true);
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create("", null)).build();
+            }).build();
+        try {
+            client.newCall(request()).execute();
+            fail("A response from an old API key must be discarded");
+        } catch (IOException expected) {
             assertEquals("second-test-key", AuthStore.getApiKey(application));
         }
     }

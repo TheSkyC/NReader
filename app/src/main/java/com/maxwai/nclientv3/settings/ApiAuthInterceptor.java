@@ -23,9 +23,19 @@ public class ApiAuthInterceptor implements Interceptor {
     }
     public static final class ExpectedIdentity {
         private final String fingerprint;
+        private final java.util.function.BooleanSupplier current;
 
         public ExpectedIdentity(@NonNull String fingerprint) {
+            this(fingerprint, () -> true);
+        }
+
+        public ExpectedIdentity(@NonNull String fingerprint, @NonNull java.util.function.BooleanSupplier current) {
             this.fingerprint = fingerprint;
+            this.current = current;
+        }
+
+        private void checkCurrent() throws IOException {
+            if (!current.getAsBoolean()) throw new IOException("API operation expired");
         }
     }
 
@@ -59,7 +69,12 @@ public class ApiAuthInterceptor implements Interceptor {
             return chain.proceed(request);
         }
         ExpectedIdentity expected = request.tag(ExpectedIdentity.class);
+        long credentialGeneration = AuthStore.identityGeneration();
+        if (expected != null) expected.checkCurrent();
         String session = AuthSessionStore.identity(context);
+        if (expected != null && (request.header("Authorization") != null
+            || !isTrustedApiRequest(request.url(), session != null ? Utility.ORIGINAL_URL : Utility.getHost())))
+            throw new IOException("API identity is unavailable");
         if (session != null && request.header("Authorization") == null
             && isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)) {
             if (expected != null && !expected.fingerprint.equals(session)) throw new IOException("API identity changed");
@@ -70,7 +85,12 @@ public class ApiAuthInterceptor implements Interceptor {
             Request authenticated = request.newBuilder()
                 .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
                 .header("Authorization", "User " + token).build();
+            if (expected != null) expected.checkCurrent();
             Response response = chain.proceed(authenticated);
+            if (expected != null && !expected.current.getAsBoolean()) {
+                response.close();
+                throw new IOException("API operation expired");
+            }
             if (!session.equals(AuthSessionStore.identity(context))) {
                 response.close();
                 throw new IOException("API identity changed");
@@ -80,12 +100,16 @@ public class ApiAuthInterceptor implements Interceptor {
                 response.close();
                 String refreshed = SessionRefresh.access(context, session, token);
                 if (refreshed == null && expected == null && isPublicGet(request)
-                    && session.equals(AuthSessionStore.identity(context))) return chain.proceed(request);
+                    && (session.equals(AuthSessionStore.identity(context))
+                        || (AuthSessionStore.hasStoredSession(context) && AuthSessionStore.identity(context) == null)))
+                    return chain.proceed(request);
                 if (refreshed == null || !session.equals(AuthSessionStore.identity(context)))
                     throw new IOException("Account session refresh failed");
+                if (expected != null) expected.checkCurrent();
                 Response retried = chain.proceed(authenticated.newBuilder()
                     .header("Authorization", "User " + refreshed).build());
-                if (!session.equals(AuthSessionStore.identity(context))) {
+                if (!session.equals(AuthSessionStore.identity(context))
+                    || (expected != null && !expected.current.getAsBoolean())) {
                     retried.close();
                     throw new IOException("API identity changed");
                 }
@@ -105,7 +129,8 @@ public class ApiAuthInterceptor implements Interceptor {
             return chain.proceed(request);
         }
         if (session == null && AuthSessionStore.hasStoredSession(context)
-            && isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)) {
+            && (isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)
+                || isTrustedApiRequest(request.url(), Utility.getHost()))) {
             if (expected != null) throw new IOException("Account session expired");
             return chain.proceed(request);
         }
@@ -119,10 +144,19 @@ public class ApiAuthInterceptor implements Interceptor {
                 .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
                 .header("Authorization", new AuthCredentials(AuthCredentials.Type.API_KEY, key).toAuthorizationHeader())
                 .build();
+            expected.checkCurrent();
             Response response = chain.proceed(authenticated);
+            if (!expected.current.getAsBoolean()) {
+                response.close();
+                throw new IOException("API operation expired");
+            }
+            if (!expected.fingerprint.equals(AuthStore.activeIdentity(context))) {
+                response.close();
+                throw new IOException("API identity changed");
+            }
             if (response.code() == 401 || response.code() == 403)
-                AuthStore.setApiKeyValidationIfCurrent(context, key, false);
-            else if (response.isSuccessful()) AuthStore.setApiKeyValidationIfCurrent(context, key, true);
+                AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, false);
+            else if (response.isSuccessful()) AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, true);
             return response;
         }
         if (request.header("Authorization") != null || !isTrustedApiRequest(request.url(), Utility.getHost())) {
@@ -142,9 +176,9 @@ public class ApiAuthInterceptor implements Interceptor {
             .build();
         Response response = chain.proceed(authenticated);
         if (response.code() == 401 || response.code() == 403) {
-            AuthStore.setApiKeyValidationIfCurrent(context, key, false);
+            AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, false);
         } else if (response.isSuccessful()) {
-            AuthStore.setApiKeyValidationIfCurrent(context, key, true);
+            AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, true);
         }
         return response;
     }

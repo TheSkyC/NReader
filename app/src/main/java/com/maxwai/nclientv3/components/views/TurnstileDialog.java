@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.webkit.JavascriptInterface;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -16,6 +17,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.utility.LogUtility;
 
 import org.json.JSONObject;
 
@@ -45,13 +47,26 @@ public final class TurnstileDialog {
             public boolean shouldOverrideUrlLoading(@NonNull WebView webView, @NonNull WebResourceRequest request) {
                 return true;
             }
+
+            @Override
+            public void onReceivedError(@NonNull WebView webView, @NonNull WebResourceRequest request,
+                                        @NonNull WebResourceError error) {
+                if ("challenges.cloudflare.com".equalsIgnoreCase(request.getUrl().getHost()))
+                    LogUtility.w("Account verification resource failed with network code " + error.getErrorCode());
+            }
         });
         AtomicBoolean finished = new AtomicBoolean();
+        AtomicBoolean scriptReady = new AtomicBoolean();
         Handler main = new Handler(Looper.getMainLooper());
         Dialog dialog = new MaterialAlertDialogBuilder(context).setTitle(R.string.account_verify_title)
             .setMessage(R.string.account_verify_message).setView(view)
             .setNegativeButton(R.string.cancel, (ignored, which) -> { }).create();
         view.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void ready() {
+                scriptReady.set(true);
+            }
+
             @JavascriptInterface
             public void token(String value) {
                 if (value == null || value.isEmpty() || value.length() > 4096) return;
@@ -74,7 +89,10 @@ public final class TurnstileDialog {
             }
 
             @JavascriptInterface
-            public void error() {
+            public void error(String code) {
+                if (code != null && code.matches("[0-9]{1,8}"))
+                    LogUtility.w("Account verification failed with code " + code);
+                else LogUtility.w("Account verification failed");
                 main.post(() -> {
                     if (!finished.compareAndSet(false, true)) return;
                     callback.onFailure();
@@ -84,12 +102,14 @@ public final class TurnstileDialog {
         }, "NReaderVerification");
         String html = "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
             + "<script src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=ready&render=explicit' async defer></script>"
-            + "</head><body><div id='challenge'></div><script>function ready(){turnstile.render('#challenge',"
+            + "</head><body><div id='challenge'></div><script>function ready(){NReaderVerification.ready();turnstile.render('#challenge',"
             + "{sitekey:" + JSONObject.quote(siteKey) + ",theme:'auto',callback:function(t){NReaderVerification.token(t)},"
-            + "'error-callback':function(){NReaderVerification.error()},"
-            + "'expired-callback':function(){NReaderVerification.error()}})}</script></body></html>";
+            + "'error-callback':function(code){NReaderVerification.error(String(code))},"
+            + "'expired-callback':function(){NReaderVerification.error('')}})}</script></body></html>";
         Runnable timeout = () -> {
             if (!finished.compareAndSet(false, true)) return;
+            LogUtility.w(scriptReady.get() ? "Account verification timed out after script initialization"
+                : "Account verification timed out before script initialization");
             callback.onFailure();
             dialog.dismiss();
         };
