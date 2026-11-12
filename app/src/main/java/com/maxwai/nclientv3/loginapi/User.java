@@ -78,16 +78,17 @@ public class User {
                     try (Response received = response) {
                         if (!received.isSuccessful() || received.body() == null) return;
                         User user = readResponse(received.body());
-                        if (Login.updateUserIfCurrent(appContext, identity, generation, user)) {
-                            com.maxwai.nclientv3.settings.AccountRepository repository =
-                                com.maxwai.nclientv3.settings.AccountRuntime.repository();
-                            if (repository != null) {
-                                synchronized (repository) {
-                                    if (generation == AuthStore.identityGeneration()
-                                        && repository.updateProfile(identity, repository.identityGeneration(),
-                                            user.id, user.username, user.avatarUrl)) AuthStore.notifyAccountProfileChanged();
-                                }
+                        com.maxwai.nclientv3.settings.AccountRepository repository =
+                            com.maxwai.nclientv3.settings.AccountRuntime.repository();
+                        if (repository != null) {
+                            synchronized (repository) {
+                                if (generation != AuthStore.identityGeneration()
+                                    || !repository.updateProfile(identity, repository.identityGeneration(),
+                                        user.id, user.username, user.avatarUrl)) return;
                             }
+                            AuthStore.notifyAccountProfileChanged();
+                        }
+                        if (Login.updateUserIfCurrent(appContext, identity, generation, user)) {
                             if (createUser != null) createUser.onCreateUser(user);
                         }
                     } catch (IOException | RuntimeException exception) {

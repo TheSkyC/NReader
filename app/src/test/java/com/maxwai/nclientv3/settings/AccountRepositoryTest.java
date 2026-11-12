@@ -89,4 +89,20 @@ public class AccountRepositoryTest {
             assertNotEquals(generation, repository.identityGeneration());
         }
     }
+
+    @Test public void profileCannotChangeAnEstablishedUserIdentity() throws Exception {
+        assertTrue(repository.putAndSelect(account("one"), repository.identityGeneration()));
+        assertTrue(repository.updateProfile("one", repository.identityGeneration(), 42, "First", null));
+        long generation = repository.identityGeneration();
+        assertTrue(repository.updateProfile("one", generation, 42, "Updated", null));
+        assertFalse(repository.updateProfile("one", generation, 43, "Other", null));
+        assertTrue(repository.snapshot().activeAccount().rejected);
+        assertEquals(42, repository.snapshot().activeAccount().userId);
+        assertEquals("Updated", repository.snapshot().activeAccount().username);
+        assertNotEquals(generation, repository.identityGeneration());
+        AccountRepository reopened = new AccountRepository(vault);
+        reopened.open();
+        assertTrue(reopened.snapshot().activeAccount().rejected);
+        assertEquals(42, reopened.snapshot().activeAccount().userId);
+    }
 }
