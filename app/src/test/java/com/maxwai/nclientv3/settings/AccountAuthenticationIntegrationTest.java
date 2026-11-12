@@ -6,6 +6,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.maxwai.nclientv3.api.components.Tag;
+import com.maxwai.nclientv3.api.enums.TagStatus;
+import com.maxwai.nclientv3.api.enums.TagType;
+import com.maxwai.nclientv3.async.database.Queries;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +25,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Collections;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -162,6 +169,50 @@ public class AccountAuthenticationIntegrationTest {
         assertFalse(Boolean.FALSE.equals(com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654)));
         repository.select(null);
         assertNull(com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654));
+    }
+
+    @Test public void accountSwitchIsolatesOnlineTagsAndPreservesLocalFilters() throws Exception {
+        Global.initFromShared(application);
+        Login.initLogin(application);
+        String firstKey = "tags-first-fixture";
+        String secondKey = "tags-second-fixture";
+        String firstId = ApiAuthInterceptor.fingerprint(firstKey);
+        String secondId = ApiAuthInterceptor.fingerprint(secondKey);
+        Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
+        schema.setAccessible(true);
+        try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
+            Queries.setDb(database);
+            database.execSQL((String) schema.get(null));
+            Tag local = new Tag("local", 1, 1001, TagType.TAG, TagStatus.AVOIDED);
+            Tag first = new Tag("first", 1, 1002, TagType.TAG, TagStatus.DEFAULT);
+            Tag second = new Tag("second", 1, 1003, TagType.TAG, TagStatus.DEFAULT);
+            Queries.TagTable.insert(local);
+            assertTrue(repository.putAndSelect(new AccountVault.Account(firstId, AccountVault.Type.API_KEY,
+                "First", null, firstKey, null, null, 0, 0, false, 1), repository.identityGeneration()));
+            long firstLoad = Login.beginOnlineTagsLoad(application, firstId);
+            assertTrue(Login.replaceOnlineTags(application, firstId, firstLoad, Collections.singletonList(first)));
+            long staleLoad = Login.beginOnlineTagsLoad(application, firstId);
+            assertEquals(first.getId(), Queries.TagTable.getAllOnlineBlacklisted().get(0).getId());
+
+            assertTrue(repository.putAndSelect(new AccountVault.Account(secondId, AccountVault.Type.API_KEY,
+                "Second", null, secondKey, null, null, 0, 0, false, 2), repository.identityGeneration()));
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertFalse(Login.replaceOnlineTags(application, firstId, staleLoad, Collections.singletonList(first)));
+            long secondLoad = Login.beginOnlineTagsLoad(application, secondId);
+            assertTrue(Login.replaceOnlineTags(application, secondId, secondLoad, Collections.singletonList(second)));
+            assertEquals(second.getId(), Queries.TagTable.getAllOnlineBlacklisted().get(0).getId());
+
+            repository.select(firstId);
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertFalse(Login.replaceOnlineTags(application, firstId, staleLoad, Collections.singletonList(first)));
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(local.getId()).getStatus());
+            repository.select(null);
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(local.getId()).getStatus());
+        } finally {
+            Queries.setDb(null);
+            Login.updateUser(null);
+        }
     }
 
     @Test public void refreshPersistsOnlyToTheAccountThatStartedIt() throws Exception {
