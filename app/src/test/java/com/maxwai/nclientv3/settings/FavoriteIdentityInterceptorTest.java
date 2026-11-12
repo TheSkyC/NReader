@@ -200,9 +200,11 @@ public class FavoriteIdentityInterceptorTest {
                 return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                     .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build();
             }).build();
-        try (Response response = client.newCall(new Request.Builder()
-            .url("https://" + Global.getMirror() + "/api/v2/galleries").build()).execute()) {
-            assertEquals(401, response.code());
+        try {
+            client.newCall(new Request.Builder()
+                .url("https://" + Global.getMirror() + "/api/v2/galleries").build()).execute();
+            fail("A response from a previous identity generation must be discarded");
+        } catch (IOException expected) {
             assertTrue(AuthStore.hasValidApiKey(application));
         }
     }
