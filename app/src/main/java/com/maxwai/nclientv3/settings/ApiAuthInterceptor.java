@@ -80,8 +80,7 @@ public class ApiAuthInterceptor implements Interceptor {
             if (expected != null && !expected.fingerprint.equals(session)) throw new IOException("API identity changed");
             String token = SessionRefresh.access(context, session, null);
             if (token == null && expected == null && isPublicGet(request)
-                && (session.equals(AuthSessionStore.identity(context))
-                    || (AuthSessionStore.hasStoredSession(context) && AuthSessionStore.identity(context) == null)))
+                && AuthSessionStore.isStoredIdentity(context, session))
                 return chain.proceed(request);
             if (token == null || !session.equals(AuthSessionStore.identity(context)))
                 throw new IOException("Account session is unavailable");
@@ -103,8 +102,7 @@ public class ApiAuthInterceptor implements Interceptor {
                 response.close();
                 String refreshed = SessionRefresh.access(context, session, token);
                 if (refreshed == null && expected == null && isPublicGet(request)
-                    && (session.equals(AuthSessionStore.identity(context))
-                        || (AuthSessionStore.hasStoredSession(context) && AuthSessionStore.identity(context) == null)))
+                    && AuthSessionStore.isStoredIdentity(context, session))
                     return chain.proceed(request);
                 if (refreshed == null || !session.equals(AuthSessionStore.identity(context)))
                     throw new IOException("Account session refresh failed");
