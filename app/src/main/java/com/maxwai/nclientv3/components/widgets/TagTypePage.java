@@ -35,16 +35,20 @@ public class TagTypePage extends Fragment {
     private String adapterIdentity;
     private long refreshSequence;
     private long observedRestoreGeneration;
+    private boolean waitingForOnlineTags;
     private final Runnable onlineTagsObserver = () -> {
         View root = getView();
         if (root == null || adapter == null) return;
         long restoreGeneration = Login.onlineTagsRestoreGeneration();
-        if (restoreGeneration != observedRestoreGeneration && !Login.isOnlineTagMutationPending()) {
+        if ((waitingForOnlineTags || restoreGeneration != observedRestoreGeneration) && !Login.isOnlineTagMutationPending()) {
+            waitingForOnlineTags = false;
             observedRestoreGeneration = restoreGeneration;
             if (!Login.hasCurrentOnlineTags() && AuthStore.activeIdentity(requireContext()) != null) {
                 refreshOnlineTags(root);
                 return;
             }
+            root.findViewById(R.id.online_tag_refresh).setEnabled(true);
+            root.findViewById(R.id.online_tag_progress).setVisibility(View.GONE);
         }
         TextView status = root.findViewById(R.id.online_tag_status);
         status.setText(Login.isOnlineTagMutationPending() ? R.string.online_blacklist_loading
@@ -134,6 +138,11 @@ public class TagTypePage extends Fragment {
         refresh.setEnabled(false);
         progress.setVisibility(View.VISIBLE);
         status.setText(R.string.online_blacklist_loading);
+        if (Login.isOnlineTagMutationPending()) {
+            waitingForOnlineTags = true;
+            return;
+        }
+        waitingForOnlineTags = false;
         long startingRevision = Login.currentOnlineTagsRevision();
         startOnlineTagsLoad(successful -> {
             Activity host = getActivity();
@@ -178,6 +187,7 @@ public class TagTypePage extends Fragment {
     @Override
     public void onDestroyView() {
         refreshSequence++;
+        waitingForOnlineTags = false;
         Login.removeOnlineTagsObserver(onlineTagsObserver);
         AuthStore.removeIdentityObserver(authObserver);
         if (adapter != null) adapter.close();
