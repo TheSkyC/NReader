@@ -94,6 +94,11 @@ public class Login {
         return hasCurrentOnlineTags() && pendingOnlineTagIdentity == null ? onlineTagsRevision : -1;
     }
 
+    public static synchronized long onlineTagsInvalidationSequence() {
+        synchronizeOnlineTagsGeneration();
+        return onlineTagsMinimumSequence;
+    }
+
     public static synchronized boolean isOnlineTagMutationPending() {
         synchronizeOnlineTagsGeneration();
         return onlineTagsRestores != 0 || pendingOnlineTagIdentity != null;
