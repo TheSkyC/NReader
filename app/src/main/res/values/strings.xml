@@ -2,6 +2,32 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 
 <resources>
+    <string name="account_remember_password">Remember password on this device</string>
+    <string name="account_storage_error">Could not save the account. Please try again.</string>
+    <string name="account_login_description">Sign in to use online favorites and tags. You can choose whether to remember your password on this device.</string>
+    <string name="account_remove_message">Remove this account and its saved credentials from this device?</string>
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_add">Add account</string>
+    <string name="accounts_use_guest">Use without an account</string>
+    <string name="accounts_manage">Manage</string>
+    <string name="accounts_manage_named">Manage %1$s</string>
+    <string name="accounts_empty">Add an account to use online favorites and tags. Downloads and reading history are shared on this device.</string>
+    <string name="accounts_loading">Loading accounts…</string>
+    <string name="accounts_choose_method">Choose a sign-in method</string>
+    <string name="accounts_password_method">Username and password</string>
+    <string name="accounts_key_method">API key</string>
+    <string name="accounts_current">Current account</string>
+    <string name="accounts_needs_sign_in">Sign-in required</string>
+    <string name="accounts_key_invalid">API key needs verification</string>
+    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_unnamed_key">API key account</string>
+    <string name="accounts_reauthenticate">Sign in again</string>
+    <string name="accounts_revalidate_key">Verify API key again</string>
+    <string name="accounts_key_mismatch">This key differs from the selected account. Add it as a new account instead.</string>
+    <string name="accounts_remove">Remove account</string>
+    <string name="accounts_switch">Switch account</string>
+    <string name="accounts_guest">Not signed in</string>
+    <string name="accounts_shared_data">Downloads, local favorites and reading history are shared on this device.</string>
     <string name="preference_key_account_login" translatable="false">account_login</string>
     <string name="account_title">nhentai account</string>
     <string name="account_setting_summary">Sign in with your username and password</string>

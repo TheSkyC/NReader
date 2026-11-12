@@ -20,6 +20,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -37,6 +39,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.bumptech.glide.RequestManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.maxwai.nclientv3.adapters.ListAdapter;
@@ -58,11 +61,15 @@ import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
+import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
 import com.maxwai.nclientv3.components.widgets.GalleryListGrid;
 import com.maxwai.nclientv3.settings.AuthSessionStore;
 import com.maxwai.nclientv3.settings.AuthStore;
+import com.maxwai.nclientv3.settings.AccountRuntime;
+import com.maxwai.nclientv3.settings.AccountVault;
+import com.maxwai.nclientv3.loginapi.NhentaiLoginApi;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.settings.TagV2;
@@ -121,6 +128,9 @@ public class MainActivity extends BaseActivity
     private InspectorV3 blacklistLoadingInspector;
     private final Runnable accountFilterObserver = this::refreshAccountFilter;
     private final Runnable favoriteIdentityObserver = this::refreshFavoriteIdentity;
+    private final Runnable accountHeaderObserver = this::refreshAccountHeader;
+    private String headerProfileIdentity;
+    private long headerProfileGeneration = -1;
     private long favoriteInspectorGeneration = -1;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
@@ -276,8 +286,10 @@ public class MainActivity extends BaseActivity
         Login.observeOnlineTags(accountFilterObserver);
         AuthStore.observeIdentityChanges(accountFilterObserver);
         AuthStore.observeIdentityChanges(favoriteIdentityObserver);
+        AuthStore.observeIdentityChanges(accountHeaderObserver);
         refreshAccountFilter();
         refreshFavoriteIdentity();
+        refreshAccountHeader();
     }
 
     @Override
@@ -285,6 +297,7 @@ public class MainActivity extends BaseActivity
         Login.removeOnlineTagsObserver(accountFilterObserver);
         AuthStore.removeIdentityObserver(accountFilterObserver);
         AuthStore.removeIdentityObserver(favoriteIdentityObserver);
+        AuthStore.removeIdentityObserver(accountHeaderObserver);
         super.onStop();
     }
 
@@ -312,7 +325,13 @@ public class MainActivity extends BaseActivity
                 startInspector();
             } else if (AuthSessionStore.hasStoredSession(this) && AuthSessionStore.identity(this) == null) {
                 snackbar = Snackbar.make(masterLayout, R.string.online_blacklist_session_expired, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.account_sign_in, view -> startActivity(new Intent(this, AccountLoginActivity.class)));
+                    .setAction(R.string.account_sign_in, view -> {
+                        Intent login = new Intent(this, AccountLoginActivity.class);
+                        AccountVault.Account account = AccountRuntime.activeAccount();
+                        if (account != null && account.type == AccountVault.Type.PASSWORD)
+                            login.putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, account.id);
+                        startActivity(login);
+                    });
                 snackbar.show();
             } else {
                 showError(R.string.online_blacklist_load_error, view -> loadInitialOnlineTags(pendingInspector));
@@ -418,7 +437,42 @@ public class MainActivity extends BaseActivity
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setNavigationOnClickListener(v -> finish());
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getHeaderView(0).setOnClickListener(view -> startActivity(new Intent(this, AccountsActivity.class)));
         onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
+    }
+
+    private void refreshAccountHeader() {
+        if (isFinishing() || isDestroyed() || navigationView == null) return;
+        View header = navigationView.getHeaderView(0);
+        TextView name = header.findViewById(R.id.nav_account_name);
+        TextView action = header.findViewById(R.id.nav_account_action);
+        ImageView avatar = header.findViewById(R.id.nav_account_avatar);
+        AccountVault.Account account = AccountRuntime.activeAccount();
+        name.setText(account == null ? getString(R.string.accounts_guest)
+            : account.username.isEmpty() ? getString(R.string.accounts_unnamed_key) : account.username);
+        boolean needsSignIn = account != null && (account.rejected
+            || (account.type == AccountVault.Type.PASSWORD
+            && (account.refreshToken == null || account.refreshExpiry <= System.currentTimeMillis())));
+        action.setText(needsSignIn ? R.string.accounts_needs_sign_in : R.string.accounts_switch);
+        if (AccountRuntime.repository() != null && !AccountRuntime.repository().isOpen()) {
+            name.setText(AccountRuntime.openError() == null ? R.string.accounts_loading : R.string.account_storage_error);
+        }
+        RequestManager images = GlideX.with(avatar);
+        if (images != null) {
+            images.clear(avatar);
+            String url = account == null ? null : NhentaiLoginApi.trustedAvatarUrl(account.avatarUrl);
+            if (url == null) avatar.setImageResource(R.drawable.ic_person);
+            else images.load(url).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);
+        }
+        onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
+        String identity = AuthStore.activeIdentity(this);
+        long generation = AuthStore.identityGeneration();
+        if (AccountRuntime.repository() != null && identity != null && generation >= 0
+            && (!identity.equals(headerProfileIdentity) || generation != headerProfileGeneration)) {
+            headerProfileIdentity = identity;
+            headerProfileGeneration = generation;
+            if (Login.getUser() == null) com.maxwai.nclientv3.loginapi.User.createUser(this, null);
+        }
     }
 
     public void setIdOpenedGallery(int idOpenedGallery) {
@@ -721,6 +775,7 @@ public class MainActivity extends BaseActivity
     protected void onResume() {
         super.onResume();
         Login.initLogin(this);
+        refreshAccountHeader();
         if (idOpenedGallery != -1) {
             adapter.updateColor(idOpenedGallery);
             idOpenedGallery = -1;

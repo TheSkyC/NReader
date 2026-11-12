@@ -28,7 +28,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/account_description"
+                android:text="@string/account_login_description"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <TextView
@@ -70,6 +70,13 @@
                     android:maxLines="1"
                     android:saveEnabled="false" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/account_remember_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/account_remember_password" />
 
             <ProgressBar
                 android:id="@+id/account_progress"
