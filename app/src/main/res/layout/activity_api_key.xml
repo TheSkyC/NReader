@@ -109,6 +109,7 @@
             android:inputType="textNoSuggestions|textVisiblePassword"
             android:maxLines="4"
             android:minLines="2"
+            android:saveEnabled="false"
             android:textIsSelectable="true" />
 
         <com.google.android.material.button.MaterialButton
