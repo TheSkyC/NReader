@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 28, application = android.app.Application.class)
 public class ExportFileTest {
     @Test
     public void sanitizesPathCharactersAndProvidesFallbackName() {

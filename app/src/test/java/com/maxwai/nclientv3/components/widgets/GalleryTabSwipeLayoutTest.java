@@ -18,7 +18,7 @@ import org.robolectric.util.ReflectionHelpers;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 28, application = android.app.Application.class)
 public class GalleryTabSwipeLayoutTest {
     private GalleryTabSwipeLayout layout;
     private ScrollableChild child;

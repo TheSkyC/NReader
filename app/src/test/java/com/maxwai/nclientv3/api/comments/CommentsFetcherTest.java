@@ -35,7 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 28, application = android.app.Application.class)
 public class CommentsFetcherTest {
     @Test
     public void parsesPaginatedCommentsAndUser() throws IOException {

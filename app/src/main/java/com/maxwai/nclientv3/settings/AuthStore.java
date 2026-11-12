@@ -26,6 +26,12 @@ public final class AuthStore {
         identityObservers.remove(observer);
     }
 
+    public static void notifyAccountProfileChanged() {
+        main.post(() -> {
+            for (Runnable observer : identityObservers) observer.run();
+        });
+    }
+
     public static long identityGeneration() {
         synchronized (generationLock) {
             return identityWriters == 0 ? identityGeneration.get() : -1;
@@ -97,6 +103,11 @@ public final class AuthStore {
 
     @Nullable
     public static AuthCredentials getCredentials(@NonNull Context context) {
+        if (AccountRuntime.repository() != null) {
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            if (account == null || account.type != AccountVault.Type.API_KEY) return null;
+            return new AuthCredentials(AuthCredentials.Type.API_KEY, account.apiKey);
+        }
         SharedPreferences preferences = getPreferences(context);
         String typeName = preferences.getString(KEY_TYPE, null);
         String secret = preferences.getString(KEY_SECRET, null);
@@ -119,6 +130,10 @@ public final class AuthStore {
     }
 
     public static boolean hasValidApiKey(@NonNull Context context) {
+        if (AccountRuntime.repository() != null) {
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            return account != null && account.type == AccountVault.Type.API_KEY && !account.rejected;
+        }
         AuthCredentials credentials = getCredentials(context);
         if (credentials == null || credentials.getType() != AuthCredentials.Type.API_KEY) return false;
 
@@ -129,6 +144,7 @@ public final class AuthStore {
 
     @Nullable
     public static String activeIdentity(@NonNull Context context) {
+        if (identityGeneration() < 0) return null;
         String session = AuthSessionStore.identity(context);
         if (session != null) return session;
         if (AuthSessionStore.hasStoredSession(context)) return null;
@@ -153,6 +169,19 @@ public final class AuthStore {
 
     public static synchronized void setApiKeyValidationIfCurrent(@NonNull Context context,
                                                                   @NonNull String apiKey, long generation, boolean valid) {
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository != null) {
+            if (valid) return;
+            AccountVault.Account account = AccountRuntime.activeAccount();
+            long accountGeneration = repository.identityGeneration();
+            if (generation < 0 || generation != identityGeneration() || accountGeneration < 0 || account == null
+                || account.type != AccountVault.Type.API_KEY || !apiKey.equals(account.apiKey)) return;
+            AccountRuntime.execute(store -> store.reject(account.id, accountGeneration), error -> {
+                if (error != null) com.maxwai.nclientv3.utility.LogUtility.w("Unable to update account status: "
+                    + error.getClass().getSimpleName());
+            });
+            return;
+        }
         if (generation >= 0 && generation == identityGeneration() && apiKey.equals(getApiKey(context)))
             setApiKeyValidation(context, valid);
     }

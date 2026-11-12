@@ -9,7 +9,7 @@ import org.robolectric.annotation.Config;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 28, application = android.app.Application.class)
 public class NetworkUtilTest {
     @Test
     public void classifiesOnlyValidatedNetworksAndSeparatesMeteredWifi() {

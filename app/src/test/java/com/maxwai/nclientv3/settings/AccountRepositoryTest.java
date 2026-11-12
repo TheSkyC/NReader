@@ -21,7 +21,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28)
+@Config(sdk = 28, application = android.app.Application.class)
 public class AccountRepositoryTest {
     @Rule public final TemporaryFolder folder = new TemporaryFolder();
     private AccountVault vault;

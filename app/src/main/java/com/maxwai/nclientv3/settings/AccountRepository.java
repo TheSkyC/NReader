@@ -94,7 +94,22 @@ public final class AccountRepository {
             || !account.id.equals(accountId) || account.type != AccountVault.Type.PASSWORD
             || !expectedRefreshToken.equals(account.refreshToken)) return false;
         AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, account.username,
-            account.password, null, accessToken, refreshToken, accessExpiry, refreshExpiry, false, account.userId);
+            account.password, null, accessToken, refreshToken, accessExpiry, refreshExpiry, false, account.userId,
+            account.loginName, account.avatarUrl);
+        state = vault.update(value -> replace(value, replacement));
+        return true;
+    }
+
+    @WorkerThread
+    public synchronized boolean invalidateAccess(@NonNull String accountId, long expectedGeneration,
+                                                 @NonNull String expectedToken) throws IOException {
+        AccountVault.Account account = requireOpen().activeAccount();
+        if (expectedGeneration < 0 || expectedGeneration != identityGeneration() || account == null
+            || account.type != AccountVault.Type.PASSWORD || !accountId.equals(account.id)
+            || !expectedToken.equals(account.accessToken)) return false;
+        AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, account.username,
+            account.password, null, null, account.refreshToken, 0, account.refreshExpiry, account.rejected, account.userId,
+            account.loginName, account.avatarUrl);
         state = vault.update(value -> replace(value, replacement));
         return true;
     }
@@ -108,8 +123,22 @@ public final class AccountRepository {
         if (account.rejected) return true;
         AccountVault.Account rejected = new AccountVault.Account(account.id, account.type, account.username,
             account.password, account.apiKey, account.accessToken, account.refreshToken,
-            account.accessExpiry, account.refreshExpiry, true, account.userId);
+            account.accessExpiry, account.refreshExpiry, true, account.userId, account.loginName, account.avatarUrl);
         transition(value -> replace(value, rejected));
+        return true;
+    }
+
+    @WorkerThread
+    public synchronized boolean updateProfile(@NonNull String accountId, long expectedGeneration,
+                                              long userId, @NonNull String username,
+                                              @Nullable String avatarUrl) throws IOException {
+        AccountVault.Account account = requireOpen().activeAccount();
+        if (expectedGeneration < 0 || expectedGeneration != identityGeneration()
+            || account == null || !account.id.equals(accountId) || userId <= 0) return false;
+        AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, username,
+            account.password, account.apiKey, account.accessToken, account.refreshToken,
+            account.accessExpiry, account.refreshExpiry, account.rejected, userId, account.loginName, avatarUrl);
+        state = vault.update(value -> replace(value, replacement));
         return true;
     }
 
@@ -123,11 +152,13 @@ public final class AccountRepository {
     }
 
     private void beginChange() {
+        AuthStore.beginIdentityChange();
         generation.incrementAndGet();
     }
 
     private void endChange() {
         generation.incrementAndGet();
+        AuthStore.endIdentityChange();
     }
 
     @NonNull private AccountVault.State requireOpen() throws IOException {

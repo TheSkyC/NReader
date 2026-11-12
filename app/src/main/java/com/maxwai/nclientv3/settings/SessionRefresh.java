@@ -28,12 +28,14 @@ final class SessionRefresh {
 
     @Nullable
     static synchronized String access(@NonNull Context context, @NonNull String identity, @Nullable String rejectedToken) {
+        long generation = AuthStore.identityGeneration();
+        if (generation < 0) return null;
         if (!identity.equals(AuthSessionStore.identity(context))) return null;
         String current = AuthSessionStore.accessTokenIfCurrent(context, identity);
         String decoded = decode(current);
         if (decoded != null && (rejectedToken == null || !decoded.equals(rejectedToken))) return decoded;
         if (current != null && rejectedToken != null && rejectedToken.equals(decoded))
-            AuthSessionStore.invalidateAccessIfCurrent(context, identity, current);
+            AuthSessionStore.invalidateAccessIfCurrent(context, identity, current, generation);
         if (identity.equals(failedIdentity) && SystemClock.elapsedRealtime() - lastFailure < 30000
             && lastFailure != 0) return null;
         String refresh = AuthSessionStore.refreshTokenIfCurrent(context, identity);
@@ -51,7 +53,7 @@ final class SessionRefresh {
             .followRedirects(false).followSslRedirects(false).retryOnConnectionFailure(false)
             .callTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build().newCall(request).execute()) {
             if (response.code() == 401) {
-                AuthSessionStore.rejectIfCurrent(context, identity);
+                AuthSessionStore.rejectIfCurrent(context, identity, generation);
                 return null;
             }
             if (!response.isSuccessful() || response.body() == null) throw new IOException("Refresh failed");
@@ -63,8 +65,8 @@ final class SessionRefresh {
             Object access = body.opt("access_token");
             Object replacementRefresh = body.opt("refresh_token");
             if (!(access instanceof String) || !(replacementRefresh instanceof String)
-                || !AuthSessionStore.replace(context, AuthSessionStore.tokenCookies(
-                    (String) access, (String) replacementRefresh), identity))
+                || !AuthSessionStore.replaceIfCurrent(context, AuthSessionStore.tokenCookies(
+                    (String) access, (String) replacementRefresh), identity, generation, refresh))
                 throw new IOException("Refresh was not confirmed");
             lastFailure = 0;
             failedIdentity = null;

@@ -57,6 +57,8 @@ public final class AccountVault {
         @NonNull public final String id;
         @NonNull public final Type type;
         @NonNull public final String username;
+        @Nullable public final String loginName;
+        @Nullable public final String avatarUrl;
         @Nullable public final String password;
         @Nullable public final String apiKey;
         @Nullable public final String accessToken;
@@ -70,8 +72,19 @@ public final class AccountVault {
                        @Nullable String password, @Nullable String apiKey,
                        @Nullable String accessToken, @Nullable String refreshToken,
                        long accessExpiry, long refreshExpiry, boolean rejected, long userId) {
+            this(id, type, username, password, apiKey, accessToken, refreshToken, accessExpiry,
+                refreshExpiry, rejected, userId, null, null);
+        }
+
+        public Account(@NonNull String id, @NonNull Type type, @NonNull String username,
+                       @Nullable String password, @Nullable String apiKey,
+                       @Nullable String accessToken, @Nullable String refreshToken,
+                       long accessExpiry, long refreshExpiry, boolean rejected, long userId,
+                       @Nullable String loginName, @Nullable String avatarUrl) {
             if (id == null || id.isEmpty() || id.length() > 128 || type == null
                 || username == null || username.length() > 256
+                || (loginName != null && (loginName.isEmpty() || loginName.length() > 256))
+                || (avatarUrl != null && (avatarUrl.isEmpty() || avatarUrl.length() > 2048))
                 || !validField(password) || !validField(apiKey) || !validField(accessToken)
                 || !validField(refreshToken) || accessExpiry < 0 || refreshExpiry < 0 || userId < 0
                 || (type == Type.API_KEY && (apiKey == null || apiKey.trim().isEmpty()))
@@ -82,6 +95,8 @@ public final class AccountVault {
             this.id = id;
             this.type = type;
             this.username = username;
+            this.loginName = loginName;
+            this.avatarUrl = avatarUrl;
             this.password = password;
             this.apiKey = apiKey;
             this.accessToken = accessToken;
@@ -101,6 +116,8 @@ public final class AccountVault {
             object.put("id", id);
             object.put("type", type.name());
             object.put("username", username);
+            if (loginName != null) object.put("loginName", loginName);
+            if (avatarUrl != null) object.put("avatarUrl", avatarUrl);
             if (password != null) object.put("password", password);
             if (apiKey != null) object.put("apiKey", apiKey);
             if (accessToken != null) object.put("accessToken", accessToken);
@@ -117,7 +134,8 @@ public final class AccountVault {
                 object.getString("username"), optionalString(object, "password"),
                 optionalString(object, "apiKey"), optionalString(object, "accessToken"),
                 optionalString(object, "refreshToken"), object.getLong("accessExpiry"),
-                object.getLong("refreshExpiry"), object.getBoolean("rejected"), object.getLong("userId"));
+                object.getLong("refreshExpiry"), object.getBoolean("rejected"), object.getLong("userId"),
+                optionalString(object, "loginName"), optionalString(object, "avatarUrl"));
         }
 
         @Nullable

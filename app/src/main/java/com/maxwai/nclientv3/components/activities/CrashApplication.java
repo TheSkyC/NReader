@@ -22,6 +22,7 @@ import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.settings.Database;
+import com.maxwai.nclientv3.settings.AccountRuntime;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.TagV2;
 import com.maxwai.nclientv3.utility.network.NetworkUtil;
@@ -43,6 +44,7 @@ public class CrashApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        AccountRuntime.initialize(this);
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         Global.initStorage(this);
         //noinspection resource

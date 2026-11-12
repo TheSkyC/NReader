@@ -70,6 +70,15 @@ public class ApiAuthInterceptor implements Interceptor {
         }
         ExpectedIdentity expected = request.tag(ExpectedIdentity.class);
         long credentialGeneration = AuthStore.identityGeneration();
+        if (credentialGeneration < 0 && AccountRuntime.repository() != null
+            && !AccountRuntime.repository().isOpen() && AccountRuntime.openError() == null) {
+            AccountRuntime.awaitInitialization();
+            credentialGeneration = AuthStore.identityGeneration();
+        }
+        if (credentialGeneration < 0 && request.header("Authorization") == null
+            && (isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)
+                || isTrustedApiRequest(request.url(), Utility.getHost())))
+            throw new IOException("Account identity is changing");
         if (expected != null) expected.checkCurrent();
         String session = AuthSessionStore.identity(context);
         if (expected != null && (request.header("Authorization") != null
