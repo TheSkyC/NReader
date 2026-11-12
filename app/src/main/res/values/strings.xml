@@ -498,6 +498,7 @@
     <string name="online_blacklist_loading">Loading online blacklist…</string>
     <string name="online_blacklist_loaded">Online blacklist is up to date</string>
     <string name="online_blacklist_load_error">Could not load online blacklist. Try refreshing.</string>
+    <string name="online_blacklist_session_expired">Your account session has expired. Sign in to load your online blacklist.</string>
     <string name="online_blacklist_search_unavailable">The online blacklist is not loaded. Refresh it, or search without its tags.</string>
     <string name="online_blacklist_search_without">Search without</string>
     <string name="online_blacklist_sign_in_required">Sign in again or check your API key before refreshing the online blacklist.</string>

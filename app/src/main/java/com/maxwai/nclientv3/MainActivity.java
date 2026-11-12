@@ -61,6 +61,7 @@ import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
 import com.maxwai.nclientv3.components.widgets.GalleryListGrid;
+import com.maxwai.nclientv3.settings.AuthSessionStore;
 import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
@@ -308,6 +309,10 @@ public class MainActivity extends BaseActivity
             }
             if (!Login.wantsAccountTag() || Login.hasCurrentOnlineTags()) {
                 startInspector();
+            } else if (AuthSessionStore.hasStoredSession(this) && AuthSessionStore.identity(this) == null) {
+                snackbar = Snackbar.make(masterLayout, R.string.online_blacklist_session_expired, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.account_sign_in, view -> startActivity(new Intent(this, AccountLoginActivity.class)));
+                snackbar.show();
             } else {
                 showError(R.string.online_blacklist_load_error, view -> loadInitialOnlineTags(pendingInspector));
             }

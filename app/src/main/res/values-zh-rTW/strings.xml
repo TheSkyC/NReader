@@ -413,6 +413,7 @@
     <string name="online_blacklist_loading">正在載入線上封鎖清單…</string>
     <string name="online_blacklist_loaded">線上封鎖清單已更新</string>
     <string name="online_blacklist_load_error">無法載入線上封鎖清單，請嘗試重新整理。</string>
+    <string name="online_blacklist_session_expired">帳號工作階段已過期，請登入以載入線上封鎖清單。</string>
     <string name="online_blacklist_search_unavailable">線上封鎖清單尚未載入。請重新整理，或不使用這些標籤繼續搜尋。</string>
     <string name="online_blacklist_search_without">繼續搜尋</string>
     <string name="online_blacklist_sign_in_required">請重新登入或檢查 API 金鑰，然後重新整理線上封鎖清單。</string>
