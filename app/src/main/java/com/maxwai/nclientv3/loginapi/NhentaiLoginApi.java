@@ -3,6 +3,7 @@ package com.maxwai.nclientv3.loginapi;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.maxwai.nclientv3.settings.AuthSessionStore;
 import com.maxwai.nclientv3.settings.Global;
@@ -161,6 +162,33 @@ public final class NhentaiLoginApi {
                              long attempt, @NonNull CancelHandle handle, @NonNull String userAgent,
                              @NonNull String protectionCookies)
         throws IOException {
+        LoginResult result = authenticate(context, username, password, captcha, challenge, nonce,
+            handle, userAgent, protectionCookies);
+        if (!AuthSessionStore.completeAttempt(context, result.cookies, attempt))
+            throw new IOException("Login not completed");
+    }
+
+    public static final class LoginResult {
+        @NonNull public final List<Cookie> cookies;
+        public final long userId;
+        @Nullable public final String username;
+        @Nullable public final String avatarUrl;
+
+        private LoginResult(List<Cookie> cookies, long userId, @Nullable String username,
+                            @Nullable String avatarUrl) {
+            this.cookies = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(cookies));
+            this.userId = userId;
+            this.username = username;
+            this.avatarUrl = avatarUrl;
+        }
+    }
+
+    @NonNull
+    public static LoginResult authenticate(@NonNull Context context, @NonNull String username,
+                                           @NonNull String password, @NonNull String captcha,
+                                           @NonNull Challenge challenge, @NonNull String nonce,
+                                           @NonNull CancelHandle handle, @NonNull String userAgent,
+                                           @NonNull String protectionCookies) throws IOException {
         JSONObject payload = new JSONObject();
         try {
             payload.put("username", username);
@@ -207,9 +235,38 @@ public final class NhentaiLoginApi {
             } catch (JSONException exception) {
                 throw new IOException("Invalid login response", exception);
             }
-            List<Cookie> cookies = parseTokens(body);
-            if (!AuthSessionStore.completeAttempt(context, cookies, attempt)) throw new IOException("Login not completed");
+            return parseLoginResult(body);
         } finally { handle.detach(call); }
+    }
+
+    static LoginResult parseLoginResult(@NonNull JSONObject body) throws IOException {
+        List<Cookie> cookies = parseTokens(body);
+        if (cookies.size() != 2) throw new IOException("Invalid login credentials response");
+        JSONObject user = body.optJSONObject("user");
+        Object rawId = user.opt("id");
+        Object rawName = user.opt("username");
+        Object rawAvatar = user.opt("avatar_url");
+        long id = 0;
+        String name = null;
+        String avatar = null;
+        if (rawId != null && rawId != JSONObject.NULL) {
+            if (!(rawId instanceof Integer) && !(rawId instanceof Long)) throw new IOException("Invalid account profile");
+            id = ((Number) rawId).longValue();
+            if (id <= 0) throw new IOException("Invalid account profile");
+        }
+        if (rawName != null && rawName != JSONObject.NULL) {
+            if (!(rawName instanceof String) || ((String) rawName).trim().isEmpty()
+                || ((String) rawName).length() > 256) throw new IOException("Invalid account profile");
+            name = (String) rawName;
+        }
+        if (rawAvatar instanceof String && ((String) rawAvatar).length() <= 2048) {
+            HttpUrl url = HttpUrl.parse((String) rawAvatar);
+            if (url != null && url.isHttps() && url.port() == 443 && url.username().isEmpty()
+                && url.password().isEmpty()
+                && (url.host().equals("nhentai.net") || url.host().endsWith(".nhentai.net")))
+                avatar = url.toString();
+        }
+        return new LoginResult(cookies, id, name, avatar);
     }
 
     static List<Cookie> parseTokens(@NonNull JSONObject body) throws IOException {
