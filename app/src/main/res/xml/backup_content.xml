@@ -11,4 +11,5 @@
     <exclude domain="sharedpref" path="DebugDisplay.xml" />
     <exclude domain="sharedpref" path="Auth.xml" />
     <exclude domain="sharedpref" path="Login.xml" />
+    <exclude domain="sharedpref" path="online_favorite_cache.xml" />
 </full-backup-content>
