@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -63,6 +64,11 @@ public final class AccountLoginActivity extends GeneralActivity {
         signIn = findViewById(R.id.account_sign_in);
         signOut = findViewById(R.id.account_sign_out);
         signIn.setOnClickListener(view -> start());
+        password.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId != EditorInfo.IME_ACTION_DONE) return false;
+            start();
+            return true;
+        });
         signOut.setOnClickListener(view -> confirmSignOut());
         showIdle();
         AuthStore.observeChanges(this, authObserver);
