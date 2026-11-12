@@ -63,6 +63,20 @@ public class NhentaiLoginApiTest {
             new JSONObject("{\"challenge\":\"fixture\",\"difficulty\":257}")));
     }
 
+    @Test public void loginResultKeepsValidatedProfileAndRejectsUntrustedAvatar() throws Exception {
+        JSONObject body = new JSONObject("{\"user\":{\"id\":12,\"username\":\"fixture\","
+            + "\"avatar_url\":\"https://i.nhentai.net/avatars/12.png\"},"
+            + "\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}");
+        NhentaiLoginApi.LoginResult result = NhentaiLoginApi.parseLoginResult(body);
+        assertEquals(12, result.userId);
+        assertEquals("fixture", result.username);
+        assertEquals("https://i.nhentai.net/avatars/12.png", result.avatarUrl);
+        body.getJSONObject("user").put("avatar_url", "https://nhentai.net.evil.example/avatar.png");
+        assertEquals(null, NhentaiLoginApi.parseLoginResult(body).avatarUrl);
+        body.getJSONObject("user").put("id", "12");
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseLoginResult(body));
+    }
+
     @Test public void explicitWebViewCookiesSurviveTheNetworkCookieBridge() throws Exception {
         Application app = org.robolectric.RuntimeEnvironment.getApplication();
         okhttp3.OkHttpClient previous = com.maxwai.nclientv3.settings.Global.client;
