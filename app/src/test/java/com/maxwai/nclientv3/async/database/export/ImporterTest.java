@@ -47,6 +47,21 @@ public class ImporterTest {
     private DatabaseHelper helper;
     private SQLiteDatabase database;
 
+    @Test
+    public void archiveDoesNotImportAuthenticationPreferences() throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+            for (String name : new String[]{"Database.json", "Auth.json", "Login.json", "Settings.json"}) {
+                zip.putNextEntry(new ZipEntry(name));
+                zip.write("{}".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+        }
+        java.util.List<String> imported = new java.util.ArrayList<>();
+        BackupArchive.read(new ByteArrayInputStream(bytes.toByteArray()), (name, source) -> imported.add(name));
+        assertEquals(java.util.Collections.singletonList("Settings.json"), imported);
+    }
+
     @Before
     public void setUp() {
         RuntimeEnvironment.getApplication().deleteDatabase("Entries.db");
