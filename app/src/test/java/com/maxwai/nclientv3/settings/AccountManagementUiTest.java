@@ -103,4 +103,13 @@ public class AccountManagementUiTest {
             assertEquals(View.GONE, activity.findViewById(R.id.clear_api_key).getVisibility());
         }
     }
+
+    @Test public void unsavedApiKeyIsNotRestoredAfterRecreation() {
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("unsaved-key-fixture");
+            controller.recreate();
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
 }
