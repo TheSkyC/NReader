@@ -21,6 +21,7 @@ import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
@@ -39,6 +40,30 @@ public class AccountLoginActivityTest {
             controller.recreate();
             EditText password = controller.get().findViewById(R.id.account_password);
             assertEquals("", password.getText().toString());
+        } finally {
+            AuthSessionStore.clear(app);
+            AuthStore.clear(app);
+        }
+    }
+
+    @Test public void destroyingActivityInvalidatesPendingLoginWithoutReplacingSession() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        Global.initFromShared(app);
+        assertTrue(AuthSessionStore.replace(app,
+            AuthSessionStore.tokenCookies("old-access-fixture", "old-refresh-fixture"), null));
+        String originalIdentity = AuthSessionStore.identity(app);
+        long attempt = AuthSessionStore.beginAttempt();
+        try {
+            ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class).setup();
+            java.lang.reflect.Field attemptField = AccountLoginActivity.class.getDeclaredField("attempt");
+            attemptField.setAccessible(true);
+            attemptField.setLong(controller.get(), attempt);
+            controller.pause().stop().destroy();
+            assertFalse(AuthSessionStore.completeAttempt(app,
+                AuthSessionStore.tokenCookies("new-access-fixture", "new-refresh-fixture"), attempt));
+            assertEquals(originalIdentity, AuthSessionStore.identity(app));
         } finally {
             AuthSessionStore.clear(app);
             AuthStore.clear(app);
