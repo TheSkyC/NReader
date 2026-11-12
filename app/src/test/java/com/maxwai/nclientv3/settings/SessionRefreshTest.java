@@ -114,6 +114,53 @@ public class SessionRefreshTest {
         assertNull(SessionRefresh.access(context, identity, null));
     }
 
+    @Test public void rejectedRefreshStillAllowsPublicReadWithoutCredentials() throws Exception {
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain ->
+            new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build()).build();
+        java.util.List<String> authorization = new java.util.ArrayList<>();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(context))
+            .addInterceptor(chain -> {
+                authorization.add(chain.request().header("Authorization"));
+                boolean authenticated = chain.request().header("Authorization") != null;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(authenticated ? 401 : 200).message("fixture")
+                    .body(ResponseBody.create("{}", null)).build();
+            }).build();
+        try (Response response = client.newCall(new Request.Builder()
+            .url("https://nhentai.net/api/v2/galleries").build()).execute()) {
+            assertEquals(200, response.code());
+        }
+        assertEquals(2, authorization.size());
+        assertEquals("User old", authorization.get(0));
+        assertNull(authorization.get(1));
+        assertNull(AuthSessionStore.identity(context));
+        assertTrue(AuthSessionStore.hasStoredSession(context));
+    }
+
+    @Test public void rejectedRefreshDoesNotRetryAccountBoundReadAnonymously() throws Exception {
+        String identity = AuthSessionStore.identity(context);
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain ->
+            new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build()).build();
+        int[] requests = {0};
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(context))
+            .addInterceptor(chain -> {
+                requests[0]++;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(401).message("Unauthorized").body(ResponseBody.create("", null)).build();
+            }).build();
+        try {
+            client.newCall(new Request.Builder().url("https://nhentai.net/api/v2/favorites")
+                .tag(ApiAuthInterceptor.ExpectedIdentity.class, new ApiAuthInterceptor.ExpectedIdentity(identity))
+                .build()).execute();
+            org.junit.Assert.fail("Account-bound reads must not fall back to an anonymous request");
+        } catch (java.io.IOException expected) {
+            assertEquals(1, requests[0]);
+            assertNull(AuthSessionStore.identity(context));
+        }
+    }
+
     @Test public void accessTokenIsNotUrlDecoded() {
         assertTrue(AuthSessionStore.replace(context, AuthSessionStore.tokenCookies("a%2Fb+c", "refresh"), null));
         String identity = AuthSessionStore.identity(context);

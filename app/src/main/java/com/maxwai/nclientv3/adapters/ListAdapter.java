@@ -39,6 +39,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     private final List<SimpleGallery> mDataset;
     private final List<SimpleGallery> allDataset = new ArrayList<>();
     private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.atomic.AtomicLong filterGeneration = new java.util.concurrent.atomic.AtomicLong();
     private final BaseActivity context;
     private final String queryString;
     private RecyclerView attachedRecycler;
@@ -219,11 +220,13 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     public boolean isLoadedCustomStatusOnly() { return loadedCustomStatusOnly; }
 
     private void applyLoadedFilters() {
+        long generation = filterGeneration.incrementAndGet();
         List<SimpleGallery> snapshot = new ArrayList<>(allDataset);
         filterExecutor.execute(() -> {
             ArrayList<SimpleGallery> result = new ArrayList<>();
             for (SimpleGallery gallery : snapshot) if (matchesLoadedFilters(gallery)) result.add(gallery);
             context.runOnUiThread(() -> {
+                if (generation != filterGeneration.get()) return;
                 mDataset.clear();
                 mDataset.addAll(result);
                 notifyDataSetChanged();
@@ -245,6 +248,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     }
 
     public void addGalleries(List<GenericGallery> galleries) {
+        filterGeneration.incrementAndGet();
         int c = mDataset.size();
         for (GenericGallery g : galleries) {
             SimpleGallery gallery = (SimpleGallery) g;
@@ -260,6 +264,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     }
 
     public void restartDataset(List<GenericGallery> galleries) {
+        filterGeneration.incrementAndGet();
         /*int c=mDataset.size();
         if(c>0) {
             mDataset.clear();
@@ -286,6 +291,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     }
 
     public void close() {
+        filterGeneration.incrementAndGet();
         filterExecutor.shutdownNow();
     }
 }

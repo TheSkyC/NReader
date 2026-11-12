@@ -5,7 +5,7 @@
     <string name="preference_key_account_login" translatable="false">account_login</string>
     <string name="account_title">nhentai account</string>
     <string name="account_setting_summary">Sign in with your username and password</string>
-    <string name="account_description">Sign in to use online favorites. Your password is not saved. Your API key remains separate.</string>
+    <string name="account_description">Sign in to use online favorites and tags. Your password is not saved. Your API key remains separate.</string>
     <string name="account_username">Username or email</string>
     <string name="account_password">Password</string>
     <string name="account_sign_in">Sign in</string>
@@ -18,7 +18,7 @@
     <string name="account_enter_password">Enter your password.</string>
     <string name="account_preparing_verification">Preparing verification…</string>
     <string name="account_signing_in">Signing in…</string>
-    <string name="account_verification_error">Unable to load verification. Check your connection and try again.</string>
+    <string name="account_verification_error">Verification did not complete. Check your connection and try again.</string>
     <string name="account_login_error">Sign-in could not be completed. Check your details and try again.</string>
     <string name="account_protection_error">The site blocked this sign-in request after verification. Try again later.</string>
     <string name="account_verify_title">Verify your sign-in</string>
@@ -493,6 +493,14 @@
         <item>pretty</item>
     </string-array>
     <string name="online_blacklist_add_error">Error adding to online blacklist</string>
+    <string name="online_blacklist_update_error">Could not update the online blacklist. Please try again.</string>
+    <string name="online_blacklist_refresh">Refresh</string>
+    <string name="online_blacklist_loading">Loading online blacklist…</string>
+    <string name="online_blacklist_loaded">Online blacklist is up to date</string>
+    <string name="online_blacklist_load_error">Could not load online blacklist. Try refreshing.</string>
+    <string name="online_blacklist_search_unavailable">The online blacklist is not loaded. Refresh it, or search without its tags.</string>
+    <string name="online_blacklist_search_without">Search without</string>
+    <string name="online_blacklist_sign_in_required">Sign in again or check your API key before refreshing the online blacklist.</string>
     <string name="clipboard_settings_error">Error copying settings into clipboard</string>
     <string name="send_image_error">Error creating Image to send</string>
     <string name="unlock">Unlock</string>

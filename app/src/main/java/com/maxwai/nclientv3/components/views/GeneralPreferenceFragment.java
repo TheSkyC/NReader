@@ -505,6 +505,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         if (act == null) return;
         Preference apiKey = findPreference(getString(R.string.preference_key_api_key));
         if (apiKey != null) updateApiKeySummary(apiKey);
+        Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
+        if (accountTags != null) accountTags.setEnabled(Login.isLogged());
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
         if (restore != null) updateSnapshotAvailability(restore);
     }

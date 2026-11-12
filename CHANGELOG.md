@@ -5,6 +5,8 @@
 - Add nhentai account sign-in with Turnstile, bounded proof of work and
   renewable session credentials. Keep API keys separate and isolate online
   favorite state across account changes.
+- Support account sessions in online tag filtering, with identity-bound blacklist
+  synchronization, atomic cache replacement and a retryable status in the tag UI.
 - Split gallery details, page previews, and comments into separate tabs, with a
   direct reading action and retained single-column reading. Load comments using
   the paginated API and provide a browser entry while posting remains unavailable.

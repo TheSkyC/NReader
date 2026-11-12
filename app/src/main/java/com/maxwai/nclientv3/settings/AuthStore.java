@@ -11,6 +11,45 @@ public final class AuthStore {
     private static final String KEY_TYPE = "type";
     private static final String KEY_SECRET = "secret";
     private static final String KEY_VALID = "valid";
+    private static final java.util.concurrent.atomic.AtomicLong identityGeneration = new java.util.concurrent.atomic.AtomicLong();
+    private static int identityWriters;
+    private static final Object generationLock = new Object();
+    private static final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final java.util.concurrent.CopyOnWriteArrayList<Runnable> identityObservers =
+        new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void observeIdentityChanges(@NonNull Runnable observer) {
+        identityObservers.addIfAbsent(observer);
+    }
+
+    public static void removeIdentityObserver(@NonNull Runnable observer) {
+        identityObservers.remove(observer);
+    }
+
+    public static long identityGeneration() {
+        synchronized (generationLock) {
+            return identityWriters == 0 ? identityGeneration.get() : -1;
+        }
+    }
+
+    static void beginIdentityChange() {
+        synchronized (generationLock) {
+            identityWriters++;
+            identityGeneration.incrementAndGet();
+        }
+    }
+
+    static void endIdentityChange() {
+        boolean stable;
+        synchronized (generationLock) {
+            identityGeneration.incrementAndGet();
+            identityWriters--;
+            stable = identityWriters == 0;
+        }
+        if (stable) main.post(() -> {
+            for (Runnable observer : identityObservers) observer.run();
+        });
+    }
 
     private AuthStore() {
     }
@@ -32,15 +71,28 @@ public final class AuthStore {
 
     public static synchronized void saveApiKey(@NonNull Context context, @NonNull String apiKey, boolean valid) {
         String normalized = apiKey.trim();
+        boolean changed = !normalized.equals(getApiKey(context)) || hasValidApiKey(context) != valid;
+        if (changed) beginIdentityChange();
+        try {
         getPreferences(context).edit()
             .putString(KEY_TYPE, AuthCredentials.Type.API_KEY.name())
             .putString(KEY_SECRET, normalized)
             .putBoolean(KEY_VALID, valid)
             .apply();
+        } finally {
+            if (changed) endIdentityChange();
+        }
     }
 
     public static synchronized void clear(@NonNull Context context) {
+        SharedPreferences preferences = getPreferences(context);
+        boolean changed = preferences.contains(KEY_TYPE) || preferences.contains(KEY_SECRET) || preferences.contains(KEY_VALID);
+        if (changed) beginIdentityChange();
+        try {
         getPreferences(context).edit().remove(KEY_TYPE).remove(KEY_SECRET).remove(KEY_VALID).apply();
+        } finally {
+            if (changed) endIdentityChange();
+        }
     }
 
     @Nullable
@@ -90,12 +142,19 @@ public final class AuthStore {
 
     public static synchronized void setApiKeyValidation(@NonNull Context context, boolean valid) {
         if (!hasApiKey(context)) return;
+        boolean changed = hasValidApiKey(context) != valid;
+        if (changed) beginIdentityChange();
+        try {
         getPreferences(context).edit().putBoolean(KEY_VALID, valid).apply();
+        } finally {
+            if (changed) endIdentityChange();
+        }
     }
 
     public static synchronized void setApiKeyValidationIfCurrent(@NonNull Context context,
-                                                                  @NonNull String apiKey, boolean valid) {
-        if (apiKey.equals(getApiKey(context))) setApiKeyValidation(context, valid);
+                                                                  @NonNull String apiKey, long generation, boolean valid) {
+        if (generation >= 0 && generation == identityGeneration() && apiKey.equals(getApiKey(context)))
+            setApiKeyValidation(context, valid);
     }
 
     @Nullable

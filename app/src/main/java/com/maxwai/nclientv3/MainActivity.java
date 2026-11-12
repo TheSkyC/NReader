@@ -53,6 +53,7 @@ import com.maxwai.nclientv3.api.enums.TagStatus;
 import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.async.ScrapeTags;
 import com.maxwai.nclientv3.async.VersionChecker;
+import com.maxwai.nclientv3.loginapi.LoadTags;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
@@ -114,6 +115,12 @@ public class MainActivity extends BaseActivity
     private boolean inspecting = false, filteringTag = false;
     private SortType temporaryType;
     private Snackbar snackbar = null;
+    private long normalInspectorRevision = -1;
+    private String normalInspectorIdentity;
+    private InspectorV3 blacklistLoadingInspector;
+    private final Runnable accountFilterObserver = this::refreshAccountFilter;
+    private final Runnable favoriteIdentityObserver = this::refreshFavoriteIdentity;
+    private long favoriteInspectorGeneration = -1;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
         resetDataset = new MainInspectorResponse() {
@@ -127,7 +134,7 @@ public class MainActivity extends BaseActivity
     };
     final Runnable changeLanguageRunnable = () -> {
         useNormalMode();
-        inspector.start();
+        startInspector();
     };
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
@@ -153,7 +160,7 @@ public class MainActivity extends BaseActivity
         refresher.setOnRefreshListener(() -> {
             inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
             if (Global.isInfiniteScrollMain()) inspector.setPage(1);
-            inspector.start();
+            startInspector();
         });
 
         manageDrawer();
@@ -175,7 +182,7 @@ public class MainActivity extends BaseActivity
         }
         if (firstTime) checkUpdate();
         if (inspector != null) {
-            inspector.start();
+            startInspector();
         } else {
             LogUtility.e(getIntent().getExtras());
         }
@@ -192,6 +199,119 @@ public class MainActivity extends BaseActivity
                 }
             }
         });
+    }
+
+    private void startInspector() {
+        if (modeType == ModeType.NORMAL && Login.wantsAccountTag() && !Login.hasCurrentOnlineTags()) {
+            if (Login.isOnlineTagMutationPending()) refresher.setRefreshing(true);
+            else loadInitialOnlineTags(inspector);
+        } else {
+            String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
+            long revision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
+            if (modeType == ModeType.NORMAL && (!Objects.equals(identity, normalInspectorIdentity)
+                || revision != normalInspectorRevision)) {
+                int page = inspector.getPage();
+                SortType sort = inspector.getSortType();
+                inspector = InspectorV3.searchInspector(this, null, null, page, sort, null, inspector.getResponse());
+                normalInspectorIdentity = identity;
+                normalInspectorRevision = revision;
+            }
+            InspectorV3 request = inspector;
+            if (modeType == ModeType.FAVORITE) favoriteInspectorGeneration = AuthStore.identityGeneration();
+            boolean normal = modeType == ModeType.NORMAL;
+            java.util.function.BooleanSupplier current = () -> !isFinishing() && !isDestroyed() && inspector == request
+                && request.isFavoriteIdentityCurrent() && (!normal
+                || (Objects.equals(identity, Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null)
+                && revision == (Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1)));
+            request.setResultCurrent(current);
+            InspectorV3.InspectorResponse delegate = request.getResponse();
+            request.setDeliveryResponse(new InspectorV3.InspectorResponse() {
+                private void deliver(Runnable action) {
+                    runOnUiThread(() -> { if (current.getAsBoolean()) action.run(); });
+                }
+                @Override public boolean shouldStart(InspectorV3 value) { return current.getAsBoolean() && delegate.shouldStart(value); }
+                @Override public void onStart() { deliver(delegate::onStart); }
+                @Override public void onSuccess(List<GenericGallery> galleries) { deliver(() -> delegate.onSuccess(galleries)); }
+                @Override public void onFailure(Exception error) { deliver(() -> delegate.onFailure(error)); }
+                @Override public void onEnd() {
+                    runOnUiThread(() -> {
+                        if (!isFinishing() && !isDestroyed() && inspector == request) delegate.onEnd();
+                    });
+                }
+            });
+            request.start();
+        }
+    }
+
+    private void refreshFavoriteIdentity() {
+        if (isFinishing() || isDestroyed() || modeType != ModeType.FAVORITE || inspector == null) return;
+        long generation = AuthStore.identityGeneration();
+        if (generation < 0 || generation == favoriteInspectorGeneration) return;
+        if (inspector.getRequestType() == ApiRequestType.FAVORITE) {
+            inspector = inspector.cloneInspector(this, resetDataset);
+            inspector.setPage(1);
+        } else {
+            inspector = InspectorV3.favoriteInspector(this, null, 1, resetDataset);
+        }
+        adapter.restartDataset(java.util.Collections.emptyList());
+        startInspector();
+    }
+
+    private void refreshAccountFilter() {
+        if (isFinishing() || isDestroyed() || modeType != ModeType.NORMAL || inspector == null
+            || blacklistLoadingInspector != null) return;
+        String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
+        long revision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
+        if (Objects.equals(identity, normalInspectorIdentity) && revision == normalInspectorRevision
+            && (!Login.wantsAccountTag() || Login.hasCurrentOnlineTags())) return;
+        inspector = inspector.cloneInspector(this, resetDataset);
+        adapter.restartDataset(java.util.Collections.emptyList());
+        startInspector();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Login.observeOnlineTags(accountFilterObserver);
+        AuthStore.observeIdentityChanges(accountFilterObserver);
+        AuthStore.observeIdentityChanges(favoriteIdentityObserver);
+        refreshAccountFilter();
+        refreshFavoriteIdentity();
+    }
+
+    @Override
+    protected void onStop() {
+        Login.removeOnlineTagsObserver(accountFilterObserver);
+        AuthStore.removeIdentityObserver(accountFilterObserver);
+        AuthStore.removeIdentityObserver(favoriteIdentityObserver);
+        super.onStop();
+    }
+
+    private void loadInitialOnlineTags(InspectorV3 pendingInspector) {
+        if (blacklistLoadingInspector == pendingInspector) return;
+        blacklistLoadingInspector = pendingInspector;
+        long generation = AuthStore.identityGeneration();
+        refresher.setRefreshing(true);
+        new LoadTags(this, successful -> runOnUiThread(() -> {
+            if (blacklistLoadingInspector == pendingInspector) blacklistLoadingInspector = null;
+            if (isFinishing() || isDestroyed() || inspector != pendingInspector || modeType != ModeType.NORMAL) return;
+            refresher.setRefreshing(false);
+            long currentGeneration = AuthStore.identityGeneration();
+            if (currentGeneration < 0) return;
+            if (generation != currentGeneration) {
+                startInspector();
+                return;
+            }
+            if (Login.wantsAccountTag() && Login.isOnlineTagMutationPending()) {
+                refresher.setRefreshing(true);
+                return;
+            }
+            if (!Login.wantsAccountTag() || Login.hasCurrentOnlineTags()) {
+                startInspector();
+            } else {
+                showError(R.string.online_blacklist_load_error, view -> loadInitialOnlineTags(pendingInspector));
+            }
+        })).start();
     }
 
     private void manageDrawer() {
@@ -239,7 +359,7 @@ public class MainActivity extends BaseActivity
             public void pageChanged() {
                 inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
                 inspector.setPage(pageSwitcher.getActualPage());
-                inspector.start();
+                startInspector();
             }
         });
     }
@@ -261,7 +381,7 @@ public class MainActivity extends BaseActivity
                     inspecting = true;
                     inspector = inspector.cloneInspector(MainActivity.this, addDataset);
                     inspector.setPage(inspector.getPage() + 1);
-                    inspector.start();
+                    startInspector();
                 }
             }
         });
@@ -368,6 +488,8 @@ public class MainActivity extends BaseActivity
     private void useNormalMode() {
         inspector = InspectorV3.basicInspector(this, 1, resetDataset);
         modeType = ModeType.NORMAL;
+        normalInspectorIdentity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
+        normalInspectorRevision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
     }
 
     private void useSharedTextMode(Intent intent) {
@@ -606,7 +728,7 @@ public class MainActivity extends BaseActivity
         if (setting) {
             Global.initFromShared(this);//restart all settings
             inspector = inspector.cloneInspector(this, resetDataset);
-            inspector.start();//restart inspector
+            startInspector();//restart inspector
             adapter.notifyDataSetChanged();//restart adapter
             adapter.resetStatuses();
             showPageSwitcher(inspector.getPage(), inspector.getPageCount());//restart page switcher
@@ -614,7 +736,7 @@ public class MainActivity extends BaseActivity
             setting = false;
         } else if (filteringTag) {
             inspector = InspectorV3.basicInspector(this, 1, resetDataset);
-            inspector.start();
+            startInspector();
             filteringTag = false;
         }
         invalidateOptionsMenu();
@@ -741,7 +863,7 @@ public class MainActivity extends BaseActivity
             showLoadedFilterDialog(item);
         } else if (item.getItemId() == R.id.random_favorite) {
             inspector = InspectorV3.randomInspector(this, startGallery, true);
-            inspector.start();
+            startInspector();
         } else if (item.getItemId() == R.id.download_page) {
             if (inspector.getGalleries() != null)
                 showDialogDownloadAll();
@@ -855,7 +977,7 @@ public class MainActivity extends BaseActivity
             inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
             inspector.setSortType(temporaryType);
             popularItemDispay(item);
-            inspector.start();
+            startInspector();
         });
         builder.setNegativeButton(R.string.cancel, null);
         builder.show();
@@ -1009,7 +1131,7 @@ public class MainActivity extends BaseActivity
             super.onFailure(e);
             showError(R.string.unable_to_connect_to_the_site, v -> {
                 inspector = inspector.cloneInspector(MainActivity.this, inspector.getResponse());
-                inspector.start();
+                startInspector();
             });
         }
 

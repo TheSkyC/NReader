@@ -48,12 +48,13 @@ public final class OnlineFavoriteClient {
     private static boolean saveQueued;
     private static long mutationVersion;
     private static long identityVersion;
+    private static long authGeneration = -1;
     private static long discardedVersion;
     private static final Map<String, Long> changedVersions = new LinkedHashMap<>();
     private static final CopyOnWriteArrayList<WeakReference<IntConsumer>> listeners = new CopyOnWriteArrayList<>();
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static String activeIdentity;
-    private static SharedPreferences.OnSharedPreferenceChangeListener authObserver;
+    private static Runnable authObserver;
     private static Context authContext;
 
     public interface Result {
@@ -74,10 +75,10 @@ public final class OnlineFavoriteClient {
         synchronized (confirmedStates) {
             Context application = context.getApplicationContext();
             if (authContext != application) {
-                if (authContext != null) AuthStore.removeChangesObserver(authContext, authObserver);
+                if (authObserver != null) AuthStore.removeIdentityObserver(authObserver);
                 authContext = application;
-                authObserver = (preferences, key) -> identity(application);
-                AuthStore.observeChanges(application, authObserver);
+                authObserver = () -> identity(application);
+                AuthStore.observeIdentityChanges(authObserver);
             }
         }
     }
@@ -123,10 +124,12 @@ public final class OnlineFavoriteClient {
         String key = cacheKey(identity, galleryId);
         Boolean currentFavorite;
         boolean started;
+        long operationIdentityVersion;
         synchronized (confirmedStates) {
-            started = inFlight.add(key);
+            started = identity.equals(activeIdentity) && inFlight.add(key);
             if (started) markChanged(key);
             currentFavorite = restoredStates.contains(key) ? null : confirmedStates.get(key);
+            operationIdentityVersion = identityVersion;
         }
         if (!started) {
             result.onFailure();
@@ -135,7 +138,7 @@ public final class OnlineFavoriteClient {
         Result finished = new Result() {
             private void release() {
                 synchronized (confirmedStates) {
-                    if (inFlight.remove(key)) markChanged(key);
+                    if (operationIdentityVersion == identityVersion && inFlight.remove(key)) markChanged(key);
                 }
             }
             @Override public void onSuccess(boolean favorited) {
@@ -149,18 +152,18 @@ public final class OnlineFavoriteClient {
         };
         try {
             if (currentFavorite != null) {
-                mutate(context, galleryId, currentFavorite, identity, client, finished);
+                mutate(context, galleryId, currentFavorite, identity, operationIdentityVersion, client, finished);
                 return;
             }
-            Request request = request(galleryId, "GET", identity);
+            Request request = request(context, galleryId, "GET", identity, operationIdentityVersion);
             enqueue(context, client, request, identity, new Result() {
             @Override public void onSuccess(boolean favorited) {
-                if (!identity.equals(identity(context))) {
+                if (!isCurrentOperation(context, identity, operationIdentityVersion)) {
                     finished.onFailure();
                     return;
                 }
-                remember(identity, galleryId, favorited);
-                mutate(context, galleryId, favorited, identity, client, finished);
+                remember(identity, operationIdentityVersion, galleryId, favorited);
+                mutate(context, galleryId, favorited, identity, operationIdentityVersion, client, finished);
             }
             @Override public void onFailure() { finished.onFailure(); }
             });
@@ -241,20 +244,37 @@ public final class OnlineFavoriteClient {
         if (changed) notifyStateChanged(0);
     }
 
+    private static boolean isCurrentOperation(Context context, String identity, long generation) {
+        if (!identity.equals(identity(context))) return false;
+        synchronized (confirmedStates) {
+            return identity.equals(activeIdentity) && generation == identityVersion;
+        }
+    }
+
     private static void mutate(Context context, int galleryId, boolean remove,
-                               String identity, OkHttpClient client, Result result) {
+                               String identity, long generation, OkHttpClient client, Result result) {
         try {
-            enqueue(context, client, request(galleryId, remove ? "DELETE" : "POST", identity), identity, new Result() {
+            if (!isCurrentOperation(context, identity, generation)) {
+                result.onFailure();
+                return;
+            }
+            enqueue(context, client, request(context, galleryId, remove ? "DELETE" : "POST", identity, generation), identity, new Result() {
             @Override public void onSuccess(boolean favorited) {
-                remember(identity, galleryId, favorited);
+                if (favorited == remove || !isCurrentOperation(context, identity, generation)) {
+                    onUncertain();
+                    return;
+                }
+                remember(identity, generation, galleryId, favorited);
                 result.onSuccess(favorited);
             }
             @Override public void onFailure() { result.onFailure(); }
             @Override public void onUncertain() {
                 boolean removed;
                 synchronized (confirmedStates) {
-                    removed = confirmedStates.remove(cacheKey(identity, galleryId)) != null;
-                    restoredStates.remove(cacheKey(identity, galleryId));
+                    if (identity.equals(activeIdentity) && generation == identityVersion) {
+                        removed = confirmedStates.remove(cacheKey(identity, galleryId)) != null;
+                        restoredStates.remove(cacheKey(identity, galleryId));
+                    } else removed = false;
                 }
                 if (removed) persist(context);
                 if (removed) notifyStateChanged(galleryId);
@@ -267,16 +287,18 @@ public final class OnlineFavoriteClient {
         }
     }
 
-    private static Request request(int galleryId, String method, String identity) {
-        String url = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/favorite", galleryId);
+    private static Request request(Context context, int galleryId, String method, String identity, long generation) {
+        String url = String.format(Locale.US, Utility.getAuthenticatedApiBaseUrl(context) + "galleries/%d/favorite", galleryId);
         return new Request.Builder().url(url).tag(ApiAuthInterceptor.ExpectedIdentity.class,
-                new ApiAuthInterceptor.ExpectedIdentity(identity))
+                new ApiAuthInterceptor.ExpectedIdentity(identity, () -> isCurrentOperation(context, identity, generation)))
             .method(method, "GET".equals(method) ? null : RequestBody.EMPTY).build();
     }
 
     private static void enqueue(Context context, OkHttpClient client, Request request, String identity, Result result) {
         try {
-            client.newCall(request)
+            OkHttpClient requestClient = "GET".equals(request.method()) ? client : client.newBuilder()
+                .retryOnConnectionFailure(false).followRedirects(false).followSslRedirects(false).build();
+            requestClient.newCall(request)
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException exception) {
@@ -287,7 +309,8 @@ public final class OnlineFavoriteClient {
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         try (Response received = response) {
                             if (!received.isSuccessful()) {
-                                if (received.code() >= 500) result.onUncertain();
+                                if (received.code() < 400 || received.code() == 408 || received.code() >= 500)
+                                    result.onUncertain();
                                 else result.onFailure();
                                 return;
                             }
@@ -295,7 +318,11 @@ public final class OnlineFavoriteClient {
                                 result.onUncertain();
                                 return;
                             }
-                            Boolean favorited = parseResponse(received.body().string());
+                            if (received.body().contentLength() > 65536 || received.body().source().request(65537)) {
+                                result.onUncertain();
+                                return;
+                            }
+                            Boolean favorited = parseResponse(received.body().source().readUtf8());
                             if (favorited == null || !identity.equals(identity(context))) result.onUncertain();
                             else result.onSuccess(favorited);
                         } catch (IOException exception) {
@@ -315,11 +342,18 @@ public final class OnlineFavoriteClient {
         String identity;
         boolean changed;
         synchronized (confirmedStates) {
-            identity = AuthStore.activeIdentity(context);
-            changed = !java.util.Objects.equals(identity, activeIdentity);
+            long currentGeneration = AuthStore.identityGeneration();
+            identity = currentGeneration < 0 ? null : AuthStore.activeIdentity(context);
+            if (currentGeneration != AuthStore.identityGeneration()) {
+                currentGeneration = -1;
+                identity = null;
+            }
+            changed = !java.util.Objects.equals(identity, activeIdentity) || currentGeneration != authGeneration;
             if (changed) {
+                authGeneration = currentGeneration;
                 confirmedStates.clear();
                 restoredStates.clear();
+                inFlight.clear();
                 activeIdentity = identity;
                 resetIdentityChanges();
                 if (identity != null) load(context.getApplicationContext(), identity, identityVersion, mutationVersion);
@@ -330,10 +364,14 @@ public final class OnlineFavoriteClient {
     }
 
     private static void remember(String identity, int galleryId, boolean favorited) {
+        remember(identity, -1, galleryId, favorited);
+    }
+
+    private static void remember(String identity, long generation, int galleryId, boolean favorited) {
         boolean changed;
         boolean evicted = false;
         synchronized (confirmedStates) {
-            if (!identity.equals(activeIdentity)) return;
+            if (!identity.equals(activeIdentity) || (generation >= 0 && generation != identityVersion)) return;
             Boolean previous = confirmedStates.put(cacheKey(identity, galleryId), favorited);
             restoredStates.remove(cacheKey(identity, galleryId));
             changed = previous == null || previous != favorited;

@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3.adapters;
 
 import android.database.Cursor;
+import android.content.SharedPreferences;
 import android.util.JsonWriter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,16 +23,22 @@ import com.maxwai.nclientv3.api.enums.TagStatus;
 import com.maxwai.nclientv3.api.enums.TagType;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.AsyncCursorQuery;
+import com.maxwai.nclientv3.loginapi.LoadTags;
+import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
+import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.settings.TagV2;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
-import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Locale;
+import java.util.Objects;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -44,23 +51,38 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     @NonNull
     private final TagFilterActivity context;
     private final boolean logged = Login.isLogged();
+    private final String identity;
+    private volatile boolean closed;
+    private final Runnable authObserver;
     private final TagType type;
     private final TagMode tagMode;
     private String lastQuery = null;
     private Cursor cursor = null;
-    private final AsyncCursorQuery queryLoader = new AsyncCursorQuery();
+    private final AsyncCursorQuery queryLoader;
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online) {
+        this(cont, query, online, new AsyncCursorQuery());
+    }
+
+    TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online, AsyncCursorQuery queryLoader) {
         this.context = cont;
+        this.queryLoader = queryLoader;
+        this.identity = AuthStore.activeIdentity(cont);
+        this.authObserver = createAuthObserver();
         this.type = null;
         this.tagMode = online ? TagMode.ONLINE : TagMode.OFFLINE;
+        AuthStore.observeIdentityChanges(authObserver);
         filter(query);
     }
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, TagType type) {
         this.context = cont;
+        this.queryLoader = new AsyncCursorQuery();
+        this.identity = AuthStore.activeIdentity(cont);
+        this.authObserver = createAuthObserver();
         this.type = type;
         this.tagMode = TagMode.TYPE;
+        AuthStore.observeIdentityChanges(authObserver);
         filter(query);
     }
 
@@ -68,7 +90,14 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         lastQuery = query == null ? "" : query;
         String requestedQuery = lastQuery;
         boolean sortedByName = TagV2.isSortedByName();
+        long requestedRevision = tagMode == TagMode.ONLINE ? Login.currentOnlineTagsRevision() : -1;
         queryLoader.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName), result -> {
+            if (tagMode == TagMode.ONLINE && (!Objects.equals(identity, AuthStore.activeIdentity(context))
+                || requestedRevision < 0 || requestedRevision != Login.currentOnlineTagsRevision())) {
+                cursor = null;
+                notifyDataSetChanged();
+                return;
+            }
             int oldCount = getItemCount(), newCount = result.getCount();
             cursor = result;
             if (newCount > oldCount) notifyItemRangeInserted(oldCount, newCount - oldCount);
@@ -78,8 +107,21 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     }
 
     public void close() {
+        closed = true;
+        AuthStore.removeIdentityObserver(authObserver);
         cursor = null;
         queryLoader.close();
+    }
+
+
+    private Runnable createAuthObserver() {
+        return () -> {
+            if (tagMode == TagMode.ONLINE && !Objects.equals(identity, AuthStore.activeIdentity(context))) context.runOnUiThread(() -> {
+                if (closed) return;
+                cursor = null;
+                notifyDataSetChanged();
+            });
+        };
     }
 
     @NonNull
@@ -106,17 +148,13 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
                     }
                     break;
                 case ONLINE:
-                    try {
-                        onlineTagUpdate(ent, !Login.isOnlineTags(ent), holder.imgView);
-                    } catch (IOException e) {
-                        LogUtility.e("Error setting tag", e);
-                    }
+                    onlineTagUpdate(ent, false);
                     break;
             }
 
         });
         if (tagMode != TagMode.ONLINE && logged) holder.master.setOnLongClickListener(view -> {
-            if (!Login.isOnlineTags(ent)) showBlacklistDialog(ent, holder.imgView);
+            if (!Login.isOnlineTags(ent)) showBlacklistDialog(ent);
             else
                 Toast.makeText(context, R.string.tag_already_in_blacklist, Toast.LENGTH_SHORT).show();
             return true;
@@ -129,48 +167,80 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         return cursor == null ? 0 : cursor.getCount();
     }
 
-    private void showBlacklistDialog(final Tag tag, final ImageView imgView) {
+    private void showBlacklistDialog(final Tag tag) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
         builder.setIcon(R.drawable.ic_star_border).setTitle(R.string.add_to_online_blacklist).setMessage(R.string.are_you_sure);
         builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
-            try {
-                onlineTagUpdate(tag, true, imgView);
-            } catch (IOException e) {
-                LogUtility.w("Error adding to online blacklist", e);
-                Toast.makeText(context, R.string.online_blacklist_add_error, Toast.LENGTH_SHORT).show();
-            }
+            onlineTagUpdate(tag, true);
         }).setNegativeButton(R.string.no, null).show();
     }
 
-    private void onlineTagUpdate(final Tag tag, final boolean add, final ImageView imgView) throws IOException {
-        if (!Login.isLogged()) return;
+    private void onlineTagUpdate(final Tag tag, final boolean add) {
+        long operation = identity == null ? -1 : Login.beginOnlineTagMutation(context, identity);
+        if (operation < 0) {
+            Toast.makeText(context, R.string.online_blacklist_update_error, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
         StringWriter sw = new StringWriter();
         JsonWriter jw = new JsonWriter(sw);
         jw.beginObject().name("added").beginArray();
-        if (add) jw.value(tag.getId());;
+        if (add) jw.value(tag.getId());
         jw.endArray().name("removed").beginArray();
-        if (!add) jw.value(tag.getId());;
+        if (!add) jw.value(tag.getId());
         jw.endArray().endObject();
 
-        final String url = Utility.getApiBaseUrl() + "blacklist";
+        final String url = Utility.getAuthenticatedApiBaseUrl(context) + "blacklist";
         final RequestBody ss = RequestBody.create(sw.toString(), MediaType.get("application/json"));
-        Global.getClient(context)
-            .newCall(new Request.Builder().url(url).post(ss).build())
+        Global.getClient(context).newBuilder().retryOnConnectionFailure(false)
+            .followRedirects(false).followSslRedirects(false).build()
+            .newCall(new Request.Builder().url(url).post(ss)
+                .tag(ApiAuthInterceptor.ExpectedIdentity.class, new ApiAuthInterceptor.ExpectedIdentity(identity,
+                    () -> Login.isOnlineTagMutationCurrent(context, identity, operation))).build())
             .enqueue(new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    failedOnlineTagUpdate(operation);
                 }
 
                 @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    if (response.body().string().contains("true")) {
-                        if (add) Login.addOnlineTag(tag);
-                        else Login.removeOnlineTag(tag);
-                        if (tagMode == TagMode.ONLINE)
-                            updateLogo(imgView, add ? TagStatus.AVOIDED : TagStatus.DEFAULT);
+                public void onResponse(@NonNull Call call, @NonNull Response response) {
+                    try (response) {
+                        if (!response.isSuccessful() || response.body() == null
+                            || response.body().contentLength() > 65536
+                            || response.body().source().request(65537)) throw new IOException("Blacklist update failed");
+                        JSONObject result = new JSONObject(response.body().source().readUtf8());
+                        if (!(result.opt("success") instanceof Boolean) || !result.getBoolean("success")
+                            || result.getInt("count") < 0)
+                            throw new IOException("Blacklist update rejected");
+                        if (!Login.finishOnlineTagMutation(context, identity, operation, tag, add)) return;
+                        context.runOnUiThread(() -> {
+                            if (!closed && !context.isFinishing() && !context.isDestroyed()) filter(lastQuery);
+                        });
+                    } catch (IOException | JSONException | RuntimeException exception) {
+                        failedOnlineTagUpdate(operation);
                     }
                 }
             });
+        } catch (IOException | RuntimeException exception) {
+            failedOnlineTagUpdate(operation);
+        }
+    }
+
+    private void failedOnlineTagUpdate(long operation) {
+        if (!Login.invalidateOnlineTags(identity, operation)) return;
+        if (identity.equals(AuthStore.activeIdentity(context)))
+            new LoadTags(context, successful -> context.runOnUiThread(() -> {
+                if (!closed && !context.isFinishing() && !context.isDestroyed()) {
+                    filter(lastQuery);
+                }
+            })).start();
+        context.runOnUiThread(() -> {
+            if (!closed && !context.isFinishing() && !context.isDestroyed()) {
+                Toast.makeText(context, R.string.online_blacklist_update_error, Toast.LENGTH_SHORT).show();
+                filter(lastQuery);
+            }
+        });
     }
 
     private void updateLogo(ImageView img, TagStatus s) {

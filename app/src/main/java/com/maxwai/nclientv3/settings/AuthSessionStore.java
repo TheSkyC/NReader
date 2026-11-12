@@ -108,8 +108,14 @@ public final class AuthSessionStore {
     }
 
     static synchronized void rejectIfCurrent(@NonNull Context context, @NonNull String expectedIdentity) {
-        if (expectedIdentity.equals(identity(context)))
-            AuthStore.getPreferences(context).edit().putBoolean(REJECTED, true).apply();
+        if (expectedIdentity.equals(identity(context))) {
+            AuthStore.beginIdentityChange();
+            try {
+                AuthStore.getPreferences(context).edit().putBoolean(REJECTED, true).apply();
+            } finally {
+                AuthStore.endIdentityChange();
+            }
+        }
     }
 
     /** Only accept secure, persistent cookies scoped to the official origin. */
@@ -132,13 +138,24 @@ public final class AuthSessionStore {
             .putString(ACCESS, access.value()).putLong(ACCESS_EXPIRY, access.expiresAt())
             .remove(REJECTED);
         if (refresh != null) editor.putString(REFRESH, refresh.value()).putLong(REFRESH_EXPIRY, refresh.expiresAt());
-        editor.apply();
+        if (expectedIdentity == null) AuthStore.beginIdentityChange();
+        try {
+            editor.apply();
+        } finally {
+            if (expectedIdentity == null) AuthStore.endIdentityChange();
+        }
         return true;
     }
 
     public static synchronized void clear(@NonNull Context context) {
         attempt++;
-        AuthStore.getPreferences(context).edit().remove(ID).remove(ACCESS).remove(REFRESH)
-            .remove(ACCESS_EXPIRY).remove(REFRESH_EXPIRY).remove(REJECTED).apply();
+        boolean changed = hasStoredSession(context);
+        if (changed) AuthStore.beginIdentityChange();
+        try {
+            AuthStore.getPreferences(context).edit().remove(ID).remove(ACCESS).remove(REFRESH)
+                .remove(ACCESS_EXPIRY).remove(REFRESH_EXPIRY).remove(REJECTED).apply();
+        } finally {
+            if (changed) AuthStore.endIdentityChange();
+        }
     }
 }

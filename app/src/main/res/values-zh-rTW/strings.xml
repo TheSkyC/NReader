@@ -2,7 +2,7 @@
 <resources>
     <string name="account_title">nhentai 帳號</string>
     <string name="account_setting_summary">使用使用者名稱與密碼登入</string>
-    <string name="account_description">登入後即可使用線上收藏。密碼不會儲存，API 金鑰則獨立管理。</string>
+    <string name="account_description">登入後即可使用線上收藏和標籤。密碼不會儲存，API 金鑰則獨立管理。</string>
     <string name="account_username">使用者名稱或電子郵件</string>
     <string name="account_password">密碼</string>
     <string name="account_sign_in">登入</string>
@@ -15,7 +15,7 @@
     <string name="account_enter_password">請輸入密碼。</string>
     <string name="account_preparing_verification">正在準備驗證…</string>
     <string name="account_signing_in">正在登入…</string>
-    <string name="account_verification_error">無法載入驗證，請檢查網路後重試。</string>
+    <string name="account_verification_error">驗證未完成，請檢查網路後重試。</string>
     <string name="account_login_error">無法完成登入，請檢查帳號資料後重試。</string>
     <string name="account_protection_error">驗證完成後，網站仍封鎖了登入請求。請稍後重試。</string>
     <string name="account_verify_title">驗證登入</string>
@@ -408,4 +408,12 @@
     <string name="list_columns_summary">依可用寬度和文字大小調整；寬螢幕視窗可使用 4 欄。</string>
     <string name="cover_group_credit">社團：%1$s</string>
     <string name="restore_snapshot_checking">正在檢查還原快照…</string>
+    <string name="online_blacklist_update_error">無法更新線上封鎖清單，請重試。</string>
+    <string name="online_blacklist_refresh">重新整理</string>
+    <string name="online_blacklist_loading">正在載入線上封鎖清單…</string>
+    <string name="online_blacklist_loaded">線上封鎖清單已更新</string>
+    <string name="online_blacklist_load_error">無法載入線上封鎖清單，請嘗試重新整理。</string>
+    <string name="online_blacklist_search_unavailable">線上封鎖清單尚未載入。請重新整理，或不使用這些標籤繼續搜尋。</string>
+    <string name="online_blacklist_search_without">繼續搜尋</string>
+    <string name="online_blacklist_sign_in_required">請重新登入或檢查 API 金鑰，然後重新整理線上封鎖清單。</string>
 </resources>

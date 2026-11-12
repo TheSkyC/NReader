@@ -26,7 +26,7 @@ public final class AsyncCursorQuery implements AutoCloseable {
         this(executor);
     }
 
-    AsyncCursorQuery(Executor worker) {
+    public AsyncCursorQuery(Executor worker) {
         this.worker = worker;
     }
 

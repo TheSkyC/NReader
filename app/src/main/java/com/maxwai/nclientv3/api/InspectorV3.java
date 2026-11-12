@@ -23,6 +23,7 @@ import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
@@ -69,18 +70,31 @@ public class InspectorV3 extends Thread implements Parcelable {
     private ArrayList<GenericGallery> galleries = null;
     private Ranges ranges = null;
     private InspectorResponse response;
+    private InspectorResponse deliveryResponse;
     private WeakReference<Context> context;
     private String jsonResponse;
     private int responseCode;
     private String retryAfter;
     private volatile okhttp3.Call activeCall;
     private volatile boolean canceled;
+    private java.util.function.BooleanSupplier resultCurrent = () -> true;
     private OnlineFavoriteClient.FavoriteListSnapshot favoriteListSnapshot;
+    private volatile long favoriteAuthGeneration = -1;
+
+    public boolean isFavoriteIdentityCurrent() {
+        if (requestType != ApiRequestType.FAVORITE && requestType != ApiRequestType.RANDOM_FAVORITE) return true;
+        return favoriteAuthGeneration < 0
+            || favoriteAuthGeneration == com.maxwai.nclientv3.settings.AuthStore.identityGeneration();
+    }
 
     public void cancelRequest() {
         canceled = true;
         okhttp3.Call call = activeCall;
         if (call != null) call.cancel();
+    }
+
+    public void setResultCurrent(@NonNull java.util.function.BooleanSupplier resultCurrent) {
+        this.resultCurrent = resultCurrent;
     }
 
     public int getResponseCode() {
@@ -225,7 +239,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         tags.addAll(getLanguageTags(Global.getOnlyLanguage()));
         if (Global.removeAvoidedGalleries())
             tags.addAll(Queries.TagTable.getAllStatus(TagStatus.AVOIDED));
-        tags.addAll(Queries.TagTable.getAllOnlineBlacklisted());
+        if (Login.useAccountTag()) tags.addAll(Queries.TagTable.getAllOnlineBlacklisted());
         return tags;
     }
 
@@ -277,11 +291,16 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public void initialize(Context context, InspectorResponse response) {
         this.response = response;
+        this.deliveryResponse = response;
         this.context = new WeakReference<>(context);
     }
 
     public InspectorResponse getResponse() {
         return response;
+    }
+
+    public void setDeliveryResponse(@NonNull InspectorResponse response) {
+        deliveryResponse = response;
     }
 
     public InspectorV3 cloneInspector(Context context, InspectorResponse response) {
@@ -351,24 +370,27 @@ public class InspectorV3 extends Thread implements Parcelable {
             }
         }
         url = builder.toString().replace(' ', '+');
-        LogUtility.d("WWW: " + getBookmarkURL());
-    }
-
-    private String getBookmarkURL() {
-        if (page < 2) return url;
-        else return url.substring(0, url.lastIndexOf('=') + 1);
     }
 
     public boolean createDocument() throws IOException {
         if (jsonResponse != null) return true;
         Context requestContext = context.get();
         if (requestContext == null) throw new IOException("Request context unavailable");
-        Request.Builder builder = new Request.Builder().url(url);
-        if (requestType == ApiRequestType.FAVORITE) {
+        boolean accountFavorites = requestType == ApiRequestType.FAVORITE || requestType == ApiRequestType.RANDOM_FAVORITE;
+        String requestUrl = url;
+        if (accountFavorites) {
+            okhttp3.HttpUrl parsed = okhttp3.HttpUrl.get(url);
+            okhttp3.HttpUrl base = okhttp3.HttpUrl.get(Utility.getAuthenticatedApiBaseUrl(requestContext));
+            requestUrl = parsed.newBuilder().host(base.host()).port(base.port()).build().toString();
+        }
+        Request.Builder builder = new Request.Builder().url(requestUrl);
+        if (accountFavorites) {
+            favoriteAuthGeneration = com.maxwai.nclientv3.settings.AuthStore.identityGeneration();
             favoriteListSnapshot = OnlineFavoriteClient.beginFavoriteList(requestContext);
-            if (favoriteListSnapshot != null)
-                builder.tag(ApiAuthInterceptor.ExpectedIdentity.class,
-                    new ApiAuthInterceptor.ExpectedIdentity(favoriteListSnapshot.identity));
+            if (favoriteListSnapshot == null || favoriteAuthGeneration < 0 || !isFavoriteIdentityCurrent())
+                throw new IOException("Online identity is unavailable");
+            builder.tag(ApiAuthInterceptor.ExpectedIdentity.class,
+                new ApiAuthInterceptor.ExpectedIdentity(favoriteListSnapshot.identity, this::isFavoriteIdentityCurrent));
         }
         okhttp3.Call call = Global.getClient(requestContext).newCall(builder.build());
         activeCall = call;
@@ -397,25 +419,26 @@ public class InspectorV3 extends Thread implements Parcelable {
     @Override
     public synchronized void start() {
         if (getState() != State.NEW) return;
-        if (response.shouldStart(this))
+        if (deliveryResponse.shouldStart(this))
             super.start();
     }
 
     @Override
     public void run() {
-        LogUtility.d("Starting download: " + url);
-        if (response != null) response.onStart();
+        LogUtility.d("Starting API request: " + requestType);
+        if (deliveryResponse != null) deliveryResponse.onStart();
         try {
-            createDocument();
+            if (!createDocument()) throw new IOException("API request failed: HTTP " + responseCode);
             parseDocument();
-            if (response != null) {
-                response.onSuccess(galleries);
+            if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()) {
+                deliveryResponse.onSuccess(galleries);
             }
         } catch (Exception e) {
-            if (response != null) response.onFailure(e);
+            if (deliveryResponse != null && resultCurrent.getAsBoolean()
+                && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
         }
-        if (response != null) response.onEnd();
-        LogUtility.d("Finished download: " + url);
+        if (deliveryResponse != null) deliveryResponse.onEnd();
+        LogUtility.d("Finished API request: " + requestType);
     }
 
     private void filterDocumentTags() {
