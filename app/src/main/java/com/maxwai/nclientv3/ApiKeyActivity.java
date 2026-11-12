@@ -27,6 +27,9 @@ import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +41,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiKeyActivity extends GeneralActivity {
+    private static final long MAX_VALIDATION_RESPONSE = 2L * 1024 * 1024;
     public static final String EXTRA_ADD_ACCOUNT = "add_account";
     public static final String EXTRA_ACCOUNT_ID = "account_id";
 
@@ -221,7 +225,7 @@ public class ApiKeyActivity extends GeneralActivity {
                 try (response) {
                     validationCall.compareAndSet(call, null);
                     if (stopped.get()) return;
-                    if (response.isSuccessful()) {
+                    if (response.isSuccessful() && isValidFavoritesResponse(response)) {
                         if (!validationState.compareAndSet(1, 2)) return;
                         if (repository == null) {
                             AuthStore.saveApiKey(ApiKeyActivity.this, apiKey, true);
@@ -262,14 +266,30 @@ public class ApiKeyActivity extends GeneralActivity {
 
                     LogUtility.w("API key validation rejected: " + response.code());
                     validationState.compareAndSet(1, 0);
+                    int errorMessage = response.code() == 401 || response.code() == 403
+                        ? R.string.login_api_key_invalid : R.string.unable_to_connect_to_the_site;
                     runOnUiThread(() -> {
                         if (stopped.get() || isFinishing() || isDestroyed()) return;
                         setLoading(false);
-                        Toast.makeText(ApiKeyActivity.this, R.string.login_api_key_invalid, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ApiKeyActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     });
                 }
             }
         });
+    }
+
+    private static boolean isValidFavoritesResponse(@NonNull Response response) {
+        try {
+            okhttp3.ResponseBody body = response.body();
+            if (body == null || body.contentLength() > MAX_VALIDATION_RESPONSE
+                || body.source().request(MAX_VALIDATION_RESPONSE + 1)) return false;
+            JSONObject result = new JSONObject(body.source().readUtf8());
+            Object pages = result.opt("num_pages");
+            return result.optJSONArray("result") != null
+                && (pages instanceof Integer || pages instanceof Long) && ((Number) pages).longValue() >= 0;
+        } catch (IOException | JSONException exception) {
+            return false;
+        }
     }
 
     @Override

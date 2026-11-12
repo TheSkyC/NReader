@@ -368,7 +368,7 @@ public class AccountManagementUiTest {
             }
             return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
                 .code(validation ? 200 : 503).message("fixture")
-                .body(okhttp3.ResponseBody.create("{}", null)).build();
+                .body(okhttp3.ResponseBody.create(validation ? "{\"result\":[],\"num_pages\":0}" : "{}", null)).build();
         }).build();
         Global.client = client;
         try {
@@ -421,6 +421,35 @@ public class AccountManagementUiTest {
                 assertEquals("fixture-password", repository.snapshot().activeAccount().password);
                 assertTrue(activity.findViewById(R.id.validate_api_key).isEnabled());
                 assertFalse(activity.isFinishing());
+            }
+        } finally {
+            Global.client = originalClient;
+        }
+    }
+
+    @Test public void invalidSuccessfulApiResponseDoesNotAddAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch received = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            received.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(okhttp3.ResponseBody.create("<html>Login</html>", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("invalid-response-key");
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(received.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("existing", repository.snapshot().activeId);
+                assertEquals(1, repository.snapshot().accounts.size());
+                assertTrue(controller.get().findViewById(R.id.validate_api_key).isEnabled());
             }
         } finally {
             Global.client = originalClient;
