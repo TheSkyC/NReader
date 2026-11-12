@@ -68,6 +68,24 @@ public class SessionRefreshTest {
         assertEquals(1, calls[0]);
     }
 
+    @Test public void transientRefreshFailurePreservesSessionAndRetriesAfterCooldown() {
+        String identity = AuthSessionStore.identity(context);
+        int[] calls = {0};
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            if (++calls[0] == 1) throw new java.io.IOException("Temporary network failure");
+            return response(chain.request());
+        }).build();
+        assertNull(SessionRefresh.access(context, identity, "old"));
+        assertEquals(identity, AuthSessionStore.identity(context));
+        assertNull(AuthSessionStore.accessToken(context));
+        assertNull(SessionRefresh.access(context, identity, null));
+        assertEquals(1, calls[0]);
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(31));
+        assertEquals("new", SessionRefresh.access(context, identity, null));
+        assertEquals(identity, AuthSessionStore.identity(context));
+        assertEquals(2, calls[0]);
+    }
+
     @Test public void refreshCannotOverwriteReplacementAccount() {
         String identity = AuthSessionStore.identity(context);
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
