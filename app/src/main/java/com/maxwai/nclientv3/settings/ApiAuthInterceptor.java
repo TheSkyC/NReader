@@ -162,7 +162,8 @@ public class ApiAuthInterceptor implements Interceptor {
                 response.close();
                 throw new IOException("API operation expired");
             }
-            if (!expected.fingerprint.equals(AuthStore.activeIdentity(context))) {
+            if (credentialGeneration != AuthStore.identityGeneration()
+                || !expected.fingerprint.equals(AuthStore.activeIdentity(context))) {
                 response.close();
                 throw new IOException("API identity changed");
             }

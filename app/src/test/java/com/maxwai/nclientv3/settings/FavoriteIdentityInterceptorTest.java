@@ -209,6 +209,22 @@ public class FavoriteIdentityInterceptorTest {
         }
     }
 
+    @Test public void boundResponseIsDiscardedAfterSwitchingAwayAndBack() throws Exception {
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                AuthStore.saveApiKey(application, "second-test-key", true);
+                AuthStore.saveApiKey(application, "first-test-key", true);
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create("", null)).build();
+            }).build();
+        try {
+            client.newCall(request()).execute();
+            fail("A bound response from an earlier identity generation must be discarded");
+        } catch (IOException expected) {
+            assertTrue(AuthStore.hasValidApiKey(application));
+        }
+    }
+
     @Test public void successfulResponseFromPreviousApiKeyIsRejected() throws Exception {
         OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
             .addInterceptor(chain -> {

@@ -20,7 +20,6 @@ public final class AccountRuntime {
     private static final ExecutorService worker = Executors.newSingleThreadExecutor();
     private static final Handler main = new Handler(Looper.getMainLooper());
     @Nullable private static volatile AccountRepository repository;
-    @Nullable private static volatile Context owner;
     @Nullable private static volatile IOException openError;
     @Nullable private static volatile CountDownLatch initialization;
 
@@ -28,12 +27,11 @@ public final class AccountRuntime {
 
     public static synchronized void initialize(@NonNull Context context) {
         Context application = context.getApplicationContext();
-        if (repository != null && owner == application) return;
+        if (repository != null) return;
         AccountRepository created = new AccountRepository(new AccountVault(application));
         CountDownLatch ready = new CountDownLatch(1);
         initialization = ready;
         openError = null;
-        owner = application;
         repository = created;
         AuthStore.beginIdentityChange();
         worker.execute(() -> {
