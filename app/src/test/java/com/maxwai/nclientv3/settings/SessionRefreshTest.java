@@ -100,6 +100,29 @@ public class SessionRefreshTest {
         }
     }
 
+    @Test public void publicReadDoesNotFallBackToAnotherRejectedSession() throws Exception {
+        context.getSharedPreferences("Auth", 0).edit().putLong("session_access_expiry", 0).commit();
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            assertTrue(AuthSessionStore.replace(context, cookies("replacement"), null));
+            AuthSessionStore.rejectIfCurrent(context, AuthSessionStore.identity(context));
+            return response(chain.request());
+        }).build();
+        int[] requests = {0};
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(context))
+            .addInterceptor(chain -> {
+                requests[0]++;
+                return response(chain.request());
+            }).build();
+        try {
+            client.newCall(new Request.Builder().url("https://nhentai.net/api/v2/galleries").build()).execute();
+            org.junit.Assert.fail("A different rejected session must not permit an old request");
+        } catch (java.io.IOException expected) {
+            assertEquals(0, requests[0]);
+            assertNull(AuthSessionStore.identity(context));
+            assertTrue(AuthSessionStore.hasStoredSession(context));
+        }
+    }
+
     @Test public void rejectedWriteRefreshesButIsNotReplayed() throws Exception {
         String identity = AuthSessionStore.identity(context);
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> response(chain.request())).build();

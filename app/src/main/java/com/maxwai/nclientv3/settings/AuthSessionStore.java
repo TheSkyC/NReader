@@ -30,6 +30,13 @@ public final class AuthSessionStore {
         return AuthStore.getPreferences(context).contains(ID);
     }
 
+    static boolean isStoredIdentity(@NonNull Context context, @NonNull String expectedIdentity) {
+        long generation = AuthStore.identityGeneration();
+        if (generation < 0) return false;
+        Object storedIdentity = AuthStore.getPreferences(context).getAll().get(ID);
+        return expectedIdentity.equals(storedIdentity) && generation == AuthStore.identityGeneration();
+    }
+
     public static synchronized long beginAttempt() {
         return ++attempt;
     }
