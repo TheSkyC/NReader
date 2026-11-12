@@ -137,6 +137,44 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void vaultLoadingAcrossRecreationStillPrefillsUntouchedForm() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("login-name", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("fixture-password", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+            assertTrue(((CheckBox) controller.get().findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void editedFormIsNotPrefilledAfterRecreationDuringVaultLoad() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.account_username)).setText("edited-login");
+            ((EditText) controller.get().findViewById(R.id.account_password)).setText("unsaved-password");
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("edited-login", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+            assertFalse(((CheckBox) controller.get().findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
     @Test public void recreatedReauthenticationDoesNotReplaceEditedPasswordWithSavedPassword() throws Exception {
         repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
         Intent intent = new Intent(application, AccountLoginActivity.class)

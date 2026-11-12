@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class AccountLoginActivity extends GeneralActivity {
     public static final String EXTRA_ACCOUNT_ID = "account_id";
     private static final String EDITED_CREDENTIALS = "edited_credentials";
+    private static final String PENDING_PREFILL = "pending_prefill";
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private EditText username;
@@ -55,6 +56,7 @@ public final class AccountLoginActivity extends GeneralActivity {
     private boolean restoredAccount;
     private boolean credentialsEdited;
     private boolean recreated;
+    private boolean pendingPrefill;
     private boolean restoreSavedPassword = true;
     private boolean busy;
     private boolean stopped;
@@ -91,7 +93,8 @@ public final class AccountLoginActivity extends GeneralActivity {
         });
         targetAccountId = getIntent().getStringExtra(EXTRA_ACCOUNT_ID);
         recreated = savedInstanceState != null;
-        restoreSavedPassword = !recreated || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
+        pendingPrefill = recreated && savedInstanceState.getBoolean(PENDING_PREFILL, false);
+        restoreSavedPassword = !recreated || pendingPrefill || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
         status = findViewById(R.id.account_status);
         progress = findViewById(R.id.account_progress);
         signIn = findViewById(R.id.account_sign_in);
@@ -104,7 +107,7 @@ public final class AccountLoginActivity extends GeneralActivity {
         });
         signOut.setOnClickListener(view -> confirmSignOut());
         showIdle();
-        restoreAccount();
+        if (!pendingPrefill) restoreAccount();
         AuthStore.observeChanges(this, authObserver);
         AuthStore.observeIdentityChanges(identityObserver);
     }
@@ -118,12 +121,21 @@ public final class AccountLoginActivity extends GeneralActivity {
         if (credentialsEdited) return;
         for (AccountVault.Account account : state.accounts) {
             if (!account.id.equals(targetAccountId) || account.type != AccountVault.Type.PASSWORD) continue;
-            if (!recreated) username.setText(account.loginName == null ? account.username : account.loginName);
+            if (!recreated || pendingPrefill) username.setText(account.loginName == null ? account.username : account.loginName);
             if (restoreSavedPassword && account.password != null && password.length() == 0) {
                 password.setText(account.password);
-                if (!recreated) rememberPassword.setChecked(true);
+                if (!recreated || pendingPrefill) rememberPassword.setChecked(true);
             }
             break;
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (pendingPrefill) {
+            credentialsEdited = false;
+            restoreAccount();
         }
     }
 
@@ -134,6 +146,7 @@ public final class AccountLoginActivity extends GeneralActivity {
         String savedPassword = account == null || account.password == null ? "" : account.password;
         boolean edited = account == null || !Objects.equals(loginName, username.getText().toString())
             || !savedPassword.equals(password.getText().toString());
+        outState.putBoolean(PENDING_PREFILL, targetAccountId != null && !restoredAccount && !credentialsEdited);
         outState.putBoolean(EDITED_CREDENTIALS, edited);
         super.onSaveInstanceState(outState);
     }
