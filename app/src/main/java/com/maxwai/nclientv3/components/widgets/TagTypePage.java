@@ -144,11 +144,22 @@ public class TagTypePage extends Fragment {
         }
         waitingForOnlineTags = false;
         long startingRevision = Login.currentOnlineTagsRevision();
+        long startingInvalidation = Login.onlineTagsInvalidationSequence();
         startOnlineTagsLoad(successful -> {
             Activity host = getActivity();
             if (host == null) return;
             host.runOnUiThread(() -> {
                 if (getView() != root || adapter == null || request != refreshSequence) return;
+                if (Login.isOnlineTagMutationPending()) {
+                    waitingForOnlineTags = true;
+                    status.setText(R.string.online_blacklist_loading);
+                    return;
+                }
+                if (startingInvalidation != Login.onlineTagsInvalidationSequence()
+                    && !Login.hasCurrentOnlineTags() && AuthStore.activeIdentity(host) != null) {
+                    refreshOnlineTags(root);
+                    return;
+                }
                 refresh.setEnabled(true);
                 progress.setVisibility(View.GONE);
                 long currentRevision = Login.currentOnlineTagsRevision();
