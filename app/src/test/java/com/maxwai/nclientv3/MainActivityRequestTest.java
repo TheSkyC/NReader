@@ -512,6 +512,60 @@ public class MainActivityRequestTest {
         }
     }
 
+    @Test public void expiredSessionOffersSignInWithoutLoadingUnfilteredFeed() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(app.getString(R.string.preference_key_use_account_tag), true).commit();
+        Global.initFromShared(app);
+        assertTrue(AuthSessionStore.replace(app, AuthSessionStore.tokenCookies("access-fixture", "refresh-fixture"), null));
+        app.getSharedPreferences("Auth", 0).edit().putBoolean("session_rejected", true).commit();
+        com.maxwai.nclientv3.settings.Login.initLogin(app);
+        OkHttpClient previous = Global.client;
+        AtomicInteger requests = new AtomicInteger();
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            requests.incrementAndGet();
+            throw new java.io.IOException("Unexpected request");
+        }).build();
+        java.lang.reflect.Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean oldFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            try (org.robolectric.android.controller.ActivityController<MainActivity> controller =
+                     Robolectric.buildActivity(MainActivity.class).setup()) {
+                MainActivity activity = controller.get();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (activity.findViewById(com.google.android.material.R.id.snackbar_action) == null
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.yield();
+                }
+                android.widget.TextView message = activity.findViewById(com.google.android.material.R.id.snackbar_text);
+                android.widget.TextView action = activity.findViewById(com.google.android.material.R.id.snackbar_action);
+                assertNotNull(message);
+                assertNotNull(action);
+                assertEquals(activity.getString(R.string.online_blacklist_session_expired), message.getText().toString());
+                assertEquals(activity.getString(R.string.account_sign_in), action.getText().toString());
+                assertEquals(0, requests.get());
+                action.performClick();
+                assertEquals(AccountLoginActivity.class.getName(),
+                    Shadows.shadowOf(activity).getNextStartedActivity().getComponent().getClassName());
+            }
+        } finally {
+            Global.client = previous;
+            firstTime.setBoolean(null, oldFirstTime);
+            AuthSessionStore.clear(app);
+            AuthStore.clear(app);
+            com.maxwai.nclientv3.settings.Login.updateUser(null);
+            app.getSharedPreferences("Settings", 0).edit()
+                .remove(app.getString(R.string.preference_key_use_account_tag)).commit();
+            com.maxwai.nclientv3.settings.Login.initLogin(app);
+        }
+    }
+
     @Test public void failedBlacklistBlocksFeedAndRetryLoadsIt() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);

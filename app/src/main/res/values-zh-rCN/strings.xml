@@ -414,6 +414,7 @@
     <string name="online_blacklist_loading">正在加载在线屏蔽列表…</string>
     <string name="online_blacklist_loaded">在线屏蔽列表已更新</string>
     <string name="online_blacklist_load_error">无法加载在线屏蔽列表，请尝试刷新。</string>
+    <string name="online_blacklist_session_expired">账号会话已过期，请登录以加载在线屏蔽列表。</string>
     <string name="online_blacklist_search_unavailable">在线屏蔽列表尚未加载。请刷新，或不使用这些标签继续搜索。</string>
     <string name="online_blacklist_search_without">继续搜索</string>
     <string name="online_blacklist_sign_in_required">请重新登录或检查 API 密钥，然后刷新在线屏蔽列表。</string>
