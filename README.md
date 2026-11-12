@@ -91,6 +91,12 @@ Crowdin project.
   confirmed state; transport or timeout failures mark it unknown.
   A bounded, account-scoped cache restores recent confirmed states after restart;
   restored states are checked with the server before an online favorite is changed.
+- Add multiple accounts using username and password or an API key, and switch
+  between them from the navigation drawer. Online favorites and account tags use
+  the selected account; local favorites, downloads, bookmarks, and reading history
+  remain shared on the device. Password storage is optional. Account credentials
+  and sessions are encrypted with a device-local Android Keystore key and excluded
+  from backups; sign in again after moving to another device.
 - Save reading positions automatically in paged and single-column reading,
   with a separate Continue action and preserved manual page bookmarks.
 - Share galleries or open them in a browser.
