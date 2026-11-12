@@ -29,6 +29,12 @@ public class NhentaiLoginApiTest {
         assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseTokens(
             new JSONObject("{\"success\":false,\"user\":{},\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}")));
         assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseTokens(
+            new JSONObject("{\"success\":\"false\",\"user\":{},\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseTokens(
+            new JSONObject("{\"success\":null,\"user\":{},\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}")));
+        assertEquals(2, NhentaiLoginApi.parseTokens(new JSONObject(
+            "{\"user\":{},\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}")).size());
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseTokens(
             new JSONObject("{\"user\":{},\"access_token\":123,\"refresh_token\":\"refresh-fixture\"}")));
         assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseTokens(
             new JSONObject("{\"access_token\":\"access-fixture\",\"refresh_token\":\"refresh-fixture\"}")));

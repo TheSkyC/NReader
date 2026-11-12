@@ -198,7 +198,7 @@ public final class NhentaiLoginApi {
     }
 
     static List<Cookie> parseTokens(@NonNull JSONObject body) throws IOException {
-        if (body.optJSONObject("user") == null || Boolean.FALSE.equals(body.opt("success")))
+        if (body.optJSONObject("user") == null || (body.has("success") && !Boolean.TRUE.equals(body.opt("success"))))
             throw new IOException("Login was not confirmed");
         Object access = body.opt("access_token");
         Object refresh = body.opt("refresh_token");
