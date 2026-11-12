@@ -10,7 +10,9 @@ import com.maxwai.nclientv3.utility.Utility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
@@ -41,10 +43,26 @@ public class CustomCookieJar implements ClearableCookieJar {
         return cookie.expiresAt() < System.currentTimeMillis();
     }
 
+    private static List<String> persistenceKey(Cookie cookie) {
+        return java.util.Arrays.asList(cookie.domain(), cookie.path(), cookie.name(),
+            Boolean.toString(cookie.secure()));
+    }
+
     @Override
     synchronized public void saveFromResponse(@NonNull HttpUrl url, @NonNull List<Cookie> cookies) {
-        cache.addAll(cookies);
-        persistor.saveAll(filterPersistentCookies(cookies));
+        Map<List<String>, Cookie> latest = new LinkedHashMap<>();
+        for (Cookie cookie : cookies) {
+            latest.put(persistenceKey(cookie), cookie);
+        }
+        List<Cookie> accepted = new ArrayList<>(latest.values());
+        List<Cookie> sessionCookies = new ArrayList<>();
+        for (Cookie cookie : accepted) if (!cookie.persistent()) sessionCookies.add(cookie);
+        for (Iterator<Cookie> it = cache.iterator(); it.hasNext(); ) {
+            if (latest.containsKey(persistenceKey(it.next()))) it.remove();
+        }
+        cache.addAll(accepted);
+        if (!sessionCookies.isEmpty()) persistor.removeAll(sessionCookies);
+        persistor.saveAll(filterPersistentCookies(accepted));
     }
 
     @NonNull
