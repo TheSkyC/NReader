@@ -109,11 +109,16 @@ public final class NhentaiLoginApi {
     @NonNull
     public static String captchaSiteKey(@NonNull Context context, @NonNull CancelHandle handle) throws IOException {
         JSONObject body = execute(context, new Request.Builder().url(ORIGIN.resolve("/api/v2/captcha")).build(), handle);
-        String provider = body.optString("provider", "");
-        String key = body.optString("site_key", "");
-        if (!"turnstile".equalsIgnoreCase(provider) || !validSiteKey(key))
+        return parseCaptchaSiteKey(body);
+    }
+
+    static String parseCaptchaSiteKey(@NonNull JSONObject body) throws IOException {
+        Object provider = body.opt("provider");
+        Object key = body.opt("site_key");
+        if (!(provider instanceof String) || !"turnstile".equalsIgnoreCase((String) provider)
+            || !(key instanceof String) || !validSiteKey((String) key))
             throw new IOException("Unsupported CAPTCHA configuration");
-        return key;
+        return (String) key;
     }
 
     static boolean validSiteKey(@NonNull String key) {
@@ -134,11 +139,16 @@ public final class NhentaiLoginApi {
     public static Challenge challenge(@NonNull Context context, @NonNull CancelHandle handle) throws IOException {
         JSONObject body = execute(context, new Request.Builder()
             .url(ORIGIN.resolve("/api/v2/pow?action=login")).build(), handle);
-        String challenge = body.optString("challenge", "");
+        return parseChallenge(body);
+    }
+
+    static Challenge parseChallenge(@NonNull JSONObject body) throws IOException {
+        Object challenge = body.opt("challenge");
         Object difficulty = body.opt("difficulty");
-        if (challenge.isEmpty() || challenge.length() > 4096 || !(difficulty instanceof Integer)
+        if (!(challenge instanceof String) || ((String) challenge).isEmpty()
+            || ((String) challenge).length() > 4096 || !(difficulty instanceof Integer)
             || (Integer) difficulty < 0 || (Integer) difficulty > 256) throw new IOException("Invalid PoW challenge");
-        return new Challenge(challenge, (Integer) difficulty);
+        return new Challenge((String) challenge, (Integer) difficulty);
     }
 
     public static void login(@NonNull Context context, @NonNull String username, @NonNull String password,

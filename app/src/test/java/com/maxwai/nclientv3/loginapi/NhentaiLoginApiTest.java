@@ -41,4 +41,25 @@ public class NhentaiLoginApiTest {
         assertTrue(NhentaiLoginApi.parseTokens(new JSONObject(
             "{\"user\":{},\"access_token\":\"\",\"refresh_token\":\"refresh-fixture\"}")).isEmpty());
     }
+
+    @Test public void configurationRequiresStringFieldsAndBoundedDifficulty() throws Exception {
+        assertEquals("test-key", NhentaiLoginApi.parseCaptchaSiteKey(
+            new JSONObject("{\"provider\":\"turnstile\",\"site_key\":\"test-key\"}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseCaptchaSiteKey(
+            new JSONObject("{\"provider\":\"turnstile\",\"site_key\":123}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseCaptchaSiteKey(
+            new JSONObject("{\"provider\":\"turnstile\",\"site_key\":null}")));
+        NhentaiLoginApi.Challenge challenge = NhentaiLoginApi.parseChallenge(
+            new JSONObject("{\"challenge\":\"fixture\",\"difficulty\":8}"));
+        assertEquals("fixture", challenge.value);
+        assertEquals(8, challenge.difficulty);
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseChallenge(
+            new JSONObject("{\"challenge\":123,\"difficulty\":8}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseChallenge(
+            new JSONObject("{\"challenge\":null,\"difficulty\":8}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseChallenge(
+            new JSONObject("{\"challenge\":\"fixture\",\"difficulty\":\"8\"}")));
+        assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseChallenge(
+            new JSONObject("{\"challenge\":\"fixture\",\"difficulty\":257}")));
+    }
 }
