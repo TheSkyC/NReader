@@ -223,7 +223,6 @@ public class ApiKeyActivity extends GeneralActivity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (response) {
-                    validationCall.compareAndSet(call, null);
                     if (stopped.get()) return;
                     if (response.isSuccessful() && isValidFavoritesResponse(response)) {
                         if (!validationState.compareAndSet(1, 2)) return;
@@ -273,6 +272,8 @@ public class ApiKeyActivity extends GeneralActivity {
                         setLoading(false);
                         Toast.makeText(ApiKeyActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     });
+                } finally {
+                    validationCall.compareAndSet(call, null);
                 }
             }
         });

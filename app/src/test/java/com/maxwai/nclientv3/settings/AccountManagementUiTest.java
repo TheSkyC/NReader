@@ -498,4 +498,54 @@ public class AccountManagementUiTest {
             Global.client = originalClient;
         }
     }
+
+    @Test public void leavingApiKeyPageCancelsValidationWhileReadingResponse() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        CountDownLatch reading = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicReference<okhttp3.Call> pending = new java.util.concurrent.atomic.AtomicReference<>();
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            pending.set(chain.call());
+            okio.BufferedSource source = okio.Okio.buffer(new okio.ForwardingSource(
+                new okio.Buffer().writeUtf8("{\"result\":[],\"num_pages\":0}")) {
+                @Override public long read(okio.Buffer sink, long count) throws java.io.IOException {
+                    reading.countDown();
+                    try {
+                        if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new java.io.IOException(exception);
+                    }
+                    return super.read(sink, count);
+                }
+            });
+            okhttp3.ResponseBody body = new okhttp3.ResponseBody() {
+                @Override public okhttp3.MediaType contentType() { return null; }
+                @Override public long contentLength() { return -1; }
+                @Override public okio.BufferedSource source() { return source; }
+            };
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(body).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup();
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("new-key-fixture");
+            controller.get().findViewById(R.id.validate_api_key).performClick();
+            assertTrue(reading.await(5, TimeUnit.SECONDS));
+            controller.pause().stop().destroy();
+            assertTrue(pending.get().isCanceled());
+            release.countDown();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+            assertEquals(0, client.dispatcher().runningCallsCount());
+            assertEquals("existing", repository.snapshot().activeId);
+            assertEquals(1, repository.snapshot().accounts.size());
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
+        }
+    }
 }
