@@ -294,6 +294,46 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void drawerReflectsAccountSwitchAndGuestMode() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        long expiry = System.currentTimeMillis() + 600000;
+        repository.putAndSelect(new AccountVault.Account("second", AccountVault.Type.PASSWORD, "Second user",
+            null, null, "access-two", "refresh-two", expiry, expiry, true, 8), repository.identityGeneration());
+        Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean originalFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain ->
+            new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(503).message("fixture").body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+                MainActivity activity = controller.get();
+                TextView name = activity.findViewById(R.id.nav_account_name);
+                TextView action = activity.findViewById(R.id.nav_account_action);
+                assertEquals("Second user", name.getText().toString());
+                assertEquals(activity.getString(R.string.accounts_needs_sign_in), action.getText().toString());
+                repository.select("first");
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("Display name", name.getText().toString());
+                repository.select(null);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(activity.getString(R.string.accounts_guest), name.getText().toString());
+                assertEquals(activity.getString(R.string.accounts_switch), action.getText().toString());
+                com.google.android.material.navigation.NavigationView navigation = activity.findViewById(R.id.nav_view);
+                navigation.getHeaderView(0).performClick();
+                assertEquals(AccountsActivity.class.getName(), Shadows.shadowOf(activity).getNextStartedActivity()
+                    .getComponent().getClassName());
+            }
+        } finally {
+            Global.client = originalClient;
+            firstTime.setBoolean(null, originalFirstTime);
+            Login.updateUser(null);
+        }
+    }
+
     @Test public void addingApiKeyDoesNotPrefillOrOfferToRemoveExistingKey() throws Exception {
         String key = "existing-key-fixture";
         repository.putAndSelect(new AccountVault.Account(ApiAuthInterceptor.fingerprint(key), AccountVault.Type.API_KEY,
