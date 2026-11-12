@@ -24,6 +24,23 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class CustomCookiePersistenceTest {
+    @Test public void expiredCookieIsRemovedFromPersistenceWithoutRemovingValidCookies() {
+        SharedPreferences preferences = RuntimeEnvironment.getApplication().getSharedPreferences("cookie-expiry-test", 0);
+        preferences.edit().clear().commit();
+        SharedPrefsCookiePersistor persistor = new SharedPrefsCookiePersistor(preferences);
+        HttpUrl url = HttpUrl.get("https://nhentai.net/");
+        Cookie expired = Cookie.parse(url, "cf_clearance=expired; Path=/; Secure; Max-Age=0");
+        Cookie valid = Cookie.parse(url, "__cf_bm=valid; Path=/; Secure; Max-Age=3600");
+        persistor.saveAll(Arrays.asList(expired, valid));
+        CustomCookieJar jar = new CustomCookieJar(new SetCookieCache(), persistor);
+        assertEquals(Collections.singletonList(valid), jar.loadForRequest(url));
+        assertEquals(Collections.singletonList(valid), persistor.loadAll());
+        assertEquals(Collections.singletonList(valid),
+            new CustomCookieJar(new SetCookieCache(), persistor).loadForRequest(url));
+        jar.clear();
+        assertTrue(new CustomCookieJar(new SetCookieCache(), persistor).loadForRequest(url).isEmpty());
+    }
+
     @Test public void sessionReplacementDoesNotRestoreOlderPersistentCookie() {
         SharedPreferences preferences = RuntimeEnvironment.getApplication().getSharedPreferences("cookie-test", 0);
         preferences.edit().clear().commit();
