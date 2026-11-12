@@ -226,6 +226,29 @@ public class AccountAuthenticationIntegrationTest {
         assertEquals("login-fixture", repository.snapshot().activeAccount().loginName);
     }
 
+    @Test public void mismatchedProfileRejectsAccountWithoutInstallingWrongUser() throws Exception {
+        Global.initFromShared(application);
+        Login.initLogin(application);
+        Login.updateUser(null);
+        assertTrue(repository.putAndSelect(session("profile", "access", "refresh"), repository.identityGeneration()));
+        java.util.concurrent.CountDownLatch reached = new java.util.concurrent.CountDownLatch(1);
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            reached.countDown();
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(ResponseBody.create("{\"id\":6,\"username\":\"wrong-user\"}", null)).build();
+        }).build();
+        Global.client = client;
+        com.maxwai.nclientv3.loginapi.User.createUser(application, null);
+        assertTrue(reached.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
+        while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+        assertEquals(0, client.dispatcher().runningCallsCount());
+        assertTrue(repository.snapshot().activeAccount().rejected);
+        assertEquals(5, repository.snapshot().activeAccount().userId);
+        assertNull(Login.getUser());
+        assertNull(AuthStore.activeIdentity(application));
+    }
+
     @Test public void refreshResponseAfterSwitchAwayAndBackIsDiscarded() throws Exception {
         assertTrue(repository.putAndSelect(session("first", "old-access", "old-refresh"), repository.identityGeneration()));
         assertTrue(repository.putAndSelect(session("second", "other-access", "other-refresh"), repository.identityGeneration()));

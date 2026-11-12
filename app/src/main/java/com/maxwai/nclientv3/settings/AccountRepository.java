@@ -135,6 +135,10 @@ public final class AccountRepository {
         AccountVault.Account account = requireOpen().activeAccount();
         if (expectedGeneration < 0 || expectedGeneration != identityGeneration()
             || account == null || !account.id.equals(accountId) || userId <= 0) return false;
+        if (account.userId > 0 && account.userId != userId) {
+            reject(accountId, expectedGeneration);
+            return false;
+        }
         AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, username,
             account.password, account.apiKey, account.accessToken, account.refreshToken,
             account.accessExpiry, account.refreshExpiry, account.rejected, userId, account.loginName, avatarUrl);
