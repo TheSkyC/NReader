@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AccountLoginActivity extends GeneralActivity {
     public static final String EXTRA_ACCOUNT_ID = "account_id";
+    private static final String EDITED_CREDENTIALS = "edited_credentials";
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private EditText username;
@@ -52,6 +53,8 @@ public final class AccountLoginActivity extends GeneralActivity {
     private long accountGeneration;
     @Nullable private String targetAccountId;
     private boolean restoredAccount;
+    private boolean recreated;
+    private boolean restoreSavedPassword = true;
     private boolean busy;
     private boolean stopped;
     private boolean displayedSession;
@@ -74,6 +77,8 @@ public final class AccountLoginActivity extends GeneralActivity {
         password = findViewById(R.id.account_password);
         rememberPassword = findViewById(R.id.account_remember_password);
         targetAccountId = getIntent().getStringExtra(EXTRA_ACCOUNT_ID);
+        recreated = savedInstanceState != null;
+        restoreSavedPassword = !recreated || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
         status = findViewById(R.id.account_status);
         progress = findViewById(R.id.account_progress);
         signIn = findViewById(R.id.account_sign_in);
@@ -99,13 +104,24 @@ public final class AccountLoginActivity extends GeneralActivity {
         restoredAccount = true;
         for (AccountVault.Account account : state.accounts) {
             if (!account.id.equals(targetAccountId) || account.type != AccountVault.Type.PASSWORD) continue;
-            username.setText(account.loginName == null ? account.username : account.loginName);
-            if (account.password != null) {
+            if (!recreated) username.setText(account.loginName == null ? account.username : account.loginName);
+            if (restoreSavedPassword && account.password != null && password.length() == 0) {
                 password.setText(account.password);
-                rememberPassword.setChecked(true);
+                if (!recreated) rememberPassword.setChecked(true);
             }
             break;
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        AccountVault.Account account = targetAccount();
+        String loginName = account == null ? null : account.loginName == null ? account.username : account.loginName;
+        String savedPassword = account == null || account.password == null ? "" : account.password;
+        boolean edited = account == null || !Objects.equals(loginName, username.getText().toString())
+            || !savedPassword.equals(password.getText().toString());
+        outState.putBoolean(EDITED_CREDENTIALS, edited);
+        super.onSaveInstanceState(outState);
     }
 
     private void showIdle() {
