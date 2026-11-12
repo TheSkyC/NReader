@@ -43,6 +43,7 @@
     <string name="account_signing_in">正在登入…</string>
     <string name="account_verification_error">驗證未完成，請檢查網路後重試。</string>
     <string name="account_login_error">無法完成登入，請檢查帳號資料後重試。</string>
+    <string name="account_identity_unconfirmed">無法確認這是所選帳戶。請檢查帳號資料，或移除該帳戶後重新新增。</string>
     <string name="account_protection_error">驗證完成後，網站仍封鎖了登入請求。請稍後重試。</string>
     <string name="account_verify_title">驗證登入</string>
     <string name="account_verify_message">請完成驗證以繼續。</string>

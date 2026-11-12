@@ -131,6 +131,19 @@ public class AccountAuthenticationIntegrationTest {
         assertEquals(1, repository.snapshot().accounts.size());
     }
 
+    @Test public void reauthenticationRequiresVerifiedUserIds() throws Exception {
+        long attempt = AuthSessionStore.beginAttempt();
+        assertTrue(AuthSessionStore.completeAccountAttempt(AuthSessionStore.tokenCookies("old", "old-refresh"),
+            attempt, repository.identityGeneration(), "login", "User", null, null, 0, null));
+        String accountId = repository.snapshot().activeId;
+        long nextAttempt = AuthSessionStore.beginAttempt();
+        org.junit.Assert.assertThrows(java.io.IOException.class, () ->
+            AuthSessionStore.completeAccountAttempt(AuthSessionStore.tokenCookies("other", "other-refresh"),
+                nextAttempt, repository.identityGeneration(), "other", "Other", null, null, 42, accountId));
+        assertEquals("old-refresh", repository.snapshot().activeAccount().refreshToken);
+        assertEquals(accountId, repository.snapshot().activeId);
+    }
+
     @Test public void favoriteCacheRemainsScopedWhenSwitchingSavedAccounts() throws Exception {
         String firstKey = "favorites-first-fixture";
         String secondKey = "favorites-second-fixture";

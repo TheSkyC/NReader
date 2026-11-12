@@ -26,6 +26,12 @@ public final class AuthSessionStore {
     private AuthSessionStore() {
     }
 
+    public static final class AccountMismatchException extends java.io.IOException {
+        AccountMismatchException() {
+            super("Login does not match the selected account");
+        }
+    }
+
     public static boolean hasStoredSession(@NonNull Context context) {
         if (AccountRuntime.repository() != null) {
             AccountVault.Account account = AccountRuntime.activeAccount();
@@ -91,8 +97,8 @@ public final class AuthSessionStore {
                     && account.type == AccountVault.Type.PASSWORD) existing = account;
             }
             if (targetId != null && (existing == null || existing.type != AccountVault.Type.PASSWORD
-                || (existing.userId > 0 && (userId <= 0 || existing.userId != userId))))
-                throw new java.io.IOException("Login does not match the selected account");
+                || existing.userId <= 0 || userId <= 0 || existing.userId != userId))
+                throw new AccountMismatchException();
             String accountId = existing == null ? "user:" + UUID.randomUUID() : existing.id;
             AccountVault.Account account = new AccountVault.Account(accountId, AccountVault.Type.PASSWORD,
                 username, password, null, access.value(), refresh.value(), access.expiresAt(),
