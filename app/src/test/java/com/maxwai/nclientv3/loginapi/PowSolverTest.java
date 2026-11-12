@@ -34,4 +34,17 @@ public class PowSolverTest {
     public void cancelsBeforeDoingWork() {
         assertThrows(CancellationException.class, () -> PowSolver.solve("x", 256, 1000, () -> true));
     }
+
+    @Test
+    public void cancellationIsObservedWhileSearching() {
+        java.util.concurrent.atomic.AtomicInteger checks = new java.util.concurrent.atomic.AtomicInteger();
+        assertThrows(CancellationException.class,
+            () -> PowSolver.solve("fixture-challenge", 256, 10000, () -> checks.incrementAndGet() >= 2));
+        assertTrue(checks.get() >= 2);
+    }
+
+    @Test
+    public void difficultChallengeStopsAtDeadline() {
+        assertThrows(CancellationException.class, () -> PowSolver.solve("fixture-challenge", 256, 1, () -> false));
+    }
 }
