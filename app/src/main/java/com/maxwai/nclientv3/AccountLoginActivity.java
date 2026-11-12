@@ -53,6 +53,7 @@ public final class AccountLoginActivity extends GeneralActivity {
     private long accountGeneration;
     @Nullable private String targetAccountId;
     private boolean restoredAccount;
+    private boolean credentialsEdited;
     private boolean recreated;
     private boolean restoreSavedPassword = true;
     private boolean busy;
@@ -76,6 +77,18 @@ public final class AccountLoginActivity extends GeneralActivity {
         username = findViewById(R.id.account_username);
         password = findViewById(R.id.account_password);
         rememberPassword = findViewById(R.id.account_remember_password);
+        android.text.TextWatcher editWatcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                if (!restoredAccount) credentialsEdited = true;
+            }
+            @Override public void afterTextChanged(android.text.Editable text) { }
+        };
+        username.addTextChangedListener(editWatcher);
+        password.addTextChangedListener(editWatcher);
+        rememberPassword.setOnCheckedChangeListener((button, checked) -> {
+            if (!restoredAccount) credentialsEdited = true;
+        });
         targetAccountId = getIntent().getStringExtra(EXTRA_ACCOUNT_ID);
         recreated = savedInstanceState != null;
         restoreSavedPassword = !recreated || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
@@ -102,6 +115,7 @@ public final class AccountLoginActivity extends GeneralActivity {
         AccountVault.State state = repository == null ? null : repository.snapshot();
         if (state == null) return;
         restoredAccount = true;
+        if (credentialsEdited) return;
         for (AccountVault.Account account : state.accounts) {
             if (!account.id.equals(targetAccountId) || account.type != AccountVault.Type.PASSWORD) continue;
             if (!recreated) username.setText(account.loginName == null ? account.username : account.loginName);
