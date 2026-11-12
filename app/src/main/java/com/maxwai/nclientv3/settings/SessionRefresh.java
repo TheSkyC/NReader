@@ -60,8 +60,11 @@ final class SessionRefresh {
             source.request(65537);
             if (source.getBuffer().size() > 65536) throw new IOException("Refresh response too large");
             JSONObject body = new JSONObject(source.readUtf8());
-            if (!AuthSessionStore.replace(context, AuthSessionStore.tokenCookies(
-                body.optString("access_token", ""), body.optString("refresh_token", "")), identity))
+            Object access = body.opt("access_token");
+            Object replacementRefresh = body.opt("refresh_token");
+            if (!(access instanceof String) || !(replacementRefresh instanceof String)
+                || !AuthSessionStore.replace(context, AuthSessionStore.tokenCookies(
+                    (String) access, (String) replacementRefresh), identity))
                 throw new IOException("Refresh was not confirmed");
             lastFailure = 0;
             failedIdentity = null;
