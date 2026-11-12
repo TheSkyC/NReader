@@ -395,6 +395,38 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void rejectedApiKeyDoesNotChangeExistingAccountAndCanBeRetried() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch validated = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            validated.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(401).message("fixture").body(okhttp3.ResponseBody.create("{}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ApiKeyActivity activity = controller.get();
+                ((EditText) activity.findViewById(R.id.api_key_input)).setText("invalid-key-fixture");
+                activity.findViewById(R.id.validate_api_key).performClick();
+                assertTrue(validated.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("existing", repository.snapshot().activeId);
+                assertEquals(1, repository.snapshot().accounts.size());
+                assertEquals("fixture-password", repository.snapshot().activeAccount().password);
+                assertTrue(activity.findViewById(R.id.validate_api_key).isEnabled());
+                assertFalse(activity.isFinishing());
+            }
+        } finally {
+            Global.client = originalClient;
+        }
+    }
+
     @Test public void leavingApiKeyPageCancelsPendingValidation() throws Exception {
         String originalKey = "original-key-fixture";
         String originalId = ApiAuthInterceptor.fingerprint(originalKey);
