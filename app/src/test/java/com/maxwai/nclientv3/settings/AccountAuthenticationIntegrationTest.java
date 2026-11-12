@@ -131,6 +131,26 @@ public class AccountAuthenticationIntegrationTest {
         assertEquals(1, repository.snapshot().accounts.size());
     }
 
+    @Test public void favoriteCacheRemainsScopedWhenSwitchingSavedAccounts() throws Exception {
+        String firstKey = "favorites-first-fixture";
+        String secondKey = "favorites-second-fixture";
+        String firstId = ApiAuthInterceptor.fingerprint(firstKey);
+        String secondId = ApiAuthInterceptor.fingerprint(secondKey);
+        assertTrue(repository.putAndSelect(new AccountVault.Account(firstId, AccountVault.Type.API_KEY,
+            "First", null, firstKey, null, null, 0, 0, false, 1), repository.identityGeneration()));
+        com.maxwai.nclientv3.api.OnlineFavoriteClient.rememberState(application, 987654, true);
+        assertEquals(Boolean.TRUE, com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654));
+        assertTrue(repository.putAndSelect(new AccountVault.Account(secondId, AccountVault.Type.API_KEY,
+            "Second", null, secondKey, null, null, 0, 0, false, 2), repository.identityGeneration()));
+        assertNull(com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654));
+        com.maxwai.nclientv3.api.OnlineFavoriteClient.rememberState(application, 987654, false);
+        assertEquals(Boolean.FALSE, com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654));
+        repository.select(firstId);
+        assertFalse(Boolean.FALSE.equals(com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654)));
+        repository.select(null);
+        assertNull(com.maxwai.nclientv3.api.OnlineFavoriteClient.cachedState(application, 987654));
+    }
+
     @Test public void refreshPersistsOnlyToTheAccountThatStartedIt() throws Exception {
         assertTrue(repository.putAndSelect(session("refresh-first", "old-access", "old-refresh"), repository.identityGeneration()));
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
