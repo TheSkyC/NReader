@@ -62,4 +62,47 @@ public class NhentaiLoginApiTest {
         assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseChallenge(
             new JSONObject("{\"challenge\":\"fixture\",\"difficulty\":257}")));
     }
+
+    @Test public void explicitWebViewCookiesSurviveTheNetworkCookieBridge() throws Exception {
+        Application app = org.robolectric.RuntimeEnvironment.getApplication();
+        okhttp3.OkHttpClient previous = com.maxwai.nclientv3.settings.Global.client;
+        okhttp3.Cookie stale = new okhttp3.Cookie.Builder().name("cf_clearance").value("old-fixture")
+            .hostOnlyDomain("nhentai.net").path("/").secure().build();
+        okhttp3.Cookie session = new okhttp3.Cookie.Builder().name("sessionid").value("session-fixture")
+            .hostOnlyDomain("nhentai.net").path("/").secure().build();
+        okhttp3.CookieJar source = new okhttp3.CookieJar() {
+            @Override public void saveFromResponse(okhttp3.HttpUrl url, java.util.List<okhttp3.Cookie> cookies) { }
+            @Override public java.util.List<okhttp3.Cookie> loadForRequest(okhttp3.HttpUrl url) {
+                return java.util.Arrays.asList(stale, session);
+            }
+        };
+        com.maxwai.nclientv3.settings.Global.client = new okhttp3.OkHttpClient.Builder().cookieJar(source).build();
+        try {
+            okhttp3.Request request = new okhttp3.Request.Builder().url("https://nhentai.net/api/v2/auth/login")
+                .header("Cookie", "cf_clearance=new-fixture").build();
+            assertEquals("cf_clearance=new-fixture", bridgedCookie(request, NhentaiLoginApi.client(app, true).cookieJar()));
+            assertEquals("cf_clearance=old-fixture", bridgedCookie(request, NhentaiLoginApi.client(app, false).cookieJar()));
+        } finally {
+            com.maxwai.nclientv3.settings.Global.client = previous;
+        }
+    }
+
+    private static String bridgedCookie(okhttp3.Request request, okhttp3.CookieJar jar) throws Exception {
+        java.util.concurrent.atomic.AtomicReference<String> cookie = new java.util.concurrent.atomic.AtomicReference<>();
+        okhttp3.Interceptor.Chain chain = (okhttp3.Interceptor.Chain) java.lang.reflect.Proxy.newProxyInstance(
+            okhttp3.Interceptor.Chain.class.getClassLoader(), new Class<?>[]{okhttp3.Interceptor.Chain.class},
+            (proxy, method, args) -> {
+                if (method.getName().equals("request")) return request;
+                if (method.getName().equals("getCookieJar")) return jar;
+                if (method.getName().equals("proceed")) {
+                    okhttp3.Request sent = (okhttp3.Request) args[0];
+                    cookie.set(sent.header("Cookie"));
+                    return new okhttp3.Response.Builder().request(sent).protocol(okhttp3.Protocol.HTTP_1_1)
+                        .code(200).message("fixture").body(okhttp3.ResponseBody.create("", null)).build();
+                }
+                throw new UnsupportedOperationException(method.getName());
+            });
+        new okhttp3.internal.http.BridgeInterceptor().intercept(chain).close();
+        return cookie.get();
+    }
 }

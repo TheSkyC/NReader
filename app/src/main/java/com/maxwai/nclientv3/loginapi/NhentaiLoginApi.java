@@ -41,6 +41,10 @@ public final class NhentaiLoginApi {
     }
 
     private static OkHttpClient client(Context context) {
+        return client(context, false);
+    }
+
+    static OkHttpClient client(Context context, boolean explicitProtectionCookies) {
         CookieJar existing = Global.getClient(context).cookieJar();
         CookieJar networkCookies = new CookieJar() {
             @Override public void saveFromResponse(@NonNull HttpUrl url, @NonNull List<Cookie> cookies) {
@@ -58,7 +62,8 @@ public final class NhentaiLoginApi {
             }
         };
         OkHttpClient.Builder builder = Global.getClient(context).newBuilder()
-            .cookieJar(networkCookies).followRedirects(false).followSslRedirects(false)
+            .cookieJar(explicitProtectionCookies ? CookieJar.NO_COOKIES : networkCookies)
+            .followRedirects(false).followSslRedirects(false)
             .retryOnConnectionFailure(false).callTimeout(30, java.util.concurrent.TimeUnit.SECONDS);
         builder.interceptors().clear();
         builder.networkInterceptors().clear();
@@ -172,7 +177,7 @@ public final class NhentaiLoginApi {
             .post(RequestBody.create(payload.toString(), JSON));
         if (!protectionCookies.isEmpty()) builder.header("Cookie", protectionCookies);
         Request request = builder.build();
-        Call call = handle.attach(client(context).newCall(request));
+        Call call = handle.attach(client(context, !protectionCookies.isEmpty()).newCall(request));
         try (Response response = call.execute()) {
             if (!response.isSuccessful() || response.body() == null) {
                 String type = response.header("Content-Type", "");
