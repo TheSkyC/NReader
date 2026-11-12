@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.franmontiel.persistentcookiejar.ClearableCookieJar;
 import com.franmontiel.persistentcookiejar.cache.CookieCache;
 import com.franmontiel.persistentcookiejar.persistence.CookiePersistor;
+import com.maxwai.nclientv3.utility.Utility;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +60,7 @@ public class CustomCookieJar implements ClearableCookieJar {
                 cookiesToRemove.add(currentCookie);
                 it.remove();
 
-            } else if (cookieMatches(currentCookie, url)) {
+            } else if (cookieMatches(currentCookie, url, Utility.getHost())) {
                 validCookies.add(currentCookie);
             }
         }
@@ -70,6 +71,16 @@ public class CustomCookieJar implements ClearableCookieJar {
 
     static boolean cookieMatches(@NonNull Cookie cookie, @NonNull HttpUrl url) {
         return cookie.matches(url);
+    }
+
+    static boolean cookieMatches(@NonNull Cookie cookie, @NonNull HttpUrl url, String mirror) {
+        if (!cookieMatches(cookie, url)) return false;
+        boolean apiHost = url.host().equalsIgnoreCase(Utility.ORIGINAL_URL)
+            || url.host().equalsIgnoreCase(mirror);
+        if (apiHost && url.encodedPath().startsWith("/api/v2/")) {
+            return cookie.name().equals("cf_clearance") || cookie.name().equals("__cf_bm");
+        }
+        return true;
     }
 
     @Override
