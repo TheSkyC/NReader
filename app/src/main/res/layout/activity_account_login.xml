@@ -48,7 +48,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:autofillHints="username"
+                    android:imeOptions="actionNext"
                     android:inputType="text"
+                    android:nextFocusDown="@id/account_password"
                     android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -63,6 +65,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:autofillHints="password"
+                    android:imeOptions="actionDone"
                     android:inputType="textPassword"
                     android:maxLines="1"
                     android:saveEnabled="false" />

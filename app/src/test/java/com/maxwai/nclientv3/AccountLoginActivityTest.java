@@ -3,6 +3,7 @@ package com.maxwai.nclientv3;
 import android.app.Application;
 import android.os.Looper;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 import android.widget.EditText;
 
@@ -87,6 +88,27 @@ public class AccountLoginActivityTest {
             signIn.performClick();
             assertNotNull(password.getError());
             assertTrue(signIn.isEnabled());
+            assertEquals(View.GONE, activity.findViewById(R.id.account_progress).getVisibility());
+        } finally {
+            AuthSessionStore.clear(app);
+            AuthStore.clear(app);
+        }
+    }
+
+    @Test public void keyboardDoneValidatesCredentials() {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        Global.initFromShared(app);
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class).setup()) {
+            AccountLoginActivity activity = controller.get();
+            EditText username = activity.findViewById(R.id.account_username);
+            EditText password = activity.findViewById(R.id.account_password);
+            assertEquals(EditorInfo.IME_ACTION_NEXT, username.getImeOptions() & EditorInfo.IME_MASK_ACTION);
+            assertEquals(EditorInfo.IME_ACTION_DONE, password.getImeOptions() & EditorInfo.IME_MASK_ACTION);
+            username.setText("fixture-user");
+            password.onEditorAction(EditorInfo.IME_ACTION_DONE);
+            assertNotNull(password.getError());
             assertEquals(View.GONE, activity.findViewById(R.id.account_progress).getVisibility());
         } finally {
             AuthSessionStore.clear(app);
