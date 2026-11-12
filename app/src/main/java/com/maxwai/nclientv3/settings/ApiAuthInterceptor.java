@@ -81,7 +81,7 @@ public class ApiAuthInterceptor implements Interceptor {
             String token = SessionRefresh.access(context, session, null);
             if (token == null && expected == null && isPublicGet(request)
                 && AuthSessionStore.isStoredIdentity(context, session))
-                return chain.proceed(request);
+                return proceedPublicForSession(chain, request, session);
             if (token == null || !session.equals(AuthSessionStore.identity(context)))
                 throw new IOException("Account session is unavailable");
             Request authenticated = request.newBuilder()
@@ -103,7 +103,7 @@ public class ApiAuthInterceptor implements Interceptor {
                 String refreshed = SessionRefresh.access(context, session, token);
                 if (refreshed == null && expected == null && isPublicGet(request)
                     && AuthSessionStore.isStoredIdentity(context, session))
-                    return chain.proceed(request);
+                    return proceedPublicForSession(chain, request, session);
                 if (refreshed == null || !session.equals(AuthSessionStore.identity(context)))
                     throw new IOException("Account session refresh failed");
                 if (expected != null) expected.checkCurrent();
@@ -180,6 +180,16 @@ public class ApiAuthInterceptor implements Interceptor {
             AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, false);
         } else if (response.isSuccessful()) {
             AuthStore.setApiKeyValidationIfCurrent(context, key, credentialGeneration, true);
+        }
+        return response;
+    }
+
+    private Response proceedPublicForSession(@NonNull Chain chain, @NonNull Request request,
+                                             @NonNull String session) throws IOException {
+        Response response = chain.proceed(request);
+        if (!AuthSessionStore.isStoredIdentity(context, session)) {
+            response.close();
+            throw new IOException("API identity changed");
         }
         return response;
     }
