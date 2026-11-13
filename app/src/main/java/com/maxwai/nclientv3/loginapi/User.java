@@ -30,13 +30,25 @@ public class User {
         int id = -1;
         String username = null;
         String avatarUrl = null;
+        boolean foundId = false;
+        boolean foundUsername = false;
         jr.beginObject();
         while (jr.peek() != JsonToken.END_OBJECT) {
             switch (jr.nextName()) {
                 case "id":
-                    id = jr.nextInt();
+                    if (foundId || jr.peek() != JsonToken.NUMBER) throw new IOException("Invalid user ID");
+                    foundId = true;
+                    String rawId = jr.nextString();
+                    if (!rawId.matches("[1-9][0-9]{0,9}")) throw new IOException("Invalid user ID");
+                    try {
+                        id = Integer.parseInt(rawId);
+                    } catch (NumberFormatException exception) {
+                        throw new IOException("Invalid user ID", exception);
+                    }
                     break;
                 case "username":
+                    if (foundUsername || jr.peek() != JsonToken.STRING) throw new IOException("Invalid username");
+                    foundUsername = true;
                     username = jr.nextString();
                     break;
                 case "avatar_url":
@@ -101,7 +113,10 @@ public class User {
     public static User readResponse(@NonNull ResponseBody body) throws IOException {
         if (body.contentLength() > 65536 || body.source().request(65537))
             throw new IOException("Account profile response too large");
-        return new User(new JsonReader(body.charStream()));
+        JsonReader reader = new JsonReader(body.charStream());
+        User user = new User(reader);
+        if (reader.peek() != JsonToken.END_DOCUMENT) throw new IOException("Invalid user information");
+        return user;
     }
 
     @NonNull
