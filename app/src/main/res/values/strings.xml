@@ -56,7 +56,8 @@
     <string name="comment_input_hint">Write a comment</string>
     <string name="comment_send">Post comment</string>
     <string name="comment_login_title">Sign in to comment</string>
-    <string name="comment_login_message">To post a comment, sign in with your username and password. API keys can be used to read comments.</string>
+    <string name="comment_login_message">API keys cannot be used to post comments. Sign in with your username and password to comment.</string>
+    <string name="comment_login_guest_message">Sign in with your username and password to post a comment.</string>
     <string name="comment_login_action">Sign in</string>
     <string name="comment_select_title">Choose comment account</string>
     <string name="comment_choose_after_sign_in">Choose the account you want to comment with.</string>

@@ -4,21 +4,28 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.graphics.drawable.DrawableCompat;
 
+import com.bumptech.glide.RequestManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.color.MaterialColors;
 import com.maxwai.nclientv3.api.comments.CommentMutationClient;
 import com.maxwai.nclientv3.api.comments.Comment;
 import com.maxwai.nclientv3.components.views.TurnstileDialog;
+import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.loginapi.NhentaiLoginApi;
 import com.maxwai.nclientv3.loginapi.PowSolver;
 import com.maxwai.nclientv3.settings.AccountRepository;
@@ -46,6 +53,7 @@ final class CommentComposer {
     private final Button identity;
     private final Button send;
     private final EditText input;
+    private final ImageView avatar;
     private final TextView status;
     private final SharedPreferences preferences;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -77,6 +85,7 @@ final class CommentComposer {
         identity = activity.findViewById(R.id.comment_identity);
         send = activity.findViewById(R.id.comment_send);
         input = activity.findViewById(R.id.comment_input);
+        avatar = activity.findViewById(R.id.comment_account_avatar);
         status = activity.findViewById(R.id.comment_status);
         preferences = activity.getSharedPreferences(PREFERENCES, Activity.MODE_PRIVATE);
         browsingKnown = preferences.getBoolean(BROWSING_KNOWN, false);
@@ -96,6 +105,7 @@ final class CommentComposer {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!changingText && selected != null) drafts.putString(selected, s.toString());
+                send.setEnabled(!busy && !s.toString().trim().isEmpty());
             }
             @Override public void afterTextChanged(Editable s) { }
         });
@@ -204,13 +214,28 @@ final class CommentComposer {
             }
         }
         boolean available = usable(account) && !account.id.equals(reauthenticate);
+        RequestManager images = GlideX.with(avatar);
+        if (images != null) {
+            images.clear(avatar);
+            Drawable placeholder = AppCompatResources.getDrawable(activity, R.drawable.ic_person);
+            if (placeholder != null) {
+                placeholder = DrawableCompat.wrap(placeholder.mutate());
+                DrawableCompat.setTint(placeholder, MaterialColors.getColor(avatar, com.google.android.material.R.attr.colorOnSurface));
+            }
+            String url = account == null ? null : NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
+            if (url == null) avatar.setImageDrawable(placeholder);
+            else images.load(url).placeholder(placeholder).error(placeholder).circleCrop().into(avatar);
+        }
         identity.setText(account == null ? activity.getString(R.string.comment_choose_account)
+            : available ? account.username : activity.getString(R.string.comment_expired, account.username));
+        identity.setContentDescription(account == null ? activity.getString(R.string.comment_choose_account)
             : activity.getString(available ? R.string.comment_as : R.string.comment_expired, account.username));
         identity.setEnabled(!busy && repository != null && repository.isOpen());
         input.setVisibility(available ? View.VISIBLE : View.GONE);
         send.setVisibility(available ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.comment_input_card).setVisibility(available ? View.VISIBLE : View.GONE);
         input.setEnabled(!busy);
-        send.setEnabled(!busy);
+        send.setEnabled(!busy && !input.getText().toString().trim().isEmpty());
         activity.updateCommentActions();
     }
 
@@ -297,8 +322,16 @@ final class CommentComposer {
                 : activity.getString(R.string.comment_expired, account.username));
         }
         if (accounts.isEmpty()) {
+            boolean hasApiAccount = false;
+            for (AccountVault.Account account : state.accounts) {
+                if (account.type == AccountVault.Type.API_KEY) {
+                    hasApiAccount = true;
+                    break;
+                }
+            }
             new MaterialAlertDialogBuilder(activity).setTitle(R.string.comment_login_title)
-                .setMessage(R.string.comment_login_message).setNegativeButton(R.string.cancel, null)
+                .setMessage(hasApiAccount ? R.string.comment_login_message : R.string.comment_login_guest_message)
+                .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.comment_login_action, (dialog, which) -> login(null)).show();
             return;
         }

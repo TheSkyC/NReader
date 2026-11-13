@@ -82,28 +82,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="8dp">
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <Button
+                    <ImageView
+                        android:id="@+id/comment_account_avatar"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_person" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/comment_identity"
                         style="@style/Widget.MaterialComponents.Button.TextButton"
                         android:layout_width="0dp"
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:gravity="start|center_vertical"
-                        android:text="@string/comment_choose_account" />
-
-                    <Button
-                        android:id="@+id/comments_browser"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
-                        android:text="@string/open_in_browser" />
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorOnSurface"
+                        android:text="@string/comment_choose_account"
+                        app:icon="@drawable/ic_comment_chevron_down"
+                        app:iconGravity="textEnd"
+                        app:iconSize="20dp"
+                        app:iconTint="?attr/colorOnSurface" />
                 </LinearLayout>
 
                 <TextView
@@ -112,29 +123,55 @@
                     android:layout_height="wrap_content"
                     android:visibility="gone" />
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/comment_input_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeWidth="1dp">
 
-                    <EditText
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:gravity="bottom"
+                      android:orientation="horizontal"
+                      android:paddingStart="16dp"
+                      android:paddingEnd="4dp">
+
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/comment_input"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:background="@null"
+                        android:gravity="center_vertical|start"
                         android:hint="@string/comment_input_hint"
                         android:importantForAutofill="no"
                         android:inputType="textCapSentences|textMultiLine"
                         android:maxLines="3"
+                        android:minHeight="48dp"
                         android:saveEnabled="false" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/comment_send"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/comment_send" />
-                </LinearLayout>
+                        style="@style/Widget.MaterialComponents.Button.Icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="@string/comment_send"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="48dp"
+                        android:padding="12dp"
+                        app:cornerRadius="24dp"
+                        app:icon="@drawable/ic_comment_send"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="24dp" />
+                  </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
     </com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout>

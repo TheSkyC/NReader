@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import android.view.WindowManager;
 import android.view.ViewTreeObserver;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
@@ -472,17 +474,6 @@ public class GalleryActivity extends BaseActivity {
             message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
             findViewById(R.id.comments_more).setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
         }
-        View browser = findViewById(R.id.comments_browser);
-        browser.setVisibility(!isLocal && gallery.isValid() ? View.VISIBLE : View.GONE);
-        browser.setOnClickListener(v -> {
-            Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
-            intent.setData(Uri.parse(Utility.getBaseUrl() + "g/" + gallery.getId() + "/"));
-            try {
-                startActivity(intent);
-            } catch (ActivityNotFoundException e) {
-                Toast.makeText(this, R.string.gallery_browser_unavailable, Toast.LENGTH_SHORT).show();
-            }
-        });
         findViewById(R.id.gallery_jump_page).setOnClickListener(v -> {
             if (gallery.getPageCount() <= 0) return;
             DefaultDialogs.pageChangerDialog(new DefaultDialogs.Builder(this)
@@ -498,6 +489,7 @@ public class GalleryActivity extends BaseActivity {
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) { showTab(tab.getPosition()); }
             @Override public void onTabUnselected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 2) hideCommentKeyboard();
                 if (tab.getPosition() == 1) {
                     saveScrollPosition();
                     stopRestoringPosition();
@@ -523,6 +515,27 @@ public class GalleryActivity extends BaseActivity {
     private void selectTab(int index) {
         TabLayout.Tab tab = tabs == null ? null : tabs.getTabAt(index);
         if (tab != null) tab.select();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            View input = findViewById(R.id.comment_input);
+            if (input != null && input.hasFocus()) {
+                Rect bounds = new Rect();
+                if (!input.getGlobalVisibleRect(bounds) || !bounds.contains((int) event.getRawX(), (int) event.getRawY()))
+                    hideCommentKeyboard();
+            }
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    private void hideCommentKeyboard() {
+        View input = findViewById(R.id.comment_input);
+        if (input == null || !input.hasFocus()) return;
+        InputMethodManager keyboard = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (keyboard != null) keyboard.hideSoftInputFromWindow(input.getWindowToken(), 0);
+        input.clearFocus();
     }
 
     private void showTab(int index) {
@@ -661,6 +674,7 @@ public class GalleryActivity extends BaseActivity {
         menu.findItem(R.id.change_view).setVisible(tabs != null && tabs.getSelectedTabPosition() == 1);
 
         menu.findItem(R.id.share).setVisible(gallery.isValid());
+        menu.findItem(R.id.open_gallery_browser).setVisible(isValidOnline);
         menu.findItem(R.id.load_internet).setVisible(isLocal && gallery.isValid());
     }
 
@@ -704,6 +718,16 @@ public class GalleryActivity extends BaseActivity {
         else if (id == R.id.load_internet) toInternet();
         else if (id == R.id.manage_status) updateStatus();
         else if (id == R.id.share) Global.shareGallery(this, gallery);
+        else if (id == R.id.open_gallery_browser) {
+            Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
+            intent.setData(Uri.parse(Utility.getBaseUrl() + "g/" + gallery.getId() + "/"));
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(this, R.string.gallery_browser_unavailable, Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
         else if (id == R.id.favorite_manager) {
             if (isLocalFavorite) {
                 Favorites.removeFavorite(gallery);
