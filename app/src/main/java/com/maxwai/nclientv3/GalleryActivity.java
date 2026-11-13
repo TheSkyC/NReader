@@ -472,7 +472,7 @@ public class GalleryActivity extends BaseActivity {
             TextView message = findViewById(R.id.comments_message);
             message.setText(R.string.gallery_comments_empty);
             message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
-            findViewById(R.id.comments_more).setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
+            updateCommentsFooter();
         }
         findViewById(R.id.gallery_jump_page).setOnClickListener(v -> {
             if (gallery.getPageCount() <= 0) return;
@@ -485,7 +485,6 @@ public class GalleryActivity extends BaseActivity {
         });
         commentsRefresher.setOnRefreshListener(() -> loadComments(1));
         findViewById(R.id.comments_retry).setOnClickListener(v -> loadComments(commentsRequestedPage));
-        findViewById(R.id.comments_more).setOnClickListener(v -> loadComments(commentsPage + 1));
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) { showTab(tab.getPosition()); }
             @Override public void onTabUnselected(TabLayout.Tab tab) {
@@ -565,10 +564,9 @@ public class GalleryActivity extends BaseActivity {
         commentsLoading = true;
         commentsRequestedPage = page;
         commentsRefresher.setRefreshing(true);
+        updateCommentsFooter();
         retry.setVisibility(View.GONE);
         message.setVisibility(View.GONE);
-        View more = findViewById(R.id.comments_more);
-        more.setVisibility(View.GONE);
         commentsRequest = CommentsFetcher.fetch(this, gallery.getId(), page, new CommentsResultCallback(this, page));
     }
 
@@ -597,7 +595,6 @@ public class GalleryActivity extends BaseActivity {
         commentsRefresher.setRefreshing(false);
         TextView message = findViewById(R.id.comments_message);
         View retry = findViewById(R.id.comments_retry);
-        View more = findViewById(R.id.comments_more);
         if (success) {
             commentsLoaded = true;
             commentsPage = page;
@@ -611,11 +608,19 @@ public class GalleryActivity extends BaseActivity {
             updateCommentActions();
             message.setText(R.string.gallery_comments_empty);
             message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
-            more.setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
+            updateCommentsFooter();
         } else {
             message.setText(R.string.gallery_comments_failed);
             message.setVisibility(View.VISIBLE);
             retry.setVisibility(View.VISIBLE);
+            updateCommentsFooter();
+        }
+    }
+
+    private void updateCommentsFooter() {
+        if (commentsAdapter != null) {
+            commentsAdapter.setLoadMore(commentsPage < commentsPages, commentsLoading,
+                () -> loadComments(commentsPage + 1));
         }
     }
 

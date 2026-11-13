@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -31,6 +32,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
+    private static final int VIEW_COMMENT = 0;
+    private static final int VIEW_MORE = 1;
     private final List<Comment> comments;
     private final DateFormat format;
     private final int userId;
@@ -38,6 +41,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private final boolean readOnly;
     private java.util.function.LongSupplier commentOwner;
     private java.util.function.Consumer<Comment> deleteComment;
+    private boolean hasMore;
+    private boolean loadingMore;
+    private Runnable loadMore;
 
     public CommentAdapter(AppCompatActivity context, List<Comment> comments) {
         this(context, comments, false);
@@ -56,11 +62,19 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     @NonNull
     @Override
     public CommentAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.comment_layout, parent, false));
+        int layout = viewType == VIEW_MORE ? R.layout.item_comments_more : R.layout.comment_layout;
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(layout, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull CommentAdapter.ViewHolder holder, int pos) {
+        if (holder.getItemViewType() == VIEW_MORE) {
+            holder.loadMore.setEnabled(!loadingMore);
+            holder.loadMore.setOnClickListener(v -> {
+                if (!loadingMore && loadMore != null) loadMore.run();
+            });
+            return;
+        }
         int position = holder.getBindingAdapterPosition();
         Comment c = comments.get(position);
         holder.body.setMaxLines(7);
@@ -110,18 +124,22 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return comments.size();
+        return comments.size() + (hasMore ? 1 : 0);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return hasMore && position == comments.size() ? VIEW_MORE : VIEW_COMMENT;
     }
 
     public void addComment(Comment c) {
         comments.add(0, c);
-        context.runOnUiThread(() -> notifyItemInserted(0));
+        context.runOnUiThread(this::notifyDataSetChanged);
     }
 
     public void addComments(List<Comment> additional) {
-        int start = comments.size();
         comments.addAll(additional);
-        notifyItemRangeInserted(start, additional.size());
+        notifyDataSetChanged();
     }
 
     public List<Comment> getComments() {
@@ -135,6 +153,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public void setLoadMore(boolean hasMore, boolean loading, @NonNull Runnable action) {
+        this.hasMore = hasMore;
+        loadingMore = loading;
+        loadMore = action;
+        notifyDataSetChanged();
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageButton userImage;
         final ImageButton close;
@@ -142,6 +167,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         final TextView body;
         final TextView date;
         final ConstraintLayout layout;
+        final Button loadMore;
 
         public ViewHolder(@NonNull View v) {
             super(v);
@@ -151,6 +177,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             user = v.findViewById(R.id.username);
             body = v.findViewById(R.id.body);
             date = v.findViewById(R.id.date);
+            loadMore = v.findViewById(R.id.comments_more);
         }
     }
 }
