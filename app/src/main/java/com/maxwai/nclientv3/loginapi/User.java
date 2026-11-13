@@ -52,7 +52,7 @@ public class User {
                     username = jr.nextString();
                     break;
                 case "avatar_url":
-                    if (jr.peek() == JsonToken.STRING) avatarUrl = NhentaiLoginApi.trustedAvatarUrl(jr.nextString());
+                    if (jr.peek() == JsonToken.STRING) avatarUrl = jr.nextString();
                     else jr.skipValue();
                     break;
                 default:
@@ -66,7 +66,7 @@ public class User {
         }
         this.username = username;
         this.id = id;
-        this.avatarUrl = avatarUrl;
+        this.avatarUrl = NhentaiLoginApi.accountAvatarUrl(avatarUrl, id);
     }
 
     public static void createUser(@NonNull Context context, final CreateUser createUser) {

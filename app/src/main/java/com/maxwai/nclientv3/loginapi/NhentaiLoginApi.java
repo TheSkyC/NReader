@@ -259,7 +259,8 @@ public final class NhentaiLoginApi {
                 || ((String) rawName).length() > 256) throw new IOException("Invalid account profile");
             name = (String) rawName;
         }
-        if (rawAvatar instanceof String) avatar = trustedAvatarUrl((String) rawAvatar);
+        if (rawAvatar instanceof String) avatar = (String) rawAvatar;
+        avatar = accountAvatarUrl(avatar, id);
         return new LoginResult(cookies, id, name, avatar);
     }
 
@@ -271,6 +272,15 @@ public final class NhentaiLoginApi {
             && url.password().isEmpty()
             && (url.host().equals("nhentai.net") || url.host().endsWith(".nhentai.net"))
             ? url.toString() : null;
+    }
+
+    @Nullable
+    public static String accountAvatarUrl(@Nullable String avatar, long userId) {
+        String trusted = trustedAvatarUrl(avatar);
+        if (trusted != null) return trusted;
+        if (avatar != null && avatar.matches("/?avatars/[A-Za-z0-9_-]{1,128}\\.(png|jpg|jpeg|webp|gif)"))
+            return "https://i1.nhentai.net/" + (avatar.startsWith("/") ? avatar.substring(1) : avatar);
+        return userId > 0 ? "https://i1.nhentai.net/avatars/" + userId + ".png" : null;
     }
 
     static List<Cookie> parseTokens(@NonNull JSONObject body) throws IOException {

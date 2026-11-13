@@ -464,7 +464,7 @@ public class MainActivity extends BaseActivity
         RequestManager images = GlideX.with(avatar);
         if (images != null) {
             images.clear(avatar);
-            String url = account == null ? null : NhentaiLoginApi.trustedAvatarUrl(account.avatarUrl);
+            String url = account == null ? null : NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
             if (url == null) avatar.setImageResource(R.drawable.ic_person);
             else images.load(url).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);
         }
