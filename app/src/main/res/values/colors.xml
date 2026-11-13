@@ -12,4 +12,6 @@
     <color name="primaryColorVariant">@color/primary_material_light</color>
     <color name="colorAccent">@android:color/holo_blue_bright</color>
     <color name="colorPrimary">@android:color/holo_blue_bright</color>
+    <color name="comment_input_background">#F5F7FA</color>
+    <color name="comment_input_stroke">#D7DCE2</color>
 </resources>
