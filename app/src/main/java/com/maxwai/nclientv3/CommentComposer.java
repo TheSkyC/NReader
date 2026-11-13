@@ -427,7 +427,8 @@ final class CommentComposer {
                         refresh.run();
                     } else {
                         if (result.status == 401) reauthenticate = accountId;
-                        finishAttempt(currentAttempt, errorForStatus(result.status));
+                        finishAttempt(currentAttempt, result.accountTooNew
+                            ? R.string.comment_account_too_new : errorForStatus(result.status));
                     }
                 });
             } catch (IOException | RuntimeException exception) {

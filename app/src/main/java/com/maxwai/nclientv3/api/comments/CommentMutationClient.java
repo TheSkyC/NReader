@@ -8,12 +8,14 @@ import androidx.annotation.Nullable;
 
 import com.maxwai.nclientv3.settings.ApiAuthInterceptor;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.LogUtility;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
@@ -34,11 +36,17 @@ public final class CommentMutationClient {
         public final int status;
         @Nullable public final Comment comment;
         public final boolean confirmed;
+        public final boolean accountTooNew;
 
         Result(int status, @Nullable Comment comment, boolean confirmed) {
+            this(status, comment, confirmed, false);
+        }
+
+        Result(int status, @Nullable Comment comment, boolean confirmed, boolean accountTooNew) {
             this.status = status;
             this.comment = comment;
             this.confirmed = confirmed;
+            this.accountTooNew = accountTooNew;
         }
     }
 
@@ -103,7 +111,21 @@ public final class CommentMutationClient {
             call = active;
         }
         try (Response response = active.execute()) {
-            if (!response.isSuccessful()) return new Result(response.code(), null, false);
+            if (!response.isSuccessful()) {
+                LogUtility.w("Comment operation rejected with HTTP status", response.code());
+                boolean accountTooNew = false;
+                if (galleryId != 0 && response.code() == 400 && response.body() != null) {
+                    try {
+                        String body = response.peekBody(4096).string();
+                        String error = new JSONObject(body).optString("error", "").toLowerCase(Locale.ROOT);
+                        accountTooNew = error.contains("comment")
+                            && (error.contains("account is too new") || error.contains("account too new"));
+                    } catch (JSONException | IOException ignored) {
+                        LogUtility.w("Unable to classify comment rejection");
+                    }
+                }
+                return new Result(response.code(), null, false, accountTooNew);
+            }
             if (response.body() == null || response.body().contentLength() > MAX_RESPONSE)
                 throw new IOException("Invalid comment response");
             BufferedSource source = response.body().source();
