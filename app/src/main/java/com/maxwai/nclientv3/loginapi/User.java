@@ -98,7 +98,7 @@ public class User {
             });
     }
 
-    static User readResponse(@NonNull ResponseBody body) throws IOException {
+    public static User readResponse(@NonNull ResponseBody body) throws IOException {
         if (body.contentLength() > 65536 || body.source().request(65537))
             throw new IOException("Account profile response too large");
         return new User(new JsonReader(body.charStream()));

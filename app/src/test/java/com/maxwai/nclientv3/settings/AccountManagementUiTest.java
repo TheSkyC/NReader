@@ -361,14 +361,14 @@ public class AccountManagementUiTest {
         okhttp3.OkHttpClient originalClient = Global.client;
         CountDownLatch validated = new CountDownLatch(1);
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
-            boolean validation = chain.request().url().encodedPath().endsWith("/favorites");
+            boolean validation = chain.request().url().encodedPath().endsWith("/user");
             if (validation) {
                 assertEquals("Key " + newKey, chain.request().header("Authorization"));
                 validated.countDown();
             }
             return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
                 .code(validation ? 200 : 503).message("fixture")
-                .body(okhttp3.ResponseBody.create(validation ? "{\"result\":[],\"num_pages\":0}" : "{}", null)).build();
+                .body(okhttp3.ResponseBody.create(validation ? "{\"id\":42,\"username\":\"Verified\"}" : "{}", null)).build();
         }).build();
         Global.client = client;
         try {
@@ -383,6 +383,8 @@ public class AccountManagementUiTest {
                 assertEquals(newId, repository.snapshot().activeId);
                 assertEquals(2, repository.snapshot().accounts.size());
                 assertEquals(newKey, repository.snapshot().activeAccount().apiKey);
+                assertEquals(42, repository.snapshot().activeAccount().userId);
+                assertEquals("Verified", repository.snapshot().activeAccount().username);
                 assertEquals("existing", repository.snapshot().accounts.get(0).id);
                 while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
                 assertEquals(0, client.dispatcher().runningCallsCount());
@@ -392,6 +394,49 @@ public class AccountManagementUiTest {
         } finally {
             Global.client = originalClient;
             Login.updateUser(null);
+        }
+    }
+
+    @Test public void apiKeyRevalidationWaitsForMatchingProfileBeforeEnablingAccount() throws Exception {
+        String key = "rejected-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Original",
+            null, key, null, null, 0, 0, true, 42), repository.identityGeneration());
+        CountDownLatch requested = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            requested.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            }
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture")
+                .body(okhttp3.ResponseBody.create("{\"id\":43,\"username\":\"Other\"}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(requested.await(5, TimeUnit.SECONDS));
+                assertTrue(repository.snapshot().activeAccount().rejected);
+                release.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(repository.snapshot().activeAccount().rejected);
+                assertEquals(42, repository.snapshot().activeAccount().userId);
+                assertTrue(controller.get().findViewById(R.id.validate_api_key).isEnabled());
+                assertFalse(controller.get().isFinishing());
+            }
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
         }
     }
 
@@ -508,7 +553,7 @@ public class AccountManagementUiTest {
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
             pending.set(chain.call());
             okio.BufferedSource source = okio.Okio.buffer(new okio.ForwardingSource(
-                new okio.Buffer().writeUtf8("{\"result\":[],\"num_pages\":0}")) {
+                new okio.Buffer().writeUtf8("{\"id\":42,\"username\":\"Verified\"}")) {
                 @Override public long read(okio.Buffer sink, long count) throws java.io.IOException {
                     reading.countDown();
                     try {
