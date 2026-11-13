@@ -36,6 +36,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private final int userId;
     private final AppCompatActivity context;
     private final boolean readOnly;
+    private java.util.function.LongSupplier commentOwner;
+    private java.util.function.Consumer<Comment> deleteComment;
 
     public CommentAdapter(AppCompatActivity context, List<Comment> comments) {
         this(context, comments, false);
@@ -63,11 +65,17 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         Comment c = comments.get(position);
         holder.body.setMaxLines(7);
         holder.layout.setOnClickListener(v1 -> context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7)));
-        holder.close.setVisibility(readOnly || c.getPosterId() != userId ? View.GONE : View.VISIBLE);
+        long currentOwner = commentOwner == null ? userId : commentOwner.getAsLong();
+        holder.close.setVisibility((readOnly && deleteComment == null) || c.getPosterId() != currentOwner
+            ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());
         holder.body.setText(c.getComment());
         holder.date.setText(format.format(c.getPostDate()));
         holder.close.setOnClickListener(v -> {
+            if (deleteComment != null) {
+                deleteComment.accept(c);
+                return;
+            }
             String submitUrl = String.format(Locale.US, Utility.getApiBaseUrl() + "comments/%d", c.getId());
             Global.getClient(context)
                 .newCall(new Request.Builder().url(submitUrl).delete().build())
@@ -118,6 +126,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     public List<Comment> getComments() {
         return new ArrayList<>(comments);
+    }
+
+    public void setCommentActions(@NonNull java.util.function.LongSupplier owner,
+                                  @NonNull java.util.function.Consumer<Comment> delete) {
+        commentOwner = owner;
+        deleteComment = delete;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

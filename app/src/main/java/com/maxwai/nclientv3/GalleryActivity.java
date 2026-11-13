@@ -99,6 +99,7 @@ public class GalleryActivity extends BaseActivity {
     private int commentsRestoredPendingPage;
     @Nullable private CommentsFetcher.RequestHandle commentsRequest;
     private CommentAdapter commentsAdapter;
+    @Nullable private CommentComposer commentComposer;
     private MenuItem onlineFavoriteItem;
     private boolean onlineFavoritePending;
     private String statusString;
@@ -348,6 +349,7 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         if (commentsRequest != null) commentsRequest.cancel();
+        if (commentComposer != null) commentComposer.destroy();
         stopRestoringPosition();
         super.onDestroy();
     }
@@ -383,6 +385,7 @@ public class GalleryActivity extends BaseActivity {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
+        if (commentComposer != null) commentComposer.save(state);
         saveScrollPosition();
         ReadingPosition currentPosition = displayedTab == 1
             ? (activeScrollTarget != null ? activeScrollTarget : scrollPosition()) : null;
@@ -443,12 +446,23 @@ public class GalleryActivity extends BaseActivity {
         tabs.addTab(tabs.newTab().setText(R.string.gallery_tab_pages));
         tabs.addTab(tabs.newTab().setText(R.string.comments));
         commentsList.setLayoutManager(new LinearLayoutManager(this));
+        View composer = findViewById(R.id.comment_composer);
+        composer.setVisibility(!isLocal && gallery.isValid() ? View.VISIBLE : View.GONE);
+        if (!isLocal && gallery.isValid()) {
+            commentComposer = new CommentComposer(this, gallery.getId(), state, () -> {
+                if (commentsRequest != null) commentsRequest.cancel();
+                commentsRequest = null;
+                commentsLoading = false;
+                loadComments(1);
+            });
+        }
         Object retained = getLastCustomNonConfigurationInstance();
         if (retained instanceof RetainedComments) {
             RetainedComments previous = (RetainedComments) retained;
             commentsAdapter = new CommentAdapter(this, previous.comments, true);
             commentsList.setAdapter(commentsAdapter);
             commentsList.getLayoutManager().onRestoreInstanceState(previous.layoutState);
+            updateCommentActions();
             commentsLoaded = true;
             commentsPage = previous.page;
             commentsPages = previous.pages;
@@ -581,6 +595,7 @@ public class GalleryActivity extends BaseActivity {
             } else {
                 commentsAdapter.addComments(comments);
             }
+            updateCommentActions();
             message.setText(R.string.gallery_comments_empty);
             message.setVisibility(commentsAdapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
             more.setVisibility(commentsPage < commentsPages ? View.VISIBLE : View.GONE);
@@ -589,6 +604,11 @@ public class GalleryActivity extends BaseActivity {
             message.setVisibility(View.VISIBLE);
             retry.setVisibility(View.VISIBLE);
         }
+    }
+
+    void updateCommentActions() {
+        if (commentsAdapter != null && commentComposer != null)
+            commentsAdapter.setCommentActions(commentComposer::currentUserId, commentComposer::delete);
     }
 
     @Override
@@ -647,6 +667,7 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (commentComposer != null) commentComposer.render();
         updateColumnCount(false);
         supportInvalidateOptionsMenu();
         if (positionReady) {
@@ -657,6 +678,13 @@ public class GalleryActivity extends BaseActivity {
                 supportInvalidateOptionsMenu();
             }));
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CommentComposer.LOGIN_REQUEST && commentComposer != null)
+            commentComposer.onLoginResult(resultCode, data);
     }
 
     @Override

@@ -51,6 +51,34 @@
     <string name="account_verify_message">Complete the verification to continue.</string>
     <string name="account_online_favorite_unavailable">Sign in or configure an API key to use online favorites.</string>
     <string name="comment_feature_unavailable">Commenting is unavailable</string>
+    <string name="comment_choose_account">Sign in to comment</string>
+    <string name="comment_as">Commenting as %1$s</string>
+    <string name="comment_input_hint">Write a comment</string>
+    <string name="comment_send">Post comment</string>
+    <string name="comment_login_title">Sign in to comment</string>
+    <string name="comment_login_message">To post a comment, sign in with your username and password. API keys can be used to read comments.</string>
+    <string name="comment_login_action">Sign in</string>
+    <string name="comment_select_title">Choose comment account</string>
+    <string name="comment_choose_after_sign_in">Choose the account you want to comment with.</string>
+    <string name="comment_add_account">Sign in to another account</string>
+    <string name="comment_expired">%1$s · Sign in again</string>
+    <string name="comment_length_error">Enter 10 to 1000 characters.</string>
+    <string name="comment_preparing">Preparing verification…</string>
+    <string name="comment_verify_title">Verify your comment</string>
+    <string name="comment_posting">Posting comment…</string>
+    <string name="comment_posted">Comment posted</string>
+    <string name="comment_verification_failed">Verification failed. Please try again.</string>
+    <string name="comment_session_expired">Sign in again to post a comment.</string>
+    <string name="comment_rate_limited">Too many requests. Please try again later.</string>
+    <string name="comment_disabled">Comments are temporarily unavailable.</string>
+    <string name="comment_rejected">The comment could not be posted. Check your text and try again.</string>
+    <string name="comment_unknown">The result could not be confirmed. Refresh the comments before trying again.</string>
+    <string name="comment_unknown_confirm">The previous result is unknown. Check the comments before posting again. Do you want to continue?</string>
+    <string name="comment_send_again">Post again</string>
+    <string name="comment_delete">Delete</string>
+    <string name="comment_delete_confirm">Delete this comment?</string>
+    <string name="comment_deleting">Deleting comment…</string>
+    <string name="comment_deleted">Comment deleted</string>
     <string name="preference_key_offscreen_limit" translatable="false">offscreen_limit</string>
     <string name="preference_key_enable_beta" translatable="false">enable_beta</string>
     <string name="preference_key_save_path" translatable="false">save_path</string>
