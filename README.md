@@ -108,6 +108,8 @@ multitasking previews are no longer hidden by `FLAG_SECURE`.
 
 State definitions, database upgrades and backup compatibility are documented in
 [state and reading contracts](docs/state-and-reading.md).
+Research for a possible future API key creation workflow is recorded in
+[API key creation research](docs/api-key-creation-research.md).
 
 For favorite-card interaction checks, sign in to an nhentai account or configure a
 valid API key and open Settings to switch **Favorite button actions** between local and online favorites as the
