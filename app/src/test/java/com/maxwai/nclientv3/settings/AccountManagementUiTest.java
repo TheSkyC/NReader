@@ -89,6 +89,103 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void commentDraftsFollowAccountAndRemovalDoesNotSelectAnotherAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        repository.putAccount(passwordAccount("second", false), repository.identityGeneration(), false);
+        application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        application.deleteDatabase("Entries.db");
+        okhttp3.OkHttpClient previous = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> new okhttp3.Response.Builder()
+            .request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(404).message("Not found")
+            .body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            com.maxwai.nclientv3.api.components.Gallery gallery = new com.maxwai.nclientv3.api.components.Gallery(application,
+                "{\"id\":117,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+                    + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+                    + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+            Intent intent = new Intent(application, com.maxwai.nclientv3.GalleryActivity.class)
+                .putExtra(application.getPackageName() + ".GALLERY", gallery);
+            try (ActivityController<com.maxwai.nclientv3.GalleryActivity> controller =
+                     Robolectric.buildActivity(com.maxwai.nclientv3.GalleryActivity.class, intent).setup()) {
+                com.maxwai.nclientv3.GalleryActivity activity = controller.get();
+                EditText input = activity.findViewById(R.id.comment_input);
+                input.setText("First account draft");
+                activity.findViewById(R.id.comment_identity).performClick();
+                androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
+                    org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(1), 1, 1);
+                assertEquals("", input.getText().toString());
+                input.setText("Second account draft");
+                assertEquals("first", repository.snapshot().activeId);
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(0), 0, 0);
+                assertEquals("First account draft", input.getText().toString());
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(1), 1, 1);
+                assertEquals("Second account draft", input.getText().toString());
+                Object composer = org.robolectric.util.ReflectionHelpers.getField(activity, "commentComposer");
+                org.robolectric.util.ReflectionHelpers.setField(composer, "busy", true);
+                org.robolectric.util.ReflectionHelpers.setField(composer, "dispatched", true);
+                org.robolectric.util.ReflectionHelpers.setField(composer, "operationAccount", "second");
+                controller.recreate();
+                activity = controller.get();
+                assertEquals(activity.getString(R.string.comment_unknown),
+                    ((TextView) activity.findViewById(R.id.comment_status)).getText().toString());
+                controller.recreate();
+                activity = controller.get();
+                input = activity.findViewById(R.id.comment_input);
+                assertEquals(activity.getString(R.string.comment_unknown),
+                    ((TextView) activity.findViewById(R.id.comment_status)).getText().toString());
+                assertEquals("Second account draft", input.getText().toString());
+                repository.remove("second");
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(View.GONE, input.getVisibility());
+                assertNull(application.getSharedPreferences("CommentIdentity", 0).getString("account", null));
+                assertEquals("first", repository.snapshot().activeId);
+            }
+        } finally {
+            Global.client = previous;
+            application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        }
+    }
+
+    @Test public void commentSignInExplainsRequirementAndOpensPasswordLogin() throws Exception {
+        application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        application.deleteDatabase("Entries.db");
+        okhttp3.OkHttpClient previous = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> new okhttp3.Response.Builder()
+            .request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(404).message("Not found")
+            .body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            com.maxwai.nclientv3.api.components.Gallery gallery = new com.maxwai.nclientv3.api.components.Gallery(application,
+                "{\"id\":117,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+                    + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+                    + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+            Intent intent = new Intent(application, com.maxwai.nclientv3.GalleryActivity.class)
+                .putExtra(application.getPackageName() + ".GALLERY", gallery);
+            try (ActivityController<com.maxwai.nclientv3.GalleryActivity> controller =
+                     Robolectric.buildActivity(com.maxwai.nclientv3.GalleryActivity.class, intent).setup()) {
+                com.maxwai.nclientv3.GalleryActivity activity = controller.get();
+                assertEquals(View.GONE, activity.findViewById(R.id.comment_input).getVisibility());
+                activity.findViewById(R.id.comment_identity).performClick();
+                androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
+                    org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Intent login = Shadows.shadowOf(activity).getNextStartedActivityForResult().intent;
+                assertEquals(AccountLoginActivity.class.getName(), login.getComponent().getClassName());
+                assertTrue(login.getBooleanExtra(AccountLoginActivity.EXTRA_COMMENT_ACCOUNT, false));
+            }
+        } finally {
+            Global.client = previous;
+            application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        }
+    }
+
     @Test public void reauthenticationPrefillsOnlyTheSelectedAccount() throws Exception {
         repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
         Intent intent = new Intent(application, AccountLoginActivity.class)

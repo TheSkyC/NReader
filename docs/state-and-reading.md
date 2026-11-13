@@ -11,8 +11,11 @@ NReader modifications by TheSkyC (2026); see NOTICE.
   horizontal galleries, zoomed images, and system back gestures retain priority;
   tab selection and each page's scrolling state remain independent.
 - The comments tab loads independently; unavailable, empty, and failed results
-  are distinguished. Comment posting remains unavailable until the application
-  supports the required user authentication and verification flow.
+  are distinguished. Comment publishing uses a separately selected saved
+  username/password account; browsing and online favorites keep their selected
+  account. API-key-only and guest users can read comments and choose or sign in
+  to a comment account. Failed or uncertain submissions retain the draft and are
+  not automatically retried. Removing an account prevents further writes with it.
 
 - Site gallery IDs identify automatic positions. Unknown local IDs are excluded
   until a stable local identity model exists.

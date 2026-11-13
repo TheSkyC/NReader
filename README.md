@@ -99,6 +99,10 @@ Crowdin project.
   from backups; sign in again after moving to another device.
 - Save reading positions automatically in paged and single-column reading,
   with a separate Continue action and preserved manual page bookmarks.
+- Read gallery comments and post or delete your own comments with a separately
+  selected username/password account. API keys can read comments; posting needs
+  an account session and interactive verification. Comment drafts stay scoped to
+  the selected account while the gallery screen is open.
 - Share galleries or open them in a browser.
 - Protect app access with a PIN.
 - Take screenshots and screen recordings, as enabled by the preserved local change.

@@ -36,6 +36,11 @@ public final class TurnstileDialog {
 
     @NonNull
     public static Dialog show(@NonNull Context context, @NonNull String siteKey, @NonNull Callback callback) {
+        return show(context, siteKey, R.string.account_verify_title, callback);
+    }
+
+    @NonNull
+    public static Dialog show(@NonNull Context context, @NonNull String siteKey, int title, @NonNull Callback callback) {
         WebView view = new WebView(context);
         WebSettings settings = view.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -59,7 +64,7 @@ public final class TurnstileDialog {
         AtomicBoolean finished = new AtomicBoolean();
         AtomicBoolean scriptReady = new AtomicBoolean();
         Handler main = new Handler(Looper.getMainLooper());
-        Dialog dialog = new MaterialAlertDialogBuilder(context).setTitle(R.string.account_verify_title)
+        Dialog dialog = new MaterialAlertDialogBuilder(context).setTitle(title)
             .setMessage(R.string.account_verify_message).setView(view)
             .setNegativeButton(R.string.cancel, (ignored, which) -> { }).create();
         Runnable[] poll = new Runnable[1];

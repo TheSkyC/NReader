@@ -1,5 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="comment_choose_account">登入後發表評論</string>
+    <string name="comment_as">評論帳戶：%1$s</string>
+    <string name="comment_input_hint">寫下評論</string>
+    <string name="comment_send">發表評論</string>
+    <string name="comment_login_title">登入後發表評論</string>
+    <string name="comment_login_message">發表評論需要使用使用者名稱和密碼登入。API 金鑰可用來查看評論。</string>
+    <string name="comment_login_action">前往登入</string>
+    <string name="comment_select_title">選擇評論帳戶</string>
+    <string name="comment_choose_after_sign_in">請選擇要使用的評論帳戶。</string>
+    <string name="comment_add_account">登入其他帳戶</string>
+    <string name="comment_expired">%1$s · 需要重新登入</string>
+    <string name="comment_length_error">請輸入 10 至 1000 個字元。</string>
+    <string name="comment_preparing">正在準備驗證…</string>
+    <string name="comment_verify_title">驗證評論</string>
+    <string name="comment_posting">正在發表評論…</string>
+    <string name="comment_posted">評論已發表</string>
+    <string name="comment_verification_failed">驗證失敗，請重試。</string>
+    <string name="comment_session_expired">請重新登入後發表評論。</string>
+    <string name="comment_rate_limited">請求過於頻繁，請稍後再試。</string>
+    <string name="comment_disabled">評論功能暫時無法使用。</string>
+    <string name="comment_rejected">無法發表評論，請檢查內容後重試。</string>
+    <string name="comment_unknown">無法確認是否發表成功，請重新整理評論後再決定是否重試。</string>
+    <string name="comment_unknown_confirm">上次操作的結果尚未確認。請先重新整理評論查看，確定要再次發表嗎？</string>
+    <string name="comment_send_again">再次發表</string>
+    <string name="comment_delete">刪除</string>
+    <string name="comment_delete_confirm">刪除這則評論？</string>
+    <string name="comment_deleting">正在刪除評論…</string>
+    <string name="comment_deleted">評論已刪除</string>
     <string name="account_remember_password">在此裝置記住密碼</string>
     <string name="account_storage_error">無法儲存帳戶，請重試。</string>
     <string name="account_login_description">登入後即可使用線上收藏和標籤。你可以選擇是否在此裝置記住密碼。</string>

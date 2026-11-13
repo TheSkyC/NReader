@@ -41,20 +41,6 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="@string/gallery_comments_read_only" />
-
-            <Button
-                android:id="@+id/comments_browser"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:text="@string/open_in_browser" />
-
             <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                 android:id="@+id/comments_refresher"
                 android:layout_width="match_parent"
@@ -90,6 +76,66 @@
                 android:layout_gravity="center_horizontal"
                 android:text="@string/gallery_comments_more"
                 android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/comment_composer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/comment_identity"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:gravity="start|center_vertical"
+                        android:text="@string/comment_choose_account" />
+
+                    <Button
+                        android:id="@+id/comments_browser"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="@string/open_in_browser" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/comment_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/comment_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/comment_input_hint"
+                        android:importantForAutofill="no"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="3"
+                        android:saveEnabled="false" />
+
+                    <Button
+                        android:id="@+id/comment_send"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/comment_send" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout>
 </LinearLayout>
