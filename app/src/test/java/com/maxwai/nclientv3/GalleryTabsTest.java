@@ -116,7 +116,7 @@ public class GalleryTabsTest {
                 activity = controller.get();
                 tabs = activity.findViewById(R.id.gallery_tabs);
                 assertEquals(2, tabs.getSelectedTabPosition());
-                assertEquals(1, ((RecyclerView) activity.findViewById(R.id.comments_list)).getAdapter().getItemCount());
+                assertEquals(2, ((RecyclerView) activity.findViewById(R.id.comments_list)).getAdapter().getItemCount());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.comments_more).getVisibility());
             }
         }
@@ -195,7 +195,7 @@ public class GalleryTabsTest {
                     Shadows.shadowOf(Looper.getMainLooper()).idle();
                     Thread.sleep(10);
                 }
-                assertEquals(1, ((RecyclerView) activity.findViewById(R.id.comments_list)).getAdapter().getItemCount());
+                assertEquals(2, ((RecyclerView) activity.findViewById(R.id.comments_list)).getAdapter().getItemCount());
                 activity.findViewById(R.id.comments_more).performClick();
                 assertTrue(secondPageEntered.await(5, TimeUnit.SECONDS));
                 controller.recreate();

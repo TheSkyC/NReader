@@ -69,14 +69,6 @@
                 android:text="@string/retry"
                 android:visibility="gone" />
 
-            <Button
-                android:id="@+id/comments_more"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/gallery_comments_more"
-                android:visibility="gone" />
-
             <LinearLayout
                 android:id="@+id/comment_composer"
                 android:layout_width="match_parent"
