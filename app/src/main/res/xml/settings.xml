@@ -29,10 +29,6 @@
             app:iconSpaceReserved="false"
             app:isPreferenceVisible="false" />
         <Preference
-            android:key="@string/preference_key_api_key"
-            android:title="@string/setting_api_key_title"
-            app:iconSpaceReserved="false" />
-        <Preference
             android:key="@string/preference_key_account_login"
             android:title="@string/accounts_title"
             android:summary="@string/accounts_shared_data"

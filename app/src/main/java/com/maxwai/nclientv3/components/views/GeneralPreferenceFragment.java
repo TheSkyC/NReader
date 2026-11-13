@@ -35,7 +35,6 @@ import androidx.preference.SwitchPreferenceCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.CopyToClipboardActivity;
-import com.maxwai.nclientv3.ApiKeyActivity;
 import com.maxwai.nclientv3.AccountLoginActivity;
 import com.maxwai.nclientv3.AccountsActivity;
 import com.maxwai.nclientv3.R;
@@ -47,7 +46,6 @@ import com.maxwai.nclientv3.async.database.export.Importer;
 import com.maxwai.nclientv3.components.activities.CrashApplication;
 import com.maxwai.nclientv3.components.launcher.LauncherCalculator;
 import com.maxwai.nclientv3.components.launcher.LauncherReal;
-import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.settings.MainGridSettings;
@@ -211,15 +209,6 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             return true;
         });
 
-        {
-            Preference apiKey = Objects.requireNonNull(findPreference(getString(R.string.preference_key_api_key)));
-            updateApiKeySummary(apiKey);
-            apiKey.setOnPreferenceClickListener(preference -> {
-                Intent i = new Intent(act, ApiKeyActivity.class);
-                act.runOnUiThread(() -> act.startActivity(i));
-                return true;
-            });
-        }
         {
             Preference statusScreen = Objects.requireNonNull(findPreference(getString(R.string.preference_key_status_screen)));
             statusScreen.setOnPreferenceClickListener(preference -> {
@@ -504,8 +493,6 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         if (act == null) return;
-        Preference apiKey = findPreference(getString(R.string.preference_key_api_key));
-        if (apiKey != null) updateApiKeySummary(apiKey);
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
         if (accountTags != null) accountTags.setEnabled(Login.isLogged());
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
@@ -534,17 +521,6 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 else restore.setSummary(R.string.restore_snapshot_unavailable);
             });
         }).start();
-    }
-
-    private void updateApiKeySummary(@NonNull Preference preference) {
-        if (act == null) return;
-        if (AuthStore.hasValidApiKey(act)) {
-            preference.setSummary(R.string.setting_api_key_summary_valid);
-        } else if (AuthStore.hasApiKey(act)) {
-            preference.setSummary(R.string.setting_api_key_summary_invalid);
-        } else {
-            preference.setSummary(R.string.setting_api_key_summary_missing);
-        }
     }
 
     public void manageCustomPath() {
