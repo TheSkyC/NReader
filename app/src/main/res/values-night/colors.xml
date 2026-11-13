@@ -6,4 +6,6 @@
     <color name="primaryColorVariant">@color/primary_material_dark</color>
     <color name="colorAccent">@android:color/holo_blue_dark</color>
     <color name="colorPrimary">@android:color/holo_blue_dark</color>
+    <color name="comment_input_background">#1F2023</color>
+    <color name="comment_input_stroke">#4B4F56</color>
 </resources>

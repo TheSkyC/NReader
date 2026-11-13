@@ -127,50 +127,52 @@
                     android:id="@+id/comment_input_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="24dp"
+                    android:layout_marginTop="4dp"
+                    app:cardBackgroundColor="@color/comment_input_background"
+                    app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeColor="@color/comment_input_stroke"
                     app:strokeWidth="1dp">
 
-                  <LinearLayout
+                  <FrameLayout
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
-                      android:gravity="bottom"
-                      android:orientation="horizontal"
-                      android:paddingStart="16dp"
+                      android:paddingStart="14dp"
                       android:paddingEnd="4dp">
 
                     <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/comment_input"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:background="@null"
-                        android:gravity="center_vertical|start"
+                        android:gravity="top|start"
                         android:hint="@string/comment_input_hint"
                         android:importantForAutofill="no"
                         android:inputType="textCapSentences|textMultiLine"
                         android:maxLines="3"
-                        android:minHeight="48dp"
+                        android:minHeight="44dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:paddingEnd="54dp"
                         android:saveEnabled="false" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/comment_send"
                         style="@style/Widget.MaterialComponents.Button.Icon"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="bottom|end"
                         android:contentDescription="@string/comment_send"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        android:minWidth="48dp"
-                        android:padding="12dp"
-                        app:cornerRadius="24dp"
+                        android:minWidth="44dp"
+                        android:padding="10dp"
+                        app:cornerRadius="22dp"
                         app:icon="@drawable/ic_comment_send"
                         app:iconGravity="textStart"
                         app:iconPadding="0dp"
-                        app:iconSize="24dp" />
-                  </LinearLayout>
+                        app:iconSize="22dp" />
+                  </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
