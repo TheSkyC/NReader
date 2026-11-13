@@ -148,6 +148,18 @@ public final class NhentaiLoginApi {
         return parseChallenge(body);
     }
 
+    @NonNull
+    public static Challenge commentChallenge(@NonNull Context context, @NonNull CancelHandle handle) throws IOException {
+        JSONObject body = execute(context, new Request.Builder()
+            .url(ORIGIN.resolve("/api/v2/pow?action=comment")).build(), handle);
+        Object value = body.opt("challenge");
+        Object difficulty = body.opt("difficulty");
+        if (!(value instanceof String) || ((String) value).length() > 4096 || !(difficulty instanceof Integer)
+            || (Integer) difficulty < 0 || (Integer) difficulty > 256
+            || ((Integer) difficulty > 0 && ((String) value).isEmpty())) throw new IOException("Invalid PoW challenge");
+        return new Challenge((String) value, (Integer) difficulty);
+    }
+
     static Challenge parseChallenge(@NonNull JSONObject body) throws IOException {
         Object challenge = body.opt("challenge");
         Object difficulty = body.opt("difficulty");
