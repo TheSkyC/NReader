@@ -26,6 +26,15 @@ public class UserTest {
         assertEquals("fixture", user.getUsername());
     }
 
+    @Test public void profileAvatarSupportsRelativePathAndIdFallback() throws Exception {
+        try (ResponseBody body = ResponseBody.create("{\"id\":42,\"username\":\"fixture\",\"avatar_url\":\"/avatars/photo.webp\"}", null)) {
+            assertEquals("https://i1.nhentai.net/avatars/photo.webp", User.readResponse(body).getAvatarUrl());
+        }
+        try (ResponseBody body = ResponseBody.create("{\"id\":42,\"username\":\"fixture\"}", null)) {
+            assertEquals("https://i1.nhentai.net/avatars/42.png", User.readResponse(body).getAvatarUrl());
+        }
+    }
+
     @Test public void incompleteProfilesAreRejected() throws Exception {
         for (String json : new String[]{"{}", "{\"id\":0,\"username\":\"fixture\"}",
             "{\"id\":42,\"username\":\"  \"}"}) {

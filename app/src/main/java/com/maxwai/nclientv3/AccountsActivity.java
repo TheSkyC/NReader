@@ -93,7 +93,7 @@ public final class AccountsActivity extends GeneralActivity {
         if (Objects.equals(account.id, activeId)) state = state == null ? getString(R.string.accounts_current)
             : getString(R.string.accounts_detail_format, getString(R.string.accounts_current), state);
         detail.setText(state == null ? method : getString(R.string.accounts_detail_format, method, state));
-        String avatarUrl = NhentaiLoginApi.trustedAvatarUrl(account.avatarUrl);
+        String avatarUrl = NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
         RequestManager images = GlideX.with(avatar);
         if (images != null && avatarUrl != null)
             images.load(avatarUrl).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);

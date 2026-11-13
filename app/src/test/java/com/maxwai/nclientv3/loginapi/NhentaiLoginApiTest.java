@@ -72,9 +72,17 @@ public class NhentaiLoginApiTest {
         assertEquals("fixture", result.username);
         assertEquals("https://i.nhentai.net/avatars/12.png", result.avatarUrl);
         body.getJSONObject("user").put("avatar_url", "https://nhentai.net.evil.example/avatar.png");
-        assertEquals(null, NhentaiLoginApi.parseLoginResult(body).avatarUrl);
+        assertEquals("https://i1.nhentai.net/avatars/12.png", NhentaiLoginApi.parseLoginResult(body).avatarUrl);
         body.getJSONObject("user").put("id", "12");
         assertThrows(java.io.IOException.class, () -> NhentaiLoginApi.parseLoginResult(body));
+    }
+
+    @Test public void avatarResolutionAcceptsSitePathsAndRejectsUntrustedHosts() {
+        assertEquals("https://i1.nhentai.net/avatars/12.png", NhentaiLoginApi.accountAvatarUrl("/avatars/12.png", 12));
+        assertEquals("https://i1.nhentai.net/avatars/profile.webp", NhentaiLoginApi.accountAvatarUrl("avatars/profile.webp", 12));
+        assertEquals("https://i1.nhentai.net/avatars/12.png", NhentaiLoginApi.accountAvatarUrl(null, 12));
+        assertEquals("https://i1.nhentai.net/avatars/12.png", NhentaiLoginApi.accountAvatarUrl("//evil.example/avatars/12.png", 12));
+        assertEquals(null, NhentaiLoginApi.accountAvatarUrl(null, 0));
     }
 
     @Test public void explicitWebViewCookiesSurviveTheNetworkCookieBridge() throws Exception {
