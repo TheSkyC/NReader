@@ -20,9 +20,18 @@ access conditions before implementing any integration.
   list remained empty after a page reload.
 - The user reports that accounts may need to be approximately 14–15 days old.
   This duration has not been independently confirmed and must not be hardcoded.
-- A successful creation, its exact request sequence, proof-of-work action, and
-  the website's cleanup interaction have not yet been observed. Do not infer them
-  from this record; capture a sanitized trace with an eligible account first.
+- On November 13, 2026, an eligible account successfully created a temporary key
+  through the same form. After entering a name and completing verification,
+  **Create Key** displayed the full key with a notice that it would not be shown
+  again. The list added a named entry showing its prefix, creation date and usage
+  status. NReader validated the key and replaced an existing key for the same
+  account. The new key's **Revoke** action opened a confirmation; confirming it
+  removed that entry and restored the original key count. No unrelated key was
+  changed, and the temporary key was also removed from NReader.
+- The exact request sequence and proof-of-work action have not yet been observed:
+  the sanitized network observer attached to another browser tab. Do not infer
+  the missing sequence; capture a trace with an eligible account before using
+  this record to implement creation.
 
 ## Declared API contract
 
