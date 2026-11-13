@@ -355,6 +355,23 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void returningToKeyRevalidationPreservesEditedKeyAndDoesNotRestoreItAfterRecreation() throws Exception {
+        String savedKey = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(savedKey);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, savedKey, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            EditText input = controller.get().findViewById(R.id.api_key_input);
+            assertEquals(savedKey, input.getText().toString());
+            input.setText("replacement-key-fixture");
+            controller.pause().stop().restart().start().resume();
+            assertEquals("replacement-key-fixture", input.getText().toString());
+            controller.recreate();
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
     @Test public void validatedApiKeyIsAddedAndSelectedWithoutRemovingExistingAccount() throws Exception {
         repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
         String newKey = "validated-key-fixture";
