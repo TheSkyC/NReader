@@ -6,7 +6,8 @@
     <string name="comment_input_hint">写下评论</string>
     <string name="comment_send">发表评论</string>
     <string name="comment_login_title">登录后发表评论</string>
-    <string name="comment_login_message">发表评论需要使用用户名和密码登录。API 密钥可用于查看评论。</string>
+    <string name="comment_login_message">API 密钥没有评论权限。请使用账号密码登录后发表评论。</string>
+    <string name="comment_login_guest_message">使用账号密码登录后即可发表评论。</string>
     <string name="comment_login_action">去登录</string>
     <string name="comment_select_title">选择评论账号</string>
     <string name="comment_choose_after_sign_in">请选择要使用的评论账号。</string>

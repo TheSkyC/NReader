@@ -5,7 +5,8 @@
     <string name="comment_input_hint">寫下評論</string>
     <string name="comment_send">發表評論</string>
     <string name="comment_login_title">登入後發表評論</string>
-    <string name="comment_login_message">發表評論需要使用使用者名稱和密碼登入。API 金鑰可用來查看評論。</string>
+    <string name="comment_login_message">API 金鑰沒有評論權限。請使用帳號密碼登入後發表評論。</string>
+    <string name="comment_login_guest_message">使用帳號密碼登入後即可發表評論。</string>
     <string name="comment_login_action">前往登入</string>
     <string name="comment_select_title">選擇評論帳戶</string>
     <string name="comment_choose_after_sign_in">請選擇要使用的評論帳戶。</string>

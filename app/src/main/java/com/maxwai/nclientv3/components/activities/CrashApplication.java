@@ -90,11 +90,15 @@ public class CrashApplication extends Application {
             View rootView = activity.getWindow().getDecorView().getRootView();
             ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
                 Insets barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                int bottom = barsInsets.bottom;
+                if (activity instanceof com.maxwai.nclientv3.GalleryActivity) {
+                    bottom = Math.max(bottom, insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
+                }
                 v.setPadding(
                     barsInsets.left,
                     barsInsets.top,
                     barsInsets.right,
-                    barsInsets.bottom
+                    bottom
                 );
                 return WindowInsetsCompat.CONSUMED;
             });

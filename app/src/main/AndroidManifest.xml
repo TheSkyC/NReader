@@ -109,6 +109,7 @@
         <activity
             android:name=".GalleryActivity"
             android:exported="true"
+            android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_gallery"
             android:parentActivityName=".MainActivity">
             <intent-filter android:autoVerify="true">

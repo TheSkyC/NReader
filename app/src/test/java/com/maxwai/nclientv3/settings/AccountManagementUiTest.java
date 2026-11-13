@@ -174,6 +174,18 @@ public class AccountManagementUiTest {
                 activity.findViewById(R.id.comment_identity).performClick();
                 androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
                     org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                assertEquals(activity.getString(R.string.comment_login_guest_message),
+                    ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                dialog.dismiss();
+                String key = "comment-api-fixture";
+                repository.putAndSelect(new AccountVault.Account(ApiAuthInterceptor.fingerprint(key),
+                    AccountVault.Type.API_KEY, "API account", null, key, null, null, 0, 0, false, 10),
+                    repository.identityGeneration());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                assertEquals(activity.getString(R.string.comment_login_message),
+                    ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
                 dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 Intent login = Shadows.shadowOf(activity).getNextStartedActivityForResult().intent;
