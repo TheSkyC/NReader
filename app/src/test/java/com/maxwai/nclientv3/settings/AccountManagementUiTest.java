@@ -355,6 +355,46 @@ public class AccountManagementUiTest {
         }
     }
 
+    @Test public void lateVaultLoadPrefillsUntouchedApiKeyForm() throws Exception {
+        String key = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, key, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            assertEquals(controller.get().getString(R.string.accounts_loading),
+                ((TextView) controller.get().findViewById(R.id.api_key_status_text)).getText().toString());
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(key, ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+            assertEquals(controller.get().getString(R.string.login_status_api_key_saved),
+                ((TextView) controller.get().findViewById(R.id.api_key_status_text)).getText().toString());
+        }
+    }
+
+    @Test public void lateVaultLoadDoesNotOverwriteEditedApiKey() throws Exception {
+        String key = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, key, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("edited-key-fixture");
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("edited-key-fixture", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
     @Test public void returningToKeyRevalidationPreservesEditedKeyAndDoesNotRestoreItAfterRecreation() throws Exception {
         String savedKey = "saved-key-fixture";
         String id = ApiAuthInterceptor.fingerprint(savedKey);
