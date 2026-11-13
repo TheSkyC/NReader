@@ -21,6 +21,18 @@ import okhttp3.Response;
 public class ApiAuthInterceptor implements Interceptor {
     static final class RefreshRequest {
     }
+    public static final class AccountIdentity {
+        private final String accountId;
+        private final long revision;
+        private final java.util.function.BooleanSupplier current;
+
+        public AccountIdentity(@NonNull String accountId, long revision,
+                               @NonNull java.util.function.BooleanSupplier current) {
+            this.accountId = accountId;
+            this.revision = revision;
+            this.current = current;
+        }
+    }
     public static final class ExpectedIdentity {
         private final String fingerprint;
         private final java.util.function.BooleanSupplier current;
@@ -67,6 +79,25 @@ public class ApiAuthInterceptor implements Interceptor {
                 || !"POST".equals(request.method()) || request.header("Authorization") != null)
                 throw new IOException("Invalid refresh request");
             return chain.proceed(request);
+        }
+        AccountIdentity account = request.tag(AccountIdentity.class);
+        if (account != null) {
+            if (request.header("Authorization") != null || !isTrustedApiRequest(request.url(), Utility.ORIGINAL_URL)
+                || !account.current.getAsBoolean()) throw new IOException("Invalid account operation");
+            AccountRepository repository = AccountRuntime.repository();
+            if (repository == null || repository.accountRevision(account.accountId) != account.revision)
+                throw new IOException("Account changed");
+            String token = SessionRefresh.accessAccount(context, account.accountId, account.revision);
+            if (token == null || !account.current.getAsBoolean()
+                || repository.accountRevision(account.accountId) != account.revision)
+                throw new IOException("Account session unavailable");
+            Request authenticated = request.newBuilder().header("Authorization", "User " + token).build();
+            Response response = chain.proceed(authenticated);
+            if (!account.current.getAsBoolean() || repository.accountRevision(account.accountId) != account.revision) {
+                response.close();
+                throw new IOException("Account operation expired");
+            }
+            return response;
         }
         ExpectedIdentity expected = request.tag(ExpectedIdentity.class);
         long credentialGeneration = AuthStore.identityGeneration();

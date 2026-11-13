@@ -76,6 +76,28 @@ public class AccountRepositoryTest {
         assertEquals("new-refresh", repository.snapshot().activeAccount().refreshToken);
     }
 
+    @Test public void accountScopedRefreshSurvivesBrowsingSwitchButRejectsRemovedOrReplacedAccount() throws Exception {
+        repository.putAndSelect(account("one"), repository.identityGeneration());
+        long revision = repository.accountRevision("one");
+        repository.putAndSelect(account("two"), repository.identityGeneration());
+        assertTrue(repository.updateAccountSession("one", revision, "refresh-one",
+            "new-access", "new-refresh", 300, 400));
+        assertEquals("two", repository.snapshot().activeId);
+        assertFalse(repository.rejectAccountSession("one", revision, "refresh-one"));
+        repository.remove("one");
+        repository.putAndSelect(account("one"), repository.identityGeneration());
+        assertFalse(repository.updateAccountSession("one", revision, "new-refresh",
+            "stale-access", "stale-refresh", 500, 600));
+        assertEquals("refresh-one", repository.account("one").refreshToken);
+    }
+
+    @Test public void savingCommentAccountDoesNotChangeBrowsingAccount() throws Exception {
+        repository.putAndSelect(account("browser"), repository.identityGeneration());
+        assertTrue(repository.putAccount(account("commenter"), repository.identityGeneration(), false));
+        assertEquals("browser", repository.snapshot().activeId);
+        assertEquals("commenter", repository.account("commenter").username);
+    }
+
     @Test public void failedDiskWriteKeepsPreviouslyActiveAccount() throws Exception {
         assertTrue(repository.putAndSelect(account("one"), repository.identityGeneration()));
         assertTrue(repository.putAndSelect(account("two"), repository.identityGeneration()));

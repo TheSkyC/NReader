@@ -27,6 +27,58 @@ final class SessionRefresh {
     }
 
     @Nullable
+    static synchronized String accessAccount(@NonNull Context context, @NonNull String accountId, long revision) {
+        AccountRepository repository = AccountRuntime.repository();
+        if (repository == null) return null;
+        AccountVault.Account account;
+        synchronized (repository) {
+            account = repository.account(accountId);
+            if (account == null || repository.accountRevision(accountId) != revision
+                || account.type != AccountVault.Type.PASSWORD || account.rejected
+                || account.refreshToken == null || account.refreshExpiry <= System.currentTimeMillis()) return null;
+            if (account.accessExpiry > System.currentTimeMillis() && decode(account.accessToken) != null)
+                return decode(account.accessToken);
+        }
+        String refresh = account.refreshToken;
+        if (accountId.equals(failedIdentity) && lastFailure != 0
+            && SystemClock.elapsedRealtime() - lastFailure < 30000) return null;
+        try {
+            JSONObject payload = new JSONObject().put("refresh_token", refresh);
+            Request request = new Request.Builder().url(ORIGIN.resolve("/api/v2/auth/refresh"))
+                .tag(ApiAuthInterceptor.RefreshRequest.class, new ApiAuthInterceptor.RefreshRequest())
+                .post(RequestBody.create(payload.toString(), MediaType.get("application/json; charset=utf-8"))).build();
+            try (Response response = Global.getClient(context).newBuilder().cookieJar(CookieJar.NO_COOKIES)
+                .followRedirects(false).followSslRedirects(false).retryOnConnectionFailure(false)
+                .callTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build().newCall(request).execute()) {
+                if (response.code() == 401) {
+                    repository.rejectAccountSession(accountId, revision, refresh);
+                    return null;
+                }
+                if (!response.isSuccessful() || response.body() == null
+                    || response.body().contentLength() > 65536) throw new IOException("Refresh failed");
+                okio.BufferedSource source = response.body().source();
+                source.request(65537);
+                if (source.getBuffer().size() > 65536) throw new IOException("Refresh response too large");
+                JSONObject body = new JSONObject(source.readUtf8());
+                Object access = body.opt("access_token");
+                Object replacement = body.opt("refresh_token");
+                if (!(access instanceof String) || !(replacement instanceof String)) throw new IOException("Invalid refresh response");
+                java.util.List<okhttp3.Cookie> cookies = AuthSessionStore.tokenCookies((String) access, (String) replacement);
+                if (cookies.size() != 2 || !repository.updateAccountSession(accountId, revision, refresh,
+                    cookies.get(0).value(), cookies.get(1).value(), cookies.get(0).expiresAt(), cookies.get(1).expiresAt()))
+                    throw new IOException("Refresh was not confirmed");
+                lastFailure = 0;
+                failedIdentity = null;
+                return decode((String) access);
+            }
+        } catch (IOException | JSONException exception) {
+            lastFailure = SystemClock.elapsedRealtime();
+            failedIdentity = accountId;
+            return null;
+        }
+    }
+
+    @Nullable
     static synchronized String access(@NonNull Context context, @NonNull String identity, @Nullable String rejectedToken) {
         long generation = AuthStore.identityGeneration();
         if (generation < 0) return null;
