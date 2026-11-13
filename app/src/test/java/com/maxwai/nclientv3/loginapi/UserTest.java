@@ -50,4 +50,24 @@ public class UserTest {
             }
         }
     }
+
+    @Test public void invalidIdentityTypesDuplicatesAndTrailingContentAreRejected() throws Exception {
+        for (String json : new String[]{
+            "{\"id\":\"42\",\"username\":\"fixture\"}",
+            "{\"id\":42.0,\"username\":\"fixture\"}",
+            "{\"id\":2147483648,\"username\":\"fixture\"}",
+            "{\"id\":42,\"id\":43,\"username\":\"fixture\"}",
+            "{\"id\":42,\"username\":42}",
+            "{\"id\":42,\"username\":\"one\",\"username\":\"two\"}",
+            "{\"id\":42,\"username\":\"fixture\"} {}"}) {
+            try (ResponseBody body = ResponseBody.create(json, null)) {
+                try {
+                    User.readResponse(body);
+                    fail("Invalid profile must be rejected");
+                } catch (IOException expected) {
+                    // Expected.
+                }
+            }
+        }
+    }
 }
