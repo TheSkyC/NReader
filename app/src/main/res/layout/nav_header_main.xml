@@ -1,52 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_header"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/nav_header_height"
+    android:layout_height="wrap_content"
+    android:minHeight="112dp"
     android:background="?attr/navHeaderGradient"
     android:clickable="true"
     android:focusable="true"
-    android:contentDescription="@string/accounts_switch"
-    android:gravity="bottom"
-    android:orientation="vertical"
-    android:paddingStart="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingEnd="@dimen/activity_horizontal_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin">
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="20dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="20dp">
 
     <ImageView
         android:id="@+id/nav_account_avatar"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:contentDescription="@null"
-        app:layout_constraintBottom_toTopOf="@+id/nav_account_name"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="spread_inside"
         app:srcCompat="@drawable/ic_person" />
 
-    <TextView
-        android:id="@+id/nav_account_name"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="@string/accounts_guest"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        app:layout_constraintBottom_toTopOf="@+id/nav_account_action"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nav_account_avatar" />
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/nav_account_action"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/accounts_switch"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/nav_account_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="@string/accounts_guest"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/nav_account_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/accounts_add"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@null"
+        app:srcCompat="@drawable/ic_keyboard_arrow_right"
+        app:tint="?android:attr/textColorSecondary" />
+</LinearLayout>

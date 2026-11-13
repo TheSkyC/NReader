@@ -67,6 +67,9 @@ public final class AccountsActivity extends GeneralActivity {
         list.removeAllViews();
         add.setEnabled(!busy && state != null);
         guest.setEnabled(!busy && state != null && state.activeId != null);
+        guest.setText(state != null && state.activeId == null
+            ? getString(R.string.accounts_detail_format, getString(R.string.accounts_guest), getString(R.string.accounts_current))
+            : getString(R.string.accounts_use_guest));
         if (state == null) {
             status.setText(AccountRuntime.openError() == null ? R.string.accounts_loading : R.string.account_storage_error);
             return;
@@ -90,15 +93,18 @@ public final class AccountsActivity extends GeneralActivity {
             state = getString(account.type == AccountVault.Type.PASSWORD
                 ? R.string.accounts_needs_sign_in : R.string.accounts_key_invalid);
         }
-        if (Objects.equals(account.id, activeId)) state = state == null ? getString(R.string.accounts_current)
-            : getString(R.string.accounts_detail_format, getString(R.string.accounts_current), state);
         detail.setText(state == null ? method : getString(R.string.accounts_detail_format, method, state));
+        boolean current = Objects.equals(account.id, activeId);
+        row.findViewById(R.id.account_current).setVisibility(current ? View.VISIBLE : View.INVISIBLE);
         String avatarUrl = NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
         RequestManager images = GlideX.with(avatar);
         if (images != null && avatarUrl != null)
             images.load(avatarUrl).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);
         View select = row.findViewById(R.id.account_select);
         select.setEnabled(!busy);
+        String description = getString(R.string.accounts_detail_format, displayName, detail.getText());
+        select.setContentDescription(current
+            ? getString(R.string.accounts_detail_format, description, getString(R.string.accounts_current)) : description);
         select.setOnClickListener(view -> select(account.id));
         View manage = row.findViewById(R.id.account_manage);
         manage.setEnabled(!busy);

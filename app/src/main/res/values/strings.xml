@@ -26,7 +26,7 @@
     <string name="accounts_remove">Remove account</string>
     <string name="accounts_switch">Switch account</string>
     <string name="accounts_guest">Not signed in</string>
-    <string name="accounts_shared_data">Downloads, local favorites and reading history are shared on this device.</string>
+    <string name="accounts_shared_data">Online data follows your account. Downloads, local favorites and reading history are shared on this device.</string>
     <string name="preference_key_account_login" translatable="false">account_login</string>
     <string name="account_title">nhentai account</string>
     <string name="account_setting_summary">Sign in with your username and password</string>

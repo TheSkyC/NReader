@@ -25,7 +25,7 @@
     <string name="accounts_remove">移除账户</string>
     <string name="accounts_switch">切换账户</string>
     <string name="accounts_guest">未登录</string>
-    <string name="accounts_shared_data">下载、本地收藏和阅读历史在此设备上共享。</string>
+    <string name="accounts_shared_data">在线数据随账户切换，下载、本地收藏和阅读历史在此设备上共享。</string>
     <string name="account_title">nhentai 账号</string>
     <string name="account_setting_summary">使用用户名和密码登录</string>
     <string name="account_description">登录后可使用在线收藏和标签。密码不会保存，API 密钥独立管理。</string>

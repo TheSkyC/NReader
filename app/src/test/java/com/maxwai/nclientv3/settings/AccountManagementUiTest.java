@@ -82,8 +82,10 @@ public class AccountManagementUiTest {
             View row = list.getChildAt(0);
             assertEquals("Display name", ((TextView) row.findViewById(R.id.account_name)).getText().toString());
             String detail = ((TextView) row.findViewById(R.id.account_detail)).getText().toString();
-            assertTrue(detail.contains(activity.getString(R.string.accounts_current)));
             assertTrue(detail.contains(activity.getString(R.string.accounts_needs_sign_in)));
+            assertEquals(View.VISIBLE, row.findViewById(R.id.account_current).getVisibility());
+            assertTrue(row.findViewById(R.id.account_select).getContentDescription().toString()
+                .contains(activity.getString(R.string.accounts_current)));
         }
     }
 
@@ -223,20 +225,22 @@ public class AccountManagementUiTest {
             list.getChildAt(0).findViewById(R.id.account_select).performClick();
             awaitAccountOperations();
             assertEquals("first", repository.snapshot().activeId);
-            String firstDetail = ((TextView) list.getChildAt(0).findViewById(R.id.account_detail)).getText().toString();
-            assertTrue(firstDetail.contains(activity.getString(R.string.accounts_current)));
+            assertEquals(View.VISIBLE, list.getChildAt(0).findViewById(R.id.account_current).getVisibility());
+            assertEquals(View.INVISIBLE, list.getChildAt(1).findViewById(R.id.account_current).getVisibility());
 
             activity.findViewById(R.id.accounts_guest).performClick();
             awaitAccountOperations();
             assertNull(repository.snapshot().activeId);
             assertEquals(2, list.getChildCount());
             assertFalse(activity.findViewById(R.id.accounts_guest).isEnabled());
+            assertTrue(((TextView) activity.findViewById(R.id.accounts_guest)).getText().toString()
+                .contains(activity.getString(R.string.accounts_current)));
 
             list.getChildAt(1).findViewById(R.id.account_select).performClick();
             awaitAccountOperations();
             assertEquals("second", repository.snapshot().activeId);
-            String secondDetail = ((TextView) list.getChildAt(1).findViewById(R.id.account_detail)).getText().toString();
-            assertTrue(secondDetail.contains(activity.getString(R.string.accounts_current)));
+            assertEquals(View.INVISIBLE, list.getChildAt(0).findViewById(R.id.account_current).getVisibility());
+            assertEquals(View.VISIBLE, list.getChildAt(1).findViewById(R.id.account_current).getVisibility());
         }
     }
 
@@ -321,7 +325,7 @@ public class AccountManagementUiTest {
                 repository.select(null);
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(activity.getString(R.string.accounts_guest), name.getText().toString());
-                assertEquals(activity.getString(R.string.accounts_switch), action.getText().toString());
+                assertEquals(activity.getString(R.string.accounts_add), action.getText().toString());
                 com.google.android.material.navigation.NavigationView navigation = activity.findViewById(R.id.nav_view);
                 navigation.getHeaderView(0).performClick();
                 assertEquals(AccountsActivity.class.getName(), Shadows.shadowOf(activity).getNextStartedActivity()
