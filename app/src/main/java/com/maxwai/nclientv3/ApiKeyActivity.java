@@ -39,6 +39,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiKeyActivity extends GeneralActivity {
+    private static final String KEY_EDITED = "api_key_edited";
     public static final String EXTRA_ADD_ACCOUNT = "add_account";
     public static final String EXTRA_ACCOUNT_ID = "account_id";
 
@@ -51,6 +52,8 @@ public class ApiKeyActivity extends GeneralActivity {
     private MaterialButton validateApiKey;
     private boolean validationInFlight = false;
     private boolean addAccount;
+    private boolean keyEdited;
+    private boolean updatingKey;
     @Nullable private String targetAccountId;
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final AtomicReference<Call> validationCall = new AtomicReference<>();
@@ -72,6 +75,14 @@ public class ApiKeyActivity extends GeneralActivity {
         statusText = findViewById(R.id.api_key_status_text);
         inputGroup = findViewById(R.id.api_key_input_group);
         apiKeyInput = findViewById(R.id.api_key_input);
+        keyEdited = savedInstanceState != null && savedInstanceState.getBoolean(KEY_EDITED, false);
+        apiKeyInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                if (!updatingKey) keyEdited = true;
+            }
+            @Override public void afterTextChanged(android.text.Editable text) { }
+        });
         progressBar = findViewById(R.id.login_progress);
         openApiKeyPage = findViewById(R.id.open_api_key_page);
         clearApiKey = findViewById(R.id.clear_api_key);
@@ -116,8 +127,10 @@ public class ApiKeyActivity extends GeneralActivity {
         AccountVault.Account target = targetAccount();
         String apiKey = targetAccountId != null ? (target == null ? null : target.apiKey)
             : addAccount ? null : AuthStore.getApiKey(this);
-        if (apiKey != null && !validationInFlight) {
+        if (apiKey != null && !validationInFlight && !keyEdited) {
+            updatingKey = true;
             apiKeyInput.setText(apiKey);
+            updatingKey = false;
         }
         clearApiKey.setEnabled(!addAccount && !validationInFlight && AuthStore.hasApiKey(this));
         clearApiKey.setVisibility(addAccount || targetAccountId != null ? View.GONE : View.VISIBLE);
@@ -276,6 +289,12 @@ public class ApiKeyActivity extends GeneralActivity {
         } catch (IOException | RuntimeException exception) {
             return null;
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putBoolean(KEY_EDITED, keyEdited);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
