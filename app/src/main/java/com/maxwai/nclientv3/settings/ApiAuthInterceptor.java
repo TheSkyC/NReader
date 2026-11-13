@@ -97,6 +97,7 @@ public class ApiAuthInterceptor implements Interceptor {
                 response.close();
                 throw new IOException("Account operation expired");
             }
+            if (response.code() == 401) repository.invalidateAccountAccess(account.accountId, account.revision, token);
             return response;
         }
         ExpectedIdentity expected = request.tag(ExpectedIdentity.class);

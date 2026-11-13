@@ -104,6 +104,18 @@ public class AccountAuthenticationIntegrationTest {
         assertEquals("login-one", repository.snapshot().activeAccount().loginName);
     }
 
+    @Test public void commentLoginKeepsTheBrowsingAccountSelected() throws Exception {
+        repository.putAndSelect(session("browser", "browser-access", "browser-refresh"), repository.identityGeneration());
+        long attempt = AuthSessionStore.beginAttempt();
+        String commenter = AuthSessionStore.completeAccountAttemptForRole(
+            AuthSessionStore.tokenCookies("comment-access", "comment-refresh"), attempt,
+            repository.identityGeneration(), "comment-login", "Commenter", null, null, 42, null, false);
+        assertEquals("browser", repository.snapshot().activeId);
+        assertEquals(42, repository.account(commenter).userId);
+        assertEquals("comment-refresh", repository.account(commenter).refreshToken);
+        assertNull(repository.account(commenter).password);
+    }
+
     @Test public void loginStartedBeforeSwitchCannotReplaceSelectedAccount() throws Exception {
         assertTrue(repository.putAndSelect(session("first-login", "one", "refresh-one"), repository.identityGeneration()));
         assertTrue(repository.putAndSelect(session("second-login", "two", "refresh-two"), repository.identityGeneration()));
@@ -224,6 +236,70 @@ public class AccountAuthenticationIntegrationTest {
         assertEquals("new-refresh", repository.snapshot().activeAccount().refreshToken);
         assertEquals("password-fixture", repository.snapshot().activeAccount().password);
         assertEquals("login-fixture", repository.snapshot().activeAccount().loginName);
+    }
+
+    @Test public void explicitCommentAccountDoesNotUseTheBrowsingAccount() throws Exception {
+        repository.putAndSelect(session("commenter", "comment-access", "comment-refresh"), repository.identityGeneration());
+        long revision = repository.accountRevision("commenter");
+        repository.putAndSelect(session("browser", "browser-access", "browser-refresh"), repository.identityGeneration());
+        java.util.concurrent.atomic.AtomicReference<String> authorization = new java.util.concurrent.atomic.AtomicReference<>();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                authorization.set(chain.request().header("Authorization"));
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create("{}", null)).build();
+            }).build();
+        okhttp3.Request request = new okhttp3.Request.Builder()
+            .url("https://nhentai.net/api/v2/galleries/123/comments")
+            .tag(ApiAuthInterceptor.AccountIdentity.class,
+                new ApiAuthInterceptor.AccountIdentity("commenter", revision, () -> true))
+            .post(okhttp3.RequestBody.EMPTY).build();
+        try (Response response = client.newCall(request).execute()) {
+            assertEquals(200, response.code());
+        }
+        assertEquals("User comment-access", authorization.get());
+        assertEquals("browser", repository.snapshot().activeId);
+        repository.remove("commenter");
+        org.junit.Assert.assertThrows(java.io.IOException.class, () -> client.newCall(request).execute());
+        okhttp3.Request untrusted = request.newBuilder().url("https://example.com/api/v2/galleries/123/comments").build();
+        org.junit.Assert.assertThrows(java.io.IOException.class, () -> client.newCall(untrusted).execute());
+    }
+
+    @Test public void inactiveCommentSessionRefreshDoesNotChangeBrowsingAccount() throws Exception {
+        long future = System.currentTimeMillis() + 600000;
+        repository.putAndSelect(new AccountVault.Account("inactive", AccountVault.Type.PASSWORD, "inactive",
+            null, null, "old-access", "old-refresh", 1, future, false, 5), repository.identityGeneration());
+        long revision = repository.accountRevision("inactive");
+        repository.putAndSelect(session("browser", "browser-access", "browser-refresh"), repository.identityGeneration());
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
+            .request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+            .body(ResponseBody.create("{\"access_token\":\"new-access\",\"refresh_token\":\"new-refresh\"}", null)).build()).build();
+        assertEquals("new-access", SessionRefresh.accessAccount(application, "inactive", revision));
+        assertEquals("new-refresh", repository.account("inactive").refreshToken);
+        assertEquals("browser", repository.snapshot().activeId);
+    }
+
+    @Test public void rejectedCommentAccessIsInvalidatedWithoutReplayingWrite() throws Exception {
+        repository.putAndSelect(session("commenter", "old-access", "refresh"), repository.identityGeneration());
+        long revision = repository.accountRevision("commenter");
+        java.util.concurrent.atomic.AtomicInteger writes = new java.util.concurrent.atomic.AtomicInteger();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new ApiAuthInterceptor(application))
+            .addInterceptor(chain -> {
+                writes.incrementAndGet();
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(401).message("Unauthorized").body(ResponseBody.create("{}", null)).build();
+            }).build();
+        okhttp3.Request request = new okhttp3.Request.Builder()
+            .url("https://nhentai.net/api/v2/galleries/123/comments")
+            .tag(ApiAuthInterceptor.AccountIdentity.class,
+                new ApiAuthInterceptor.AccountIdentity("commenter", revision, () -> true))
+            .post(okhttp3.RequestBody.EMPTY).build();
+        try (Response response = client.newCall(request).execute()) {
+            assertEquals(401, response.code());
+        }
+        assertEquals(1, writes.get());
+        assertNull(repository.account("commenter").accessToken);
+        assertEquals("refresh", repository.account("commenter").refreshToken);
     }
 
     @Test public void mismatchedProfileRejectsAccountWithoutInstallingWrongUser() throws Exception {

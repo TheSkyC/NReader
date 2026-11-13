@@ -147,6 +147,19 @@ public final class AccountRepository {
     }
 
     @WorkerThread
+    public synchronized boolean invalidateAccountAccess(@NonNull String accountId, long revision,
+                                                        @NonNull String expectedAccess) throws IOException {
+        AccountVault.Account account = account(accountId);
+        if (account == null || accountRevision(accountId) != revision || account.rejected
+            || account.type != AccountVault.Type.PASSWORD || !expectedAccess.equals(account.accessToken)) return false;
+        AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, account.username,
+            account.password, null, null, account.refreshToken, 0, account.refreshExpiry, false, account.userId,
+            account.loginName, account.avatarUrl);
+        state = vault.update(value -> replace(value, replacement));
+        return true;
+    }
+
+    @WorkerThread
     public synchronized boolean rejectAccountSession(@NonNull String accountId, long revision,
                                                      @NonNull String expectedRefresh) throws IOException {
         AccountVault.Account account = account(accountId);
