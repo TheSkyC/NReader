@@ -457,10 +457,14 @@ public class MainActivity extends BaseActivity
         boolean needsSignIn = account != null && (account.rejected
             || (account.type == AccountVault.Type.PASSWORD
             && (account.refreshToken == null || account.refreshExpiry <= System.currentTimeMillis())));
-        action.setText(needsSignIn ? R.string.accounts_needs_sign_in : R.string.accounts_switch);
+        action.setText(account == null ? R.string.accounts_add
+            : needsSignIn ? (account.type == AccountVault.Type.PASSWORD
+                ? R.string.accounts_needs_sign_in : R.string.accounts_key_invalid) : R.string.accounts_current);
         if (AccountRuntime.repository() != null && !AccountRuntime.repository().isOpen()) {
             name.setText(AccountRuntime.openError() == null ? R.string.accounts_loading : R.string.account_storage_error);
         }
+        header.setContentDescription(getString(R.string.accounts_detail_format,
+            getString(R.string.accounts_detail_format, name.getText(), action.getText()), getString(R.string.accounts_switch)));
         RequestManager images = GlideX.with(avatar);
         if (images != null) {
             images.clear(avatar);
