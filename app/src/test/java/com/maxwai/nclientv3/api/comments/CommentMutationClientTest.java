@@ -86,6 +86,17 @@ public class CommentMutationClientTest {
         assertThrows(IOException.class, () -> client.delete(4));
     }
 
+    @Test public void distinguishesNewAccountRestrictionFromOtherRejections() throws Exception {
+        AtomicReference<String> error = new AtomicReference<>("{\"error\":\"Your account is too new to post comments.\"}");
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
+            .request(chain.request()).protocol(Protocol.HTTP_1_1).code(400).message("Bad Request")
+            .body(ResponseBody.create(error.get(), null)).build()).build();
+        CommentMutationClient client = new CommentMutationClient(RuntimeEnvironment.getApplication(), "account", 1, () -> true);
+        assertTrue(client.publish(42, "Hello there", "captcha", "challenge", "nonce", "agent", "").accountTooNew);
+        error.set("{\"error\":\"New comments are disabled for this account.\"}");
+        assertFalse(client.publish(42, "Hello there", "captcha", "challenge", "nonce", "agent", "").accountTooNew);
+    }
+
     @Test public void verificationCookiesAreNotOverwrittenByGlobalCookieJar() {
         okhttp3.CookieJar jar = new okhttp3.CookieJar() {
             @Override public void saveFromResponse(okhttp3.HttpUrl url, java.util.List<okhttp3.Cookie> cookies) { }
