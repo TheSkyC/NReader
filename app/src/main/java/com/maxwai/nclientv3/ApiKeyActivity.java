@@ -58,6 +58,7 @@ public class ApiKeyActivity extends GeneralActivity {
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final AtomicReference<Call> validationCall = new AtomicReference<>();
     private final AtomicInteger validationState = new AtomicInteger();
+    private final Runnable identityObserver = this::loadSavedApiKey;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,6 +94,19 @@ public class ApiKeyActivity extends GeneralActivity {
         clearApiKey.setOnClickListener(v -> clearSavedApiKey());
         validateApiKey.setOnClickListener(v -> validateAndSaveApiKey());
         loadSavedApiKey();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        AuthStore.observeIdentityChanges(identityObserver);
+        loadSavedApiKey();
+    }
+
+    @Override
+    protected void onStop() {
+        AuthStore.removeIdentityObserver(identityObserver);
+        super.onStop();
     }
 
     @Override
@@ -141,7 +155,11 @@ public class ApiKeyActivity extends GeneralActivity {
     private String getStatusMessage() {
         if (targetAccountId != null) {
             AccountVault.Account account = targetAccount();
-            if (account == null) return getString(R.string.account_storage_error);
+            if (account == null) {
+                AccountRepository repository = AccountRuntime.repository();
+                return getString(repository != null && !repository.isOpen() && AccountRuntime.openError() == null
+                    ? R.string.accounts_loading : R.string.account_storage_error);
+            }
             return getString(account.rejected ? R.string.login_status_api_key_invalid : R.string.login_status_api_key_saved);
         }
         if (addAccount) return getString(R.string.login_api_key_intro_message);
