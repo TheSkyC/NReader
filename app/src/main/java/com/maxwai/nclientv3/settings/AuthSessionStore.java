@@ -73,7 +73,15 @@ public final class AuthSessionStore {
                                                                @NonNull String username, @Nullable String avatarUrl,
                                                                @Nullable String password, long userId,
                                                                @Nullable String targetId) throws java.io.IOException {
-        if (id != attempt) return false;
+        return completeAccountAttemptForRole(cookies, id, generation, loginName, username, avatarUrl,
+            password, userId, targetId, true) != null;
+    }
+
+    @Nullable
+    public static synchronized String completeAccountAttemptForRole(@NonNull List<Cookie> cookies, long id,
+            long generation, @NonNull String loginName, @NonNull String username, @Nullable String avatarUrl,
+            @Nullable String password, long userId, @Nullable String targetId, boolean select) throws java.io.IOException {
+        if (id != attempt) return null;
         AccountRepository repository = AccountRuntime.repository();
         if (repository == null || !repository.isOpen()) throw new java.io.IOException("Account storage is unavailable");
         Cookie access = null;
@@ -85,11 +93,11 @@ public final class AuthSessionStore {
             if (cookie.name().equals("access_token")) access = cookie;
             if (cookie.name().equals("refresh_token")) refresh = cookie;
         }
-        if (access == null || refresh == null) return false;
+        if (access == null || refresh == null) return null;
         synchronized (repository) {
-            if (generation < 0 || generation != repository.identityGeneration() || id != attempt) return false;
+            if (generation < 0 || generation != repository.identityGeneration() || id != attempt) return null;
             AccountVault.State state = repository.snapshot();
-            if (state == null) return false;
+            if (state == null) return null;
             AccountVault.Account existing = null;
             for (AccountVault.Account account : state.accounts) {
                 if (targetId != null && account.id.equals(targetId)) existing = account;
@@ -103,9 +111,9 @@ public final class AuthSessionStore {
             AccountVault.Account account = new AccountVault.Account(accountId, AccountVault.Type.PASSWORD,
                 username, password, null, access.value(), refresh.value(), access.expiresAt(),
                 refresh.expiresAt(), false, userId, loginName, avatarUrl);
-            boolean saved = repository.putAndSelect(account, generation);
+            boolean saved = repository.putAccount(account, generation, select);
             attempt++;
-            return saved;
+            return saved ? accountId : null;
         }
     }
 

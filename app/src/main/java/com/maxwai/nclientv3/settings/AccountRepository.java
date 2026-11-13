@@ -7,6 +7,8 @@ import androidx.annotation.WorkerThread;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class AccountRepository {
     private final AccountVault vault;
     private final AtomicLong generation = new AtomicLong();
+    private final Map<String, Long> accountRevisions = new HashMap<>();
     @Nullable private volatile AccountVault.State state;
 
     public AccountRepository(@NonNull AccountVault vault) {
@@ -58,6 +61,12 @@ public final class AccountRepository {
     @WorkerThread
     public synchronized boolean putAndSelect(@NonNull AccountVault.Account account, long expectedGeneration)
         throws IOException {
+        return putAccount(account, expectedGeneration, true);
+    }
+
+    @WorkerThread
+    public synchronized boolean putAccount(@NonNull AccountVault.Account account, long expectedGeneration,
+                                           boolean select) throws IOException {
         requireOpen();
         if (expectedGeneration < 0 || expectedGeneration != identityGeneration()) return false;
         transition(current -> {
@@ -65,8 +74,9 @@ public final class AccountRepository {
             int index = indexOf(accounts, account.id);
             if (index < 0) accounts.add(account);
             else accounts.set(index, account);
-            return new AccountVault.State(accounts, account.id);
+            return new AccountVault.State(accounts, select ? account.id : current.activeId);
         });
+        bumpAccountRevision(account.id);
         return true;
     }
 
@@ -106,6 +116,48 @@ public final class AccountRepository {
             if (index >= 0) accounts.remove(index);
             return new AccountVault.State(accounts, Objects.equals(value.activeId, accountId) ? null : value.activeId);
         });
+        bumpAccountRevision(accountId);
+    }
+
+    @Nullable
+    public synchronized AccountVault.Account account(@NonNull String accountId) {
+        return state == null ? null : find(state.accounts, accountId);
+    }
+
+    public synchronized long accountRevision(@NonNull String accountId) {
+        return account(accountId) == null ? -1 : accountRevisions.getOrDefault(accountId, 0L);
+    }
+
+    private void bumpAccountRevision(@NonNull String accountId) {
+        accountRevisions.put(accountId, accountRevisions.getOrDefault(accountId, 0L) + 1);
+    }
+
+    @WorkerThread
+    public synchronized boolean updateAccountSession(@NonNull String accountId, long revision,
+            @NonNull String expectedRefresh, @NonNull String access, @NonNull String refresh,
+            long accessExpiry, long refreshExpiry) throws IOException {
+        AccountVault.Account account = account(accountId);
+        if (account == null || accountRevision(accountId) != revision || account.rejected
+            || account.type != AccountVault.Type.PASSWORD || !expectedRefresh.equals(account.refreshToken)) return false;
+        AccountVault.Account replacement = new AccountVault.Account(account.id, account.type, account.username,
+            account.password, null, access, refresh, accessExpiry, refreshExpiry, false, account.userId,
+            account.loginName, account.avatarUrl);
+        state = vault.update(value -> replace(value, replacement));
+        return true;
+    }
+
+    @WorkerThread
+    public synchronized boolean rejectAccountSession(@NonNull String accountId, long revision,
+                                                     @NonNull String expectedRefresh) throws IOException {
+        AccountVault.Account account = account(accountId);
+        if (account == null || accountRevision(accountId) != revision || account.rejected
+            || account.type != AccountVault.Type.PASSWORD || !expectedRefresh.equals(account.refreshToken)) return false;
+        AccountVault.Account rejected = new AccountVault.Account(account.id, account.type, account.username,
+            account.password, null, account.accessToken, account.refreshToken, account.accessExpiry,
+            account.refreshExpiry, true, account.userId, account.loginName, account.avatarUrl);
+        transition(value -> replace(value, rejected));
+        bumpAccountRevision(accountId);
+        return true;
     }
 
     /** Discards a late refresh after a switch, including switching away and back. */
@@ -151,6 +203,7 @@ public final class AccountRepository {
             account.password, account.apiKey, account.accessToken, account.refreshToken,
             account.accessExpiry, account.refreshExpiry, true, account.userId, account.loginName, account.avatarUrl);
         transition(value -> replace(value, rejected));
+        bumpAccountRevision(accountId);
         return true;
     }
 

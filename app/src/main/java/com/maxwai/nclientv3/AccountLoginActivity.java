@@ -2,6 +2,7 @@ package com.maxwai.nclientv3;
 
 import android.app.Dialog;
 import android.content.SharedPreferences;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AccountLoginActivity extends GeneralActivity {
     public static final String EXTRA_ACCOUNT_ID = "account_id";
+    public static final String EXTRA_COMMENT_ACCOUNT = "comment_account";
     private static final String EDITED_CREDENTIALS = "edited_credentials";
     private static final String PENDING_PREFILL = "pending_prefill";
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -253,6 +255,7 @@ public final class AccountLoginActivity extends GeneralActivity {
         status.setText(R.string.account_signing_in);
         worker.execute(() -> {
             try {
+                String savedCommentAccount = null;
                 NhentaiLoginApi.Challenge challenge = NhentaiLoginApi.challenge(getApplicationContext(), requestHandle);
                 String nonce = PowSolver.solve(challenge.value, challenge.difficulty, 60000, cancelled::get);
                 if (cancelled.get()) return;
@@ -262,14 +265,21 @@ public final class AccountLoginActivity extends GeneralActivity {
                 } else {
                     NhentaiLoginApi.LoginResult result = NhentaiLoginApi.authenticate(getApplicationContext(),
                         user, pass, captcha, challenge, nonce, requestHandle, userAgent, protectionCookies);
-                    if (cancelled.get() || !AuthSessionStore.completeAccountAttempt(result.cookies, currentAttempt,
+                    savedCommentAccount = cancelled.get() ? null : AuthSessionStore.completeAccountAttemptForRole(result.cookies, currentAttempt,
                         accountGeneration, user, result.username == null ? user : result.username, result.avatarUrl,
-                        remember ? pass : null, result.userId, targetAccountId))
+                        remember ? pass : null, result.userId, targetAccountId,
+                        !getIntent().getBooleanExtra(EXTRA_COMMENT_ACCOUNT, false));
+                    if (savedCommentAccount == null)
                         throw new IOException("Login was cancelled or the account changed");
                 }
+                String completedAccount = savedCommentAccount;
                 postIfActive(() -> {
-                    Login.updateUser(null);
-                    Login.isLogged(this);
+                    if (!getIntent().getBooleanExtra(EXTRA_COMMENT_ACCOUNT, false)) {
+                        Login.updateUser(null);
+                        Login.isLogged(this);
+                    } else if (completedAccount != null) {
+                        setResult(RESULT_OK, new Intent().putExtra(EXTRA_ACCOUNT_ID, completedAccount));
+                    }
                     if (AccountRuntime.repository() != null) {
                         finish();
                         return;
