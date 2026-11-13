@@ -90,6 +90,55 @@ public class AccountRepositoryTest {
         }
     }
 
+    private AccountVault.Account apiKey(String key, long userId) {
+        return new AccountVault.Account(ApiAuthInterceptor.fingerprint(key), AccountVault.Type.API_KEY,
+            "Verified", null, key, null, null, 0, 0, false, userId);
+    }
+
+    @Test public void rotatedKeyReplacesOnlyTheSameConfirmedUserAndSurvivesReopen() throws Exception {
+        AccountVault.Account original = apiKey("old-key", 42);
+        repository.putAndSelect(account("other"), repository.identityGeneration());
+        repository.putAndSelect(original, repository.identityGeneration());
+        AccountVault.Account replacement = apiKey("new-key", 42);
+        assertTrue(repository.putApiKeyAndSelect(replacement, original.id, repository.identityGeneration()));
+        assertEquals(2, repository.snapshot().accounts.size());
+        assertEquals(replacement.id, repository.snapshot().activeId);
+        AccountRepository reopened = new AccountRepository(vault);
+        reopened.open();
+        assertEquals("new-key", reopened.snapshot().activeAccount().apiKey);
+        assertEquals("other", reopened.snapshot().accounts.get(0).id);
+    }
+
+    @Test public void revalidationCannotActivateKeyForAnotherOrUnconfirmedUser() throws Exception {
+        AccountVault.Account original = apiKey("old-key", 42);
+        repository.putAndSelect(original, repository.identityGeneration());
+        repository.reject(original.id, repository.identityGeneration());
+        try {
+            repository.putApiKeyAndSelect(apiKey("old-key", 43), original.id, repository.identityGeneration());
+            org.junit.Assert.fail("A different user must not activate the stored key");
+        } catch (AuthSessionStore.AccountMismatchException expected) {
+            assertTrue(repository.snapshot().activeAccount().rejected);
+            assertEquals(42, repository.snapshot().activeAccount().userId);
+        }
+        AccountVault.Account unknown = apiKey("unknown-key", 0);
+        repository.putAndSelect(unknown, repository.identityGeneration());
+        try {
+            repository.putApiKeyAndSelect(apiKey("replacement-key", 42), unknown.id, repository.identityGeneration());
+            org.junit.Assert.fail("An unconfirmed account must not be rebound");
+        } catch (AuthSessionStore.AccountMismatchException expected) {
+            assertEquals(unknown.id, repository.snapshot().activeId);
+        }
+    }
+
+    @Test public void lateKeyValidationCannotOverwriteAChangedSelection() throws Exception {
+        repository.putAndSelect(account("other"), repository.identityGeneration());
+        long generation = repository.identityGeneration();
+        repository.select(null);
+        assertFalse(repository.putApiKeyAndSelect(apiKey("new-key", 42), null, generation));
+        assertNull(repository.snapshot().activeId);
+        assertEquals(1, repository.snapshot().accounts.size());
+    }
+
     @Test public void profileCannotChangeAnEstablishedUserIdentity() throws Exception {
         assertTrue(repository.putAndSelect(account("one"), repository.identityGeneration()));
         assertTrue(repository.updateProfile("one", repository.identityGeneration(), 42, "First", null));

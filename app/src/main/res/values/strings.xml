@@ -23,7 +23,6 @@
     <string name="accounts_unnamed_key">API key account</string>
     <string name="accounts_reauthenticate">Sign in again</string>
     <string name="accounts_revalidate_key">Verify API key again</string>
-    <string name="accounts_key_mismatch">This key differs from the selected account. Add it as a new account instead.</string>
     <string name="accounts_remove">Remove account</string>
     <string name="accounts_switch">Switch account</string>
     <string name="accounts_guest">Not signed in</string>

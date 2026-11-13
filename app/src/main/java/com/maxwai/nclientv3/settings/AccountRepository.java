@@ -71,6 +71,32 @@ public final class AccountRepository {
     }
 
     @WorkerThread
+    public synchronized boolean putApiKeyAndSelect(@NonNull AccountVault.Account account,
+                                                   @Nullable String targetId, long expectedGeneration)
+        throws IOException {
+        AccountVault.State current = requireOpen();
+        if (expectedGeneration < 0 || expectedGeneration != identityGeneration()) return false;
+        if (account.type != AccountVault.Type.API_KEY || account.userId <= 0 || account.rejected)
+            throw new IOException("API key identity is unavailable");
+        AccountVault.Account previous = find(current.accounts, targetId == null ? account.id : targetId);
+        if (targetId != null && previous == null) throw new IOException("Account no longer exists");
+        if (previous != null && (previous.type != AccountVault.Type.API_KEY || previous.userId <= 0
+            || previous.userId != account.userId)) throw new AuthSessionStore.AccountMismatchException();
+        AccountVault.Account collision = find(current.accounts, account.id);
+        if (collision != null && (collision.type != AccountVault.Type.API_KEY || collision.userId != account.userId))
+            throw new AuthSessionStore.AccountMismatchException();
+        transition(value -> {
+            List<AccountVault.Account> accounts = new ArrayList<>(value.accounts);
+            if (targetId != null) accounts.removeIf(item -> targetId.equals(item.id));
+            int index = indexOf(accounts, account.id);
+            if (index < 0) accounts.add(account);
+            else accounts.set(index, account);
+            return new AccountVault.State(accounts, account.id);
+        });
+        return true;
+    }
+
+    @WorkerThread
     public synchronized void remove(@NonNull String accountId) throws IOException {
         AccountVault.State current = requireOpen();
         if (find(current.accounts, accountId) == null) return;

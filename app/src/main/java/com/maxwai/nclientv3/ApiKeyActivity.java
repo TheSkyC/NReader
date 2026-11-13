@@ -17,6 +17,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.button.MaterialButton;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
+import com.maxwai.nclientv3.loginapi.User;
 import com.maxwai.nclientv3.settings.AuthStore;
 import com.maxwai.nclientv3.settings.AccountRuntime;
 import com.maxwai.nclientv3.settings.AccountRepository;
@@ -26,9 +27,6 @@ import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.Login;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,7 +39,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiKeyActivity extends GeneralActivity {
-    private static final long MAX_VALIDATION_RESPONSE = 2L * 1024 * 1024;
     public static final String EXTRA_ADD_ACCOUNT = "add_account";
     public static final String EXTRA_ACCOUNT_ID = "account_id";
 
@@ -186,10 +183,6 @@ public class ApiKeyActivity extends GeneralActivity {
             return;
         }
         String candidateId = ApiAuthInterceptor.fingerprint(apiKey);
-        if (targetAccountId != null && !targetAccountId.equals(candidateId)) {
-            Toast.makeText(this, R.string.accounts_key_mismatch, Toast.LENGTH_LONG).show();
-            return;
-        }
 
         setLoading(true);
         AccountRepository repository = AccountRuntime.repository();
@@ -200,7 +193,7 @@ public class ApiKeyActivity extends GeneralActivity {
             return;
         }
         Request request = new Request.Builder()
-            .url(Utility.getApiBaseUrl() + "favorites")
+            .url(Utility.getApiBaseUrl() + "user")
             .header("Authorization", "Key " + apiKey)
             .build();
         Call pending = Global.getClient(this).newCall(request);
@@ -224,30 +217,27 @@ public class ApiKeyActivity extends GeneralActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (response) {
                     if (stopped.get()) return;
-                    if (response.isSuccessful() && isValidFavoritesResponse(response)) {
+                    User profile = readValidatedProfile(response);
+                    if (profile != null) {
                         if (!validationState.compareAndSet(1, 2)) return;
                         if (repository == null) {
                             AuthStore.saveApiKey(ApiKeyActivity.this, apiKey, true);
                         } else {
                             try {
-                                AccountVault.Account previous = null;
-                                AccountVault.State state = repository.snapshot();
-                                if (state == null) throw new IOException("Account storage is unavailable");
-                                for (AccountVault.Account item : state.accounts) {
-                                    if (candidateId.equals(item.id) && item.type == AccountVault.Type.API_KEY) previous = item;
-                                }
-                                if (targetAccountId != null && previous == null) throw new IOException("Account no longer exists");
                                 AccountVault.Account account = new AccountVault.Account(candidateId, AccountVault.Type.API_KEY,
-                                    previous == null ? "" : previous.username, null, apiKey, null, null, 0, 0,
-                                    false, previous == null ? 0 : previous.userId, null,
-                                    previous == null ? null : previous.avatarUrl);
+                                    profile.getUsername(), null, apiKey, null, null, 0, 0,
+                                    false, profile.getId(), null, profile.getAvatarUrl());
                                 if (stopped.get()) return;
-                                if (!repository.putAndSelect(account, generation)) throw new IOException("Account changed");
+                                if (!repository.putApiKeyAndSelect(account, targetAccountId, generation))
+                                    throw new IOException("Account changed");
                             } catch (IOException | IllegalArgumentException exception) {
                                 runOnUiThread(() -> {
                                     if (isFinishing() || isDestroyed()) return;
                                     setLoading(false);
-                                    Toast.makeText(ApiKeyActivity.this, R.string.account_storage_error, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ApiKeyActivity.this,
+                                        exception instanceof com.maxwai.nclientv3.settings.AuthSessionStore.AccountMismatchException
+                                            ? R.string.account_identity_unconfirmed : R.string.account_storage_error,
+                                        Toast.LENGTH_LONG).show();
                                 });
                                 return;
                             }
@@ -279,17 +269,12 @@ public class ApiKeyActivity extends GeneralActivity {
         });
     }
 
-    private static boolean isValidFavoritesResponse(@NonNull Response response) {
+    @Nullable private static User readValidatedProfile(@NonNull Response response) {
         try {
             okhttp3.ResponseBody body = response.body();
-            if (body == null || body.contentLength() > MAX_VALIDATION_RESPONSE
-                || body.source().request(MAX_VALIDATION_RESPONSE + 1)) return false;
-            JSONObject result = new JSONObject(body.source().readUtf8());
-            Object pages = result.opt("num_pages");
-            return result.optJSONArray("result") != null
-                && (pages instanceof Integer || pages instanceof Long) && ((Number) pages).longValue() >= 0;
-        } catch (IOException | JSONException exception) {
-            return false;
+            return response.isSuccessful() && body != null ? User.readResponse(body) : null;
+        } catch (IOException | RuntimeException exception) {
+            return null;
         }
     }
 

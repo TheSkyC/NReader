@@ -21,7 +21,6 @@
     <string name="accounts_unnamed_key">API 金鑰帳戶</string>
     <string name="accounts_reauthenticate">重新登入</string>
     <string name="accounts_revalidate_key">重新驗證 API 金鑰</string>
-    <string name="accounts_key_mismatch">此金鑰與所選帳戶不同，請將其新增為新帳戶。</string>
     <string name="accounts_remove">移除帳戶</string>
     <string name="accounts_switch">切換帳戶</string>
     <string name="accounts_guest">尚未登入</string>

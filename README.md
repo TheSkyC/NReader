@@ -111,8 +111,12 @@ State definitions, database upgrades and backup compatibility are documented in
 
 For favorite-card interaction checks, sign in to an nhentai account or configure a
 valid API key and open Settings to switch **Favorite button actions** between local and online favorites as the
-preferred tap action. Account sessions take priority when both are present; signing
-out removes the session without deleting the saved API key. Passwords are not stored.
+preferred tap action. The selected account supplies authentication for online
+requests. Choosing guest mode keeps saved accounts available; removing an account
+deletes its credentials. Passwords are stored only when Remember password is
+selected. API keys are validated against the user profile before saving. Replacing
+a key requires the same confirmed server user ID; a mismatch leaves saved accounts
+unchanged.
 Account sessions also support the online blacklist and account-tag search option.
 Blacklist data is loaded for the active identity and is hidden until a complete
 response is available. The online tags screen offers refresh and retry controls.
