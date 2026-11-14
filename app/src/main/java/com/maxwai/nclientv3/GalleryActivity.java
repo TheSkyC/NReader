@@ -381,6 +381,16 @@ public class GalleryActivity extends BaseActivity {
 
     private void detailLoadingState(boolean loading) {
         if (detailsAdapter != null) detailsAdapter.setLoading(loading);
+        View status = findViewById(R.id.gallery_pages_status);
+        status.setVisibility(detailReady ? View.GONE : View.VISIBLE);
+        refresher.setVisibility(detailReady ? View.VISIBLE : View.GONE);
+        findViewById(R.id.gallery_jump_page).setVisibility(detailReady ? View.VISIBLE : View.GONE);
+        findViewById(R.id.gallery_pages_loading).setVisibility(loading ? View.VISIBLE : View.GONE);
+        TextView message = findViewById(R.id.gallery_pages_message);
+        message.setText(loading ? R.string.gallery_loading_details : R.string.unable_to_connect_to_the_site);
+        View retry = findViewById(R.id.gallery_pages_retry);
+        retry.setVisibility(!detailReady && !loading ? View.VISIBLE : View.GONE);
+        retry.setOnClickListener(view -> retryDetailLoading());
     }
 
     private void applyDetailFailure() {
@@ -786,7 +796,7 @@ public class GalleryActivity extends BaseActivity {
         menu.findItem(R.id.manage_status).setVisible(detailReady && gallery.isValid());
         menu.findItem(R.id.related).setVisible(false);
         menu.findItem(R.id.comments).setVisible(false);
-        menu.findItem(R.id.change_view).setVisible(tabs != null && tabs.getSelectedTabPosition() == 1);
+        menu.findItem(R.id.change_view).setVisible(detailReady && tabs != null && tabs.getSelectedTabPosition() == 1);
 
         menu.findItem(R.id.share).setVisible(gallery.isValid());
         menu.findItem(R.id.open_gallery_browser).setVisible(isValidOnline);

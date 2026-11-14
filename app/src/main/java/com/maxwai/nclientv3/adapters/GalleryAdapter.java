@@ -218,7 +218,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         final ViewGroup vg = holder.master.findViewById(R.id.tag_master);
         final TextView idContainer = holder.master.findViewById(R.id.id_num);
         initializeIdContainer(idContainer);
-        holder.master.findViewById(R.id.gallery_metadata).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
+        boolean hasPageCount = gallery instanceof SimpleGallery && gallery.getPageCount() > 0;
+        holder.master.findViewById(R.id.gallery_metadata).setVisibility(hasTags() || hasPageCount ? View.VISIBLE : View.GONE);
+        holder.master.findViewById(R.id.favorite_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
+        holder.master.findViewById(R.id.upload_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
+        if (hasPageCount) ((TextView) holder.master.findViewById(R.id.page_stat))
+            .setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
         if (!hasTags()) {
             ViewGroup.LayoutParams layoutParams = vg.getLayoutParams();
             layoutParams.height = 0;
