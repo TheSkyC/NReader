@@ -97,6 +97,10 @@ public class GalleryOpeningTest {
                     .code(200).message("OK").body(ResponseBody.create(DETAIL, null)).build();
             }).build();
             Gallery full = new Gallery(application, DETAIL, null, false);
+            String withLanguage = DETAIL.replace("\"num_pages\":1,",
+                "\"num_pages\":1,\"tags\":[{\"id\":12227,\"count\":1,\"name\":\"english\",\"type\":\"language\"}],");
+            Gallery english = new Gallery(application, withLanguage, null, false);
+            assertEquals(com.maxwai.nclientv3.api.enums.Language.ENGLISH, new SimpleGallery(english).getLanguage());
             Intent intent = new Intent(application, GalleryActivity.class);
             intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(full));
             try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
@@ -105,6 +109,7 @@ public class GalleryOpeningTest {
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals("Test", activity.getTitle().toString());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
                 Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
                 activity.onCreateOptionsMenu(menu);
                 assertFalse(menu.findItem(R.id.manage_status).isVisible());
@@ -124,6 +129,7 @@ public class GalleryOpeningTest {
                     Thread.sleep(10);
                 }
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.GONE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
                 assertEquals(View.GONE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.refresher).getVisibility());
             } finally {
