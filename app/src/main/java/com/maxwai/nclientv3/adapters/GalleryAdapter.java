@@ -63,6 +63,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private int colCount;
     private final boolean details;
     private boolean loading;
+    private boolean loadFailed;
     private final boolean[] expandedTags = new boolean[TagType.values.length];
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
@@ -182,11 +183,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             ImageDownloadUtility.loadImage(R.drawable.ic_logo, cover);
         }
         if (loading != null) loading.setVisibility(this.loading ? View.VISIBLE : View.GONE);
+        holder.master.findViewById(R.id.gallery_load_error).setVisibility(loadFailed ? View.VISIBLE : View.GONE);
+        holder.master.findViewById(R.id.gallery_load_retry).setOnClickListener(view -> context.retryDetailLoading());
         context.bindReadingActions(holder.master);
     }
 
     public void setLoading(boolean loading) {
         this.loading = loading;
+        this.loadFailed = !loading && gallery instanceof SimpleGallery;
         if (details) notifyItemChanged(0);
     }
 

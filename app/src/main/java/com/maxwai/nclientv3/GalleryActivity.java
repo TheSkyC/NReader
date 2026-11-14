@@ -42,7 +42,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.Snackbar;
 import com.maxwai.nclientv3.adapters.GalleryAdapter;
 import com.maxwai.nclientv3.adapters.CommentAdapter;
 import com.maxwai.nclientv3.api.OnlineFavoriteClient;
@@ -362,6 +361,10 @@ public class GalleryActivity extends BaseActivity {
         detailRequest.start();
     }
 
+    public void retryDetailLoading() {
+        if (!detailReady && detailRequest == null) startDetailRequest();
+    }
+
     private void detailLoadingState(boolean loading) {
         if (detailsAdapter != null) detailsAdapter.setLoading(loading);
     }
@@ -370,11 +373,6 @@ public class GalleryActivity extends BaseActivity {
         detailReady = false;
         detailLoadingState(false);
         supportInvalidateOptionsMenu();
-        if (detailsList != null && !isFinishing() && !isDestroyed()) {
-            Snackbar.make(detailsList, R.string.unable_to_connect_to_the_site, Snackbar.LENGTH_INDEFINITE)
-                .setAction(R.string.retry, view -> startDetailRequest())
-                .show();
-        }
     }
 
     private void loadAutomaticPosition() {
