@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">Impossible de se connecter au site</string>
     <string name="no_entry_found">Aucune entrée trouvée</string>
     <string name="retry">Réessayer</string>
+    <string name="gallery_open_local_copy">Ouvrir la copie téléchargée</string>
     <string name="folder_location">Emplacement du dossier</string>
     <string name="default_zoom">Zoom par défaut</string>
     <string name="choose_directory">Choisir un répertoire</string>

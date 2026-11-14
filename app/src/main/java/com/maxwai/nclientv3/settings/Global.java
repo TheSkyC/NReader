@@ -76,7 +76,9 @@ public class Global {
     private static LocalSortType localSortType;
     private static boolean buttonChangePage, hideMultitask, enableBeta, volumeOverride, zoomOneColumn, keepHistory, lockScreen, onlyTag, showTitles, removeAvoidedGalleries, useRtl;
     private static DataUsageType usageMobile, usageWifi;
-    private static String lastVersion, mirror;
+    private static String lastVersion;
+    private static volatile String mirror;
+    private static long mirrorGeneration;
     private static int maxHistory, columnCount, maxId, galleryWidth = -1, galleryHeight = -1;
     private static int colPortStat, colLandStat, colPortHist, colLandHist, colPortMain, colLandMain, colPortDownload, colLandDownload, colLandFavorite, colPortFavorite;
     private static boolean infiniteScrollMain, infiniteScrollFavorite, exactTagMatch;
@@ -258,11 +260,13 @@ public class Global {
         shared.edit().remove("local_sort").apply();
         localSortType = new LocalSortType(getIntPreference(shared, context.getString(R.string.key_local_sort), 0));
         useRtl = getBooleanPreference(shared, context.getString(R.string.preference_key_use_rtl), false);
+        String selectedMirror;
         try {
-            mirror = shared.getString(context.getString(R.string.preference_key_site_mirror), Utility.ORIGINAL_URL);
+            selectedMirror = shared.getString(context.getString(R.string.preference_key_site_mirror), Utility.ORIGINAL_URL);
         } catch (ClassCastException exception) {
-            mirror = Utility.ORIGINAL_URL;
+            selectedMirror = Utility.ORIGINAL_URL;
         }
+        setMirror(selectedMirror);
         keepHistory = getBooleanPreference(shared, context.getString(R.string.preference_key_keep_history), true);
         removeAvoidedGalleries = getBooleanPreference(shared, context.getString(R.string.preference_key_remove_ignored), true);
         onlyTag = getBooleanPreference(shared, context.getString(R.string.key_ignore_tags), true);
@@ -348,6 +352,17 @@ public class Global {
 
     public static String getMirror() {
         return mirror;
+    }
+
+    private static synchronized void setMirror(String selectedMirror) {
+        if (!java.util.Objects.equals(mirror, selectedMirror)) {
+            mirror = selectedMirror;
+            mirrorGeneration++;
+        }
+    }
+
+    public static synchronized long getMirrorGeneration() {
+        return mirrorGeneration;
     }
 
     public static DataUsageType getDownloadPolicy() {

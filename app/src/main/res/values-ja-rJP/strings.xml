@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">サイトに接続出来ませんでした。</string>
     <string name="no_entry_found">エントリが見つかりませんでした。</string>
     <string name="retry">リトライ</string>
+    <string name="gallery_open_local_copy">ダウンロード済みの作品を開く</string>
     <string name="folder_location">フォルダの場所</string>
     <string name="default_zoom">デフォルトの倍率を設定</string>
     <string name="choose_directory">ディレクトリを選択</string>

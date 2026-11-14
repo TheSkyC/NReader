@@ -50,6 +50,7 @@ import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.comments.CommentsFetcher;
 import com.maxwai.nclientv3.api.comments.Comment;
 import com.maxwai.nclientv3.api.InspectorV3;
+import com.maxwai.nclientv3.api.GalleryDetailRequests;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.api.local.LocalGallery;
@@ -110,13 +111,21 @@ public class GalleryActivity extends BaseActivity {
     private MenuItem onlineFavoriteItem;
     private boolean onlineFavoritePending;
     private String statusString;
-    @Nullable private InspectorV3 detailRequest;
+    @Nullable private GalleryDetailRequests.Subscription detailRequest;
+    @Nullable private Thread localFallback;
+    @Nullable private LocalGallery localFallbackGallery;
+    private long localFallbackIdentity;
+    private long localFallbackMirrorGeneration;
+    private String localFallbackSource;
     private long detailRequestGeneration;
     private boolean detailReady;
     private boolean detailRefreshFailed;
     private long shellStartedAt = -1;
     private boolean activityResumed;
     @Nullable private Gallery pendingDetailRefresh;
+    private long pendingDetailIdentity;
+    private String pendingDetailSource;
+    private long pendingMirrorGeneration;
 
     private int newStatusColor;
     private ReadingPosition automaticPosition;
@@ -329,18 +338,27 @@ public class GalleryActivity extends BaseActivity {
 
     private void startDetailRequest() {
         if (gallery.getId() <= 0 || isFinishing() || isDestroyed()) return;
+        cancelLocalFallback();
+        localFallbackGallery = null;
         if (detailRequest != null) detailRequest.cancelRequest();
         pendingDetailRefresh = null;
         detailRefreshFailed = false;
         final long requestGeneration = ++detailRequestGeneration;
         final int requestedId = gallery.getId();
+        final long requestIdentity = AuthStore.identityGeneration();
+        final String requestSource = Utility.getBaseUrl();
+        final long requestMirrorGeneration = Global.getMirrorGeneration();
         final long requestStartedAt = SystemClock.elapsedRealtime();
         detailLoadingState(true);
-        detailRequest = InspectorV3.galleryInspector(this, gallery.getId(), new InspectorV3.DefaultInspectorResponse() {
+        detailRequest = GalleryDetailRequests.open(this, gallery.getId(), new GalleryDetailRequests.Callback() {
             @Override
             public void onSuccess(List<GenericGallery> galleries) {
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    if (!isCurrentDetailSource(requestIdentity, requestSource, requestMirrorGeneration)) {
+                        retireDetailRequest();
+                        return;
+                    }
                     LogUtility.d("Gallery detail request completed in "
                         + (SystemClock.elapsedRealtime() - requestStartedAt) + " ms");
                     if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)
@@ -358,6 +376,9 @@ public class GalleryActivity extends BaseActivity {
                     Gallery result = (Gallery) galleries.get(0);
                     if (detailReady) {
                         pendingDetailRefresh = result;
+                        pendingDetailIdentity = requestIdentity;
+                        pendingDetailSource = requestSource;
+                        pendingMirrorGeneration = requestMirrorGeneration;
                         applyPendingDetailRefresh();
                     } else {
                         loadGallery(result, zoom);
@@ -370,32 +391,15 @@ public class GalleryActivity extends BaseActivity {
 
             @Override
             public void onFailure(Exception error) {
-                LogUtility.w("Unable to load gallery details", error);
-                int galleryId = gallery.getId();
-                File folder = Global.findGalleryFolder(GalleryActivity.this, galleryId);
-                LocalGallery local = folder != null && folder.isDirectory() ? new LocalGallery(folder) : null;
-                if (local != null && local.isValid()) local.calculateSizes();
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    boolean sourceChanged = !isCurrentDetailSource(requestIdentity, requestSource, requestMirrorGeneration);
+                    if (!sourceChanged) LogUtility.w("Unable to load gallery details", error);
                     LogUtility.d("Gallery detail request failed in "
                         + (SystemClock.elapsedRealtime() - requestStartedAt) + " ms");
-                    detailRequest = null;
-                    detailRefreshFailed = true;
-                    if (detailReady && gallery instanceof Gallery) {
-                        detailLoadingState(false);
-                        detailsAdapter.setRefreshFailed();
-                        supportInvalidateOptionsMenu();
-                        return;
-                    }
-                    if (local != null && local.isValid()) {
-                        Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
-                        intent.putExtra(getPackageName() + ".GALLERY", local);
-                        intent.putExtra(getPackageName() + ".ISLOCAL", true);
-                        startActivity(intent);
-                        finish();
-                        return;
-                    }
-                    applyDetailFailure();
+                    retireDetailRequest();
+                    if (!sourceChanged && !detailReady)
+                        findLocalFallback(requestedId, requestGeneration, requestIdentity, requestSource, requestMirrorGeneration);
                 });
             }
 
@@ -405,25 +409,104 @@ public class GalleryActivity extends BaseActivity {
                     if (requestGeneration == detailRequestGeneration) detailRequest = null;
                 });
             }
-        });
-        detailRequest.setDeferredRelatedResponse(related -> runOnUiThread(() -> {
-            if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
-                || !detailReady || gallery.getId() != requestedId || !(gallery instanceof Gallery)) return;
-            if (pendingDetailRefresh != null) {
-                pendingDetailRefresh.setRelated(related);
-            } else {
-                ((Gallery) gallery).setRelated(related);
-                if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
+            @Override
+            public void onRelated(List<SimpleGallery> related) {
+                runOnUiThread(() -> {
+                    if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    if (!isCurrentDetailSource(requestIdentity, requestSource, requestMirrorGeneration)) {
+                        retireDetailRequest();
+                        return;
+                    }
+                    if (!detailReady || gallery.getId() != requestedId || !(gallery instanceof Gallery)) return;
+                    if (pendingDetailRefresh != null) {
+                        pendingDetailRefresh.setRelated(related);
+                    } else {
+                        ((Gallery) gallery).setRelated(related);
+                        if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
+                    }
+                });
             }
-        }));
-        detailRequest.start();
+        });
         if (zoom == 0 && !detailReady) loadCachedDetail(requestedId, requestGeneration);
+    }
+
+    private void retireDetailRequest() {
+        if (detailRequest != null) detailRequest.cancelRequest();
+        detailRequest = null;
+        detailRefreshFailed = true;
+        if (detailReady) {
+            detailLoadingState(false);
+            detailsAdapter.setRefreshFailed();
+            supportInvalidateOptionsMenu();
+        } else applyDetailFailure();
+    }
+
+    private boolean isCurrentDetailSource(long identity, String source, long mirrorGeneration) {
+        return identity >= 0 && identity == AuthStore.identityGeneration() && source.equals(Utility.getBaseUrl())
+            && mirrorGeneration == Global.getMirrorGeneration();
+    }
+
+    private void findLocalFallback(int requestedId, long requestGeneration, long requestIdentity, String requestSource,
+                                   long requestMirrorGeneration) {
+        android.content.Context context = getApplicationContext();
+        localFallback = new Thread(() -> {
+            if (!isCurrentDetailSource(requestIdentity, requestSource, requestMirrorGeneration)) return;
+            File folder = Global.findGalleryFolder(context, requestedId);
+            if (Thread.currentThread().isInterrupted()) return;
+            LocalGallery local = folder != null && folder.isDirectory() ? new LocalGallery(folder) : null;
+            if (Thread.currentThread().isInterrupted() || local == null || !local.isValid()) return;
+            local.calculateSizes(() -> !Thread.currentThread().isInterrupted());
+            if (Thread.currentThread().isInterrupted()) return;
+            runOnUiThread(() -> {
+                if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
+                    || !isCurrentDetailSource(requestIdentity, requestSource, requestMirrorGeneration)
+                    || detailReady || !detailRefreshFailed) return;
+                localFallbackGallery = local;
+                localFallbackIdentity = requestIdentity;
+                localFallbackSource = requestSource;
+                localFallbackMirrorGeneration = requestMirrorGeneration;
+                if (detailsAdapter != null) detailsAdapter.notifyItemChanged(0);
+                detailLoadingState(false);
+            });
+        }, "gallery-local-" + requestedId);
+        localFallback.start();
+    }
+
+    private void cancelLocalFallback() {
+        if (localFallback != null) localFallback.interrupt();
+        localFallback = null;
+    }
+
+    public boolean hasLocalFallback() {
+        return localFallbackGallery != null && !detailReady && detailRefreshFailed
+            && isCurrentDetailSource(localFallbackIdentity, localFallbackSource, localFallbackMirrorGeneration);
+    }
+
+    public void openLocalFallback() {
+        if (!hasLocalFallback() || !GalleryOpenGate.tryAcquire(gallery.getId())) return;
+        Intent intent = new Intent(this, GalleryActivity.class);
+        intent.putExtra(getPackageName() + ".GALLERY", localFallbackGallery);
+        intent.putExtra(getPackageName() + ".ISLOCAL", true);
+        try {
+            startActivity(intent);
+        } catch (RuntimeException error) {
+            GalleryOpenGate.release();
+            throw error;
+        }
     }
 
     private void applyPendingDetailRefresh() {
         if (pendingDetailRefresh == null || !activityResumed || displayedTab == 1
             || detailsList.getScrollState() != RecyclerView.SCROLL_STATE_IDLE
             || isFinishing() || isDestroyed()) return;
+        if (!isCurrentDetailSource(pendingDetailIdentity, pendingDetailSource, pendingMirrorGeneration)) {
+            pendingDetailRefresh = null;
+            detailRefreshFailed = true;
+            detailLoadingState(false);
+            detailsAdapter.setRefreshFailed();
+            supportInvalidateOptionsMenu();
+            return;
+        }
         Parcelable detailsState = detailsList.getLayoutManager().onSaveInstanceState();
         Parcelable pagesState = recycler.getLayoutManager().onSaveInstanceState();
         Gallery refreshed = pendingDetailRefresh;
@@ -481,6 +564,9 @@ public class GalleryActivity extends BaseActivity {
         View retry = findViewById(R.id.gallery_pages_retry);
         retry.setVisibility(!detailReady && !loading ? View.VISIBLE : View.GONE);
         retry.setOnClickListener(view -> retryDetailLoading());
+        View local = findViewById(R.id.gallery_pages_local);
+        local.setVisibility(!loading && hasLocalFallback() ? View.VISIBLE : View.GONE);
+        local.setOnClickListener(view -> openLocalFallback());
     }
 
     private void applyDetailFailure() {
@@ -557,6 +643,7 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         detailRequestGeneration++;
+        cancelLocalFallback();
         if (detailRequest != null) detailRequest.cancelRequest();
         if (commentsRequest != null) commentsRequest.cancel();
         if (commentComposer != null) commentComposer.destroy();

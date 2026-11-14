@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">Не вдається підключитися до сайту</string>
     <string name="no_entry_found">Матеріалів не знайдено</string>
     <string name="retry">Спробувати знову</string>
+    <string name="gallery_open_local_copy">Відкрити завантажену копію</string>
     <string name="folder_location">Розташування папки</string>
     <string name="default_zoom">Стандартне масштабування</string>
     <string name="choose_directory">Вибір каталогу</string>
