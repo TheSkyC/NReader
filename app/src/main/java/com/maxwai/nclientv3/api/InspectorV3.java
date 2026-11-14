@@ -468,10 +468,15 @@ public class InspectorV3 extends Thread implements Parcelable {
         if (!v2.has("title") && v2.has("id")) {
             int galleryId = v2.getInt("id");
             String detailUrl = Utility.getBaseUrl() + "api/v2/galleries/" + galleryId + "?include=related,favorite";
-            try (Response resp = Global.getClient(context.get()).newCall(new Request.Builder().url(detailUrl).build()).execute()) {
+            okhttp3.Call call = Global.getClient(context.get()).newCall(new Request.Builder().url(detailUrl).build());
+            activeCall = call;
+            if (canceled) call.cancel();
+            try (Response resp = call.execute()) {
                 String body = resp.body().string();
                 if (resp.code() != HttpURLConnection.HTTP_OK) return;
                 v2 = new JSONObject(body);
+            } finally {
+                activeCall = null;
             }
         }
 
@@ -500,6 +505,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         ArrayList<Integer> batch = new ArrayList<>(100);
         ArrayList<Tag> fetched = new ArrayList<>();
         for (int id : missingIds) {
+            if (canceled) return;
             batch.add(id);
             if (batch.size() == 100) {
                 fetchTagBatch(batch, fetched);
@@ -511,13 +517,17 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     private void fetchTagBatch(List<Integer> ids, List<Tag> destination) {
+        if (canceled) return;
         StringBuilder query = new StringBuilder();
         for (int id : ids) {
             if (query.length() > 0) query.append(',');
             query.append(id);
         }
         String url = Utility.getBaseUrl() + "api/v2/tags/ids?ids=" + query;
-        try (Response response = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build()).execute()) {
+        okhttp3.Call call = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build());
+        activeCall = call;
+        if (canceled) call.cancel();
+        try (Response response = call.execute()) {
             if (!response.isSuccessful() || response.body() == null) {
                 LogUtility.w("Unable to load related gallery tags: HTTP " + response.code());
                 return;
@@ -531,7 +541,9 @@ public class InspectorV3 extends Thread implements Parcelable {
                 destination.add(tag);
             }
         } catch (IOException | JSONException e) {
-            LogUtility.w("Unable to load missing related gallery tags", e);
+            if (!canceled) LogUtility.w("Unable to load missing related gallery tags", e);
+        } finally {
+            activeCall = null;
         }
     }
 
