@@ -214,6 +214,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         final ViewGroup vg = holder.master.findViewById(R.id.tag_master);
         final TextView idContainer = holder.master.findViewById(R.id.id_num);
         initializeIdContainer(idContainer);
+        holder.master.findViewById(R.id.gallery_metadata).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
         if (!hasTags()) {
             ViewGroup.LayoutParams layoutParams = vg.getLayoutParams();
             layoutParams.height = 0;

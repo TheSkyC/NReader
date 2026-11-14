@@ -52,6 +52,7 @@ import com.maxwai.nclientv3.api.comments.Comment;
 import com.maxwai.nclientv3.api.InspectorV3;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
+import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.GalleryOpenGate;
@@ -70,6 +71,7 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 
 import java.io.IOException;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
@@ -214,7 +216,7 @@ public class GalleryActivity extends BaseActivity {
         });
         if (savedInstanceState != null && savedInstanceState.getBoolean("continuousReader", false)) {
             pendingPosition = new ReadingPosition(savedInstanceState.getInt("readerPage", 1),
-                savedInstanceState.getFloat("readerOffset", 0f)).clamp(gallery.getPageCount());
+                savedInstanceState.getFloat("readerOffset", 0f));
             readerOpened = true;
         }
         loadAutomaticPosition();
@@ -312,6 +314,7 @@ public class GalleryActivity extends BaseActivity {
         if (gallery.getId() <= 0 || isFinishing() || isDestroyed()) return;
         if (detailRequest != null) detailRequest.cancelRequest();
         final long requestGeneration = ++detailRequestGeneration;
+        final int requestedId = gallery.getId();
         detailLoadingState(true);
         detailRequest = InspectorV3.galleryInspector(this, gallery.getId(), new InspectorV3.DefaultInspectorResponse() {
             @Override
@@ -319,11 +322,16 @@ public class GalleryActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
                     detailRequest = null;
-                    if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)) {
+                    if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)
+                        || galleries.get(0).getId() != requestedId || !galleries.get(0).isValid()
+                        || galleries.get(0).getGalleryData().isIncomplete()
+                        || galleries.get(0).getPageCount() <= 0
+                        || galleries.get(0).getPageCount() != galleries.get(0).getGalleryData().getPages().size()) {
                         applyDetailFailure();
                         return;
                     }
                     loadGallery(galleries.get(0), zoom);
+                    applyLoadedPosition();
                     detailLoadingState(false);
                     supportInvalidateOptionsMenu();
                 });
@@ -331,9 +339,22 @@ public class GalleryActivity extends BaseActivity {
 
             @Override
             public void onFailure(Exception error) {
+                LogUtility.w("Unable to load gallery details", error);
+                int galleryId = gallery.getId();
+                File folder = Global.findGalleryFolder(GalleryActivity.this, galleryId);
+                LocalGallery local = folder != null && folder.isDirectory() ? new LocalGallery(folder) : null;
+                if (local != null && local.isValid()) local.calculateSizes();
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
                     detailRequest = null;
+                    if (local != null && local.isValid()) {
+                        Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
+                        intent.putExtra(getPackageName() + ".GALLERY", local);
+                        intent.putExtra(getPackageName() + ".ISLOCAL", true);
+                        startActivity(intent);
+                        finish();
+                        return;
+                    }
                     applyDetailFailure();
                 });
             }
@@ -359,16 +380,23 @@ public class GalleryActivity extends BaseActivity {
     private void loadAutomaticPosition() {
         ReadingProgress.load(gallery.getId(), position -> runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
-            automaticPosition = position == null ? null : position.clamp(gallery.getPageCount());
+            automaticPosition = position;
             positionReady = true;
             if (detailsAdapter != null) detailsAdapter.notifyItemChanged(0);
             supportInvalidateOptionsMenu();
-            if (pendingPosition != null) {
-                ReadingPosition pending = pendingPosition;
-                pendingPosition = null;
-                resumeReading(pending);
-            }
+            applyLoadedPosition();
         }));
+    }
+
+    private void applyLoadedPosition() {
+        if (!detailReady || !positionReady) return;
+        if (automaticPosition != null) automaticPosition = automaticPosition.clamp(gallery.getPageCount());
+        if (detailsAdapter != null) detailsAdapter.notifyItemChanged(0);
+        if (pendingPosition != null) {
+            ReadingPosition pending = pendingPosition;
+            pendingPosition = null;
+            resumeReading(pending);
+        }
     }
 
     private void resumeReading(ReadingPosition position) {
@@ -457,7 +485,7 @@ public class GalleryActivity extends BaseActivity {
     protected void onSaveInstanceState(@NonNull Bundle state) {
         if (commentComposer != null) commentComposer.save(state);
         saveScrollPosition();
-        ReadingPosition currentPosition = displayedTab == 1
+        ReadingPosition currentPosition = pendingPosition != null ? pendingPosition : displayedTab == 1
             ? (activeScrollTarget != null ? activeScrollTarget : scrollPosition()) : null;
         if (readerOpened && currentPosition != null) {
             state.putBoolean("continuousReader", true);
@@ -494,6 +522,7 @@ public class GalleryActivity extends BaseActivity {
             : getString(R.string.gallery_continue_page, automaticPosition.page));
         read.setOnClickListener(v -> openPagedReader(automaticPosition == null ? 1 : automaticPosition.page));
         start.setVisibility(automaticPosition == null ? View.GONE : View.VISIBLE);
+        start.setEnabled(detailReady && positionReady);
         start.setOnClickListener(v -> openPagedReader(1));
     }
 
@@ -742,6 +771,7 @@ public class GalleryActivity extends BaseActivity {
         onlineFavoriteItem.setVisible(isValidOnline && hasValidApiKey);
         menu.findItem(R.id.favorite_manager).setVisible(isValidOnline);
         menu.findItem(R.id.download_gallery).setVisible(isValidOnline);
+        menu.findItem(R.id.manage_status).setVisible(detailReady && gallery.isValid());
         menu.findItem(R.id.related).setVisible(false);
         menu.findItem(R.id.comments).setVisible(false);
         menu.findItem(R.id.change_view).setVisible(tabs != null && tabs.getSelectedTabPosition() == 1);
@@ -758,7 +788,7 @@ public class GalleryActivity extends BaseActivity {
         if (commentComposer != null) commentComposer.render();
         updateColumnCount(false);
         supportInvalidateOptionsMenu();
-        if (positionReady) {
+        if (positionReady && detailReady) {
             ReadingProgress.load(gallery.getId(), position -> runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 automaticPosition = position == null ? null : position.clamp(gallery.getPageCount());
@@ -791,7 +821,9 @@ public class GalleryActivity extends BaseActivity {
         } else if (id == R.id.add_online_gallery) addToFavorite();
         else if (id == R.id.change_view) updateColumnCount(true);
         else if (id == R.id.load_internet) toInternet();
-        else if (id == R.id.manage_status) updateStatus();
+        else if (id == R.id.manage_status) {
+            if (detailReady && gallery.isValid()) updateStatus();
+        }
         else if (id == R.id.share) Global.shareGallery(this, gallery);
         else if (id == R.id.open_gallery_browser) {
             Intent intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
