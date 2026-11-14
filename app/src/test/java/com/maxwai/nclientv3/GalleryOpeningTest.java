@@ -9,6 +9,7 @@ import android.app.Application;
 import android.content.Intent;
 import android.content.ContentValues;
 import android.os.Looper;
+import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 
@@ -125,6 +126,65 @@ public class GalleryOpeningTest {
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
                 assertEquals(View.GONE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.refresher).getVisibility());
+            } finally {
+                release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void cachedDetailRestoresPendingPositionAfterProgressLoads() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                throw new IOException("Offline");
+            }).build();
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            Bundle state = new Bundle();
+            state.putBoolean("continuousReader", true);
+            state.putInt("readerPage", 1);
+            state.putFloat("readerOffset", 0.25f);
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup(state)) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "positionReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "positionReady"));
+                assertFalse(ReflectionHelpers.getField(activity, "detailReady"));
+                assertTrue(ReflectionHelpers.getField(activity, "pendingPosition") != null);
+                Queries.GalleryTable.insert(cached);
+                long generation = ReflectionHelpers.getField(activity, "detailRequestGeneration");
+                ReflectionHelpers.callInstanceMethod(activity, "loadCachedDetail",
+                    ReflectionHelpers.ClassParameter.from(int.class, 117),
+                    ReflectionHelpers.ClassParameter.from(long.class, generation));
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(null, ReflectionHelpers.getField(activity, "pendingPosition"));
             } finally {
                 release.countDown();
             }
