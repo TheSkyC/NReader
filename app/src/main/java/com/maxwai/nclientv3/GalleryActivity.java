@@ -113,6 +113,7 @@ public class GalleryActivity extends BaseActivity {
     @Nullable private InspectorV3 detailRequest;
     private long detailRequestGeneration;
     private boolean detailReady;
+    private boolean detailRefreshFailed;
     private long shellStartedAt = -1;
     private boolean activityResumed;
     @Nullable private Gallery pendingDetailRefresh;
@@ -330,6 +331,7 @@ public class GalleryActivity extends BaseActivity {
         if (gallery.getId() <= 0 || isFinishing() || isDestroyed()) return;
         if (detailRequest != null) detailRequest.cancelRequest();
         pendingDetailRefresh = null;
+        detailRefreshFailed = false;
         final long requestGeneration = ++detailRequestGeneration;
         final int requestedId = gallery.getId();
         final long requestStartedAt = SystemClock.elapsedRealtime();
@@ -348,7 +350,9 @@ public class GalleryActivity extends BaseActivity {
                         || galleries.get(0).getPageCount() != galleries.get(0).getGalleryData().getPages().size()) {
                         if (detailRequest != null) detailRequest.cancelRequest();
                         detailRequest = null;
-                        if (!detailReady) applyDetailFailure();
+                        detailRefreshFailed = true;
+                        if (detailReady) detailsAdapter.setRefreshFailed();
+                        else applyDetailFailure();
                         return;
                     }
                     Gallery result = (Gallery) galleries.get(0);
@@ -376,8 +380,10 @@ public class GalleryActivity extends BaseActivity {
                     LogUtility.d("Gallery detail request failed in "
                         + (SystemClock.elapsedRealtime() - requestStartedAt) + " ms");
                     detailRequest = null;
+                    detailRefreshFailed = true;
                     if (detailReady && gallery instanceof Gallery) {
                         detailLoadingState(false);
+                        detailsAdapter.setRefreshFailed();
                         supportInvalidateOptionsMenu();
                         return;
                     }
@@ -411,7 +417,7 @@ public class GalleryActivity extends BaseActivity {
             }
         }));
         detailRequest.start();
-        if (zoom == 0) loadCachedDetail(requestedId, requestGeneration);
+        if (zoom == 0 && !detailReady) loadCachedDetail(requestedId, requestGeneration);
     }
 
     private void applyPendingDetailRefresh() {
@@ -453,13 +459,14 @@ public class GalleryActivity extends BaseActivity {
                 loadGallery(cached, 0);
                 applyLoadedPosition();
                 detailLoadingState(false);
+                if (detailRefreshFailed) detailsAdapter.setRefreshFailed();
                 supportInvalidateOptionsMenu();
             });
         }, "gallery-cache-" + requestedId).start();
     }
 
     public void retryDetailLoading() {
-        if (!detailReady && detailRequest == null) startDetailRequest();
+        if (detailRequest == null && (!detailReady || detailRefreshFailed)) startDetailRequest();
     }
 
     private void detailLoadingState(boolean loading) {

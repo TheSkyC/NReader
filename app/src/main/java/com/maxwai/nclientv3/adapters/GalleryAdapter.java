@@ -194,6 +194,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (details) notifyItemChanged(0);
     }
 
+    public void setRefreshFailed() {
+        loading = false;
+        loadFailed = true;
+        if (details) notifyItemChanged(0);
+    }
+
     public void copyExpandedTagsFrom(@NonNull GalleryAdapter previous) {
         System.arraycopy(previous.expandedTags, 0, expandedTags, 0, expandedTags.length);
     }
