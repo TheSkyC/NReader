@@ -194,6 +194,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (details) notifyItemChanged(0);
     }
 
+    public void copyExpandedTagsFrom(@NonNull GalleryAdapter previous) {
+        System.arraycopy(previous.expandedTags, 0, expandedTags, 0, expandedTags.length);
+    }
+
     private void loadRelatedLayout(ViewHolder holder) {
         LogUtility.d("Called RElated");
         final RecyclerView recyclerView = holder.master.findViewById(R.id.recycler);
