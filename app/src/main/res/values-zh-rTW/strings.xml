@@ -104,6 +104,7 @@
     <string name="ignore_tags">忽略其它標籤</string>
     <string name="use_account_tag">使用帳戶標籤</string>
     <string name="title_activity_gallery">圖庫</string>
+    <string name="gallery_loading_details">正在載入圖庫詳細資料</string>
     <string name="title_activity_zoom">啟用縮放</string>
     <string name="title_activity_tag_filter">標籤篩選</string>
     <string name="title_activity_api_key">API key</string>

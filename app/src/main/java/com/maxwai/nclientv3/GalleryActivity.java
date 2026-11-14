@@ -42,9 +42,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.maxwai.nclientv3.adapters.GalleryAdapter;
 import com.maxwai.nclientv3.adapters.CommentAdapter;
 import com.maxwai.nclientv3.api.OnlineFavoriteClient;
+import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.comments.CommentsFetcher;
 import com.maxwai.nclientv3.api.comments.Comment;
 import com.maxwai.nclientv3.api.InspectorV3;
@@ -52,6 +54,7 @@ import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.components.GalleryOpenGate;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.status.Status;
@@ -105,6 +108,9 @@ public class GalleryActivity extends BaseActivity {
     private MenuItem onlineFavoriteItem;
     private boolean onlineFavoritePending;
     private String statusString;
+    @Nullable private InspectorV3 detailRequest;
+    private long detailRequestGeneration;
+    private boolean detailReady;
 
     private int newStatusColor;
     private ReadingPosition automaticPosition;
@@ -162,16 +168,17 @@ public class GalleryActivity extends BaseActivity {
             if (!tryLoadFromURL()) finish();
             return;
         }
-        if (gal != null) this.gallery = gal;
-        if (gallery.getType() != GenericGallery.Type.LOCAL) {
-            Queries.HistoryTable.addGallery(((Gallery) gallery).toSimpleGallery());
+        this.gallery = gal;
+        isLocal = gallery.isLocal() || getIntent().getBooleanExtra(getPackageName() + ".ISLOCAL", false);
+        if (!isLocal) {
+            if (gallery instanceof Gallery) Queries.HistoryTable.addGallery(((Gallery) gallery).toSimpleGallery());
+            else if (gallery instanceof SimpleGallery) Queries.HistoryTable.addGallery((SimpleGallery) gallery);
         }
         LogUtility.d("" + gallery);
         if (Global.useRtl()) {
             recycler.setRotationY(180);
             detailsList.setRotationY(180);
         }
-        isLocal = gallery.isLocal() || getIntent().getBooleanExtra(getPackageName() + ".ISLOCAL", false);
         if (!isLocal && gallery instanceof Gallery) {
             onlineFavoriteState = OnlineFavoriteClient.cachedState(this, gallery.getId());
         }
@@ -179,7 +186,8 @@ public class GalleryActivity extends BaseActivity {
         refresher.setEnabled(false);
         recycler.setLayoutManager(new CustomGridLayoutManager(this, Global.getColumnCount()));
 
-        loadGallery(gallery, zoom);//if already has gallery
+        if (gallery instanceof SimpleGallery) loadShell((SimpleGallery) gallery);
+        else loadGallery(gallery, zoom);//if already has gallery
         setupTabs(savedInstanceState);
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -210,6 +218,7 @@ public class GalleryActivity extends BaseActivity {
             readerOpened = true;
         }
         loadAutomaticPosition();
+        if (gallery instanceof SimpleGallery) startDetailRequest();
     }
 
     static int galleryIdFromLink(@Nullable Uri data) {
@@ -272,6 +281,7 @@ public class GalleryActivity extends BaseActivity {
 
     private void loadGallery(GenericGallery gall, int zoom) {
         this.gallery = gall;
+        detailReady = gall instanceof Gallery || gall.isLocal();
         if (getSupportActionBar() != null) {
             applyTitle();
         }
@@ -287,6 +297,62 @@ public class GalleryActivity extends BaseActivity {
             intent.putExtra(getPackageName() + ".DIRECTORY", adapter.getDirectory());
             intent.putExtra(getPackageName() + ".PAGE", zoom);
             startActivity(intent);
+        }
+    }
+
+    private void loadShell(SimpleGallery shell) {
+        detailReady = false;
+        applyTitle();
+        detailsAdapter = new GalleryAdapter(this, shell, 1, true);
+        detailsList.setLayoutManager(new LinearLayoutManager(this));
+        detailsList.setAdapter(detailsAdapter);
+    }
+
+    private void startDetailRequest() {
+        if (gallery.getId() <= 0 || isFinishing() || isDestroyed()) return;
+        if (detailRequest != null) detailRequest.cancelRequest();
+        final long requestGeneration = ++detailRequestGeneration;
+        detailLoadingState(true);
+        detailRequest = InspectorV3.galleryInspector(this, gallery.getId(), new InspectorV3.DefaultInspectorResponse() {
+            @Override
+            public void onSuccess(List<GenericGallery> galleries) {
+                runOnUiThread(() -> {
+                    if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    detailRequest = null;
+                    if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)) {
+                        applyDetailFailure();
+                        return;
+                    }
+                    loadGallery(galleries.get(0), zoom);
+                    detailLoadingState(false);
+                    supportInvalidateOptionsMenu();
+                });
+            }
+
+            @Override
+            public void onFailure(Exception error) {
+                runOnUiThread(() -> {
+                    if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    detailRequest = null;
+                    applyDetailFailure();
+                });
+            }
+        });
+        detailRequest.start();
+    }
+
+    private void detailLoadingState(boolean loading) {
+        if (detailsAdapter != null) detailsAdapter.setLoading(loading);
+    }
+
+    private void applyDetailFailure() {
+        detailReady = false;
+        detailLoadingState(false);
+        supportInvalidateOptionsMenu();
+        if (detailsList != null && !isFinishing() && !isDestroyed()) {
+            Snackbar.make(detailsList, R.string.unable_to_connect_to_the_site, Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.retry, view -> startDetailRequest())
+                .show();
         }
     }
 
@@ -306,7 +372,7 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void resumeReading(ReadingPosition position) {
-        if (position == null || gallery.getPageCount() <= 0) return;
+        if (!detailReady || position == null || gallery.getPageCount() <= 0) return;
         ReadingPosition target = position.clamp(gallery.getPageCount());
         if (Global.getColumnCount() == 1) {
             selectTab(1);
@@ -350,6 +416,8 @@ public class GalleryActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        detailRequestGeneration++;
+        if (detailRequest != null) detailRequest.cancelRequest();
         if (commentsRequest != null) commentsRequest.cancel();
         if (commentComposer != null) commentComposer.destroy();
         stopRestoringPosition();
@@ -421,7 +489,7 @@ public class GalleryActivity extends BaseActivity {
     public void bindReadingActions(View header) {
         Button read = header.findViewById(R.id.gallery_read);
         Button start = header.findViewById(R.id.gallery_read_from_start);
-        read.setEnabled(positionReady && gallery.getPageCount() > 0);
+        read.setEnabled(detailReady && positionReady && gallery.getPageCount() > 0);
         read.setText(automaticPosition == null ? getString(R.string.gallery_start_reading)
             : getString(R.string.gallery_continue_page, automaticPosition.page));
         read.setOnClickListener(v -> openPagedReader(automaticPosition == null ? 1 : automaticPosition.page));
@@ -430,7 +498,7 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void openPagedReader(int page) {
-        if (gallery.getPageCount() <= 0) return;
+        if (!detailReady || adapter == null || gallery.getPageCount() <= 0) return;
         if (!gallery.isLocal() && Global.getDownloadPolicy() == Global.DataUsageType.NONE
             && (adapter.getDirectory() == null || adapter.getDirectory().getPage(page) == null)) {
             Toast.makeText(this, R.string.enable_network_to_continue, Toast.LENGTH_SHORT).show();
@@ -475,7 +543,7 @@ public class GalleryActivity extends BaseActivity {
             updateCommentsFooter();
         }
         findViewById(R.id.gallery_jump_page).setOnClickListener(v -> {
-            if (gallery.getPageCount() <= 0) return;
+            if (!detailReady || gallery.getPageCount() <= 0) return;
             DefaultDialogs.pageChangerDialog(new DefaultDialogs.Builder(this)
                 .setActual(1).setMin(1).setMax(gallery.getPageCount())
                 .setTitle(R.string.change_page).setDrawable(R.drawable.ic_find_in_page)
@@ -659,8 +727,8 @@ public class GalleryActivity extends BaseActivity {
 
         menu.findItem(R.id.favorite_manager).setIcon(isLocalFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
         menuItemsVisible(menu);
-        menu.findItem(R.id.continue_reading).setVisible(automaticPosition != null);
-        menu.findItem(R.id.manual_bookmark).setVisible(Queries.ResumeTable.pageFromId(gallery.getId()) > 0);
+        menu.findItem(R.id.continue_reading).setVisible(detailReady && automaticPosition != null);
+        menu.findItem(R.id.manual_bookmark).setVisible(detailReady && Queries.ResumeTable.pageFromId(gallery.getId()) > 0);
         initFavoriteIcon(menu);
         Utility.tintMenu(this, menu);
         updateColumnCount(false);
@@ -669,7 +737,7 @@ public class GalleryActivity extends BaseActivity {
 
     private void menuItemsVisible(Menu menu) {
         boolean hasValidApiKey = AuthStore.hasOnlineIdentity(this);
-        boolean isValidOnline = gallery.isValid() && !isLocal;
+        boolean isValidOnline = detailReady && gallery.isValid() && !isLocal;
         onlineFavoriteItem = menu.findItem(R.id.add_online_gallery);
         onlineFavoriteItem.setVisible(isValidOnline && hasValidApiKey);
         menu.findItem(R.id.favorite_manager).setVisible(isValidOnline);
@@ -686,6 +754,7 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        GalleryOpenGate.release();
         if (commentComposer != null) commentComposer.render();
         updateColumnCount(false);
         supportInvalidateOptionsMenu();
@@ -714,6 +783,7 @@ public class GalleryActivity extends BaseActivity {
         } else if (id == R.id.manual_bookmark) {
             resumeReading(new ReadingPosition(Queries.ResumeTable.pageFromId(gallery.getId()), 0f));
         } else if (id == R.id.download_gallery) {
+            if (!detailReady || !(gallery instanceof Gallery)) return true;
             if (Global.hasStoragePermission(this))
                 new RangeSelector(this, (Gallery) gallery).show();
             else
@@ -734,6 +804,7 @@ public class GalleryActivity extends BaseActivity {
             return true;
         }
         else if (id == R.id.favorite_manager) {
+            if (!(gallery instanceof Gallery)) return true;
             if (isLocalFavorite) {
                 Favorites.removeFavorite(gallery);
             } else {

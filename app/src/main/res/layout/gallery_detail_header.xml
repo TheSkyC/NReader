@@ -32,6 +32,13 @@
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
 
+            <ProgressBar
+                android:id="@+id/gallery_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/gallery_loading_details" />
+
         </LinearLayout>
     </LinearLayout>
 

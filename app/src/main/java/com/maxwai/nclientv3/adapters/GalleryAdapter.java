@@ -19,6 +19,7 @@ import com.maxwai.nclientv3.GalleryActivity;
 import com.maxwai.nclientv3.MainActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.ZoomActivity;
+import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GalleryData;
 import com.maxwai.nclientv3.api.components.GenericGallery;
@@ -61,6 +62,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private Policy policy;
     private int colCount;
     private final boolean details;
+    private boolean loading;
     private final boolean[] expandedTags = new boolean[TagType.values.length];
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
@@ -71,6 +73,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         this.context = cont;
         this.gallery = gallery;
         this.details = details;
+        this.loading = gallery instanceof SimpleGallery;
         setColCount(colCount);
         try {
             if (gallery instanceof LocalGallery) {
@@ -167,21 +170,30 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         TextView title = holder.master.findViewById(R.id.gallery_title);
         title.setText(gallery.getTitle());
         ImageView cover = holder.master.findViewById(R.id.gallery_cover);
+        View loading = holder.master.findViewById(R.id.gallery_loading);
         File firstPage = directory == null ? null : directory.getPage(1);
         if (firstPage != null && firstPage.exists()) {
             ImageDownloadUtility.loadImageOp(context, cover, firstPage, 0);
         } else if (gallery instanceof Gallery && gallery.hasGalleryData()) {
             ImageDownloadUtility.loadImage(context, ((Gallery) gallery).getCover(), cover);
+        } else if (gallery instanceof SimpleGallery) {
+            ImageDownloadUtility.loadImage(context, ((SimpleGallery) gallery).getThumbnail(), cover);
         } else {
             ImageDownloadUtility.loadImage(R.drawable.ic_logo, cover);
         }
+        if (loading != null) loading.setVisibility(this.loading ? View.VISIBLE : View.GONE);
         context.bindReadingActions(holder.master);
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading = loading;
+        if (details) notifyItemChanged(0);
     }
 
     private void loadRelatedLayout(ViewHolder holder) {
         LogUtility.d("Called RElated");
         final RecyclerView recyclerView = holder.master.findViewById(R.id.recycler);
-        if (gallery.isLocal()) {
+        if (gallery.isLocal() || !(this.gallery instanceof Gallery)) {
             holder.master.setVisibility(View.GONE);
             return;
         }
