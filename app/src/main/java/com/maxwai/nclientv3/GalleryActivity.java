@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -112,6 +113,7 @@ public class GalleryActivity extends BaseActivity {
     @Nullable private InspectorV3 detailRequest;
     private long detailRequestGeneration;
     private boolean detailReady;
+    private long shellStartedAt = -1;
     private boolean activityResumed;
     @Nullable private Gallery pendingDetailRefresh;
 
@@ -302,6 +304,10 @@ public class GalleryActivity extends BaseActivity {
         detailsList.setLayoutManager(new LinearLayoutManager(this));
         detailsList.setAdapter(detailsAdapter);
         lookup();
+        if (shellStartedAt >= 0) {
+            LogUtility.d("Gallery shell ready in " + (SystemClock.elapsedRealtime() - shellStartedAt) + " ms");
+            shellStartedAt = -1;
+        }
         if (zoom > 0 && (gallery.isLocal() || Global.getDownloadPolicy() != Global.DataUsageType.NONE)) {
             Intent intent = new Intent(this, ZoomActivity.class);
             intent.putExtra(getPackageName() + ".GALLERY", this.gallery);
@@ -312,6 +318,7 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void loadShell(SimpleGallery shell) {
+        shellStartedAt = SystemClock.elapsedRealtime();
         detailReady = false;
         applyTitle();
         detailsAdapter = new GalleryAdapter(this, shell, 1, true);
@@ -325,12 +332,15 @@ public class GalleryActivity extends BaseActivity {
         pendingDetailRefresh = null;
         final long requestGeneration = ++detailRequestGeneration;
         final int requestedId = gallery.getId();
+        final long requestStartedAt = SystemClock.elapsedRealtime();
         detailLoadingState(true);
         detailRequest = InspectorV3.galleryInspector(this, gallery.getId(), new InspectorV3.DefaultInspectorResponse() {
             @Override
             public void onSuccess(List<GenericGallery> galleries) {
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    LogUtility.d("Gallery detail request completed in "
+                        + (SystemClock.elapsedRealtime() - requestStartedAt) + " ms");
                     if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)
                         || galleries.get(0).getId() != requestedId || !galleries.get(0).isValid()
                         || galleries.get(0).getGalleryData().isIncomplete()
@@ -363,6 +373,8 @@ public class GalleryActivity extends BaseActivity {
                 if (local != null && local.isValid()) local.calculateSizes();
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
+                    LogUtility.d("Gallery detail request failed in "
+                        + (SystemClock.elapsedRealtime() - requestStartedAt) + " ms");
                     detailRequest = null;
                     if (detailReady && gallery instanceof Gallery) {
                         detailLoadingState(false);
