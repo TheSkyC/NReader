@@ -172,7 +172,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     private void loadHeader(ViewHolder holder) {
         TextView title = holder.master.findViewById(R.id.gallery_title);
-        title.setText(gallery.getTitle());
+        title.setText(context.getDisplayTitle());
         ImageView language = holder.master.findViewById(R.id.gallery_shell_language);
         if (gallery instanceof SimpleGallery) {
             LanguageFlag.bind(language, ((SimpleGallery) gallery).getLanguage());

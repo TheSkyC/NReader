@@ -29,6 +29,7 @@ import com.maxwai.nclientv3.utility.Utility;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.json.JSONObject;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -187,6 +188,116 @@ public class GalleryOpeningTest {
     }
 
     @Test
+    public void listTitleSurvivesCacheRefreshAndRecreation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                String refreshed = DETAIL.replace("\"pretty\":\"Test\"", "\"pretty\":\"Updated\"");
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(refreshed, null)).build();
+            }).build();
+            String title = "[Group] Test [English]";
+            SimpleGallery shell = SimpleGallery.fromV2ListItem(application, new JSONObject()
+                .put("id", 117).put("media_id", "1").put("english_title", title).put("num_pages", 1));
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", shell);
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals("Test", ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getTitle());
+                assertEquals(title, activity.getTitle().toString());
+                assertEquals(title, ((android.widget.TextView) activity.findViewById(R.id.gallery_title)).getText().toString());
+
+                release.countDown();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!"Updated".equals(((Gallery) ReflectionHelpers.getField(activity, "gallery")).getTitle())
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertEquals("Updated", ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getTitle());
+                assertEquals(title, activity.getTitle().toString());
+                assertEquals(title, ((android.widget.TextView) activity.findViewById(R.id.gallery_title)).getText().toString());
+                activity.findViewById(R.id.toolbar).performLongClick();
+                android.content.ClipboardManager clipboard = activity.getSystemService(android.content.ClipboardManager.class);
+                assertEquals(title, clipboard.getPrimaryClip().getItemAt(0).getText().toString());
+
+                controller.recreate();
+                GalleryActivity recreated = controller.get();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(title, recreated.getTitle().toString());
+                assertEquals(title, ((android.widget.TextView) recreated.findViewById(R.id.gallery_title)).getText().toString());
+                recreated.findViewById(R.id.toolbar).performLongClick();
+                assertEquals(title, clipboard.getPrimaryClip().getItemAt(0).getText().toString());
+            } finally {
+                release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void entriesWithoutListTitleUsePreferredDetailTitle() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        OkHttpClient previous = Global.client;
+        com.maxwai.nclientv3.api.enums.TitleType previousTitleType = Global.getTitleType();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            ReflectionHelpers.setStaticField(Global.class, "titleType", com.maxwai.nclientv3.api.enums.TitleType.ENGLISH);
+            String detail = DETAIL.replace("\"pretty\":\"Test\"", "\"pretty\":\"Test\",\"english\":\"English title\"");
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain ->
+                new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(detail, null)).build()).build();
+            for (String entryTitle : new String[]{null, "", " \t "}) {
+                Intent intent = new Intent(application, GalleryActivity.class);
+                intent.putExtra(application.getPackageName() + ".GALLERY", entryTitle == null
+                    ? new Gallery(application, detail, null, false)
+                    : SimpleGallery.fromV2ListItem(application, new JSONObject()
+                        .put("id", 117).put("media_id", "1").put("english_title", entryTitle).put("num_pages", 1)));
+                try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                    GalleryActivity activity = controller.get();
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                    while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                        && System.nanoTime() < deadline) {
+                        Shadows.shadowOf(Looper.getMainLooper()).idle();
+                        Thread.sleep(10);
+                    }
+                    assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                    assertEquals("English title", activity.getTitle().toString());
+                    assertEquals("English title", ((android.widget.TextView) activity.findViewById(R.id.gallery_title)).getText().toString());
+                }
+            }
+        } finally {
+            Global.client = previous;
+            ReflectionHelpers.setStaticField(Global.class, "titleType", previousTitleType);
+        }
+    }
+
+    @Test
     public void cachedDetailRestoresPendingPositionAfterProgressLoads() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");
@@ -297,7 +408,8 @@ public class GalleryOpeningTest {
                 controller.resume();
                 assertTrue(ReflectionHelpers.getField(activity, "pendingDetailRefresh") != null);
                 ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(0).select();
-                assertEquals("Updated", activity.getTitle().toString());
+                assertEquals("Test", activity.getTitle().toString());
+                assertEquals("Updated", ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getTitle());
                 assertEquals(null, ReflectionHelpers.getField(activity, "pendingDetailRefresh"));
                 Object newAdapter = ReflectionHelpers.getField(activity, "detailsAdapter");
                 boolean[] refreshedExpansion = ReflectionHelpers.getField(newAdapter, "expandedTags");
