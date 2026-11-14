@@ -2,11 +2,11 @@
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
 
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryVariant">@color/primaryColorVariant</item>
+        <item name="colorPrimary">@color/theme_primary</item>
+        <item name="colorPrimaryVariant">@color/theme_primary_variant</item>
         <item name="colorSecondary">@color/theme_secondary</item>
         <item name="colorSecondaryVariant">@color/theme_secondary</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorAccent">@color/theme_secondary</item>
         <item name="colorOnPrimary">@color/theme_on_primary</item>
         <item name="colorOnSecondary">@color/theme_on_secondary</item>
         <item name="colorSurface">@color/theme_surface</item>

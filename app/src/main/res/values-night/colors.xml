@@ -3,6 +3,7 @@
     <color name="tint_dark">@android:color/white</color>
     <color name="tint_light">@android:color/black</color>
 
+    <!-- Compatibility aliases for older layouts and code paths. -->
     <color name="primaryColorVariant">@color/theme_primary_variant</color>
     <color name="colorAccent">@color/theme_secondary</color>
     <color name="colorPrimary">@color/theme_primary</color>
