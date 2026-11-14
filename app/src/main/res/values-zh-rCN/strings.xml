@@ -312,7 +312,7 @@
     <string name="data_usage_full">按需加载缩略图或完整图片</string>
     <string name="data_usage_no">不加载网络图片</string>
     <string name="enable_network_to_continue">请在网络使用设置中允许加载图片，或切换网络后重试。</string>
-    <string name="id_tag">ID：</string>
+    <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID 已复制到剪贴板</string>
     <string name="copied_to_clipboard">已复制到剪贴板</string>
     <string name="maximum_notification_count">最大通知数</string>

@@ -217,7 +217,7 @@
     <string name="data_usage_full">Her şeyi indir (Yüksek veri kullanımı)</string>
     <string name="data_usage_no">Sayfaları indirme</string>
     <string name="enable_network_to_continue">Sayfayı görmek için veri kullanım ayarlarını değiştirin veya bağlı olduğunuz ağı değiştirin</string>
-    <string name="id_tag">ID:</string>
+    <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">Galeri ID\'si panoya kopyalandı</string>
     <string name="copied_to_clipboard">Panoya kopyalandı</string>
     <string name="maximum_notification_count">Maksimum bildirim sayısı</string>
