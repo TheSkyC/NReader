@@ -37,6 +37,7 @@
                 android:layout_width="24dp"
                 android:layout_height="18dp"
                 android:layout_marginTop="8dp"
+                android:contentDescription="@string/unknown_language"
                 android:scaleType="fitCenter"
                 android:visibility="gone" />
 
