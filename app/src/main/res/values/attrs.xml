@@ -2,6 +2,4 @@
 <resources>
 
     <attr name="navHeaderGradient" format="reference|color"/>
-    <attr name="nreaderSurfaceVariant" format="reference|color"/>
-    <attr name="nreaderOutline" format="reference|color"/>
 </resources>

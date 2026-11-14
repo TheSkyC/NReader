@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="theme_primary">@android:color/holo_blue_dark</color>
+    <color name="theme_primary_variant">@color/primary_material_dark</color>
+    <color name="theme_on_primary">@android:color/white</color>
+    <color name="theme_secondary">@android:color/holo_blue_dark</color>
+    <color name="theme_on_secondary">@android:color/white</color>
+    <color name="theme_background">#1F2023</color>
+    <color name="theme_surface">#1F2023</color>
+    <color name="theme_on_surface">@android:color/white</color>
+    <color name="theme_surface_variant">#2A2D32</color>
+    <color name="theme_on_surface_variant">#C4C7CE</color>
+    <color name="theme_outline">#4B4F56</color>
+    <color name="theme_error">#FFB4AB</color>
+    <color name="theme_on_error">#690005</color>
+    <color name="theme_image_overlay">#8F000000</color>
+    <color name="theme_badge_overlay">#80000000</color>
+    <color name="theme_image_scrim_strong">#D9000000</color>
+    <color name="theme_image_scrim_medium">#66000000</color>
+    <color name="theme_reader_overlay">#5F000000</color>
+    <color name="theme_on_image_overlay">@android:color/white</color>
+    <color name="theme_image_progress_track">#40FFFFFF</color>
+    <color name="theme_splash_background">#1F1F1F</color>
+    <color name="theme_nav_header_start">#0D0D0D</color>
+    <color name="theme_nav_header_center">#1F1F1F</color>
+    <color name="theme_nav_header_end">#404040</color>
+</resources>
