@@ -12,11 +12,15 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Response;
@@ -115,6 +119,48 @@ public class InspectorResultTest {
             assertTrue(!clone.isAlive());
             assertEquals(1, published.get());
         } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test public void cancellationAlsoCancelsRelatedTagRequest() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        AtomicReference<Call> call = new AtomicReference<>();
+        OkHttpClient previous = Global.client;
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            call.set(chain.call());
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("fixture timeout");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            }
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(ResponseBody.create("[]", null)).build();
+        }).build();
+        try {
+            InspectorV3 inspector = InspectorV3.galleryInspector(app, 42, new InspectorV3.DefaultInspectorResponse() {});
+            java.lang.reflect.Method fetch = InspectorV3.class.getDeclaredMethod("fetchTagBatch", List.class, List.class);
+            fetch.setAccessible(true);
+            Thread worker = new Thread(() -> {
+                try {
+                    fetch.invoke(inspector, Collections.singletonList(1), new ArrayList<>());
+                } catch (ReflectiveOperationException exception) {
+                    throw new AssertionError(exception);
+                }
+            });
+            worker.start();
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            inspector.cancelRequest();
+            assertTrue(call.get().isCanceled());
+            release.countDown();
+            worker.join(5000);
+            assertTrue(!worker.isAlive());
+        } finally {
+            release.countDown();
             Global.client = previous;
         }
     }
