@@ -8,7 +8,6 @@
     <color name="theme_secondary">@android:color/holo_blue_bright</color>
     <color name="theme_on_secondary">@android:color/black</color>
     <color name="theme_background">@android:color/white</color>
-    <color name="theme_on_background">@android:color/black</color>
     <color name="theme_surface">@android:color/white</color>
     <color name="theme_on_surface">@android:color/black</color>
     <color name="theme_surface_variant">#F5F7FA</color>
