@@ -150,6 +150,29 @@ public class Queries {
             }
         }
 
+        @Nullable
+        public static Gallery completeCachedGalleryFromId(Context context, int id) {
+            try (Cursor cursor = db.query(true, TABLE_NAME, null, IDGALLERY + "=?", new String[]{"" + id}, null, null, null, null)) {
+                if (!cursor.moveToFirst()) return null;
+                if (cursor.getInt(getColumnFromName(cursor, MEDIAID)) <= 0) return null;
+                String path = cursor.getString(getColumnFromName(cursor, PAGES));
+                if (path == null) return null;
+                String[] parts = path.split(";", -1);
+                if (parts.length < 5 || !parts[parts.length - 1].isEmpty()) return null;
+                int count;
+                try {
+                    count = Integer.parseInt(parts[0]);
+                } catch (NumberFormatException error) {
+                    return null;
+                }
+                if (count <= 0 || count != parts.length - 4) return null;
+                for (int index = 1; index < parts.length - 1; index++) {
+                    if (!parts[index].startsWith("/") || parts[index].length() == 1) return null;
+                }
+                return cursorToGallery(context, cursor);
+            }
+        }
+
         /**
          * @return Cursor to favorite Table
          * @noinspection DeprecatedIsStillUsed

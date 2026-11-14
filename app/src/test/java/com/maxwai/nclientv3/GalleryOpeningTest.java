@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.ContentValues;
 import android.os.Looper;
 import android.view.Menu;
 import android.view.View;
@@ -17,6 +18,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
+import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.settings.Global;
 
 import org.junit.Test;
@@ -44,10 +46,33 @@ import okhttp3.ResponseBody;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class GalleryOpeningTest {
-    private static final String DETAIL = "{\"id\":117,\"num_pages\":1,"
+    private static final String DETAIL = "{\"id\":117,\"media_id\":1,\"num_pages\":1,"
         + "\"title\":{\"pretty\":\"Test\"},\"cover\":{\"path\":\"galleries/1/cover.png\"},"
         + "\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
         + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}";
+
+    @Test
+    public void cacheLookupRejectsLegacyAndTruncatedPageRecords() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            android.database.sqlite.SQLiteDatabase db = database.getWritableDatabase();
+            Global.initFromShared(application);
+            Queries.GalleryTable.insert(new Gallery(application, DETAIL, null, false));
+            assertTrue(Queries.GalleryTable.completeCachedGalleryFromId(application, 117) != null);
+            ContentValues values = new ContentValues();
+            for (String pages : new String[]{"legacy", "2;/cover.png;/thumb.png;/1.png;", "partial-v1;1;cover"}) {
+                values.put(Queries.GalleryTable.PAGES, pages);
+                db.update(Queries.GalleryTable.TABLE_NAME, values, Queries.GalleryTable.IDGALLERY + "=?", new String[]{"117"});
+                assertEquals(null, Queries.GalleryTable.completeCachedGalleryFromId(application, 117));
+            }
+            Queries.GalleryTable.insert(new Gallery(application, DETAIL, null, false));
+            values.clear();
+            values.put(Queries.GalleryTable.MEDIAID, 0);
+            db.update(Queries.GalleryTable.TABLE_NAME, values, Queries.GalleryTable.IDGALLERY + "=?", new String[]{"117"});
+            assertEquals(null, Queries.GalleryTable.completeCachedGalleryFromId(application, 117));
+        }
+    }
 
     @Test
     public void shellDisablesActionsUntilDetailArrives() throws Exception {
@@ -100,6 +125,123 @@ public class GalleryOpeningTest {
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
                 assertEquals(View.GONE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.refresher).getVisibility());
+            } finally {
+                release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void refreshWaitsForReaderToCloseAndPreservesTagExpansion() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                String refreshed = DETAIL.replace("\"pretty\":\"Test\"", "\"pretty\":\"Updated\"");
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(refreshed, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                Object oldAdapter = ReflectionHelpers.getField(activity, "detailsAdapter");
+                boolean[] expanded = ReflectionHelpers.getField(oldAdapter, "expandedTags");
+                expanded[0] = true;
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
+                controller.pause();
+                release.countDown();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (ReflectionHelpers.getField(activity, "pendingDetailRefresh") == null
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "pendingDetailRefresh") != null);
+                assertEquals("Test", activity.getTitle().toString());
+                controller.resume();
+                assertTrue(ReflectionHelpers.getField(activity, "pendingDetailRefresh") != null);
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(0).select();
+                assertEquals("Updated", activity.getTitle().toString());
+                assertEquals(null, ReflectionHelpers.getField(activity, "pendingDetailRefresh"));
+                Object newAdapter = ReflectionHelpers.getField(activity, "detailsAdapter");
+                boolean[] refreshedExpansion = ReflectionHelpers.getField(newAdapter, "expandedTags");
+                assertTrue(refreshedExpansion[0]);
+            } finally {
+                release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void invalidNetworkRefreshDoesNotDiscardDisplayedCache() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            com.maxwai.nclientv3.async.database.Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                String wrongId = DETAIL.replace("\"id\":117", "\"id\":118");
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(wrongId, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                release.countDown();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (ReflectionHelpers.getField(activity, "detailRequest") != null
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(117, ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getId());
             } finally {
                 release.countDown();
             }

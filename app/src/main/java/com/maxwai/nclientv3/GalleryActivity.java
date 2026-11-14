@@ -112,6 +112,8 @@ public class GalleryActivity extends BaseActivity {
     @Nullable private InspectorV3 detailRequest;
     private long detailRequestGeneration;
     private boolean detailReady;
+    private boolean activityResumed;
+    @Nullable private Gallery pendingDetailRefresh;
 
     private int newStatusColor;
     private ReadingPosition automaticPosition;
@@ -202,6 +204,12 @@ public class GalleryActivity extends BaseActivity {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) saveScrollPosition();
             }
         });
+        detailsList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) applyPendingDetailRefresh();
+            }
+        });
         recycler.setOnGenericMotionListener((view, event) -> {
             if (event.getAction() == MotionEvent.ACTION_SCROLL) stopRestoringPosition();
             return false;
@@ -288,7 +296,9 @@ public class GalleryActivity extends BaseActivity {
         }
         adapter = new GalleryAdapter(this, gallery, Global.getColumnCount());
         recycler.setAdapter(adapter);
+        GalleryAdapter previousDetails = detailsAdapter;
         detailsAdapter = new GalleryAdapter(this, gallery, 1, true);
+        if (previousDetails != null) detailsAdapter.copyExpandedTagsFrom(previousDetails);
         detailsList.setLayoutManager(new LinearLayoutManager(this));
         detailsList.setAdapter(detailsAdapter);
         lookup();
@@ -312,6 +322,7 @@ public class GalleryActivity extends BaseActivity {
     private void startDetailRequest() {
         if (gallery.getId() <= 0 || isFinishing() || isDestroyed()) return;
         if (detailRequest != null) detailRequest.cancelRequest();
+        pendingDetailRefresh = null;
         final long requestGeneration = ++detailRequestGeneration;
         final int requestedId = gallery.getId();
         detailLoadingState(true);
@@ -327,13 +338,19 @@ public class GalleryActivity extends BaseActivity {
                         || galleries.get(0).getPageCount() != galleries.get(0).getGalleryData().getPages().size()) {
                         if (detailRequest != null) detailRequest.cancelRequest();
                         detailRequest = null;
-                        applyDetailFailure();
+                        if (!detailReady) applyDetailFailure();
                         return;
                     }
-                    loadGallery(galleries.get(0), zoom);
-                    applyLoadedPosition();
-                    detailLoadingState(false);
-                    supportInvalidateOptionsMenu();
+                    Gallery result = (Gallery) galleries.get(0);
+                    if (detailReady) {
+                        pendingDetailRefresh = result;
+                        applyPendingDetailRefresh();
+                    } else {
+                        loadGallery(result, zoom);
+                        applyLoadedPosition();
+                        detailLoadingState(false);
+                        supportInvalidateOptionsMenu();
+                    }
                 });
             }
 
@@ -374,23 +391,55 @@ public class GalleryActivity extends BaseActivity {
         detailRequest.setDeferredRelatedResponse(related -> runOnUiThread(() -> {
             if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
                 || !detailReady || gallery.getId() != requestedId || !(gallery instanceof Gallery)) return;
-            ((Gallery) gallery).setRelated(related);
-            if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
+            if (pendingDetailRefresh != null) {
+                pendingDetailRefresh.setRelated(related);
+            } else {
+                ((Gallery) gallery).setRelated(related);
+                if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
+            }
         }));
         detailRequest.start();
         if (zoom == 0) loadCachedDetail(requestedId, requestGeneration);
     }
 
+    private void applyPendingDetailRefresh() {
+        if (pendingDetailRefresh == null || !activityResumed || displayedTab == 1
+            || detailsList.getScrollState() != RecyclerView.SCROLL_STATE_IDLE
+            || isFinishing() || isDestroyed()) return;
+        Parcelable detailsState = detailsList.getLayoutManager().onSaveInstanceState();
+        Parcelable pagesState = recycler.getLayoutManager().onSaveInstanceState();
+        Gallery refreshed = pendingDetailRefresh;
+        pendingDetailRefresh = null;
+        loadGallery(refreshed, 0);
+        detailsList.getLayoutManager().onRestoreInstanceState(detailsState);
+        recycler.getLayoutManager().onRestoreInstanceState(pagesState);
+        applyLoadedPosition();
+        detailLoadingState(false);
+        supportInvalidateOptionsMenu();
+    }
+
     private void loadCachedDetail(int requestedId, long requestGeneration) {
         new Thread(() -> {
-            Gallery cached = Queries.GalleryTable.galleryFromId(this, requestedId);
+            Gallery cached;
+            try {
+                cached = Queries.GalleryTable.completeCachedGalleryFromId(getApplicationContext(), requestedId);
+            } catch (RuntimeException error) {
+                LogUtility.w("Unable to load cached gallery details");
+                return;
+            }
             if (cached == null || !cached.isValid() || cached.getGalleryData().isIncomplete()
+                || cached.getId() != requestedId
                 || cached.getPageCount() <= 0
                 || cached.getPageCount() != cached.getGalleryData().getPages().size()) return;
+            for (com.maxwai.nclientv3.api.components.Page page : cached.getGalleryData().getPages()) {
+                Uri uri = page.getImagePath();
+                if (uri == null || !"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null) return;
+            }
             runOnUiThread(() -> {
                 if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
                     || detailReady || !(gallery instanceof SimpleGallery)) return;
                 loadGallery(cached, 0);
+                applyLoadedPosition();
                 detailLoadingState(false);
                 supportInvalidateOptionsMenu();
             });
@@ -521,6 +570,7 @@ public class GalleryActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
+        activityResumed = false;
         saveScrollPosition();
         super.onPause();
     }
@@ -681,6 +731,7 @@ public class GalleryActivity extends BaseActivity {
     private void showTab(int index) {
         displayedTab = index;
         ((GalleryTabSwipeLayout) findViewById(R.id.gallery_tab_content)).setCurrentPage(index);
+        applyPendingDetailRefresh();
         if (index == 2 && !commentsLoading) {
             if (commentsRestoredPendingPage > 0) {
                 int pending = commentsRestoredPendingPage;
@@ -828,6 +879,8 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        activityResumed = true;
+        applyPendingDetailRefresh();
         GalleryOpenGate.release();
         if (commentComposer != null) commentComposer.render();
         updateColumnCount(false);
