@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gallery_loading_details">Завантаження відомостей про галерею</string>
     <string name="setting_on_ignore_tags">Інші теги не будуть використані, якщо тег вибрано з меню галереї(окрім мови)</string>
     <string name="setting_off_ignore_tags">Інші теги будуть використані, якщо тег вибрано з меню галереї</string>
     <string name="setting_on_use_account_tag">Використовувати теги акаунту у пошуковому запиті (Локальні теги будуть мати більший пріоритет)</string>

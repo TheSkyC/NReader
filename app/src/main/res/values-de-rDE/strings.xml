@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gallery_loading_details">Galeriedetails werden geladen</string>
     <string name="setting_on_ignore_tags">Andere Tags werden nicht gesucht, wenn du einen Tag von einer Galerie auswählst (außer die Sprache)</string>
     <string name="setting_off_ignore_tags">Andere Tags werden gesucht, wenn du einen Tag von einer Galerie auswählst</string>
     <string name="setting_on_use_account_tag">Benutze online Tags in deiner Suche (lokale Tags haben Priorität)</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gallery_loading_details">جارٍ تحميل تفاصيل المعرض</string>
     <string name="setting_on_ignore_tags">لن يُستعلم عن الوسوم الأخرى إذا اختير وسام من قائمة الأعمال (باستثناء اللغة)</string>
     <string name="setting_off_ignore_tags">سيُستعلم عن الوسوم الأخرى إذا اختير وسام من قائمة الأعمال</string>
     <string name="setting_on_use_account_tag">اِستخدم وسوم حسابك عند استعلام البحث (ستحظى الوسوم المحلية بالأولوية)</string>
