@@ -88,6 +88,7 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 public class GalleryActivity extends BaseActivity {
     @NonNull
     private GenericGallery gallery = Gallery.emptyGallery();
+    @Nullable private String entryTitle;
     private boolean isLocal;
     private GalleryAdapter adapter;
     private int zoom;
@@ -184,6 +185,7 @@ public class GalleryActivity extends BaseActivity {
             return;
         }
         this.gallery = gal;
+        if (gal instanceof SimpleGallery && !gal.getTitle().trim().isEmpty()) entryTitle = gal.getTitle();
         isLocal = gallery.isLocal() || getIntent().getBooleanExtra(getPackageName() + ".ISLOCAL", false);
         if (!isLocal) {
             if (gallery instanceof Gallery) Queries.HistoryTable.addGallery(((Gallery) gallery).toSimpleGallery());
@@ -705,10 +707,15 @@ public class GalleryActivity extends BaseActivity {
             commentsList.getLayoutManager().onSaveInstanceState());
     }
 
+    @NonNull
+    public String getDisplayTitle() {
+        return entryTitle != null ? entryTitle : gallery.getTitle();
+    }
+
     private void applyTitle() {
-        setTitle(gallery.getTitle());
+        setTitle(getDisplayTitle());
         toolbar.setOnLongClickListener(v -> {
-            CopyToClipboardActivity.copyTextToClipboard(this, gallery.getTitle());
+            CopyToClipboardActivity.copyTextToClipboard(this, getDisplayTitle());
             Toast.makeText(this, R.string.title_copied_to_clipboard, Toast.LENGTH_SHORT).show();
             return true;
         });
