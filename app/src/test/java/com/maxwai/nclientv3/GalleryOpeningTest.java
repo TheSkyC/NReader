@@ -311,10 +311,56 @@ public class GalleryOpeningTest {
     }
 
     @Test
+    public void cacheArrivingAfterNetworkFailureKeepsRetryAvailable() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
+                .request(chain.request()).protocol(Protocol.HTTP_1_1).code(503).message("offline")
+                .body(ResponseBody.create("{}", null)).build()).build();
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailRefreshFailed"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailRefreshFailed"));
+                assertFalse(ReflectionHelpers.getField(activity, "detailReady"));
+                Queries.GalleryTable.insert(cached);
+                long generation = ReflectionHelpers.getField(activity, "detailRequestGeneration");
+                ReflectionHelpers.callInstanceMethod(activity, "loadCachedDetail",
+                    ReflectionHelpers.ClassParameter.from(int.class, 117),
+                    ReflectionHelpers.ClassParameter.from(long.class, generation));
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_retry).getVisibility());
+                assertTrue(activity.findViewById(R.id.gallery_read).isEnabled());
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
     public void cachedDetailSurvivesFailedNetworkRefresh() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");
         CountDownLatch entered = new CountDownLatch(1);
+        AtomicInteger requests = new AtomicInteger();
         OkHttpClient previous = Global.client;
         try (DatabaseHelper database = new DatabaseHelper(application)) {
             database.getWritableDatabase();
@@ -323,6 +369,10 @@ public class GalleryOpeningTest {
             com.maxwai.nclientv3.async.database.Queries.GalleryTable.insert(cached);
             Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
                 entered.countDown();
+                if (requests.incrementAndGet() > 1) {
+                    return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                        .code(200).message("OK").body(ResponseBody.create(DETAIL, null)).build();
+                }
                 return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                     .code(503).message("offline").body(ResponseBody.create("{}", null)).build();
             }).build();
@@ -332,13 +382,28 @@ public class GalleryOpeningTest {
                 GalleryActivity activity = controller.get();
                 assertTrue(entered.await(5, TimeUnit.SECONDS));
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                View error = activity.findViewById(R.id.gallery_load_error);
+                while ((!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    || error == null || error.getVisibility() != View.VISIBLE)
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                    error = activity.findViewById(R.id.gallery_load_error);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.VISIBLE, error.getVisibility());
+                assertTrue(activity.findViewById(R.id.gallery_read).isEnabled());
+                activity.findViewById(R.id.gallery_load_retry).performClick();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while ((requests.get() < 2 || ReflectionHelpers.getField(activity, "detailRequest") != null)
                     && System.nanoTime() < deadline) {
                     Shadows.shadowOf(Looper.getMainLooper()).idle();
                     Thread.sleep(10);
                 }
-                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(2, requests.get());
                 assertEquals(View.GONE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
             }
         } finally {
             Global.client = previous;
