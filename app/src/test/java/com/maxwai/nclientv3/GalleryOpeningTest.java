@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
+import com.google.android.material.tabs.TabLayout;
 
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.api.components.Gallery;
@@ -81,7 +82,13 @@ public class GalleryOpeningTest {
                 Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
                 activity.onCreateOptionsMenu(menu);
                 assertFalse(menu.findItem(R.id.manage_status).isVisible());
-                assertEquals(View.GONE, activity.findViewById(R.id.gallery_metadata).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_metadata).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.favorite_stat).getVisibility());
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.refresher).getVisibility());
+                activity.onCreateOptionsMenu(menu);
+                assertFalse(menu.findItem(R.id.change_view).isVisible());
 
                 release.countDown();
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
@@ -91,6 +98,8 @@ public class GalleryOpeningTest {
                     Thread.sleep(10);
                 }
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.GONE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.refresher).getVisibility());
             } finally {
                 release.countDown();
             }
@@ -184,7 +193,9 @@ public class GalleryOpeningTest {
                 }
                 assertEquals(View.VISIBLE, error.getVisibility());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
-                activity.findViewById(R.id.gallery_load_retry).performClick();
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_pages_retry).getVisibility());
+                activity.findViewById(R.id.gallery_pages_retry).performClick();
                 deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
                 while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
                     && System.nanoTime() < deadline) {
