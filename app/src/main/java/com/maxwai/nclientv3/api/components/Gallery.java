@@ -213,6 +213,10 @@ public class Gallery extends GenericGallery {
         return related;
     }
 
+    public void setRelated(List<SimpleGallery> related) {
+        this.related = new ArrayList<>(related);
+    }
+
     @Override
     public boolean isValid() {
         return galleryData.isValid();

@@ -320,12 +320,13 @@ public class GalleryActivity extends BaseActivity {
             public void onSuccess(List<GenericGallery> galleries) {
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
-                    detailRequest = null;
                     if (galleries.size() != 1 || !(galleries.get(0) instanceof Gallery)
                         || galleries.get(0).getId() != requestedId || !galleries.get(0).isValid()
                         || galleries.get(0).getGalleryData().isIncomplete()
                         || galleries.get(0).getPageCount() <= 0
                         || galleries.get(0).getPageCount() != galleries.get(0).getGalleryData().getPages().size()) {
+                        if (detailRequest != null) detailRequest.cancelRequest();
+                        detailRequest = null;
                         applyDetailFailure();
                         return;
                     }
@@ -357,7 +358,20 @@ public class GalleryActivity extends BaseActivity {
                     applyDetailFailure();
                 });
             }
+
+            @Override
+            public void onEnd() {
+                runOnUiThread(() -> {
+                    if (requestGeneration == detailRequestGeneration) detailRequest = null;
+                });
+            }
         });
+        detailRequest.setDeferredRelatedResponse(related -> runOnUiThread(() -> {
+            if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
+                || !detailReady || gallery.getId() != requestedId || !(gallery instanceof Gallery)) return;
+            ((Gallery) gallery).setRelated(related);
+            if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
+        }));
         detailRequest.start();
     }
 
