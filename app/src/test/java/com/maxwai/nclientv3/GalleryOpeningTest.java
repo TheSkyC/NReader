@@ -149,6 +149,10 @@ public class GalleryOpeningTest {
                 assertEquals("Test", activity.getTitle().toString());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
+                assertEquals("ID 117", ((android.widget.TextView) activity.findViewById(R.id.id_num)).getText().toString());
+                activity.findViewById(R.id.id_num).performClick();
+                android.content.ClipboardManager clipboard = activity.getSystemService(android.content.ClipboardManager.class);
+                assertEquals("117", clipboard.getPrimaryClip().getItemAt(0).getText().toString());
                 Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
                 activity.onCreateOptionsMenu(menu);
                 assertFalse(menu.findItem(R.id.manage_status).isVisible());
@@ -168,7 +172,10 @@ public class GalleryOpeningTest {
                     Thread.sleep(10);
                 }
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
-                assertEquals(View.GONE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
+                assertEquals("ID 117", ((android.widget.TextView) activity.findViewById(R.id.id_num)).getText().toString());
+                activity.findViewById(R.id.id_num).performClick();
+                assertEquals("117", clipboard.getPrimaryClip().getItemAt(0).getText().toString());
                 assertEquals(View.GONE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.refresher).getVisibility());
             } finally {

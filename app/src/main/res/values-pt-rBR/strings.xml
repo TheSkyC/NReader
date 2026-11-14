@@ -217,7 +217,7 @@
     <string name="data_usage_full">Baixar miniaturas ou imagens completas</string>
     <string name="data_usage_no">Não baixar imagens</string>
     <string name="enable_network_to_continue">Habilite download de imagens ou mude de rede para abrir a imagem</string>
-    <string name="id_tag">ID:</string>
+    <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID copiado para a área de transferência</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
     <string name="maximum_notification_count">Número máximo de notificações</string>

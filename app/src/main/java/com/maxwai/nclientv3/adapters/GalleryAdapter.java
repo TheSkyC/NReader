@@ -12,6 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.maxwai.nclientv3.CopyToClipboardActivity;
@@ -175,7 +177,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (gallery instanceof SimpleGallery) {
             LanguageFlag.bind(language, ((SimpleGallery) gallery).getLanguage());
             language.setVisibility(View.VISIBLE);
+        } else if (gallery instanceof Gallery) {
+            LanguageFlag.bind(language, ((Gallery) gallery).getLanguage());
+            language.setVisibility(View.VISIBLE);
         } else language.setVisibility(View.GONE);
+        initializeIdContainer(holder.master.findViewById(R.id.id_num));
         ImageView cover = holder.master.findViewById(R.id.gallery_cover);
         View loading = holder.master.findViewById(R.id.gallery_loading);
         File firstPage = directory == null ? null : directory.getPage(1);
@@ -235,8 +241,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     private void loadTagLayout(ViewHolder holder) {
         final ViewGroup vg = holder.master.findViewById(R.id.tag_master);
-        final TextView idContainer = holder.master.findViewById(R.id.id_num);
-        initializeIdContainer(idContainer);
         boolean hasPageCount = gallery instanceof SimpleGallery && gallery.getPageCount() > 0;
         holder.master.findViewById(R.id.gallery_metadata).setVisibility(hasTags() || hasPageCount ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.favorite_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
@@ -299,7 +303,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return;
         }
         String id = Integer.toString(gallery.getId());
-        idContainer.setText(id);
+        String label = context.getString(R.string.id_tag, id);
+        idContainer.setText(label);
+        idContainer.setTooltipText(label);
         idContainer.setVisibility(gallery.getId() != SpecialTagIds.INVALID_ID ? View.VISIBLE : View.GONE);
         idContainer.setOnClickListener(v -> {
             CopyToClipboardActivity.copyTextToClipboard(context, id);
@@ -307,6 +313,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 Toast.makeText(context, R.string.id_copied_to_clipboard, Toast.LENGTH_SHORT).show()
             );
         });
+        ViewCompat.replaceAccessibilityAction(idContainer,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+            context.getString(android.R.string.copy), null);
     }
 
     private void addInfoLayout(ViewHolder holder, GalleryData gallery) {
