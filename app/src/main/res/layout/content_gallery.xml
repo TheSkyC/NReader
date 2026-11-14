@@ -48,6 +48,13 @@
             android:layout_marginTop="8dp"
             android:text="@string/retry"
             android:visibility="gone" />
+        <Button
+            android:id="@+id/gallery_pages_local"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gallery_open_local_copy"
+            android:visibility="gone" />
     </LinearLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

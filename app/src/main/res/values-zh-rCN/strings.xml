@@ -331,6 +331,7 @@
     <string name="unable_to_connect_to_the_site">无法连接到站点</string>
     <string name="no_entry_found">未找到条目</string>
     <string name="retry">重试</string>
+    <string name="gallery_open_local_copy">打开已下载的副本</string>
     <string name="folder_location">文件夹位置</string>
     <string name="default_zoom">默认缩放</string>
     <string name="choose_directory">选择文件夹</string>

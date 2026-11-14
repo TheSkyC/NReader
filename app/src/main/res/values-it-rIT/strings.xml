@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">Impossibile connettersi al sito</string>
     <string name="no_entry_found">Nessuna galleria trovata</string>
     <string name="retry">Riprova</string>
+    <string name="gallery_open_local_copy">Apri copia scaricata</string>
     <string name="folder_location">Posizione cartella</string>
     <string name="default_zoom">Default zoom</string>
     <string name="choose_directory">Scegli cartella</string>

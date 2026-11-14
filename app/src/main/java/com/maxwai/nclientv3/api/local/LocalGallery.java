@@ -120,8 +120,14 @@ public class LocalGallery extends GenericGallery {
     }
 
     public void calculateSizes() {
-        for (PageFile f : folder)
+        calculateSizes(() -> true);
+    }
+
+    public void calculateSizes(java.util.function.BooleanSupplier shouldContinue) {
+        for (PageFile f : folder) {
+            if (!shouldContinue.getAsBoolean()) return;
             checkSize(f);
+        }
     }
 
     private void checkSize(File f) {

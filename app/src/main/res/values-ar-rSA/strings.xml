@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">تعذر الاتصال بالموقع</string>
     <string name="no_entry_found">لم يُعثر على أي مُدخلَة</string>
     <string name="retry">أَعدِ المحاولة</string>
+    <string name="gallery_open_local_copy">فتح النسخة التي تم تنزيلها</string>
     <string name="folder_location">موقع المجلد</string>
     <string name="default_zoom">مستوى التقريب الاعتيادي</string>
     <string name="choose_directory">اِختر مجلدًا</string>

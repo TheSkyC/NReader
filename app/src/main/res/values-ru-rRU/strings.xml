@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">Не удалось подключиться к сайту</string>
     <string name="no_entry_found">Не было найдено ни одного элемента</string>
     <string name="retry">Попробовать снова</string>
+    <string name="gallery_open_local_copy">Открыть загруженную копию</string>
     <string name="folder_location">Расположение папки</string>
     <string name="default_zoom">Приближение по умолчанию</string>
     <string name="choose_directory">Выберите каталог</string>

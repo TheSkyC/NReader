@@ -191,6 +191,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (loading != null) loading.setVisibility(this.loading ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.gallery_load_error).setVisibility(loadFailed ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.gallery_load_retry).setOnClickListener(view -> context.retryDetailLoading());
+        View local = holder.master.findViewById(R.id.gallery_load_local);
+        local.setVisibility(context.hasLocalFallback() ? View.VISIBLE : View.GONE);
+        local.setOnClickListener(view -> context.openLocalFallback());
         context.bindReadingActions(holder.master);
     }
 

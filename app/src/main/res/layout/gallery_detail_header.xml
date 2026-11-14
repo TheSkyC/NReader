@@ -112,6 +112,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/retry" />
+        <Button
+            android:id="@+id/gallery_load_local"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gallery_open_local_copy"
+            android:visibility="gone" />
     </LinearLayout>
 
     <Button

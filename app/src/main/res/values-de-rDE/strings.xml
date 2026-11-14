@@ -231,6 +231,7 @@
     <string name="unable_to_connect_to_the_site">Kann sich nicht mit der Seite verbinden</string>
     <string name="no_entry_found">Kein Eintrag gefunden</string>
     <string name="retry">Wiederholen</string>
+    <string name="gallery_open_local_copy">Heruntergeladene Kopie öffnen</string>
     <string name="folder_location">Speicherort</string>
     <string name="default_zoom">Standard Zoom</string>
     <string name="choose_directory">Ordner auswählen</string>

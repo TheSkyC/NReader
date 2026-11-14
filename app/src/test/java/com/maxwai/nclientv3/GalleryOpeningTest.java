@@ -19,10 +19,13 @@ import com.google.android.material.tabs.TabLayout;
 import com.maxwai.nclientv3.api.SimpleGallery;
 import com.maxwai.nclientv3.adapters.FavoriteAdapter;
 import com.maxwai.nclientv3.api.components.Gallery;
+import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.components.GalleryOpenGate;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.settings.AuthStore;
+import com.maxwai.nclientv3.utility.Utility;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +38,9 @@ import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -532,8 +537,10 @@ public class GalleryOpeningTest {
                 assertTrue(relatedEntered.await(5, TimeUnit.SECONDS));
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 Gallery gallery = ReflectionHelpers.getField(activity, "gallery");
-                Thread inspector = ReflectionHelpers.getField(activity, "detailRequest");
-                assertTrue(inspector != null);
+                Object subscription = ReflectionHelpers.getField(activity, "detailRequest");
+                assertTrue(subscription != null);
+                Object entry = ReflectionHelpers.getField(subscription, "entry");
+                Thread inspector = ReflectionHelpers.getField(entry, "inspector");
                 controller.pause().stop().destroy();
                 assertTrue(relatedCall.get().isCanceled());
                 releaseRelated.countDown();
@@ -646,6 +653,330 @@ public class GalleryOpeningTest {
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
                 assertEquals(2, requests.get());
                 assertEquals(117, ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getId());
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void accountChangeDiscardsRefreshPendingWhileReading() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            AuthStore.clear(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                String refreshed = DETAIL.replace("\"pretty\":\"Test\"", "\"pretty\":\"Updated\"");
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(refreshed, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
+                release.countDown();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (ReflectionHelpers.getField(activity, "pendingDetailRefresh") == null
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "pendingDetailRefresh") != null);
+                AuthStore.saveApiKey(application, "test-identity", true);
+                ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(0).select();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("Test", activity.getTitle().toString());
+                assertEquals(null, ReflectionHelpers.getField(activity, "pendingDetailRefresh"));
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+            }
+        } finally {
+            release.countDown();
+            AuthStore.clear(application);
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void downloadedFallbackOpensOnlyOnExplicitActionAndKeepsCurrentPage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain ->
+                new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(503).message("offline").body(ResponseBody.create("{}", null)).build()).build();
+            File folder = new File(application.getCacheDir(), "fallback-test");
+            assertTrue(folder.isDirectory() || folder.mkdirs());
+            File page = new File(folder, "1.jpg");
+            assertTrue(page.isFile() || page.createNewFile());
+            LocalGallery local = new LocalGallery(folder, true);
+            assertTrue(local.isValid());
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailRefreshFailed"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailRefreshFailed"));
+                ReflectionHelpers.setField(activity, "localFallbackGallery", local);
+                ReflectionHelpers.setField(activity, "localFallbackIdentity", AuthStore.identityGeneration());
+                ReflectionHelpers.setField(activity, "localFallbackSource", Utility.getBaseUrl());
+                ReflectionHelpers.setField(activity, "localFallbackMirrorGeneration", Global.getMirrorGeneration());
+                ReflectionHelpers.callInstanceMethod(activity, "detailLoadingState",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, false));
+                assertEquals(null, Shadows.shadowOf(activity).getNextStartedActivity());
+                View open = activity.findViewById(R.id.gallery_pages_local);
+                assertEquals(View.VISIBLE, open.getVisibility());
+                open.performClick();
+                open.performClick();
+                Intent opened = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertTrue(opened != null);
+                assertTrue(opened.getBooleanExtra(application.getPackageName() + ".ISLOCAL", false));
+                assertEquals(null, Shadows.shadowOf(activity).getNextStartedActivity());
+                assertFalse(activity.isFinishing());
+                controller.pause().resume();
+                open.performClick();
+                assertTrue(Shadows.shadowOf(activity).getNextStartedActivity() != null);
+            }
+        } finally {
+            GalleryOpenGate.release();
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void accountChangeAfterFailureAllowsRetryWithCurrentIdentity() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        AtomicInteger calls = new AtomicInteger();
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            AuthStore.clear(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                int call = calls.incrementAndGet();
+                if (call == 1) {
+                    entered.countDown();
+                    try {
+                        if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                    } catch (InterruptedException error) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(error);
+                    }
+                }
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(call == 1 ? 503 : 200).message("test")
+                    .body(ResponseBody.create(call == 1 ? "{}" : DETAIL, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                Object subscription = ReflectionHelpers.getField(activity, "detailRequest");
+                Object entry = ReflectionHelpers.getField(subscription, "entry");
+                Thread inspector = ReflectionHelpers.getField(entry, "inspector");
+                ExecutorService delivery = ReflectionHelpers.getField(entry, "delivery");
+                release.countDown();
+                inspector.join(5000);
+                assertTrue(delivery.awaitTermination(5, TimeUnit.SECONDS));
+                AuthStore.saveApiKey(application, "test-identity", true);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+                assertEquals(null, Shadows.shadowOf(activity).getNextStartedActivity());
+                activity.retryDetailLoading();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(2, calls.get());
+            }
+        } finally {
+            release.countDown();
+            AuthStore.clear(application);
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void accountChangeFailureCancelsBlockedRelatedRequest() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch relatedEntered = new CountDownLatch(1), releaseRelated = new CountDownLatch(1);
+        AtomicReference<Call> relatedCall = new AtomicReference<>();
+        OkHttpClient previous = Global.client;
+        String detailWithRelated = DETAIL.substring(0, DETAIL.length() - 1)
+            + ",\"related\":[{\"id\":118,\"media_id\":\"2\",\"thumbnail\":\"galleries/2/thumb.jpg\","
+            + "\"english_title\":\"Related\",\"num_pages\":1,\"tag_ids\":[12345]}]}";
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            AuthStore.clear(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                boolean tags = chain.request().url().encodedPath().endsWith("/tags/ids");
+                if (tags) {
+                    relatedCall.set(chain.call());
+                    relatedEntered.countDown();
+                    try {
+                        if (!releaseRelated.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                    } catch (InterruptedException error) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(error);
+                    }
+                }
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(tags ? "[]" : detailWithRelated, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(relatedEntered.await(5, TimeUnit.SECONDS));
+                Object subscription = ReflectionHelpers.getField(activity, "detailRequest");
+                com.maxwai.nclientv3.api.GalleryDetailRequests.Callback callback =
+                    ReflectionHelpers.getField(subscription, "callback");
+                AuthStore.saveApiKey(application, "test-identity", true);
+                callback.onFailure(new IOException("Account identity changed"));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(relatedCall.get().isCanceled());
+                assertEquals(null, ReflectionHelpers.getField(activity, "detailRequest"));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+            }
+        } finally {
+            releaseRelated.countDown();
+            AuthStore.clear(application);
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void accountChangeBeforeUiDeliveryRejectsDetail() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        OkHttpClient previous = Global.client;
+        CountDownLatch release = new CountDownLatch(1), entered = new CountDownLatch(1);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            AuthStore.clear(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(DETAIL, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                Object subscription = ReflectionHelpers.getField(activity, "detailRequest");
+                Object entry = ReflectionHelpers.getField(subscription, "entry");
+                Thread inspector = ReflectionHelpers.getField(entry, "inspector");
+                ExecutorService delivery = ReflectionHelpers.getField(entry, "delivery");
+                release.countDown();
+                inspector.join(5000);
+                assertFalse(inspector.isAlive());
+                assertTrue(delivery.awaitTermination(5, TimeUnit.SECONDS));
+                AuthStore.saveApiKey(application, "test-identity", true);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+            }
+        } finally {
+            release.countDown();
+            AuthStore.clear(application);
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void twoDetailActivitiesShareRequestWhenOneCloses() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        AtomicInteger requests = new AtomicInteger();
+        AtomicReference<Call> call = new AtomicReference<>();
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                requests.incrementAndGet();
+                call.set(chain.call());
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(DETAIL, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            ActivityController<GalleryActivity> first = Robolectric.buildActivity(GalleryActivity.class, intent).setup();
+            try (ActivityController<GalleryActivity> second = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                first.pause().stop().destroy();
+                assertFalse(call.get().isCanceled());
+                release.countDown();
+                GalleryActivity remaining = second.get();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(remaining, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(remaining, "detailReady"));
+                assertEquals(1, requests.get());
+            } finally {
+                release.countDown();
             }
         } finally {
             Global.client = previous;
