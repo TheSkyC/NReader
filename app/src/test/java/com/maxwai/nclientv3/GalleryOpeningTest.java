@@ -17,9 +17,11 @@ import androidx.appcompat.widget.Toolbar;
 import com.google.android.material.tabs.TabLayout;
 
 import com.maxwai.nclientv3.api.SimpleGallery;
+import com.maxwai.nclientv3.adapters.FavoriteAdapter;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.Queries;
+import com.maxwai.nclientv3.components.GalleryOpenGate;
 import com.maxwai.nclientv3.settings.Global;
 
 import org.junit.Test;
@@ -51,6 +53,39 @@ public class GalleryOpeningTest {
         + "\"title\":{\"pretty\":\"Test\"},\"cover\":{\"path\":\"galleries/1/cover.png\"},"
         + "\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
         + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}";
+
+    @Test
+    @Config(sdk = {26, 28})
+    public void incompleteFavoriteOpensOneShellWithKnownMetadata() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        GalleryOpenGate.release();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery original = new Gallery(application, DETAIL, null, false);
+            Queries.FavoriteTable.addFavorite(new SimpleGallery(original));
+            Gallery partial = Queries.GalleryTable.galleryFromId(application, 117);
+            assertTrue(partial.getGalleryData().isIncomplete());
+            try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).setup()) {
+                FavoriteActivity activity = controller.get();
+                FavoriteAdapter adapter = ReflectionHelpers.getField(activity, "adapter");
+                ReflectionHelpers.callInstanceMethod(adapter, "startGallery",
+                    ReflectionHelpers.ClassParameter.from(Gallery.class, partial));
+                ReflectionHelpers.callInstanceMethod(adapter, "startGallery",
+                    ReflectionHelpers.ClassParameter.from(Gallery.class, partial));
+                Intent opened = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertTrue(opened != null);
+                SimpleGallery shell = opened.getParcelableExtra(application.getPackageName() + ".GALLERY");
+                assertEquals(117, shell.getId());
+                assertEquals(original.getTitle(), shell.getTitle());
+                assertEquals(original.getPageCount(), shell.getPageCount());
+                assertEquals(null, Shadows.shadowOf(activity).getNextStartedActivity());
+            }
+        } finally {
+            GalleryOpenGate.release();
+        }
+    }
 
     @Test
     public void cacheLookupRejectsLegacyAndTruncatedPageRecords() throws Exception {
