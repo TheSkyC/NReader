@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gallery_loading_details">Carregando detalhes da galeria</string>
     <string name="setting_on_ignore_tags">Outras tags não serão consultadas quando uma etiqueta for selecionada no menu da galeria (exceto o idioma)</string>
     <string name="setting_off_ignore_tags">Outras tags serão consultadas quando uma etiqueta for selecionada no menu da galeria</string>
     <string name="setting_on_use_account_tag">Usar as tags da conta na pesquisa (Tags locais terão prioridade)</string>

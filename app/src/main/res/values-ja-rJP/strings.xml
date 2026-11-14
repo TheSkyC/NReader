@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gallery_loading_details">ギャラリーの詳細を読み込み中</string>
     <string name="setting_on_ignore_tags">ギャラリーメニューからタグを選択した場合、他のタグは照会されません（言語を除く）</string>
     <string name="setting_off_ignore_tags">ギャラリーメニューからタグを選択すると、他のタグが照会されます</string>
     <string name="setting_on_use_account_tag">アカウントタグを検索に使用します（ローカルタグが優先されます）</string>
