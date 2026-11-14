@@ -55,7 +55,6 @@ public class GalleryOpeningTest {
         + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}";
 
     @Test
-    @Config(sdk = {26, 28})
     public void incompleteFavoriteOpensOneShellWithKnownMetadata() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");
@@ -488,6 +487,62 @@ public class GalleryOpeningTest {
                 assertEquals("Test", activity.getTitle().toString());
             } finally {
                 release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void destroyingDetailCancelsRelatedTagRequest() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch relatedEntered = new CountDownLatch(1), releaseRelated = new CountDownLatch(1);
+        AtomicReference<Call> relatedCall = new AtomicReference<>();
+        OkHttpClient previous = Global.client;
+        String detailWithRelated = DETAIL.substring(0, DETAIL.length() - 1)
+            + ",\"related\":[{\"id\":118,\"media_id\":\"2\",\"thumbnail\":\"galleries/2/thumb.jpg\","
+            + "\"english_title\":\"Related\",\"num_pages\":1,\"tag_ids\":[12345]}]}";
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                boolean tags = chain.request().url().encodedPath().endsWith("/tags/ids");
+                if (tags) {
+                    relatedCall.set(chain.call());
+                    relatedEntered.countDown();
+                    try {
+                        if (!releaseRelated.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                    } catch (InterruptedException error) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(error);
+                    }
+                }
+                String body = tags ? "[{\"id\":12345,\"name\":\"artist\",\"type\":\"artist\",\"count\":1}]"
+                    : detailWithRelated;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(body, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup();
+            try {
+                GalleryActivity activity = controller.get();
+                assertTrue(relatedEntered.await(5, TimeUnit.SECONDS));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Gallery gallery = ReflectionHelpers.getField(activity, "gallery");
+                Thread inspector = ReflectionHelpers.getField(activity, "detailRequest");
+                assertTrue(inspector != null);
+                controller.pause().stop().destroy();
+                assertTrue(relatedCall.get().isCanceled());
+                releaseRelated.countDown();
+                inspector.join(5000);
+                assertFalse(inspector.isAlive());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(gallery.getRelated().isEmpty());
+            } finally {
+                releaseRelated.countDown();
             }
         } finally {
             Global.client = previous;
