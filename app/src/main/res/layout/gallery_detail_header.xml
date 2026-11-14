@@ -32,12 +32,53 @@
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
 
-            <ProgressBar
+            <LinearLayout
                 android:id="@+id/gallery_loading"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:contentDescription="@string/gallery_loading_details" />
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ProgressBar
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        style="@style/TextAppearance.MaterialComponents.Caption"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:accessibilityLiveRegion="polite"
+                        android:text="@string/gallery_loading_details" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:alpha="0.12"
+                    android:background="@drawable/gallery_loading_placeholder"
+                    android:importantForAccessibility="no" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="40dp"
+                    android:alpha="0.12"
+                    android:background="@drawable/gallery_loading_placeholder"
+                    android:importantForAccessibility="no" />
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
