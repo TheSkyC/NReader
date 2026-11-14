@@ -21,6 +21,7 @@ import com.maxwai.nclientv3.api.enums.Language;
 import com.maxwai.nclientv3.files.LocalDownloadState;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
+import com.maxwai.nclientv3.components.GalleryOpenGate;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.TagV2;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
@@ -134,12 +135,17 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             else holder.layout.performClick();
         });
         holder.layout.setOnClickListener(v -> {
-              /*Intent intent = new Intent(context, GalleryActivity.class);
-              intent.putExtra(context.getPackageName() + ".ID", ent.getId());
-              context.startActivity(intent);*/
+            if (!GalleryOpenGate.tryAcquire(ent.getId())) return;
             if (context instanceof MainActivity)
                 ((MainActivity) context).setIdOpenedGallery(ent.getId());
-            downloadGallery(ent);
+            Intent intent = new Intent(context, GalleryActivity.class);
+            intent.putExtra(context.getPackageName() + ".GALLERY", ent);
+            try {
+                context.startActivity(intent);
+            } catch (RuntimeException error) {
+                GalleryOpenGate.release();
+                throw error;
+            }
             holder.overlay.setVisibility((queryString != null && ent.hasIgnoredTags(queryString)) ? View.VISIBLE : View.GONE);
         });
         holder.overlay.setOnClickListener(v -> holder.overlay.setVisibility(View.GONE));

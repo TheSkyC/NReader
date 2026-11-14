@@ -105,6 +105,7 @@
     <string name="ignore_tags">忽略其他标签</string>
     <string name="use_account_tag">使用账户标签偏好</string>
     <string name="title_activity_gallery">画廊</string>
+    <string name="gallery_loading_details">正在加载画廊详情</string>
     <string name="title_activity_zoom">图片缩放</string>
     <string name="title_activity_tag_filter">标签筛选</string>
     <string name="title_activity_api_key">API 密钥</string>
