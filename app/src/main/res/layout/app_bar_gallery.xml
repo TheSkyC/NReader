@@ -120,10 +120,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    app:cardBackgroundColor="@color/comment_input_background"
+                    app:cardBackgroundColor="?attr/nreaderSurfaceVariant"
                     app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="@color/comment_input_stroke"
+                    app:strokeColor="?attr/nreaderOutline"
                     app:strokeWidth="1dp">
 
                   <FrameLayout

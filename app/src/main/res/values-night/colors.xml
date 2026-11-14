@@ -20,7 +20,11 @@
     <color name="theme_image_scrim_medium">#66000000</color>
     <color name="theme_reader_overlay">#5F000000</color>
     <color name="theme_on_image_overlay">@android:color/white</color>
+    <color name="theme_image_progress_track">#40FFFFFF</color>
     <color name="theme_splash_background">#1F1F1F</color>
+    <color name="theme_nav_header_start">#0D0D0D</color>
+    <color name="theme_nav_header_center">#1F1F1F</color>
+    <color name="theme_nav_header_end">#404040</color>
 
     <color name="tint_dark">@android:color/white</color>
     <color name="tint_light">@android:color/black</color>

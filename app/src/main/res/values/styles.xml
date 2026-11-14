@@ -20,6 +20,8 @@
         <item name="android:textColorPrimary">@color/theme_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/theme_splash_background</item>
+        <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="nreaderOutline">@color/theme_outline</item>
         <item name="navHeaderGradient">@drawable/side_nav_bar</item>
     </style>
 
@@ -32,6 +34,8 @@
         <item name="android:colorBackground">@color/theme_black_background</item>
         <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
+        <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>
+        <item name="nreaderOutline">@color/theme_black_outline</item>
         <item name="elevationOverlayEnabled">false</item>
         <item name="navHeaderGradient">@color/theme_black_background</item>
         <item name="colorPrimaryVariant">@color/theme_black_background</item>

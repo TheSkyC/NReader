@@ -71,7 +71,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@android:color/white"
+        android:textColor="@color/theme_on_image_overlay"
         android:textSize="12sp"
         android:visibility="invisible"
         app:layout_constrainedWidth="true"
@@ -91,7 +91,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:srcCompat="@drawable/ic_cover_download"
-        app:tint="@android:color/white" />
+        app:tint="@color/theme_on_image_overlay" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/gallery_download_progress"
@@ -102,7 +102,7 @@
         app:indicatorColor="@color/cover_downloading"
         app:indicatorInset="2dp"
         app:indicatorSize="36dp"
-        app:trackColor="#40FFFFFF"
+        app:trackColor="@color/theme_image_progress_track"
         app:trackThickness="2dp"
         app:layout_constraintBottom_toBottomOf="@id/gallery_local_files"
         app:layout_constraintEnd_toEndOf="@id/gallery_local_files"
