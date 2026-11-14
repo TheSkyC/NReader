@@ -35,6 +35,7 @@ import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.ImageDownloadUtility;
 import com.maxwai.nclientv3.utility.LogUtility;
+import com.maxwai.nclientv3.utility.LanguageFlag;
 import com.maxwai.nclientv3.utility.Utility;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -170,6 +171,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private void loadHeader(ViewHolder holder) {
         TextView title = holder.master.findViewById(R.id.gallery_title);
         title.setText(gallery.getTitle());
+        ImageView language = holder.master.findViewById(R.id.gallery_shell_language);
+        if (gallery instanceof SimpleGallery) {
+            LanguageFlag.bind(language, ((SimpleGallery) gallery).getLanguage());
+            language.setVisibility(View.VISIBLE);
+        } else language.setVisibility(View.GONE);
         ImageView cover = holder.master.findViewById(R.id.gallery_cover);
         View loading = holder.master.findViewById(R.id.gallery_loading);
         File firstPage = directory == null ? null : directory.getPage(1);

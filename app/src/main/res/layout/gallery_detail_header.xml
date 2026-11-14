@@ -32,6 +32,14 @@
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
 
+            <ImageView
+                android:id="@+id/gallery_shell_language"
+                android:layout_width="24dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="8dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/gallery_loading"
                 android:layout_width="match_parent"

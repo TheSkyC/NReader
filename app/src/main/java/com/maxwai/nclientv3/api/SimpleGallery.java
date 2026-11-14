@@ -92,6 +92,7 @@ public class SimpleGallery extends GenericGallery {
         id = gallery.getId();
         thumbnail = gallery.getThumbnail();
         pageCount = gallery.getPageCount();
+        language = gallery.getLanguage();
         tags = gallery.getTags();
         if (tags != null) for (Tag tag : tags.getAllTagsList()) tagIds.add(tag.getId());
     }
