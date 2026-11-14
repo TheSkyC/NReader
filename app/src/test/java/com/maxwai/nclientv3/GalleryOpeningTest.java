@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -92,6 +93,52 @@ public class GalleryOpeningTest {
                 assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
             } finally {
                 release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void invalidDetailKeepsRetryVisibleAndRetryLoadsCorrectGallery() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        AtomicInteger requests = new AtomicInteger();
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                String response = requests.incrementAndGet() == 1
+                    ? DETAIL.replace("\"id\":117", "\"id\":118") : DETAIL;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(response, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                View error = activity.findViewById(R.id.gallery_load_error);
+                while ((requests.get() == 0 || error == null || error.getVisibility() != View.VISIBLE)
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                    error = activity.findViewById(R.id.gallery_load_error);
+                }
+                assertEquals(View.VISIBLE, error.getVisibility());
+                assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
+                activity.findViewById(R.id.gallery_load_retry).performClick();
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(2, requests.get());
+                assertEquals(117, ((Gallery) ReflectionHelpers.getField(activity, "gallery")).getId());
             }
         } finally {
             Global.client = previous;
