@@ -100,6 +100,61 @@ public class GalleryOpeningTest {
     }
 
     @Test
+    public void mainDetailIsReadyWhileRelatedTagsAreStillLoading() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch relatedEntered = new CountDownLatch(1);
+        CountDownLatch releaseRelated = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        String detailWithRelated = DETAIL.substring(0, DETAIL.length() - 1)
+            + ",\"related\":[{}, {\"id\":118,\"media_id\":\"2\",\"thumbnail\":\"galleries/2/thumb.jpg\","
+            + "\"english_title\":\"Related\",\"num_pages\":1,\"tag_ids\":[12345]}]}";
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                boolean tags = chain.request().url().encodedPath().endsWith("/tags/ids");
+                if (tags) {
+                    relatedEntered.countDown();
+                    try {
+                        if (!releaseRelated.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                    } catch (InterruptedException error) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(error);
+                    }
+                }
+                String body = tags ? "[{\"id\":12345,\"name\":\"test artist\",\"type\":\"artist\",\"count\":1}]"
+                    : detailWithRelated;
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(body, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY",
+                new SimpleGallery(new Gallery(application, DETAIL, null, false)));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(relatedEntered.await(5, TimeUnit.SECONDS));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                Gallery gallery = ReflectionHelpers.getField(activity, "gallery");
+                assertTrue(gallery.getRelated().isEmpty());
+                releaseRelated.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (gallery.getRelated().isEmpty() && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertEquals(1, gallery.getRelated().size());
+                assertEquals(118, gallery.getRelated().get(0).getId());
+            } finally {
+                releaseRelated.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
     public void invalidDetailKeepsRetryVisibleAndRetryLoadsCorrectGallery() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");

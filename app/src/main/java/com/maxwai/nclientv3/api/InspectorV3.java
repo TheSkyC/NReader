@@ -78,6 +78,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     private volatile okhttp3.Call activeCall;
     private volatile boolean canceled;
     private java.util.function.BooleanSupplier resultCurrent = () -> true;
+    @Nullable private java.util.function.Consumer<List<SimpleGallery>> deferredRelatedResponse;
+    @Nullable private JSONArray pendingRelated;
     private OnlineFavoriteClient.FavoriteListSnapshot favoriteListSnapshot;
     private volatile long favoriteAuthGeneration = -1;
 
@@ -95,6 +97,10 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public void setResultCurrent(@NonNull java.util.function.BooleanSupplier resultCurrent) {
         this.resultCurrent = resultCurrent;
+    }
+
+    public void setDeferredRelatedResponse(@NonNull java.util.function.Consumer<List<SimpleGallery>> callback) {
+        deferredRelatedResponse = callback;
     }
 
     public int getResponseCode() {
@@ -433,6 +439,16 @@ public class InspectorV3 extends Thread implements Parcelable {
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()) {
                 deliveryResponse.onSuccess(galleries);
             }
+            if (pendingRelated != null && deferredRelatedResponse != null && !canceled) {
+                try {
+                    List<SimpleGallery> related = parseDeferredRelated(pendingRelated);
+                    hydrateRelatedTags(related);
+                    if (!canceled && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent())
+                        deferredRelatedResponse.accept(related);
+                } catch (RuntimeException error) {
+                    if (!canceled) LogUtility.w("Unable to prepare related galleries", error);
+                }
+            }
         } catch (Exception e) {
             if (deliveryResponse != null && resultCurrent.getAsBoolean()
                 && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
@@ -483,7 +499,9 @@ public class InspectorV3 extends Thread implements Parcelable {
         // Handle related galleries
         List<SimpleGallery> relatedList = new ArrayList<>();
         JSONArray relatedArr = v2.optJSONArray("related");
-        if (relatedArr != null) {
+        if (deferredRelatedResponse != null) {
+            pendingRelated = relatedArr == null ? new JSONArray() : relatedArr;
+        } else if (relatedArr != null) {
             for (int i = 0; i < relatedArr.length(); i++) {
                 relatedList.add(SimpleGallery.fromV2ListItem(context.get(), relatedArr.getJSONObject(i)));
             }
@@ -495,6 +513,18 @@ public class InspectorV3 extends Thread implements Parcelable {
 
         Gallery gallery = new Gallery(context.get(), v2.toString(), relatedList, isFavorite);
         galleries.add(gallery);
+    }
+
+    private List<SimpleGallery> parseDeferredRelated(JSONArray related) {
+        List<SimpleGallery> result = new ArrayList<>();
+        for (int index = 0; index < related.length() && !canceled; index++) {
+            try {
+                result.add(SimpleGallery.fromV2ListItem(context.get(), related.getJSONObject(index)));
+            } catch (JSONException | RuntimeException error) {
+                LogUtility.w("Unable to parse related gallery at index " + index);
+            }
+        }
+        return result;
     }
 
     private void hydrateRelatedTags(List<SimpleGallery> related) {
