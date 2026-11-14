@@ -47,7 +47,7 @@
                 android:minLines="2"
                 android:text="249084208"
                 android:textAlignment="center"
-                android:textColor="@android:color/white"
+                android:textColor="@color/theme_on_image_overlay"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -112,7 +112,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginLeft="8dp"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/theme_on_image_overlay"
                     app:layout_constraintBottom_toBottomOf="@+id/progressBar"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="@+id/progressBar" />

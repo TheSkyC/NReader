@@ -4,24 +4,42 @@
 
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryVariant">@color/primaryColorVariant</item>
+        <item name="colorSecondary">@color/theme_secondary</item>
+        <item name="colorSecondaryVariant">@color/theme_secondary</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="31">#1F1F1F</item>
+        <item name="colorOnPrimary">@color/theme_on_primary</item>
+        <item name="colorOnSecondary">@color/theme_on_secondary</item>
+        <item name="colorSurface">@color/theme_surface</item>
+        <item name="colorOnSurface">@color/theme_on_surface</item>
+        <item name="colorError">@color/theme_error</item>
+        <item name="colorOnError">@color/theme_on_error</item>
+        <item name="colorControlNormal">@color/theme_on_surface_variant</item>
+        <item name="colorControlActivated">@color/theme_primary</item>
+        <item name="android:colorBackground">@color/theme_background</item>
+        <item name="android:windowBackground">@color/theme_background</item>
+        <item name="android:textColorPrimary">@color/theme_on_surface</item>
+        <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/theme_splash_background</item>
         <item name="navHeaderGradient">@drawable/side_nav_bar</item>
     </style>
 
 
     <style name="AppTheme.Black" parent="AppTheme">
-        <item name="colorSurface">#000000</item>
-        <item name="android:windowBackground">#000000</item>
-        <item name="android:colorBackground">#000000</item>
+        <item name="colorSurface">@color/theme_black_surface</item>
+        <item name="colorOnSurface">@color/theme_black_on_surface</item>
+        <item name="colorControlNormal">@color/theme_black_on_surface</item>
+        <item name="android:windowBackground">@color/theme_black_background</item>
+        <item name="android:colorBackground">@color/theme_black_background</item>
+        <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
+        <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
         <item name="elevationOverlayEnabled">false</item>
-        <item name="navHeaderGradient">#000000</item>
-        <item name="colorPrimaryVariant">#000000</item>
+        <item name="navHeaderGradient">@color/theme_black_background</item>
+        <item name="colorPrimaryVariant">@color/theme_black_background</item>
         <item name="cardViewStyle">@style/BlackCardView</item>
     </style>
 
     <style name="BlackCardView" parent="CardView">
-        <item name="cardBackgroundColor">#000000</item>
+        <item name="cardBackgroundColor">@color/theme_black_surface</item>
     </style>
 
 </resources>

@@ -16,9 +16,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
-        app:tabIndicatorColor="@android:color/black"
-        app:tabSelectedTextColor="@android:color/black"
-        app:tabTextColor="@android:color/black"
+        app:tabIndicatorColor="?attr/colorOnPrimary"
+        app:tabSelectedTextColor="?attr/colorOnPrimary"
+        app:tabTextColor="?attr/colorOnPrimary"
         app:tabMode="fixed" />
 
     <com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout
