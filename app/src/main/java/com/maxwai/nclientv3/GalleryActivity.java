@@ -347,6 +347,11 @@ public class GalleryActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()) return;
                     detailRequest = null;
+                    if (detailReady && gallery instanceof Gallery) {
+                        detailLoadingState(false);
+                        supportInvalidateOptionsMenu();
+                        return;
+                    }
                     if (local != null && local.isValid()) {
                         Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
                         intent.putExtra(getPackageName() + ".GALLERY", local);
@@ -373,6 +378,23 @@ public class GalleryActivity extends BaseActivity {
             if (detailsAdapter != null) detailsAdapter.notifyItemChanged(2);
         }));
         detailRequest.start();
+        if (zoom == 0) loadCachedDetail(requestedId, requestGeneration);
+    }
+
+    private void loadCachedDetail(int requestedId, long requestGeneration) {
+        new Thread(() -> {
+            Gallery cached = Queries.GalleryTable.galleryFromId(this, requestedId);
+            if (cached == null || !cached.isValid() || cached.getGalleryData().isIncomplete()
+                || cached.getPageCount() <= 0
+                || cached.getPageCount() != cached.getGalleryData().getPages().size()) return;
+            runOnUiThread(() -> {
+                if (requestGeneration != detailRequestGeneration || isFinishing() || isDestroyed()
+                    || detailReady || !(gallery instanceof SimpleGallery)) return;
+                loadGallery(cached, 0);
+                detailLoadingState(false);
+                supportInvalidateOptionsMenu();
+            });
+        }, "gallery-cache-" + requestedId).start();
     }
 
     public void retryDetailLoading() {

@@ -109,6 +109,84 @@ public class GalleryOpeningTest {
     }
 
     @Test
+    public void cachedDetailSurvivesFailedNetworkRefresh() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            com.maxwai.nclientv3.async.database.Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(503).message("offline").body(ResponseBody.create("{}", null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals(View.GONE, activity.findViewById(R.id.gallery_load_error).getVisibility());
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
+    public void completeLocalCacheAppearsBeforeNetworkRefresh() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+        OkHttpClient previous = Global.client;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Gallery cached = new Gallery(application, DETAIL, null, false);
+            com.maxwai.nclientv3.async.database.Queries.GalleryTable.insert(cached);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                entered.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) throw new IOException("Test timed out");
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException(error);
+                }
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create(DETAIL, null)).build();
+            }).build();
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", new SimpleGallery(cached));
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                assertTrue(entered.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "detailReady"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "detailReady"));
+                assertEquals("Test", activity.getTitle().toString());
+            } finally {
+                release.countDown();
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
     public void mainDetailIsReadyWhileRelatedTagsAreStillLoading() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");
