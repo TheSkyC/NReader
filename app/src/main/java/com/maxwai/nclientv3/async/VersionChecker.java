@@ -15,6 +15,8 @@ import androidx.core.content.FileProvider;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.async.update.UpdateState;
+import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -38,17 +40,20 @@ public class VersionChecker {
     private static final String LATEST_RELEASE_URL = "https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest";
     private static String latest = null;
     private final AppCompatActivity context;
+    private final UpdateStateStore stateStore;
     private String downloadUrl;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
+        this.stateStore = new UpdateStateStore(context);
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
         if (latest != null && Global.hasStoragePermission(context)) {
             downloadVersion(latest);
             latest = null;
             return;
         }
+        stateStore.save(UpdateState.checking(System.currentTimeMillis()));
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
         Global.getClient(context).newCall(new Request.Builder().url(RELEASE_API_URL).build()).enqueue(new Callback() {
             @Override
@@ -83,9 +88,11 @@ public class VersionChecker {
                             newer = false;
                         }
                         if (downloadUrl == null || !newer) {
+                            stateStore.save(UpdateState.idle(System.currentTimeMillis()));
                             if (!silent)
                                 Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
                         } else {
+                            stateStore.save(UpdateState.available(finalRelease.versionCode, System.currentTimeMillis()));
                             createDialog(finalRelease);
                         }
                     });
@@ -97,6 +104,7 @@ public class VersionChecker {
     }
 
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
+        stateStore.save(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
         context.runOnUiThread(() -> {
             LogUtility.e(exception.getLocalizedMessage(), exception);
             if (!silent)
@@ -234,7 +242,10 @@ public class VersionChecker {
         final File f = new File(Global.UPDATEFOLDER,
             "NReader-" + latestVersion + flavorSuffix + "-release.apk");
         if (f.exists()) {
-            if (context.getSharedPreferences("Settings", 0).getBoolean("downloaded", false)) {
+            UpdateState savedState = stateStore.load();
+            if (savedState.isReadyToInstall()
+                && latestVersion.equals(savedState.getVersion())
+                && f.getAbsolutePath().equals(savedState.getFilePath())) {
                 installApp(f);
                 return;
             }
@@ -263,6 +274,13 @@ public class VersionChecker {
                     Global.UPDATEFOLDER.mkdirs();
                     //noinspection ResultOfMethodCallIgnored
                     f.createNewFile();
+                    stateStore.save(UpdateState.downloading(
+                        latestVersion,
+                        f.getAbsolutePath(),
+                        0L,
+                        response.body().contentLength(),
+                        System.currentTimeMillis()
+                    ));
                     try (FileOutputStream stream = new FileOutputStream(f);
                          InputStream stream1 = response.body().byteStream()) {
                         int read;
@@ -272,12 +290,22 @@ public class VersionChecker {
                         }
                         stream.flush();
                     }
-                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", true).apply();
+                    stateStore.save(UpdateState.readyToInstall(
+                        latestVersion,
+                        f.getAbsolutePath(),
+                        f.length(),
+                        System.currentTimeMillis()
+                    ));
                     installApp(f);
                 } catch (IOException | RuntimeException e) {
                     //noinspection ResultOfMethodCallIgnored
                     f.delete();
-                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", false).apply();
+                    stateStore.save(UpdateState.error(
+                        latestVersion,
+                        f.getAbsolutePath(),
+                        "download",
+                        System.currentTimeMillis()
+                    ));
                     notifyDownloadFailure(e);
                 }
             }
@@ -293,12 +321,16 @@ public class VersionChecker {
 
     private void installApp(File f) {
         try {
+            UpdateState savedState = stateStore.load();
+            String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
+            stateStore.save(UpdateState.installing(version, f.getAbsolutePath(), System.currentTimeMillis()));
             Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", f);
             @SuppressLint("RequestInstallPackagesPolicy") Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
             intent.setData(apkUri);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             context.startActivity(intent);
         } catch (IllegalArgumentException ignore) {
+            stateStore.save(UpdateState.error(null, f.getAbsolutePath(), "install_provider", System.currentTimeMillis()));
             context.runOnUiThread(() -> Toast.makeText(context, context.getString(R.string.downloaded_update_at, f.getAbsolutePath()), Toast.LENGTH_SHORT).show());
 
         }
