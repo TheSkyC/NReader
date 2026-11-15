@@ -133,30 +133,71 @@ public class VersionChecker {
                         release = new GitHubRelease();
                         release.versionCode = BuildConfig.VERSION_NAME;
                     }
-                    downloadUrl = release.downloadUrl;
-                    GitHubRelease finalRelease = release;
-                    context.runOnUiThread(() -> {
-                        boolean newer;
-                        try {
-                            newer = finalRelease.isNewerThenVersion(BuildConfig.VERSION_NAME);
-                        } catch (IllegalArgumentException ignored) {
-                            newer = false;
-                        }
-                        if (downloadUrl == null || !newer) {
-                            saveState(UpdateState.idle(System.currentTimeMillis()));
-                            if (!silent)
-                                Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
-                        } else {
-                            latestRelease = finalRelease;
-                            metadataStore.setSelectedSha256(finalRelease.sha256);
-                            saveState(UpdateState.available(finalRelease.versionCode, System.currentTimeMillis()));
-                            if (listener == null) createDialog(finalRelease);
-                            else context.runOnUiThread(() -> listener.onReleaseAvailable(finalRelease));
-                        }
-                    });
+                    if (release.manifestUrl != null) {
+                        requestManifest(release, withPrerelease, silent);
+                    } else {
+                        publishRelease(release, silent);
+                    }
                 } catch (IOException | RuntimeException e) {
                     notifyRetrievalFailure(e, silent);
                 }
+            }
+        });
+    }
+
+    private void requestManifest(
+        @NonNull GitHubRelease apiRelease,
+        boolean withPrerelease,
+        boolean silent
+    ) {
+        updateClient.newCall(new Request.Builder()
+            .url(apiRelease.manifestUrl)
+            .header("Accept", "application/json")
+            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
+            .build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                publishRelease(apiRelease, silent);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                try (Response ignored = response) {
+                    if (!response.isSuccessful() || response.body() == null
+                        || response.body().contentLength() > 1024L * 1024L) {
+                        publishRelease(apiRelease, silent);
+                        return;
+                    }
+                    GitHubRelease manifestRelease;
+                    try (JsonReader reader = new JsonReader(new StringReader(response.body().string()))) {
+                        manifestRelease = parseManifestJson(reader, withPrerelease, BuildConfig.FLAVOR, context.getPackageName());
+                    }
+                    publishRelease(manifestRelease == null ? apiRelease : manifestRelease, silent);
+                } catch (RuntimeException ignored) {
+                    publishRelease(apiRelease, silent);
+                }
+            }
+        });
+    }
+
+    private void publishRelease(@NonNull GitHubRelease release, boolean silent) {
+        downloadUrl = release.downloadUrl;
+        context.runOnUiThread(() -> {
+            boolean newer;
+            try {
+                newer = release.isNewerThenVersion(BuildConfig.VERSION_NAME);
+            } catch (IllegalArgumentException ignored) {
+                newer = false;
+            }
+            if (downloadUrl == null || !newer) {
+                saveState(UpdateState.idle(System.currentTimeMillis()));
+                if (!silent) Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
+            } else {
+                latestRelease = release;
+                metadataStore.setSelectedSha256(release.sha256);
+                saveState(UpdateState.available(release.versionCode, System.currentTimeMillis()));
+                if (listener == null) createDialog(release);
+                else listener.onReleaseAvailable(release);
             }
         });
     }
@@ -262,12 +303,11 @@ public class VersionChecker {
                 case "assets":
                     jr.beginArray();
                     while (jr.hasNext()) {
-                        if (release.downloadUrl != null) {
-                            jr.skipValue();
-                            continue;
-                        }
-                        AssetCandidate candidate = getAsset(jr, flavor);
-                        if (release.downloadUrl == null && candidate != null) {
+                        AssetCandidate candidate = getAsset(jr);
+                        if (candidate == null) continue;
+                        if ("nreader-update.json".equals(candidate.name)) {
+                            release.manifestUrl = candidate.url;
+                        } else if (release.downloadUrl == null && matchesFlavorAsset(candidate.name, flavor)) {
                             release.downloadUrl = candidate.url;
                             release.sha256 = candidate.sha256;
                         }
@@ -284,7 +324,67 @@ public class VersionChecker {
         return invalid ? null : release;
     }
 
-    private static AssetCandidate getAsset(JsonReader jr, String flavor) throws IOException {
+    static GitHubRelease parseManifestJson(
+        JsonReader jr,
+        boolean withPrerelease,
+        String flavor,
+        String packageName
+    ) throws IOException {
+        GitHubRelease release = new GitHubRelease();
+        boolean invalid = false;
+        jr.beginObject();
+        while (jr.peek() != JsonToken.END_OBJECT) {
+            switch (jr.nextName()) {
+                case "versionName":
+                    release.versionCode = jr.nextString();
+                    break;
+                case "channel":
+                    release.beta = !"stable".equalsIgnoreCase(jr.nextString());
+                    if (release.beta && !withPrerelease) invalid = true;
+                    break;
+                case "notes":
+                case "releaseNotes":
+                    release.body = jr.nextString();
+                    break;
+                case "assets":
+                    jr.beginArray();
+                    while (jr.hasNext()) {
+                        String assetFlavor = null;
+                        String assetPackage = null;
+                        String url = null;
+                        String digest = null;
+                        long minSdk = 0L;
+                        jr.beginObject();
+                        while (jr.peek() != JsonToken.END_OBJECT) {
+                            switch (jr.nextName()) {
+                                case "flavor": assetFlavor = jr.nextString(); break;
+                                case "packageName": assetPackage = jr.nextString(); break;
+                                case "url": url = jr.nextString(); break;
+                                case "sha256": digest = jr.nextString(); break;
+                                case "minSdk": minSdk = jr.nextLong(); break;
+                                default: jr.skipValue(); break;
+                            }
+                        }
+                        jr.endObject();
+                        if (release.downloadUrl == null && flavor.equals(assetFlavor)
+                            && packageName.equals(assetPackage) && minSdk <= Build.VERSION.SDK_INT
+                            && url != null) {
+                            release.downloadUrl = url;
+                            release.sha256 = digest;
+                        }
+                    }
+                    jr.endArray();
+                    break;
+                default:
+                    jr.skipValue();
+                    break;
+            }
+        }
+        jr.endObject();
+        return invalid || release.versionCode == null ? null : release;
+    }
+
+    private static AssetCandidate getAsset(JsonReader jr) throws IOException {
         String name = null;
         String url = null;
         String digest = null;
@@ -300,15 +400,17 @@ public class VersionChecker {
             else jr.skipValue();
         }
         jr.endObject();
-        if (name == null || url == null || !matchesFlavorAsset(name, flavor)) return null;
-        return new AssetCandidate(url, digest);
+        if (name == null || url == null) return null;
+        return new AssetCandidate(name, url, digest);
     }
 
     private static final class AssetCandidate {
+        private final String name;
         private final String url;
         private final String sha256;
 
-        private AssetCandidate(String url, String sha256) {
+        private AssetCandidate(String name, String url, String sha256) {
+            this.name = name;
             this.url = url;
             this.sha256 = sha256;
         }
@@ -495,7 +597,7 @@ public class VersionChecker {
 
     public static class GitHubRelease {
         private final static String regex = "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(pre\\d+|(?:alpha|beta|rc)\\.\\d+))?$";
-        String versionCode, body, downloadUrl, sha256;
+        String versionCode, body, downloadUrl, sha256, manifestUrl;
         boolean beta;
 
         @Nullable public String getVersionCode() { return versionCode; }
