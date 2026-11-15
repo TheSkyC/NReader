@@ -18,8 +18,8 @@ Set `JAVA_HOME` to a JDK and configure `ANDROID_HOME` or an ignored
 .\gradlew.bat assembleDebug
 ```
 
-- `post28`: Android 9 / API 28 and newer.
-- `pre28`: Android 8 / API 26–27, retaining the upstream compatibility flavor.
+- `minApi28`: Android 9 / API 28 and newer.
+- `minApi26`: Android 8 / API 26–27, retaining the upstream compatibility flavor.
 - APK filenames begin with `NReader_`. Debug builds are labeled `NReader Debug`.
 
 Debug builds use Android's standard debug signing configuration and do not need
@@ -37,7 +37,7 @@ NReader releases. Keystores, passwords, local SDK configuration, build outputs, 
 IDE caches were not imported from the source working directory and must not be committed.
 
 The first test release uses version `1.0.0-pre1`. Pushing a matching Git tag runs
-the prerelease workflow and publishes both SDK flavor APKs and the post28 AAB. The
+the prerelease workflow and publishes both SDK flavor APKs and the minApi28 AAB. The
 `1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.
 
 Debug builds mask gallery covers and reader images with an opaque checkerboard
@@ -52,8 +52,8 @@ use the synthetic fixtures with masking disabled to check those actions.
 Run the regression tests and shared debug packaging checks with:
 
 ```powershell
-.\gradlew.bat :app:testPost28DebugUnitTest
-.\gradlew.bat assembleDebug bundleDebug :app:lintPost28Debug
+.\gradlew.bat :app:testMinApi28DebugUnitTest
+.\gradlew.bat assembleDebug bundleDebug :app:lintMinApi28Debug
 ```
 
 The tests use Robolectric for migrations, backup rollback, reading positions,

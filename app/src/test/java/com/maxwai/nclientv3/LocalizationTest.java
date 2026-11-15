@@ -18,8 +18,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
-// API 28 is the lowest runtime supported by the post28 test APK; the same
-// resource tests run against the pre28 flavor separately.
+// API 28 is the lowest runtime supported by the minApi28 test APK; the same
+// resource tests run against the minApi26 flavor separately.
 @Config(sdk = 28, application = Application.class)
 public class LocalizationTest {
     private Resources resources(String languageTag) {

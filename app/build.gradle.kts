@@ -64,12 +64,12 @@ android {
     }
     flavorDimensions += "sdk"
     productFlavors {
-        create("post28") {
+        create("minApi28") {
             dimension = "sdk"
             targetSdk = 36
             minSdk = 28
         }
-        create("pre28") {
+        create("minApi26") {
             dimension = "sdk"
             targetSdk = 28
             minSdk = 26
@@ -143,9 +143,7 @@ androidComponents {
         }
         variant.sources.assets?.addGeneratedSourceDirectory(copyLegalNotices, CopyLegalNotices::outputDirectory)
         var suffix = ""
-        if (variant.flavorName == "pre28") {
-            suffix += "_pre28"
-        }
+        suffix += if (variant.flavorName == "minApi26") "_minApi26" else "_minApi28"
         if (variant.buildType == "debug") {
             suffix += "_debug"
         } else if (variant.buildType == "RelWithDebInfo") {

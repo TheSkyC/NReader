@@ -63,7 +63,7 @@ jobs:
           } > keystore.properties
 
       - name: Assemble release APKs and bundle
-        run: ./gradlew assembleRelease bundlePost28Release
+        run: ./gradlew assembleRelease bundleMinApi28Release
 
       - name: Publish GitHub release
         env:

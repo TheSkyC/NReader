@@ -57,7 +57,7 @@ whole, including the smaller feature catalogs, for missing or duplicate keys,
 array shape and formatter compatibility.
 
 Run `python scripts/check_localization.py` for the SDK-independent catalog checks
-and `./gradlew.bat :app:testPost28DebugUnitTest --tests '*LocalizationTest'` for
+and `./gradlew.bat :app:testMinApi28DebugUnitTest --tests '*LocalizationTest'` for
 Android resource selection and formatting tests on API 26 and API 28.
 
 Compilation and resource tests do not establish native-language editorial

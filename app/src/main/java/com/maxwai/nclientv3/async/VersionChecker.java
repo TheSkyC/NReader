@@ -130,8 +130,8 @@ public class VersionChecker {
                         }
                         release.downloadUrl = getDownloadUrl(jr);
                         //noinspection ConstantValue
-                        if ((BuildConfig.FLAVOR.equals("pre28") && !release.downloadUrl.contains("pre28")) ||
-                            (BuildConfig.FLAVOR.equals("post28") && release.downloadUrl.contains("pre28")))
+                        if ((BuildConfig.FLAVOR.equals("minApi26") && !release.downloadUrl.contains("minApi26")) ||
+                            (BuildConfig.FLAVOR.equals("minApi28") && release.downloadUrl.contains("minApi26")))
                             release.downloadUrl = null;
                     }
                     jr.endArray();
