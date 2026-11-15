@@ -132,6 +132,7 @@ public class VersionChecker {
 
     private void saveState(@NonNull UpdateState state) {
         stateStore.save(state);
+        UpdateNotification.publish(context, state);
         if (listener != null) {
             context.runOnUiThread(() -> listener.onUpdateState(state));
         }

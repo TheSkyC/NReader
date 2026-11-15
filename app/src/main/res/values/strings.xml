@@ -196,6 +196,8 @@
     <string name="channel1_description">Show gallery download progress and results.</string>
     <string name="channel2_description">Show PDF export progress and results.</string>
     <string name="channel3_description">Show ZIP export progress and results.</string>
+    <string name="channel4_name">Application updates</string>
+    <string name="channel4_description">Show application update availability, progress and results.</string>
     <string name="channel2_title">Creating PDF:</string>
     <string name="channel3_title">Creating ZIP:</string>
     <string name="only_english">English only</string>
@@ -324,6 +326,11 @@
     <string name="update_download">Download update</string>
     <string name="update_install">Install update</string>
     <string name="update_no_release_notes">This release does not include release notes.</string>
+    <string name="update_notification_available">NReader update available</string>
+    <string name="update_notification_downloading">Downloading NReader update</string>
+    <string name="update_notification_ready">NReader update ready</string>
+    <string name="update_notification_failed">NReader update failed</string>
+    <string name="update_notification_version" formatted="true">Version %s</string>
     <string name="copyURL">Copy URL</string>
     <string name="add_bookmark">Add bookmark</string>
     <string name="manage_bookmarks">Manage bookmarks</string>
