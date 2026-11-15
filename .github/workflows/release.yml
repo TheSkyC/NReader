@@ -77,7 +77,12 @@ jobs:
             exit 1
           fi
           notes='Built and signed by the NReader GitHub Actions release workflow.'
-          if [[ "$RELEASE_TAG" == *-* ]]; then
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" \
+              --title "NReader $RELEASE_TAG" \
+              --notes "$notes"
+          elif [[ "$RELEASE_TAG" == *-* ]]; then
             gh release create "$RELEASE_TAG" "${assets[@]}" \
               --title "NReader $RELEASE_TAG" \
               --prerelease \
