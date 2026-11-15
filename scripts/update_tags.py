@@ -63,7 +63,7 @@ class TagInfo:
 @limits(calls=30, period=60)
 def make_api_request(url_path: str) -> dict:
     user_agent_header = {
-        "User-Agent": "NClient/tag-update-ci (https://github.com/maxwai/NClientV3)"}
+        "User-Agent": "NReader/tag-update-ci (https://github.com/TheSkyC/NReader)"}
     res = requests.get(API_URL + url_path, headers=user_agent_header)
     if res.status_code == 429:  # rate_limit
         print("Got rate limit, waiting 1 sec")
