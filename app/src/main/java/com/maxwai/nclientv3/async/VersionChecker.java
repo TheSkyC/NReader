@@ -253,7 +253,7 @@ public class VersionChecker {
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
         saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
         context.runOnUiThread(() -> {
-            LogUtility.e(exception.getLocalizedMessage(), exception);
+            LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());
             if (!silent)
                 Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
         });
@@ -729,7 +729,7 @@ public class VersionChecker {
 
     private void notifyDownloadFailure(Exception exception) {
         context.runOnUiThread(() -> {
-            LogUtility.e(exception.getLocalizedMessage(), exception);
+            LogUtility.e("Update download failed: " + exception.getClass().getSimpleName());
             Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show();
         });
     }
