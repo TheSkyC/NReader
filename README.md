@@ -36,6 +36,11 @@ before installation or distribution. Keep the same private signing key for futur
 NReader releases. Keystores, passwords, local SDK configuration, build outputs, and
 IDE caches were not imported from the source working directory and must not be committed.
 
+The first test release uses version `1.0.0-pre1`. Pushing a matching Git tag runs
+the prerelease workflow and publishes both SDK flavor APKs and the post28 AAB. The
+current repository has no CI signing secrets, so this test release is unsigned and
+is intended to validate packaging and release automation only.
+
 Debug builds mask gallery covers and reader images with an opaque checkerboard
 by default. The Settings switch **Mask images for debugging** applies when a screen
 is reopened. It preserves image dimensions for layout and reading-position checks;

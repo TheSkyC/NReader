@@ -18,8 +18,8 @@ val keystoreProperties = Properties().apply {
 val majorVersion = 1
 val minorVersion = 0
 val patchVersion = 0
-val buildVersion = 0
-val version = "${majorVersion}.${minorVersion}.${patchVersion}"
+val buildVersion = 1
+val version = "${majorVersion}.${minorVersion}.${patchVersion}-pre${buildVersion}"
 
 android {
     signingConfigs {
@@ -140,7 +140,9 @@ androidComponents {
                 this.apkFolder.set(variant.artifacts.get(SingleArtifact.APK))
                 this.builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
                 this.versionName.set(
-                    variant.outputs.single().versionName.get().substringBeforeLast("-")
+                    variant.outputs.single().versionName.get()
+                        .removeSuffix("-debug")
+                        .removeSuffix("-relwithdebinfo")
                 )
                 this.suffix.set(suffix)
             }.get()
@@ -156,6 +158,10 @@ androidComponents {
     beforeVariants {
         it.enableAndroidTest = false
     }
+}
+
+tasks.register("printNReaderVersion") {
+    doLast { println(version) }
 }
 
 

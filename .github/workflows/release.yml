@@ -1,0 +1,72 @@
+# Modified for NReader by TheSkyC (2026); see NOTICE.
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag to publish'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6.1.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          expected="$(./gradlew -q :app:printNReaderVersion | tail -n 1)"
+          if [ "$RELEASE_TAG" != "$expected" ]; then
+            echo "Release tag $RELEASE_TAG does not match Gradle version $expected" >&2
+            exit 1
+          fi
+
+      - name: Assemble release APKs and bundle
+        run: ./gradlew assembleRelease bundlePost28Release
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          assets=(app/build/outputs/apk/release/*.apk app/build/outputs/bundle/post28Release/*.aab)
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo 'No release assets were produced' >&2
+            exit 1
+          fi
+          notes='This test release is unsigned because CI signing secrets are not configured yet.'
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --title "NReader $RELEASE_TAG" \
+              --prerelease \
+              --notes "$notes"
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --title "NReader $RELEASE_TAG" \
+              --notes "$notes"
+          fi
