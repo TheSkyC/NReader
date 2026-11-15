@@ -7,7 +7,7 @@ body:
       label: Checklist
       description: Please confirm that you have done following steps.
       options:
-        - label: I have looked at the common issues and ways to fix them in the [wiki](https://github.com/maxwai/NClientV3/wiki)
+        - label: I have looked at the common issues and ways to fix them in the [NReader wiki](https://github.com/TheSkyC/NReader/wiki)
           required: true
         - label: I have searched the existing issues for the same bug
           required: true
@@ -53,7 +53,7 @@ body:
     attributes:
       label: App Version
       description: App Version where the bug happens
-      placeholder: "4.0.9"
+      placeholder: "1.0.0"
     validations:
       required: true
   - type: textarea
