@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,7 +67,12 @@ public class VersionChecker {
     private final AppCompatActivity context;
     private final UpdateStateStore stateStore;
     private final UpdateMetadataStore metadataStore;
-    private final OkHttpClient updateClient = new OkHttpClient.Builder().build();
+    private final OkHttpClient updateClient = new OkHttpClient.Builder()
+        .connectTimeout(15L, TimeUnit.SECONDS)
+        .readTimeout(60L, TimeUnit.SECONDS)
+        .writeTimeout(60L, TimeUnit.SECONDS)
+        .callTimeout(15L, TimeUnit.MINUTES)
+        .build();
     @Nullable private final Listener listener;
     @Nullable private InstallLauncher installLauncher;
     @Nullable private GitHubRelease latestRelease;

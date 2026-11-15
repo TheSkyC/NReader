@@ -31,7 +31,12 @@ import okhttp3.Response;
 public final class UpdateCheckWorker extends Worker {
     private static final String WORK_NAME = "nreader_update_check";
     private static final long INTERVAL_HOURS = 24L;
-    private final OkHttpClient client = new OkHttpClient.Builder().build();
+    private final OkHttpClient client = new OkHttpClient.Builder()
+        .connectTimeout(15L, TimeUnit.SECONDS)
+        .readTimeout(60L, TimeUnit.SECONDS)
+        .writeTimeout(60L, TimeUnit.SECONDS)
+        .callTimeout(15L, TimeUnit.MINUTES)
+        .build();
 
     public UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters) {
         super(context, parameters);
