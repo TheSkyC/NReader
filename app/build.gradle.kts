@@ -15,11 +15,28 @@ val keystoreProperties = Properties().apply {
     }
 }
 
-val majorVersion = 1
-val minorVersion = 0
-val patchVersion = 0
-val buildVersion = 1
-val version = "${majorVersion}.${minorVersion}.${patchVersion}-pre${buildVersion}"
+val nreaderApplicationId = "com.theskyc.nreader"
+val nreaderVersion = providers.gradleProperty("nreaderVersion").orNull
+    ?: error("nreaderVersion must be set in gradle.properties")
+val versionPattern = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-(pre\d+|(?:alpha|beta|rc)\.\d+))?$""")
+val versionMatch = versionPattern.matchEntire(nreaderVersion)
+    ?: error("nreaderVersion must use SemVer, for example 1.0.0-beta.1")
+val majorVersion = versionMatch.groupValues[1].toInt()
+val minorVersion = versionMatch.groupValues[2].toInt()
+val patchVersion = versionMatch.groupValues[3].toInt()
+val prerelease = versionMatch.groupValues[4].ifEmpty { null }
+val qualifierCode = when {
+    prerelease == null -> 99
+    prerelease.startsWith("pre") -> prerelease.removePrefix("pre").toInt()
+    prerelease.startsWith("alpha.") -> 10 + prerelease.substringAfter('.').toInt()
+    prerelease.startsWith("beta.") -> 30 + prerelease.substringAfter('.').toInt()
+    prerelease.startsWith("rc.") -> 60 + prerelease.substringAfter('.').toInt()
+    else -> error("Unsupported nreaderVersion qualifier: $prerelease")
+}
+require(qualifierCode in 1..99) {
+    "nreaderVersion qualifier sequence must produce a version code between 1 and 99"
+}
+val computedVersionCode = majorVersion * 100_000 + minorVersion * 1_000 + patchVersion * 100 + qualifierCode
 
 android {
     signingConfigs {
@@ -34,15 +51,14 @@ android {
     }
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.theskyc.nreader"
+        applicationId = nreaderApplicationId
         buildConfigField("String", "UPDATE_REPOSITORY", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
         // Format: MmPPbb
         // M: Major, m: minor, P: Patch, b: build
-        versionCode =
-            "%d%d%02d%02d".format(majorVersion, minorVersion, patchVersion, buildVersion).toInt()
+        versionCode = computedVersionCode
         multiDexEnabled = true
-        versionName = version
+        versionName = nreaderVersion
         vectorDrawables.useSupportLibrary = true
         proguardFiles("proguard-rules.pro")
     }
@@ -161,7 +177,15 @@ androidComponents {
 }
 
 tasks.register("printNReaderVersion") {
-    doLast { println(version) }
+    doLast { println(nreaderVersion) }
+}
+
+tasks.register("printNReaderMetadata") {
+    doLast {
+        println("versionName=$nreaderVersion")
+        println("versionCode=$computedVersionCode")
+        println("applicationId=$nreaderApplicationId")
+    }
 }
 
 

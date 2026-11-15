@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,7 +111,7 @@ public class VersionChecker {
         while (jr.peek() != JsonToken.END_OBJECT) {
             switch (jr.nextName()) {
                 case "tag_name":
-                    release.versionCode = jr.nextString();
+                    release.versionCode = GitHubRelease.normalizeVersion(jr.nextString());
                     break;
                 case "body":
                     release.body = jr.nextString();
@@ -248,93 +247,74 @@ public class VersionChecker {
 
 
     public static class GitHubRelease {
-        // regex to get version in the form: MM.mm.pp(-suffix)
-        private final static String regex = "(\\d+)\\.(\\d+)\\.(\\d+)(?:-((?:pre|rc)\\d))?";
+        private final static String regex = "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(pre\\d+|(?:alpha|beta|rc)\\.\\d+))?$";
         String versionCode, body, downloadUrl;
         boolean beta;
 
         public boolean isNewerThenVersion(String currentVersion) throws IllegalArgumentException {
-            Matcher matcher = Pattern.compile(regex).matcher(currentVersion);
-            if (!matcher.find()) {
-                throw new IllegalArgumentException("Current Version not in format");
-            }
-            int[] curNumbers = new int[3];
-            String curSuffix;
-            try {
-                curNumbers[0] = Integer.parseInt(Objects.requireNonNull(matcher.group(1)));
-                curNumbers[1] = Integer.parseInt(Objects.requireNonNull(matcher.group(2)));
-                curNumbers[2] = Integer.parseInt(Objects.requireNonNull(matcher.group(3)));
-                curSuffix = matcher.group(4);
-            } catch (NumberFormatException ignored) {
-                throw new IllegalStateException("Current Version not in format");
+            ParsedVersion current = ParsedVersion.parse(currentVersion, "Current");
+            ParsedVersion newer = ParsedVersion.parse(versionCode, "New");
+            return newer.compareTo(current) > 0;
+        }
+
+        private static String normalizeVersion(String value) {
+            return value.startsWith("v") ? value.substring(1) : value;
+        }
+
+        private static final class ParsedVersion implements Comparable<ParsedVersion> {
+            private final int major;
+            private final int minor;
+            private final int patch;
+            private final int qualifierRank;
+            private final int qualifierSequence;
+
+            private ParsedVersion(int major, int minor, int patch, int qualifierRank, int qualifierSequence) {
+                this.major = major;
+                this.minor = minor;
+                this.patch = patch;
+                this.qualifierRank = qualifierRank;
+                this.qualifierSequence = qualifierSequence;
             }
 
-            matcher = Pattern.compile(regex).matcher(versionCode);
-            if (!matcher.find()) {
-                throw new IllegalArgumentException("New Version not in format");
-            }
-            int[] newNumbers = new int[3];
-            String newSuffix;
-            try {
-                newNumbers[0] = Integer.parseInt(Objects.requireNonNull(matcher.group(1)));
-                newNumbers[1] = Integer.parseInt(Objects.requireNonNull(matcher.group(2)));
-                newNumbers[2] = Integer.parseInt(Objects.requireNonNull(matcher.group(3)));
-                newSuffix = matcher.group(4);
-            } catch (NumberFormatException ignored) {
-                throw new IllegalStateException("New Version not in format");
-            }
-
-            for (int i = 0; i < curNumbers.length; i++) {
-                if (newNumbers[i] < curNumbers[i]) {
-                    return false;
-                } else if (newNumbers[i] > curNumbers[i]) {
-                    return true;
+            private static ParsedVersion parse(String value, String label) {
+                Matcher matcher = Pattern.compile(regex).matcher(value);
+                if (!matcher.matches()) {
+                    throw new IllegalArgumentException(label + " Version not in format");
                 }
-            }
-            // At this point only the suffix may be different
-
-            if (curSuffix == null && newSuffix == null) {
-                return false;
-            } else if (curSuffix == null) { // newSuffix != null
-                // our current version doesn't have a suffix but the newest has one.
-                // as suffixes are only for pre release, we have a newer version
-                return false;
-            } else if (newSuffix == null) { // curSuffix != null
-                // our current version has a suffix but the newest has none.
-                // as suffixes are only for pre release, there is a newer version
-                return true;
-            }
-
-            // Hierarchy of pre release: preX -> rcX
-            if (curSuffix.startsWith("pre") && newSuffix.startsWith("rc")) {
-                return true;
-            } else if (curSuffix.startsWith("rc") && newSuffix.startsWith("pre")) {
-                return false;
-            }
-
-            if (curSuffix.startsWith("pre") && newSuffix.startsWith("pre")) {
-                int curPreRelease, newPreRelease;
-                try {
-                    curPreRelease = Integer.parseInt(curSuffix.substring(3));
-                    newPreRelease = Integer.parseInt(newSuffix.substring(3));
-                } catch (NumberFormatException ignored) {
-                    throw new IllegalStateException("New Version not in format");
+                String qualifier = matcher.group(4);
+                int qualifierRank = 4;
+                int qualifierSequence = Integer.MAX_VALUE;
+                if (qualifier != null) {
+                    if (qualifier.startsWith("pre")) {
+                        qualifierRank = 0;
+                        qualifierSequence = Integer.parseInt(qualifier.substring(3));
+                    } else {
+                        String name = qualifier.substring(0, qualifier.indexOf('.'));
+                        qualifierSequence = Integer.parseInt(qualifier.substring(qualifier.indexOf('.') + 1));
+                        qualifierRank = name.equals("alpha") ? 1 : name.equals("beta") ? 2 : 3;
+                    }
                 }
-                return newPreRelease > curPreRelease;
+                return new ParsedVersion(
+                    Integer.parseInt(matcher.group(1)),
+                    Integer.parseInt(matcher.group(2)),
+                    Integer.parseInt(matcher.group(3)),
+                    qualifierRank,
+                    qualifierSequence
+                );
             }
 
-            if (curSuffix.startsWith("rc") && newSuffix.startsWith("rc")) {
-                int curPreRelease, newPreRelease;
-                try {
-                    curPreRelease = Integer.parseInt(curSuffix.substring(2));
-                    newPreRelease = Integer.parseInt(newSuffix.substring(2));
-                } catch (NumberFormatException ignored) {
-                    throw new IllegalStateException("New Version not in format");
-                }
-                return newPreRelease > curPreRelease;
+            @Override
+            public int compareTo(ParsedVersion other) {
+                int result = Integer.compare(major, other.major);
+                if (result != 0) return result;
+                result = Integer.compare(minor, other.minor);
+                if (result != 0) return result;
+                result = Integer.compare(patch, other.patch);
+                if (result != 0) return result;
+                result = Integer.compare(qualifierRank, other.qualifierRank);
+                if (result != 0) return result;
+                return Integer.compare(qualifierSequence, other.qualifierSequence);
             }
-
-            throw new IllegalStateException("Suffix was not formated as expected");
         }
     }
 }
