@@ -18,8 +18,10 @@ import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.settings.Global;
@@ -71,6 +73,7 @@ public class ImageDownloadUtility {
             loadLogo(view, placeholderWidthDp);
             return;
         }
+        view.setTag(null);
         // Clear the previous binding even when network loading has been disabled.
         glide.clear(view);
         loadLogo(view, placeholderWidthDp);
@@ -90,6 +93,33 @@ public class ImageDownloadUtility {
                 return false;
             }
         }).into(DebugImageMask.target(view));
+    }
+
+    /** Keeps an already visible detail cover until the replacement is ready. */
+    public static void loadImagePreservingCurrent(Context context, Uri url, ImageView view) {
+        if (context instanceof Activity && (((Activity) context).isDestroyed() || ((Activity) context).isFinishing())) return;
+        RequestManager glide = GlideX.with(context);
+        if (glide == null) return;
+
+        Drawable current = view.getDrawable();
+        glide.clear(view);
+        if (current == null) loadLogo(view);
+        else view.setImageDrawable(current);
+        if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) return;
+
+        Object requestToken = new Object();
+        view.setTag(requestToken);
+        glide.load(url).into(new CustomTarget<Drawable>() {
+            @Override
+            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                if (view.getTag() == requestToken)
+                    view.setImageDrawable(DebugImageMask.wrap(context, resource));
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
+        });
     }
 
     private static Uri getUrlForGallery(Gallery gallery, int page, boolean shouldFull) {

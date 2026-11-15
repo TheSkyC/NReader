@@ -188,9 +188,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (firstPage != null && firstPage.exists()) {
             ImageDownloadUtility.loadImageOp(context, cover, firstPage, 0);
         } else if (gallery instanceof Gallery && gallery.hasGalleryData()) {
-            ImageDownloadUtility.loadImage(context, ((Gallery) gallery).getCover(), cover);
+            ImageDownloadUtility.loadImagePreservingCurrent(context, ((Gallery) gallery).getCover(), cover);
         } else if (gallery instanceof SimpleGallery) {
-            ImageDownloadUtility.loadImage(context, ((SimpleGallery) gallery).getThumbnail(), cover);
+            ImageDownloadUtility.loadImagePreservingCurrent(context, ((SimpleGallery) gallery).getThumbnail(), cover);
         } else {
             ImageDownloadUtility.loadImage(R.drawable.ic_logo, cover);
         }
