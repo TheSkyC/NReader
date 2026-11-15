@@ -556,6 +556,9 @@ public class VersionChecker {
             if (uri.getUserInfo() != null || uri.getFragment() != null) return false;
             if ("https".equalsIgnoreCase(scheme) && host != null) return true;
             if (!BuildConfig.DEBUG || !"http".equalsIgnoreCase(scheme) || host == null) return false;
+            if (host.startsWith("[") && host.endsWith("]")) {
+                host = host.substring(1, host.length() - 1);
+            }
             return "localhost".equalsIgnoreCase(host)
                 || "127.0.0.1".equals(host)
                 || "10.0.2.2".equals(host)

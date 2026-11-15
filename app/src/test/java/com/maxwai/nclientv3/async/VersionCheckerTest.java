@@ -70,6 +70,7 @@ public class VersionCheckerTest {
     public void onlyLocalHttpHostsAreAllowedForDebugUpdateSources() {
         assertTrue(VersionChecker.isAllowedUpdateUrl("http://localhost:8765/releases"));
         assertTrue(VersionChecker.isAllowedUpdateUrl("http://10.0.2.2:8765/releases"));
+        assertTrue(VersionChecker.isAllowedUpdateUrl("http://[::1]:8765/releases"));
         assertFalse(VersionChecker.isAllowedUpdateUrl("http://updates.example/releases"));
         assertTrue(VersionChecker.isAllowedUpdateUrl("https://updates.example/releases"));
         assertFalse(VersionChecker.isAllowedUpdateUrl("https://user:password@updates.example/releases"));
