@@ -35,8 +35,17 @@ public final class UpdateStateRecovery {
         }
 
         if (state.getPhase() == UpdatePhase.DOWNLOADING) {
+            deletePartialFile(file);
             return UpdateState.error(version, filePath, "interrupted_download", now);
         }
         return state;
+    }
+
+    private static void deletePartialFile(File file) {
+        if (file == null || !file.getName().endsWith(".part")) return;
+        // Only remove the temporary download artifact created by VersionChecker.
+        // A persisted final APK is left untouched for explicit user recovery.
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
     }
 }

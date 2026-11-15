@@ -43,4 +43,21 @@ public class UpdateStateRecoveryTest {
             file.delete();
         }
     }
+
+    @Test
+    public void interruptedDownloadRemovesTemporaryPartFile() throws IOException {
+        Context context = RuntimeEnvironment.getApplication();
+        File file = File.createTempFile("nreader-update", ".apk.part", context.getCacheDir());
+        try {
+            UpdateState state = UpdateState.downloading("99.0.0", file.getAbsolutePath(), 10L, 100L, 1L);
+
+            UpdateState recovered = UpdateStateRecovery.reconcile(context, state);
+
+            assertEquals(UpdatePhase.ERROR, recovered.getPhase());
+            assertEquals(false, file.exists());
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+    }
 }
