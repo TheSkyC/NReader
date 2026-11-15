@@ -140,6 +140,7 @@ public class VersionChecker {
                                 Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
                         } else {
                             latestRelease = finalRelease;
+                            metadataStore.setSelectedSha256(finalRelease.sha256);
                             saveState(UpdateState.available(finalRelease.versionCode, System.currentTimeMillis()));
                             if (listener == null) createDialog(finalRelease);
                             else context.runOnUiThread(() -> listener.onReleaseAvailable(finalRelease));
@@ -241,9 +242,10 @@ public class VersionChecker {
                             jr.skipValue();
                             continue;
                         }
-                        String candidateUrl = getDownloadUrl(jr, flavor);
-                        if (release.downloadUrl == null && candidateUrl != null) {
-                            release.downloadUrl = candidateUrl;
+                        AssetCandidate candidate = getAsset(jr, flavor);
+                        if (release.downloadUrl == null && candidate != null) {
+                            release.downloadUrl = candidate.url;
+                            release.sha256 = candidate.sha256;
                         }
                     }
                     jr.endArray();
@@ -258,9 +260,10 @@ public class VersionChecker {
         return invalid ? null : release;
     }
 
-    private static String getDownloadUrl(JsonReader jr, String flavor) throws IOException {
+    private static AssetCandidate getAsset(JsonReader jr, String flavor) throws IOException {
         String name = null;
         String url = null;
+        String digest = null;
         jr.beginObject();
         while (jr.peek() != JsonToken.END_OBJECT) {
             String property = jr.nextName();
@@ -268,12 +271,23 @@ public class VersionChecker {
                 name = jr.nextString();
             else if ("browser_download_url".equals(property))
                 url = jr.nextString();
+            else if ("digest".equals(property))
+                digest = jr.nextString();
             else jr.skipValue();
         }
         jr.endObject();
-        if (name == null || url == null || !name.endsWith(".apk")) return null;
-        if (!matchesFlavorAsset(name, flavor)) return null;
-        return url;
+        if (name == null || url == null || !matchesFlavorAsset(name, flavor)) return null;
+        return new AssetCandidate(url, digest);
+    }
+
+    private static final class AssetCandidate {
+        private final String url;
+        private final String sha256;
+
+        private AssetCandidate(String url, String sha256) {
+            this.url = url;
+            this.sha256 = sha256;
+        }
     }
 
     static boolean matchesFlavorAsset(String assetName, String flavor) {
@@ -317,6 +331,7 @@ public class VersionChecker {
         final File f = new File(Global.UPDATEFOLDER,
             "NReader-" + latestVersion + flavorSuffix + "-release.apk");
         final File partial = new File(f.getAbsolutePath() + ".part");
+        final String expectedSha256 = metadataStore.getSelectedSha256();
         if (f.exists()) {
             UpdateState savedState = stateStore.load();
             if (savedState.isReadyToInstall()
@@ -377,6 +392,9 @@ public class VersionChecker {
                     if (expectedLength >= 0L && writtenLength != expectedLength) {
                         throw new IOException("Downloaded update length does not match response");
                     }
+                    if (!UpdateFileVerifier.matchesSha256(partial, expectedSha256)) {
+                        throw new IOException("Downloaded update checksum does not match release metadata");
+                    }
                     if (f.exists() && !f.delete()) {
                         throw new IOException("Unable to replace previous update");
                     }
@@ -416,6 +434,9 @@ public class VersionChecker {
 
     private void installApp(File f) {
         try {
+            if (!UpdateFileVerifier.matchesSha256(f, metadataStore.getSelectedSha256())) {
+                throw new IOException("Cached update checksum does not match release metadata");
+            }
             PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), 0);
             if (archive == null || !context.getPackageName().equals(archive.packageName)) {
                 throw new IOException("Update package name does not match the installed application");
@@ -444,12 +465,13 @@ public class VersionChecker {
 
     public static class GitHubRelease {
         private final static String regex = "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(pre\\d+|(?:alpha|beta|rc)\\.\\d+))?$";
-        String versionCode, body, downloadUrl;
+        String versionCode, body, downloadUrl, sha256;
         boolean beta;
 
         @Nullable public String getVersionCode() { return versionCode; }
         @Nullable public String getBody() { return body; }
         @Nullable public String getDownloadUrl() { return downloadUrl; }
+        @Nullable public String getSha256() { return sha256; }
         public boolean isBeta() { return beta; }
 
         static boolean isVersionAtLeast(String candidate, String current) {

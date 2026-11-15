@@ -12,6 +12,7 @@ final class UpdateMetadataStore {
     private static final String PREFERENCES = "UpdateMetadata";
     private static final String BODY = "body";
     private static final String ETAG = "etag";
+    private static final String SELECTED_SHA256 = "selected_sha256";
 
     private final SharedPreferences preferences;
 
@@ -21,6 +22,14 @@ final class UpdateMetadataStore {
 
     @Nullable String getBody() { return preferences.getString(BODY, null); }
     @Nullable String getEtag() { return preferences.getString(ETAG, null); }
+    @Nullable String getSelectedSha256() { return preferences.getString(SELECTED_SHA256, null); }
+
+    void setSelectedSha256(@Nullable String sha256) {
+        SharedPreferences.Editor editor = preferences.edit();
+        if (sha256 == null) editor.remove(SELECTED_SHA256);
+        else editor.putString(SELECTED_SHA256, sha256);
+        editor.apply();
+    }
 
     void save(@NonNull String body, @Nullable String etag) {
         SharedPreferences.Editor editor = preferences.edit().putString(BODY, body);
