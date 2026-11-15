@@ -344,6 +344,7 @@ public class VersionChecker {
         if (resultCode == android.app.Activity.RESULT_CANCELED) {
             UpdateState state = stateStore.load();
             if (state.getFilePath() != null && new File(state.getFilePath()).isFile()) {
+                UpdateNotification.resetReady(context);
                 saveState(UpdateState.readyToInstall(
                     state.getVersion() == null ? BuildConfig.VERSION_NAME : state.getVersion(),
                     state.getFilePath(),
