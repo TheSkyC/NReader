@@ -51,6 +51,7 @@ import okhttp3.Response;
 
 public class VersionChecker {
     private static final int INSTALL_REQUEST_CODE = 1202;
+    static final long MAX_UPDATE_SIZE_BYTES = 256L * 1024L * 1024L;
     public interface InstallLauncher {
         void launch(@NonNull Intent intent);
     }
@@ -509,6 +510,7 @@ public class VersionChecker {
                             && assetPackage != null && !assetPackage.trim().isEmpty()
                             && minSdk > 0L
                             && sizeBytes > 0L
+                            && sizeBytes <= MAX_UPDATE_SIZE_BYTES
                             && url != null && isAllowedUpdateUrl(url)
                             && digest != null && digest.matches("(?i)^[0-9a-f]{64}$")
                             && assetKeys.add(identity);
@@ -693,6 +695,10 @@ public class VersionChecker {
                         System.currentTimeMillis()
                     ));
                     long expectedLength = response.body().contentLength();
+                    if (expectedLength > MAX_UPDATE_SIZE_BYTES
+                        || (expectedSize > MAX_UPDATE_SIZE_BYTES)) {
+                        throw new IOException("Update package exceeds the maximum allowed size");
+                    }
                     long writtenLength = 0L;
                     try (FileOutputStream stream = new FileOutputStream(partial);
                          InputStream stream1 = response.body().byteStream()) {
@@ -701,6 +707,9 @@ public class VersionChecker {
                         while ((read = stream1.read(bytes)) != -1) {
                             stream.write(bytes, 0, read);
                             writtenLength += read;
+                            if (writtenLength > MAX_UPDATE_SIZE_BYTES) {
+                                throw new IOException("Update package exceeds the maximum allowed size");
+                            }
                         }
                         stream.flush();
                     }
