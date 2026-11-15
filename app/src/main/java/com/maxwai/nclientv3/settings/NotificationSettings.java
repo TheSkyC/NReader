@@ -48,6 +48,7 @@ public class NotificationSettings {
     }
 
     public static void cancel(int notificationId) {
+        if (notificationSettings == null) return;
         notificationSettings.notificationManager.cancel(notificationId);
         notificationArray.remove(Integer.valueOf(notificationId));
     }

@@ -145,7 +145,8 @@ public class VersionChecker {
     }
 
     public void installReadyUpdate() {
-        UpdateState state = stateStore.load();
+        UpdateState state = UpdateStateRecovery.reconcile(context, stateStore.load());
+        stateStore.save(state);
         if (!state.isReadyToInstall() || state.getFilePath() == null) return;
         File file = new File(state.getFilePath());
         if (!file.isFile()) {
@@ -417,6 +418,15 @@ public class VersionChecker {
         @Nullable public String getDownloadUrl() { return downloadUrl; }
         public boolean isBeta() { return beta; }
 
+        static boolean isVersionAtLeast(String candidate, String current) {
+            try {
+                return ParsedVersion.parse(candidate, "Candidate").compareTo(
+                    ParsedVersion.parse(current, "Current")) >= 0;
+            } catch (IllegalArgumentException ignored) {
+                return false;
+            }
+        }
+
         public boolean isNewerThenVersion(String currentVersion) throws IllegalArgumentException {
             ParsedVersion current = ParsedVersion.parse(currentVersion, "Current");
             ParsedVersion newer = ParsedVersion.parse(versionCode, "New");
@@ -424,7 +434,9 @@ public class VersionChecker {
         }
 
         private static String normalizeVersion(String value) {
-            return value.startsWith("v") ? value.substring(1) : value;
+            String normalized = value == null ? "" : value.trim();
+            normalized = normalized.replaceFirst("(?i)-(debug|relwithdebinfo)$", "");
+            return normalized.startsWith("v") ? normalized.substring(1) : normalized;
         }
 
         static final class ParsedVersion implements Comparable<ParsedVersion> {
@@ -443,6 +455,7 @@ public class VersionChecker {
             }
 
             private static ParsedVersion parse(String value, String label) {
+                value = normalizeVersion(value);
                 Matcher matcher = Pattern.compile(regex).matcher(value);
                 if (!matcher.matches()) {
                     throw new IllegalArgumentException(label + " Version not in format");
@@ -482,5 +495,6 @@ public class VersionChecker {
                 return Integer.compare(qualifierSequence, other.qualifierSequence);
             }
         }
+
     }
 }

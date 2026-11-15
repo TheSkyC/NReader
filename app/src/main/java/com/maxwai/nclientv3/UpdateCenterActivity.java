@@ -12,6 +12,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
 import com.maxwai.nclientv3.async.VersionChecker;
+import com.maxwai.nclientv3.async.UpdateStateRecovery;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -57,6 +58,16 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         currentState = new UpdateStateStore(this).load();
         render(currentState);
         startCheck();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (checker != null) {
+            currentState = UpdateStateRecovery.reconcile(this, new UpdateStateStore(this).load());
+            new UpdateStateStore(this).save(currentState);
+            render(currentState);
+        }
     }
 
     private void startCheck() {

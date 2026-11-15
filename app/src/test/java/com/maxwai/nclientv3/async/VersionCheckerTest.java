@@ -25,6 +25,7 @@ public class VersionCheckerTest {
     public void acceptsLegacyAndPrefixedReleaseTags() {
         assertTrue(isNewer("v1.0.0-beta.1", "1.0.0-pre1"));
         assertFalse(isNewer("1.0.0-pre1", "1.0.0-pre1"));
+        assertFalse(isNewer("1.0.0-beta.1", "1.0.0-beta.2-debug"));
     }
 
     @Test

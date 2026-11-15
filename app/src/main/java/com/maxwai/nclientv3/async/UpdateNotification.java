@@ -75,6 +75,10 @@ public final class UpdateNotification {
         NotificationSettings.notify(context, NOTIFICATION_ID, builder.build());
     }
 
+    public static void clear(@NonNull Context context) {
+        NotificationSettings.cancel(NOTIFICATION_ID);
+    }
+
     private static boolean markOnce(Context context, String key, String version) {
         String previous = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).getString(key, null);
         if (version.equals(previous)) return false;
