@@ -38,8 +38,7 @@ IDE caches were not imported from the source working directory and must not be c
 
 The first test release uses version `1.0.0-pre1`. Pushing a matching Git tag runs
 the prerelease workflow and publishes both SDK flavor APKs and the post28 AAB. The
-current repository has no CI signing secrets, so this test release is unsigned and
-is intended to validate packaging and release automation only.
+`1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.
 
 Debug builds mask gallery covers and reader images with an opaque checkerboard
 by default. The Settings switch **Mask images for debugging** applies when a screen

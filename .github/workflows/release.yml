@@ -45,6 +45,23 @@ jobs:
             exit 1
           fi
 
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "${ANDROID_KEYSTORE_BASE64:?Missing keystore secret}" \
+            | base64 --decode > "$RUNNER_TEMP/nreader-release.jks"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/nreader-release.jks"
+            printf 'storePassword=%s\n' "${ANDROID_KEYSTORE_PASSWORD:?Missing keystore password secret}"
+            printf 'keyAlias=%s\n' "${ANDROID_KEY_ALIAS:?Missing key alias secret}"
+            printf 'keyPassword=%s\n' "${ANDROID_KEY_PASSWORD:?Missing key password secret}"
+          } > keystore.properties
+
       - name: Assemble release APKs and bundle
         run: ./gradlew assembleRelease bundlePost28Release
 
@@ -59,7 +76,7 @@ jobs:
             echo 'No release assets were produced' >&2
             exit 1
           fi
-          notes='This test release is unsigned because CI signing secrets are not configured yet.'
+          notes='Built and signed by the NReader GitHub Actions release workflow.'
           if [[ "$RELEASE_TAG" == *-* ]]; then
             gh release create "$RELEASE_TAG" "${assets[@]}" \
               --title "NReader $RELEASE_TAG" \
