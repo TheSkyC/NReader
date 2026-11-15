@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,59 +53,87 @@ public class VersionChecker {
         Global.getClient(context).newCall(new Request.Builder().url(RELEASE_API_URL).build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                context.runOnUiThread(() -> {
-                    LogUtility.e(e.getLocalizedMessage(), e);
-                    if (!silent)
-                        Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
-                });
+                notifyRetrievalFailure(e, silent);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                GitHubRelease release;
-                try (JsonReader jr = new JsonReader(response.body().charStream())) {
-                    release = parseVersionJson(jr, withPrerelease);
-                }
-                if (release == null) {
-                    release = new GitHubRelease();
-                    release.versionCode = BuildConfig.VERSION_NAME;
-                }
-                downloadUrl = release.downloadUrl;
-                GitHubRelease finalRelease = release;
-                context.runOnUiThread(() -> {
-                    boolean newer;
-                    try {
-                        newer = finalRelease.isNewerThenVersion(BuildConfig.VERSION_NAME);
-                    } catch (IllegalStateException ignored) {
-                        newer = false;
+                try {
+                    GitHubRelease release;
+                    try (Response ignored = response;
+                         JsonReader jr = response.isSuccessful() && response.body() != null
+                             ? new JsonReader(response.body().charStream())
+                             : null) {
+                        if (jr == null) {
+                            throw new IOException("Unable to retrieve release metadata: HTTP " + response.code());
+                        }
+                        release = parseVersionJson(jr, withPrerelease, BuildConfig.FLAVOR);
                     }
-                    if (downloadUrl == null || !newer) {
-                        if (!silent)
-                            Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
-                    } else {
-                        LogUtility.d("Executing false");
-                        createDialog(finalRelease);
+                    if (release == null) {
+                        release = new GitHubRelease();
+                        release.versionCode = BuildConfig.VERSION_NAME;
                     }
-                });
+                    downloadUrl = release.downloadUrl;
+                    GitHubRelease finalRelease = release;
+                    context.runOnUiThread(() -> {
+                        boolean newer;
+                        try {
+                            newer = finalRelease.isNewerThenVersion(BuildConfig.VERSION_NAME);
+                        } catch (IllegalArgumentException ignored) {
+                            newer = false;
+                        }
+                        if (downloadUrl == null || !newer) {
+                            if (!silent)
+                                Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
+                        } else {
+                            createDialog(finalRelease);
+                        }
+                    });
+                } catch (IOException | RuntimeException e) {
+                    notifyRetrievalFailure(e, silent);
+                }
             }
         });
     }
 
-    private static GitHubRelease parseVersionJson(JsonReader jr, boolean withPrerelease) throws IOException {
+    private void notifyRetrievalFailure(Exception exception, boolean silent) {
+        context.runOnUiThread(() -> {
+            LogUtility.e(exception.getLocalizedMessage(), exception);
+            if (!silent)
+                Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    static GitHubRelease parseVersionJson(JsonReader jr, boolean withPrerelease, String flavor) throws IOException {
+        List<GitHubRelease> candidates = new ArrayList<>();
         try {
-            GitHubRelease release;
             jr.beginArray();
             while (jr.hasNext()) {
-                release = parseVersion(jr, withPrerelease);
-                if (release != null)
-                    return release;
+                GitHubRelease release = parseVersion(jr, withPrerelease, flavor);
+                if (release != null) candidates.add(release);
             }
         } catch (IllegalStateException ignore) {
         }
-        return null;
+        return selectNewestCompatible(candidates);
     }
 
-    private static GitHubRelease parseVersion(JsonReader jr, boolean withPrerelease) throws IOException {
+    static GitHubRelease selectNewestCompatible(List<GitHubRelease> candidates) {
+        GitHubRelease newest = null;
+        for (GitHubRelease candidate : candidates) {
+            if (candidate == null || candidate.versionCode == null || candidate.downloadUrl == null) continue;
+            try {
+                GitHubRelease.ParsedVersion.parse(candidate.versionCode, "Release");
+                if (newest == null || candidate.isNewerThenVersion(newest.versionCode)) {
+                    newest = candidate;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Ignore malformed release tags and continue with valid candidates.
+            }
+        }
+        return newest;
+    }
+
+    private static GitHubRelease parseVersion(JsonReader jr, boolean withPrerelease, String flavor) throws IOException {
         GitHubRelease release = new GitHubRelease();
         boolean invalid = false;
         jr.beginObject();
@@ -128,7 +158,10 @@ public class VersionChecker {
                             jr.skipValue();
                             continue;
                         }
-                        release.downloadUrl = getDownloadUrl(jr);
+                        String candidateUrl = getDownloadUrl(jr, flavor);
+                        if (release.downloadUrl == null && candidateUrl != null) {
+                            release.downloadUrl = candidateUrl;
+                        }
                     }
                     jr.endArray();
                     break;
@@ -142,7 +175,7 @@ public class VersionChecker {
         return invalid ? null : release;
     }
 
-    private static String getDownloadUrl(JsonReader jr) throws IOException {
+    private static String getDownloadUrl(JsonReader jr, String flavor) throws IOException {
         String name = null;
         String url = null;
         jr.beginObject();
@@ -156,9 +189,13 @@ public class VersionChecker {
         }
         jr.endObject();
         if (name == null || url == null || !name.endsWith(".apk")) return null;
-        boolean minApi26 = name.contains("-minApi26-");
-        if (BuildConfig.FLAVOR.equals("minApi26") != minApi26) return null;
+        if (!matchesFlavorAsset(name, flavor)) return null;
         return url;
+    }
+
+    static boolean matchesFlavorAsset(String assetName, String flavor) {
+        return assetName != null && flavor != null && assetName.endsWith(".apk")
+            && assetName.contains("-" + flavor + "-");
     }
 
     private void createDialog(GitHubRelease release) {
@@ -209,31 +246,48 @@ public class VersionChecker {
         Global.getClient(context).newCall(new Request.Builder().url(downloadUrl).build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());
+                notifyDownloadFailure(e);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", false).apply();
-                if (Global.UPDATEFOLDER == null) {
-                    Global.initStorage(context);
-                }
-                //noinspection ResultOfMethodCallIgnored
-                Global.UPDATEFOLDER.mkdirs();
-                //noinspection ResultOfMethodCallIgnored
-                f.createNewFile();
-                try (FileOutputStream stream = new FileOutputStream(f);
-                     InputStream stream1 = response.body().byteStream()) {
-                    int read;
-                    byte[] bytes = new byte[1024];
-                    while ((read = stream1.read(bytes)) != -1) {
-                        stream.write(bytes, 0, read);
+                try (Response ignored = response) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        throw new IOException("Unable to download update: HTTP " + response.code());
                     }
-                    stream.flush();
+                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", false).apply();
+                    if (Global.UPDATEFOLDER == null) {
+                        Global.initStorage(context);
+                    }
+                    //noinspection ResultOfMethodCallIgnored
+                    Global.UPDATEFOLDER.mkdirs();
+                    //noinspection ResultOfMethodCallIgnored
+                    f.createNewFile();
+                    try (FileOutputStream stream = new FileOutputStream(f);
+                         InputStream stream1 = response.body().byteStream()) {
+                        int read;
+                        byte[] bytes = new byte[1024];
+                        while ((read = stream1.read(bytes)) != -1) {
+                            stream.write(bytes, 0, read);
+                        }
+                        stream.flush();
+                    }
+                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", true).apply();
+                    installApp(f);
+                } catch (IOException | RuntimeException e) {
+                    //noinspection ResultOfMethodCallIgnored
+                    f.delete();
+                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", false).apply();
+                    notifyDownloadFailure(e);
                 }
-                context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", true).apply();
-                installApp(f);
             }
+        });
+    }
+
+    private void notifyDownloadFailure(Exception exception) {
+        context.runOnUiThread(() -> {
+            LogUtility.e(exception.getLocalizedMessage(), exception);
+            Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show();
         });
     }
 
@@ -266,7 +320,7 @@ public class VersionChecker {
             return value.startsWith("v") ? value.substring(1) : value;
         }
 
-        private static final class ParsedVersion implements Comparable<ParsedVersion> {
+        static final class ParsedVersion implements Comparable<ParsedVersion> {
             private final int major;
             private final int minor;
             private final int patch;
