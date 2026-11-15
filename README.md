@@ -20,7 +20,7 @@ Set `JAVA_HOME` to a JDK and configure `ANDROID_HOME` or an ignored
 
 - `minApi28`: Android 9 / API 28 and newer.
 - `minApi26`: Android 8 / API 26–27, retaining the upstream compatibility flavor.
-- APK filenames begin with `NReader_`. Debug builds are labeled `NReader Debug`.
+- Release APKs use `NReader-<version>-minApiXX-release.apk` names. Debug builds are labeled `NReader Debug`.
 
 Debug builds use Android's standard debug signing configuration and do not need
 `keystore.properties`. To sign release builds, copy
@@ -36,9 +36,11 @@ before installation or distribution. Keep the same private signing key for futur
 NReader releases. Keystores, passwords, local SDK configuration, build outputs, and
 IDE caches were not imported from the source working directory and must not be committed.
 
-The first test release uses version `1.0.0-pre1`. Pushing a matching Git tag runs
+The first test release uses version `1.0.0-beta.1`. Pushing a matching Git tag runs
 the prerelease workflow and publishes both SDK flavor APKs and the minApi28 AAB. The
-`1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.
+The earlier `1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.
+
+Release assets include a `SHA256SUMS.txt` file covering every APK and AAB.
 
 Debug builds mask gallery covers and reader images with an opaque checkerboard
 by default. The Settings switch **Mask images for debugging** applies when a screen

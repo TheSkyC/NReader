@@ -26,17 +26,17 @@ val minorVersion = versionMatch.groupValues[2].toInt()
 val patchVersion = versionMatch.groupValues[3].toInt()
 val prerelease = versionMatch.groupValues[4].ifEmpty { null }
 val qualifierCode = when {
-    prerelease == null -> 99
+    prerelease == null -> 399
     prerelease.startsWith("pre") -> prerelease.removePrefix("pre").toInt()
-    prerelease.startsWith("alpha.") -> 10 + prerelease.substringAfter('.').toInt()
-    prerelease.startsWith("beta.") -> 30 + prerelease.substringAfter('.').toInt()
-    prerelease.startsWith("rc.") -> 60 + prerelease.substringAfter('.').toInt()
+    prerelease.startsWith("alpha.") -> 100 + prerelease.substringAfter('.').toInt()
+    prerelease.startsWith("beta.") -> 200 + prerelease.substringAfter('.').toInt()
+    prerelease.startsWith("rc.") -> 300 + prerelease.substringAfter('.').toInt()
     else -> error("Unsupported nreaderVersion qualifier: $prerelease")
 }
-require(qualifierCode in 1..99) {
-    "nreaderVersion qualifier sequence must produce a version code between 1 and 99"
+require(qualifierCode in 1..399) {
+    "nreaderVersion qualifier sequence must produce a version code between 1 and 399"
 }
-val computedVersionCode = majorVersion * 100_000 + minorVersion * 1_000 + patchVersion * 100 + qualifierCode
+val computedVersionCode = majorVersion * 1_000_000 + minorVersion * 10_000 + patchVersion * 1_000 + qualifierCode
 
 android {
     signingConfigs {
@@ -142,12 +142,13 @@ androidComponents {
             noticeFile.set(rootProject.layout.projectDirectory.file("NOTICE"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(copyLegalNotices, CopyLegalNotices::outputDirectory)
-        var suffix = ""
-        suffix += if (variant.flavorName == "minApi26") "_minApi26" else "_minApi28"
+        var suffix = if (variant.flavorName == "minApi26") "-minApi26" else "-minApi28"
         if (variant.buildType == "debug") {
-            suffix += "_debug"
+            suffix += "-debug"
         } else if (variant.buildType == "RelWithDebInfo") {
-            suffix += "_relwithdebinfo"
+            suffix += "-relwithdebinfo"
+        } else {
+            suffix += "-release"
         }
         var renameTask =
             tasks.register<CreateRenamedApk>("createRenamedApk${variant.flavorName?.capitalized()}${variant.buildType?.capitalized()}") {
@@ -261,10 +262,10 @@ abstract class CreateRenamedApk : DefaultTask() {
     fun taskAction() {
         val builtArtifacts = builtArtifactsLoader.get().load(apkFolder.get())
             ?: throw RuntimeException("Cannot load APKs")
-        val newName = "NReader_${versionName.get()}${suffix.get()}.apk"
+        val newName = "NReader-${versionName.get()}${suffix.get()}.apk"
         val newFile = apkFolder.asFile.get().resolve(newName)
         File(builtArtifacts.elements.single().outputFile).copyTo(newFile, overwrite = true)
-        if (!suffix.get().contains("_debug")) {
+        if (!suffix.get().contains("-debug")) {
             val releaseFolder =
                 apkFolder.get().asFile.parentFile.parentFile.resolve("release").resolve(newName)
             newFile.copyTo(releaseFolder)

@@ -65,17 +65,64 @@ jobs:
       - name: Assemble release APKs and bundle
         run: ./gradlew assembleRelease bundleMinApi28Release
 
+      - name: Name release bundle
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          bundle_dir="app/build/outputs/bundle/minApi28Release"
+          source="$bundle_dir/app-minApi28-release.aab"
+          target="$bundle_dir/NReader-$RELEASE_TAG-minApi28-release.aab"
+          if [ ! -f "$source" ]; then
+            echo "Missing bundle: $source" >&2
+            exit 1
+          fi
+          mv "$source" "$target"
+
+      - name: Validate release artifacts
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          metadata="$(./gradlew -q :app:printNReaderMetadata)"
+          version_name="$(awk -F= '$1 == "versionName" { print $2 }' <<< "$metadata")"
+          version_code="$(awk -F= '$1 == "versionCode" { print $2 }' <<< "$metadata")"
+          application_id="$(awk -F= '$1 == "applicationId" { print $2 }' <<< "$metadata")"
+          apk_dir="app/build/outputs/apk/release"
+          apk_min_api26="$apk_dir/NReader-$RELEASE_TAG-minApi26-release.apk"
+          apk_min_api28="$apk_dir/NReader-$RELEASE_TAG-minApi28-release.apk"
+          aab="app/build/outputs/bundle/minApi28Release/NReader-$RELEASE_TAG-minApi28-release.aab"
+          for artifact in "$apk_min_api26" "$apk_min_api28" "$aab"; do
+            if [ ! -f "$artifact" ]; then
+              echo "Missing expected artifact: $artifact" >&2
+              exit 1
+            fi
+          done
+          for apk in "$apk_min_api26" "$apk_min_api28"; do
+            package_line="$(aapt dump badging "$apk" | head -n 1)"
+            expected_line="package: name='$application_id' versionCode='$version_code' versionName='$version_name'"
+            if [[ "$package_line" != "$expected_line"* ]]; then
+              echo "Unexpected APK metadata in $apk: $package_line" >&2
+              exit 1
+            fi
+            apksigner verify --verbose "$apk"
+          done
+          jarsigner -verify "$aab" >/dev/null
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          assets=(app/build/outputs/apk/release/*.apk app/build/outputs/bundle/post28Release/*.aab)
+          assets=(app/build/outputs/apk/release/NReader-*.apk app/build/outputs/bundle/minApi28Release/*.aab)
           if [ "${#assets[@]}" -eq 0 ]; then
             echo 'No release assets were produced' >&2
             exit 1
           fi
+          sha256sum "${assets[@]}" > SHA256SUMS.txt
+          assets+=(SHA256SUMS.txt)
           notes='Built and signed by the NReader GitHub Actions release workflow.'
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber

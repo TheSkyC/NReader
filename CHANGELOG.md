@@ -4,7 +4,7 @@
 
 No changes yet.
 
-## 1.0.0-pre1 — 2026-11-16
+## 1.0.0-beta.1 — 2026-11-16
 
 - Revise English and all existing translations for accurate account, reading,
   sharing and backup behavior. Complete untranslated interface text and use

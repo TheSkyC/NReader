@@ -129,10 +129,6 @@ public class VersionChecker {
                             continue;
                         }
                         release.downloadUrl = getDownloadUrl(jr);
-                        //noinspection ConstantValue
-                        if ((BuildConfig.FLAVOR.equals("minApi26") && !release.downloadUrl.contains("minApi26")) ||
-                            (BuildConfig.FLAVOR.equals("minApi28") && release.downloadUrl.contains("minApi26")))
-                            release.downloadUrl = null;
                     }
                     jr.endArray();
                     break;
@@ -147,14 +143,21 @@ public class VersionChecker {
     }
 
     private static String getDownloadUrl(JsonReader jr) throws IOException {
+        String name = null;
         String url = null;
         jr.beginObject();
         while (jr.peek() != JsonToken.END_OBJECT) {
-            if ("browser_download_url".equals(jr.nextName()))
+            String property = jr.nextName();
+            if ("name".equals(property))
+                name = jr.nextString();
+            else if ("browser_download_url".equals(property))
                 url = jr.nextString();
             else jr.skipValue();
         }
         jr.endObject();
+        if (name == null || url == null || !name.endsWith(".apk")) return null;
+        boolean minApi26 = name.contains("-minApi26-");
+        if (BuildConfig.FLAVOR.equals("minApi26") != minApi26) return null;
         return url;
     }
 
@@ -190,7 +193,9 @@ public class VersionChecker {
     }
 
     private void downloadVersion(String latestVersion) {
-        final File f = new File(Global.UPDATEFOLDER, "NReader_" + latestVersion + ".apk");
+        String flavorSuffix = BuildConfig.FLAVOR.equals("minApi26") ? "-minApi26" : "-minApi28";
+        final File f = new File(Global.UPDATEFOLDER,
+            "NReader-" + latestVersion + flavorSuffix + "-release.apk");
         if (f.exists()) {
             if (context.getSharedPreferences("Settings", 0).getBoolean("downloaded", false)) {
                 installApp(f);
