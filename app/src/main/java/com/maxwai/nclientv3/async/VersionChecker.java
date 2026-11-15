@@ -537,6 +537,7 @@ public class VersionChecker {
             URI uri = new URI(value);
             String scheme = uri.getScheme();
             String host = uri.getHost();
+            if (uri.getUserInfo() != null || uri.getFragment() != null) return false;
             if ("https".equalsIgnoreCase(scheme) && host != null) return true;
             if (!BuildConfig.DEBUG || !"http".equalsIgnoreCase(scheme) || host == null) return false;
             return "localhost".equalsIgnoreCase(host)

@@ -72,6 +72,8 @@ public class VersionCheckerTest {
         assertTrue(VersionChecker.isAllowedUpdateUrl("http://10.0.2.2:8765/releases"));
         assertFalse(VersionChecker.isAllowedUpdateUrl("http://updates.example/releases"));
         assertTrue(VersionChecker.isAllowedUpdateUrl("https://updates.example/releases"));
+        assertFalse(VersionChecker.isAllowedUpdateUrl("https://user:password@updates.example/releases"));
+        assertFalse(VersionChecker.isAllowedUpdateUrl("https://updates.example/releases#fragment"));
     }
 
     private static VersionChecker.GitHubRelease release(String version, String url) {
