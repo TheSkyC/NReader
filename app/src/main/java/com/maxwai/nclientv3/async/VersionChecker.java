@@ -57,6 +57,8 @@ public class VersionChecker {
     @Nullable private final Listener listener;
     @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
+    @Nullable private Call metadataCall;
+    @Nullable private Call downloadCall;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
         this(context, silent, null);
@@ -87,14 +89,20 @@ public class VersionChecker {
         if (useConditionalRequest && metadataStore.getEtag() != null) {
             request.header("If-None-Match", metadataStore.getEtag());
         }
-        updateClient.newCall(request.build()).enqueue(new Callback() {
+        metadataCall = updateClient.newCall(request.build());
+        metadataCall.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (call.isCanceled() || call != metadataCall) return;
                 notifyRetrievalFailure(e, silent);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (call != metadataCall) {
+                    response.close();
+                    return;
+                }
                 try {
                     String json;
                     boolean retryWithoutCache = false;
@@ -174,6 +182,22 @@ public class VersionChecker {
         GitHubRelease release = latestRelease;
         if (release == null || release.versionCode == null) return;
         downloadVersion(release.versionCode);
+    }
+
+    public void cancel() {
+        if (metadataCall != null) metadataCall.cancel();
+        if (downloadCall != null) downloadCall.cancel();
+    }
+
+    public void cancelDownload() {
+        if (downloadCall != null) downloadCall.cancel();
+        UpdateState state = stateStore.load();
+        if (state.getFilePath() != null) {
+            //noinspection ResultOfMethodCallIgnored
+            new File(state.getFilePath()).delete();
+        }
+        saveState(UpdateState.idle(System.currentTimeMillis()));
+        UpdateNotification.clear(context);
     }
 
     public void installReadyUpdate() {
@@ -347,17 +371,23 @@ public class VersionChecker {
         partial.delete();
         if (downloadUrl == null) return;
         LogUtility.d(f.getAbsolutePath());
-        updateClient.newCall(new Request.Builder()
+        downloadCall = updateClient.newCall(new Request.Builder()
             .url(downloadUrl)
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
-            .build()).enqueue(new Callback() {
+            .build());
+        downloadCall.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (call.isCanceled() || call != downloadCall) return;
                 notifyDownloadFailure(e);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (call != downloadCall) {
+                    response.close();
+                    return;
+                }
                 try (Response ignored = response) {
                     if (!response.isSuccessful() || response.body() == null) {
                         throw new IOException("Unable to download update: HTTP " + response.code());

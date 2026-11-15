@@ -54,7 +54,13 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             } else if (release != null) checker.startDownload();
             else startCheck();
         });
-        secondary.setOnClickListener(view -> startCheck());
+        secondary.setOnClickListener(view -> {
+            if (currentState != null && currentState.getPhase() == UpdatePhase.DOWNLOADING) {
+                checker.cancelDownload();
+            } else {
+                startCheck();
+            }
+        });
         currentState = new UpdateStateStore(this).load();
         render(currentState);
         startCheck();
@@ -71,8 +77,15 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     }
 
     private void startCheck() {
+        if (checker != null) checker.cancel();
         release = null;
         checker = new VersionChecker(this, false, this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (checker != null) checker.cancel();
+        super.onDestroy();
     }
 
     @Override
@@ -94,6 +107,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private void render(@NonNull UpdateState state) {
         progress.setVisibility(View.GONE);
         secondary.setVisibility(View.VISIBLE);
+        secondary.setText(R.string.check_for_updates);
         switch (state.getPhase()) {
             case CHECKING:
                 status.setText(R.string.update_checking);
@@ -111,6 +125,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 } else {
                     progress.setIndeterminate(true);
                 }
+                secondary.setText(R.string.update_cancel_download);
                 break;
             case READY_TO_INSTALL:
                 status.setText(R.string.update_ready_to_install);
@@ -126,17 +141,20 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_error);
                 action.setText(R.string.update_retry);
                 action.setEnabled(true);
+                secondary.setText(R.string.check_for_updates);
                 break;
             case AVAILABLE:
                 status.setText(R.string.update_available);
                 action.setText(R.string.update_download);
                 action.setEnabled(true);
+                secondary.setText(R.string.check_for_updates);
                 break;
             case IDLE:
             default:
                 status.setText(R.string.update_up_to_date);
                 action.setText(R.string.check_for_updates);
                 action.setEnabled(true);
+                secondary.setText(R.string.check_for_updates);
                 break;
         }
         if (state.getVersion() != null && version.getText().length() == 0) {
