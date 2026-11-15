@@ -161,23 +161,42 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     }
 
     void bind(GenericGallery gallery) {
-        reset();
+        boolean preserveRenderedState = this.gallery != null && this.id == gallery.getId() && this.state != null;
+        if (preserveRenderedState) {
+            binding++;
+            request++;
+            favoritePending = false;
+            onlineFavoritePending = false;
+        } else {
+            reset();
+        }
         this.gallery = gallery;
         id = gallery.getId();
         directory = gallery instanceof LocalGallery ? ((LocalGallery) gallery).getDirectory() : null;
         onlineTotal = directory == null ? gallery.getPageCount() : 0;
         bindAuthor(gallery);
+        if (preserveRenderedState) render(state);
         refresh();
     }
 
     void bindDownload(GalleryDownloaderV2 downloader) {
-        reset();
+        int downloaderId = downloader.getId();
+        boolean preserveRenderedState = this.gallery != null && this.id == downloaderId && this.state != null;
+        if (preserveRenderedState) {
+            binding++;
+            request++;
+            favoritePending = false;
+            onlineFavoritePending = false;
+        } else {
+            reset();
+        }
         gallery = downloader.getGallery();
-        id = downloader.getId();
+        id = downloaderId;
         directory = downloader.getFolder();
         onlineTotal = gallery == null ? 0 : gallery.getPageCount();
         bindAuthor(gallery);
         follow(downloader);
+        if (preserveRenderedState) render(state);
         refresh();
     }
 
