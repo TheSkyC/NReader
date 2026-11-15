@@ -4,6 +4,11 @@
 
 No changes yet.
 
+## 1.0.0-beta.2 — 2026-11-16
+
+- Standardize release metadata, minimum-API flavor names, artifact filenames,
+  pre-release comparison, signed CI validation, and SHA-256 manifests.
+
 ## 1.0.0-beta.1 — 2026-11-16
 
 - Revise English and all existing translations for accurate account, reading,
