@@ -4,7 +4,10 @@ package com.maxwai.nclientv3.async;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.widget.Toast;
@@ -241,6 +244,7 @@ public class VersionChecker {
         String flavorSuffix = BuildConfig.FLAVOR.equals("minApi26") ? "-minApi26" : "-minApi28";
         final File f = new File(Global.UPDATEFOLDER,
             "NReader-" + latestVersion + flavorSuffix + "-release.apk");
+        final File partial = new File(f.getAbsolutePath() + ".part");
         if (f.exists()) {
             UpdateState savedState = stateStore.load();
             if (savedState.isReadyToInstall()
@@ -252,6 +256,8 @@ public class VersionChecker {
             //noinspection ResultOfMethodCallIgnored
             f.delete();
         }
+        //noinspection ResultOfMethodCallIgnored
+        partial.delete();
         if (downloadUrl == null) return;
         LogUtility.d(f.getAbsolutePath());
         Global.getClient(context).newCall(new Request.Builder().url(downloadUrl).build()).enqueue(new Callback() {
@@ -273,22 +279,34 @@ public class VersionChecker {
                     //noinspection ResultOfMethodCallIgnored
                     Global.UPDATEFOLDER.mkdirs();
                     //noinspection ResultOfMethodCallIgnored
-                    f.createNewFile();
+                    partial.createNewFile();
                     stateStore.save(UpdateState.downloading(
                         latestVersion,
-                        f.getAbsolutePath(),
+                        partial.getAbsolutePath(),
                         0L,
                         response.body().contentLength(),
                         System.currentTimeMillis()
                     ));
-                    try (FileOutputStream stream = new FileOutputStream(f);
+                    long expectedLength = response.body().contentLength();
+                    long writtenLength = 0L;
+                    try (FileOutputStream stream = new FileOutputStream(partial);
                          InputStream stream1 = response.body().byteStream()) {
                         int read;
                         byte[] bytes = new byte[1024];
                         while ((read = stream1.read(bytes)) != -1) {
                             stream.write(bytes, 0, read);
+                            writtenLength += read;
                         }
                         stream.flush();
+                    }
+                    if (expectedLength >= 0L && writtenLength != expectedLength) {
+                        throw new IOException("Downloaded update length does not match response");
+                    }
+                    if (f.exists() && !f.delete()) {
+                        throw new IOException("Unable to replace previous update");
+                    }
+                    if (!partial.renameTo(f)) {
+                        throw new IOException("Unable to finalize downloaded update");
                     }
                     stateStore.save(UpdateState.readyToInstall(
                         latestVersion,
@@ -298,6 +316,8 @@ public class VersionChecker {
                     ));
                     installApp(f);
                 } catch (IOException | RuntimeException e) {
+                    //noinspection ResultOfMethodCallIgnored
+                    partial.delete();
                     //noinspection ResultOfMethodCallIgnored
                     f.delete();
                     stateStore.save(UpdateState.error(
@@ -321,6 +341,16 @@ public class VersionChecker {
 
     private void installApp(File f) {
         try {
+            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), 0);
+            if (archive == null || !context.getPackageName().equals(archive.packageName)) {
+                throw new IOException("Update package name does not match the installed application");
+            }
+            long archiveVersion = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                ? archive.getLongVersionCode()
+                : archive.versionCode;
+            if (archiveVersion <= BuildConfig.VERSION_CODE) {
+                throw new IOException("Update package version is not newer than the installed application");
+            }
             UpdateState savedState = stateStore.load();
             String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
             stateStore.save(UpdateState.installing(version, f.getAbsolutePath(), System.currentTimeMillis()));
@@ -329,9 +359,9 @@ public class VersionChecker {
             intent.setData(apkUri);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             context.startActivity(intent);
-        } catch (IllegalArgumentException ignore) {
-            stateStore.save(UpdateState.error(null, f.getAbsolutePath(), "install_provider", System.currentTimeMillis()));
-            context.runOnUiThread(() -> Toast.makeText(context, context.getString(R.string.downloaded_update_at, f.getAbsolutePath()), Toast.LENGTH_SHORT).show());
+        } catch (IOException | IllegalArgumentException | SecurityException exception) {
+            stateStore.save(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
+            context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());
 
         }
     }
