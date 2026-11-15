@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.widget.Toast;
@@ -581,6 +582,15 @@ public class VersionChecker {
             }
             UpdateState savedState = stateStore.load();
             String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && !context.getPackageManager().canRequestPackageInstalls()) {
+                Intent settingsIntent = new Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:" + context.getPackageName())
+                );
+                context.startActivity(settingsIntent);
+                return;
+            }
             saveState(UpdateState.installing(version, f.getAbsolutePath(), System.currentTimeMillis()));
             Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", f);
             @SuppressLint("RequestInstallPackagesPolicy") Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
