@@ -93,6 +93,12 @@ jobs:
           apk_min_api26="$apk_dir/NReader-$RELEASE_TAG-minApi26-release.apk"
           apk_min_api28="$apk_dir/NReader-$RELEASE_TAG-minApi28-release.apk"
           aab="app/build/outputs/bundle/minApi28Release/NReader-$RELEASE_TAG-minApi28-release.aab"
+          aapt_bin="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          apksigner_bin="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          if [ -z "$aapt_bin" ] || [ -z "$apksigner_bin" ]; then
+            echo 'Android build-tools are missing aapt or apksigner' >&2
+            exit 1
+          fi
           for artifact in "$apk_min_api26" "$apk_min_api28" "$aab"; do
             if [ ! -f "$artifact" ]; then
               echo "Missing expected artifact: $artifact" >&2
@@ -100,13 +106,13 @@ jobs:
             fi
           done
           for apk in "$apk_min_api26" "$apk_min_api28"; do
-            package_line="$(aapt dump badging "$apk" | head -n 1)"
+            package_line="$("$aapt_bin" dump badging "$apk" | head -n 1)"
             expected_line="package: name='$application_id' versionCode='$version_code' versionName='$version_name'"
             if [[ "$package_line" != "$expected_line"* ]]; then
               echo "Unexpected APK metadata in $apk: $package_line" >&2
               exit 1
             fi
-            apksigner verify --verbose "$apk"
+            "$apksigner_bin" verify --verbose "$apk"
           done
           jarsigner -verify "$aab" >/dev/null
 
