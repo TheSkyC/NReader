@@ -50,6 +50,9 @@ import okhttp3.Response;
 
 public class VersionChecker {
     private static final int INSTALL_REQUEST_CODE = 1202;
+    public interface InstallLauncher {
+        void launch(@NonNull Intent intent);
+    }
     public interface Listener {
         void onUpdateState(@NonNull UpdateState state);
         void onReleaseAvailable(@NonNull GitHubRelease release);
@@ -63,6 +66,7 @@ public class VersionChecker {
     private final UpdateMetadataStore metadataStore;
     private final OkHttpClient updateClient = new OkHttpClient.Builder().build();
     @Nullable private final Listener listener;
+    @Nullable private InstallLauncher installLauncher;
     @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
     @Nullable private Call metadataCall;
@@ -267,6 +271,10 @@ public class VersionChecker {
         GitHubRelease release = latestRelease;
         if (release == null || release.versionCode == null) return;
         downloadVersion(release.versionCode);
+    }
+
+    public void setInstallLauncher(@Nullable InstallLauncher launcher) {
+        installLauncher = launcher;
     }
 
     private void restoreSelectedRelease() {
@@ -769,7 +777,8 @@ public class VersionChecker {
             @SuppressLint("RequestInstallPackagesPolicy") Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
             intent.setData(apkUri);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            context.startActivityForResult(intent, INSTALL_REQUEST_CODE);
+            if (installLauncher != null) installLauncher.launch(intent);
+            else context.startActivityForResult(intent, INSTALL_REQUEST_CODE);
         } catch (IOException | IllegalArgumentException | SecurityException exception) {
             saveState(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
             context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());

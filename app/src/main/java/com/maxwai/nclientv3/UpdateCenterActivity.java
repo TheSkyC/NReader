@@ -1,6 +1,7 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.maxwai.nclientv3.async.VersionChecker;
 import com.maxwai.nclientv3.async.UpdateMetadataStore;
@@ -41,6 +44,16 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private VersionChecker checker;
     private VersionChecker.GitHubRelease release;
     private UpdateState currentState;
+    private final ActivityResultLauncher<Intent> installLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+            if (checker != null) {
+                checker.onInstallActivityResult(result.getResultCode());
+                currentState = new UpdateStateStore(this).load();
+                render(currentState);
+            }
+        }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +106,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             && currentState.getPhase() != UpdatePhase.DOWNLOADING
             && currentState.getPhase() != UpdatePhase.INSTALLING;
         checker = new VersionChecker(this, false, this, shouldCheck);
+        checker.setInstallLauncher(installLauncher::launch);
     }
 
     @Override
@@ -110,22 +124,13 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         channel.setText("");
         size.setText("");
         checker = new VersionChecker(this, false, this);
+        checker.setInstallLauncher(installLauncher::launch);
     }
 
     @Override
     protected void onDestroy() {
         if (checker != null) checker.cancel();
         super.onDestroy();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1202 && checker != null) {
-            checker.onInstallActivityResult(resultCode);
-            currentState = new UpdateStateStore(this).load();
-            render(currentState);
-        }
     }
 
     @Override
