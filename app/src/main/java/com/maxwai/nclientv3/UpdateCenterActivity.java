@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3;
 
 import android.os.Bundle;
+import android.text.format.Formatter;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
 import com.maxwai.nclientv3.async.VersionChecker;
+import com.maxwai.nclientv3.async.UpdateMetadataStore;
 import com.maxwai.nclientv3.async.UpdateStateRecovery;
 import com.maxwai.nclientv3.async.UpdateReminderStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
@@ -20,11 +22,18 @@ import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 
 import java.util.Objects;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class UpdateCenterActivity extends GeneralActivity implements VersionChecker.Listener {
     private TextView status;
     private TextView version;
     private TextView notes;
+    private TextView channel;
+    private TextView size;
+    private TextView lastChecked;
+    private TextView errorDetail;
+    private TextView progressLabel;
     private ProgressBar progress;
     private Button action;
     private Button secondary;
@@ -46,6 +55,11 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         status = findViewById(R.id.update_status);
         version = findViewById(R.id.update_version);
         notes = findViewById(R.id.update_notes);
+        channel = findViewById(R.id.update_channel);
+        size = findViewById(R.id.update_size);
+        lastChecked = findViewById(R.id.update_last_checked);
+        errorDetail = findViewById(R.id.update_error_detail);
+        progressLabel = findViewById(R.id.update_progress_label);
         progress = findViewById(R.id.update_progress);
         action = findViewById(R.id.update_action);
         secondary = findViewById(R.id.update_secondary);
@@ -75,22 +89,26 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         });
         currentState = new UpdateStateStore(this).load();
         render(currentState);
-        startCheck();
+        boolean shouldCheck = currentState.getPhase() != UpdatePhase.READY_TO_INSTALL
+            && currentState.getPhase() != UpdatePhase.DOWNLOADING
+            && currentState.getPhase() != UpdatePhase.INSTALLING;
+        checker = new VersionChecker(this, false, this, shouldCheck);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (checker != null) {
-            currentState = UpdateStateRecovery.reconcile(this, new UpdateStateStore(this).load());
-            new UpdateStateStore(this).save(currentState);
-            render(currentState);
-        }
+        currentState = UpdateStateRecovery.reconcile(this, new UpdateStateStore(this).load());
+        new UpdateStateStore(this).save(currentState);
+        render(currentState);
     }
 
     private void startCheck() {
         if (checker != null) checker.cancel();
         release = null;
+        notes.setText(R.string.update_no_release_notes);
+        channel.setText("");
+        size.setText("");
         checker = new VersionChecker(this, false, this);
     }
 
@@ -122,6 +140,13 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         version.setText(getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, release.getVersionCode()));
         String body = release.getBody();
         notes.setText(body == null || body.trim().isEmpty() ? getString(R.string.update_no_release_notes) : body.trim());
+        channel.setText(getString(
+            R.string.update_release_channel,
+            getString(release.isBeta() ? R.string.update_channel_prerelease : R.string.update_channel_stable)
+        ));
+        if (release.getSizeBytes() > 0L) {
+            size.setText(getString(R.string.update_size_format, Formatter.formatFileSize(this, release.getSizeBytes())));
+        }
         secondary.setText(R.string.update_remind_later);
         skip.setVisibility(View.VISIBLE);
         action.setText(R.string.update_download);
@@ -130,6 +155,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
 
     private void render(@NonNull UpdateState state) {
         progress.setVisibility(View.GONE);
+        progressLabel.setVisibility(View.GONE);
+        errorDetail.setVisibility(View.GONE);
         secondary.setVisibility(View.VISIBLE);
         skip.setVisibility(View.GONE);
         secondary.setText(R.string.check_for_updates);
@@ -147,6 +174,12 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 if (state.hasKnownProgress()) {
                     progress.setIndeterminate(false);
                     progress.setProgress((int) Math.min(100L, state.getDownloadedBytes() * 100L / state.getTotalBytes()));
+                    progressLabel.setVisibility(View.VISIBLE);
+                    progressLabel.setText(getString(
+                        R.string.update_progress_format,
+                        Formatter.formatFileSize(this, state.getDownloadedBytes()),
+                        Formatter.formatFileSize(this, state.getTotalBytes())
+                    ));
                 } else {
                     progress.setIndeterminate(true);
                 }
@@ -167,6 +200,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 action.setText(R.string.update_retry);
                 action.setEnabled(true);
                 secondary.setText(R.string.check_for_updates);
+                errorDetail.setVisibility(View.VISIBLE);
+                errorDetail.setText(errorMessage(state.getErrorCode()));
                 break;
             case AVAILABLE:
                 status.setText(R.string.update_available);
@@ -182,8 +217,32 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 secondary.setText(R.string.check_for_updates);
                 break;
         }
-        if (state.getVersion() != null && version.getText().length() == 0) {
-            version.setText(getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, state.getVersion()));
+        version.setText(state.getVersion() == null
+            ? getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME)
+            : getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, state.getVersion()));
+        UpdateMetadataStore metadataStore = new UpdateMetadataStore(this);
+        long checkedAt = metadataStore.getLastSuccessfulCheck();
+        lastChecked.setText(checkedAt > 0L
+            ? getString(R.string.update_last_checked_format, DateFormat.getDateTimeInstance().format(new Date(checkedAt)))
+            : getString(R.string.update_last_checked_never));
+        if (state.getTotalBytes() > 0L && size.getText().length() == 0) {
+            size.setText(getString(R.string.update_size_format, Formatter.formatFileSize(this, state.getTotalBytes())));
         }
+    }
+
+    private String errorMessage(String errorCode) {
+        if ("metadata".equals(errorCode) || "background_metadata".equals(errorCode)) {
+            return getString(R.string.update_error_metadata);
+        }
+        if ("download".equals(errorCode) || "interrupted_download".equals(errorCode)) {
+            return getString(R.string.update_error_download);
+        }
+        if ("missing_file".equals(errorCode)) {
+            return getString(R.string.update_error_missing_file);
+        }
+        if ("install_validation".equals(errorCode)) {
+            return getString(R.string.update_error_install_validation);
+        }
+        return getString(R.string.update_error_retry_hint);
     }
 }

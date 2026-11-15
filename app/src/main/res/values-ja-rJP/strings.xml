@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">GitHubでバグや問題を報告する(GitHubのアカウントが必要です。)</string>
     <string name="github">GitHub（ギットハブ)</string>
     <string name="install">インストール</string>
-    <string name="download_update_failed">更新されたバージョンをダウンロードできません。</string>
+    <string name="channel4_name">アプリのアップデート</string>
+    <string name="channel4_description">アップデートの有無、進行状況、結果を表示します。</string>
+    <string name="download_update_failed">更新されたバージョンをダウンロードできません</string>
+    <string name="application_update">アプリのアップデート</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">アップデートを確認しています…</string>
+    <string name="update_up_to_date">最新バージョンです</string>
+    <string name="update_available">アップデートがあります</string>
+    <string name="update_downloading">アップデートをダウンロードしています…</string>
+    <string name="update_ready_to_install">アップデートをインストールできます</string>
+    <string name="update_installing">システムインストーラーを開いています…</string>
+    <string name="update_error">アップデートを完了できませんでした</string>
+    <string name="update_retry">再試行</string>
+    <string name="update_download">アップデートをダウンロード</string>
+    <string name="update_install">アップデートをインストール</string>
+    <string name="update_cancel_download">ダウンロードをキャンセル</string>
+    <string name="update_remind_later">明日通知する</string>
+    <string name="update_skip_version">このバージョンをスキップ</string>
+    <string name="update_no_release_notes">このリリースにはリリースノートがありません。</string>
+    <string name="update_notification_available">NReaderのアップデートがあります</string>
+    <string name="update_notification_downloading">NReaderのアップデートをダウンロードしています</string>
+    <string name="update_notification_ready">NReaderのアップデートをインストールできます</string>
+    <string name="update_notification_failed">NReaderのアップデートに失敗しました</string>
+    <string name="update_notification_version" formatted="true">バージョン %s</string>
+    <string name="update_current_version_format" formatted="true">現在のバージョン %s</string>
+    <string name="update_release_channel" formatted="true">チャンネル: %s</string>
+    <string name="update_channel_stable">安定版</string>
+    <string name="update_channel_prerelease">プレリリース</string>
+    <string name="update_size_format" formatted="true">ダウンロードサイズ: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s / %2$s</string>
+    <string name="update_last_checked_format" formatted="true">最終確認: %s</string>
+    <string name="update_last_checked_never">最終確認: 未確認</string>
+    <string name="update_error_metadata">リリース情報を確認できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="update_error_download">アップデートのダウンロードが中断されたか不完全です。もう一度お試しください。</string>
+    <string name="update_error_missing_file">ダウンロードしたアップデートは利用できません。もう一度ダウンロードしてください。</string>
+    <string name="update_error_install_validation">アップデートパッケージを検証できませんでした。設定されたソースからもう一度ダウンロードしてください。</string>
+    <string name="update_error_retry_hint">アップデートを完了できませんでした。接続を確認して、もう一度お試しください。</string>
     <string name="copyURL">URLをコピー</string>
     <string name="add_bookmark">ブックマークに追加</string>
     <string name="manage_bookmarks">ブックマークを管理</string>

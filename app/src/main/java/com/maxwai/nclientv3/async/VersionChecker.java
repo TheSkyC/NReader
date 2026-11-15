@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -22,6 +23,7 @@ import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
+import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -32,7 +34,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,24 +66,39 @@ public class VersionChecker {
     @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
     @Nullable private Call metadataCall;
+    @Nullable private Call manifestCall;
     @Nullable private Call downloadCall;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
-        this(context, silent, null);
+        this(context, silent, null, true);
     }
 
     public VersionChecker(AppCompatActivity context, final boolean silent, @Nullable Listener listener) {
+        this(context, silent, listener, true);
+    }
+
+    public VersionChecker(
+        AppCompatActivity context,
+        final boolean silent,
+        @Nullable Listener listener,
+        boolean startCheck
+    ) {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
         this.stateStore = new UpdateStateStore(context);
         this.metadataStore = new UpdateMetadataStore(context);
         this.listener = listener;
-        if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
+        if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) return;
+        restoreSelectedRelease();
+        if (!startCheck) {
+            return;
+        }
         if (latest != null && Global.hasStoragePermission(context)) {
             downloadVersion(latest);
             latest = null;
             return;
         }
+        metadataStore.markAttempt(System.currentTimeMillis());
         saveState(UpdateState.checking(System.currentTimeMillis()));
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
         requestReleases(withPrerelease, silent, true);
@@ -85,7 +106,7 @@ public class VersionChecker {
 
     private void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest) {
         Request.Builder request = new Request.Builder()
-            .url(RELEASE_API_URL)
+            .url(releaseApiUrl())
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (useConditionalRequest && metadataStore.getEtag() != null) {
@@ -152,18 +173,29 @@ public class VersionChecker {
         boolean withPrerelease,
         boolean silent
     ) {
-        updateClient.newCall(new Request.Builder()
+        if (apiRelease.manifestUrl == null || !isAllowedUpdateUrl(apiRelease.manifestUrl)) {
+            publishRelease(apiRelease, silent);
+            return;
+        }
+        if (manifestCall != null) manifestCall.cancel();
+        manifestCall = updateClient.newCall(new Request.Builder()
             .url(apiRelease.manifestUrl)
             .header("Accept", "application/json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
-            .build()).enqueue(new Callback() {
+            .build());
+        manifestCall.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (call.isCanceled() || call != manifestCall) return;
                 publishRelease(apiRelease, silent);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (call != manifestCall) {
+                    response.close();
+                    return;
+                }
                 try (Response ignored = response) {
                     if (!response.isSuccessful() || response.body() == null
                         || response.body().contentLength() > 1024L * 1024L) {
@@ -184,19 +216,29 @@ public class VersionChecker {
 
     private void publishRelease(@NonNull GitHubRelease release, boolean silent) {
         downloadUrl = release.downloadUrl;
+        metadataStore.markSuccessfulCheck(System.currentTimeMillis());
         context.runOnUiThread(() -> {
             boolean newer;
             try {
-                newer = release.isNewerThenVersion(BuildConfig.VERSION_NAME);
+                newer = release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
             } catch (IllegalArgumentException ignored) {
                 newer = false;
             }
-            if (downloadUrl == null || !newer) {
+            if (downloadUrl == null || !isAllowedUpdateUrl(downloadUrl) || !isValidSha256(release.sha256) || !newer) {
+                metadataStore.clearSelectedRelease();
                 saveState(UpdateState.idle(System.currentTimeMillis()));
                 if (!silent) Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
             } else {
                 latestRelease = release;
-                metadataStore.setSelectedSha256(release.sha256);
+                metadataStore.saveSelectedRelease(
+                    release.versionCode,
+                    release.releaseVersionCode,
+                    release.downloadUrl,
+                    release.body,
+                    release.beta,
+                    release.sha256,
+                    release.sizeBytes
+                );
                 saveState(UpdateState.available(release.versionCode, System.currentTimeMillis()));
                 if (listener == null) createDialog(release);
                 else listener.onReleaseAvailable(release);
@@ -227,8 +269,33 @@ public class VersionChecker {
         downloadVersion(release.versionCode);
     }
 
+    private void restoreSelectedRelease() {
+        if (stateStore.load().getPhase() != UpdatePhase.AVAILABLE) return;
+        String version = metadataStore.getSelectedVersion();
+        String url = metadataStore.getSelectedUrl();
+        String sha256 = metadataStore.getSelectedSha256();
+        if (version == null || url == null || !isAllowedUpdateUrl(url) || !isValidSha256(sha256)) return;
+        GitHubRelease restored = new GitHubRelease();
+        restored.versionCode = version;
+        restored.releaseVersionCode = metadataStore.getSelectedVersionCode();
+        restored.downloadUrl = url;
+        restored.body = metadataStore.getSelectedBody();
+        restored.beta = metadataStore.isSelectedBeta();
+        restored.sha256 = sha256;
+        restored.sizeBytes = metadataStore.getSelectedSize();
+        try {
+            if (!restored.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) return;
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+        latestRelease = restored;
+        downloadUrl = url;
+        if (listener != null) listener.onReleaseAvailable(restored);
+    }
+
     public void cancel() {
         if (metadataCall != null) metadataCall.cancel();
+        if (manifestCall != null) manifestCall.cancel();
         if (downloadCall != null) downloadCall.cancel();
     }
 
@@ -240,6 +307,7 @@ public class VersionChecker {
             new File(state.getFilePath()).delete();
         }
         saveState(UpdateState.idle(System.currentTimeMillis()));
+        metadataStore.clearSelectedRelease();
         UpdateNotification.clear(context);
     }
 
@@ -324,8 +392,10 @@ public class VersionChecker {
                         if ("nreader-update.json".equals(candidate.name)) {
                             release.manifestUrl = candidate.url;
                         } else if (release.downloadUrl == null && matchesFlavorAsset(candidate.name, flavor)) {
-                            release.downloadUrl = candidate.url;
-                            release.sha256 = candidate.sha256;
+                            if (isAllowedUpdateUrl(candidate.url) && isValidSha256(candidate.sha256)) {
+                                release.downloadUrl = candidate.url;
+                                release.sha256 = candidate.sha256;
+                            }
                         }
                     }
                     jr.endArray();
@@ -340,6 +410,12 @@ public class VersionChecker {
         return invalid ? null : release;
     }
 
+    private static boolean isValidSha256(@Nullable String value) {
+        if (value == null) return false;
+        String normalized = value.startsWith("sha256:") ? value.substring(7) : value;
+        return normalized.matches("(?i)^[0-9a-f]{64}$");
+    }
+
     static GitHubRelease parseManifestJson(
         JsonReader jr,
         boolean withPrerelease,
@@ -348,14 +424,36 @@ public class VersionChecker {
     ) throws IOException {
         GitHubRelease release = new GitHubRelease();
         boolean invalid = false;
+        boolean hasSchema = false;
+        boolean hasVersionCode = false;
+        boolean hasChannel = false;
+        boolean hasAssets = false;
+        Set<String> assetKeys = new HashSet<>();
         jr.beginObject();
         while (jr.peek() != JsonToken.END_OBJECT) {
             switch (jr.nextName()) {
+                case "schemaVersion":
+                    hasSchema = jr.nextInt() == 1;
+                    if (!hasSchema) invalid = true;
+                    break;
                 case "versionName":
                     release.versionCode = jr.nextString();
                     break;
+                case "versionCode":
+                    release.releaseVersionCode = jr.nextLong();
+                    hasVersionCode = release.releaseVersionCode > 0L;
+                    if (!hasVersionCode) invalid = true;
+                    break;
                 case "channel":
-                    release.beta = !"stable".equalsIgnoreCase(jr.nextString());
+                    String channel = jr.nextString();
+                    if (!"stable".equalsIgnoreCase(channel)
+                        && !"beta".equalsIgnoreCase(channel)
+                        && !"alpha".equalsIgnoreCase(channel)
+                        && !"rc".equalsIgnoreCase(channel)) {
+                        invalid = true;
+                    }
+                    release.beta = !"stable".equalsIgnoreCase(channel);
+                    hasChannel = true;
                     if (release.beta && !withPrerelease) invalid = true;
                     break;
                 case "notes":
@@ -363,30 +461,46 @@ public class VersionChecker {
                     release.body = jr.nextString();
                     break;
                 case "assets":
+                    hasAssets = true;
                     jr.beginArray();
                     while (jr.hasNext()) {
+                        String assetId = null;
                         String assetFlavor = null;
                         String assetPackage = null;
                         String url = null;
                         String digest = null;
-                        long minSdk = 0L;
+                        long minSdk = -1L;
+                        long sizeBytes = -1L;
                         jr.beginObject();
                         while (jr.peek() != JsonToken.END_OBJECT) {
                             switch (jr.nextName()) {
+                                case "id": assetId = jr.nextString(); break;
                                 case "flavor": assetFlavor = jr.nextString(); break;
                                 case "packageName": assetPackage = jr.nextString(); break;
                                 case "url": url = jr.nextString(); break;
                                 case "sha256": digest = jr.nextString(); break;
                                 case "minSdk": minSdk = jr.nextLong(); break;
+                                case "sizeBytes": sizeBytes = jr.nextLong(); break;
                                 default: jr.skipValue(); break;
                             }
                         }
                         jr.endObject();
+                        String identity = String.valueOf(assetId) + "|" + assetFlavor + "|" + assetPackage + "|" + minSdk;
+                        boolean validAsset = assetId != null && !assetId.trim().isEmpty()
+                            && assetFlavor != null && !assetFlavor.trim().isEmpty()
+                            && assetPackage != null && !assetPackage.trim().isEmpty()
+                            && minSdk > 0L
+                            && sizeBytes > 0L
+                            && url != null && isAllowedUpdateUrl(url)
+                            && digest != null && digest.matches("(?i)^[0-9a-f]{64}$")
+                            && assetKeys.add(identity);
+                        if (!validAsset) invalid = true;
                         if (release.downloadUrl == null && flavor.equals(assetFlavor)
                             && packageName.equals(assetPackage) && minSdk <= Build.VERSION.SDK_INT
-                            && url != null) {
+                            && validAsset) {
                             release.downloadUrl = url;
                             release.sha256 = digest;
+                            release.sizeBytes = sizeBytes;
                         }
                     }
                     jr.endArray();
@@ -397,7 +511,32 @@ public class VersionChecker {
             }
         }
         jr.endObject();
+        if (release.versionCode != null) {
+            try {
+                GitHubRelease.ParsedVersion.parse(release.versionCode, "Manifest");
+            } catch (IllegalArgumentException ignored) {
+                invalid = true;
+            }
+        }
+        if (!hasSchema || !hasVersionCode || !hasChannel || !hasAssets || release.downloadUrl == null) invalid = true;
         return invalid || release.versionCode == null ? null : release;
+    }
+
+    static boolean isAllowedUpdateUrl(@NonNull String value) {
+        Uri uri = Uri.parse(value);
+        if ("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null) return true;
+        if (!BuildConfig.DEBUG || !"http".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null) return false;
+        String host = uri.getHost();
+        return "localhost".equalsIgnoreCase(host)
+            || "127.0.0.1".equals(host)
+            || "10.0.2.2".equals(host)
+            || "::1".equals(host);
+    }
+
+    @NonNull
+    private static String releaseApiUrl() {
+        if (!BuildConfig.UPDATE_ENDPOINT.isEmpty()) return BuildConfig.UPDATE_ENDPOINT;
+        return RELEASE_API_URL;
     }
 
     private static AssetCandidate getAsset(JsonReader jr) throws IOException {
@@ -460,11 +599,14 @@ public class VersionChecker {
                 latest = latestVersion;
                 context.runOnUiThread(() -> context.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 2));
             }
-        }).setNegativeButton(R.string.cancel, null)
-            .setNeutralButton(R.string.github, (dialog, which) -> {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(LATEST_RELEASE_URL));
+        }).setNegativeButton(R.string.cancel, null);
+        if (!BuildConfig.UPDATE_REPOSITORY.isEmpty()) {
+            builder.setNeutralButton(R.string.github, (dialog, which) -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest"));
                 context.startActivity(browserIntent);
             });
+        }
         if (!context.isFinishing()) builder.show();
     }
 
@@ -488,6 +630,7 @@ public class VersionChecker {
         //noinspection ResultOfMethodCallIgnored
         partial.delete();
         if (downloadUrl == null) return;
+        final long expectedSize = metadataStore.getSelectedSize();
         LogUtility.d(f.getAbsolutePath());
         downloadCall = updateClient.newCall(new Request.Builder()
             .url(downloadUrl)
@@ -540,6 +683,9 @@ public class VersionChecker {
                     if (expectedLength >= 0L && writtenLength != expectedLength) {
                         throw new IOException("Downloaded update length does not match response");
                     }
+                    if (expectedSize > 0L && writtenLength != expectedSize) {
+                        throw new IOException("Downloaded update size does not match release metadata");
+                    }
                     if (!UpdateFileVerifier.matchesSha256(partial, expectedSha256)) {
                         throw new IOException("Downloaded update checksum does not match release metadata");
                     }
@@ -582,10 +728,15 @@ public class VersionChecker {
 
     private void installApp(File f) {
         try {
-            if (!UpdateFileVerifier.matchesSha256(f, metadataStore.getSelectedSha256())) {
+            String expectedSha256 = metadataStore.getSelectedSha256();
+            if (!isValidSha256(expectedSha256)
+                || !UpdateFileVerifier.matchesSha256(f, expectedSha256)) {
                 throw new IOException("Cached update checksum does not match release metadata");
             }
-            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), 0);
+            int signingFlags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                ? PackageManager.GET_SIGNING_CERTIFICATES
+                : PackageManager.GET_SIGNATURES;
+            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), signingFlags);
             if (archive == null || !context.getPackageName().equals(archive.packageName)) {
                 throw new IOException("Update package name does not match the installed application");
             }
@@ -594,6 +745,13 @@ public class VersionChecker {
                 : archive.versionCode;
             if (archiveVersion <= BuildConfig.VERSION_CODE) {
                 throw new IOException("Update package version is not newer than the installed application");
+            }
+            long expectedReleaseVersionCode = metadataStore.getSelectedVersionCode();
+            if (expectedReleaseVersionCode > 0L && archiveVersion != expectedReleaseVersionCode) {
+                throw new IOException("Update package version does not match release metadata");
+            }
+            if (!hasMatchingSigner(archive)) {
+                throw new IOException("Update package signer does not match the installed application");
             }
             UpdateState savedState = stateStore.load();
             String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
@@ -619,16 +777,59 @@ public class VersionChecker {
         }
     }
 
+    private boolean hasMatchingSigner(@NonNull PackageInfo archive) {
+        PackageInfo installed;
+        try {
+            installed = context.getPackageManager().getPackageInfo(
+                context.getPackageName(),
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                    ? PackageManager.GET_SIGNING_CERTIFICATES
+                    : PackageManager.GET_SIGNATURES
+            );
+        } catch (PackageManager.NameNotFoundException exception) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (installed.signingInfo == null || archive.signingInfo == null) return false;
+            Signature[] installedSigners = installed.signingInfo.hasMultipleSigners()
+                ? installed.signingInfo.getApkContentsSigners()
+                : installed.signingInfo.getSigningCertificateHistory();
+            Signature[] archiveSigners = archive.signingInfo.hasMultipleSigners()
+                ? archive.signingInfo.getApkContentsSigners()
+                : archive.signingInfo.getSigningCertificateHistory();
+            if (installed.signingInfo.hasMultipleSigners() || archive.signingInfo.hasMultipleSigners()) {
+                return new HashSet<>(Arrays.asList(installed.signingInfo.getApkContentsSigners()))
+                    .equals(new HashSet<>(Arrays.asList(archive.signingInfo.getApkContentsSigners())));
+            }
+            return intersects(installedSigners, archiveSigners);
+        }
+        return installed.signatures != null
+            && archive.signatures != null
+            && intersects(installed.signatures, archive.signatures);
+    }
+
+    private static boolean intersects(@NonNull Signature[] left, @NonNull Signature[] right) {
+        HashSet<Signature> values = new HashSet<>(Arrays.asList(left));
+        for (Signature signature : right) {
+            if (values.contains(signature)) return true;
+        }
+        return false;
+    }
+
 
     public static class GitHubRelease {
         private final static String regex = "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(pre\\d+|(?:alpha|beta|rc)\\.\\d+))?$";
         String versionCode, body, downloadUrl, sha256, manifestUrl;
+        long releaseVersionCode = -1L;
+        long sizeBytes = -1L;
         boolean beta;
 
         @Nullable public String getVersionCode() { return versionCode; }
         @Nullable public String getBody() { return body; }
         @Nullable public String getDownloadUrl() { return downloadUrl; }
         @Nullable public String getSha256() { return sha256; }
+        public long getSizeBytes() { return sizeBytes; }
+        public long getReleaseVersionCode() { return releaseVersionCode; }
         public boolean isBeta() { return beta; }
 
         static boolean isVersionAtLeast(String candidate, String current) {
@@ -644,6 +845,11 @@ public class VersionChecker {
             ParsedVersion current = ParsedVersion.parse(currentVersion, "Current");
             ParsedVersion newer = ParsedVersion.parse(versionCode, "New");
             return newer.compareTo(current) > 0;
+        }
+
+        public boolean isNewerThanInstalled(String currentVersion, long currentVersionCode) {
+            if (releaseVersionCode > 0L) return releaseVersionCode > currentVersionCode;
+            return isNewerThenVersion(currentVersion);
         }
 
         private static String normalizeVersion(String value) {

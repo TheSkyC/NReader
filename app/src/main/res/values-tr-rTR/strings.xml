@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">GitHub üzerinden hata gönder</string>
     <string name="github">GitHub</string>
     <string name="install">Yükle</string>
-    <string name="download_update_failed">Güncellenmiş sürüm indirilemedi</string>
+    <string name="channel4_name">Uygulama güncellemeleri</string>
+    <string name="channel4_description">Uygulama güncellemelerinin kullanılabilirliğini, ilerlemesini ve sonuçlarını göster.</string>
+    <string name="download_update_failed">Güncellenen sürüm indirilemedi</string>
+    <string name="application_update">Uygulama güncellemesi</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Güncellemeler denetleniyor…</string>
+    <string name="update_up_to_date">En güncel sürümdesiniz</string>
+    <string name="update_available">Güncelleme mevcut</string>
+    <string name="update_downloading">Güncelleme indiriliyor…</string>
+    <string name="update_ready_to_install">Güncelleme kuruluma hazır</string>
+    <string name="update_installing">Sistem yükleyicisi açılıyor…</string>
+    <string name="update_error">Güncelleme tamamlanamadı</string>
+    <string name="update_retry">Tekrar dene</string>
+    <string name="update_download">Güncellemeyi indir</string>
+    <string name="update_install">Güncellemeyi yükle</string>
+    <string name="update_cancel_download">İndirmeyi iptal et</string>
+    <string name="update_remind_later">Yarın hatırlat</string>
+    <string name="update_skip_version">Bu sürümü atla</string>
+    <string name="update_no_release_notes">Bu sürüm sürüm notu içermiyor.</string>
+    <string name="update_notification_available">NReader güncellemesi mevcut</string>
+    <string name="update_notification_downloading">NReader güncellemesi indiriliyor</string>
+    <string name="update_notification_ready">NReader güncellemesi kuruluma hazır</string>
+    <string name="update_notification_failed">NReader güncellemesi başarısız</string>
+    <string name="update_notification_version" formatted="true">Sürüm %s</string>
+    <string name="update_current_version_format" formatted="true">Mevcut sürüm %s</string>
+    <string name="update_release_channel" formatted="true">Kanal: %s</string>
+    <string name="update_channel_stable">Kararlı</string>
+    <string name="update_channel_prerelease">Ön sürüm</string>
+    <string name="update_size_format" formatted="true">İndirme boyutu: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s / %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Son denetim: %s</string>
+    <string name="update_last_checked_never">Son denetim: Hiçbir zaman</string>
+    <string name="update_error_metadata">Sürüm bilgileri doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="update_error_download">Güncelleme indirmesi kesildi veya tamamlanmadı. Tekrar deneyin.</string>
+    <string name="update_error_missing_file">İndirilen güncelleme artık kullanılamıyor. Yeniden indirin.</string>
+    <string name="update_error_install_validation">Güncelleme paketi doğrulanamadı. Yapılandırılmış kaynaktan yeniden indirin.</string>
+    <string name="update_error_retry_hint">Güncelleme tamamlanamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="copyURL">URL\'yi kopyala</string>
     <string name="add_bookmark">Yer imi ekle</string>
     <string name="manage_bookmarks">Yer imlerini yönet</string>

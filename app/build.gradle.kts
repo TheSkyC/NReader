@@ -16,6 +16,10 @@ val keystoreProperties = Properties().apply {
 }
 
 val nreaderApplicationId = "com.theskyc.nreader"
+val updateEndpoint = providers.gradleProperty("nreaderUpdateEndpoint").orNull ?: ""
+val updateEndpointConfig = updateEndpoint
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
 val nreaderVersion = providers.gradleProperty("nreaderVersion").orNull
     ?: error("nreaderVersion must be set in gradle.properties")
 val versionPattern = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-(pre\d+|(?:alpha|beta|rc)\.\d+))?$""")
@@ -53,6 +57,7 @@ android {
     defaultConfig {
         applicationId = nreaderApplicationId
         buildConfigField("String", "UPDATE_REPOSITORY", "\"\"")
+        buildConfigField("String", "UPDATE_ENDPOINT", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
         // Format: MmPPbb
         // M: Major, m: minor, P: Patch, b: build
@@ -87,6 +92,7 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             resValue("string", "app_name", "NReader Debug")
+            buildConfigField("String", "UPDATE_ENDPOINT", "\"$updateEndpointConfig\"")
         }
         create("RelWithDebInfo") {
             initWith(buildTypes["release"])

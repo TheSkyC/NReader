@@ -416,7 +416,7 @@ public class Global {
     }
 
     public static boolean shouldCheckForUpdates(Context context) {
-        return !BuildConfig.UPDATE_REPOSITORY.isEmpty()
+        return (!BuildConfig.UPDATE_REPOSITORY.isEmpty() || !BuildConfig.UPDATE_ENDPOINT.isEmpty())
             && context.getSharedPreferences("Settings", 0).getBoolean(context.getString(R.string.preference_key_check_update), true);
     }
 

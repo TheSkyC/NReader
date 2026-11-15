@@ -3,6 +3,7 @@ package com.maxwai.nclientv3.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.util.JsonReader;
 
@@ -17,10 +18,10 @@ public class VersionCheckerManifestTest {
     @Test
     public void selectsManifestAssetForCurrentFlavorAndPackage() throws Exception {
         String json = "{"
-            + "\"schemaVersion\":1,\"versionName\":\"1.1.0\",\"channel\":\"stable\","
+            + "\"schemaVersion\":1,\"versionName\":\"1.1.0\",\"versionCode\":11000,\"channel\":\"stable\","
             + "\"assets\":["
-            + "{\"flavor\":\"minApi26\",\"packageName\":\"com.theskyc.nreader\",\"minSdk\":26,\"sha256\":\"abc\",\"url\":\"https://example.invalid/26.apk\"},"
-            + "{\"flavor\":\"minApi28\",\"packageName\":\"com.theskyc.nreader\",\"minSdk\":28,\"sha256\":\"def\",\"url\":\"https://example.invalid/28.apk\"}"
+            + "{\"id\":\"minApi26\",\"flavor\":\"minApi26\",\"packageName\":\"com.theskyc.nreader\",\"minSdk\":26,\"sizeBytes\":120,\"sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"url\":\"https://example.invalid/26.apk\"},"
+            + "{\"id\":\"minApi28\",\"flavor\":\"minApi28\",\"packageName\":\"com.theskyc.nreader\",\"minSdk\":28,\"sizeBytes\":120,\"sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"url\":\"https://example.invalid/28.apk\"}"
             + "]}";
 
         VersionChecker.GitHubRelease release = VersionChecker.parseManifestJson(
@@ -29,6 +30,16 @@ public class VersionCheckerManifestTest {
         assertNotNull(release);
         assertEquals("1.1.0", release.getVersionCode());
         assertEquals("https://example.invalid/28.apk", release.getDownloadUrl());
-        assertEquals("def", release.getSha256());
+        assertEquals("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", release.getSha256());
+    }
+
+    @Test
+    public void rejectsManifestWithInvalidDigest() throws Exception {
+        String json = "{\"schemaVersion\":1,\"versionName\":\"1.1.0\",\"versionCode\":11000,\"channel\":\"stable\","
+            + "\"assets\":[{\"id\":\"minApi28\",\"flavor\":\"minApi28\",\"packageName\":\"com.theskyc.nreader\","
+            + "\"minSdk\":28,\"sizeBytes\":120,\"sha256\":\"bad\",\"url\":\"https://example.invalid/28.apk\"}]}";
+
+        assertNull(VersionChecker.parseManifestJson(
+            new JsonReader(new StringReader(json)), false, "minApi28", "com.theskyc.nreader"));
     }
 }

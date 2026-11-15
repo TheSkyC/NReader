@@ -334,6 +334,19 @@
     <string name="update_notification_ready">NReader update ready</string>
     <string name="update_notification_failed">NReader update failed</string>
     <string name="update_notification_version" formatted="true">Version %s</string>
+    <string name="update_current_version_format" formatted="true">Current version %s</string>
+    <string name="update_release_channel" formatted="true">Channel: %s</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_prerelease">Prerelease</string>
+    <string name="update_size_format" formatted="true">Download size: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s of %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Last checked: %s</string>
+    <string name="update_last_checked_never">Last checked: Never</string>
+    <string name="update_error_metadata">The release information could not be verified. Check your connection and try again.</string>
+    <string name="update_error_download">The update download was interrupted or incomplete. Try again.</string>
+    <string name="update_error_missing_file">The downloaded update is no longer available. Download it again.</string>
+    <string name="update_error_install_validation">The update package failed validation. Download it again from the configured source.</string>
+    <string name="update_error_retry_hint">The update could not be completed. Check your connection and try again.</string>
     <string name="copyURL">Copy URL</string>
     <string name="add_bookmark">Add bookmark</string>
     <string name="manage_bookmarks">Manage bookmarks</string>

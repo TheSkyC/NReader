@@ -14,4 +14,8 @@
     <exclude domain="sharedpref" path="CommentIdentity.xml" />
     <exclude domain="sharedpref" path="Login.xml" />
     <exclude domain="sharedpref" path="online_favorite_cache.xml" />
+    <exclude domain="sharedpref" path="UpdateMetadata.xml" />
+    <exclude domain="sharedpref" path="UpdateState.xml" />
+    <exclude domain="sharedpref" path="UpdateReminder.xml" />
+    <exclude domain="sharedpref" path="UpdateNotification.xml" />
 </full-backup-content>

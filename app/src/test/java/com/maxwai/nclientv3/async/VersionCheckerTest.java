@@ -56,6 +56,16 @@ public class VersionCheckerTest {
         assertNull(release);
     }
 
+    @Test
+    public void numericReleaseVersionCodeTakesPrecedenceWhenAvailable() {
+        VersionChecker.GitHubRelease release = new VersionChecker.GitHubRelease();
+        release.versionCode = "1.1.0";
+        release.releaseVersionCode = 100L;
+
+        assertFalse(release.isNewerThanInstalled("1.0.0", 101L));
+        assertTrue(release.isNewerThanInstalled("1.0.0", 99L));
+    }
+
     private static VersionChecker.GitHubRelease release(String version, String url) {
         VersionChecker.GitHubRelease release = new VersionChecker.GitHubRelease();
         release.versionCode = version;

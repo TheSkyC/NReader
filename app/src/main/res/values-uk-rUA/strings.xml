@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Надіслати баг на GitHub</string>
     <string name="github">GitHub</string>
     <string name="install">Встановити</string>
-    <string name="download_update_failed">Не вдалося завантажити нову версію</string>
+    <string name="channel4_name">Оновлення застосунку</string>
+    <string name="channel4_description">Показувати доступність, перебіг і результати оновлень.</string>
+    <string name="download_update_failed">Не вдалося завантажити оновлену версію</string>
+    <string name="application_update">Оновлення застосунку</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Перевірка оновлень…</string>
+    <string name="update_up_to_date">У вас остання версія</string>
+    <string name="update_available">Доступне оновлення</string>
+    <string name="update_downloading">Завантаження оновлення…</string>
+    <string name="update_ready_to_install">Оновлення готове до встановлення</string>
+    <string name="update_installing">Відкриття системного інсталятора…</string>
+    <string name="update_error">Не вдалося завершити оновлення</string>
+    <string name="update_retry">Повторити</string>
+    <string name="update_download">Завантажити оновлення</string>
+    <string name="update_install">Встановити оновлення</string>
+    <string name="update_cancel_download">Скасувати завантаження</string>
+    <string name="update_remind_later">Нагадати завтра</string>
+    <string name="update_skip_version">Пропустити цю версію</string>
+    <string name="update_no_release_notes">Цей випуск не містить приміток.</string>
+    <string name="update_notification_available">Доступне оновлення NReader</string>
+    <string name="update_notification_downloading">Завантаження оновлення NReader</string>
+    <string name="update_notification_ready">Оновлення NReader готове</string>
+    <string name="update_notification_failed">Помилка оновлення NReader</string>
+    <string name="update_notification_version" formatted="true">Версія %s</string>
+    <string name="update_current_version_format" formatted="true">Поточна версія %s</string>
+    <string name="update_release_channel" formatted="true">Канал: %s</string>
+    <string name="update_channel_stable">Стабільний</string>
+    <string name="update_channel_prerelease">Попередній випуск</string>
+    <string name="update_size_format" formatted="true">Розмір завантаження: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s із %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Остання перевірка: %s</string>
+    <string name="update_last_checked_never">Остання перевірка: Ніколи</string>
+    <string name="update_error_metadata">Не вдалося перевірити відомості про випуск. Перевірте з’єднання й повторіть спробу.</string>
+    <string name="update_error_download">Завантаження оновлення перервано або неповне. Повторіть спробу.</string>
+    <string name="update_error_missing_file">Завантажене оновлення більше недоступне. Завантажте його знову.</string>
+    <string name="update_error_install_validation">Пакет оновлення не пройшов перевірку. Завантажте його знову з налаштованого джерела.</string>
+    <string name="update_error_retry_hint">Не вдалося завершити оновлення. Перевірте з’єднання й повторіть спробу.</string>
     <string name="copyURL">Копіювати адресу</string>
     <string name="add_bookmark">Додати до закладок</string>
     <string name="manage_bookmarks">Керування закладками</string>

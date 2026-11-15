@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Envía un error a GitHub</string>
     <string name="github">GitHub</string>
     <string name="install">Instalar</string>
+    <string name="channel4_name">Actualizaciones de aplicaciones</string>
+    <string name="channel4_description">Mostrar disponibilidad, progreso y resultados de las actualizaciones.</string>
     <string name="download_update_failed">No se puede descargar la versión actualizada</string>
+    <string name="application_update">Actualización de la aplicación</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Buscando actualizaciones…</string>
+    <string name="update_up_to_date">Ya tienes la última versión</string>
+    <string name="update_available">Actualización disponible</string>
+    <string name="update_downloading">Descargando actualización…</string>
+    <string name="update_ready_to_install">La actualización está lista para instalar</string>
+    <string name="update_installing">Abriendo el instalador del sistema…</string>
+    <string name="update_error">No se pudo completar la actualización</string>
+    <string name="update_retry">Intentar de nuevo</string>
+    <string name="update_download">Descargar actualización</string>
+    <string name="update_install">Instalar actualización</string>
+    <string name="update_cancel_download">Cancelar descarga</string>
+    <string name="update_remind_later">Recordármelo mañana</string>
+    <string name="update_skip_version">Omitir esta versión</string>
+    <string name="update_no_release_notes">Esta versión no incluye notas de la versión.</string>
+    <string name="update_notification_available">Actualización de NReader disponible</string>
+    <string name="update_notification_downloading">Descargando actualización de NReader</string>
+    <string name="update_notification_ready">Actualización de NReader lista</string>
+    <string name="update_notification_failed">Error en la actualización de NReader</string>
+    <string name="update_notification_version" formatted="true">Versión %s</string>
+    <string name="update_current_version_format" formatted="true">Versión actual %s</string>
+    <string name="update_release_channel" formatted="true">Canal: %s</string>
+    <string name="update_channel_stable">Estable</string>
+    <string name="update_channel_prerelease">Preliminar</string>
+    <string name="update_size_format" formatted="true">Tamaño de descarga: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s de %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Última comprobación: %s</string>
+    <string name="update_last_checked_never">Última comprobación: Nunca</string>
+    <string name="update_error_metadata">No se pudo verificar la información de la versión. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="update_error_download">La descarga de la actualización se interrumpió o está incompleta. Inténtalo de nuevo.</string>
+    <string name="update_error_missing_file">La actualización descargada ya no está disponible. Descárgala de nuevo.</string>
+    <string name="update_error_install_validation">El paquete de actualización no se pudo validar. Descárgalo de nuevo desde la fuente configurada.</string>
+    <string name="update_error_retry_hint">No se pudo completar la actualización. Comprueba la conexión e inténtalo de nuevo.</string>
     <string name="copyURL">Copiar URL</string>
     <string name="add_bookmark">Agregar a marcadores</string>
     <string name="manage_bookmarks">Administrar los marcadores</string>

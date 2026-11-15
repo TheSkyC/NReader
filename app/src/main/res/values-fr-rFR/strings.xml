@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Envoyer un bug sur GitHub</string>
     <string name="github">GitHub</string>
     <string name="install">Installer</string>
+    <string name="channel4_name">Mises à jour de l’application</string>
+    <string name="channel4_description">Afficher la disponibilité, la progression et le résultat des mises à jour.</string>
     <string name="download_update_failed">Impossible de télécharger la mise à jour</string>
+    <string name="application_update">Mise à jour de l’application</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Recherche de mises à jour…</string>
+    <string name="update_up_to_date">Vous utilisez la dernière version</string>
+    <string name="update_available">Mise à jour disponible</string>
+    <string name="update_downloading">Téléchargement de la mise à jour…</string>
+    <string name="update_ready_to_install">La mise à jour est prête à être installée</string>
+    <string name="update_installing">Ouverture de l’installateur système…</string>
+    <string name="update_error">Impossible de terminer la mise à jour</string>
+    <string name="update_retry">Réessayer</string>
+    <string name="update_download">Télécharger la mise à jour</string>
+    <string name="update_install">Installer la mise à jour</string>
+    <string name="update_cancel_download">Annuler le téléchargement</string>
+    <string name="update_remind_later">Me le rappeler demain</string>
+    <string name="update_skip_version">Ignorer cette version</string>
+    <string name="update_no_release_notes">Cette version ne contient pas de notes de version.</string>
+    <string name="update_notification_available">Mise à jour NReader disponible</string>
+    <string name="update_notification_downloading">Téléchargement de la mise à jour NReader</string>
+    <string name="update_notification_ready">Mise à jour NReader prête</string>
+    <string name="update_notification_failed">Échec de la mise à jour NReader</string>
+    <string name="update_notification_version" formatted="true">Version %s</string>
+    <string name="update_current_version_format" formatted="true">Version actuelle %s</string>
+    <string name="update_release_channel" formatted="true">Canal : %s</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_prerelease">Préversion</string>
+    <string name="update_size_format" formatted="true">Taille du téléchargement : %s</string>
+    <string name="update_progress_format" formatted="true">%1$s sur %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Dernière vérification : %s</string>
+    <string name="update_last_checked_never">Dernière vérification : Jamais</string>
+    <string name="update_error_metadata">Les informations de version n’ont pas pu être vérifiées. Vérifiez votre connexion et réessayez.</string>
+    <string name="update_error_download">Le téléchargement de la mise à jour a été interrompu ou est incomplet. Réessayez.</string>
+    <string name="update_error_missing_file">La mise à jour téléchargée n’est plus disponible. Téléchargez-la à nouveau.</string>
+    <string name="update_error_install_validation">Le paquet de mise à jour n’a pas pu être validé. Téléchargez-le à nouveau depuis la source configurée.</string>
+    <string name="update_error_retry_hint">La mise à jour n’a pas pu être terminée. Vérifiez votre connexion et réessayez.</string>
     <string name="copyURL">Copier l\'URL</string>
     <string name="add_bookmark">Ajouter un signet</string>
     <string name="manage_bookmarks">Gérer les signets</string>

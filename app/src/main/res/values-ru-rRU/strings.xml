@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Отправить баг на GitHub</string>
     <string name="github">GitHub</string>
     <string name="install">Установить</string>
-    <string name="download_update_failed">Неудалось загрузить обновлённую версию</string>
+    <string name="channel4_name">Обновления приложения</string>
+    <string name="channel4_description">Показывать доступность, ход и результаты обновлений приложения.</string>
+    <string name="download_update_failed">Не удалось загрузить обновлённую версию</string>
+    <string name="application_update">Обновление приложения</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Проверка обновлений…</string>
+    <string name="update_up_to_date">Установлена последняя версия</string>
+    <string name="update_available">Доступно обновление</string>
+    <string name="update_downloading">Загрузка обновления…</string>
+    <string name="update_ready_to_install">Обновление готово к установке</string>
+    <string name="update_installing">Открытие системного установщика…</string>
+    <string name="update_error">Не удалось завершить обновление</string>
+    <string name="update_retry">Повторить</string>
+    <string name="update_download">Загрузить обновление</string>
+    <string name="update_install">Установить обновление</string>
+    <string name="update_cancel_download">Отменить загрузку</string>
+    <string name="update_remind_later">Напомнить завтра</string>
+    <string name="update_skip_version">Пропустить эту версию</string>
+    <string name="update_no_release_notes">В этой версии нет примечаний к выпуску.</string>
+    <string name="update_notification_available">Доступно обновление NReader</string>
+    <string name="update_notification_downloading">Загрузка обновления NReader</string>
+    <string name="update_notification_ready">Обновление NReader готово</string>
+    <string name="update_notification_failed">Ошибка обновления NReader</string>
+    <string name="update_notification_version" formatted="true">Версия %s</string>
+    <string name="update_current_version_format" formatted="true">Текущая версия %s</string>
+    <string name="update_release_channel" formatted="true">Канал: %s</string>
+    <string name="update_channel_stable">Стабильный</string>
+    <string name="update_channel_prerelease">Предварительная версия</string>
+    <string name="update_size_format" formatted="true">Размер загрузки: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s из %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Последняя проверка: %s</string>
+    <string name="update_last_checked_never">Последняя проверка: Никогда</string>
+    <string name="update_error_metadata">Не удалось проверить сведения о выпуске. Проверьте подключение и повторите попытку.</string>
+    <string name="update_error_download">Загрузка обновления прервана или завершена не полностью. Повторите попытку.</string>
+    <string name="update_error_missing_file">Загруженное обновление больше недоступно. Загрузите его снова.</string>
+    <string name="update_error_install_validation">Пакет обновления не прошёл проверку. Загрузите его снова из настроенного источника.</string>
+    <string name="update_error_retry_hint">Не удалось завершить обновление. Проверьте подключение и повторите попытку.</string>
     <string name="copyURL">Копировать URL</string>
     <string name="add_bookmark">Добавить закладку</string>
     <string name="manage_bookmarks">Управлять закладками</string>

@@ -200,7 +200,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
 
         Preference updateSettings = Objects.requireNonNull(findPreference(getString(R.string.preference_key_update_settings)));
-        updateSettings.setVisible(!BuildConfig.UPDATE_REPOSITORY.isEmpty());
+        updateSettings.setVisible(!BuildConfig.UPDATE_REPOSITORY.isEmpty() || !BuildConfig.UPDATE_ENDPOINT.isEmpty());
 
         fillRoba();
 

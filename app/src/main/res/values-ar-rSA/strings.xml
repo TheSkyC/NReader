@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">أَبلغ عن عيب في GitHub</string>
     <string name="github">جيتهاب</string>
     <string name="install">ثبِّت</string>
-    <string name="download_update_failed">تعذر تنزيل الإصدار المُحدَّث</string>
+    <string name="channel4_name">تحديثات التطبيقات</string>
+    <string name="channel4_description">عرض توفر تحديث التطبيق وتقدمه ونتيجته.</string>
+    <string name="download_update_failed">تعذّر تنزيل الإصدار المحدّث</string>
+    <string name="application_update">تحديث التطبيق</string>
+    <string name="update_version_format_short" formatted="true">%1$s ← %2$s</string>
+    <string name="update_checking">جارٍ البحث عن تحديثات…</string>
+    <string name="update_up_to_date">التطبيق محدّث</string>
+    <string name="update_available">يتوفر تحديث</string>
+    <string name="update_downloading">جارٍ تنزيل التحديث…</string>
+    <string name="update_ready_to_install">التحديث جاهز للتثبيت</string>
+    <string name="update_installing">جارٍ فتح مُثبّت النظام…</string>
+    <string name="update_error">تعذّر إكمال التحديث</string>
+    <string name="update_retry">حاول مجددًا</string>
+    <string name="update_download">تنزيل التحديث</string>
+    <string name="update_install">تثبيت التحديث</string>
+    <string name="update_cancel_download">إلغاء التنزيل</string>
+    <string name="update_remind_later">ذكّرني غدًا</string>
+    <string name="update_skip_version">تخطَّ هذا الإصدار</string>
+    <string name="update_no_release_notes">لا تتضمن هذه النسخة ملاحظات إصدار.</string>
+    <string name="update_notification_available">يتوفر تحديث لـ NReader</string>
+    <string name="update_notification_downloading">جارٍ تنزيل تحديث NReader</string>
+    <string name="update_notification_ready">تحديث NReader جاهز</string>
+    <string name="update_notification_failed">فشل تحديث NReader</string>
+    <string name="update_notification_version" formatted="true">الإصدار %s</string>
+    <string name="update_current_version_format" formatted="true">الإصدار الحالي %s</string>
+    <string name="update_release_channel" formatted="true">القناة: %s</string>
+    <string name="update_channel_stable">مستقر</string>
+    <string name="update_channel_prerelease">إصدار تجريبي</string>
+    <string name="update_size_format" formatted="true">حجم التنزيل: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s من %2$s</string>
+    <string name="update_last_checked_format" formatted="true">آخر فحص: %s</string>
+    <string name="update_last_checked_never">آخر فحص: لم يتم بعد</string>
+    <string name="update_error_metadata">تعذّر التحقق من معلومات الإصدار. تحقّق من الاتصال وحاول مجددًا.</string>
+    <string name="update_error_download">توقّف تنزيل التحديث أو اكتمل بشكل غير صحيح. حاول مجددًا.</string>
+    <string name="update_error_missing_file">لم يعد التحديث الذي تم تنزيله متاحًا. نزّله مرة أخرى.</string>
+    <string name="update_error_install_validation">فشل التحقق من حزمة التحديث. نزّلها مرة أخرى من المصدر المكوّن.</string>
+    <string name="update_error_retry_hint">تعذّر إكمال التحديث. تحقّق من الاتصال وحاول مجددًا.</string>
     <string name="copyURL">اِنسَخ الرابط</string>
     <string name="add_bookmark">أَضف إلى العلامات</string>
     <string name="manage_bookmarks">سيِّر العلامات</string>

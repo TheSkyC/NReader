@@ -38,7 +38,7 @@ public final class UpdateCheckWorker extends Worker {
     }
 
     public static void schedule(@NonNull Context context) {
-        if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
+        if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) return;
         Constraints constraints = new Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build();
@@ -64,6 +64,7 @@ public final class UpdateCheckWorker extends Worker {
         if (!Global.shouldCheckForUpdates(context)) return Result.success();
         UpdateStateStore stateStore = new UpdateStateStore(context);
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(context);
+        metadataStore.markAttempt(System.currentTimeMillis());
         stateStore.save(UpdateState.checking(System.currentTimeMillis()));
         try {
             String json = fetchReleaseJson(metadataStore);
@@ -72,6 +73,7 @@ public final class UpdateCheckWorker extends Worker {
                 release = VersionChecker.parseVersionJson(reader, Global.isEnableBeta(), BuildConfig.FLAVOR);
             }
             if (release == null) {
+                metadataStore.markSuccessfulCheck(System.currentTimeMillis());
                 stateStore.save(UpdateState.idle(System.currentTimeMillis()));
                 return Result.success();
             }
@@ -79,11 +81,21 @@ public final class UpdateCheckWorker extends Worker {
                 VersionChecker.GitHubRelease manifestRelease = fetchManifest(release, context);
                 if (manifestRelease != null) release = manifestRelease;
             }
-            if (release.downloadUrl == null || !release.isNewerThenVersion(BuildConfig.VERSION_NAME)) {
+            if (release.downloadUrl == null || !release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
+                metadataStore.markSuccessfulCheck(System.currentTimeMillis());
                 stateStore.save(UpdateState.idle(System.currentTimeMillis()));
                 return Result.success();
             }
-            metadataStore.setSelectedSha256(release.sha256);
+            metadataStore.saveSelectedRelease(
+                release.versionCode,
+                release.releaseVersionCode,
+                release.downloadUrl,
+                release.body,
+                release.beta,
+                release.sha256,
+                release.sizeBytes
+            );
+            metadataStore.markSuccessfulCheck(System.currentTimeMillis());
             UpdateState available = UpdateState.available(release.versionCode, System.currentTimeMillis());
             stateStore.save(available);
             UpdateNotification.publish(context, available);
@@ -96,13 +108,19 @@ public final class UpdateCheckWorker extends Worker {
 
     @NonNull
     private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore) throws IOException {
+        return fetchReleaseJson(metadataStore, false);
+    }
+
+    @NonNull
+    private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional) throws IOException {
         Request.Builder builder = new Request.Builder()
-            .url("https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases")
+            .url(releaseApiUrl())
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
-        if (metadataStore.getEtag() != null) builder.header("If-None-Match", metadataStore.getEtag());
+        if (!unconditional && metadataStore.getEtag() != null) builder.header("If-None-Match", metadataStore.getEtag());
         try (Response response = client.newCall(builder.build()).execute()) {
             if (response.code() == 304 && metadataStore.getBody() != null) return metadataStore.getBody();
+            if (response.code() == 304) return fetchReleaseJson(metadataStore, true);
             if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
             if (response.body().contentLength() > 2L * 1024L * 1024L) throw new IOException("Metadata too large");
             String body = response.body().string();
@@ -115,6 +133,9 @@ public final class UpdateCheckWorker extends Worker {
         @NonNull VersionChecker.GitHubRelease apiRelease,
         @NonNull Context context
     ) throws IOException {
+        if (apiRelease.manifestUrl == null || !VersionChecker.isAllowedUpdateUrl(apiRelease.manifestUrl)) {
+            return null;
+        }
         try (Response response = client.newCall(new Request.Builder()
             .url(apiRelease.manifestUrl)
             .header("Accept", "application/json")
@@ -131,5 +152,11 @@ public final class UpdateCheckWorker extends Worker {
                 );
             }
         }
+    }
+
+    @NonNull
+    private static String releaseApiUrl() {
+        if (!BuildConfig.UPDATE_ENDPOINT.isEmpty()) return BuildConfig.UPDATE_ENDPOINT;
+        return "https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases";
     }
 }

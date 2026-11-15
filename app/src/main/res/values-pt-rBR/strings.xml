@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Enviar bug no GitHub</string>
     <string name="github">GitHub</string>
     <string name="install">Instalar</string>
-    <string name="download_update_failed">Não foi possível baixar a versão mais recente</string>
+    <string name="channel4_name">Atualizações do aplicativo</string>
+    <string name="channel4_description">Mostrar disponibilidade, progresso e resultados das atualizações.</string>
+    <string name="download_update_failed">Não foi possível baixar a versão atualizada</string>
+    <string name="application_update">Atualização do aplicativo</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Verificando atualizações…</string>
+    <string name="update_up_to_date">Você está na versão mais recente</string>
+    <string name="update_available">Atualização disponível</string>
+    <string name="update_downloading">Baixando atualização…</string>
+    <string name="update_ready_to_install">A atualização está pronta para instalar</string>
+    <string name="update_installing">Abrindo o instalador do sistema…</string>
+    <string name="update_error">Não foi possível concluir a atualização</string>
+    <string name="update_retry">Tentar novamente</string>
+    <string name="update_download">Baixar atualização</string>
+    <string name="update_install">Instalar atualização</string>
+    <string name="update_cancel_download">Cancelar download</string>
+    <string name="update_remind_later">Lembrar amanhã</string>
+    <string name="update_skip_version">Ignorar esta versão</string>
+    <string name="update_no_release_notes">Esta versão não inclui notas da versão.</string>
+    <string name="update_notification_available">Atualização do NReader disponível</string>
+    <string name="update_notification_downloading">Baixando atualização do NReader</string>
+    <string name="update_notification_ready">Atualização do NReader pronta</string>
+    <string name="update_notification_failed">Falha na atualização do NReader</string>
+    <string name="update_notification_version" formatted="true">Versão %s</string>
+    <string name="update_current_version_format" formatted="true">Versão atual %s</string>
+    <string name="update_release_channel" formatted="true">Canal: %s</string>
+    <string name="update_channel_stable">Estável</string>
+    <string name="update_channel_prerelease">Pré-lançamento</string>
+    <string name="update_size_format" formatted="true">Tamanho do download: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s de %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Última verificação: %s</string>
+    <string name="update_last_checked_never">Última verificação: Nunca</string>
+    <string name="update_error_metadata">Não foi possível verificar as informações da versão. Verifique a conexão e tente novamente.</string>
+    <string name="update_error_download">O download da atualização foi interrompido ou está incompleto. Tente novamente.</string>
+    <string name="update_error_missing_file">A atualização baixada não está mais disponível. Baixe-a novamente.</string>
+    <string name="update_error_install_validation">O pacote de atualização não passou na validação. Baixe-o novamente da fonte configurada.</string>
+    <string name="update_error_retry_hint">Não foi possível concluir a atualização. Verifique a conexão e tente novamente.</string>
     <string name="copyURL">Copiar URL</string>
     <string name="add_bookmark">Adicionar marcador</string>
     <string name="manage_bookmarks">Gerenciar marcadores</string>

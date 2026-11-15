@@ -143,7 +143,43 @@
     <string name="send_bug_on_github">Einen Fehler auf GitHub melden</string>
     <string name="github">GitHub</string>
     <string name="install">Installieren</string>
+    <string name="channel4_name">App-Updates</string>
+    <string name="channel4_description">Verfügbarkeit, Fortschritt und Ergebnis von App-Updates anzeigen.</string>
     <string name="download_update_failed">Update konnte nicht heruntergeladen werden</string>
+    <string name="application_update">App-Update</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Suche nach Updates…</string>
+    <string name="update_up_to_date">Du hast die aktuelle Version</string>
+    <string name="update_available">Update verfügbar</string>
+    <string name="update_downloading">Update wird heruntergeladen…</string>
+    <string name="update_ready_to_install">Update ist bereit zur Installation</string>
+    <string name="update_installing">Systeminstaller wird geöffnet…</string>
+    <string name="update_error">Update konnte nicht abgeschlossen werden</string>
+    <string name="update_retry">Erneut versuchen</string>
+    <string name="update_download">Update herunterladen</string>
+    <string name="update_install">Update installieren</string>
+    <string name="update_cancel_download">Download abbrechen</string>
+    <string name="update_remind_later">Morgen erinnern</string>
+    <string name="update_skip_version">Diese Version überspringen</string>
+    <string name="update_no_release_notes">Für diese Version gibt es keine Versionshinweise.</string>
+    <string name="update_notification_available">NReader-Update verfügbar</string>
+    <string name="update_notification_downloading">NReader-Update wird heruntergeladen</string>
+    <string name="update_notification_ready">NReader-Update bereit</string>
+    <string name="update_notification_failed">NReader-Update fehlgeschlagen</string>
+    <string name="update_notification_version" formatted="true">Version %s</string>
+    <string name="update_current_version_format" formatted="true">Aktuelle Version %s</string>
+    <string name="update_release_channel" formatted="true">Kanal: %s</string>
+    <string name="update_channel_stable">Stabil</string>
+    <string name="update_channel_prerelease">Vorabversion</string>
+    <string name="update_size_format" formatted="true">Downloadgröße: %s</string>
+    <string name="update_progress_format" formatted="true">%1$s von %2$s</string>
+    <string name="update_last_checked_format" formatted="true">Zuletzt geprüft: %s</string>
+    <string name="update_last_checked_never">Zuletzt geprüft: Nie</string>
+    <string name="update_error_metadata">Die Versionsinformationen konnten nicht verifiziert werden. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="update_error_download">Der Update-Download wurde unterbrochen oder ist unvollständig. Versuche es erneut.</string>
+    <string name="update_error_missing_file">Das heruntergeladene Update ist nicht mehr verfügbar. Lade es erneut herunter.</string>
+    <string name="update_error_install_validation">Das Update-Paket konnte nicht validiert werden. Lade es erneut aus der konfigurierten Quelle herunter.</string>
+    <string name="update_error_retry_hint">Das Update konnte nicht abgeschlossen werden. Prüfe deine Verbindung und versuche es erneut.</string>
     <string name="copyURL">URL kopieren</string>
     <string name="add_bookmark">Lesezeichen hinzufügen</string>
     <string name="manage_bookmarks">Lesezeichen verwalten</string>
