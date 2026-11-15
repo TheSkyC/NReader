@@ -32,6 +32,7 @@
         tools:ignore="UnusedAttribute">
 
         <activity android:name=".StatusManagerActivity" />
+        <activity android:name=".UpdateCenterActivity" android:exported="false" />
         <activity android:name=".AccountsActivity" android:exported="false" />
         <activity
             android:name=".PINActivity"

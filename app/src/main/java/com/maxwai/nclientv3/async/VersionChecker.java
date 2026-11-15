@@ -13,6 +13,7 @@ import android.util.JsonToken;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -39,24 +40,36 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class VersionChecker {
+    public interface Listener {
+        void onUpdateState(@NonNull UpdateState state);
+        void onReleaseAvailable(@NonNull GitHubRelease release);
+    }
+
     private static final String RELEASE_API_URL = "https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases";
     private static final String LATEST_RELEASE_URL = "https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest";
     private static String latest = null;
     private final AppCompatActivity context;
     private final UpdateStateStore stateStore;
+    @Nullable private final Listener listener;
+    @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
+        this(context, silent, null);
+    }
+
+    public VersionChecker(AppCompatActivity context, final boolean silent, @Nullable Listener listener) {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
         this.stateStore = new UpdateStateStore(context);
+        this.listener = listener;
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
         if (latest != null && Global.hasStoragePermission(context)) {
             downloadVersion(latest);
             latest = null;
             return;
         }
-        stateStore.save(UpdateState.checking(System.currentTimeMillis()));
+        saveState(UpdateState.checking(System.currentTimeMillis()));
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
         Global.getClient(context).newCall(new Request.Builder().url(RELEASE_API_URL).build()).enqueue(new Callback() {
             @Override
@@ -91,12 +104,14 @@ public class VersionChecker {
                             newer = false;
                         }
                         if (downloadUrl == null || !newer) {
-                            stateStore.save(UpdateState.idle(System.currentTimeMillis()));
+                            saveState(UpdateState.idle(System.currentTimeMillis()));
                             if (!silent)
                                 Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
                         } else {
-                            stateStore.save(UpdateState.available(finalRelease.versionCode, System.currentTimeMillis()));
-                            createDialog(finalRelease);
+                            latestRelease = finalRelease;
+                            saveState(UpdateState.available(finalRelease.versionCode, System.currentTimeMillis()));
+                            if (listener == null) createDialog(finalRelease);
+                            else context.runOnUiThread(() -> listener.onReleaseAvailable(finalRelease));
                         }
                     });
                 } catch (IOException | RuntimeException e) {
@@ -107,12 +122,36 @@ public class VersionChecker {
     }
 
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
-        stateStore.save(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
+        saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
         context.runOnUiThread(() -> {
             LogUtility.e(exception.getLocalizedMessage(), exception);
             if (!silent)
                 Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void saveState(@NonNull UpdateState state) {
+        stateStore.save(state);
+        if (listener != null) {
+            context.runOnUiThread(() -> listener.onUpdateState(state));
+        }
+    }
+
+    public void startDownload() {
+        GitHubRelease release = latestRelease;
+        if (release == null || release.versionCode == null) return;
+        downloadVersion(release.versionCode);
+    }
+
+    public void installReadyUpdate() {
+        UpdateState state = stateStore.load();
+        if (!state.isReadyToInstall() || state.getFilePath() == null) return;
+        File file = new File(state.getFilePath());
+        if (!file.isFile()) {
+            saveState(UpdateState.error(state.getVersion(), state.getFilePath(), "missing_file", System.currentTimeMillis()));
+            return;
+        }
+        installApp(file);
     }
 
     static GitHubRelease parseVersionJson(JsonReader jr, boolean withPrerelease, String flavor) throws IOException {
@@ -280,7 +319,7 @@ public class VersionChecker {
                     Global.UPDATEFOLDER.mkdirs();
                     //noinspection ResultOfMethodCallIgnored
                     partial.createNewFile();
-                    stateStore.save(UpdateState.downloading(
+                    saveState(UpdateState.downloading(
                         latestVersion,
                         partial.getAbsolutePath(),
                         0L,
@@ -308,7 +347,7 @@ public class VersionChecker {
                     if (!partial.renameTo(f)) {
                         throw new IOException("Unable to finalize downloaded update");
                     }
-                    stateStore.save(UpdateState.readyToInstall(
+                    saveState(UpdateState.readyToInstall(
                         latestVersion,
                         f.getAbsolutePath(),
                         f.length(),
@@ -320,7 +359,7 @@ public class VersionChecker {
                     partial.delete();
                     //noinspection ResultOfMethodCallIgnored
                     f.delete();
-                    stateStore.save(UpdateState.error(
+                    saveState(UpdateState.error(
                         latestVersion,
                         f.getAbsolutePath(),
                         "download",
@@ -353,14 +392,14 @@ public class VersionChecker {
             }
             UpdateState savedState = stateStore.load();
             String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
-            stateStore.save(UpdateState.installing(version, f.getAbsolutePath(), System.currentTimeMillis()));
+            saveState(UpdateState.installing(version, f.getAbsolutePath(), System.currentTimeMillis()));
             Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", f);
             @SuppressLint("RequestInstallPackagesPolicy") Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
             intent.setData(apkUri);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             context.startActivity(intent);
         } catch (IOException | IllegalArgumentException | SecurityException exception) {
-            stateStore.save(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
+            saveState(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
             context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());
 
         }
@@ -371,6 +410,11 @@ public class VersionChecker {
         private final static String regex = "^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(pre\\d+|(?:alpha|beta|rc)\\.\\d+))?$";
         String versionCode, body, downloadUrl;
         boolean beta;
+
+        @Nullable public String getVersionCode() { return versionCode; }
+        @Nullable public String getBody() { return body; }
+        @Nullable public String getDownloadUrl() { return downloadUrl; }
+        public boolean isBeta() { return beta; }
 
         public boolean isNewerThenVersion(String currentVersion) throws IllegalArgumentException {
             ParsedVersion current = ParsedVersion.parse(currentVersion, "Current");

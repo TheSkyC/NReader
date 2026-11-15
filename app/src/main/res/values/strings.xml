@@ -311,6 +311,19 @@
     <string name="github">GitHub</string>
     <string name="install">Install</string>
     <string name="download_update_failed">Unable to download updated version</string>
+    <string name="application_update">Application update</string>
+    <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You are up to date</string>
+    <string name="update_available">Update available</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_ready_to_install">Update is ready to install</string>
+    <string name="update_installing">Opening system installer…</string>
+    <string name="update_error">Could not complete the update</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_download">Download update</string>
+    <string name="update_install">Install update</string>
+    <string name="update_no_release_notes">This release does not include release notes.</string>
     <string name="copyURL">Copy URL</string>
     <string name="add_bookmark">Add bookmark</string>
     <string name="manage_bookmarks">Manage bookmarks</string>

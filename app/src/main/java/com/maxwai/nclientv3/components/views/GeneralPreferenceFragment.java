@@ -39,6 +39,7 @@ import com.maxwai.nclientv3.AccountLoginActivity;
 import com.maxwai.nclientv3.AccountsActivity;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.SettingsActivity;
+import com.maxwai.nclientv3.UpdateCenterActivity;
 import com.maxwai.nclientv3.StatusManagerActivity;
 import com.maxwai.nclientv3.async.MetadataFetcher;
 import com.maxwai.nclientv3.async.VersionChecker;
@@ -391,7 +392,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         {
             Preference update = Objects.requireNonNull(findPreference(getString(R.string.preference_key_update)));
             update.setOnPreferenceClickListener(preference -> {
-                new VersionChecker(act, false);
+                act.startActivity(new Intent(act, UpdateCenterActivity.class));
                 return true;
             });
         }
