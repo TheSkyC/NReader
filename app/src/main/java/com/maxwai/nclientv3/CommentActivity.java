@@ -1,3 +1,4 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3;
 
 import android.content.res.Configuration;
@@ -64,7 +65,8 @@ public class CommentActivity extends BaseActivity {
         findViewById(R.id.card).setVisibility(Login.isLogged() ? View.VISIBLE : View.GONE);
         findViewById(R.id.sendButton).setOnClickListener(v -> {
             if (commentText.getText().toString().length() < MINIUM_MESSAGE_LENGHT) {
-                Toast.makeText(this, getString(R.string.minimum_comment_length, MINIUM_MESSAGE_LENGHT), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getResources().getQuantityString(R.plurals.minimum_comment_length,
+                    MINIUM_MESSAGE_LENGHT, MINIUM_MESSAGE_LENGHT), Toast.LENGTH_SHORT).show();
                 return;
             }
             String submitUrl = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/comments", id);

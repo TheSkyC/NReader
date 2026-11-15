@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Les commentaires ne sont pas disponibles</string>
     <string name="cover_local_favorite_selected">Dans les favoris locaux</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Manquantes (%1$d) : %2$s\nEndommagées (%3$d) : %4$s</string>
     <string name="download_repair_unavailable">La réparation est indisponible car l\'identité de la galerie, le dossier enregistré, les métadonnées ou la source ne peuvent pas être vérifiés.</string>
     <string name="filter_download_state">Filtrer par état de téléchargement</string>
-    <string name="filter_all">Tous les téléchargements</string>
+    <string name="filter_all">Tous les états de téléchargement</string>
     <string name="filter_complete">Complet</string>
-    <string name="filter_partial">Partiel</string>
+    <string name="filter_partial">Pages manquantes</string>
     <string name="filter_damaged">Endommagé</string>
-    <string name="filter_unverified">Non vérifié</string>
+    <string name="filter_unverified">Intégralité inconnue</string>
     <string name="filter_absent">Aucune copie locale</string>
     <string name="filter_personal_state">Filtrer par état personnel</string>
-    <string name="filter_favorite_only">Favoris uniquement</string>
-    <string name="filter_reading_only">Lecture en cours</string>
-    <string name="filter_unread_only">Non lu</string>
+    <string name="filter_favorite_only">Favoris locaux uniquement</string>
+    <string name="filter_reading_only">Avec progression de lecture</string>
+    <string name="filter_unread_only">Sans progression de lecture</string>
     <string name="filter_custom_status_only">Statut personnalisé attribué</string>
     <string name="filter_loaded_results">Filtrer les résultats chargés</string>
     <string name="filter_downloaded_only">Téléchargé localement</string>
-    <string name="backup_restore_preview">Vérifier la restauration</string>
-    <string name="backup_restore_preview_message">Cette sauvegarde contient %1$d lignes de base de données. %2$s. Continuer la restauration ?</string>
+    <string name="backup_restore_preview">Restaurer une sauvegarde</string>
+    <string name="backup_restore_preview_message">Enregistrements de la base de données : %1$d. %2$s.\n\nLa restauration remplace la base de données actuelle, y compris les favoris, l’historique et les marque-pages, et importe les paramètres de cette sauvegarde. Les images téléchargées restent inchangées.\n\nRestaurer cette sauvegarde ?</string>
     <string name="backup_integrity_verified">Intégrité vérifiée</string>
-    <string name="backup_legacy_format">Ancien format sans manifeste d\'intégrité</string>
-    <string name="restore_snapshot">Restaurer la base de données précédente</string>
-    <string name="restore_snapshot_message">Remplacer la base de données actuelle et les paramètres exportés par l\'instantané enregistré avant la dernière importation ? Les fichiers téléchargés ne sont pas modifiés.</string>
-    <string name="restore_snapshot_summary">Âge de l\'instantané : %1$d jours</string>
+    <string name="backup_legacy_format">Ancienne sauvegarde sans informations d’intégrité</string>
+    <string name="restore_snapshot">Restaurer l’instantané précédant l’importation</string>
+    <string name="restore_snapshot_message">Remplacer la base de données actuelle et les paramètres sauvegardés par l’instantané créé avant la dernière importation ? Les images téléchargées restent inchangées.</string>
     <string name="restore_snapshot_unavailable">Aucun instantané de restauration récent disponible.</string>
     <string name="restore_snapshot_checking">Vérification de l\'instantané de restauration…</string>
 </resources>

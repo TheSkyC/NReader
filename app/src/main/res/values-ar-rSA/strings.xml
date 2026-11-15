@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">جارٍ تحميل تفاصيل المعرض</string>
     <string name="setting_on_ignore_tags">لن يُستعلم عن الوسوم الأخرى إذا اختير وسام من قائمة الأعمال (باستثناء اللغة)</string>
@@ -13,7 +14,7 @@
     <string name="title_activity_gallery">عمل</string>
     <string name="title_activity_zoom">نشاط التقريب</string>
     <string name="title_activity_tag_filter">تصفية الوسوم</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">مفتاح API</string>
     <string name="parodies">مُحاكَيات</string>
     <string name="characters">شخصيات</string>
     <string name="tags">وسوم</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">تُستخدم لإظهار مدى تقدُّم إنشاء الملف المضغوط ZIP</string>
     <string name="channel2_title">جارٍ إنشاء المستند المحمول:</string>
     <string name="channel3_title">جارٍ إنشاء الملف المضغوط:</string>
-    <string name="tags_max_reached" formatted="true">يمكنك الحصول على %d كعددِ وسومٍ مختارةٍ قصويٍّ.</string>
     <string name="only_english">الإنجليزية فقط</string>
     <string name="only_japanese">اليابانية فقط</string>
     <string name="only_chinese">الصينية فقط</string>
     <string name="all_languages">كل اللغات</string>
     <string name="unknown_language">لغة غير معروفة</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="setting_api_key_title">مفتاح API</string>
     <string name="setting_api_key_summary_missing">أنشئ مفتاح API من صفحة إعدادات الحساب على الموقع، ثم الصقه في التطبيق.</string>
     <string name="setting_api_key_summary_valid">تم الحفظ والتحقق. افتح هذا الخيار لاستبدال المفتاح أو إزالته.</string>
     <string name="setting_api_key_summary_invalid">يوجد مفتاح API محفوظ، لكنه لم يعد صالحاً. افتح هذا الخيار لاستبداله أو إزالته.</string>
     <string name="login_api_key_intro_title">استخدام مفتاح API</string>
-    <string name="login_api_key_intro_message">يستخدم موقع nhentai الآن مفاتيح API لإتاحة الوصول للتطبيق. لتسجيل الدخول، افتح صفحة إعدادات الحساب في المتصفح وأنشئ مفتاح API، ثم عد إلى هنا والصق المفتاح.</string>
+    <string name="login_api_key_intro_message">لاستخدام مفتاح API، افتح إعدادات حساب nhentai في المتصفح وأنشئ مفتاحًا، ثم عد إلى هنا للصقه.</string>
     <string name="login_open_api_key_page">فتح صفحة مفاتيح API</string>
     <string name="login_api_key_input_title">الصق مفتاح API</string>
-    <string name="login_api_key_input_message">يُتحقق من المفتاح عبر واجهة API v2 قبل حفظه.</string>
+    <string name="login_api_key_input_message">يتم التحقق من صلاحية المفتاح قبل حفظه.</string>
     <string name="login_api_key_hint">مفتاح API</string>
     <string name="login_validate_and_save">التحقق والحفظ</string>
     <string name="login_api_key_saved">تم حفظ مفتاح API</string>
@@ -54,12 +54,12 @@
     <string name="login_status_api_key_saved">يوجد مفتاح API تم التحقق منه ومحفوظ على هذا الجهاز.</string>
     <string name="login_status_api_key_invalid">يجب استبدال مفتاح API المحفوظ أو إزالته.</string>
     <string name="remove_api_key">إزالة مفتاح API</string>
-    <string name="favorite_online_manga">الأعمال المُفضَّلة عبر الشابكة</string>
+    <string name="favorite_online_manga">المفضلة عبر الإنترنت</string>
     <string name="online_tags">الوسوم عبر الشابكة</string>
     <string name="add_to_online_favorite">أَضف إلى مفضَّلاتك عبر الشابكة</string>
     <string name="remove_from_online_favorites">اِحذف من مفضَّلاتك عبر الشابكة</string>
-    <string name="add_to_online_blacklist">أتود الإضافة إلى لائحتك السوداء عبر الشابكة؟</string>
-    <string name="tag_already_in_blacklist">الوسم موجود في اللائحة السوداء سلفًا</string>
+    <string name="add_to_online_blacklist">هل تريد إضافة هذا الوسم إلى قائمة الحظر عبر الإنترنت؟</string>
+    <string name="tag_already_in_blacklist">هذا الوسم موجود في قائمة الحظر بالفعل.</string>
     <string name="are_you_sure">أمتأكد؟</string>
     <string name="thumbnail">صُويرة</string>
     <string name="settings">إعدادات</string>
@@ -94,14 +94,12 @@
     <string name="applied_filters">التصفيات المُطبَّقة</string>
     <string name="show_related">أَظهر أعمال ذات صلة</string>
     <string name="random_manga">عمل عشوائي</string>
-    <string name="save_page">اِحفظ الصفحة</string>
-    <string name="page_count_format" formatted="true">%d صفحةً(صفحاتٍ)</string>
+    <string name="save_page">حفظ الصورة</string>
     <string name="upload_date_format" formatted="true">رُفِع بتاريخ %1$s عند الـ %2$s</string>
-    <string name="favorite_count_format" formatted="true">مُفضَّل عند %d أشخاص(شخصًا)</string>
-    <string name="favorite_manga">الأعمال المُفضَّلة</string>
+    <string name="favorite_manga">المفضلة المحلية</string>
     <string name="setting_on_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة لن تُعرض</string>
     <string name="setting_off_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة ستُضبَّب</string>
-    <string name="remove_ignored_galleries">اِحذف الأعمال المُتجاهلة</string>
+    <string name="remove_ignored_galleries">إخفاء الأعمال المتجاهلة</string>
     <string name="clear_tag_preferences">أَزِل إعدادات الوسم</string>
     <string name="check_for_update_on_startup">اِلتمس التحديثات عند تشغيل التطبيق</string>
     <string name="check_for_updates">اِلتمس التحديثات</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">إعدادات الصور</string>
     <string name="miscellaneous">مُنوَّعات</string>
     <string name="favorite_action_mode_title">إجراء بطاقة المفضلة</string>
-    <string name="favorite_action_local_primary">القلب أولاً</string>
-    <string name="favorite_action_online_primary">النجمة أولاً</string>
-    <string name="favorite_action_online_unavailable">اضبط مفتاح API صالحاً لاستخدام المفضلة عبر الإنترنت</string>
+    <string name="favorite_action_local_primary">النقر: المفضلة المحلية؛ الضغط المطوّل: المفضلة عبر الإنترنت</string>
+    <string name="favorite_action_online_primary">النقر: المفضلة عبر الإنترنت إن توفرت؛ الضغط المطوّل: المفضلة المحلية</string>
+    <string name="favorite_action_online_unavailable">سجّل الدخول أو أضف مفتاح API صالحًا لاستخدام المفضلة عبر الإنترنت.</string>
     <string name="favorite_action_local_accessibility">تبديل المفضلة المحلية</string>
     <string name="favorite_action_online_accessibility">تبديل المفضلة عبر الإنترنت</string>
     <string name="update_settings">إعدادات التحديثات</string>
-    <string name="online_favorite_manga">الأعمال المُفضَّلة عبر الشابكة</string>
+    <string name="online_favorite_manga">المفضلة عبر الإنترنت</string>
     <string name="cache_size_formatted">حجم الخبيئة: %.2f MB</string>
     <string name="cache_cleared">مُحيت الخبيئة</string>
-    <string name="sort_by_latest">اِفرِز حسب الحداثة</string>
+    <string name="sort_by_latest">الأحدث إضافة أولًا</string>
     <string name="edit">عدِّل</string>
     <string name="options">خيارات</string>
     <string name="keep_history">أَبق على تأريخ البحث</string>
@@ -142,7 +140,7 @@
     <string name="send">أَرسل</string>
     <string name="send_comment">أَرسل التعليق…</string>
     <string name="profile_picture">صورة الملف الشخصي</string>
-    <string name="send_bug_on_github">أَبلغ عن عيب في Github</string>
+    <string name="send_bug_on_github">أَبلغ عن عيب في GitHub</string>
     <string name="github">جيتهاب</string>
     <string name="install">ثبِّت</string>
     <string name="download_update_failed">تعذر تنزيل الإصدار المُحدَّث</string>
@@ -171,7 +169,7 @@
     <string name="cancel">أَلغ</string>
     <string name="no">لا</string>
     <string name="yes">نعم</string>
-    <string name="disable_lock_title">عطِّل إغلاق الشاشة أثناء القراءة</string>
+    <string name="disable_lock_title">إبقاء الشاشة مضاءة أثناء القراءة</string>
     <string name="download_all_galleries_in_this_page">نزِّل كل الأعمال في هذه الصفحة</string>
     <string name="download_all_galleries">نزِّل كل الأعمال</string>
     <string name="favorite_column_count">اِختر عدد أعمدة المُفضَّلات</string>
@@ -187,8 +185,8 @@
     <string name="start_page">صفحة البداية</string>
     <string name="end_page">صفحة النهاية</string>
     <string name="invalid_range_selected">النطاق المُختار غير صالح</string>
-    <string name="send_with_title">أتود إرساله بعنوانه؟</string>
-    <string name="caption_send_with_title">أتود إلحاق الرابط بالصورة كوصف لها؟</string>
+    <string name="send_with_title">مشاركة الصورة</string>
+    <string name="caption_send_with_title">هل تريد إرفاق رابط الصفحة عند مشاركة هذه الصورة؟</string>
     <string name="history_size">حجم التأريخ</string>
     <string name="history_size_summary">عيِّن عدد مدخلات التأريخ القصوي</string>
     <string name="view_history">اِعرِض التأريخ</string>
@@ -204,18 +202,18 @@
     <string name="zoom_one_column">فعِّل التقريب</string>
     <string name="insert_pin">أَدخِل الرقم السري</string>
     <string name="confirm_pin">أَكد الرقم السري</string>
-    <string name="setting_device_credentials">Enable Device Credentials to enter the app</string>
-    <string name="setting_device_credentials_low_sdk">Only available for Android 11 or higher</string>
-    <string name="use_device_credentials">Use Device Credentials</string>
+    <string name="setting_device_credentials">السماح بفتح التطبيق ببصمة الإصبع أو الوجه، أو برمز PIN أو نمط أو كلمة مرور قفل الجهاز.</string>
+    <string name="setting_device_credentials_low_sdk">يتطلب Android 11 أو إصدارًا أحدث</string>
+    <string name="use_device_credentials">استخدام مصادقة الجهاز</string>
     <string name="wrong_pin">الرقم المُدخَل خاطئ</string>
     <string name="rotate_image">أَدر الصورة</string>
     <string name="toggle_online_favorite">بدِّل التفضيل من عدمه عبر الشابكة</string>
     <string name="data_usage_settings">غيِّر إعدادات استخدام البيانات</string>
     <string name="mobile_data_usage_setting">إعدادات استخدام بيانات الجوال</string>
     <string name="wifi_data_usage_setting">إعدادات استخدام بيانات الشبكة اللاسلكية</string>
-    <string name="data_usage_thumb">نزِّل الصُّويرات دائمًا</string>
-    <string name="data_usage_full">نزِّل الصُّويرات أو الصور كاملة</string>
-    <string name="data_usage_no">لا تُنزِّل الصور</string>
+    <string name="data_usage_thumb">تحميل الصور المصغرة فقط</string>
+    <string name="data_usage_full">تحميل الصور المصغرة أو الكاملة حسب الحاجة</string>
+    <string name="data_usage_no">عدم تحميل الصور من الشبكة</string>
     <string name="enable_network_to_continue">فعِّل تنزيل الصور أو تغيير الشبكة لفتحها</string>
     <string name="id_tag">المُعرِّف %1$s</string>
     <string name="id_copied_to_clipboard">نُسخ المُعرِّف إلى الحافظة</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">لا يمكن استخدام الأبيض والأسود</string>
     <string name="change_status_title">اِختر وضعية جديدة:</string>
     <string name="remove_status">بدون</string>
-    <string name="name_too_short">الاسم بالغ القِصر</string>
+    <string name="name_too_short">أدخل اسمًا من حرفين على الأقل.</string>
     <string name="duplicated_name">الاسم موجود سلفًا</string>
     <string name="manage_statuses">سيِّر الوضعيات</string>
     <string name="update_status">حدِّث الوضعية:</string>
@@ -268,19 +266,18 @@
     <string name="title">العنوان</string>
     <string name="download_date">تاريخ التنزيل</string>
     <string name="page_count">عدد الصفحات</string>
-    <string name="artist">Artist</string>
-    <string name="group">Group</string>
+    <string name="artist">الفنان</string>
+    <string name="group">المجموعة</string>
     <string name="descending_order">تنازلي</string>
-    <string name="minimum_comment_length" formatted="true">يجب أن يحوي تعليقك على %d حروف على الأقل</string>
     <string name="change_scroll_type">غيِّر نمط التمرير</string>
     <string name="export_data">صدِّر البيانات</string>
     <string name="import_data">اِستورد البيانات</string>
     <string name="default_status_1">قيد القراءة</string>
     <string name="default_status_2">تم</string>
     <string name="default_status_3">مُعلَّق</string>
-    <string name="default_status_4">تُخلِّي عنه</string>
-    <string name="default_status_5">مُخطَّطة قراءته</string>
-    <string name="title_site_mirror">غيِّر الموقع المرآة</string>
+    <string name="default_status_4">مُتروك</string>
+    <string name="default_status_5">مُخطَّط لقراءته</string>
+    <string name="title_site_mirror">غيِّر مرآة الموقع</string>
     <string name="disguise_app_in_drawer">موِّه التطبيق في درج التطبيقات</string>
     <string name="summary_disguise_app">سيتنكَّر التطبيق بأيقونة آلة حاسبة (تجريبي)</string>
     <string name="app_name_fake_calculator">آلة حاسبة</string>
@@ -291,8 +288,8 @@
     <string name="custom_path">مسار مُخصَّص</string>
     <string name="insert_path">أدخل المسار:</string>
     <string name="requesting_storage_access">الولوج لوحدة التخزين مطلوب</string>
-    <string name="request_storage_manager_summary">بسبب بعض قيود الولوج لوحدة التخزين في نظام أندرويد 11، سيُطلب منك منح أذونات إضافية للتطبيق تمكُّنًا من استخدام المسارات المُخصَّصة. إذا أردت منح هذه الأذونات فالمرجو منك تفعيل الإعداد في الشاشة التالية.</string>
-    <string name="summary_beta">الانتقال إلى إصدار beta سيجعل من المستحيل عليك العودة إلى إصدار مُستقِر دون حذف التطبيق</string>
+    <string name="request_storage_manager_summary">في Android 11 والإصدارات الأحدث، تتطلب مسارات التنزيل المخصصة الوصول إلى جميع الملفات.\nاسمح بهذا الوصول في شاشة إعدادات النظام التالية لاستخدام مسار مخصص.</string>
+    <string name="summary_beta">قد تتطلب العودة إلى إصدار مستقر أقدم إلغاء تثبيت التطبيق. صدّر بياناتك قبل تبديل الإصدار.</string>
     <string name="navigation_settings_per_screen">إعدادات التنقُّل حسب الشاشة</string>
     <string name="downloaded_update_at" formatted="true">نُزِّل التحديث في %s</string>
     <string name="summary_offscreen_limit">عيِّن عدد الصور المراد تحميلها استباقيًّا خارج الشاشة أثناء قراءة عمل ما</string>
@@ -306,40 +303,40 @@
     <string name="import_finished">انتهى الاستيراد</string>
     <string name="system_default">الافتراضي للنظام</string>
     <string name="clear_cookies">امح الكوكيز</string>
-    <string name="fetching_cloudflare_token">جاري جلب رمز Cloudflare...</string>
-    <string name="exact_title_match_title">Exact tag match only</string>
-    <string name="exact_title_match_summary">Hide galleries which would appear in the site but doesn\'t contains all the tags searched</string>
-    <string name="hide">Hide</string>
-    <string name="shuffle_contentDescription">Random Gallery Button</string>
-    <string name="copy_logs">Copy logs to file</string>
-    <string name="copy_logs_summary">This will put all available logs of this App into a file. The available logs could extend multiple days. Also, it is possible that the logs contain personal information to be sure to check before publishing the file. Use this to attach logs to a Bug report.</string>
-    <string name="copy_logs_fail">Problem generating logfile</string>
+    <string name="fetching_cloudflare_token">جارٍ تجهيز التحقق من الموقع…</string>
+    <string name="exact_title_match_title">مطابقة جميع علامات البحث</string>
+    <string name="exact_title_match_summary">إخفاء الأعمال التي لا تتضمن جميع علامات البحث.</string>
+    <string name="hide">إخفاء</string>
+    <string name="shuffle_contentDescription">عمل عشوائي</string>
+    <string name="copy_logs">تصدير السجلات</string>
+    <string name="copy_logs_summary">حفظ سجلات التطبيق المتاحة في ملف لإرفاقه ببلاغ عن مشكلة. قد تشمل السجلات عدة أيام ومعلومات شخصية. راجع الملف قبل مشاركته.</string>
+    <string name="copy_logs_fail">تعذّر تصدير السجلات.</string>
     <string-array name="scroll_type">
         <item>أفقي</item>
         <item>عمودي</item>
     </string-array>
     <string-array name="theme">
-        <item>فاتحة</item>
-        <item>داكنة</item>
-        <item>True Black</item>
+        <item>فاتح</item>
+        <item>داكن</item>
+        <item>أسود خالص</item>
     </string-array>
     <string-array name="title_type_array">
         <item>الإنجليزية</item>
         <item>اليابانية</item>
-        <item>أنيق</item>
+        <item>العنوان المنقح</item>
     </string-array>
-    <string name="online_blacklist_add_error">Error adding to online blacklist</string>
-    <string name="clipboard_settings_error">Error copying settings into clipboard</string>
-    <string name="send_image_error">Error creating Image to send</string>
-    <string name="unlock">Unlock</string>
-    <string name="auth_error">Authentication error</string>
-    <string name="auth_title">Biometric login for NClient</string>
-    <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="online_blacklist_add_error">تعذّرت إضافة العلامة إلى قائمة الحظر عبر الإنترنت.</string>
+    <string name="clipboard_settings_error">تعذّر نسخ الإعدادات إلى الحافظة.</string>
+    <string name="send_image_error">تعذّر تجهيز الصورة للمشاركة.</string>
+    <string name="unlock">فتح القفل</string>
+    <string name="auth_error">تعذّر التحقق من الهوية</string>
+    <string name="auth_title">فتح قفل NReader</string>
+    <string name="auth_subtitle">تحقق من هويتك باستخدام المصادقة الحيوية أو قفل شاشة الجهاز.</string>
     <string name="continue_reading">متابعة القراءة</string>
     <string name="open_manual_bookmark">فتح العلامة اليدوية</string>
     <string name="pause_download">إيقاف التنزيل مؤقتًا</string>
     <string name="download_failed">فشل التنزيل</string>
-    <string name="download_error_authentication">تم رفض الوصول. تحقق من مفتاح API وأذونات الحساب.</string>
+    <string name="download_error_authentication">رُفض الوصول. تحقّق من تسجيل الدخول ومفتاح API قبل إعادة المحاولة.</string>
     <string name="download_error_rate_limit">طلبات كثيرة جدًا. انتظر قبل إعادة المحاولة.</string>
     <string name="download_error_storage">تعذرت كتابة الملفات. تحقق من المساحة المتاحة وأذونات التخزين.</string>
     <string name="download_error_not_found">المعرض أو الصفحة المطلوبة لم تعد متاحة.</string>
@@ -349,10 +346,10 @@
     <string name="state_local_favorite">مفضلة محلية</string>
     <string name="state_custom_status">الحالة: %1$s</string>
     <string name="state_reading_page">تمت القراءة حتى الصفحة %1$d</string>
-    <string name="state_download_complete">تم التنزيل</string>
-    <string name="state_download_partial">تنزيل جزئي</string>
+    <string name="state_download_complete">تم التنزيل بالكامل</string>
+    <string name="state_download_partial">صفحات ناقصة</string>
     <string name="state_download_damaged">تنزيل تالف</string>
-    <string name="state_download_unverified">الملفات المحلية غير متحقق منها</string>
+    <string name="state_download_unverified">اكتمال غير مؤكد</string>
     <string name="debug_mask_images">حجب الصور لتصحيح الأخطاء</string>
     <string name="debug_mask_images_summary">يغطي الأغلفة وصفحات القراءة بنمط مربعات معتم. يسري عند إعادة فتح الشاشة؛ لا يغير الملفات المنزلة.</string>
     <string name="list_columns_action">تبديل الأعمدة: %1$d → %2$d</string>
@@ -370,7 +367,7 @@
     <string name="accounts_use_guest">استخدم بدون حساب</string>
     <string name="accounts_manage">إدارة</string>
     <string name="accounts_manage_named">إدارة %1$s</string>
-    <string name="accounts_empty">قم بإضافة حساب لاستخدام المفضلة والعلامات عبر الإنترنت. تتم مشاركة التنزيلات وسجل القراءة على هذا الجهاز.</string>
+    <string name="accounts_empty">أضف حسابًا لاستخدام المفضلة والعلامات عبر الإنترنت. التنزيلات والمفضلة المحلية وسجل القراءة مشتركة على هذا الجهاز.</string>
     <string name="accounts_loading">جارٍ تحميل الحسابات…</string>
     <string name="accounts_choose_method">اختر طريقة تسجيل الدخول</string>
     <string name="accounts_password_method">اسم المستخدم وكلمة المرور</string>
@@ -385,18 +382,18 @@
     <string name="accounts_remove">إزالة الحساب</string>
     <string name="accounts_switch">تبديل الحساب</string>
     <string name="accounts_guest">لم يتم تسجيل الدخول</string>
-    <string name="accounts_shared_data">البيانات عبر الإنترنت تتبع حسابك. تتم مشاركة التنزيلات والمفضلات المحلية وسجل القراءة على هذا الجهاز.</string>
+    <string name="accounts_shared_data">تستخدم البيانات عبر الإنترنت الحساب المحدد. تتشارك جميع الحسابات على هذا الجهاز التنزيلات والمفضلة المحلية وسجل القراءة.</string>
     <string name="account_title">حساب نهنتاي</string>
     <string name="account_setting_summary">قم بتسجيل الدخول باستخدام اسم المستخدم وكلمة المرور الخاصة بك</string>
-    <string name="account_description">قم بتسجيل الدخول لاستخدام المفضلة والعلامات عبر الإنترنت. لم يتم حفظ كلمة المرور الخاصة بك. يظل مفتاح API الخاص بك منفصلاً.</string>
+    <string name="account_description">سجّل الدخول لاستخدام المفضلة والعلامات عبر الإنترنت. يمكنك اختيار حفظ كلمة المرور على هذا الجهاز.</string>
     <string name="account_username">اسم المستخدم أو البريد الإلكتروني</string>
     <string name="account_password">كلمة المرور</string>
     <string name="account_sign_in">تسجيل الدخول</string>
     <string name="account_sign_out">تسجيل الخروج</string>
-    <string name="account_sign_out_message">هل تريد إزالة جلسة الحساب من هذا الجهاز؟ إذا تم حفظ مفتاح API، فسيستخدمه التطبيق في الإجراءات عبر الإنترنت.</string>
+    <string name="account_sign_out_message">هل تريد تسجيل الخروج على هذا الجهاز؟ ستبقى التنزيلات والمفضلة المحلية وسجل القراءة.</string>
     <string name="account_signed_out">لا يتم حفظ جلسة الحساب.</string>
     <string name="account_session_saved">يتم حفظ جلسة الحساب على هذا الجهاز.</string>
-    <string name="account_session_expired">انتهت صلاحية جلسة الحساب المحفوظة. سجّل الدخول مرة أخرى أو أزل الجلسة لاستخدام مفتاح API المحفوظ.</string>
+    <string name="account_session_expired">انتهت صلاحية تسجيل الدخول. سجّل الدخول مجددًا أو اختر حسابًا آخر من قائمة الحسابات.</string>
     <string name="account_enter_username">أدخل اسم المستخدم أو البريد الإلكتروني الخاص بك.</string>
     <string name="account_enter_password">أدخل كلمة المرور الخاصة بك.</string>
     <string name="account_preparing_verification">جارٍ تحضير التحقق…</string>
@@ -408,15 +405,15 @@
     <string name="account_verify_title">تحقق من تسجيل دخولك</string>
     <string name="account_verify_message">أكمل عملية التحقق للمتابعة.</string>
     <string name="account_online_favorite_unavailable">قم بتسجيل الدخول أو قم بتكوين مفتاح API لاستخدام المفضلة عبر الإنترنت.</string>
-    <string name="online_blacklist_update_error">تعذر تحديث القائمة السوداء عبر الإنترنت. يرجى المحاولة مرة أخرى.</string>
+    <string name="online_blacklist_update_error">تعذّر تحديث قائمة الحظر عبر الإنترنت. حاول مجددًا.</string>
     <string name="online_blacklist_refresh">تحديث</string>
-    <string name="online_blacklist_loading">جارٍ تحميل القائمة السوداء على الإنترنت...</string>
-    <string name="online_blacklist_loaded">القائمة السوداء على الإنترنت محدثة</string>
-    <string name="online_blacklist_load_error">تعذر تحميل القائمة السوداء على الإنترنت. حاول التحديث.</string>
-    <string name="online_blacklist_session_expired">لقد انتهت صلاحية جلسة حسابك. قم بتسجيل الدخول لتحميل القائمة السوداء الخاصة بك على الإنترنت.</string>
-    <string name="online_blacklist_search_unavailable">لم يتم تحميل القائمة السوداء على الإنترنت. حدّثها أو ابحث بدون علاماتها.</string>
-    <string name="online_blacklist_search_without">بحث بدون</string>
-    <string name="online_blacklist_sign_in_required">قم بتسجيل الدخول مرة أخرى أو تحقق من مفتاح API الخاص بك قبل تحديث القائمة السوداء عبر الإنترنت.</string>
+    <string name="online_blacklist_loading">جارٍ تحميل قائمة الحظر عبر الإنترنت…</string>
+    <string name="online_blacklist_loaded">تم تحديث قائمة الحظر عبر الإنترنت</string>
+    <string name="online_blacklist_load_error">تعذّر تحميل قائمة الحظر عبر الإنترنت. حاول تحديثها.</string>
+    <string name="online_blacklist_session_expired">انتهت صلاحية تسجيل الدخول. سجّل الدخول مجددًا لتحميل قائمة الحظر عبر الإنترنت.</string>
+    <string name="online_blacklist_search_unavailable">لم تُحمّل تفضيلات العلامات عبر الإنترنت. حدّثها أو ابحث دون هذه التفضيلات.</string>
+    <string name="online_blacklist_search_without">البحث دون علامات الإنترنت</string>
+    <string name="online_blacklist_sign_in_required">سجّل الدخول مجددًا أو تحقق من مفتاح API، ثم حدّث قائمة الحظر عبر الإنترنت.</string>
     <string name="comment_preparing">جارٍ إعداد التحقق…</string>
     <string name="comment_send_again">نشر مرة أخرى</string>
     <string name="comment_deleted">تم حذف التعليق</string>

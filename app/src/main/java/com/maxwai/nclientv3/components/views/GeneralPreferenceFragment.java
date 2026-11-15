@@ -517,7 +517,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             activity.runOnUiThread(() -> {
                 if (!isAdded() || getActivity() != activity || snapshotCheckGeneration.get() != generation) return;
                 restore.setEnabled(usable);
-                if (usable) restore.setSummary(getString(R.string.restore_snapshot_summary, age));
+                if (usable) restore.setSummary(getResources().getQuantityString(
+                    R.plurals.restore_snapshot_summary, (int) age, age));
                 else restore.setSummary(R.string.restore_snapshot_unavailable);
             });
         }).start();

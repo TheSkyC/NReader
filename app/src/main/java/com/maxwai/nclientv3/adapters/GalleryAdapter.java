@@ -246,7 +246,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         holder.master.findViewById(R.id.favorite_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.upload_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
         if (hasPageCount) ((TextView) holder.master.findViewById(R.id.page_stat))
-            .setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
+            .setText(context.getResources().getQuantityString(R.plurals.page_count_format,
+                gallery.getPageCount(), gallery.getPageCount()));
         if (!hasTags()) {
             ViewGroup.LayoutParams layoutParams = vg.getLayoutParams();
             layoutParams.height = 0;
@@ -320,14 +321,16 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     private void addInfoLayout(ViewHolder holder, GalleryData gallery) {
         TextView text = holder.master.findViewById(R.id.page_stat);
-        text.setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
+        text.setText(context.getResources().getQuantityString(R.plurals.page_count_format,
+            gallery.getPageCount(), gallery.getPageCount()));
         text = holder.master.findViewById(R.id.upload_stat);
         String date = android.text.format.DateFormat.getDateFormat(context).format(gallery.getUploadDate());
         text.setText(date);
         text.setContentDescription(context.getString(R.string.upload_date_format, date,
             android.text.format.DateFormat.getTimeFormat(context).format(gallery.getUploadDate())));
         text = holder.master.findViewById(R.id.favorite_stat);
-        text.setText(context.getString(R.string.favorite_count_format, gallery.getFavoriteCount()));
+        text.setText(context.getResources().getQuantityString(R.plurals.favorite_count_format,
+            gallery.getFavoriteCount(), gallery.getFavoriteCount()));
 
     }
 

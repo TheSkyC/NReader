@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="other">%1$dページ</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="other">%1$d件のお気に入り</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="other">タグは最大%1$d個まで選択できます。</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="other">コメントは%1$d文字以上で入力してください。</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="other">%1$d日前に作成したスナップショット</item>
+    </plurals>
+</resources>

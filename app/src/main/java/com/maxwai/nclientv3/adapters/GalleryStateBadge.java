@@ -331,7 +331,8 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
                 ? context.getString(R.string.state_reading_page_total, state.position.page, total)
                 : context.getString(R.string.state_reading_page_unknown, state.position.page));
         } else {
-            progress.setText(total > 0 ? context.getString(R.string.page_count_format, total) : "");
+            progress.setText(total > 0 ? context.getResources().getQuantityString(
+                R.plurals.page_count_format, total, total) : "");
             progress.setContentDescription(progress.getText());
         }
         progress.setVisibility(progress.length() == 0 ? View.GONE : View.VISIBLE);

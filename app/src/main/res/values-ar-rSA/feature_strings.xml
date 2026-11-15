@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">التعليق غير متاح</string>
     <string name="cover_local_favorite_selected">في المفضلة المحلية</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">مفقودة (%1$d): %2$s\nتالفة (%3$d): %4$s</string>
     <string name="download_repair_unavailable">إصلاح الصفحات غير متاح لتعذر التحقق من هوية المعرض أو المجلد المحفوظ أو البيانات الوصفية أو المصدر.</string>
     <string name="filter_download_state">تصفية حالة التنزيل</string>
-    <string name="filter_all">كل التنزيلات</string>
+    <string name="filter_all">جميع حالات التنزيل</string>
     <string name="filter_complete">مكتمل</string>
-    <string name="filter_partial">جزئي</string>
+    <string name="filter_partial">صفحات ناقصة</string>
     <string name="filter_damaged">تالف</string>
-    <string name="filter_unverified">غير متحقق منه</string>
+    <string name="filter_unverified">اكتمال غير مؤكد</string>
     <string name="filter_absent">لا توجد نسخة محلية</string>
     <string name="filter_personal_state">تصفية الحالة الشخصية</string>
-    <string name="filter_favorite_only">المفضلة فقط</string>
-    <string name="filter_reading_only">قيد القراءة</string>
-    <string name="filter_unread_only">غير مقروء</string>
+    <string name="filter_favorite_only">المفضلة المحلية فقط</string>
+    <string name="filter_reading_only">يوجد تقدم في القراءة</string>
+    <string name="filter_unread_only">لا يوجد تقدم في القراءة</string>
     <string name="filter_custom_status_only">له حالة مخصصة</string>
     <string name="filter_loaded_results">تصفية النتائج المحملة</string>
     <string name="filter_downloaded_only">تم تنزيله محلياً</string>
-    <string name="backup_restore_preview">مراجعة استعادة النسخة الاحتياطية</string>
-    <string name="backup_restore_preview_message">تحتوي هذه النسخة على %1$d من صفوف قاعدة البيانات. %2$s. هل تريد متابعة الاستعادة؟</string>
+    <string name="backup_restore_preview">استعادة نسخة احتياطية</string>
+    <string name="backup_restore_preview_message">سجلات قاعدة البيانات: %1$d. %2$s.\n\nستستبدل الاستعادة قاعدة البيانات الحالية، بما فيها المفضلة والسجل والإشارات المرجعية، وتستورد الإعدادات الموجودة في هذه النسخة. لن تتغير ملفات الصور المنزلة.\n\nهل تريد استعادة هذه النسخة؟</string>
     <string name="backup_integrity_verified">تم التحقق من السلامة</string>
-    <string name="backup_legacy_format">تنسيق قديم دون بيان سلامة</string>
-    <string name="restore_snapshot">استعادة قاعدة البيانات السابقة</string>
-    <string name="restore_snapshot_message">هل تريد استبدال قاعدة البيانات الحالية والإعدادات المصدرة باللقطة المحفوظة قبل آخر استيراد؟ لن تتغير الملفات المنزلة.</string>
-    <string name="restore_snapshot_summary">عمر اللقطة بالأيام: %1$d</string>
+    <string name="backup_legacy_format">نسخة قديمة دون معلومات للتحقق من التكامل</string>
+    <string name="restore_snapshot">استعادة لقطة ما قبل الاستيراد</string>
+    <string name="restore_snapshot_message">هل تريد استبدال قاعدة البيانات الحالية والإعدادات المحفوظة باللقطة التي أُنشئت قبل آخر استيراد؟ لن تتغير ملفات الصور المنزلة.</string>
     <string name="restore_snapshot_unavailable">لا توجد لقطة استعادة حديثة متاحة.</string>
     <string name="restore_snapshot_checking">جارٍ فحص لقطة الاستعادة…</string>
 </resources>

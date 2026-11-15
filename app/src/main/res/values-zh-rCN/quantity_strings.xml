@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="other">%1$d 页</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="other">%1$d 次收藏</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="other">最多可选择 %1$d 个标签。</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="other">评论至少需要 %1$d 个字符。</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="other">快照创建于 %1$d 天前</item>
+    </plurals>
+</resources>

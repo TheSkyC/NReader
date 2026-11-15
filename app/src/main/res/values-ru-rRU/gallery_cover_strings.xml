@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="cover_add_favorite">Добавить в локальное избранное</string>
     <string name="cover_remove_favorite">Удалить из локального избранного</string>
-    <string name="cover_favorite_added">Добавлено в избранное</string>
-    <string name="cover_favorite_removed">Удалено из избранного</string>
+    <string name="cover_favorite_added">Добавлено в локальное избранное</string>
+    <string name="cover_favorite_removed">Удалено из локального избранного</string>
     <string name="cover_online_favorite_add">Добавить в онлайн-избранное</string>
     <string name="cover_online_favorite_remove">Удалить из онлайн-избранного</string>
     <string name="cover_online_favorite_unknown">Статус онлайн-избранного неизвестен</string>

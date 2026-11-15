@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">Galeri ayrıntıları yükleniyor</string>
     <string name="setting_on_ignore_tags">Diğer etiketler galeri menüsünden bir etiket seçildiğinde listelenmeyecek (dil hariç)</string>
@@ -11,9 +12,9 @@
     <string name="ignore_tags">Diğer etiketleri dikkate alma</string>
     <string name="use_account_tag">Hesaptan etiketleri kullan</string>
     <string name="title_activity_gallery">Galeri</string>
-    <string name="title_activity_zoom">Yakınlaştırma aktivitesi</string>
+    <string name="title_activity_zoom">Görüntüyü yakınlaştır</string>
     <string name="title_activity_tag_filter">Etiket filtresi</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">API anahtarı</string>
     <string name="parodies">Parodiler</string>
     <string name="characters">Karakterler</string>
     <string name="tags">Etiketler</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">ZIP\'in oluşturulma sürecinin ne kadar tamamlandığını gösterir</string>
     <string name="channel2_title">PDF Oluşturuluyor:</string>
     <string name="channel3_title">ZIP oluşturuluyor:</string>
-    <string name="tags_max_reached" formatted="true">Maksimum %d etiket seçebilirsiniz.</string>
     <string name="only_english">Sadece İngilizce</string>
     <string name="only_japanese">Sadece Japonca</string>
     <string name="only_chinese">Sadece Çince</string>
     <string name="all_languages">Tüm Diller</string>
-    <string name="unknown_language">Unknown language</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="unknown_language">Bilinmeyen dil</string>
+    <string name="setting_api_key_title">API anahtarı</string>
     <string name="setting_api_key_summary_missing">Web sitesindeki hesap ayarları sayfasında bir API anahtarı oluşturun ve uygulamaya yapıştırın.</string>
     <string name="setting_api_key_summary_valid">Kaydedildi ve doğrulandı. Anahtarı değiştirmek veya kaldırmak için bu seçeneği açın.</string>
     <string name="setting_api_key_summary_invalid">Kayıtlı bir API anahtarı var ancak artık geçerli değil. Değiştirmek veya kaldırmak için bu seçeneği açın.</string>
     <string name="login_api_key_intro_title">API anahtarı kullan</string>
-    <string name="login_api_key_intro_message">nhentai sitesi artık uygulama erişimi için API anahtarları kullanıyor. Giriş yapmak için tarayıcınızda hesap ayarları sayfasını açın, bir API anahtarı oluşturun ve buraya dönüp anahtarı yapıştırın.</string>
+    <string name="login_api_key_intro_message">API anahtarı kullanmak için tarayıcıda nhentai hesap ayarlarını açın, bir anahtar oluşturun ve buraya dönüp yapıştırın.</string>
     <string name="login_open_api_key_page">API anahtarı sayfasını aç</string>
     <string name="login_api_key_input_title">API anahtarınızı yapıştırın</string>
-    <string name="login_api_key_input_message">Anahtar kaydedilmeden önce v2 API üzerinden doğrulanır.</string>
+    <string name="login_api_key_input_message">Anahtar kaydedilmeden önce geçerliliği doğrulanır.</string>
     <string name="login_api_key_hint">API anahtarı</string>
     <string name="login_validate_and_save">Doğrula ve kaydet</string>
     <string name="login_api_key_saved">API anahtarı kaydedildi</string>
@@ -54,13 +54,13 @@
     <string name="login_status_api_key_saved">Bu cihazda doğrulanmış bir API anahtarı kayıtlı.</string>
     <string name="login_status_api_key_invalid">Kayıtlı API anahtarının değiştirilmesi veya kaldırılması gerekiyor.</string>
     <string name="remove_api_key">API anahtarını kaldır</string>
-    <string name="favorite_online_manga">Favori online galeri</string>
+    <string name="favorite_online_manga">Çevrimiçi favoriler</string>
     <string name="online_tags">Online etiketler</string>
     <string name="add_to_online_favorite">Online favorilere ekle</string>
     <string name="remove_from_online_favorites">Online favorilerden kaldır</string>
-    <string name="add_to_online_blacklist">Online kara listeye ekle?</string>
-    <string name="tag_already_in_blacklist">Etiket zaten karalistede</string>
-    <string name="are_you_sure">Eminmisin?</string>
+    <string name="add_to_online_blacklist">Bu etiket çevrimiçi engelleme listesine eklensin mi?</string>
+    <string name="tag_already_in_blacklist">Bu etiket zaten engelleme listesinde.</string>
+    <string name="are_you_sure">Devam edilsin mi?</string>
     <string name="thumbnail">Önizleme</string>
     <string name="settings">Ayarlar</string>
     <string name="related">İlgili</string>
@@ -94,21 +94,19 @@
     <string name="applied_filters">Uygulanmış filtreler</string>
     <string name="show_related">İlgili galerileri göster</string>
     <string name="random_manga">Rastgele Galeri</string>
-    <string name="save_page">Sayfayı kaydet</string>
-    <string name="page_count_format" formatted="true">%d Sayfa</string>
+    <string name="save_page">Görüntüyü kaydet</string>
     <string name="upload_date_format" formatted="true">%1$s tarihinde %2$s saatinde yüklendi</string>
-    <string name="favorite_count_format" formatted="true">%d Favori</string>
-    <string name="favorite_manga">Favoriler</string>
+    <string name="favorite_manga">Yerel favoriler</string>
     <string name="setting_on_remove_ignored">Dikkate alınmayan etiket içeren galeriler gösterilmeyecek</string>
     <string name="setting_off_remove_ignored">Dikkate alınmayan etiket içeren galeriler bulanıklaştırılacak</string>
-    <string name="remove_ignored_galleries">Dikkate alınmayan galerileri kaldır</string>
+    <string name="remove_ignored_galleries">Yok sayılan galerileri gizle</string>
     <string name="clear_tag_preferences">Etiket tercihlerini temizle</string>
     <string name="check_for_update_on_startup">Açılışta güncellemeleri denetle</string>
     <string name="check_for_updates">Güncellemeleri denetle</string>
     <string name="no_updates_found">Zaten en son sürümü kullanıyorsunuz!</string>
     <string name="error_retrieving">Güncelleme bilgileri alınırken bir sorun oluştu</string>
     <string name="new_version_found">Yeni sürüm bulundu</string>
-    <string name="update_version_format" formatted="true">%1$s bu sürümden %2$s bu sürüme güncellensin mi?  Değişim kaydı: %3$s</string>
+    <string name="update_version_format" formatted="true">%1$s sürümünden %2$s sürümüne güncellensin mi?\n\nDeğişiklikler:\n%3$s</string>
     <string name="clear_this_list">Bu listeyi temizle?</string>
     <string name="set_minimum_count">Minimum sayıyı ayarla</string>
     <string name="sort_by_title">Başlığa göre sırala</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">Okuma ayarları</string>
     <string name="miscellaneous">Çeşitli</string>
     <string name="favorite_action_mode_title">Kart favori işlemi</string>
-    <string name="favorite_action_local_primary">Kalp öncelikli</string>
-    <string name="favorite_action_online_primary">Yıldız öncelikli</string>
-    <string name="favorite_action_online_unavailable">Çevrimiçi favoriler için geçerli bir API anahtarı ayarlayın</string>
+    <string name="favorite_action_local_primary">Dokunma: yerel favoriler; basılı tutma: çevrimiçi favoriler</string>
+    <string name="favorite_action_online_primary">Dokunma: varsa çevrimiçi favoriler; basılı tutma: yerel favoriler</string>
+    <string name="favorite_action_online_unavailable">Çevrimiçi favoriler için oturum açın veya geçerli bir API anahtarı ekleyin.</string>
     <string name="favorite_action_local_accessibility">Yerel favoriyi değiştir</string>
     <string name="favorite_action_online_accessibility">Çevrimiçi favoriyi değiştir</string>
     <string name="update_settings">Güncelleme ayarları</string>
-    <string name="online_favorite_manga">Online favori galeri</string>
+    <string name="online_favorite_manga">Çevrimiçi favoriler</string>
     <string name="cache_size_formatted">Önbellek boyutu: %.2f MB</string>
     <string name="cache_cleared">Önbellek temizlendi</string>
-    <string name="sort_by_latest">Tarihe göre sırala</string>
+    <string name="sort_by_latest">Son eklenenlere göre sırala</string>
     <string name="edit">Düzenle</string>
     <string name="options">Seçenekler</string>
     <string name="keep_history">Arama kaydını tut</string>
@@ -142,8 +140,8 @@
     <string name="send">Gönder</string>
     <string name="send_comment">Yorumu gönder…</string>
     <string name="profile_picture">Profil fotoğrafı</string>
-    <string name="send_bug_on_github">Github üzerinden hata gönder</string>
-    <string name="github">Github</string>
+    <string name="send_bug_on_github">GitHub üzerinden hata gönder</string>
+    <string name="github">GitHub</string>
     <string name="install">Yükle</string>
     <string name="download_update_failed">Güncellenmiş sürüm indirilemedi</string>
     <string name="copyURL">URL\'yi kopyala</string>
@@ -187,8 +185,8 @@
     <string name="start_page">Başlangıç sayfası</string>
     <string name="end_page">Bitiş sayfası</string>
     <string name="invalid_range_selected">Geçersiz aralık seçildi</string>
-    <string name="send_with_title">Başlıkla gönder?</string>
-    <string name="caption_send_with_title">Fotoğrafa URL yi çeviri olarak ekle?</string>
+    <string name="send_with_title">Görüntüyü paylaş</string>
+    <string name="caption_send_with_title">Görüntü paylaşılırken sayfanın bağlantısı da eklensin mi?</string>
     <string name="history_size">Geçmiş boyutu</string>
     <string name="history_size_summary">Geçmişe kaydedilecek kayıt sayısını seç</string>
     <string name="view_history">Geçmiş</string>
@@ -204,18 +202,18 @@
     <string name="zoom_one_column">Yakınlaştırmayı etkinleştir</string>
     <string name="insert_pin">PIN gir</string>
     <string name="confirm_pin">PIN\'i doğrula</string>
-    <string name="setting_device_credentials">Enable Device Credentials to enter the app</string>
-    <string name="setting_device_credentials_low_sdk">Only available for Android 11 or higher</string>
-    <string name="use_device_credentials">Use Device Credentials</string>
+    <string name="setting_device_credentials">Uygulamanın biyometri veya cihazın ekran kilidi PIN’i, deseni ya da parolasıyla açılmasına izin verin.</string>
+    <string name="setting_device_credentials_low_sdk">Android 11 veya üzeri gerekir</string>
+    <string name="use_device_credentials">Cihaz doğrulamasını kullan</string>
     <string name="wrong_pin">Yanlış PIN</string>
     <string name="rotate_image">Fotoğrafı çevir</string>
     <string name="toggle_online_favorite">Online favori aç/kapa</string>
     <string name="data_usage_settings">Veri kullanım ayarları</string>
     <string name="mobile_data_usage_setting">Mobil veri kullanım ayarları</string>
     <string name="wifi_data_usage_setting">Wi-Fi kullanım ayarları</string>
-    <string name="data_usage_thumb">Sadece kapak fotoğraflarını indir</string>
-    <string name="data_usage_full">Her şeyi indir (Yüksek veri kullanımı)</string>
-    <string name="data_usage_no">Sayfaları indirme</string>
+    <string name="data_usage_thumb">Yalnızca küçük resimleri yükle</string>
+    <string name="data_usage_full">Gerektiğinde küçük resim veya tam görüntü yükle</string>
+    <string name="data_usage_no">Ağdan görüntü yükleme</string>
     <string name="enable_network_to_continue">Sayfayı görmek için veri kullanım ayarlarını değiştirin veya bağlı olduğunuz ağı değiştirin</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">Galeri ID\'si panoya kopyalandı</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">Siyah veya beyaz seçilemez</string>
     <string name="change_status_title">Yeni kategoriyi seç:</string>
     <string name="remove_status">Hiçbiri</string>
-    <string name="name_too_short">İsim çok kısa</string>
+    <string name="name_too_short">En az 2 karakterden oluşan bir ad girin.</string>
     <string name="duplicated_name">Aynı isim kullanılamaz</string>
     <string name="manage_statuses">Kategorileri yönet</string>
     <string name="update_status">Kategorileri güncelle:</string>
@@ -268,10 +266,9 @@
     <string name="title">Başlık</string>
     <string name="download_date">İndirme tarihi</string>
     <string name="page_count">Sayfa sayısı</string>
-    <string name="artist">Artist</string>
-    <string name="group">Group</string>
+    <string name="artist">Sanatçı</string>
+    <string name="group">Grup</string>
     <string name="descending_order">Azalan</string>
-    <string name="minimum_comment_length" formatted="true">Yorum en az %d karakter olmalıdır</string>
     <string name="change_scroll_type">Kaydırma tipini değiştir</string>
     <string name="export_data">Verileri dışa aktar</string>
     <string name="import_data">Verileri dışarıdan yükle</string>
@@ -291,9 +288,9 @@
     <string name="custom_path">Özel Dizin</string>
     <string name="insert_path">Dizin Gir:</string>
     <string name="requesting_storage_access">Depolamaya erişim izni isteniyor</string>
-    <string name="request_storage_manager_summary">Android 11\'de depolama erişimine yönelik bazı kısıtlamalar nedeniyle, bu uygulama özel yolları kullanmak için ek izin vermenizi gerektirecektir. \nBu izinleri vermek istiyorsanız, lütfen sonraki iletişim kutusunda uygulamaya izin verin.</string>
-    <string name="summary_beta">Beta sürümüne geçerseniz, uygulamayı kaldırmadan kararlı sürümlere dönemezsiniz</string>
-    <string name="navigation_settings_per_screen">Sayfa Ayarları</string>
+    <string name="request_storage_manager_summary">Android 11 ve üzerinde özel indirme yolları için tüm dosyalara erişim gerekir.\nÖzel bir yol kullanmak için sonraki sistem ayarları ekranında bu erişime izin verin.</string>
+    <string name="summary_beta">Daha eski bir kararlı sürüme dönmek için uygulamayı kaldırmanız gerekebilir. Sürüm değiştirmeden önce verilerinizi dışa aktarın.</string>
+    <string name="navigation_settings_per_screen">Her ekran için navigasyon ayarları</string>
     <string name="downloaded_update_at" formatted="true">Güncelleme %s konumuna indirildi</string>
     <string name="summary_offscreen_limit">Bir galeriyi okurken önyüklenecek sayfa sayısını seçin</string>
     <string name="title_offscreen_limit">Resimleri Önyükleme</string>
@@ -306,40 +303,40 @@
     <string name="import_finished">İçe Alma Tammalandı</string>
     <string name="system_default">Sistem Varsayılanı</string>
     <string name="clear_cookies">Çerezleri Temizle</string>
-    <string name="fetching_cloudflare_token">Cloudflare tokeni alınıyor…</string>
-    <string name="exact_title_match_title">Exact tag match only</string>
-    <string name="exact_title_match_summary">Hide galleries which would appear in the site but doesn\'t contains all the tags searched</string>
-    <string name="hide">Hide</string>
-    <string name="shuffle_contentDescription">Random Gallery Button</string>
-    <string name="copy_logs">Copy logs to file</string>
-    <string name="copy_logs_summary">This will put all available logs of this App into a file. The available logs could extend multiple days. Also, it is possible that the logs contain personal information to be sure to check before publishing the file. Use this to attach logs to a Bug report.</string>
-    <string name="copy_logs_fail">Problem generating logfile</string>
+    <string name="fetching_cloudflare_token">Site doğrulaması hazırlanıyor…</string>
+    <string name="exact_title_match_title">Aranan tüm etiketlerle eşleşsin</string>
+    <string name="exact_title_match_summary">Aranan etiketlerin tümünü içermeyen galerileri gizle.</string>
+    <string name="hide">Gizle</string>
+    <string name="shuffle_contentDescription">Rastgele galeri</string>
+    <string name="copy_logs">Günlükleri dışa aktar</string>
+    <string name="copy_logs_summary">Sorun bildirmek için mevcut uygulama günlüklerini bir dosyaya kaydeder. Günlükler birkaç günü kapsayabilir ve kişisel bilgiler içerebilir. Paylaşmadan önce dosyayı inceleyin.</string>
+    <string name="copy_logs_fail">Günlükler dışa aktarılamadı.</string>
     <string-array name="scroll_type">
-        <item>Horizontal</item>
-        <item>Vertical</item>
+        <item>Yatay</item>
+        <item>Dikey</item>
     </string-array>
     <string-array name="theme">
-        <item>Beyaz Tema</item>
-        <item>Siyah Tema</item>
-        <item>True Black</item>
+        <item>Açık</item>
+        <item>Koyu</item>
+        <item>Tam siyah</item>
     </string-array>
     <string-array name="title_type_array">
         <item>İngilizce</item>
         <item>Japonca</item>
-        <item>Özel</item>
+        <item>Sadeleştirilmiş başlık</item>
     </string-array>
-    <string name="online_blacklist_add_error">Error adding to online blacklist</string>
-    <string name="clipboard_settings_error">Error copying settings into clipboard</string>
-    <string name="send_image_error">Error creating Image to send</string>
-    <string name="unlock">Unlock</string>
-    <string name="auth_error">Authentication error</string>
-    <string name="auth_title">Biometric login for NClient</string>
-    <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="online_blacklist_add_error">Etiket çevrimiçi engelleme listesine eklenemedi.</string>
+    <string name="clipboard_settings_error">Ayarlar panoya kopyalanamadı.</string>
+    <string name="send_image_error">Paylaşılacak görüntü hazırlanamadı.</string>
+    <string name="unlock">Kilidi aç</string>
+    <string name="auth_error">Kimlik doğrulanamadı</string>
+    <string name="auth_title">NReader kilidini aç</string>
+    <string name="auth_subtitle">Biyometri veya cihazın ekran kilidiyle kimliğinizi doğrulayın.</string>
     <string name="continue_reading">Okumaya devam et</string>
     <string name="open_manual_bookmark">Elle eklenen yer imini aç</string>
     <string name="pause_download">İndirmeyi duraklat</string>
     <string name="download_failed">İndirme başarısız</string>
-    <string name="download_error_authentication">Erişim reddedildi. API anahtarını ve hesap izinlerini kontrol edin.</string>
+    <string name="download_error_authentication">Erişim reddedildi. Yeniden denemeden önce oturum açma durumunuzu ve API anahtarınızı kontrol edin.</string>
     <string name="download_error_rate_limit">Çok fazla istek gönderildi. Yeniden denemeden önce bekleyin.</string>
     <string name="download_error_storage">Dosyalar yazılamadı. Boş alanı ve depolama izinlerini kontrol edin.</string>
     <string name="download_error_not_found">İstenen galeri veya sayfa artık kullanılamıyor.</string>
@@ -349,10 +346,10 @@
     <string name="state_local_favorite">Yerel favori</string>
     <string name="state_custom_status">Durum: %1$s</string>
     <string name="state_reading_page">%1$d. sayfaya kadar okundu</string>
-    <string name="state_download_complete">İndirildi</string>
-    <string name="state_download_partial">Kısmi indirme</string>
+    <string name="state_download_complete">Tamamı indirildi</string>
+    <string name="state_download_partial">Eksik sayfalar</string>
     <string name="state_download_damaged">Hasarlı indirme</string>
-    <string name="state_download_unverified">Yerel dosyalar doğrulanmadı</string>
+    <string name="state_download_unverified">Tamlık bilinmiyor</string>
     <string name="debug_mask_images">Hata ayıklama için görselleri maskele</string>
     <string name="debug_mask_images_summary">Kapakları ve okuma sayfalarını opak bir dama deseniyle örter. Ekran yeniden açıldığında uygulanır; indirilen dosyalar değişmez.</string>
     <string name="list_columns_action">Sütunları değiştir: %1$d → %2$d</string>
@@ -370,7 +367,7 @@
     <string name="accounts_use_guest">Hesap olmadan kullanın</string>
     <string name="accounts_manage">Yönet</string>
     <string name="accounts_manage_named">%1$s hesabını yönet</string>
-    <string name="accounts_empty">Çevrimiçi favorileri ve etiketleri kullanmak için bir hesap ekleyin. İndirmeler ve okuma geçmişi bu cihazda paylaşılıyor.</string>
+    <string name="accounts_empty">Çevrimiçi favoriler ve etiketler için bir hesap ekleyin. İndirmeler, yerel favoriler ve okuma geçmişi bu cihazda paylaşılır.</string>
     <string name="accounts_loading">Hesaplar yükleniyor…</string>
     <string name="accounts_choose_method">Bir oturum açma yöntemi seçin</string>
     <string name="accounts_password_method">Kullanıcı adı ve şifre</string>
@@ -385,18 +382,18 @@
     <string name="accounts_remove">Hesabı kaldır</string>
     <string name="accounts_switch">Hesap değiştir</string>
     <string name="accounts_guest">Oturum açılmadı</string>
-    <string name="accounts_shared_data">Çevrimiçi veriler hesabınızı takip eder. İndirilenler, yerel favoriler ve okuma geçmişi bu cihazda paylaşılır.</string>
+    <string name="accounts_shared_data">Çevrimiçi veriler seçili hesabı kullanır. İndirmeler, yerel favoriler ve okuma geçmişi bu cihazdaki tüm hesaplar arasında paylaşılır.</string>
     <string name="account_title">nhentai hesabı</string>
     <string name="account_setting_summary">Kullanıcı adınız ve şifrenizle oturum açın</string>
-    <string name="account_description">Çevrimiçi favorileri ve etiketleri kullanmak için oturum açın. Şifreniz kaydedilmedi. API anahtarınız ayrı kalır.</string>
+    <string name="account_description">Çevrimiçi favoriler ve etiketler için oturum açın. Parolanın bu cihazda kaydedilip kaydedilmeyeceğini seçebilirsiniz.</string>
     <string name="account_username">Kullanıcı adı veya e-posta</string>
     <string name="account_password">Şifre</string>
     <string name="account_sign_in">Oturum aç</string>
     <string name="account_sign_out">Oturumu kapat</string>
-    <string name="account_sign_out_message">Hesap oturumu bu cihazdan kaldırılsın mı? Bir API anahtarı kaydedilirse uygulama bunu çevrimiçi işlemler için kullanır.</string>
+    <string name="account_sign_out_message">Bu cihazda oturum kapatılsın mı? İndirmeler, yerel favoriler ve okuma geçmişi korunur.</string>
     <string name="account_signed_out">Hiçbir hesap oturumu kaydedilmedi.</string>
     <string name="account_session_saved">Bu cihaza bir hesap oturumu kaydedildi.</string>
-    <string name="account_session_expired">Kaydedilen hesap oturumunun süresi doldu. Tekrar oturum açın veya kaydedilmiş bir API anahtarını kullanmak için oturumu kaldırın.</string>
+    <string name="account_session_expired">Oturumun süresi doldu. Yeniden oturum açın veya Hesaplar bölümünden başka bir hesap seçin.</string>
     <string name="account_enter_username">Kullanıcı adınızı veya e-posta adresinizi girin.</string>
     <string name="account_enter_password">Şifrenizi girin.</string>
     <string name="account_preparing_verification">Doğrulama hazırlanıyor…</string>
@@ -408,15 +405,15 @@
     <string name="account_verify_title">Oturum açma işleminizi doğrulayın</string>
     <string name="account_verify_message">Devam etmek için doğrulamayı tamamlayın.</string>
     <string name="account_online_favorite_unavailable">Çevrimiçi sık kullanılanları kullanmak için oturum açın veya bir API anahtarı yapılandırın.</string>
-    <string name="online_blacklist_update_error">Çevrimiçi kara liste güncellenemedi. Lütfen tekrar deneyin.</string>
+    <string name="online_blacklist_update_error">Çevrimiçi engelleme listesi güncellenemedi. Yeniden deneyin.</string>
     <string name="online_blacklist_refresh">Yenile</string>
-    <string name="online_blacklist_loading">Çevrimiçi kara liste yükleniyor…</string>
-    <string name="online_blacklist_loaded">Çevrimiçi kara liste güncel</string>
-    <string name="online_blacklist_load_error">Çevrimiçi kara liste yüklenemedi. Tazelemeyi deneyin.</string>
-    <string name="online_blacklist_session_expired">Hesap oturumunuzun süresi doldu. Çevrimiçi kara listenizi yüklemek için oturum açın.</string>
-    <string name="online_blacklist_search_unavailable">Çevrimiçi kara liste yüklenmedi. Yenileyin veya etiketleri olmadan arama yapın.</string>
-    <string name="online_blacklist_search_without">olmadan ara</string>
-    <string name="online_blacklist_sign_in_required">Çevrimiçi kara listeyi yenilemeden önce tekrar oturum açın veya API anahtarınızı kontrol edin.</string>
+    <string name="online_blacklist_loading">Çevrimiçi engelleme listesi yükleniyor…</string>
+    <string name="online_blacklist_loaded">Çevrimiçi engelleme listesi güncellendi</string>
+    <string name="online_blacklist_load_error">Çevrimiçi engelleme listesi yüklenemedi. Yenilemeyi deneyin.</string>
+    <string name="online_blacklist_session_expired">Oturumun süresi doldu. Çevrimiçi engelleme listesini yüklemek için yeniden oturum açın.</string>
+    <string name="online_blacklist_search_unavailable">Çevrimiçi etiket tercihleri yüklenmedi. Yenileyin veya bu tercihler olmadan arayın.</string>
+    <string name="online_blacklist_search_without">Çevrimiçi etiketler olmadan ara</string>
+    <string name="online_blacklist_sign_in_required">Yeniden oturum açın veya API anahtarınızı kontrol edin, ardından çevrimiçi engelleme listesini yenileyin.</string>
     <string name="comment_preparing">Doğrulama hazırlanıyor…</string>
     <string name="comment_send_again">Tekrar gönder</string>
     <string name="comment_deleted">Yorum silindi</string>

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Yorumlar kullanılamıyor</string>
     <string name="cover_local_favorite_selected">Yerel favorilerde</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Eksik (%1$d): %2$s\nHasarlı (%3$d): %4$s</string>
     <string name="download_repair_unavailable">Galeri kimliği, kayıtlı klasör, meta veriler veya kaynak doğrulanamadığı için sayfalar onarılamıyor.</string>
     <string name="filter_download_state">İndirme durumunu filtrele</string>
-    <string name="filter_all">Tüm indirmeler</string>
+    <string name="filter_all">Tüm indirme durumları</string>
     <string name="filter_complete">Tamamlanmış</string>
-    <string name="filter_partial">Kısmi</string>
+    <string name="filter_partial">Eksik sayfalar</string>
     <string name="filter_damaged">Hasarlı</string>
-    <string name="filter_unverified">Doğrulanmamış</string>
+    <string name="filter_unverified">Tamlık bilinmiyor</string>
     <string name="filter_absent">Yerel kopya yok</string>
     <string name="filter_personal_state">Kişisel durumu filtrele</string>
-    <string name="filter_favorite_only">Yalnızca favoriler</string>
-    <string name="filter_reading_only">Okunuyor</string>
-    <string name="filter_unread_only">Okunmamış</string>
+    <string name="filter_favorite_only">Yalnızca yerel favoriler</string>
+    <string name="filter_reading_only">Okuma ilerlemesi var</string>
+    <string name="filter_unread_only">Okuma ilerlemesi yok</string>
     <string name="filter_custom_status_only">Özel durum atanmış</string>
     <string name="filter_loaded_results">Yüklenen sonuçları filtrele</string>
     <string name="filter_downloaded_only">Yerel olarak indirildi</string>
-    <string name="backup_restore_preview">Yedek geri yüklemesini gözden geçir</string>
-    <string name="backup_restore_preview_message">Bu yedek %1$d veritabanı satırı içeriyor. %2$s. Geri yüklemeye devam edilsin mi?</string>
+    <string name="backup_restore_preview">Yedeği geri yükle</string>
+    <string name="backup_restore_preview_message">Veritabanı kaydı: %1$d. %2$s.\n\nGeri yükleme, favoriler, geçmiş ve yer işaretleri dahil mevcut veritabanının yerini alır ve bu yedekteki ayarları içe aktarır. İndirilen görüntü dosyaları değişmez.\n\nBu yedek geri yüklensin mi?</string>
     <string name="backup_integrity_verified">Bütünlük doğrulandı</string>
-    <string name="backup_legacy_format">Bütünlük bildirimi içermeyen eski biçim</string>
-    <string name="restore_snapshot">Önceki veritabanını geri yükle</string>
-    <string name="restore_snapshot_message">Mevcut veritabanı ve dışa aktarılan ayarlar, son içe aktarmadan önce kaydedilen anlık görüntüyle değiştirilsin mi? İndirilen dosyalar değişmez.</string>
-    <string name="restore_snapshot_summary">Anlık görüntünün yaşı: %1$d gün</string>
+    <string name="backup_legacy_format">Bütünlük bilgisi içermeyen eski yedek</string>
+    <string name="restore_snapshot">İçe aktarma öncesi anlık görüntüyü geri yükle</string>
+    <string name="restore_snapshot_message">Mevcut veritabanı ve yedeklenen ayarlar, son içe aktarmadan önce kaydedilen anlık görüntüyle değiştirilsin mi? İndirilen görüntü dosyaları değişmez.</string>
     <string name="restore_snapshot_unavailable">Kullanılabilir yakın tarihli bir geri yükleme görüntüsü yok.</string>
     <string name="restore_snapshot_checking">Geri yükleme görüntüsü kontrol ediliyor…</string>
 </resources>

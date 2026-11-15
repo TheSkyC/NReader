@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">Загрузка сведений о галерее</string>
     <string name="setting_on_ignore_tags">Другие тэги не будут применены, когда тэг выбран из меню галереи(кроме языка)</string>
@@ -13,7 +14,7 @@
     <string name="title_activity_gallery">Галерея</string>
     <string name="title_activity_zoom">Работа зума</string>
     <string name="title_activity_tag_filter">Фильтр тэгов</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">Ключ API</string>
     <string name="parodies">Пародии</string>
     <string name="characters">Персонажи</string>
     <string name="tags">Тэги</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">Использован чтобы показать прогресс создания ZIP</string>
     <string name="channel2_title">Создание PDF:</string>
     <string name="channel3_title">Создание ZIP:</string>
-    <string name="tags_max_reached" formatted="true">У вас может быть максимум %d выбранных тэгов.</string>
     <string name="only_english">Только английский</string>
     <string name="only_japanese">Только японский</string>
     <string name="only_chinese">Только китайский</string>
     <string name="all_languages">Все языки</string>
-    <string name="unknown_language">Unknown language</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="unknown_language">Неизвестный язык</string>
+    <string name="setting_api_key_title">Ключ API</string>
     <string name="setting_api_key_summary_missing">Создайте ключ API на странице настроек учётной записи сайта и вставьте его в приложение.</string>
     <string name="setting_api_key_summary_valid">Сохранён и проверен. Откройте этот пункт, чтобы заменить или удалить ключ.</string>
     <string name="setting_api_key_summary_invalid">Сохранённый ключ API больше недействителен. Откройте этот пункт, чтобы заменить или удалить его.</string>
     <string name="login_api_key_intro_title">Использовать ключ API</string>
-    <string name="login_api_key_intro_message">Теперь для доступа приложения к сайту nhentai используется ключ API. Чтобы войти, откройте настройки учётной записи в браузере, создайте ключ API и вставьте его здесь.</string>
+    <string name="login_api_key_intro_message">Чтобы использовать ключ API, откройте настройки аккаунта nhentai в браузере, создайте ключ и вернитесь сюда, чтобы вставить его.</string>
     <string name="login_open_api_key_page">Открыть страницу ключей API</string>
     <string name="login_api_key_input_title">Вставьте ключ API</string>
-    <string name="login_api_key_input_message">Перед сохранением ключ проверяется через API v2.</string>
+    <string name="login_api_key_input_message">Перед сохранением проверяется действительность ключа.</string>
     <string name="login_api_key_hint">Ключ API</string>
     <string name="login_validate_and_save">Проверить и сохранить</string>
     <string name="login_api_key_saved">Ключ API сохранён</string>
@@ -54,12 +54,12 @@
     <string name="login_status_api_key_saved">На этом устройстве сохранён проверенный ключ API.</string>
     <string name="login_status_api_key_invalid">Сохранённый ключ API необходимо заменить или удалить.</string>
     <string name="remove_api_key">Удалить ключ API</string>
-    <string name="favorite_online_manga">Избранные онлайн галереи</string>
+    <string name="favorite_online_manga">Онлайн-избранное</string>
     <string name="online_tags">Онлайн тэги</string>
     <string name="add_to_online_favorite">Добавить в онлайн избранные</string>
     <string name="remove_from_online_favorites">Удалить из онлайн избранных</string>
-    <string name="add_to_online_blacklist">Добавить в онлайн чёрный список?</string>
-    <string name="tag_already_in_blacklist">Тэг уже в чёрном списке</string>
+    <string name="add_to_online_blacklist">Добавить этот тег в онлайн-список блокировки?</string>
+    <string name="tag_already_in_blacklist">Этот тег уже есть в списке блокировки.</string>
     <string name="are_you_sure">Вы уверены?</string>
     <string name="thumbnail">Превью</string>
     <string name="settings">Настройки</string>
@@ -94,14 +94,12 @@
     <string name="applied_filters">Применённые фильтры</string>
     <string name="show_related">Показать схожие галереи</string>
     <string name="random_manga">Случайная галерея</string>
-    <string name="save_page">Сохранить страницу</string>
-    <string name="page_count_format" formatted="true">%d страниц</string>
+    <string name="save_page">Сохранить изображение</string>
     <string name="upload_date_format" formatted="true">Загружено %1$s в %2$s</string>
-    <string name="favorite_count_format" formatted="true">%d избранных</string>
-    <string name="favorite_manga">Избранные галереи</string>
+    <string name="favorite_manga">Локальное избранное</string>
     <string name="setting_on_remove_ignored">Галереи с игнорируемыми тэгами не будут показываться</string>
     <string name="setting_off_remove_ignored">Галереи с игнорируемыми тэгами будут размыты</string>
-    <string name="remove_ignored_galleries">Убрать игнорируемые галереи</string>
+    <string name="remove_ignored_galleries">Скрывать игнорируемые галереи</string>
     <string name="clear_tag_preferences">Очистить предпочтения тэгов</string>
     <string name="check_for_update_on_startup">Проверять наличие обновлений при запуске</string>
     <string name="check_for_updates">Проверить наличие обновлений</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">Настройки изображений</string>
     <string name="miscellaneous">Разное</string>
     <string name="favorite_action_mode_title">Действие избранного на карточке</string>
-    <string name="favorite_action_local_primary">Сначала сердце</string>
-    <string name="favorite_action_online_primary">Сначала звезда</string>
-    <string name="favorite_action_online_unavailable">Настройте действующий ключ API для онлайн-избранного</string>
+    <string name="favorite_action_local_primary">Нажатие: локальное избранное; удержание: онлайн-избранное</string>
+    <string name="favorite_action_online_primary">Нажатие: онлайн-избранное, если доступно; удержание: локальное избранное</string>
+    <string name="favorite_action_online_unavailable">Войдите или добавьте действующий ключ API для онлайн-избранного.</string>
     <string name="favorite_action_local_accessibility">Переключить локальное избранное</string>
     <string name="favorite_action_online_accessibility">Переключить онлайн-избранное</string>
     <string name="update_settings">Настройки обновлений</string>
-    <string name="online_favorite_manga">Онлайн избранная манга</string>
+    <string name="online_favorite_manga">Онлайн-избранное</string>
     <string name="cache_size_formatted">Размер кэша: %.2f MB</string>
     <string name="cache_cleared">Кэш очищен</string>
-    <string name="sort_by_latest">Сортировать по дате</string>
+    <string name="sort_by_latest">Сначала недавно добавленные</string>
     <string name="edit">Изменить</string>
     <string name="options">Опции</string>
     <string name="keep_history">Сохранять историю поиска</string>
@@ -142,8 +140,8 @@
     <string name="send">Отправить</string>
     <string name="send_comment">Отправить комментарий…</string>
     <string name="profile_picture">Картинка профиля</string>
-    <string name="send_bug_on_github">Отправить баг на Github</string>
-    <string name="github">Github</string>
+    <string name="send_bug_on_github">Отправить баг на GitHub</string>
+    <string name="github">GitHub</string>
     <string name="install">Установить</string>
     <string name="download_update_failed">Неудалось загрузить обновлённую версию</string>
     <string name="copyURL">Копировать URL</string>
@@ -171,7 +169,7 @@
     <string name="cancel">Отмена</string>
     <string name="no">Нет</string>
     <string name="yes">Да</string>
-    <string name="disable_lock_title">Отключить затухание экрана во время чтения</string>
+    <string name="disable_lock_title">Не выключать экран во время чтения</string>
     <string name="download_all_galleries_in_this_page">Загрузить все галереи на этой странице</string>
     <string name="download_all_galleries">Загрузить все галереи</string>
     <string name="favorite_column_count">Выберите количество столбцов в избранных</string>
@@ -187,8 +185,8 @@
     <string name="start_page">Начальная страница</string>
     <string name="end_page">Конечная страница</string>
     <string name="invalid_range_selected">Выбран неверный диапазон</string>
-    <string name="send_with_title">Отправить с заголовком?</string>
-    <string name="caption_send_with_title">Приложить URL к изображению как подпись?</string>
+    <string name="send_with_title">Поделиться изображением</string>
+    <string name="caption_send_with_title">Прикрепить ссылку на страницу к изображению?</string>
     <string name="history_size">Размер истории</string>
     <string name="history_size_summary">Устнавить максимальное количество элементов в истории</string>
     <string name="view_history">Посмотреть историю</string>
@@ -204,18 +202,18 @@
     <string name="zoom_one_column">Включить зум</string>
     <string name="insert_pin">Введите Пин-код</string>
     <string name="confirm_pin">Подтвердите Пин-код</string>
-    <string name="setting_device_credentials">Enable Device Credentials to enter the app</string>
-    <string name="setting_device_credentials_low_sdk">Only available for Android 11 or higher</string>
-    <string name="use_device_credentials">Use Device Credentials</string>
+    <string name="setting_device_credentials">Разрешить разблокировку приложения с помощью биометрии, PIN-кода, графического ключа или пароля устройства.</string>
+    <string name="setting_device_credentials_low_sdk">Требуется Android 11 или новее</string>
+    <string name="use_device_credentials">Использовать проверку устройства</string>
     <string name="wrong_pin">Неверный Пин-код</string>
     <string name="rotate_image">Повернуть изображение</string>
     <string name="toggle_online_favorite">Переместить в онлайн избранное</string>
     <string name="data_usage_settings">Редактировать настройки использования сети</string>
     <string name="mobile_data_usage_setting">Настройки использования мобильной сети</string>
     <string name="wifi_data_usage_setting">Настройки использование Wi-Fi сети</string>
-    <string name="data_usage_thumb">Всегда загружать превью</string>
-    <string name="data_usage_full">Загружать превью или полные изображения</string>
-    <string name="data_usage_no">Не загружать изображения</string>
+    <string name="data_usage_thumb">Загружать только миниатюры</string>
+    <string name="data_usage_full">Загружать миниатюры или полные изображения по необходимости</string>
+    <string name="data_usage_no">Не загружать изображения из сети</string>
     <string name="enable_network_to_continue">Включите загрузку изображения или смените сеть чтобы открыть изображение</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID скопирован в буфер обмена</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">Чёрный и белый цвета не могут использоваться</string>
     <string name="change_status_title">Выбрать новый статус:</string>
     <string name="remove_status">Никакой</string>
-    <string name="name_too_short">Имя слишком короткое</string>
+    <string name="name_too_short">Введите имя длиной не менее 2 символов.</string>
     <string name="duplicated_name">Имя-Дубликат</string>
     <string name="manage_statuses">Управлять статусами</string>
     <string name="update_status">Обновить статус:</string>
@@ -268,10 +266,9 @@
     <string name="title">Заголовок</string>
     <string name="download_date">Время загрузки</string>
     <string name="page_count">Количество страниц</string>
-    <string name="artist">Artist</string>
-    <string name="group">Group</string>
+    <string name="artist">Художник</string>
+    <string name="group">Группа</string>
     <string name="descending_order">В убывающем порядке</string>
-    <string name="minimum_comment_length" formatted="true">Коментарий должен быть хоят бы %d символов</string>
     <string name="change_scroll_type">Изменить тип прилистывания</string>
     <string name="export_data">Выгрузить данные</string>
     <string name="import_data">Загрузить данные</string>
@@ -291,9 +288,9 @@
     <string name="custom_path">Кастомный путь</string>
     <string name="insert_path">Введите путь:</string>
     <string name="requesting_storage_access">Запрос доступа к хранилищу</string>
-    <string name="request_storage_manager_summary">Из-за некоторых ограничений в Android 11 для доступа к хранилищу это приложение потребует выдать дополнительные разрешения для использования кастомных путей.\nЕсли вы хотите выдать эти разрешения, пожалуйста, разрешите настройки в следующем диалоге</string>
-    <string name="summary_beta">Переключение на бета версию сделает невозможным возвращение к стабильной версии без удаления приложения</string>
-    <string name="navigation_settings_per_screen">Настройки навигации при помощи экрана</string>
+    <string name="request_storage_manager_summary">В Android 11 и новее для выбора своего пути загрузки требуется доступ ко всем файлам.\nРазрешите доступ на следующем экране системных настроек.</string>
+    <string name="summary_beta">Для возврата к более старой стабильной версии может потребоваться удаление приложения. Экспортируйте данные перед сменой версии.</string>
+    <string name="navigation_settings_per_screen">Настройки навигации для каждого экрана</string>
     <string name="downloaded_update_at" formatted="true">Обновление загружено в %s</string>
     <string name="summary_offscreen_limit">Установите количество предзагружамых изображений во время чтения галереи</string>
     <string name="title_offscreen_limit">Изображение предзагрузки</string>
@@ -304,42 +301,42 @@
     <string name="title_change_page_buttons">Перелистывание страницы нажатием на изображение</string>
     <string name="export_finished">Экспорт завершён</string>
     <string name="import_finished">Импорт завершён</string>
-    <string name="system_default">System default</string>
-    <string name="clear_cookies">Clear cookies</string>
-    <string name="fetching_cloudflare_token">Fetching Cloudflare token …</string>
-    <string name="exact_title_match_title">Exact tag match only</string>
-    <string name="exact_title_match_summary">Hide galleries which would appear in the site but doesn\'t contains all the tags searched</string>
-    <string name="hide">Hide</string>
-    <string name="shuffle_contentDescription">Random Gallery Button</string>
-    <string name="copy_logs">Copy logs to file</string>
-    <string name="copy_logs_summary">This will put all available logs of this App into a file. The available logs could extend multiple days. Also, it is possible that the logs contain personal information to be sure to check before publishing the file. Use this to attach logs to a Bug report.</string>
-    <string name="copy_logs_fail">Problem generating logfile</string>
+    <string name="system_default">Как в системе</string>
+    <string name="clear_cookies">Очистить cookie</string>
+    <string name="fetching_cloudflare_token">Подготовка проверки сайта…</string>
+    <string name="exact_title_match_title">Совпадение со всеми тегами поиска</string>
+    <string name="exact_title_match_summary">Скрывать галереи, в которых нет всех искомых тегов.</string>
+    <string name="hide">Скрыть</string>
+    <string name="shuffle_contentDescription">Случайная галерея</string>
+    <string name="copy_logs">Экспорт журналов</string>
+    <string name="copy_logs_summary">Сохранить доступные журналы приложения в файл для сообщения об ошибке. Они могут охватывать несколько дней и содержать личные данные. Проверьте файл перед отправкой.</string>
+    <string name="copy_logs_fail">Не удалось экспортировать журналы.</string>
     <string-array name="scroll_type">
-        <item>Горизонтальный</item>
-        <item>Вертикальный</item>
+        <item>Горизонтально</item>
+        <item>Вертикально</item>
     </string-array>
     <string-array name="theme">
         <item>Светлая</item>
         <item>Тёмная</item>
-        <item>True Black</item>
+        <item>Чисто чёрная</item>
     </string-array>
     <string-array name="title_type_array">
         <item>Английский</item>
         <item>Японский</item>
-        <item>Pretty</item>
+        <item>Очищенное название</item>
     </string-array>
-    <string name="online_blacklist_add_error">Error adding to online blacklist</string>
-    <string name="clipboard_settings_error">Error copying settings into clipboard</string>
-    <string name="send_image_error">Error creating Image to send</string>
-    <string name="unlock">Unlock</string>
-    <string name="auth_error">Authentication error</string>
-    <string name="auth_title">Biometric login for NClient</string>
-    <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="online_blacklist_add_error">Не удалось добавить тег в онлайн-список блокировки.</string>
+    <string name="clipboard_settings_error">Не удалось скопировать настройки в буфер обмена.</string>
+    <string name="send_image_error">Не удалось подготовить изображение для отправки.</string>
+    <string name="unlock">Разблокировать</string>
+    <string name="auth_error">Не удалось подтвердить личность</string>
+    <string name="auth_title">Разблокировать NReader</string>
+    <string name="auth_subtitle">Подтвердите личность с помощью биометрии или блокировки экрана устройства.</string>
     <string name="continue_reading">Продолжить чтение</string>
     <string name="open_manual_bookmark">Открыть ручную закладку</string>
     <string name="pause_download">Приостановить загрузку</string>
     <string name="download_failed">Ошибка загрузки</string>
-    <string name="download_error_authentication">Доступ запрещён. Проверьте ключ API и права учётной записи.</string>
+    <string name="download_error_authentication">Доступ запрещён. Проверьте вход в аккаунт и ключ API перед повторной попыткой.</string>
     <string name="download_error_rate_limit">Слишком много запросов. Подождите перед повторной попыткой.</string>
     <string name="download_error_storage">Не удалось записать файлы. Проверьте свободное место и разрешения хранилища.</string>
     <string name="download_error_not_found">Запрошенная галерея или страница больше недоступна.</string>
@@ -349,10 +346,10 @@
     <string name="state_local_favorite">Локальное избранное</string>
     <string name="state_custom_status">Статус: %1$s</string>
     <string name="state_reading_page">Прочитано до страницы %1$d</string>
-    <string name="state_download_complete">Загружено</string>
-    <string name="state_download_partial">Частично загружено</string>
+    <string name="state_download_complete">Загружено полностью</string>
+    <string name="state_download_partial">Не хватает страниц</string>
     <string name="state_download_damaged">Загрузка повреждена</string>
-    <string name="state_download_unverified">Локальные файлы не проверены</string>
+    <string name="state_download_unverified">Полнота неизвестна</string>
     <string name="debug_mask_images">Скрывать изображения для отладки</string>
     <string name="debug_mask_images_summary">Закрывает обложки и страницы непрозрачной шахматной сеткой. Применяется при повторном открытии экрана; загруженные файлы не меняются.</string>
     <string name="list_columns_action">Сменить число столбцов: %1$d → %2$d</string>
@@ -370,7 +367,7 @@
     <string name="accounts_use_guest">Использовать без учетной записи</string>
     <string name="accounts_manage">Управление</string>
     <string name="accounts_manage_named">Управление %1$s</string>
-    <string name="accounts_empty">Добавьте учетную запись, чтобы использовать избранное и теги в Интернете. История загрузок и чтения доступна на этом устройстве.</string>
+    <string name="accounts_empty">Добавьте аккаунт для онлайн-избранного и тегов. Загрузки, локальное избранное и история чтения общие на этом устройстве.</string>
     <string name="accounts_loading">Загрузка аккаунтов…</string>
     <string name="accounts_choose_method">Выберите способ входа</string>
     <string name="accounts_password_method">Имя пользователя и пароль</string>
@@ -385,18 +382,18 @@
     <string name="accounts_remove">Удалить аккаунт</string>
     <string name="accounts_switch">Сменить аккаунт</string>
     <string name="accounts_guest">Не авторизован</string>
-    <string name="accounts_shared_data">Онлайн-данные следуют за вашей учетной записью. Загрузки, локальное избранное и история чтения доступны на этом устройстве.</string>
+    <string name="accounts_shared_data">Онлайн-данные относятся к выбранному аккаунту. Загрузки, локальное избранное и история чтения общие для всех аккаунтов на этом устройстве.</string>
     <string name="account_title">Аккаунт nhentai</string>
     <string name="account_setting_summary">Войдите, используя свое имя пользователя и пароль</string>
-    <string name="account_description">Войдите в систему, чтобы использовать избранное в Интернете и теги. Ваш пароль не сохранен. Ваш ключ API остается отдельным.</string>
+    <string name="account_description">Войдите, чтобы использовать онлайн-избранное и теги. Вы можете выбрать, сохранять ли пароль на этом устройстве.</string>
     <string name="account_username">Имя пользователя или адрес электронной почты</string>
     <string name="account_password">Пароль</string>
     <string name="account_sign_in">Войти</string>
     <string name="account_sign_out">Выйти</string>
-    <string name="account_sign_out_message">Удалить сеанс аккаунта с этого устройства? Если ключ API сохранен, приложение будет использовать его для онлайн-действий.</string>
+    <string name="account_sign_out_message">Выйти из аккаунта на этом устройстве? Загрузки, локальное избранное и история чтения сохранятся.</string>
     <string name="account_signed_out">Сеанс учетной записи не сохраняется.</string>
     <string name="account_session_saved">Сеанс учетной записи сохраняется на этом устройстве.</string>
-    <string name="account_session_expired">Срок действия сохраненной сессии учетной записи истек. Войдите еще раз или удалите сессию, чтобы использовать сохраненный ключ API.</string>
+    <string name="account_session_expired">Срок действия входа истёк. Войдите снова или выберите другой аккаунт в разделе «Аккаунты».</string>
     <string name="account_enter_username">Введите свое имя пользователя или адрес электронной почты.</string>
     <string name="account_enter_password">Введите свой пароль.</string>
     <string name="account_preparing_verification">Подготовка проверки…</string>
@@ -408,15 +405,15 @@
     <string name="account_verify_title">Подтвердите свой вход</string>
     <string name="account_verify_message">Завершите проверку, чтобы продолжить.</string>
     <string name="account_online_favorite_unavailable">Войдите в систему или настройте ключ API, чтобы использовать избранное в Интернете.</string>
-    <string name="online_blacklist_update_error">Не удалось обновить черный список онлайн. Пожалуйста, попробуйте еще раз.</string>
+    <string name="online_blacklist_update_error">Не удалось обновить онлайн-список блокировки. Повторите попытку.</string>
     <string name="online_blacklist_refresh">Обновить</string>
-    <string name="online_blacklist_loading">Загрузка черного списка онлайн…</string>
-    <string name="online_blacklist_loaded">Черный список онлайн обновлен</string>
-    <string name="online_blacklist_load_error">Не удалось загрузить черный список онлайн. Попробуйте обновиться.</string>
-    <string name="online_blacklist_session_expired">Срок действия сессии вашей учетной записи истек. Войдите в систему, чтобы загрузить свой черный список онлайн.</string>
-    <string name="online_blacklist_search_unavailable">Черный список онлайн не загружен. Обновите его или выполните поиск без тегов.</string>
-    <string name="online_blacklist_search_without">Искать без</string>
-    <string name="online_blacklist_sign_in_required">Войдите в систему еще раз или проверьте свой ключ API, прежде чем обновлять черный список онлайн.</string>
+    <string name="online_blacklist_loading">Загрузка онлайн-списка блокировки…</string>
+    <string name="online_blacklist_loaded">Онлайн-список блокировки обновлён</string>
+    <string name="online_blacklist_load_error">Не удалось загрузить онлайн-список блокировки. Попробуйте обновить его.</string>
+    <string name="online_blacklist_session_expired">Срок действия входа истёк. Войдите снова, чтобы загрузить онлайн-список блокировки.</string>
+    <string name="online_blacklist_search_unavailable">Онлайн-настройки тегов не загружены. Обновите их или выполните поиск без этих настроек.</string>
+    <string name="online_blacklist_search_without">Поиск без онлайн-тегов</string>
+    <string name="online_blacklist_sign_in_required">Войдите снова или проверьте ключ API, затем обновите онлайн-список блокировки.</string>
     <string name="comment_preparing">Подготовка проверки…</string>
     <string name="comment_send_again">Опубликовать снова</string>
     <string name="comment_deleted">Комментарий удалён</string>

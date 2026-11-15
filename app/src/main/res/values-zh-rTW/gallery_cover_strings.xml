@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="cover_add_favorite">加入本機收藏</string>
     <string name="cover_remove_favorite">取消本機收藏</string>
-    <string name="cover_favorite_added">已加入收藏</string>
-    <string name="cover_favorite_removed">已取消收藏</string>
+    <string name="cover_favorite_added">已加入本機收藏</string>
+    <string name="cover_favorite_removed">已取消本機收藏</string>
     <string name="cover_online_favorite_add">加入線上收藏</string>
     <string name="cover_online_favorite_remove">取消線上收藏</string>
     <string name="cover_online_favorite_unknown">線上收藏狀態未知</string>

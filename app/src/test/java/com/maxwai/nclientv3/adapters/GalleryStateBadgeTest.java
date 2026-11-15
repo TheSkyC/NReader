@@ -266,7 +266,7 @@ public class GalleryStateBadgeTest {
         View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
         activity.setContentView(card);
         new GalleryStateBadge(card).bind(gallery(115, "{\"num_pages\":16}"));
-        awaitProgress(card, activity.getString(R.string.page_count_format, 16));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 16, 16));
         assertNull(Queries.ReadingProgressTable.fromId(115));
         TextView title = card.findViewById(R.id.title);
         assertEquals(2, title.getMaxLines());
@@ -280,14 +280,14 @@ public class GalleryStateBadgeTest {
             "{\"id\":123,\"media_id\":\"1\",\"english_title\":\"Favorite state\",\"num_pages\":4}"));
         GalleryStateBadge badge = new GalleryStateBadge(card);
         badge.bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 4));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 4, 4));
         View local = card.findViewById(R.id.gallery_favorite);
         View online = card.findViewById(R.id.gallery_online_favorite);
         assertEquals(View.INVISIBLE, online.getVisibility());
 
         AuthStore.saveApiKey(activity, "synthetic-test-key", true);
         badge.bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 4));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 4, 4));
         assertEquals(View.VISIBLE, online.getVisibility());
         assertFalse(online.isClickable());
         assertFalse(online.isSelected());
@@ -327,7 +327,7 @@ public class GalleryStateBadgeTest {
             .putString(activity.getString(R.string.preference_key_favorite_action_mode), "local").apply();
         AuthStore.saveApiKey(activity, "touch-zone-test-key", true);
         new GalleryStateBadge(card).bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         int width = Math.round(240 * activity.getResources().getDisplayMetrics().density);
         card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
@@ -372,7 +372,7 @@ public class GalleryStateBadgeTest {
         OnlineFavoriteClient.rememberState(activity, 126, true);
         GalleryStateBadge badge = new GalleryStateBadge(card);
         badge.bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         View primary = card.findViewById(R.id.gallery_favorite);
         View secondary = card.findViewById(R.id.gallery_online_favorite);
         assertTrue(primary.isSelected());
@@ -392,7 +392,7 @@ public class GalleryStateBadgeTest {
 
         AuthStore.clear(activity);
         badge.bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         assertEquals(View.INVISIBLE, secondary.getVisibility());
         assertNull(androidx.core.view.ViewCompat.getStateDescription(primary));
         assertEquals(activity.getString(R.string.cover_remove_favorite), primary.getContentDescription());
@@ -435,7 +435,7 @@ public class GalleryStateBadgeTest {
                 activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
                     .putString(activity.getString(R.string.preference_key_favorite_action_mode), mode).apply();
                 badge.bind(gallery);
-                awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+                awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
                 card.measure(View.MeasureSpec.makeMeasureSpec(pixels, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                 card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
@@ -464,7 +464,7 @@ public class GalleryStateBadgeTest {
         assertTrue(secondary.getWidth() > 0);
         badge.bind(SimpleGallery.fromV2ListItem(activity, new JSONObject(
             "{\"id\":131,\"media_id\":\"1\",\"english_title\":\"Layout test\",\"num_pages\":2}")));
-        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         assertEquals(View.VISIBLE, secondary.getVisibility());
         assertTrue(secondary.getWidth() > 0);
     }
@@ -481,7 +481,7 @@ public class GalleryStateBadgeTest {
             activity.getSharedPreferences("Settings", Activity.MODE_PRIVATE).edit()
                 .putString(activity.getString(R.string.preference_key_favorite_action_mode), mode).apply();
             badge.bind(local);
-            awaitProgress(card, activity.getString(R.string.page_count_format, 1));
+            awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 1, 1));
             View primary = card.findViewById(R.id.gallery_favorite);
             View secondary = card.findViewById(R.id.gallery_online_favorite);
             assertEquals(View.VISIBLE, secondary.getVisibility());
@@ -508,7 +508,7 @@ public class GalleryStateBadgeTest {
             View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
             activity.setContentView(card);
             new GalleryStateBadge(card).bind(local);
-            awaitProgress(card, activity.getString(R.string.page_count_format, 1));
+            awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 1, 1));
             assertTrue(card.findViewById(R.id.gallery_favorite).performLongClick());
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
             while (!Boolean.TRUE.equals(OnlineFavoriteClient.cachedState(activity, 130)) && System.nanoTime() < deadline) {
@@ -539,8 +539,8 @@ public class GalleryStateBadgeTest {
         activity.setContentView(container);
         firstBadge.bind(gallery);
         secondBadge.bind(gallery);
-        awaitProgress(first, activity.getString(R.string.page_count_format, 2));
-        awaitProgress(second, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(first, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
+        awaitProgress(second, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         View firstStar = first.findViewById(R.id.gallery_online_favorite);
         View secondStar = second.findViewById(R.id.gallery_online_favorite);
         OnlineFavoriteClient.rememberState(activity, 127, true);
@@ -595,7 +595,7 @@ public class GalleryStateBadgeTest {
         View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
         activity.setContentView(card);
         new GalleryStateBadge(card).bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 2));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 2, 2));
         View star = card.findViewById(R.id.gallery_online_favorite);
         OnlineFavoriteClient.rememberState(activity, 128, true);
         shadowOf(Looper.getMainLooper()).idle();
@@ -641,7 +641,7 @@ public class GalleryStateBadgeTest {
         View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
         activity.setContentView(card);
         new GalleryStateBadge(card).bind(gallery);
-        awaitProgress(card, activity.getString(R.string.page_count_format, 180));
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 180, 180));
     }
 
     @Test

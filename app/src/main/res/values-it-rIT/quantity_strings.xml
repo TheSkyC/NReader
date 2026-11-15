@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="one">%1$d pagina</item>
+        <item quantity="other">%1$d pagine</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="one">%1$d preferito</item>
+        <item quantity="other">%1$d preferiti</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="one">Seleziona al massimo %1$d tag.</item>
+        <item quantity="other">Seleziona al massimo %1$d tag.</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="one">Inserisci almeno %1$d carattere.</item>
+        <item quantity="other">Inserisci almeno %1$d caratteri.</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="one">Istantanea creata %1$d giorno fa</item>
+        <item quantity="other">Istantanea creata %1$d giorni fa</item>
+    </plurals>
+</resources>

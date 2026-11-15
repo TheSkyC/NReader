@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Коментарі недоступні</string>
     <string name="cover_local_favorite_selected">У локальних обраних</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Відсутні (%1$d): %2$s\nПошкоджені (%3$d): %4$s</string>
     <string name="download_repair_unavailable">Відновлення сторінок недоступне, оскільки не вдалося перевірити галерею, збережену папку, метадані або джерело.</string>
     <string name="filter_download_state">Фільтрувати за станом завантаження</string>
-    <string name="filter_all">Усі завантаження</string>
+    <string name="filter_all">Усі стани завантаження</string>
     <string name="filter_complete">Повне</string>
-    <string name="filter_partial">Часткове</string>
+    <string name="filter_partial">Бракує сторінок</string>
     <string name="filter_damaged">Пошкоджене</string>
-    <string name="filter_unverified">Не перевірене</string>
+    <string name="filter_unverified">Повнота невідома</string>
     <string name="filter_absent">Немає локальної копії</string>
     <string name="filter_personal_state">Фільтрувати за особистим станом</string>
-    <string name="filter_favorite_only">Лише обрані</string>
-    <string name="filter_reading_only">Читається</string>
-    <string name="filter_unread_only">Не прочитано</string>
+    <string name="filter_favorite_only">Лише локальне обране</string>
+    <string name="filter_reading_only">Є прогрес читання</string>
+    <string name="filter_unread_only">Немає прогресу читання</string>
     <string name="filter_custom_status_only">Призначено власний статус</string>
     <string name="filter_loaded_results">Фільтрувати завантажені результати</string>
     <string name="filter_downloaded_only">Завантажено на пристрій</string>
-    <string name="backup_restore_preview">Перевірити відновлення з копії</string>
-    <string name="backup_restore_preview_message">Копія містить рядків бази даних: %1$d. %2$s. Продовжити відновлення?</string>
+    <string name="backup_restore_preview">Відновити резервну копію</string>
+    <string name="backup_restore_preview_message">Записів у базі даних: %1$d. %2$s.\n\nВідновлення замінить поточну базу даних, включно з обраним, історією та закладками, й імпортує налаштування з цієї копії. Завантажені зображення не зміняться.\n\nВідновити цю копію?</string>
     <string name="backup_integrity_verified">Цілісність перевірено</string>
-    <string name="backup_legacy_format">Старий формат без маніфесту цілісності</string>
-    <string name="restore_snapshot">Відновити попередню базу даних</string>
-    <string name="restore_snapshot_message">Замінити поточну базу даних та експортовані налаштування знімком, збереженим перед останнім імпортом? Завантажені файли не зміняться.</string>
-    <string name="restore_snapshot_summary">Вік знімка, днів: %1$d</string>
+    <string name="backup_legacy_format">Стара копія без відомостей про цілісність</string>
+    <string name="restore_snapshot">Відновити знімок до імпорту</string>
+    <string name="restore_snapshot_message">Замінити поточну базу даних і збережені налаштування знімком, створеним перед останнім імпортом? Завантажені зображення не зміняться.</string>
     <string name="restore_snapshot_unavailable">Нещодавній знімок для відновлення недоступний.</string>
     <string name="restore_snapshot_checking">Перевірка знімка для відновлення…</string>
 </resources>

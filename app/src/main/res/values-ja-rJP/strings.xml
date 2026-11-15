@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">ギャラリーの詳細を読み込み中</string>
     <string name="setting_on_ignore_tags">ギャラリーメニューからタグを選択した場合、他のタグは照会されません（言語を除く）</string>
@@ -7,13 +8,13 @@
     <string name="setting_off_use_account_tag">アカウントタグを無視</string>
     <string name="change_theme">テーマを変更</string>
     <string name="clear_cache">キャッシュをクリア</string>
-    <string name="infinite_scroll">スクロールを無限</string>
+    <string name="infinite_scroll">無限スクロール</string>
     <string name="ignore_tags">他のタグを無視</string>
     <string name="use_account_tag">アカウントタグを使用</string>
     <string name="title_activity_gallery">ギャラリー</string>
-    <string name="title_activity_zoom">ズームアクティビティ</string>
+    <string name="title_activity_zoom">画像の拡大</string>
     <string name="title_activity_tag_filter">タグフィルター</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">APIキー</string>
     <string name="parodies">パロディー</string>
     <string name="characters">キャラクター</string>
     <string name="tags">タグ</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">ZIPファイルの作成の進捗状況を表示するために使用されます。</string>
     <string name="channel2_title">PDFファイルを作成中…しばらくお待ちください:</string>
     <string name="channel3_title">ZIPファイルを作成中…しばらくお待ちください:</string>
-    <string name="tags_max_reached" formatted="true">最大%d個のタグを選択できます</string>
     <string name="only_english">英語のみ</string>
     <string name="only_japanese">日本語のみ</string>
     <string name="only_chinese">中国語のみ</string>
     <string name="all_languages">全ての言語</string>
-    <string name="unknown_language">Unknown language</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="unknown_language">不明な言語</string>
+    <string name="setting_api_key_title">APIキー</string>
     <string name="setting_api_key_summary_missing">ウェブサイトのアカウント設定ページで API キーを作成し、アプリに貼り付けてください。</string>
     <string name="setting_api_key_summary_valid">保存と検証が完了しました。この項目を開くとキーを変更または削除できます。</string>
     <string name="setting_api_key_summary_invalid">保存された API キーは無効になっています。この項目を開いてキーを変更または削除してください。</string>
     <string name="login_api_key_intro_title">API キーを使用</string>
-    <string name="login_api_key_intro_message">nhentai では現在、アプリからのアクセスに API キーを使用しています。ログインするには、ブラウザーでアカウント設定ページを開いて API キーを作成し、ここに戻ってキーを貼り付けてください。</string>
+    <string name="login_api_key_intro_message">APIキーを使用するには、ブラウザーでnhentaiのアカウント設定を開き、キーを作成してからここに貼り付けてください。</string>
     <string name="login_open_api_key_page">API キーのページを開く</string>
     <string name="login_api_key_input_title">API キーを貼り付け</string>
-    <string name="login_api_key_input_message">キーは保存前に v2 API で検証されます。</string>
+    <string name="login_api_key_input_message">キーが有効であることを確認してから保存します。</string>
     <string name="login_api_key_hint">API キー</string>
     <string name="login_validate_and_save">検証して保存</string>
     <string name="login_api_key_saved">API キーを保存しました</string>
@@ -58,8 +58,8 @@
     <string name="online_tags">オンラインタグ</string>
     <string name="add_to_online_favorite">オンラインのお気に入りに追加</string>
     <string name="remove_from_online_favorites">オンラインのお気に入りから削除</string>
-    <string name="add_to_online_blacklist">オンラインブラックリストに追加しますか？</string>
-    <string name="tag_already_in_blacklist">すでにブラックリスト追加されているタグ</string>
+    <string name="add_to_online_blacklist">このタグをオンラインのブロックリストに追加しますか？</string>
+    <string name="tag_already_in_blacklist">このタグはすでにブロックリストに登録されています。</string>
     <string name="are_you_sure">よろしいですか？</string>
     <string name="thumbnail">サムネイル</string>
     <string name="settings">設定</string>
@@ -74,7 +74,7 @@
     <string name="created_pdf">PDFファイルは正常に作成されました</string>
     <string name="error_pdf">PDFファイルの作成中にエラーが発生しました</string>
     <string name="parsing_pages">ページの解析</string>
-    <string name="writing_pdf">PDFを書く</string>
+    <string name="writing_pdf">PDFに書き込み中</string>
     <string name="navigation_drawer_open">ナビゲーションドロワーを開く</string>
     <string name="navigation_drawer_close">ナビゲーションドロワーを閉じる</string>
     <string name="nav_header_subtitle">NHentaiの非公式Androidクライアントアプリ</string>
@@ -83,25 +83,23 @@
     <string name="next_page">次のページ</string>
     <string name="downloaded_manga">ダウンロードしたギャラリー一覧</string>
     <string name="download_gallery">ギャラリーをダウンロード</string>
-    <string name="share_with">と共有する</string>
+    <string name="share_with">共有</string>
     <string name="link_copied_to_clipboard">リンクをクリップボードにコピーしました</string>
     <string name="open_in_browser">ブラウザで開く</string>
-    <string name="go_online">オンライン化</string>
+    <string name="go_online">オンラインで開く</string>
     <string name="update_tag_status">タグステータスの更新</string>
     <string name="change_view">ビューを変更</string>
     <string name="tag_preference">タグの設定</string>
-    <string name="manage_tags">漫画のタグ</string>
+    <string name="manage_tags">タグを管理</string>
     <string name="applied_filters">適用されたフィルター</string>
     <string name="show_related">関連するギャラリーを表示</string>
     <string name="random_manga">ランダムギャラリー</string>
-    <string name="save_page">現在のページを保存する</string>
-    <string name="page_count_format" formatted="true">%dページ</string>
+    <string name="save_page">画像を保存</string>
     <string name="upload_date_format" formatted="true">%1$sの%2$sにアップロード</string>
-    <string name="favorite_count_format" formatted="true">%dお気に入り</string>
-    <string name="favorite_manga">お気に入りのギャラリー</string>
+    <string name="favorite_manga">ローカルのお気に入り</string>
     <string name="setting_on_remove_ignored">タグが無視されているギャラリーは表示されません</string>
     <string name="setting_off_remove_ignored">タグが無視されたギャラリーはぼやけます</string>
-    <string name="remove_ignored_galleries">無視されたギャラリーを削除</string>
+    <string name="remove_ignored_galleries">無視するタグのあるギャラリーを非表示</string>
     <string name="clear_tag_preferences">タグ設定をクリア</string>
     <string name="check_for_update_on_startup">起動時にアップデートを確認</string>
     <string name="check_for_updates">アップデートをチェックしますか？</string>
@@ -109,7 +107,7 @@
     <string name="error_retrieving">最新バージョンの取得中にエラーが発生しました</string>
     <string name="new_version_found">新しい更新が利用可能です</string>
     <string name="update_version_format" formatted="true">バージョン%1$sからバージョン%2$sに更新しますか？\n\n変更履歴：\n%3$s</string>
-    <string name="clear_this_list">このリストを削除</string>
+    <string name="clear_this_list">このリストを空にしますか？</string>
     <string name="set_minimum_count">最小カウントを設定</string>
     <string name="sort_by_title">タイトルで並べ替え</string>
     <string name="sort_by_popular">人気順に並べ替え</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">画像の設定</string>
     <string name="miscellaneous">その他の設定</string>
     <string name="favorite_action_mode_title">カードのお気に入り操作</string>
-    <string name="favorite_action_local_primary">ハートを優先</string>
-    <string name="favorite_action_online_primary">星を優先</string>
-    <string name="favorite_action_online_unavailable">オンラインのお気に入りには有効な API キーを設定してください</string>
+    <string name="favorite_action_local_primary">タップ：ローカルのお気に入り、長押し：オンラインのお気に入り</string>
+    <string name="favorite_action_online_primary">タップ：オンラインのお気に入り（利用可能な場合）、長押し：ローカルのお気に入り</string>
+    <string name="favorite_action_online_unavailable">オンラインのお気に入りを利用するには、ログインするか有効なAPIキーを追加してください。</string>
     <string name="favorite_action_local_accessibility">ローカルのお気に入りを切り替える</string>
     <string name="favorite_action_online_accessibility">オンラインのお気に入りを切り替える</string>
     <string name="update_settings">アップデートの設定</string>
     <string name="online_favorite_manga">オンラインのお気に入りのギャラリー</string>
     <string name="cache_size_formatted">キャッシュサイズ：%.2f MB</string>
     <string name="cache_cleared">キャッシュが削除されました</string>
-    <string name="sort_by_latest">最新順に並べ替え</string>
+    <string name="sort_by_latest">追加が新しい順</string>
     <string name="edit">編集</string>
     <string name="options">設定</string>
     <string name="keep_history">検索履歴を保存</string>
@@ -142,8 +140,8 @@
     <string name="send">送信</string>
     <string name="send_comment">コメントを送信</string>
     <string name="profile_picture">プロフィール画像</string>
-    <string name="send_bug_on_github">Githubでバグや問題を報告する(Githubのアカウントが必要です。)</string>
-    <string name="github">Github（ギットハブ)</string>
+    <string name="send_bug_on_github">GitHubでバグや問題を報告する(GitHubのアカウントが必要です。)</string>
+    <string name="github">GitHub（ギットハブ)</string>
     <string name="install">インストール</string>
     <string name="download_update_failed">更新されたバージョンをダウンロードできません。</string>
     <string name="copyURL">URLをコピー</string>
@@ -171,7 +169,7 @@
     <string name="cancel">キャンセル</string>
     <string name="no">いいえ</string>
     <string name="yes">はい</string>
-    <string name="disable_lock_title">読書中は画面をオフ</string>
+    <string name="disable_lock_title">読書中は画面をオンに保つ</string>
     <string name="download_all_galleries_in_this_page">このページの全てのギャラリーをダウンロード</string>
     <string name="download_all_galleries">全てのギャラリーをダウンロード</string>
     <string name="favorite_column_count">お気に入りの列数を選択</string>
@@ -187,39 +185,39 @@
     <string name="start_page">最初のページ</string>
     <string name="end_page">最後のページ</string>
     <string name="invalid_range_selected">無効な範囲が選択されました</string>
-    <string name="send_with_title">タイトルで送信しますか？</string>
-    <string name="caption_send_with_title">画像のキャプションとしてURLを画像に追加しますか？</string>
-    <string name="history_size">履歴サイズ</string>
-    <string name="history_size_summary">履歴のエントリの最大数を設定</string>
-    <string name="view_history">履歴を表示</string>
-    <string name="history">履歴</string>
-    <string name="clear_history">履歴を削除</string>
+    <string name="send_with_title">画像を共有</string>
+    <string name="caption_send_with_title">画像の共有時にページのリンクを添付しますか？</string>
+    <string name="history_size">読書履歴の上限</string>
+    <string name="history_size_summary">保存する読書履歴の最大件数</string>
+    <string name="view_history">読書履歴</string>
+    <string name="history">読書履歴</string>
+    <string name="clear_history">読書履歴を消去</string>
     <string name="cancelled_format">キャンセル：%s</string>
     <string name="completed_format">完了：%s</string>
     <string name="downloading_format">ダウンロード中: %s</string>
     <string name="toggle_favorite">お気に入りを切り替える</string>
     <string name="resume">再開する</string>
-    <string name="title_copied_to_clipboard">タイトルをクリップボードにコピー</string>
+    <string name="title_copied_to_clipboard">タイトルをクリップボードにコピーしました</string>
     <string name="setting_zoom_one_column">ギャラリー内の1列モードでズームを有効</string>
     <string name="zoom_one_column">ズームを有効</string>
-    <string name="insert_pin">PINを挿入</string>
+    <string name="insert_pin">PINを入力</string>
     <string name="confirm_pin">PINの確認</string>
-    <string name="setting_device_credentials">Enable Device Credentials to enter the app</string>
-    <string name="setting_device_credentials_low_sdk">Only available for Android 11 or higher</string>
-    <string name="use_device_credentials">Use Device Credentials</string>
+    <string name="setting_device_credentials">生体認証または端末の画面ロックのPIN、パターン、パスワードでアプリをロック解除できるようにします。</string>
+    <string name="setting_device_credentials_low_sdk">Android 11以降で利用できます</string>
+    <string name="use_device_credentials">端末認証でロック解除</string>
     <string name="wrong_pin">PINが間違っています。</string>
-    <string name="rotate_image">画像を回転さ</string>
+    <string name="rotate_image">画像を回転</string>
     <string name="toggle_online_favorite">オンラインのお気に入りを切り替える</string>
-    <string name="data_usage_settings">データの使用量の変更</string>
-    <string name="mobile_data_usage_setting">モバイルデータでの使用量設定</string>
-    <string name="wifi_data_usage_setting">Wi-Fiデータでの使用量設定</string>
-    <string name="data_usage_thumb">常にサムネイルをダウンロード</string>
-    <string name="data_usage_full">サムネイルまたは完全な画像をダウンロード</string>
-    <string name="data_usage_no">画像をダウンロードしない</string>
-    <string name="enable_network_to_continue">イメージのダウンロードを有効にするか、ネットワークを変更してイメージを開きます</string>
+    <string name="data_usage_settings">ネットワーク画像設定</string>
+    <string name="mobile_data_usage_setting">モバイルデータでの画像読み込み</string>
+    <string name="wifi_data_usage_setting">Wi-Fiでの画像読み込み</string>
+    <string name="data_usage_thumb">サムネイルのみ読み込む</string>
+    <string name="data_usage_full">必要に応じてサムネイルまたは元画像を読み込む</string>
+    <string name="data_usage_no">ネットワークから画像を読み込まない</string>
+    <string name="enable_network_to_continue">ネットワーク画像設定で画像の読み込みを許可するか、ネットワークを切り替えて再試行してください。</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">IDをクリップボードにコピーしました。</string>
-    <string name="copied_to_clipboard">クリップボードにコピー</string>
+    <string name="copied_to_clipboard">クリップボードにコピーしました</string>
     <string name="maximum_notification_count">最大通知数</string>
     <string name="copy_settings_to_clipboard">設定をクリップボードにコピー</string>
     <string name="sort_popular_all_time">人気</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">白黒は使用出来ません。</string>
     <string name="change_status_title">新しいステータスを選択:</string>
     <string name="remove_status">無し</string>
-    <string name="name_too_short">名前が短すぎます。</string>
+    <string name="name_too_short">名前は2文字以上で入力してください。</string>
     <string name="duplicated_name">名前が重複しています。</string>
     <string name="manage_statuses">ステータスを管理</string>
     <string name="update_status">最新の状況:</string>
@@ -266,22 +264,21 @@
     <string name="status_viewer">ステータスビューア</string>
     <string name="title_hide_multitasking">マルチタスクでアプリのコンテンツを非表示</string>
     <string name="title">タイトル</string>
-    <string name="download_date">データをダウンロード</string>
+    <string name="download_date">ダウンロード日</string>
     <string name="page_count">ページ数</string>
-    <string name="artist">Artist</string>
-    <string name="group">Group</string>
+    <string name="artist">作者</string>
+    <string name="group">サークル</string>
     <string name="descending_order">降順</string>
-    <string name="minimum_comment_length" formatted="true">コメントは少なくとも%d文字である必要があります</string>
     <string name="change_scroll_type">スクロールタイプを変更</string>
     <string name="export_data">データをエクスポート</string>
     <string name="import_data">データをインポート</string>
     <string name="default_status_1">読書中</string>
     <string name="default_status_2">完了済</string>
     <string name="default_status_3">保留中</string>
-    <string name="default_status_4">ドロップ中</string>
-    <string name="default_status_5">計画中</string>
+    <string name="default_status_4">読書中止</string>
+    <string name="default_status_5">読む予定</string>
     <string name="title_site_mirror">サイトミラーを変更</string>
-    <string name="disguise_app_in_drawer">引き出しの中の変装アプリ</string>
+    <string name="disguise_app_in_drawer">アプリ一覧でアイコンを偽装</string>
     <string name="summary_disguise_app">アプリは電卓を装います（実験的）</string>
     <string name="app_name_fake_calculator">電卓</string>
     <string name="delete_galleries">ギャラリーにある本を削除</string>
@@ -291,8 +288,8 @@
     <string name="custom_path">カスタムパス</string>
     <string name="insert_path">パスを挿入:</string>
     <string name="requesting_storage_access">ストレージアクセスの要求</string>
-    <string name="request_storage_manager_summary">Android 11ではストレージアクセスに制限があるため、このアプリではカスタムパスを使用するための追加の権限を付与する必要があります。\ nこれらの権限を付与する場合は、次のダイアログで設定を有効にしてください。</string>
-    <string name="summary_beta">ベータ版に切り替えると、アンインストールせずに安定版に戻ることができなくなります。</string>
+    <string name="request_storage_manager_summary">Android 11以降でカスタムのダウンロード先を使うには、すべてのファイルへのアクセス権限が必要です。\n次のシステム設定画面でアクセスを許可してください。</string>
+    <string name="summary_beta">古い安定版に戻すには、アプリのアンインストールが必要になる場合があります。切り替える前にデータをエクスポートしてください。</string>
     <string name="navigation_settings_per_screen">画面ごとのナビゲーションを設定</string>
     <string name="downloaded_update_at" formatted="true">%sでダウンロードされた更新</string>
     <string name="summary_offscreen_limit">ギャラリーを読むときに画面外にプリロードする画像の数を設定</string>
@@ -306,40 +303,40 @@
     <string name="import_finished">インポートが完了しました</string>
     <string name="system_default">システムのデフォルト</string>
     <string name="clear_cookies">Cookie を消去</string>
-    <string name="fetching_cloudflare_token">Cloudflareトークンを取得しています …</string>
-    <string name="exact_title_match_title">Exact tag match only</string>
-    <string name="exact_title_match_summary">Hide galleries which would appear in the site but doesn\'t contains all the tags searched</string>
+    <string name="fetching_cloudflare_token">サイトの認証を準備中…</string>
+    <string name="exact_title_match_title">すべての検索タグに一致</string>
+    <string name="exact_title_match_summary">検索したタグをすべて含まないギャラリーを非表示にします。</string>
     <string name="hide">非表示</string>
-    <string name="shuffle_contentDescription">Random Gallery Button</string>
-    <string name="copy_logs">Copy logs to file</string>
-    <string name="copy_logs_summary">This will put all available logs of this App into a file. The available logs could extend multiple days. Also, it is possible that the logs contain personal information to be sure to check before publishing the file. Use this to attach logs to a Bug report.</string>
-    <string name="copy_logs_fail">Problem generating logfile</string>
+    <string name="shuffle_contentDescription">ランダムなギャラリー</string>
+    <string name="copy_logs">ログをエクスポート</string>
+    <string name="copy_logs_summary">不具合報告に添付するため、アプリの利用可能なログをファイルに保存します。数日分の記録や個人情報が含まれる場合があります。共有する前に内容を確認してください。</string>
+    <string name="copy_logs_fail">ログをエクスポートできませんでした。</string>
     <string-array name="scroll_type">
         <item>水平</item>
         <item>垂直</item>
     </string-array>
     <string-array name="theme">
-        <item>ライトテーマ</item>
-        <item>ダークテーマ</item>
-        <item>True Black</item>
+        <item>ライト</item>
+        <item>ダーク</item>
+        <item>ピュアブラック</item>
     </string-array>
     <string-array name="title_type_array">
         <item>英語</item>
         <item>日本語</item>
-        <item>かわいい</item>
+        <item>整形済みタイトル</item>
     </string-array>
-    <string name="online_blacklist_add_error">Error adding to online blacklist</string>
-    <string name="clipboard_settings_error">Error copying settings into clipboard</string>
-    <string name="send_image_error">Error creating Image to send</string>
-    <string name="unlock">Unlock</string>
-    <string name="auth_error">Authentication error</string>
-    <string name="auth_title">Biometric login for NClient</string>
-    <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="online_blacklist_add_error">オンラインのブロックリストにタグを追加できませんでした。</string>
+    <string name="clipboard_settings_error">設定をクリップボードにコピーできませんでした。</string>
+    <string name="send_image_error">共有する画像を準備できませんでした。</string>
+    <string name="unlock">ロック解除</string>
+    <string name="auth_error">本人確認に失敗しました</string>
+    <string name="auth_title">NReaderのロック解除</string>
+    <string name="auth_subtitle">生体認証または端末の画面ロックで本人確認を行ってください。</string>
     <string name="continue_reading">続きを読む</string>
     <string name="open_manual_bookmark">手動しおりを開く</string>
     <string name="pause_download">ダウンロードを一時停止</string>
     <string name="download_failed">失敗</string>
-    <string name="download_error_authentication">アクセスが拒否されました。APIキーとアカウントの権限を確認してください。</string>
+    <string name="download_error_authentication">アクセスが拒否されました。再試行する前にサインイン状態とAPIキーを確認してください。</string>
     <string name="download_error_rate_limit">リクエストが多すぎます。時間をおいて再試行してください。</string>
     <string name="download_error_storage">ファイルを書き込めませんでした。空き容量とストレージの権限を確認してください。</string>
     <string name="download_error_not_found">指定したギャラリーまたはページは利用できなくなりました。</string>
@@ -348,11 +345,11 @@
     <string name="download_conflicting_task">このギャラリーのタスクは待機中または停止処理中です。別のページ範囲を指定する前に、ダウンロード画面で完了または停止してください。</string>
     <string name="state_local_favorite">ローカルお気に入り</string>
     <string name="state_custom_status">状態: %1$s</string>
-    <string name="state_reading_page">%1$dページまで読書</string>
-    <string name="state_download_complete">ダウンロード済み</string>
-    <string name="state_download_partial">一部ダウンロード済み</string>
+    <string name="state_reading_page">読書位置：%1$dページ</string>
+    <string name="state_download_complete">全ページをダウンロード済み</string>
+    <string name="state_download_partial">ページ不足</string>
     <string name="state_download_damaged">ダウンロード破損</string>
-    <string name="state_download_unverified">ローカルファイル未確認</string>
+    <string name="state_download_unverified">完全性不明</string>
     <string name="debug_mask_images">デバッグ用画像マスク</string>
     <string name="debug_mask_images_summary">表紙と閲覧ページを不透明な格子で覆います。画面を開き直すと反映されます。ダウンロードしたファイルは変更しません。</string>
     <string name="list_columns_action">列数を切り替え：%1$d → %2$d</string>
@@ -363,14 +360,14 @@
     <string name="cover_group_credit">サークル: %1$s</string>
     <string name="account_remember_password">このデバイスにパスワードを保存する</string>
     <string name="account_storage_error">アカウントを保存できませんでした。もう一度試してください。</string>
-    <string name="account_login_description">オンラインのお気に入りとタグを使用するには、サインインしてください。このデバイスにパスワードを記憶するかどうかを選択できます。</string>
+    <string name="account_login_description">ログインするとオンラインのお気に入りとタグを利用できます。この端末にパスワードを保存するかどうかを選べます。</string>
     <string name="account_remove_message">このアカウントとその保存された認証情報をこのデバイスから削除しますか?</string>
     <string name="accounts_title">アカウント</string>
     <string name="accounts_add">アカウントを追加</string>
     <string name="accounts_use_guest">アカウントなしで使用する</string>
     <string name="accounts_manage">管理する</string>
     <string name="accounts_manage_named">%1$sの管理</string>
-    <string name="accounts_empty">オンラインのお気に入りとタグを使用するには、アカウントを追加します。ダウンロードと読書履歴はこのデバイスで共有されます。</string>
+    <string name="accounts_empty">オンラインのお気に入りとタグを利用するには、アカウントを追加してください。ダウンロード、ローカルのお気に入り、読書履歴はこの端末で共有されます。</string>
     <string name="accounts_loading">アカウントを読み込み中…</string>
     <string name="accounts_choose_method">サインイン方法を選択してください</string>
     <string name="accounts_password_method">ユーザー名とパスワード</string>
@@ -385,18 +382,18 @@
     <string name="accounts_remove">アカウントを削除する</string>
     <string name="accounts_switch">アカウントを切り替える</string>
     <string name="accounts_guest">サインインしていません</string>
-    <string name="accounts_shared_data">オンラインデータは各アカウントに紐づいています。ダウンロード、ローカルのお気に入り、読書履歴はこのデバイス上で共有されます。</string>
+    <string name="accounts_shared_data">オンラインデータには選択中のアカウントを使用します。ダウンロード、ローカルのお気に入り、読書履歴は、この端末の全アカウントで共有されます。</string>
     <string name="account_title">nhentaiアカウント</string>
     <string name="account_setting_summary">ユーザー名とパスワードを使用してサインインします</string>
-    <string name="account_description">オンラインのお気に入りとタグを使用するには、サインインしてください。パスワードは保存されません。 API キーは分離されたままになります。</string>
+    <string name="account_description">ログインするとオンラインのお気に入りとタグを利用できます。この端末にパスワードを保存するかどうかを選べます。</string>
     <string name="account_username">ユーザー名またはメールアドレス</string>
     <string name="account_password">パスワード</string>
     <string name="account_sign_in">サインイン</string>
     <string name="account_sign_out">サインアウト</string>
-    <string name="account_sign_out_message">このデバイスからアカウント セッションを削除しますか? API キーが保存されている場合、アプリはそれをオンライン アクションに使用します。</string>
+    <string name="account_sign_out_message">この端末でログアウトしますか？ローカルのダウンロード、お気に入り、読書履歴は保持されます。</string>
     <string name="account_signed_out">アカウントセッションは保存されていません。</string>
     <string name="account_session_saved">アカウントセッションがこのデバイスに保存されています。</string>
-    <string name="account_session_expired">保存されたアカウントセッションの有効期限が切れました。再度サインインするか、セッションを削除して保存済みの API キーを使用してください。</string>
+    <string name="account_session_expired">ログインの有効期限が切れました。再度ログインするか、アカウント一覧で別のアカウントを選んでください。</string>
     <string name="account_enter_username">ユーザー名またはメールアドレスを入力してください。</string>
     <string name="account_enter_password">パスワードを入力してください。</string>
     <string name="account_preparing_verification">検証を準備しています…</string>
@@ -408,15 +405,15 @@
     <string name="account_verify_title">サインインを確認する</string>
     <string name="account_verify_message">続行するには検証を完了してください。</string>
     <string name="account_online_favorite_unavailable">オンラインのお気に入りを使用するには、サインインするか API キーを構成します。</string>
-    <string name="online_blacklist_update_error">オンライン ブラックリストを更新できませんでした。もう一度試してください。</string>
+    <string name="online_blacklist_update_error">オンラインのブロックリストを更新できませんでした。再試行してください。</string>
     <string name="online_blacklist_refresh">更新</string>
-    <string name="online_blacklist_loading">オンライン ブラックリストを読み込んでいます…</string>
-    <string name="online_blacklist_loaded">オンラインブラックリストは最新です</string>
-    <string name="online_blacklist_load_error">オンラインブラックリストを読み込めませんでした。更新してみてください。</string>
-    <string name="online_blacklist_session_expired">アカウントセッションの有効期限が切れました。サインインしてオンラインブラックリストを読み込んでください。</string>
-    <string name="online_blacklist_search_unavailable">オンラインブラックリストが読み込まれていません。更新するか、ブラックリストのタグを使用せずに検索してください。</string>
-    <string name="online_blacklist_search_without">なしで検索</string>
-    <string name="online_blacklist_sign_in_required">オンライン ブラックリストを更新する前に、もう一度サインインするか、API キーを確認してください。</string>
+    <string name="online_blacklist_loading">オンラインのブロックリストを読み込み中…</string>
+    <string name="online_blacklist_loaded">オンラインのブロックリストを更新しました</string>
+    <string name="online_blacklist_load_error">オンラインのブロックリストを読み込めませんでした。更新してください。</string>
+    <string name="online_blacklist_session_expired">ログインの有効期限が切れました。再度ログインしてオンラインのブロックリストを読み込んでください。</string>
+    <string name="online_blacklist_search_unavailable">オンラインのタグ設定が読み込まれていません。更新するか、この設定を使用せずに検索してください。</string>
+    <string name="online_blacklist_search_without">オンラインタグなしで検索</string>
+    <string name="online_blacklist_sign_in_required">再度ログインするかAPIキーを確認してから、オンラインのブロックリストを更新してください。</string>
     <string name="comment_preparing">認証を準備しています…</string>
     <string name="comment_send_again">もう一度投稿</string>
     <string name="comment_deleted">コメントを削除しました</string>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="cover_add_favorite">Ajouter aux favoris locaux</string>
     <string name="cover_remove_favorite">Retirer des favoris locaux</string>
-    <string name="cover_favorite_added">Ajouté aux favoris</string>
-    <string name="cover_favorite_removed">Retiré des favoris</string>
+    <string name="cover_favorite_added">Ajouté aux favoris locaux</string>
+    <string name="cover_favorite_removed">Retiré des favoris locaux</string>
     <string name="cover_online_favorite_add">Ajouter aux favoris en ligne</string>
     <string name="cover_online_favorite_remove">Retirer des favoris en ligne</string>
     <string name="cover_online_favorite_unknown">État du favori en ligne inconnu</string>

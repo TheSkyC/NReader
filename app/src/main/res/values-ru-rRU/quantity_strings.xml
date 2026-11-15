@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="one">%1$d страница</item>
+        <item quantity="few">%1$d страницы</item>
+        <item quantity="many">%1$d страниц</item>
+        <item quantity="other">%1$d страницы</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="one">%1$d добавление в избранное</item>
+        <item quantity="few">%1$d добавления в избранное</item>
+        <item quantity="many">%1$d добавлений в избранное</item>
+        <item quantity="other">%1$d добавления в избранное</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="one">Можно выбрать не более %1$d тега.</item>
+        <item quantity="few">Можно выбрать не более %1$d тегов.</item>
+        <item quantity="many">Можно выбрать не более %1$d тегов.</item>
+        <item quantity="other">Можно выбрать не более %1$d тега.</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="one">Введите не менее %1$d символа.</item>
+        <item quantity="few">Введите не менее %1$d символов.</item>
+        <item quantity="many">Введите не менее %1$d символов.</item>
+        <item quantity="other">Введите не менее %1$d символа.</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="one">Снимок создан %1$d день назад</item>
+        <item quantity="few">Снимок создан %1$d дня назад</item>
+        <item quantity="many">Снимок создан %1$d дней назад</item>
+        <item quantity="other">Снимок создан %1$d дня назад</item>
+    </plurals>
+</resources>

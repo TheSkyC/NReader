@@ -6,8 +6,8 @@
     <string name="comment_input_hint">写下评论</string>
     <string name="comment_send">发表评论</string>
     <string name="comment_login_title">登录后发表评论</string>
-    <string name="comment_login_message">API 密钥没有评论权限。请使用账号密码登录后发表评论。</string>
-    <string name="comment_login_guest_message">使用账号密码登录后即可发表评论。</string>
+    <string name="comment_login_message">API 密钥不能用于发表评论。请使用账号密码登录后发表评论。</string>
+    <string name="comment_login_guest_message">请使用账号密码登录后发表评论。</string>
     <string name="comment_account_too_new">此账号注册时间较短，暂时无法发表评论。请稍后再试。</string>
     <string name="comment_login_action">去登录</string>
     <string name="comment_select_title">选择评论账号</string>
@@ -25,55 +25,55 @@
     <string name="comment_disabled">评论功能暂时不可用。</string>
     <string name="comment_rejected">无法发表评论，请检查内容后重试。</string>
     <string name="comment_unknown">无法确认是否发表成功，请刷新评论后再决定是否重试。</string>
-    <string name="comment_unknown_confirm">上次操作的结果尚未确认。请先刷新评论查看，确定要再次发表吗？</string>
+    <string name="comment_unknown_confirm">尚未确认上次评论是否发表成功。请先刷新评论查看，要再次发表吗？</string>
     <string name="comment_send_again">再次发表</string>
     <string name="comment_delete">删除</string>
     <string name="comment_delete_confirm">删除这条评论？</string>
     <string name="comment_deleting">正在删除评论…</string>
     <string name="comment_deleted">评论已删除</string>
     <string name="account_remember_password">在此设备上记住密码</string>
-    <string name="account_storage_error">无法保存账户，请重试。</string>
-    <string name="account_login_description">登录后可使用在线收藏和标签。你可以选择是否在此设备记住密码。</string>
-    <string name="account_remove_message">从此设备移除此账户及其保存的登录信息？</string>
-    <string name="accounts_title">账户</string>
-    <string name="accounts_add">添加账户</string>
-    <string name="accounts_use_guest">不使用账户</string>
+    <string name="account_storage_error">无法保存账号，请重试。</string>
+    <string name="account_login_description">登录后可使用在线收藏和标签，可选择是否在此设备上记住密码。</string>
+    <string name="account_remove_message">要从此设备移除此账号及其保存的登录信息吗？</string>
+    <string name="accounts_title">账号</string>
+    <string name="accounts_add">添加账号</string>
+    <string name="accounts_use_guest">以访客身份使用</string>
     <string name="accounts_manage">管理</string>
     <string name="accounts_manage_named">管理 %1$s</string>
-    <string name="accounts_empty">添加账户后可使用在线收藏和标签。下载和阅读历史在此设备上共享。</string>
-    <string name="accounts_loading">正在加载账户…</string>
+    <string name="accounts_empty">添加账号后可使用在线收藏和标签。下载、本地收藏和阅读历史在此设备上共享。</string>
+    <string name="accounts_loading">正在加载账号…</string>
     <string name="accounts_choose_method">选择登录方式</string>
     <string name="accounts_password_method">用户名和密码</string>
     <string name="accounts_key_method">API 密钥</string>
-    <string name="accounts_current">当前账户</string>
+    <string name="accounts_current">当前账号</string>
     <string name="accounts_needs_sign_in">需要重新登录</string>
     <string name="accounts_key_invalid">API 密钥需要验证</string>
     <string name="accounts_detail_format">%1$s · %2$s</string>
-    <string name="accounts_unnamed_key">API 密钥账户</string>
+    <string name="accounts_unnamed_key">API 密钥账号</string>
     <string name="accounts_reauthenticate">重新登录</string>
     <string name="accounts_revalidate_key">重新验证 API 密钥</string>
-    <string name="accounts_remove">移除账户</string>
-    <string name="accounts_switch">切换账户</string>
+    <string name="accounts_remove">移除账号</string>
+    <string name="accounts_switch">切换账号</string>
     <string name="accounts_guest">未登录</string>
-    <string name="accounts_shared_data">在线数据随账户切换，下载、本地收藏和阅读历史在此设备上共享。</string>
+    <string name="accounts_shared_data">在线数据随所选账号切换。下载、本地收藏和阅读历史由此设备上的所有账号共享。</string>
     <string name="account_title">nhentai 账号</string>
     <string name="account_setting_summary">使用用户名和密码登录</string>
-    <string name="account_description">登录后可使用在线收藏和标签。密码不会保存，API 密钥独立管理。</string>
+    <string name="account_description">登录后可使用在线收藏和标签，可选择是否在此设备上记住密码。</string>
     <string name="account_username">用户名或邮箱</string>
     <string name="account_password">密码</string>
     <string name="account_sign_in">登录</string>
     <string name="account_sign_out">退出登录</string>
-    <string name="account_sign_out_message">从此设备移除账号会话？如果已保存 API 密钥，应用将使用该密钥执行在线操作。</string>
-    <string name="account_signed_out">尚未保存账号会话。</string>
-    <string name="account_session_saved">此设备已保存账号会话。</string>
-    <string name="account_session_expired">保存的账号会话已过期。请重新登录，或移除会话以使用已保存的 API 密钥。</string>
+    <string name="account_sign_out_message">要退出此账号吗？本地下载、收藏和阅读历史不受影响。</string>
+    <string name="account_signed_out">尚未保存登录信息。</string>
+    <string name="account_session_saved">此设备已保存登录信息。</string>
+    <string name="account_session_expired">登录状态已过期，请重新登录，或在账号列表中切换到其他账号。</string>
     <string name="account_enter_username">请输入用户名或邮箱。</string>
     <string name="account_enter_password">请输入密码。</string>
     <string name="account_preparing_verification">正在准备验证…</string>
     <string name="account_signing_in">正在登录…</string>
     <string name="account_verification_error">验证未完成，请检查网络后重试。</string>
     <string name="account_login_error">无法完成登录，请检查账号信息后重试。</string>
-    <string name="account_identity_unconfirmed">无法确认这是所选账户。请检查账号信息，或移除该账户后重新添加。</string>
+    <string name="account_identity_unconfirmed">无法确认这是所选账号。请检查登录信息，或移除该账号后重新添加。</string>
     <string name="account_protection_error">验证完成后，网站仍阻止了登录请求。请稍后重试。</string>
     <string name="account_verify_title">验证登录</string>
     <string name="account_verify_message">请完成验证以继续。</string>
@@ -97,13 +97,13 @@
     <string name="delete_search_plan_confirm">要删除此搜索方案吗？</string>
     <string name="setting_on_ignore_tags">从画廊菜单选择标签时，不附加其他标签条件（语言除外）</string>
     <string name="setting_off_ignore_tags">从画廊菜单选择标签时，同时应用其他标签条件</string>
-    <string name="setting_on_use_account_tag">搜索时使用账户的标签偏好（本地偏好优先）</string>
-    <string name="setting_off_use_account_tag">搜索时忽略账户的标签偏好</string>
+    <string name="setting_on_use_account_tag">搜索时使用账号的标签偏好（本地偏好优先）</string>
+    <string name="setting_off_use_account_tag">搜索时忽略账号的标签偏好</string>
     <string name="change_theme">更改主题</string>
     <string name="clear_cache">清除缓存</string>
     <string name="infinite_scroll">无限滚动</string>
     <string name="ignore_tags">忽略其他标签</string>
-    <string name="use_account_tag">使用账户标签偏好</string>
+    <string name="use_account_tag">使用账号标签偏好</string>
     <string name="title_activity_gallery">画廊</string>
     <string name="gallery_loading_details">正在加载画廊详情</string>
     <string name="title_activity_zoom">图片缩放</string>
@@ -125,21 +125,20 @@
     <string name="channel3_description">显示 ZIP 创建进度</string>
     <string name="channel2_title">正在创建 PDF：</string>
     <string name="channel3_title">正在创建 ZIP：</string>
-    <string name="tags_max_reached" formatted="true">最多可选择 %d 个标签。</string>
     <string name="only_english">仅英文</string>
     <string name="only_japanese">仅日文</string>
     <string name="only_chinese">仅中文</string>
     <string name="all_languages">所有语言</string>
     <string name="unknown_language">未知语言</string>
     <string name="setting_api_key_title">API 密钥</string>
-    <string name="setting_api_key_summary_missing">在网站的账户设置页面创建 API 密钥，然后粘贴到应用中。</string>
+    <string name="setting_api_key_summary_missing">在网站的账号设置页面创建 API 密钥，然后粘贴到应用中。</string>
     <string name="setting_api_key_summary_valid">密钥已验证并保存。点按可替换或移除。</string>
     <string name="setting_api_key_summary_invalid">已保存的密钥已失效。点按可替换或移除。</string>
     <string name="login_api_key_intro_title">使用 API 密钥</string>
-    <string name="login_api_key_intro_message">nhentai 使用 API 密钥授权应用访问。请在浏览器中打开账户设置页面，创建 API 密钥，再返回此处粘贴密钥以登录。</string>
+    <string name="login_api_key_intro_message">要使用 API 密钥，请在浏览器中打开 nhentai 账号设置页面并创建密钥，再返回此处粘贴。</string>
     <string name="login_open_api_key_page">打开 API 密钥页面</string>
     <string name="login_api_key_input_title">粘贴 API 密钥</string>
-    <string name="login_api_key_input_message">保存前将通过 v2 API 验证密钥。</string>
+    <string name="login_api_key_input_message">验证密钥有效后才会保存。</string>
     <string name="login_api_key_hint">API 密钥</string>
     <string name="login_validate_and_save">验证并保存</string>
     <string name="login_api_key_saved">API 密钥已保存</string>
@@ -153,8 +152,8 @@
     <string name="online_tags">在线标签</string>
     <string name="add_to_online_favorite">加入在线收藏</string>
     <string name="remove_from_online_favorites">取消在线收藏</string>
-    <string name="add_to_online_blacklist">加入在线黑名单</string>
-    <string name="tag_already_in_blacklist">此标签已在黑名单中</string>
+    <string name="add_to_online_blacklist">将此标签加入在线屏蔽列表？</string>
+    <string name="tag_already_in_blacklist">此标签已在屏蔽列表中</string>
     <string name="are_you_sure">确定要执行此操作吗？</string>
     <string name="thumbnail">缩略图</string>
     <string name="settings">设置</string>
@@ -190,9 +189,7 @@
     <string name="show_related">查看相关画廊</string>
     <string name="random_manga">随机画廊</string>
     <string name="save_page">保存图片</string>
-    <string name="page_count_format" formatted="true">%d 页</string>
     <string name="upload_date_format" formatted="true">上传时间：%1$s %2$s</string>
-    <string name="favorite_count_format" formatted="true">%d 次收藏</string>
     <string name="favorite_manga">本地收藏</string>
     <string name="setting_on_remove_ignored">不显示带有已忽略标签的画廊</string>
     <string name="setting_off_remove_ignored">模糊显示带有已忽略标签的画廊</string>
@@ -200,7 +197,7 @@
     <string name="clear_tag_preferences">清除标签偏好</string>
     <string name="check_for_update_on_startup">启动时检查更新</string>
     <string name="check_for_updates">检查更新</string>
-    <string name="no_updates_found">已是最新版本</string>
+    <string name="no_updates_found">未发现更新</string>
     <string name="error_retrieving">获取最新版本时出错</string>
     <string name="new_version_found">发现新版本</string>
     <string name="update_version_format" formatted="true">要从 %1$s 版更新到 %2$s 版吗？\n\n更新日志：\n%3$s</string>
@@ -220,8 +217,8 @@
     <string name="online_favorite_manga">在线收藏</string>
     <string name="favorite_action_mode_title">收藏按钮操作</string>
     <string name="favorite_action_local_primary">点按切换本地收藏，长按切换在线收藏</string>
-    <string name="favorite_action_online_primary">点按切换在线收藏，长按切换本地收藏（在线收藏可用时）</string>
-    <string name="favorite_action_online_unavailable">请先设置有效的 API 密钥，再使用在线收藏。</string>
+    <string name="favorite_action_online_primary">点按切换在线收藏（可用时），长按切换本地收藏</string>
+    <string name="favorite_action_online_unavailable">请登录账号或添加有效的 API 密钥，以使用在线收藏。</string>
     <string name="favorite_action_local_accessibility">切换本地收藏状态</string>
     <string name="favorite_action_online_accessibility">切换在线收藏状态</string>
     <string name="cache_size_formatted">缓存大小：%.2f MB</string>
@@ -235,7 +232,7 @@
     <string name="favorite_count">收藏数</string>
     <string name="comments">评论</string>
     <string name="send">发送</string>
-    <string name="send_comment">发送评论…</string>
+    <string name="send_comment">发表评论…</string>
     <string name="profile_picture">头像</string>
     <string name="send_bug_on_github">在 GitHub 上反馈问题</string>
     <string name="github">GitHub</string>
@@ -299,19 +296,19 @@
     <string name="zoom_one_column">启用缩放</string>
     <string name="insert_pin">输入 PIN 码</string>
     <string name="confirm_pin">确认 PIN 码</string>
-    <string name="setting_device_credentials">允许使用设备的锁屏 PIN 码、图案或密码解锁应用</string>
+    <string name="setting_device_credentials">允许通过生物识别或设备锁屏 PIN 码、图案或密码解锁应用</string>
     <string name="setting_device_credentials_low_sdk">仅适用于 Android 11 及更高版本</string>
-    <string name="use_device_credentials">使用锁屏凭据解锁</string>
+    <string name="use_device_credentials">使用设备验证解锁</string>
     <string name="wrong_pin">PIN 码不正确</string>
     <string name="rotate_image">旋转图片</string>
     <string name="toggle_online_favorite">切换在线收藏状态</string>
-    <string name="data_usage_settings">网络使用设置</string>
-    <string name="mobile_data_usage_setting">移动数据使用设置</string>
-    <string name="wifi_data_usage_setting">Wi-Fi 使用设置</string>
+    <string name="data_usage_settings">网络图片设置</string>
+    <string name="mobile_data_usage_setting">使用移动数据加载图片</string>
+    <string name="wifi_data_usage_setting">使用 Wi-Fi 加载图片</string>
     <string name="data_usage_thumb">仅加载缩略图</string>
     <string name="data_usage_full">按需加载缩略图或完整图片</string>
     <string name="data_usage_no">不加载网络图片</string>
-    <string name="enable_network_to_continue">请在网络使用设置中允许加载图片，或切换网络后重试。</string>
+    <string name="enable_network_to_continue">请在网络图片设置中允许加载图片，或切换网络后重试。</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID 已复制到剪贴板</string>
     <string name="copied_to_clipboard">已复制到剪贴板</string>
@@ -322,7 +319,7 @@
     <string name="notification_permission_denied">通知不可用，可在系统设置中开启。</string>
     <string name="notification_open_settings">打开设置</string>
     <string name="copy_settings_to_clipboard">复制设置到剪贴板</string>
-    <string name="sort_popular_all_time">热门</string>
+    <string name="sort_popular_all_time">总榜</string>
     <string name="sort_recent">最新</string>
     <string name="sort_popular_day">日榜</string>
     <string name="sort_popular_week">周榜</string>
@@ -357,8 +354,8 @@
     <string name="invalid_color_selected">不能使用黑色或白色</string>
     <string name="change_status_title">选择新状态：</string>
     <string name="remove_status">无</string>
-    <string name="name_too_short">名称太短</string>
-    <string name="duplicated_name">名称重复</string>
+    <string name="name_too_short">名称至少需要 2 个字符。</string>
+    <string name="duplicated_name">此名称已被使用。</string>
     <string name="manage_statuses">管理状态</string>
     <string name="update_status">更新状态：</string>
     <string name="view_statuses">查看状态</string>
@@ -371,7 +368,6 @@
     <string name="artist">画师</string>
     <string name="group">社团</string>
     <string name="descending_order">降序</string>
-    <string name="minimum_comment_length" formatted="true">评论不得少于 %d 个字符</string>
     <string name="change_scroll_type">切换滚动方向</string>
     <string name="export_data">导出数据</string>
     <string name="import_data">导入数据</string>
@@ -392,7 +388,7 @@
     <string name="insert_path">输入路径：</string>
     <string name="requesting_storage_access">正在请求存储权限</string>
     <string name="request_storage_manager_summary">受 Android 11 及更高版本的存储权限限制，使用自定义路径需要额外授权。\n请在接下来的系统设置页面中授予所有文件访问权限。</string>
-    <string name="summary_beta">更新到测试版后，需先卸载应用才能回退到稳定版。</string>
+    <string name="summary_beta">回退到较旧的稳定版可能需要卸载应用。切换版本前请先导出数据。</string>
     <string name="navigation_settings_per_screen">各界面浏览设置</string>
     <string name="downloaded_update_at" formatted="true">更新文件已下载至 %s</string>
     <string name="summary_offscreen_limit">设置阅读时提前加载的图片数量</string>
@@ -406,7 +402,7 @@
     <string name="import_finished">导入完成</string>
     <string name="system_default">系统默认</string>
     <string name="clear_cookies">清除 Cookie</string>
-    <string name="fetching_cloudflare_token">正在获取 Cloudflare 令牌…</string>
+    <string name="fetching_cloudflare_token">正在准备网站验证…</string>
     <string name="exact_title_match_title">匹配全部搜索标签</string>
     <string name="exact_title_match_summary">隐藏未包含全部搜索标签的画廊。</string>
     <string name="hide">隐藏</string>
@@ -421,14 +417,14 @@
     <string-array name="theme">
         <item>浅色</item>
         <item>深色</item>
-        <item>纯黑（适合 AMOLED 屏幕）</item>
+        <item>纯黑</item>
     </string-array>
     <string-array name="title_type_array">
         <item>英文</item>
         <item>日文</item>
-        <item>简洁</item>
+        <item>简洁标题</item>
     </string-array>
-    <string name="online_blacklist_add_error">添加到在线黑名单时出错</string>
+    <string name="online_blacklist_add_error">无法将标签加入在线屏蔽列表。</string>
     <string name="clipboard_settings_error">将设置复制到剪贴板时出错</string>
     <string name="send_image_error">准备分享图片时出错</string>
     <string name="unlock">解锁</string>
@@ -462,9 +458,9 @@
     <string name="debug_mask_images_summary">使用不透明棋盘格遮盖封面和阅读页面，重新打开界面后生效。已下载的文件不受影响。</string>
     <string name="list_columns_action">将列数从 %1$d 列切换为 %2$d 列</string>
     <string name="list_language_filter">语言：%1$s</string>
-    <string name="list_compact_columns">窄屏窗口列数</string>
-    <string name="list_wide_columns">宽屏窗口列数</string>
-    <string name="list_columns_summary">根据可用宽度和字体大小自动调整；仅宽屏窗口支持 4 列。</string>
+    <string name="list_compact_columns">窄窗口列数</string>
+    <string name="list_wide_columns">宽窗口列数</string>
+    <string name="list_columns_summary">根据可用宽度和字体大小自动调整；仅宽窗口支持 4 列。</string>
     <string name="cover_group_credit">社团：%1$s</string>
     <string name="restore_snapshot_checking">正在检查恢复快照…</string>
     <string name="online_blacklist_update_error">无法更新在线屏蔽列表，请重试。</string>
@@ -472,8 +468,8 @@
     <string name="online_blacklist_loading">正在加载在线屏蔽列表…</string>
     <string name="online_blacklist_loaded">在线屏蔽列表已更新</string>
     <string name="online_blacklist_load_error">无法加载在线屏蔽列表，请尝试刷新。</string>
-    <string name="online_blacklist_session_expired">账号会话已过期，请登录以加载在线屏蔽列表。</string>
-    <string name="online_blacklist_search_unavailable">在线屏蔽列表尚未加载。请刷新，或不使用这些标签继续搜索。</string>
-    <string name="online_blacklist_search_without">继续搜索</string>
+    <string name="online_blacklist_session_expired">登录状态已过期，请重新登录以加载在线屏蔽列表。</string>
+    <string name="online_blacklist_search_unavailable">在线标签偏好尚未加载。请刷新，或不使用这些偏好继续搜索。</string>
+    <string name="online_blacklist_search_without">不使用在线标签搜索</string>
     <string name="online_blacklist_sign_in_required">请重新登录或检查 API 密钥，然后刷新在线屏蔽列表。</string>
 </resources>

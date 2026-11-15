@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revise English and all existing translations for accurate account, reading,
+  sharing and backup behavior. Complete untranslated interface text and use
+  locale-aware plurals for counts and snapshot ages.
+
 - Add nhentai account sign-in with Turnstile, bounded proof of work and
   renewable session credentials. Keep API keys separate and isolate online
   favorite state across account changes.

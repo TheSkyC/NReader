@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Los comentarios no están disponibles</string>
     <string name="cover_local_favorite_selected">En favoritos locales</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Ausentes (%1$d): %2$s\nDañadas (%3$d): %4$s</string>
     <string name="download_repair_unavailable">No se pueden reparar las páginas porque no se puede verificar la identidad de la galería, la carpeta guardada, los metadatos o el origen.</string>
     <string name="filter_download_state">Filtrar por estado de descarga</string>
-    <string name="filter_all">Todas las descargas</string>
+    <string name="filter_all">Todos los estados de descarga</string>
     <string name="filter_complete">Completa</string>
-    <string name="filter_partial">Parcial</string>
+    <string name="filter_partial">Páginas faltantes</string>
     <string name="filter_damaged">Dañada</string>
-    <string name="filter_unverified">Sin verificar</string>
+    <string name="filter_unverified">Integridad desconocida</string>
     <string name="filter_absent">Sin copia local</string>
     <string name="filter_personal_state">Filtrar por estado personal</string>
-    <string name="filter_favorite_only">Solo favoritos</string>
-    <string name="filter_reading_only">En lectura</string>
-    <string name="filter_unread_only">Sin leer</string>
+    <string name="filter_favorite_only">Solo favoritos locales</string>
+    <string name="filter_reading_only">Con progreso de lectura</string>
+    <string name="filter_unread_only">Sin progreso de lectura</string>
     <string name="filter_custom_status_only">Con estado personalizado</string>
     <string name="filter_loaded_results">Filtrar resultados cargados</string>
     <string name="filter_downloaded_only">Descargado localmente</string>
-    <string name="backup_restore_preview">Revisar restauración de copia</string>
-    <string name="backup_restore_preview_message">Esta copia contiene %1$d filas de base de datos. %2$s. ¿Continuar con la restauración?</string>
+    <string name="backup_restore_preview">Restaurar copia de seguridad</string>
+    <string name="backup_restore_preview_message">Registros de la base de datos: %1$d. %2$s.\n\nLa restauración sustituirá la base de datos actual, incluidos los favoritos, el historial y los marcadores, e importará los ajustes de esta copia. Las imágenes descargadas no se modificarán.\n\n¿Restaurar esta copia?</string>
     <string name="backup_integrity_verified">Integridad verificada</string>
-    <string name="backup_legacy_format">Formato antiguo sin manifiesto de integridad</string>
-    <string name="restore_snapshot">Restaurar base de datos anterior</string>
-    <string name="restore_snapshot_message">¿Sustituir la base de datos actual y los ajustes exportados por la instantánea guardada antes de la última importación? Los archivos descargados no se modifican.</string>
-    <string name="restore_snapshot_summary">Antigüedad de la instantánea: %1$d días</string>
+    <string name="backup_legacy_format">Copia antigua sin información de integridad</string>
+    <string name="restore_snapshot">Restaurar instantánea anterior a la importación</string>
+    <string name="restore_snapshot_message">¿Sustituir la base de datos actual y los ajustes respaldados por la instantánea guardada antes de la última importación? Las imágenes descargadas no se modificarán.</string>
     <string name="restore_snapshot_unavailable">No hay ninguna instantánea de restauración reciente disponible.</string>
     <string name="restore_snapshot_checking">Comprobando instantánea de restauración…</string>
 </resources>

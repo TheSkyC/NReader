@@ -141,7 +141,8 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
                 case OFFLINE:
                 case TYPE:
                     if (TagV2.maxTagReached() && ent.getStatus() == TagStatus.DEFAULT) {
-                        context.runOnUiThread(() -> Toast.makeText(context, context.getString(R.string.tags_max_reached, TagV2.MAXTAGS), Toast.LENGTH_LONG).show());
+                        context.runOnUiThread(() -> Toast.makeText(context, context.getResources().getQuantityString(
+                            R.plurals.tags_max_reached, TagV2.MAXTAGS, TagV2.MAXTAGS), Toast.LENGTH_LONG).show());
                     } else {
                         TagV2.updateStatus(ent);
                         updateLogo(holder.imgView, ent.getStatus());

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="one">%1$d sayfa</item>
+        <item quantity="other">%1$d sayfa</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="one">%1$d favori</item>
+        <item quantity="other">%1$d favori</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="one">En fazla %1$d etiket seçebilirsiniz.</item>
+        <item quantity="other">En fazla %1$d etiket seçebilirsiniz.</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="one">En az %1$d karakter girin.</item>
+        <item quantity="other">En az %1$d karakter girin.</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="one">Anlık görüntü %1$d gün önce oluşturuldu</item>
+        <item quantity="other">Anlık görüntü %1$d gün önce oluşturuldu</item>
+    </plurals>
+</resources>

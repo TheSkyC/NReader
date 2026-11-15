@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">Cargando detalles de la galería</string>
-    <string name="setting_on_ignore_tags">Otras etiquetas no se agregarán cuando una etiqueta es seleccionada desde el menu de la galería (excepto el lenguaje)</string>
-    <string name="setting_off_ignore_tags">Otras etiquetas sí seran agregadas cuando una etiqueta es seleccionada desde el menu de la galería (excepto el lenguaje)</string>
+    <string name="setting_on_ignore_tags">Al seleccionar una etiqueta desde el menú de la galería, no se aplicarán las demás condiciones de etiquetas (excepto el idioma).</string>
+    <string name="setting_off_ignore_tags">Al seleccionar una etiqueta desde el menú de la galería, también se aplicarán las demás condiciones de etiquetas.</string>
     <string name="setting_on_use_account_tag">Usar las etiquetas de la cuenta para la busqueda (las etiquetas locales tendrán prioridad)</string>
     <string name="setting_off_use_account_tag">Las etiquetas de la cuenta serán ignoradas</string>
     <string name="change_theme">Cambiar tema</string>
@@ -11,9 +12,9 @@
     <string name="ignore_tags">Ignorar otras etiquetas</string>
     <string name="use_account_tag">Usar etiquetas de la cuenta</string>
     <string name="title_activity_gallery">Galería</string>
-    <string name="title_activity_zoom">Actividad de Zoom</string>
+    <string name="title_activity_zoom">Ampliar imagen</string>
     <string name="title_activity_tag_filter">Filtro de etiquetas</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">Clave API</string>
     <string name="parodies">Parodias</string>
     <string name="characters">Personajes</string>
     <string name="tags">Etiquetas</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">Usado para mostrar el progreso de la creación del comprimido</string>
     <string name="channel2_title">Creando PDF:</string>
     <string name="channel3_title">Comprimiendo:</string>
-    <string name="tags_max_reached" formatted="true">Puedes tener un máximo de %d etiquetas seleccionadas.</string>
     <string name="only_english">Solo inglés</string>
     <string name="only_japanese">Solo japonés</string>
     <string name="only_chinese">Solo chino</string>
     <string name="all_languages">Todos los idiomas</string>
-    <string name="unknown_language">Unknown language</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="unknown_language">Idioma desconocido</string>
+    <string name="setting_api_key_title">Clave API</string>
     <string name="setting_api_key_summary_missing">Crea una clave de API en los ajustes de tu cuenta en el sitio web y pégala en la aplicación.</string>
     <string name="setting_api_key_summary_valid">Guardada y validada. Abre esta opción para sustituir o eliminar la clave.</string>
     <string name="setting_api_key_summary_invalid">Hay una clave de API guardada, pero ya no es válida. Abre esta opción para sustituirla o eliminarla.</string>
     <string name="login_api_key_intro_title">Usar una clave de API</string>
-    <string name="login_api_key_intro_message">El sitio de nhentai ahora utiliza claves de API para acceder desde aplicaciones. Para iniciar sesión, abre los ajustes de tu cuenta en el navegador, crea una clave de API y vuelve aquí para pegarla.</string>
+    <string name="login_api_key_intro_message">Para usar una clave API, abre los ajustes de tu cuenta de nhentai en el navegador, crea una clave y vuelve aquí para pegarla.</string>
     <string name="login_open_api_key_page">Abrir página de claves de API</string>
     <string name="login_api_key_input_title">Pega tu clave de API</string>
-    <string name="login_api_key_input_message">La clave se valida con la API v2 antes de guardarse.</string>
+    <string name="login_api_key_input_message">Se comprobará que la clave sea válida antes de guardarla.</string>
     <string name="login_api_key_hint">Clave de API</string>
     <string name="login_validate_and_save">Validar y guardar</string>
     <string name="login_api_key_saved">Clave de API guardada</string>
@@ -54,13 +54,13 @@
     <string name="login_status_api_key_saved">Hay una clave de API validada guardada en este dispositivo.</string>
     <string name="login_status_api_key_invalid">Hay una clave de API guardada que debe sustituirse o eliminarse.</string>
     <string name="remove_api_key">Eliminar clave de API</string>
-    <string name="favorite_online_manga">Mangas Favoritos En Línea</string>
+    <string name="favorite_online_manga">Favoritos en línea</string>
     <string name="online_tags">Etiquetas En Línea</string>
     <string name="add_to_online_favorite">Agregar a Favoritos En Línea</string>
     <string name="remove_from_online_favorites">Eliminar de Favoritos En Línea</string>
-    <string name="add_to_online_blacklist">¿Agregar a la Lista Negra En Línea?</string>
-    <string name="tag_already_in_blacklist">Etiqueta ya en la lista negra Negra En Línea</string>
-    <string name="are_you_sure">¿Estas seguro?</string>
+    <string name="add_to_online_blacklist">¿Añadir esta etiqueta a la lista de bloqueo en línea?</string>
+    <string name="tag_already_in_blacklist">Esta etiqueta ya está en la lista de bloqueo.</string>
+    <string name="are_you_sure">¿Quieres continuar?</string>
     <string name="thumbnail">Miniatura</string>
     <string name="settings">Opciones</string>
     <string name="related">Relacionado</string>
@@ -94,27 +94,25 @@
     <string name="applied_filters">Filtros aplicados</string>
     <string name="show_related">Mostrar galerías relacionadas</string>
     <string name="random_manga">Manga aleatorio</string>
-    <string name="save_page">Guardar la página</string>
-    <string name="page_count_format" formatted="true">%d páginas</string>
+    <string name="save_page">Guardar imagen</string>
     <string name="upload_date_format" formatted="true">Subido el %1$s a las %2$s</string>
-    <string name="favorite_count_format" formatted="true">%d favoritos</string>
-    <string name="favorite_manga">Manga favorito</string>
+    <string name="favorite_manga">Favoritos locales</string>
     <string name="setting_on_remove_ignored">Las galerías con etiquetas ignoradas no se mostrarán</string>
     <string name="setting_off_remove_ignored">Las galerías con etiquetas ignoradas se pondrán borrosas</string>
-    <string name="remove_ignored_galleries">Eliminar las galerías ignoradas</string>
+    <string name="remove_ignored_galleries">Ocultar galerías ignoradas</string>
     <string name="clear_tag_preferences">Limpiar preferencias de etiquetas</string>
     <string name="check_for_update_on_startup">Comprobar actualizaciones al inicio</string>
     <string name="check_for_updates">Comprobar actualizaciones</string>
     <string name="no_updates_found">No se han encontrado actualizaciones</string>
     <string name="error_retrieving">Error al obtener la última versión</string>
     <string name="new_version_found">Nueva versión encontrada</string>
-    <string name="update_version_format" formatted="true">¿Actualizar de versión %1$s a la versión %2$s?  Registro de cambios: %3$s</string>
+    <string name="update_version_format" formatted="true">¿Actualizar de la versión %1$s a la %2$s?\n\nRegistro de cambios:\n%3$s</string>
     <string name="clear_this_list">¿Limpiar esta lista?</string>
     <string name="set_minimum_count">Establecer número mínimo</string>
     <string name="sort_by_title">Ordenar por título</string>
     <string name="sort_by_popular">Ordenar por popularidad</string>
     <string name="next_page_volume_up">Ir a la siguiente página con el botón de aumentar volumen</string>
-    <string name="next_page_volume_down">Ir a la página anterior con el botón de disminuir volumen</string>
+    <string name="next_page_volume_down">Ir a la siguiente página con el botón de disminuir volumen</string>
     <string name="change_title_type">Cambiar el tipo de título</string>
     <string name="title_type_summary">Seleccione el tipo de título por defecto para las galerías</string>
     <string name="search_settings">Configuración de Búsqueda</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">Configuración de Imágenes</string>
     <string name="miscellaneous">Misceláneo</string>
     <string name="favorite_action_mode_title">Acción de favoritos en tarjetas</string>
-    <string name="favorite_action_local_primary">Corazón principal</string>
-    <string name="favorite_action_online_primary">Estrella principal</string>
-    <string name="favorite_action_online_unavailable">Configura una clave API válida para usar favoritos en línea</string>
+    <string name="favorite_action_local_primary">Tocar: favoritos locales; mantener pulsado: favoritos en línea</string>
+    <string name="favorite_action_online_primary">Tocar: favoritos en línea (si están disponibles); mantener pulsado: favoritos locales</string>
+    <string name="favorite_action_online_unavailable">Inicia sesión o añade una clave API válida para usar favoritos en línea.</string>
     <string name="favorite_action_local_accessibility">Cambiar favorito local</string>
     <string name="favorite_action_online_accessibility">Cambiar favorito en línea</string>
     <string name="update_settings">Configuración de Actualizacion</string>
-    <string name="online_favorite_manga">Manga favorito en línea</string>
+    <string name="online_favorite_manga">Favoritos en línea</string>
     <string name="cache_size_formatted">Tamaño de caché: %.2f MB</string>
     <string name="cache_cleared">Caché limpiado</string>
-    <string name="sort_by_latest">Ordenar por los más nuevos</string>
+    <string name="sort_by_latest">Ordenar por fecha de incorporación</string>
     <string name="edit">Editar</string>
     <string name="options">Opciones</string>
     <string name="keep_history">Mantener el historial de búsqueda</string>
@@ -139,11 +137,11 @@
     <string name="insert_tag_name">Inserte nombre de etiqueta:</string>
     <string name="favorite_count">Número de Favoritos</string>
     <string name="comments">Comentarios</string>
-    <string name="send">Envíar</string>
+    <string name="send">Enviar</string>
     <string name="send_comment">Enviar comentario…</string>
     <string name="profile_picture">Foto de perfil</string>
-    <string name="send_bug_on_github">Envía un error a Github</string>
-    <string name="github">Github</string>
+    <string name="send_bug_on_github">Envía un error a GitHub</string>
+    <string name="github">GitHub</string>
     <string name="install">Instalar</string>
     <string name="download_update_failed">No se puede descargar la versión actualizada</string>
     <string name="copyURL">Copiar URL</string>
@@ -187,8 +185,8 @@
     <string name="start_page">Página de inicio</string>
     <string name="end_page">Página final</string>
     <string name="invalid_range_selected">Rango inválido seleccionado</string>
-    <string name="send_with_title">¿Enviar con título?</string>
-    <string name="caption_send_with_title">¿Añadir url como pie de foto de la imagen?</string>
+    <string name="send_with_title">Compartir imagen</string>
+    <string name="caption_send_with_title">¿Incluir el enlace de la página al compartir esta imagen?</string>
     <string name="history_size">Tamaño del historial</string>
     <string name="history_size_summary">Establece el número máximo de entradas para el historial</string>
     <string name="view_history">Ver historial</string>
@@ -204,25 +202,25 @@
     <string name="zoom_one_column">Activar el zoom</string>
     <string name="insert_pin">Insertar PIN</string>
     <string name="confirm_pin">Confirmar PIN</string>
-    <string name="setting_device_credentials">Enable Device Credentials to enter the app</string>
-    <string name="setting_device_credentials_low_sdk">Solo disponible para Android 11 o superior</string>
-    <string name="use_device_credentials">Usar Credenciales del Dispositivo</string>
+    <string name="setting_device_credentials">Permitir el desbloqueo de la aplicación con biometría o con el PIN, patrón o contraseña del dispositivo.</string>
+    <string name="setting_device_credentials_low_sdk">Requiere Android 11 o posterior</string>
+    <string name="use_device_credentials">Usar la autenticación del dispositivo</string>
     <string name="wrong_pin">PIN erróneo</string>
     <string name="rotate_image">Rotar la imagen</string>
     <string name="toggle_online_favorite">Cambiar favorito en línea</string>
     <string name="data_usage_settings">Configuración de uso de datos</string>
     <string name="mobile_data_usage_setting">Configuracíon de uso de datos móviles</string>
     <string name="wifi_data_usage_setting">Configuración de uso de Wi-Fi</string>
-    <string name="data_usage_thumb">Siempre descargar miniaturas</string>
-    <string name="data_usage_full">Descargar imágenes en miniaturas o completas</string>
-    <string name="data_usage_no">No descargar imágenes</string>
+    <string name="data_usage_thumb">Cargar solo miniaturas</string>
+    <string name="data_usage_full">Cargar miniaturas o imágenes completas según sea necesario</string>
+    <string name="data_usage_no">No cargar imágenes de la red</string>
     <string name="enable_network_to_continue">Habilitar la descarga de imágenes o cambiar de red para abrir la imagen</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID copiada al portapapeles</string>
     <string name="copied_to_clipboard">Copiado al portapapeles</string>
     <string name="maximum_notification_count">Número máximo de notificaciones</string>
     <string name="copy_settings_to_clipboard">Copiar los ajustes en el portapapeles</string>
-    <string name="sort_popular_all_time">Popular</string>
+    <string name="sort_popular_all_time">Más populares de siempre</string>
     <string name="sort_recent">Recientes</string>
     <string name="sort_popular_day">Populares por día</string>
     <string name="sort_popular_week">Populares por semana</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">Blanco y negro no pueden ser usados</string>
     <string name="change_status_title">Seleccione nuevo estado:</string>
     <string name="remove_status">Ninguno</string>
-    <string name="name_too_short">El nombre es demasiado corto</string>
+    <string name="name_too_short">Introduce un nombre de al menos 2 caracteres.</string>
     <string name="duplicated_name">Nombre duplicado</string>
     <string name="manage_statuses">Administrar los estados</string>
     <string name="update_status">Estado de actualización:</string>
@@ -271,16 +269,15 @@
     <string name="artist">Artista</string>
     <string name="group">Grupo</string>
     <string name="descending_order">Orden Descendiente</string>
-    <string name="minimum_comment_length" formatted="true">El comentario debe ser de al menos %d carácteres.</string>
     <string name="change_scroll_type">Cambiar tipo de scroll</string>
     <string name="export_data">Exportar datos</string>
     <string name="import_data">Importar datos</string>
     <string name="default_status_1">Leyendo</string>
     <string name="default_status_2">Completado</string>
     <string name="default_status_3">En Espera</string>
-    <string name="default_status_4">Dropeado</string>
-    <string name="default_status_5">Planeando leer</string>
-    <string name="title_site_mirror">Caombiar fuente de datos</string>
+    <string name="default_status_4">Abandonado</string>
+    <string name="default_status_5">Pendiente de lectura</string>
+    <string name="title_site_mirror">Cambiar el sitio espejo</string>
     <string name="disguise_app_in_drawer">Ocultar aplicacion</string>
     <string name="summary_disguise_app">La aplicacion se ocultará en la bandeja de aplicaciones (experimental)</string>
     <string name="app_name_fake_calculator">Calculadora</string>
@@ -291,29 +288,29 @@
     <string name="custom_path">Ruta personalizada</string>
     <string name="insert_path">Inserte ruta:</string>
     <string name="requesting_storage_access">Solicitando acceso a almacenamiento</string>
-    <string name="request_storage_manager_summary">Debido a las restricciones de Android 11 debes de dar permisos adicionales para que las rutas funcionen.\nSi quieres conceder los permisos acepta en la siguiente ventana.</string>
-    <string name="summary_beta">Actualizar a una version beta puede provocar errores, además de no poder volver a una version estable sin desinstalar.</string>
-    <string name="navigation_settings_per_screen">Opciones de navegacion por pantalla</string>
+    <string name="request_storage_manager_summary">En Android 11 y versiones posteriores, las rutas de descarga personalizadas necesitan acceso a todos los archivos.\nPermite este acceso en la siguiente pantalla de ajustes del sistema.</string>
+    <string name="summary_beta">Volver a una versión estable anterior puede requerir desinstalar la aplicación. Exporta tus datos antes de cambiar de versión.</string>
+    <string name="navigation_settings_per_screen">Opciones de navegación por pantalla</string>
     <string name="downloaded_update_at" formatted="true">Actualización descargada en la ruta: %s</string>
     <string name="summary_offscreen_limit">Establece el número de imágenes precargadas fuera de la pantalla</string>
     <string name="title_offscreen_limit">Imagen a precargar</string>
     <string name="sort_popoular_month">Populares por mes</string>
     <string name="random">Aleatorio</string>
-    <string name="summary_fetch_metadata">Descarga los datos de galerías descargadas antes de la versión 2.3.0 las cuales no tenian etiquetas.</string>
-    <string name="title_fetch_metadata">Reconocer los datos de las galerías antiguas</string>
-    <string name="title_change_page_buttons">Cambiar de página haciendo click en la imagen</string>
+    <string name="summary_fetch_metadata">Recuperar las etiquetas y otros metadatos que faltan en las galerías descargadas antes de la versión 2.3.0.</string>
+    <string name="title_fetch_metadata">Recuperar metadatos de galerías antiguas</string>
+    <string name="title_change_page_buttons">Cambiar de página al tocar la imagen</string>
     <string name="export_finished">Exportación Finalizada</string>
     <string name="import_finished">Importación Completa</string>
-    <string name="system_default">System default</string>
-    <string name="clear_cookies">Limpiar cokkies</string>
-    <string name="fetching_cloudflare_token">Fetching Cloudflare token …</string>
-    <string name="exact_title_match_title">Exact tag match only</string>
-    <string name="exact_title_match_summary">Ocultar Galerías qué no tienen todas las etiquetas de la búsqueda</string>
+    <string name="system_default">Predeterminado del sistema</string>
+    <string name="clear_cookies">Limpiar cookies</string>
+    <string name="fetching_cloudflare_token">Preparando la verificación del sitio…</string>
+    <string name="exact_title_match_title">Coincidir con todas las etiquetas</string>
+    <string name="exact_title_match_summary">Ocultar las galerías que no contengan todas las etiquetas buscadas.</string>
     <string name="hide">Ocultar</string>
-    <string name="shuffle_contentDescription">Random Gallery Button</string>
-    <string name="copy_logs">Copy logs to file</string>
-    <string name="copy_logs_summary">This will put all available logs of this App into a file. The available logs could extend multiple days. Also, it is possible that the logs contain personal information to be sure to check before publishing the file. Use this to attach logs to a Bug report.</string>
-    <string name="copy_logs_fail">Problem generating logfile</string>
+    <string name="shuffle_contentDescription">Galería aleatoria</string>
+    <string name="copy_logs">Exportar registros</string>
+    <string name="copy_logs_summary">Guarda los registros disponibles de la aplicación en un archivo para informar de un problema. Pueden abarcar varios días y contener información personal. Revisa el archivo antes de compartirlo.</string>
+    <string name="copy_logs_fail">No se pudieron exportar los registros.</string>
     <string-array name="scroll_type">
         <item>Horizontal</item>
         <item>Vertical</item>
@@ -321,25 +318,25 @@
     <string-array name="theme">
         <item>Claro</item>
         <item>Oscuro</item>
-        <item>Negro Oled</item>
+        <item>Negro puro</item>
     </string-array>
     <string-array name="title_type_array">
         <item>Inglés</item>
         <item>Japonés</item>
-        <item>Arreglado</item>
+        <item>Título simplificado</item>
     </string-array>
-    <string name="online_blacklist_add_error">Error adding to online blacklist</string>
-    <string name="clipboard_settings_error">Error copying settings into clipboard</string>
-    <string name="send_image_error">Error creating Image to send</string>
+    <string name="online_blacklist_add_error">No se pudo añadir la etiqueta a la lista de bloqueo en línea.</string>
+    <string name="clipboard_settings_error">No se pudieron copiar los ajustes al portapapeles.</string>
+    <string name="send_image_error">No se pudo preparar la imagen para compartirla.</string>
     <string name="unlock">Desbloquear</string>
-    <string name="auth_error">Authentication error</string>
-    <string name="auth_title">Biometric login for NClient</string>
-    <string name="auth_subtitle">Log in using your biometric credential</string>
+    <string name="auth_error">No se pudo verificar la identidad</string>
+    <string name="auth_title">Desbloquear NReader</string>
+    <string name="auth_subtitle">Verifica tu identidad con biometría o con el bloqueo de pantalla del dispositivo.</string>
     <string name="continue_reading">Continuar leyendo</string>
     <string name="open_manual_bookmark">Abrir marcador manual</string>
     <string name="pause_download">Pausar descarga</string>
     <string name="download_failed">Descarga fallida</string>
-    <string name="download_error_authentication">Acceso denegado. Revisa la clave API y los permisos de la cuenta.</string>
+    <string name="download_error_authentication">Acceso denegado. Comprueba tu inicio de sesión y tu clave API antes de volver a intentarlo.</string>
     <string name="download_error_rate_limit">Demasiadas solicitudes. Espera antes de volver a intentarlo.</string>
     <string name="download_error_storage">No se pudieron escribir los archivos. Revisa el espacio y los permisos de almacenamiento.</string>
     <string name="download_error_not_found">La galería o página solicitada ya no está disponible.</string>
@@ -349,10 +346,10 @@
     <string name="state_local_favorite">Favorito local</string>
     <string name="state_custom_status">Estado: %1$s</string>
     <string name="state_reading_page">Leído hasta la página %1$d</string>
-    <string name="state_download_complete">Descargado</string>
-    <string name="state_download_partial">Descarga parcial</string>
+    <string name="state_download_complete">Descarga completa</string>
+    <string name="state_download_partial">Páginas faltantes</string>
     <string name="state_download_damaged">Descarga dañada</string>
-    <string name="state_download_unverified">Archivos locales sin verificar</string>
+    <string name="state_download_unverified">Integridad desconocida</string>
     <string name="debug_mask_images">Ocultar imágenes para depuración</string>
     <string name="debug_mask_images_summary">Cubre portadas y páginas con un tablero opaco. Se aplica al volver a abrir la pantalla; no modifica los archivos descargados.</string>
     <string name="list_columns_action">Cambiar columnas: %1$d → %2$d</string>
@@ -370,7 +367,7 @@
     <string name="accounts_use_guest">Usar sin cuenta</string>
     <string name="accounts_manage">Administrar</string>
     <string name="accounts_manage_named">Administrar %1$s</string>
-    <string name="accounts_empty">Añade una cuenta para usar favoritos y etiquetas en línea. Las descargas y el historial de lectura se comparten en este dispositivo.</string>
+    <string name="accounts_empty">Añade una cuenta para usar favoritos y etiquetas en línea. Las descargas, los favoritos locales y el historial de lectura se comparten en este dispositivo.</string>
     <string name="accounts_loading">Cargando cuentas…</string>
     <string name="accounts_choose_method">Elige un método de inicio de sesión</string>
     <string name="accounts_password_method">Nombre de usuario y contraseña</string>
@@ -385,18 +382,18 @@
     <string name="accounts_remove">Eliminar cuenta</string>
     <string name="accounts_switch">Cambiar de cuenta</string>
     <string name="accounts_guest">No iniciado sesión</string>
-    <string name="accounts_shared_data">Los datos en línea están vinculados a tu cuenta. Las descargas, los favoritos locales y el historial de lectura se comparten en este dispositivo.</string>
+    <string name="accounts_shared_data">Los datos en línea usan la cuenta seleccionada. Todas las cuentas de este dispositivo comparten las descargas, los favoritos locales y el historial de lectura.</string>
     <string name="account_title">Cuenta de nhentai</string>
     <string name="account_setting_summary">Inicia sesión con tu usuario y contraseña</string>
-    <string name="account_description">Inicia sesión para usar favoritos y etiquetas en línea. Tu contraseña no se guarda. Tu clave API se mantiene por separado.</string>
+    <string name="account_description">Inicia sesión para usar favoritos y etiquetas en línea. Puedes elegir si se guarda la contraseña en este dispositivo.</string>
     <string name="account_username">Nombre de usuario o correo electrónico</string>
     <string name="account_password">Contraseña</string>
     <string name="account_sign_in">Iniciar sesión</string>
     <string name="account_sign_out">Cerrar sesión</string>
-    <string name="account_sign_out_message">¿Eliminar la sesión de la cuenta de este dispositivo? Si se guarda una clave API, la aplicación la usará para acciones en línea.</string>
+    <string name="account_sign_out_message">¿Cerrar sesión en este dispositivo? Se conservarán las descargas, los favoritos locales y el historial de lectura.</string>
     <string name="account_signed_out">No se guarda ninguna sesión de cuenta.</string>
     <string name="account_session_saved">Una sesión de cuenta se guarda en este dispositivo.</string>
-    <string name="account_session_expired">La sesión guardada de la cuenta ha caducado. Inicia sesión de nuevo o elimina la sesión para usar una clave API guardada.</string>
+    <string name="account_session_expired">La sesión ha caducado. Inicia sesión de nuevo o elige otra cuenta en Cuentas.</string>
     <string name="account_enter_username">Introduce tu nombre de usuario o correo electrónico.</string>
     <string name="account_enter_password">Introduce tu contraseña.</string>
     <string name="account_preparing_verification">Preparando la verificación…</string>
@@ -408,15 +405,15 @@
     <string name="account_verify_title">Verifica tu inicio de sesión</string>
     <string name="account_verify_message">Completa la verificación para continuar.</string>
     <string name="account_online_favorite_unavailable">Inicia sesión o configura una clave API para usar favoritos en línea.</string>
-    <string name="online_blacklist_update_error">No se pudo actualizar la lista negra en línea. Vuelve a intentarlo.</string>
+    <string name="online_blacklist_update_error">No se pudo actualizar la lista de bloqueo en línea. Vuelve a intentarlo.</string>
     <string name="online_blacklist_refresh">Actualizar</string>
-    <string name="online_blacklist_loading">Cargando lista negra en línea…</string>
-    <string name="online_blacklist_loaded">La lista negra en línea está actualizada</string>
-    <string name="online_blacklist_load_error">No se pudo cargar la lista negra en línea. Intenta actualizarla.</string>
-    <string name="online_blacklist_session_expired">La sesión de tu cuenta ha caducado. Inicia sesión para cargar tu lista negra en línea.</string>
-    <string name="online_blacklist_search_unavailable">La lista negra en línea no está cargada. Actualízala o busca sin sus etiquetas.</string>
-    <string name="online_blacklist_search_without">Buscar sin</string>
-    <string name="online_blacklist_sign_in_required">Inicia sesión de nuevo o comprueba tu clave API antes de actualizar la lista negra en línea.</string>
+    <string name="online_blacklist_loading">Cargando lista de bloqueo en línea…</string>
+    <string name="online_blacklist_loaded">Lista de bloqueo en línea actualizada</string>
+    <string name="online_blacklist_load_error">No se pudo cargar la lista de bloqueo en línea. Intenta actualizarla.</string>
+    <string name="online_blacklist_session_expired">La sesión ha caducado. Inicia sesión de nuevo para cargar la lista de bloqueo en línea.</string>
+    <string name="online_blacklist_search_unavailable">Las preferencias de etiquetas en línea no están cargadas. Actualízalas o busca sin estas preferencias.</string>
+    <string name="online_blacklist_search_without">Buscar sin etiquetas en línea</string>
+    <string name="online_blacklist_sign_in_required">Inicia sesión de nuevo o comprueba tu clave API y actualiza la lista de bloqueo en línea.</string>
     <string name="comment_preparing">Preparando la verificación…</string>
     <string name="comment_send_again">Publicar de nuevo</string>
     <string name="comment_deleted">Comentario eliminado</string>

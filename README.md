@@ -79,6 +79,9 @@ Translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.
 
+See [localization conventions](docs/localization.md) for the complete resource
+catalogs, quantity handling and terminology.
+
 ## Features
 
 - Browse and search galleries by query or tags.

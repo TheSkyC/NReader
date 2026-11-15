@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="zero">لا صفحات</item>
+        <item quantity="one">صفحة واحدة</item>
+        <item quantity="two">صفحتان</item>
+        <item quantity="few">%1$d صفحات</item>
+        <item quantity="many">%1$d صفحة</item>
+        <item quantity="other">%1$d صفحة</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="zero">لا إضافات إلى المفضلة</item>
+        <item quantity="one">إضافة واحدة إلى المفضلة</item>
+        <item quantity="two">إضافتان إلى المفضلة</item>
+        <item quantity="few">%1$d إضافات إلى المفضلة</item>
+        <item quantity="many">%1$d إضافة إلى المفضلة</item>
+        <item quantity="other">%1$d إضافة إلى المفضلة</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="zero">الحد الأقصى للوسوم: %1$d.</item>
+        <item quantity="one">يمكن اختيار وسم واحد كحد أقصى.</item>
+        <item quantity="two">يمكن اختيار وسمين كحد أقصى.</item>
+        <item quantity="few">يمكن اختيار %1$d وسوم كحد أقصى.</item>
+        <item quantity="many">يمكن اختيار %1$d وسمًا كحد أقصى.</item>
+        <item quantity="other">يمكن اختيار %1$d وسم كحد أقصى.</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="zero">الحد الأدنى لطول التعليق: %1$d حرف.</item>
+        <item quantity="one">أدخل حرفًا واحدًا على الأقل.</item>
+        <item quantity="two">أدخل حرفين على الأقل.</item>
+        <item quantity="few">أدخل %1$d أحرف على الأقل.</item>
+        <item quantity="many">أدخل %1$d حرفًا على الأقل.</item>
+        <item quantity="other">أدخل %1$d حرفًا على الأقل.</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="zero">تم إنشاء اللقطة اليوم</item>
+        <item quantity="one">تم إنشاء اللقطة قبل يوم واحد</item>
+        <item quantity="two">تم إنشاء اللقطة قبل يومين</item>
+        <item quantity="few">تم إنشاء اللقطة قبل %1$d أيام</item>
+        <item quantity="many">تم إنشاء اللقطة قبل %1$d يومًا</item>
+        <item quantity="other">تم إنشاء اللقطة قبل %1$d يوم</item>
+    </plurals>
+</resources>

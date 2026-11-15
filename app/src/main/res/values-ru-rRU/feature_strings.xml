@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Комментарии недоступны</string>
     <string name="cover_local_favorite_selected">В локальном избранном</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Отсутствуют (%1$d): %2$s\nПовреждены (%3$d): %4$s</string>
     <string name="download_repair_unavailable">Восстановление страниц недоступно: не удалось проверить галерею, сохранённую папку, метаданные или источник.</string>
     <string name="filter_download_state">Фильтр по состоянию загрузки</string>
-    <string name="filter_all">Все загрузки</string>
+    <string name="filter_all">Все состояния загрузки</string>
     <string name="filter_complete">Полная</string>
-    <string name="filter_partial">Частичная</string>
+    <string name="filter_partial">Не хватает страниц</string>
     <string name="filter_damaged">Повреждена</string>
-    <string name="filter_unverified">Не проверена</string>
+    <string name="filter_unverified">Полнота неизвестна</string>
     <string name="filter_absent">Нет локальной копии</string>
     <string name="filter_personal_state">Фильтр по личному состоянию</string>
-    <string name="filter_favorite_only">Только избранное</string>
-    <string name="filter_reading_only">Читается</string>
-    <string name="filter_unread_only">Не прочитано</string>
+    <string name="filter_favorite_only">Только локальное избранное</string>
+    <string name="filter_reading_only">Есть прогресс чтения</string>
+    <string name="filter_unread_only">Нет прогресса чтения</string>
     <string name="filter_custom_status_only">Назначен свой статус</string>
     <string name="filter_loaded_results">Фильтровать загруженные результаты</string>
     <string name="filter_downloaded_only">Загружено на устройство</string>
-    <string name="backup_restore_preview">Проверить восстановление из копии</string>
-    <string name="backup_restore_preview_message">Копия содержит строк базы данных: %1$d. %2$s. Продолжить восстановление?</string>
+    <string name="backup_restore_preview">Восстановить резервную копию</string>
+    <string name="backup_restore_preview_message">Записей в базе данных: %1$d. %2$s.\n\nВосстановление заменит текущую базу данных, включая избранное, историю и закладки, и импортирует настройки из этой копии. Загруженные изображения не изменятся.\n\nВосстановить эту копию?</string>
     <string name="backup_integrity_verified">Целостность проверена</string>
-    <string name="backup_legacy_format">Старый формат без манифеста целостности</string>
-    <string name="restore_snapshot">Восстановить предыдущую базу данных</string>
-    <string name="restore_snapshot_message">Заменить текущую базу данных и экспортируемые настройки снимком, сохранённым перед последним импортом? Загруженные файлы не изменятся.</string>
-    <string name="restore_snapshot_summary">Возраст снимка, дней: %1$d</string>
+    <string name="backup_legacy_format">Старая копия без сведений о целостности</string>
+    <string name="restore_snapshot">Восстановить снимок до импорта</string>
+    <string name="restore_snapshot_message">Заменить текущую базу данных и сохранённые настройки снимком, созданным перед последним импортом? Загруженные изображения не изменятся.</string>
     <string name="restore_snapshot_unavailable">Недавний снимок для восстановления недоступен.</string>
     <string name="restore_snapshot_checking">Проверка снимка для восстановления…</string>
 </resources>

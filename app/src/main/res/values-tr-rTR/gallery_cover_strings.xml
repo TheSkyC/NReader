@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="cover_add_favorite">Yerel favorilere ekle</string>
     <string name="cover_remove_favorite">Yerel favorilerden kaldır</string>
-    <string name="cover_favorite_added">Favorilere eklendi</string>
-    <string name="cover_favorite_removed">Favorilerden kaldırıldı</string>
+    <string name="cover_favorite_added">Yerel favorilere eklendi</string>
+    <string name="cover_favorite_removed">Yerel favorilerden kaldırıldı</string>
     <string name="cover_online_favorite_add">Çevrimiçi favorilere ekle</string>
     <string name="cover_online_favorite_remove">Çevrimiçi favorilerden kaldır</string>
     <string name="cover_online_favorite_unknown">Çevrimiçi favori durumu bilinmiyor</string>
     <string name="cover_online_favorite_added">Çevrimiçi favorilere eklendi</string>
     <string name="cover_online_favorite_removed">Çevrimiçi favorilerden kaldırıldı</string>
     <string name="cover_undo">Geri al</string>
-    <string name="cover_download_queued">İndirme sırada</string>
+    <string name="cover_download_queued">İndirme kuyruğa alındı</string>
     <string name="cover_download_running">İndiriliyor: %1$d%%</string>
     <string name="cover_download_paused">İndirme duraklatıldı</string>
 </resources>

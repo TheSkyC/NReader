@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Kommentare sind nicht verfügbar</string>
     <string name="cover_local_favorite_selected">In lokalen Favoriten</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Fehlend (%1$d): %2$s\nBeschädigt (%3$d): %4$s</string>
     <string name="download_repair_unavailable">Die Seitenreparatur ist nicht verfügbar, da Galerieidentität, Speicherordner, Metadaten oder Quelle nicht überprüft werden können.</string>
     <string name="filter_download_state">Nach Downloadstatus filtern</string>
-    <string name="filter_all">Alle Downloads</string>
+    <string name="filter_all">Alle Downloadzustände</string>
     <string name="filter_complete">Vollständig</string>
-    <string name="filter_partial">Unvollständig</string>
+    <string name="filter_partial">Fehlende Seiten</string>
     <string name="filter_damaged">Beschädigt</string>
-    <string name="filter_unverified">Nicht überprüft</string>
+    <string name="filter_unverified">Vollständigkeit unbekannt</string>
     <string name="filter_absent">Keine lokale Kopie</string>
     <string name="filter_personal_state">Nach persönlichem Status filtern</string>
-    <string name="filter_favorite_only">Nur Favoriten</string>
-    <string name="filter_reading_only">Wird gelesen</string>
-    <string name="filter_unread_only">Ungelesen</string>
+    <string name="filter_favorite_only">Nur lokale Favoriten</string>
+    <string name="filter_reading_only">Mit Lesefortschritt</string>
+    <string name="filter_unread_only">Ohne Lesefortschritt</string>
     <string name="filter_custom_status_only">Eigener Status zugewiesen</string>
     <string name="filter_loaded_results">Geladene Ergebnisse filtern</string>
     <string name="filter_downloaded_only">Lokal heruntergeladen</string>
-    <string name="backup_restore_preview">Wiederherstellung prüfen</string>
-    <string name="backup_restore_preview_message">Diese Sicherung enthält %1$d Datenbankzeilen. %2$s. Wiederherstellung fortsetzen?</string>
+    <string name="backup_restore_preview">Sicherung wiederherstellen</string>
+    <string name="backup_restore_preview_message">Datenbankeinträge: %1$d. %2$s.\n\nDie Wiederherstellung ersetzt die aktuelle Datenbank mit Favoriten, Verlauf und Lesezeichen und importiert die Einstellungen aus dieser Sicherung. Heruntergeladene Bilddateien bleiben unverändert.\n\nDiese Sicherung wiederherstellen?</string>
     <string name="backup_integrity_verified">Integrität geprüft</string>
-    <string name="backup_legacy_format">Altes Format ohne Integritätsmanifest</string>
-    <string name="restore_snapshot">Vorherige Datenbank wiederherstellen</string>
-    <string name="restore_snapshot_message">Aktuelle Datenbank und exportierte Einstellungen durch den vor dem letzten Import gespeicherten Schnappschuss ersetzen? Heruntergeladene Dateien bleiben unverändert.</string>
-    <string name="restore_snapshot_summary">Alter des Schnappschusses: %1$d Tage</string>
+    <string name="backup_legacy_format">Ältere Sicherung ohne Integritätsinformationen</string>
+    <string name="restore_snapshot">Schnappschuss vor dem Import wiederherstellen</string>
+    <string name="restore_snapshot_message">Die aktuelle Datenbank und die gesicherten Einstellungen durch den Schnappschuss vor dem letzten Import ersetzen? Heruntergeladene Bilddateien bleiben unverändert.</string>
     <string name="restore_snapshot_unavailable">Kein aktueller Wiederherstellungsschnappschuss verfügbar.</string>
     <string name="restore_snapshot_checking">Wiederherstellungsschnappschuss wird geprüft…</string>
 </resources>

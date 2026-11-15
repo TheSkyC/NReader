@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
+<resources>
+    <plurals name="page_count_format">
+        <item quantity="one">%1$d сторінка</item>
+        <item quantity="few">%1$d сторінки</item>
+        <item quantity="many">%1$d сторінок</item>
+        <item quantity="other">%1$d сторінки</item>
+    </plurals>
+    <plurals name="favorite_count_format">
+        <item quantity="one">В обраному: %1$d</item>
+        <item quantity="few">В обраному: %1$d</item>
+        <item quantity="many">В обраному: %1$d</item>
+        <item quantity="other">В обраному: %1$d</item>
+    </plurals>
+    <plurals name="tags_max_reached">
+        <item quantity="one">Можна вибрати щонайбільше %1$d тег.</item>
+        <item quantity="few">Можна вибрати щонайбільше %1$d теги.</item>
+        <item quantity="many">Можна вибрати щонайбільше %1$d тегів.</item>
+        <item quantity="other">Можна вибрати щонайбільше %1$d тега.</item>
+    </plurals>
+    <plurals name="minimum_comment_length">
+        <item quantity="one">Введіть щонайменше %1$d символ.</item>
+        <item quantity="few">Введіть щонайменше %1$d символи.</item>
+        <item quantity="many">Введіть щонайменше %1$d символів.</item>
+        <item quantity="other">Введіть щонайменше %1$d символа.</item>
+    </plurals>
+    <plurals name="restore_snapshot_summary">
+        <item quantity="one">Знімок створено %1$d день тому</item>
+        <item quantity="few">Знімок створено %1$d дні тому</item>
+        <item quantity="many">Знімок створено %1$d днів тому</item>
+        <item quantity="other">Знімок створено %1$d дня тому</item>
+    </plurals>
+</resources>

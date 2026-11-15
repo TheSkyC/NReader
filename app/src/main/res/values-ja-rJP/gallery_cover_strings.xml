@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="cover_add_favorite">ローカルのお気に入りに追加</string>
     <string name="cover_remove_favorite">ローカルのお気に入りから削除</string>
-    <string name="cover_favorite_added">お気に入りに追加しました</string>
-    <string name="cover_favorite_removed">お気に入りから削除しました</string>
+    <string name="cover_favorite_added">ローカルのお気に入りに追加しました</string>
+    <string name="cover_favorite_removed">ローカルのお気に入りから削除しました</string>
     <string name="cover_online_favorite_add">オンラインのお気に入りに追加</string>
     <string name="cover_online_favorite_remove">オンラインのお気に入りから削除</string>
     <string name="cover_online_favorite_unknown">オンラインのお気に入り状態は不明です</string>

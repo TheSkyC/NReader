@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="comment_feature_unavailable">Os comentários estão indisponíveis</string>
     <string name="cover_local_favorite_selected">Nos favoritos locais</string>
@@ -35,26 +36,25 @@
     <string name="download_repair_pages">Ausentes (%1$d): %2$s\nDanificadas (%3$d): %4$s</string>
     <string name="download_repair_unavailable">O reparo está indisponível porque não é possível verificar a identidade da galeria, a pasta salva, os metadados ou a origem.</string>
     <string name="filter_download_state">Filtrar por estado do download</string>
-    <string name="filter_all">Todos os downloads</string>
+    <string name="filter_all">Todos os estados de download</string>
     <string name="filter_complete">Completo</string>
-    <string name="filter_partial">Parcial</string>
+    <string name="filter_partial">Páginas ausentes</string>
     <string name="filter_damaged">Danificado</string>
-    <string name="filter_unverified">Não verificado</string>
+    <string name="filter_unverified">Completude desconhecida</string>
     <string name="filter_absent">Sem cópia local</string>
     <string name="filter_personal_state">Filtrar por estado pessoal</string>
-    <string name="filter_favorite_only">Somente favoritos</string>
-    <string name="filter_reading_only">Em leitura</string>
-    <string name="filter_unread_only">Não lido</string>
+    <string name="filter_favorite_only">Somente favoritos locais</string>
+    <string name="filter_reading_only">Com progresso de leitura</string>
+    <string name="filter_unread_only">Sem progresso de leitura</string>
     <string name="filter_custom_status_only">Com status personalizado</string>
     <string name="filter_loaded_results">Filtrar resultados carregados</string>
     <string name="filter_downloaded_only">Baixado localmente</string>
-    <string name="backup_restore_preview">Revisar restauração do backup</string>
-    <string name="backup_restore_preview_message">Este backup contém %1$d linhas de banco de dados. %2$s. Continuar a restauração?</string>
+    <string name="backup_restore_preview">Restaurar backup</string>
+    <string name="backup_restore_preview_message">Registros do banco de dados: %1$d. %2$s.\n\nA restauração substitui o banco de dados atual, incluindo favoritos, histórico e marcadores, e importa as configurações deste backup. As imagens baixadas não serão alteradas.\n\nRestaurar este backup?</string>
     <string name="backup_integrity_verified">Integridade verificada</string>
-    <string name="backup_legacy_format">Formato antigo sem manifesto de integridade</string>
-    <string name="restore_snapshot">Restaurar banco de dados anterior</string>
-    <string name="restore_snapshot_message">Substituir o banco de dados atual e as configurações exportadas pela captura salva antes da última importação? Os arquivos baixados não serão alterados.</string>
-    <string name="restore_snapshot_summary">Idade da captura: %1$d dias</string>
+    <string name="backup_legacy_format">Backup antigo sem informações de integridade</string>
+    <string name="restore_snapshot">Restaurar cópia anterior à importação</string>
+    <string name="restore_snapshot_message">Substituir o banco de dados atual e as configurações salvas pela cópia criada antes da última importação? As imagens baixadas não serão alteradas.</string>
     <string name="restore_snapshot_unavailable">Nenhuma captura recente disponível para restauração.</string>
     <string name="restore_snapshot_checking">Verificando captura para restauração…</string>
 </resources>

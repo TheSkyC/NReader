@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="gallery_loading_details">Galeriedetails werden geladen</string>
     <string name="setting_on_ignore_tags">Andere Tags werden nicht gesucht, wenn du einen Tag von einer Galerie auswählst (außer die Sprache)</string>
@@ -13,7 +14,7 @@
     <string name="title_activity_gallery">Galerie</string>
     <string name="title_activity_zoom">Zoom</string>
     <string name="title_activity_tag_filter">Tag-Filter</string>
-    <string name="title_activity_api_key">API key</string>
+    <string name="title_activity_api_key">API-Schlüssel</string>
     <string name="parodies">Parodien</string>
     <string name="characters">Charaktere</string>
     <string name="tags">Tags</string>
@@ -30,21 +31,20 @@
     <string name="channel3_description">Benutzt, um den Fortschritt beim Erstellen des ZIP anzuzeigen</string>
     <string name="channel2_title">Erstelle PDF:</string>
     <string name="channel3_title">Erstelle ZIP:</string>
-    <string name="tags_max_reached" formatted="true">Du kannst ein Maximum von %d Tags haben.</string>
     <string name="only_english">Nur Englisch</string>
     <string name="only_japanese">Nur Japanisch</string>
     <string name="only_chinese">Nur Chinesisch</string>
     <string name="all_languages">Alle Sprachen</string>
     <string name="unknown_language">Unbekannte Sprache</string>
-    <string name="setting_api_key_title">API key</string>
+    <string name="setting_api_key_title">API-Schlüssel</string>
     <string name="setting_api_key_summary_missing">Erstelle auf der Kontoeinstellungsseite der Website einen API-Schlüssel und füge ihn anschließend in die App ein.</string>
     <string name="setting_api_key_summary_valid">Gespeichert und überprüft. Öffne diesen Eintrag, um den Schlüssel zu ersetzen oder zu entfernen.</string>
     <string name="setting_api_key_summary_invalid">Ein gespeicherter API-Schlüssel ist nicht mehr gültig. Öffne diesen Eintrag, um ihn zu ersetzen oder zu entfernen.</string>
     <string name="login_api_key_intro_title">API-Schlüssel verwenden</string>
-    <string name="login_api_key_intro_message">nhentai verwendet jetzt API-Schlüssel für den App-Zugriff. Öffne zum Anmelden die Kontoeinstellungen im Browser, erstelle dort einen API-Schlüssel und füge ihn anschließend hier ein.</string>
+    <string name="login_api_key_intro_message">Öffne für einen API-Schlüssel die nhentai-Kontoeinstellungen im Browser, erstelle dort einen Schlüssel und füge ihn hier ein.</string>
     <string name="login_open_api_key_page">API-Schlüssel-Seite öffnen</string>
     <string name="login_api_key_input_title">API-Schlüssel einfügen</string>
-    <string name="login_api_key_input_message">Der Schlüssel wird vor dem Speichern über die v2-API überprüft.</string>
+    <string name="login_api_key_input_message">Der Schlüssel wird vor dem Speichern auf Gültigkeit geprüft.</string>
     <string name="login_api_key_hint">API-Schlüssel</string>
     <string name="login_validate_and_save">Überprüfen und speichern</string>
     <string name="login_api_key_saved">API-Schlüssel gespeichert</string>
@@ -58,9 +58,9 @@
     <string name="online_tags">Online Tag</string>
     <string name="add_to_online_favorite">Zu online Favoriten hinzufügen</string>
     <string name="remove_from_online_favorites">Von online Favoriten entfernen</string>
-    <string name="add_to_online_blacklist">Zur online Blacklist hinzufügen?</string>
-    <string name="tag_already_in_blacklist">Tag ist schon in der Blacklist</string>
-    <string name="are_you_sure">Bist du dir sicher?</string>
+    <string name="add_to_online_blacklist">Diesen Tag zur Online-Sperrliste hinzufügen?</string>
+    <string name="tag_already_in_blacklist">Dieser Tag ist bereits in der Sperrliste.</string>
+    <string name="are_you_sure">Möchtest du fortfahren?</string>
     <string name="thumbnail">Vorschaubild</string>
     <string name="settings">Einstellungen</string>
     <string name="related">Ähnlich</string>
@@ -94,14 +94,12 @@
     <string name="applied_filters">Angewandte Filter</string>
     <string name="show_related">Zeige ähnliche Galerien</string>
     <string name="random_manga">Zufallsgalerie</string>
-    <string name="save_page">Seite speichern</string>
-    <string name="page_count_format" formatted="true">%d Seiten</string>
+    <string name="save_page">Bild speichern</string>
     <string name="upload_date_format" formatted="true">Am %1$s um %2$s hochgeladen</string>
-    <string name="favorite_count_format" formatted="true">%d Favoriten</string>
-    <string name="favorite_manga">Lieblingsgalerien</string>
+    <string name="favorite_manga">Lokale Favoriten</string>
     <string name="setting_on_remove_ignored">Die Galerie mit ignorierten Tags wird nicht gezeigt</string>
-    <string name="setting_off_remove_ignored">Die Galerie mit ignorierten Tags verschwommen angezeigt</string>
-    <string name="remove_ignored_galleries">Entferne ignorierte Galerien</string>
+    <string name="setting_off_remove_ignored">Galerien mit ignorierten Tags werden verschwommen angezeigt</string>
+    <string name="remove_ignored_galleries">Ignorierte Galerien ausblenden</string>
     <string name="clear_tag_preferences">Tag Präferenzen leeren</string>
     <string name="check_for_update_on_startup">Beim Start nach Updates suchen</string>
     <string name="check_for_updates">Nach Updates suchen</string>
@@ -122,16 +120,16 @@
     <string name="images_settings">Bilder Einstellungen</string>
     <string name="miscellaneous">Sonstiges</string>
     <string name="favorite_action_mode_title">Favoritenaktion auf Karten</string>
-    <string name="favorite_action_local_primary">Herz als Hauptaktion</string>
-    <string name="favorite_action_online_primary">Stern als Hauptaktion</string>
-    <string name="favorite_action_online_unavailable">Für Online-Favoriten einen gültigen API-Schlüssel einrichten</string>
+    <string name="favorite_action_local_primary">Tippen: lokale Favoriten; gedrückt halten: Online-Favoriten</string>
+    <string name="favorite_action_online_primary">Tippen: Online-Favoriten (falls verfügbar); gedrückt halten: lokale Favoriten</string>
+    <string name="favorite_action_online_unavailable">Melde dich an oder füge einen gültigen API-Schlüssel hinzu, um Online-Favoriten zu nutzen.</string>
     <string name="favorite_action_local_accessibility">Lokalen Favoriten umschalten</string>
     <string name="favorite_action_online_accessibility">Online-Favoriten umschalten</string>
     <string name="update_settings">Update Einstellungen</string>
     <string name="online_favorite_manga">Online Lieblingsgalerien</string>
     <string name="cache_size_formatted">Cache Größe: %.2f MB</string>
     <string name="cache_cleared">Cache geleert</string>
-    <string name="sort_by_latest">Nach Neusten sortieren</string>
+    <string name="sort_by_latest">Nach zuletzt hinzugefügt sortieren</string>
     <string name="edit">Bearbeiten</string>
     <string name="options">Optionen</string>
     <string name="keep_history">Verlauf behalten</string>
@@ -142,8 +140,8 @@
     <string name="send">Senden</string>
     <string name="send_comment">Sende Kommentar…</string>
     <string name="profile_picture">Profilbild</string>
-    <string name="send_bug_on_github">Einen Fehler auf Github melden</string>
-    <string name="github">Github</string>
+    <string name="send_bug_on_github">Einen Fehler auf GitHub melden</string>
+    <string name="github">GitHub</string>
     <string name="install">Installieren</string>
     <string name="download_update_failed">Update konnte nicht heruntergeladen werden</string>
     <string name="copyURL">URL kopieren</string>
@@ -171,7 +169,7 @@
     <string name="cancel">Abbrechen</string>
     <string name="no">Nein</string>
     <string name="yes">Ja</string>
-    <string name="disable_lock_title">Deaktiviere Bildschirm Standby während des lesen</string>
+    <string name="disable_lock_title">Bildschirm beim Lesen eingeschaltet lassen</string>
     <string name="download_all_galleries_in_this_page">Lade alle Galerien auf dieser Seite herunter</string>
     <string name="download_all_galleries">Lade alle Galerien herunter</string>
     <string name="favorite_column_count">Wähle Favoriten Spaltenanzahl aus</string>
@@ -187,8 +185,8 @@
     <string name="start_page">Startseite</string>
     <string name="end_page">Endseite</string>
     <string name="invalid_range_selected">Ungültigen Bereich ausgewählt</string>
-    <string name="send_with_title">Mit Titel senden?</string>
-    <string name="caption_send_with_title">URL als Beschreibung zum Bild hinzufügen?</string>
+    <string name="send_with_title">Bild teilen</string>
+    <string name="caption_send_with_title">Beim Teilen dieses Bildes den Seitenlink hinzufügen?</string>
     <string name="history_size">Verlauf Größe</string>
     <string name="history_size_summary">Setze die maximale Anzahl an Einträgen für deinen Verlauf</string>
     <string name="view_history">Verlauf anschauen</string>
@@ -204,18 +202,18 @@
     <string name="zoom_one_column">Zoom aktivieren</string>
     <string name="insert_pin">PIN eingeben</string>
     <string name="confirm_pin">PIN bestätigen</string>
-    <string name="setting_device_credentials">App Zugriff mit Gerätesperre sichern</string>
-    <string name="setting_device_credentials_low_sdk">Nur für Android 11 oder höher verfügbar</string>
-    <string name="use_device_credentials">Gerätesperre benutzen</string>
+    <string name="setting_device_credentials">Entsperren mit Biometrie oder der PIN, dem Muster oder Passwort der Gerätesperre erlauben.</string>
+    <string name="setting_device_credentials_low_sdk">Erfordert Android 11 oder neuer</string>
+    <string name="use_device_credentials">Geräteauthentifizierung verwenden</string>
     <string name="wrong_pin">Falscher PIN</string>
     <string name="rotate_image">Bild drehen</string>
     <string name="toggle_online_favorite">Online Favoriten umschalten</string>
     <string name="data_usage_settings">Datennutzung ändern</string>
     <string name="mobile_data_usage_setting">Mobile Datennutzung Einstellungen</string>
     <string name="wifi_data_usage_setting">WLAN Datennutzung Einstellungen</string>
-    <string name="data_usage_thumb">Immer Vorschaubilder herunterladen</string>
-    <string name="data_usage_full">Lade Vorschaubilder oder ganze Bilder herunter</string>
-    <string name="data_usage_no">Lade keine Bilder herunter</string>
+    <string name="data_usage_thumb">Nur Vorschaubilder laden</string>
+    <string name="data_usage_full">Vorschaubilder oder Vollbilder nach Bedarf laden</string>
+    <string name="data_usage_no">Keine Bilder aus dem Netzwerk laden</string>
     <string name="enable_network_to_continue">Aktiviere Bilder laden oder wechsel das Netzwerk um Bild zu öffnen</string>
     <string name="id_tag">ID %1$s</string>
     <string name="id_copied_to_clipboard">ID in die Zwischenablage kopiert</string>
@@ -257,7 +255,7 @@
     <string name="invalid_color_selected">Schwarz und Weiß kann nicht benutzt werden</string>
     <string name="change_status_title">Neuen Status auswählen:</string>
     <string name="remove_status">Keinen</string>
-    <string name="name_too_short">Name zu kurz</string>
+    <string name="name_too_short">Gib einen Namen mit mindestens 2 Zeichen ein.</string>
     <string name="duplicated_name">Doppelter Name</string>
     <string name="manage_statuses">Status bearbeiten</string>
     <string name="update_status">Status updaten:</string>
@@ -271,14 +269,13 @@
     <string name="artist">Künstler</string>
     <string name="group">Gruppe</string>
     <string name="descending_order">Absteigende Reihenfolge</string>
-    <string name="minimum_comment_length" formatted="true">Der Kommentar muss mindestens %d Zeichen haben</string>
     <string name="change_scroll_type">Ändere Scroll-Art</string>
     <string name="export_data">Exportiere Daten</string>
     <string name="import_data">Importiere Daten</string>
     <string name="default_status_1">Lesen</string>
     <string name="default_status_2">Komplett</string>
-    <string name="default_status_3">Warten</string>
-    <string name="default_status_4">Lieber nicht</string>
+    <string name="default_status_3">Pausiert</string>
+    <string name="default_status_4">Aufgegeben</string>
     <string name="default_status_5">Geplant</string>
     <string name="title_site_mirror">Mirrorseite ändern</string>
     <string name="disguise_app_in_drawer">Verstecke die App</string>
@@ -291,29 +288,29 @@
     <string name="custom_path">Benutzerdefinierter Pfad</string>
     <string name="insert_path">Pfad:</string>
     <string name="requesting_storage_access">Fordere Berechtigungen für den Gerätespeicher</string>
-    <string name="request_storage_manager_summary">Aufgrund einer Einschränkung des Speicherzugriffs in Android 11 erfordert diese App eine zusätzliche Berechtigung zur Verwendung benutzerdefinierter Pfade.\nWenn Sie diese Berechtigung erteilen möchten, aktivieren Sie die Einstellung im nächsten Dialogfeld.</string>
-    <string name="summary_beta">Das Aktualisieren auf eine Beta-Version kann dazu führen, dass Sie ohne Deinstallation nicht zu einer stabilen Version zurückkehren können</string>
-    <string name="navigation_settings_per_screen">Navigationseinstellungen pro Bild</string>
-    <string name="downloaded_update_at" formatted="true">Update zu %s heruntergeladen</string>
+    <string name="request_storage_manager_summary">Ab Android 11 benötigen eigene Downloadpfade Zugriff auf alle Dateien.\nErlaube diesen Zugriff auf der nächsten Systemeinstellungsseite, um einen eigenen Pfad zu verwenden.</string>
+    <string name="summary_beta">Für die Rückkehr zu einer älteren stabilen Version kann eine Deinstallation erforderlich sein. Exportiere vor dem Wechsel deine Daten.</string>
+    <string name="navigation_settings_per_screen">Navigationseinstellungen pro Bildschirm</string>
+    <string name="downloaded_update_at" formatted="true">Update unter %s heruntergeladen</string>
     <string name="summary_offscreen_limit">Anzahl an Seiten die vorgeladen werden beim lesen einer Galerie</string>
     <string name="title_offscreen_limit">Bilder vorladen</string>
     <string name="sort_popoular_month">Populär diesen Monat</string>
     <string name="random">Zufällig</string>
-    <string name="summary_fetch_metadata">Lade Metadaten für Galerien herunter die vor Version 2.3.0 heruntergeladen wurden\nDiesen Galerien fehlten die Metadaten</string>
+    <string name="summary_fetch_metadata">Tags und andere fehlende Metadaten für Galerien abrufen, die vor Version 2.3.0 heruntergeladen wurden.</string>
     <string name="title_fetch_metadata">Metadaten für alte Galerien abrufen</string>
-    <string name="title_change_page_buttons">Ändere Seite Klicke auf das Bild</string>
+    <string name="title_change_page_buttons">Seite durch Tippen auf das Bild wechseln</string>
     <string name="export_finished">Export fertig</string>
     <string name="import_finished">Import fertig</string>
     <string name="system_default">Systemstandard</string>
     <string name="clear_cookies">Lösche Cookies</string>
-    <string name="fetching_cloudflare_token">Cloudflare Token kriegen…</string>
-    <string name="exact_title_match_title">Nur exakte Tag Übereinstimmung</string>
-    <string name="exact_title_match_summary">Verstecken von Galerien, die auf der Website erscheinen würden, aber nicht alle gesuchten Tags enthalten</string>
+    <string name="fetching_cloudflare_token">Website-Überprüfung wird vorbereitet…</string>
+    <string name="exact_title_match_title">Alle Such-Tags müssen übereinstimmen</string>
+    <string name="exact_title_match_summary">Galerien ohne alle gesuchten Tags ausblenden.</string>
     <string name="hide">Verstecken</string>
-    <string name="shuffle_contentDescription">Zufällige Galerie Knopf</string>
-    <string name="copy_logs">Logs in Datei speichern</string>
-    <string name="copy_logs_summary">Dadurch werden alle verfügbaren Logs dieser App in einer Datei gespeichert. Die verfügbaren Logs können sich über mehrere Tage erstrecken. Außerdem ist es möglich, dass die Logs personenbezogene Daten enthalten. Überprüfe dies daher unbedingt, bevor du die Datei veröffentlichst. Verwenden diese Funktion, um Protokolle an einen Fehlerbericht anzuhängen.</string>
-    <string name="copy_logs_fail">Fehler beim Erstellen der Logdatei</string>
+    <string name="shuffle_contentDescription">Zufällige Galerie</string>
+    <string name="copy_logs">Protokolle exportieren</string>
+    <string name="copy_logs_summary">Verfügbare App-Protokolle für einen Fehlerbericht in einer Datei speichern. Sie können mehrere Tage und persönliche Informationen enthalten. Prüfe die Datei vor dem Teilen.</string>
+    <string name="copy_logs_fail">Protokolle konnten nicht exportiert werden.</string>
     <string-array name="scroll_type">
         <item>Horizontal</item>
         <item>Vertikal</item>
@@ -321,25 +318,25 @@
     <string-array name="theme">
         <item>Hell</item>
         <item>Dunkel</item>
-        <item>Schwarz (für AMOLED)</item>
+        <item>Reines Schwarz</item>
     </string-array>
     <string-array name="title_type_array">
         <item>Englisch</item>
         <item>Japanisch</item>
-        <item>Schön</item>
+        <item>Bereinigter Titel</item>
     </string-array>
-    <string name="online_blacklist_add_error">Fehler beim Hinzufügen der online Blackliste</string>
+    <string name="online_blacklist_add_error">Tag konnte nicht zur Online-Sperrliste hinzugefügt werden.</string>
     <string name="clipboard_settings_error">Fehler beim Kopieren der Einstellungen</string>
     <string name="send_image_error">Fehler beim Erstellen des Bildes zum Senden</string>
     <string name="unlock">Entsperren</string>
-    <string name="auth_error">Problem bei Authentifizierung</string>
-    <string name="auth_title">Biometrische Anmeldung für NClient</string>
-    <string name="auth_subtitle">Anmelden mit Biometrischen Daten</string>
+    <string name="auth_error">Authentifizierung fehlgeschlagen</string>
+    <string name="auth_title">NReader entsperren</string>
+    <string name="auth_subtitle">Identität mit Biometrie oder der Gerätesperre bestätigen.</string>
     <string name="continue_reading">Weiterlesen</string>
     <string name="open_manual_bookmark">Manuelles Lesezeichen öffnen</string>
     <string name="pause_download">Download pausieren</string>
     <string name="download_failed">Download fehlgeschlagen</string>
-    <string name="download_error_authentication">Zugriff verweigert. Prüfe den API-Schlüssel und die Kontoberechtigungen.</string>
+    <string name="download_error_authentication">Zugriff verweigert. Prüfe deine Anmeldung und den API-Schlüssel, bevor du es erneut versuchst.</string>
     <string name="download_error_rate_limit">Zu viele Anfragen. Warte vor einem erneuten Versuch.</string>
     <string name="download_error_storage">Dateien konnten nicht geschrieben werden. Prüfe Speicherplatz und Zugriffsrechte.</string>
     <string name="download_error_not_found">Die angeforderte Galerie oder Seite ist nicht mehr verfügbar.</string>
@@ -349,10 +346,10 @@
     <string name="state_local_favorite">Lokaler Favorit</string>
     <string name="state_custom_status">Status: %1$s</string>
     <string name="state_reading_page">Bis Seite %1$d gelesen</string>
-    <string name="state_download_complete">Heruntergeladen</string>
-    <string name="state_download_partial">Teilweise heruntergeladen</string>
+    <string name="state_download_complete">Vollständig heruntergeladen</string>
+    <string name="state_download_partial">Fehlende Seiten</string>
     <string name="state_download_damaged">Beschädigter Download</string>
-    <string name="state_download_unverified">Lokale Dateien ungeprüft</string>
+    <string name="state_download_unverified">Vollständigkeit unbekannt</string>
     <string name="debug_mask_images">Bilder zum Debuggen verdecken</string>
     <string name="debug_mask_images_summary">Verdeckt Titelbilder und Leseseiten mit einem undurchsichtigen Schachbrett. Wirkt nach erneutem Öffnen; heruntergeladene Dateien bleiben unverändert.</string>
     <string name="list_columns_action">Spalten wechseln: %1$d → %2$d</string>
@@ -361,18 +358,18 @@
     <string name="list_wide_columns">Spalten in breiten Fenstern</string>
     <string name="list_columns_summary">Passt sich an Breite und Textgröße an; 4 Spalten erfordern ein breites Fenster.</string>
     <string name="cover_group_credit">Gruppe: %1$s</string>
-    <string name="account_remember_password">Merken Sie sich das Passwort auf diesem Gerät</string>
-    <string name="account_storage_error">Das Konto konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.</string>
-    <string name="account_login_description">Melden Sie sich an, um Online-Favoriten und -Tags zu verwenden. Sie können wählen, ob Ihr Passwort auf diesem Gerät gespeichert werden soll.</string>
+    <string name="account_remember_password">Passwort auf diesem Gerät merken</string>
+    <string name="account_storage_error">Konto konnte nicht gespeichert werden. Bitte erneut versuchen.</string>
+    <string name="account_login_description">Melde dich an, um Online-Favoriten und Tags zu nutzen. Du entscheidest, ob das Passwort auf diesem Gerät gespeichert wird.</string>
     <string name="account_remove_message">Dieses Konto und seine gespeicherten Anmeldeinformationen von diesem Gerät entfernen?</string>
     <string name="accounts_title">Konten</string>
     <string name="accounts_add">Konto hinzufügen</string>
     <string name="accounts_use_guest">Nutzung ohne Konto</string>
     <string name="accounts_manage">Verwalten</string>
-    <string name="accounts_manage_named">Verwalten Sie %1$s</string>
-    <string name="accounts_empty">Fügen Sie ein Konto hinzu, um Online-Favoriten und -Tags zu verwenden. Downloads und Leseverlauf werden auf diesem Gerät geteilt.</string>
+    <string name="accounts_manage_named">%1$s verwalten</string>
+    <string name="accounts_empty">Füge ein Konto hinzu, um Online-Favoriten und Tags zu nutzen. Downloads, lokale Favoriten und Leseverlauf werden auf diesem Gerät gemeinsam genutzt.</string>
     <string name="accounts_loading">Konten werden geladen…</string>
-    <string name="accounts_choose_method">Wählen Sie eine Anmeldemethode</string>
+    <string name="accounts_choose_method">Anmeldemethode wählen</string>
     <string name="accounts_password_method">Benutzername und Passwort</string>
     <string name="accounts_key_method">API-Schlüssel</string>
     <string name="accounts_current">Aktuelles Konto</string>
@@ -380,43 +377,43 @@
     <string name="accounts_key_invalid">Der API-Schlüssel muss überprüft werden</string>
     <string name="accounts_detail_format">%1$s · %2$s</string>
     <string name="accounts_unnamed_key">API-Schlüsselkonto</string>
-    <string name="accounts_reauthenticate">Melden Sie sich erneut an</string>
-    <string name="accounts_revalidate_key">Überprüfen Sie den API-Schlüssel erneut</string>
+    <string name="accounts_reauthenticate">Erneut anmelden</string>
+    <string name="accounts_revalidate_key">API-Schlüssel erneut prüfen</string>
     <string name="accounts_remove">Konto entfernen</string>
     <string name="accounts_switch">Konto wechseln</string>
     <string name="accounts_guest">Nicht angemeldet</string>
-    <string name="accounts_shared_data">Online-Daten folgen Ihrem Konto. Downloads, lokale Favoriten und Leseverlauf werden auf diesem Gerät geteilt.</string>
+    <string name="accounts_shared_data">Online-Daten verwenden das ausgewählte Konto. Downloads, lokale Favoriten und Leseverlauf werden von allen Konten auf diesem Gerät gemeinsam genutzt.</string>
     <string name="account_title">nhentai-Konto</string>
-    <string name="account_setting_summary">Melden Sie sich mit Ihrem Benutzernamen und Passwort an</string>
-    <string name="account_description">Melden Sie sich an, um Online-Favoriten und -Tags zu verwenden. Ihr Passwort wird nicht gespeichert. Ihr API-Schlüssel bleibt separat.</string>
+    <string name="account_setting_summary">Mit Benutzername und Passwort anmelden</string>
+    <string name="account_description">Melde dich an, um Online-Favoriten und Tags zu nutzen. Du entscheidest, ob das Passwort auf diesem Gerät gespeichert wird.</string>
     <string name="account_username">Benutzername oder E-Mail</string>
     <string name="account_password">Passwort</string>
-    <string name="account_sign_in">Melden Sie sich an</string>
+    <string name="account_sign_in">Anmelden</string>
     <string name="account_sign_out">Abmelden</string>
-    <string name="account_sign_out_message">Kontositzung von diesem Gerät entfernen? Wenn ein API-Schlüssel gespeichert ist, verwendet die App ihn für Online-Aktionen.</string>
+    <string name="account_sign_out_message">Auf diesem Gerät abmelden? Lokale Downloads, Favoriten und Leseverlauf bleiben erhalten.</string>
     <string name="account_signed_out">Es wird keine Kontositzung gespeichert.</string>
     <string name="account_session_saved">Auf diesem Gerät wird eine Kontositzung gespeichert.</string>
-    <string name="account_session_expired">Die gespeicherte Kontositzung ist abgelaufen. Melden Sie sich erneut an oder entfernen Sie die Sitzung, um einen gespeicherten API-Schlüssel zu verwenden.</string>
-    <string name="account_enter_username">Geben Sie Ihren Benutzernamen oder Ihre E-Mail-Adresse ein.</string>
-    <string name="account_enter_password">Geben Sie Ihr Passwort ein.</string>
+    <string name="account_session_expired">Die Anmeldung ist abgelaufen. Melde dich erneut an oder wähle unter Konten ein anderes Konto.</string>
+    <string name="account_enter_username">Gib deinen Benutzernamen oder deine E-Mail-Adresse ein.</string>
+    <string name="account_enter_password">Gib dein Passwort ein.</string>
     <string name="account_preparing_verification">Verifizierung wird vorbereitet…</string>
     <string name="account_signing_in">Anmelden…</string>
-    <string name="account_verification_error">Die Überprüfung wurde nicht abgeschlossen. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
-    <string name="account_login_error">Die Anmeldung konnte nicht abgeschlossen werden. Überprüfen Sie Ihre Angaben und versuchen Sie es erneut.</string>
-    <string name="account_identity_unconfirmed">Es konnte nicht bestätigt werden, dass es sich hierbei um das ausgewählte Konto handelt. Überprüfen Sie die Kontodetails oder entfernen Sie das Konto und fügen Sie es erneut hinzu.</string>
-    <string name="account_protection_error">Die Website hat diese Anmeldeanfrage nach der Überprüfung blockiert. Versuchen Sie es später noch einmal.</string>
-    <string name="account_verify_title">Überprüfen Sie Ihre Anmeldung</string>
-    <string name="account_verify_message">Schließen Sie die Verifizierung ab, um fortzufahren.</string>
-    <string name="account_online_favorite_unavailable">Melden Sie sich an oder konfigurieren Sie einen API-Schlüssel, um Online-Favoriten zu verwenden.</string>
-    <string name="online_blacklist_update_error">Die Online-Blacklist konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.</string>
+    <string name="account_verification_error">Überprüfung nicht abgeschlossen. Prüfe die Verbindung und versuche es erneut.</string>
+    <string name="account_login_error">Anmeldung fehlgeschlagen. Prüfe die Anmeldedaten und versuche es erneut.</string>
+    <string name="account_identity_unconfirmed">Das ausgewählte Konto konnte nicht bestätigt werden. Prüfe die Anmeldedaten oder entferne das Konto und füge es erneut hinzu.</string>
+    <string name="account_protection_error">Die Website hat die Anmeldung nach der Überprüfung blockiert. Bitte später erneut versuchen.</string>
+    <string name="account_verify_title">Anmeldung bestätigen</string>
+    <string name="account_verify_message">Schließe die Überprüfung ab, um fortzufahren.</string>
+    <string name="account_online_favorite_unavailable">Melde dich an oder füge einen gültigen API-Schlüssel hinzu, um Online-Favoriten zu nutzen.</string>
+    <string name="online_blacklist_update_error">Online-Sperrliste konnte nicht aktualisiert werden. Bitte erneut versuchen.</string>
     <string name="online_blacklist_refresh">Aktualisieren</string>
-    <string name="online_blacklist_loading">Online-Blacklist wird geladen…</string>
-    <string name="online_blacklist_loaded">Die Online-Blacklist ist aktuell</string>
-    <string name="online_blacklist_load_error">Die Online-Blacklist konnte nicht geladen werden. Versuchen Sie, sie zu aktualisieren.</string>
-    <string name="online_blacklist_session_expired">Ihre Kontositzung ist abgelaufen. Melden Sie sich an, um Ihre Online-Blacklist zu laden.</string>
-    <string name="online_blacklist_search_unavailable">Die Online-Blacklist wurde nicht geladen. Aktualisieren Sie sie oder suchen Sie ohne ihre Tags.</string>
-    <string name="online_blacklist_search_without">Suche ohne</string>
-    <string name="online_blacklist_sign_in_required">Melden Sie sich erneut an oder überprüfen Sie Ihren API-Schlüssel, bevor Sie die Online-Blacklist aktualisieren.</string>
+    <string name="online_blacklist_loading">Online-Sperrliste wird geladen…</string>
+    <string name="online_blacklist_loaded">Online-Sperrliste aktualisiert</string>
+    <string name="online_blacklist_load_error">Online-Sperrliste konnte nicht geladen werden. Bitte aktualisieren.</string>
+    <string name="online_blacklist_session_expired">Die Anmeldung ist abgelaufen. Melde dich erneut an, um die Online-Sperrliste zu laden.</string>
+    <string name="online_blacklist_search_unavailable">Online-Tag-Einstellungen sind nicht geladen. Aktualisiere sie oder suche ohne diese Einstellungen.</string>
+    <string name="online_blacklist_search_without">Ohne Online-Tags suchen</string>
+    <string name="online_blacklist_sign_in_required">Melde dich erneut an oder prüfe deinen API-Schlüssel und aktualisiere dann die Online-Sperrliste.</string>
     <string name="comment_preparing">Überprüfung wird vorbereitet …</string>
     <string name="comment_send_again">Erneut posten</string>
     <string name="comment_deleted">Kommentar gelöscht</string>

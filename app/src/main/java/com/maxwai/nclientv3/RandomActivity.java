@@ -132,7 +132,8 @@ public class RandomActivity extends GeneralActivity {
         isFavorite = Favorites.isFavorite(loadedGallery);
         favoriteUpdateButton();
         title.setText(gallery.getTitle());
-        page.setText(getString(R.string.page_count_format, gallery.getPageCount()));
+        page.setText(getResources().getQuantityString(R.plurals.page_count_format,
+            gallery.getPageCount(), gallery.getPageCount()));
         censor.setVisibility(gallery.hasIgnoredTags() ? View.VISIBLE : View.GONE);
     }
 
