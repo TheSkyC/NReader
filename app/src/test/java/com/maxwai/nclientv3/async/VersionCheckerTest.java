@@ -66,6 +66,14 @@ public class VersionCheckerTest {
         assertTrue(release.isNewerThanInstalled("1.0.0", 99L));
     }
 
+    @Test
+    public void onlyLocalHttpHostsAreAllowedForDebugUpdateSources() {
+        assertTrue(VersionChecker.isAllowedUpdateUrl("http://localhost:8765/releases"));
+        assertTrue(VersionChecker.isAllowedUpdateUrl("http://10.0.2.2:8765/releases"));
+        assertFalse(VersionChecker.isAllowedUpdateUrl("http://updates.example/releases"));
+        assertTrue(VersionChecker.isAllowedUpdateUrl("https://updates.example/releases"));
+    }
+
     private static VersionChecker.GitHubRelease release(String version, String url) {
         VersionChecker.GitHubRelease release = new VersionChecker.GitHubRelease();
         release.versionCode = version;

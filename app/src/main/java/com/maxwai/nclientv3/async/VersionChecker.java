@@ -33,6 +33,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -531,14 +533,19 @@ public class VersionChecker {
     }
 
     static boolean isAllowedUpdateUrl(@NonNull String value) {
-        Uri uri = Uri.parse(value);
-        if ("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null) return true;
-        if (!BuildConfig.DEBUG || !"http".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null) return false;
-        String host = uri.getHost();
-        return "localhost".equalsIgnoreCase(host)
-            || "127.0.0.1".equals(host)
-            || "10.0.2.2".equals(host)
-            || "::1".equals(host);
+        try {
+            URI uri = new URI(value);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if ("https".equalsIgnoreCase(scheme) && host != null) return true;
+            if (!BuildConfig.DEBUG || !"http".equalsIgnoreCase(scheme) || host == null) return false;
+            return "localhost".equalsIgnoreCase(host)
+                || "127.0.0.1".equals(host)
+                || "10.0.2.2".equals(host)
+                || "::1".equals(host);
+        } catch (URISyntaxException ignored) {
+            return false;
+        }
     }
 
     @NonNull
