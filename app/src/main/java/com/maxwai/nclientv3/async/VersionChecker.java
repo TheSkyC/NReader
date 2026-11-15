@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -50,6 +52,8 @@ public class VersionChecker {
     private static String latest = null;
     private final AppCompatActivity context;
     private final UpdateStateStore stateStore;
+    private final UpdateMetadataStore metadataStore;
+    private final OkHttpClient updateClient = new OkHttpClient.Builder().build();
     @Nullable private final Listener listener;
     @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
@@ -62,6 +66,7 @@ public class VersionChecker {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
         this.stateStore = new UpdateStateStore(context);
+        this.metadataStore = new UpdateMetadataStore(context);
         this.listener = listener;
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty()) return;
         if (latest != null && Global.hasStoragePermission(context)) {
@@ -71,7 +76,18 @@ public class VersionChecker {
         }
         saveState(UpdateState.checking(System.currentTimeMillis()));
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
-        Global.getClient(context).newCall(new Request.Builder().url(RELEASE_API_URL).build()).enqueue(new Callback() {
+        requestReleases(withPrerelease, silent, true);
+    }
+
+    private void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest) {
+        Request.Builder request = new Request.Builder()
+            .url(RELEASE_API_URL)
+            .header("Accept", "application/vnd.github+json")
+            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
+        if (useConditionalRequest && metadataStore.getEtag() != null) {
+            request.header("If-None-Match", metadataStore.getEtag());
+        }
+        updateClient.newCall(request.build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 notifyRetrievalFailure(e, silent);
@@ -80,14 +96,29 @@ public class VersionChecker {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try {
-                    GitHubRelease release;
-                    try (Response ignored = response;
-                         JsonReader jr = response.isSuccessful() && response.body() != null
-                             ? new JsonReader(response.body().charStream())
-                             : null) {
-                        if (jr == null) {
+                    String json;
+                    boolean retryWithoutCache = false;
+                    try (Response ignored = response) {
+                        if (response.code() == 304) {
+                            json = metadataStore.getBody();
+                            retryWithoutCache = json == null;
+                        } else if (response.isSuccessful() && response.body() != null) {
+                            long length = response.body().contentLength();
+                            if (length > 2L * 1024L * 1024L) {
+                                throw new IOException("Release metadata is too large");
+                            }
+                            json = response.body().string();
+                            metadataStore.save(json, response.header("ETag"));
+                        } else {
                             throw new IOException("Unable to retrieve release metadata: HTTP " + response.code());
                         }
+                    }
+                    if (retryWithoutCache) {
+                        requestReleases(withPrerelease, silent, false);
+                        return;
+                    }
+                    GitHubRelease release;
+                    try (JsonReader jr = new JsonReader(new StringReader(json))) {
                         release = parseVersionJson(jr, withPrerelease, BuildConfig.FLAVOR);
                     }
                     if (release == null) {
@@ -301,7 +332,10 @@ public class VersionChecker {
         partial.delete();
         if (downloadUrl == null) return;
         LogUtility.d(f.getAbsolutePath());
-        Global.getClient(context).newCall(new Request.Builder().url(downloadUrl).build()).enqueue(new Callback() {
+        updateClient.newCall(new Request.Builder()
+            .url(downloadUrl)
+            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
+            .build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 notifyDownloadFailure(e);
