@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.maxwai.nclientv3.async.VersionChecker;
 import com.maxwai.nclientv3.async.UpdateMetadataStore;
+import com.maxwai.nclientv3.async.UpdateNotification;
 import com.maxwai.nclientv3.async.UpdateStateRecovery;
 import com.maxwai.nclientv3.async.UpdateReminderStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
@@ -89,6 +90,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 checker.cancelDownload();
             } else if (release != null && release.getVersionCode() != null) {
                 new UpdateReminderStore(this).remindLater(System.currentTimeMillis());
+                UpdateNotification.clear(this);
                 finish();
             } else {
                 startCheck();
@@ -97,6 +99,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         skip.setOnClickListener(view -> {
             if (release != null && release.getVersionCode() != null) {
                 new UpdateReminderStore(this).skip(release.getVersionCode());
+                UpdateNotification.clear(this);
                 finish();
             }
         });
