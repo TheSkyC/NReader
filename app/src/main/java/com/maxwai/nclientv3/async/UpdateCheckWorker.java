@@ -38,7 +38,10 @@ public final class UpdateCheckWorker extends Worker {
     }
 
     public static void schedule(@NonNull Context context) {
-        if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) return;
+        if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME);
+            return;
+        }
         Constraints constraints = new Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build();
