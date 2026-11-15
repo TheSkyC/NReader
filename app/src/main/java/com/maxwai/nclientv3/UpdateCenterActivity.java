@@ -110,6 +110,9 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             && currentState.getPhase() != UpdatePhase.INSTALLING;
         checker = new VersionChecker(this, false, this, shouldCheck);
         checker.setInstallLauncher(installLauncher::launch);
+        if (currentState.getPhase() == UpdatePhase.DOWNLOADING) {
+            checker.resumeDownload();
+        }
     }
 
     @Override
