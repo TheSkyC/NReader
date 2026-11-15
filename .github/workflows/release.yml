@@ -122,6 +122,13 @@ jobs:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
+          metadata="$(./gradlew -q :app:printNReaderMetadata)"
+          version_name="$(awk -F= '$1 == "versionName" { print $2 }' <<< "$metadata")"
+          version_code="$(awk -F= '$1 == "versionCode" { print $2 }' <<< "$metadata")"
+          application_id="$(awk -F= '$1 == "applicationId" { print $2 }' <<< "$metadata")"
+          apk_dir="app/build/outputs/apk/release"
+          apk_min_api26="$apk_dir/NReader-$RELEASE_TAG-minApi26-release.apk"
+          apk_min_api28="$apk_dir/NReader-$RELEASE_TAG-minApi28-release.apk"
           assets=(app/build/outputs/apk/release/NReader-*.apk app/build/outputs/bundle/minApi28Release/*.aab)
           if [ "${#assets[@]}" -eq 0 ]; then
             echo 'No release assets were produced' >&2
@@ -132,7 +139,16 @@ jobs:
             digest="$(sha256sum "$asset" | awk '{ print $1 }')"
             printf '%s  %s\n' "$digest" "$(basename "$asset")" >> SHA256SUMS.txt
           done
-          assets+=(SHA256SUMS.txt)
+          python scripts/build_update_manifest.py \
+            --output nreader-update.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --tag "$RELEASE_TAG" \
+            --version-name "$version_name" \
+            --version-code "$version_code" \
+            --package-name "$application_id" \
+            --apk minApi26 26 "$apk_min_api26" \
+            --apk minApi28 28 "$apk_min_api28"
+          assets+=(SHA256SUMS.txt nreader-update.json)
           notes='Built and signed by the NReader GitHub Actions release workflow.'
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
