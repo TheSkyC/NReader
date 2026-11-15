@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3.async;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import android.content.Context;
 
@@ -26,6 +27,23 @@ public class UpdateStateRecoveryTest {
         UpdateState recovered = UpdateStateRecovery.reconcile(context, state);
 
         assertEquals(UpdatePhase.IDLE, recovered.getPhase());
+    }
+
+    @Test
+    public void completedInstallRemovesDownloadedUpdateArtifact() throws IOException {
+        Context context = RuntimeEnvironment.getApplication();
+        File file = new File(context.getCacheDir(), "NReader-1.0.0-beta.1-minApi28-release.apk");
+        if (!file.createNewFile()) throw new IOException("Unable to create test artifact");
+        try {
+            UpdateState state = UpdateState.installing("1.0.0-beta.1", file.getAbsolutePath(), 1L);
+
+            UpdateStateRecovery.reconcile(context, state);
+
+            assertFalse(file.exists());
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
     }
 
     @Test

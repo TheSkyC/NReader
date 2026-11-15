@@ -23,6 +23,8 @@ public final class UpdateStateRecovery {
         long now = System.currentTimeMillis();
 
         if (version != null && VersionChecker.GitHubRelease.isVersionAtLeast(BuildConfig.VERSION_NAME, version)) {
+            deleteUpdateArtifact(file);
+            new UpdateMetadataStore(context).clearSelectedRelease();
             UpdateNotification.clear(context);
             return UpdateState.idle(now);
         }
@@ -44,7 +46,14 @@ public final class UpdateStateRecovery {
     private static void deletePartialFile(File file) {
         if (file == null || !file.getName().endsWith(".part")) return;
         // Only remove the temporary download artifact created by VersionChecker.
-        // A persisted final APK is left untouched for explicit user recovery.
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+    }
+
+    private static void deleteUpdateArtifact(File file) {
+        if (file == null) return;
+        String name = file.getName();
+        if (!name.startsWith("NReader-") || !(name.endsWith(".apk") || name.endsWith(".part"))) return;
         //noinspection ResultOfMethodCallIgnored
         file.delete();
     }

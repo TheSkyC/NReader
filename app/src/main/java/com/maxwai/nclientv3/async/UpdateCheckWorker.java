@@ -39,7 +39,7 @@ public final class UpdateCheckWorker extends Worker {
 
     public static void schedule(@NonNull Context context) {
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) {
-            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME);
+            cancelScheduledWork(context);
             return;
         }
         Constraints constraints = new Constraints.Builder()
@@ -58,6 +58,14 @@ public final class UpdateCheckWorker extends Worker {
             ExistingPeriodicWorkPolicy.KEEP,
             request
         );
+    }
+
+    private static void cancelScheduledWork(@NonNull Context context) {
+        try {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME);
+        } catch (IllegalStateException ignored) {
+            // WorkManager may be intentionally disabled in local/unit-test processes.
+        }
     }
 
     @NonNull
