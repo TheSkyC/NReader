@@ -43,6 +43,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class VersionChecker {
+    private static final int INSTALL_REQUEST_CODE = 1202;
     public interface Listener {
         void onUpdateState(@NonNull UpdateState state);
         void onReleaseAvailable(@NonNull GitHubRelease release);
@@ -252,6 +253,20 @@ public class VersionChecker {
             return;
         }
         installApp(file);
+    }
+
+    public void onInstallActivityResult(int resultCode) {
+        if (resultCode == android.app.Activity.RESULT_CANCELED) {
+            UpdateState state = stateStore.load();
+            if (state.getFilePath() != null && new File(state.getFilePath()).isFile()) {
+                saveState(UpdateState.readyToInstall(
+                    state.getVersion() == null ? BuildConfig.VERSION_NAME : state.getVersion(),
+                    state.getFilePath(),
+                    new File(state.getFilePath()).length(),
+                    System.currentTimeMillis()
+                ));
+            }
+        }
     }
 
     static GitHubRelease parseVersionJson(JsonReader jr, boolean withPrerelease, String flavor) throws IOException {
@@ -596,7 +611,7 @@ public class VersionChecker {
             @SuppressLint("RequestInstallPackagesPolicy") Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
             intent.setData(apkUri);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            context.startActivity(intent);
+            context.startActivityForResult(intent, INSTALL_REQUEST_CODE);
         } catch (IOException | IllegalArgumentException | SecurityException exception) {
             saveState(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
             context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());

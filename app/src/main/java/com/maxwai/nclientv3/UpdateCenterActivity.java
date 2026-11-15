@@ -101,6 +101,16 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1202 && checker != null) {
+            checker.onInstallActivityResult(resultCode);
+            currentState = new UpdateStateStore(this).load();
+            render(currentState);
+        }
+    }
+
+    @Override
     public void onUpdateState(@NonNull UpdateState state) {
         currentState = state;
         render(state);
