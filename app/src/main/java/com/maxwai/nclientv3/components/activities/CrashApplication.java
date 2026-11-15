@@ -21,6 +21,7 @@ import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
+import com.maxwai.nclientv3.async.UpdateCheckWorker;
 import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.settings.AccountRuntime;
 import com.maxwai.nclientv3.settings.Global;
@@ -59,6 +60,7 @@ public class CrashApplication extends Application {
         TagV2.initMinCount(this);
         TagV2.initSortByName(this);
         DownloadGalleryV2.loadDownloads(this);
+        UpdateCheckWorker.schedule(this);
         registerActivityLifecycleCallbacks(new CustomActivityLifecycleCallback());
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             String theme = preferences.getString(getString(R.string.preference_key_theme_select), "");
