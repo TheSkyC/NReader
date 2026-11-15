@@ -36,15 +36,19 @@ public class NotificationSettings {
     }
 
     public static void notify(Context context, int notificationId, Notification notification) {
-        if (maximumNotification == 0) return;
+        if (!canNotify(context)) return;
         notificationArray.remove(Integer.valueOf(notificationId));
         notificationArray.add(notificationId);
         trimArray();
         LogUtility.d("Notification count: " + notificationArray.size());
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
         notificationSettings.notificationManager.notify(notificationId, notification);
+    }
+
+    public static boolean canNotify(Context context) {
+        if (notificationSettings == null || maximumNotification == 0) return false;
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED) return false;
+        return notificationSettings.notificationManager.areNotificationsEnabled();
     }
 
     public static void cancel(int notificationId) {
