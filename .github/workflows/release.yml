@@ -127,7 +127,10 @@ jobs:
             echo 'No release assets were produced' >&2
             exit 1
           fi
-          sha256sum "${assets[@]}" > SHA256SUMS.txt
+          : > SHA256SUMS.txt
+          for asset in "${assets[@]}"; do
+            sha256sum "$asset" | sed "s#  $asset$#  $(basename "$asset")#" >> SHA256SUMS.txt
+          done
           assets+=(SHA256SUMS.txt)
           notes='Built and signed by the NReader GitHub Actions release workflow.'
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
