@@ -28,10 +28,10 @@ public final class UpdateStateRecovery {
         }
 
         if (state.getPhase() == UpdatePhase.INSTALLING || state.getPhase() == UpdatePhase.READY_TO_INSTALL) {
-            if (file != null && file.isFile()) {
+            if (version != null && file != null && file.isFile()) {
                 return UpdateState.readyToInstall(version, file.getAbsolutePath(), file.length(), now);
             }
-            return UpdateState.error(version, filePath, "missing_file", now);
+            return UpdateState.error(version, filePath, version == null ? "missing_version" : "missing_file", now);
         }
 
         if (state.getPhase() == UpdatePhase.DOWNLOADING) {
