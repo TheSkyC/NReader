@@ -13,6 +13,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.maxwai.nclientv3.async.VersionChecker;
 import com.maxwai.nclientv3.async.UpdateStateRecovery;
+import com.maxwai.nclientv3.async.UpdateReminderStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -27,6 +28,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private ProgressBar progress;
     private Button action;
     private Button secondary;
+    private Button skip;
     private VersionChecker checker;
     private VersionChecker.GitHubRelease release;
     private UpdateState currentState;
@@ -47,6 +49,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         progress = findViewById(R.id.update_progress);
         action = findViewById(R.id.update_action);
         secondary = findViewById(R.id.update_secondary);
+        skip = findViewById(R.id.update_skip);
 
         action.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.READY_TO_INSTALL) {
@@ -57,8 +60,17 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         secondary.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.DOWNLOADING) {
                 checker.cancelDownload();
+            } else if (release != null && release.getVersionCode() != null) {
+                new UpdateReminderStore(this).remindLater(System.currentTimeMillis());
+                finish();
             } else {
                 startCheck();
+            }
+        });
+        skip.setOnClickListener(view -> {
+            if (release != null && release.getVersionCode() != null) {
+                new UpdateReminderStore(this).skip(release.getVersionCode());
+                finish();
             }
         });
         currentState = new UpdateStateStore(this).load();
@@ -100,6 +112,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         version.setText(getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, release.getVersionCode()));
         String body = release.getBody();
         notes.setText(body == null || body.trim().isEmpty() ? getString(R.string.update_no_release_notes) : body.trim());
+        secondary.setText(R.string.update_remind_later);
+        skip.setVisibility(View.VISIBLE);
         action.setText(R.string.update_download);
         action.setEnabled(true);
     }
@@ -107,6 +121,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private void render(@NonNull UpdateState state) {
         progress.setVisibility(View.GONE);
         secondary.setVisibility(View.VISIBLE);
+        skip.setVisibility(View.GONE);
         secondary.setText(R.string.check_for_updates);
         switch (state.getPhase()) {
             case CHECKING:

@@ -68,6 +68,15 @@
                 android:layout_marginTop="8dp"
                 android:minHeight="48dp"
                 android:text="@string/check_for_updates" />
+
+            <Button
+                android:id="@+id/update_skip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"
+                android:text="@string/update_skip_version"
+                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

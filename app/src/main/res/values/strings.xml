@@ -326,6 +326,8 @@
     <string name="update_download">Download update</string>
     <string name="update_install">Install update</string>
     <string name="update_cancel_download">Cancel download</string>
+    <string name="update_remind_later">Remind me tomorrow</string>
+    <string name="update_skip_version">Skip this version</string>
     <string name="update_no_release_notes">This release does not include release notes.</string>
     <string name="update_notification_available">NReader update available</string>
     <string name="update_notification_downloading">Downloading NReader update</string>

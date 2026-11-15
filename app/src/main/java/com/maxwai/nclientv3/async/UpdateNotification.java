@@ -26,6 +26,8 @@ public final class UpdateNotification {
     public static void publish(@NonNull Context context, @NonNull UpdateState state) {
         String version = state.getVersion();
         if (version == null) return;
+        if (state.getPhase() == UpdatePhase.AVAILABLE
+            && new UpdateReminderStore(context).suppresses(version, System.currentTimeMillis())) return;
         if (state.getPhase() == UpdatePhase.AVAILABLE && !markOnce(context, NOTIFIED_AVAILABLE, version)) return;
         if (state.getPhase() == UpdatePhase.READY_TO_INSTALL && !markOnce(context, NOTIFIED_READY, version)) return;
         if (state.getPhase() != UpdatePhase.AVAILABLE
