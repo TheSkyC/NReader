@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3.adapters;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -67,6 +69,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private final boolean details;
     private boolean loading;
     private boolean loadFailed;
+    @Nullable private Drawable initialCover;
     private final boolean[] expandedTags = new boolean[TagType.values.length];
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
@@ -94,6 +97,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             directory = null;
         }
         LogUtility.d("Max maxSize: " + gallery.getMaxSize() + ", min maxSize: " + gallery.getMinSize());
+    }
+
+    public void setInitialCover(@Nullable Drawable initialCover) {
+        this.initialCover = initialCover;
     }
 
     public Type positionToType(int pos) {
@@ -184,6 +191,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         initializeIdContainer(holder.master.findViewById(R.id.id_num));
         ImageView cover = holder.master.findViewById(R.id.gallery_cover);
         View loading = holder.master.findViewById(R.id.gallery_loading);
+        if (initialCover != null) {
+            cover.setImageDrawable(initialCover);
+            initialCover = null;
+        }
         File firstPage = directory == null ? null : directory.getPage(1);
         if (firstPage != null && firstPage.exists()) {
             ImageDownloadUtility.loadImageOp(context, cover, firstPage, 0);

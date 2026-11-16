@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -303,6 +305,7 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void loadGallery(GenericGallery gall, int zoom) {
+        Drawable retainedCover = currentDetailCover();
         this.gallery = gall;
         detailReady = gall instanceof Gallery || gall.isLocal();
         if (getSupportActionBar() != null) {
@@ -312,6 +315,7 @@ public class GalleryActivity extends BaseActivity {
         recycler.setAdapter(adapter);
         GalleryAdapter previousDetails = detailsAdapter;
         detailsAdapter = new GalleryAdapter(this, gallery, 1, true);
+        detailsAdapter.setInitialCover(retainedCover);
         if (previousDetails != null) detailsAdapter.copyExpandedTagsFrom(previousDetails);
         detailsList.setLayoutManager(new LinearLayoutManager(this));
         detailsList.setAdapter(detailsAdapter);
@@ -327,6 +331,15 @@ public class GalleryActivity extends BaseActivity {
             intent.putExtra(getPackageName() + ".PAGE", zoom);
             startActivity(intent);
         }
+    }
+
+    @Nullable
+    private Drawable currentDetailCover() {
+        if (detailsList == null || detailsAdapter == null) return null;
+        RecyclerView.ViewHolder holder = detailsList.findViewHolderForAdapterPosition(0);
+        if (holder == null) return null;
+        ImageView cover = holder.itemView.findViewById(R.id.gallery_cover);
+        return cover == null ? null : cover.getDrawable();
     }
 
     private void loadShell(SimpleGallery shell) {
