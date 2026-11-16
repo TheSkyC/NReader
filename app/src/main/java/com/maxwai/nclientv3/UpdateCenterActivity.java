@@ -3,6 +3,7 @@ package com.maxwai.nclientv3;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +11,8 @@ import android.text.format.Formatter;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -18,6 +21,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 
 import com.maxwai.nclientv3.async.VersionChecker;
 import com.maxwai.nclientv3.async.UpdateMetadataStore;
@@ -35,6 +39,7 @@ import java.util.Date;
 
 public class UpdateCenterActivity extends GeneralActivity implements VersionChecker.Listener {
     private TextView status;
+    private TextView versionFrom;
     private TextView version;
     private TextView notes;
     private TextView channel;
@@ -43,6 +48,11 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private TextView errorDetail;
     private TextView progressLabel;
     private ProgressBar progress;
+    private ImageView statusIcon;
+    private ImageView versionArrow;
+    private View progressCard;
+    private View errorCard;
+    private LinearLayout metaRow;
     private Button action;
     private Button secondary;
     private Button skip;
@@ -88,6 +98,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         status = findViewById(R.id.update_status);
+        versionFrom = findViewById(R.id.update_version_from);
         version = findViewById(R.id.update_version);
         notes = findViewById(R.id.update_notes);
         channel = findViewById(R.id.update_channel);
@@ -96,6 +107,11 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         errorDetail = findViewById(R.id.update_error_detail);
         progressLabel = findViewById(R.id.update_progress_label);
         progress = findViewById(R.id.update_progress);
+        statusIcon = findViewById(R.id.update_status_icon);
+        versionArrow = findViewById(R.id.update_version_arrow);
+        progressCard = findViewById(R.id.update_progress_card);
+        errorCard = findViewById(R.id.update_error_card);
+        metaRow = findViewById(R.id.update_meta_row);
         action = findViewById(R.id.update_action);
         secondary = findViewById(R.id.update_secondary);
         skip = findViewById(R.id.update_skip);
@@ -190,8 +206,11 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     }
 
     private void render(@NonNull UpdateState state) {
+        renderStatusIcon(state.getPhase());
         progress.setVisibility(View.GONE);
         progressLabel.setVisibility(View.GONE);
+        progressCard.setVisibility(View.GONE);
+        errorCard.setVisibility(View.GONE);
         errorDetail.setVisibility(View.GONE);
         secondary.setVisibility(View.VISIBLE);
         skip.setVisibility(View.GONE);
@@ -207,7 +226,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_queued);
                 action.setText(R.string.update_queued);
                 action.setEnabled(false);
-                progress.setVisibility(View.VISIBLE);
+                progressCard.setVisibility(View.VISIBLE);
                 progress.setIndeterminate(true);
                 secondary.setText(R.string.update_cancel_download);
                 break;
@@ -215,7 +234,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_downloading);
                 action.setText(R.string.update_downloading);
                 action.setEnabled(false);
-                progress.setVisibility(View.VISIBLE);
+                progressCard.setVisibility(View.VISIBLE);
                 if (state.hasKnownProgress()) {
                     progress.setIndeterminate(false);
                     progress.setProgress((int) Math.min(100L, state.getDownloadedBytes() * 100L / state.getTotalBytes()));
@@ -247,6 +266,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 action.setText(R.string.update_retry);
                 action.setEnabled(true);
                 secondary.setText(R.string.check_for_updates);
+                errorCard.setVisibility(View.VISIBLE);
                 errorDetail.setVisibility(View.VISIBLE);
                 errorDetail.setText(errorMessage(state.getErrorCode()));
                 break;
@@ -269,9 +289,15 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 secondary.setVisibility(View.GONE);
                 break;
         }
-        version.setText(state.getVersion() == null
-            ? getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME)
-            : getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, state.getVersion()));
+        boolean hasTargetVersion = state.getVersion() != null;
+        versionFrom.setVisibility(hasTargetVersion ? View.VISIBLE : View.GONE);
+        versionArrow.setVisibility(hasTargetVersion ? View.VISIBLE : View.GONE);
+        if (hasTargetVersion) {
+            versionFrom.setText(BuildConfig.VERSION_NAME);
+            version.setText(state.getVersion());
+        } else {
+            version.setText(getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME));
+        }
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(this);
         boolean matchesSelected = state.getVersion() != null && state.getVersion().equals(metadataStore.getSelectedVersion());
         if (matchesSelected) {
@@ -293,6 +319,52 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         long sizeBytes = state.getTotalBytes() > 0L ? state.getTotalBytes()
             : matchesSelected ? metadataStore.getSelectedSize() : -1L;
         size.setText(sizeBytes > 0L ? getString(R.string.update_size_format, Formatter.formatFileSize(this, sizeBytes)) : "");
+        channel.setVisibility(channel.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        size.setVisibility(size.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        metaRow.setVisibility(channel.getVisibility() == View.VISIBLE || size.getVisibility() == View.VISIBLE
+            ? View.VISIBLE : View.GONE);
+    }
+
+    private void renderStatusIcon(@NonNull UpdatePhase phase) {
+        int drawable;
+        int tint;
+        switch (phase) {
+            case CHECKING:
+                drawable = R.drawable.ic_refresh;
+                tint = R.color.theme_primary;
+                break;
+            case QUEUED:
+                drawable = R.drawable.ic_cover_clock;
+                tint = R.color.theme_primary;
+                break;
+            case DOWNLOADING:
+                drawable = R.drawable.ic_cover_download;
+                tint = R.color.theme_primary;
+                break;
+            case READY_TO_INSTALL:
+                drawable = R.drawable.ic_cover_check_circle;
+                tint = R.color.state_complete;
+                break;
+            case INSTALLING:
+                drawable = R.drawable.ic_cover_check_circle;
+                tint = R.color.theme_primary;
+                break;
+            case ERROR:
+                drawable = R.drawable.ic_cover_exclamation_circle;
+                tint = R.color.state_damaged;
+                break;
+            case AVAILABLE:
+                drawable = R.drawable.ic_cover_download;
+                tint = R.color.theme_primary;
+                break;
+            case IDLE:
+            default:
+                drawable = R.drawable.ic_check_circle;
+                tint = R.color.state_complete;
+                break;
+        }
+        statusIcon.setImageResource(drawable);
+        statusIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, tint)));
     }
 
     private String errorMessage(String errorCode) {
