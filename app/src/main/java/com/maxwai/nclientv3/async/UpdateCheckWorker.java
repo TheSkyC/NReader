@@ -34,6 +34,7 @@ public final class UpdateCheckWorker extends Worker {
     private static final String WORK_NAME = "nreader_update_check";
     private static final long INTERVAL_HOURS = 24L;
     private final BooleanSupplier sourceEnabled;
+    private final BooleanSupplier reconcileDownload;
     private final OkHttpClient client = new OkHttpClient.Builder()
         .connectTimeout(15L, TimeUnit.SECONDS)
         .readTimeout(60L, TimeUnit.SECONDS)
@@ -42,12 +43,15 @@ public final class UpdateCheckWorker extends Worker {
         .build();
 
     public UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters) {
-        this(context, parameters, () -> !BuildConfig.UPDATE_REPOSITORY.isEmpty() || !BuildConfig.UPDATE_ENDPOINT.isEmpty());
+        this(context, parameters, () -> !BuildConfig.UPDATE_REPOSITORY.isEmpty() || !BuildConfig.UPDATE_ENDPOINT.isEmpty(),
+            () -> UpdateDownloadScheduler.reconcileForWorker(context));
     }
 
-    UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled) {
+    UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
+                      @NonNull BooleanSupplier reconcileDownload) {
         super(context, parameters);
         this.sourceEnabled = sourceEnabled;
+        this.reconcileDownload = reconcileDownload;
     }
 
     public static void schedule(@NonNull Context context) {
@@ -85,7 +89,7 @@ public final class UpdateCheckWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
-        if (sourceEnabled.getAsBoolean() && !UpdateDownloadScheduler.reconcileForWorker(context)) return Result.retry();
+        if (sourceEnabled.getAsBoolean() && !reconcileDownload.getAsBoolean()) return Result.retry();
         if (!Global.shouldCheckForUpdates(context)) return Result.success();
         UpdateStateStore stateStore = new UpdateStateStore(context);
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(context);

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -34,6 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.util.List;
@@ -46,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
 import kotlin.coroutines.EmptyCoroutineContext;
 
@@ -108,6 +111,7 @@ public class UpdateDownloadSchedulerTest {
     }
 
     @Test
+    @Config(application = Application.class)
     public void periodicWorkerRepairsUserDownloadWhenAutomaticChecksAreDisabled() throws Exception {
         SharedPreferences settings = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
         String key = context.getString(R.string.preference_key_check_update);
@@ -115,9 +119,14 @@ public class UpdateDownloadSchedulerTest {
         boolean previous = settings.getBoolean(key, true);
         UpdateDownloadRecord record = record();
         try {
+            if (!BuildConfig.UPDATE_ENDPOINT.isEmpty() || !BuildConfig.UPDATE_REPOSITORY.isEmpty()) {
+                settings.edit().putBoolean(key, true).commit();
+                assertTrue(Global.shouldCheckForUpdates(context));
+            }
             settings.edit().putBoolean(key, false).commit();
             assertTrue(store.claimScheduledDownload(record, 1L));
-            assertEquals(ListenableWorker.Result.success(), checkWorker(true).doWork());
+            boolean configured = !BuildConfig.UPDATE_ENDPOINT.isEmpty() || !BuildConfig.UPDATE_REPOSITORY.isEmpty();
+            assertEquals(ListenableWorker.Result.success(), checkWorker(true, configured).doWork());
             assertNotNull(manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS));
             assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
         } finally {
@@ -130,6 +139,7 @@ public class UpdateDownloadSchedulerTest {
     }
 
     @Test
+    @Config(application = Application.class)
     public void periodicWorkerDoesNotRepairDownloadWhenSourceIsDisabled() throws Exception {
         SharedPreferences settings = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
         String key = context.getString(R.string.preference_key_check_update);
@@ -148,6 +158,18 @@ public class UpdateDownloadSchedulerTest {
             else editor.remove(key);
             editor.commit();
         }
+    }
+
+    @Test
+    @Config(application = Application.class)
+    public void failedWorkQueryPreservesDownloadAndRequestsRetry() {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        BooleanSupplier reconciliation = () -> UpdateDownloadScheduler.reconcileNow(context,
+            id -> Futures.immediateFailedFuture(new IllegalStateException("fixture failure")));
+        assertEquals(ListenableWorker.Result.retry(), checkWorker(true, reconciliation).doWork());
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
     }
 
     @Test
@@ -284,6 +306,18 @@ public class UpdateDownloadSchedulerTest {
     }
 
     private UpdateCheckWorker checkWorker(boolean sourceEnabled) {
+        return checkWorker(sourceEnabled, () -> UpdateDownloadScheduler.reconcileForWorker(context));
+    }
+
+    private UpdateCheckWorker checkWorker(boolean sourceEnabled, boolean useProductionConstructor) {
+        return checkWorker(sourceEnabled, () -> UpdateDownloadScheduler.reconcileForWorker(context), useProductionConstructor);
+    }
+
+    private UpdateCheckWorker checkWorker(boolean sourceEnabled, BooleanSupplier reconciliation) {
+        return checkWorker(sourceEnabled, reconciliation, false);
+    }
+
+    private UpdateCheckWorker checkWorker(boolean sourceEnabled, BooleanSupplier reconciliation, boolean useProductionConstructor) {
         Executor direct = Runnable::run;
         WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
             new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
@@ -293,7 +327,8 @@ public class UpdateDownloadSchedulerTest {
                 }
             }, (context, id, data) -> Futures.immediateFuture(null),
             (context, id, info) -> Futures.immediateFuture(null));
-        return new UpdateCheckWorker(context, parameters, () -> sourceEnabled);
+        if (useProductionConstructor) return new UpdateCheckWorker(context, parameters);
+        return new UpdateCheckWorker(context, parameters, () -> sourceEnabled, reconciliation);
     }
 
     private static final class DeferredResult implements ListenableFuture<Void> {

@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 /** Coordinates persisted update attempts with WorkManager without blocking the UI. */
 final class UpdateDownloadScheduler {
@@ -57,6 +58,10 @@ final class UpdateDownloadScheduler {
     }
 
     private static boolean reconcileNow(@NonNull Context context) {
+        return reconcileNow(context, id -> WorkManager.getInstance(context).getWorkInfoById(id));
+    }
+
+    static boolean reconcileNow(@NonNull Context context, @NonNull Function<UUID, ListenableFuture<WorkInfo>> query) {
         Context app = context.getApplicationContext();
         UpdateStateStore store = new UpdateStateStore(app);
         if (!store.isScheduledDownload()) return true;
@@ -74,7 +79,7 @@ final class UpdateDownloadScheduler {
         }
         long revision = store.revision();
         try {
-            WorkInfo info = WorkManager.getInstance(app).getWorkInfoById(record.getId()).get(10L, TimeUnit.SECONDS);
+            WorkInfo info = query.apply(record.getId()).get(10L, TimeUnit.SECONDS);
             if (info == null) {
                 enqueueNow(app, record.getId());
             } else if (info.getState().isFinished()) {
