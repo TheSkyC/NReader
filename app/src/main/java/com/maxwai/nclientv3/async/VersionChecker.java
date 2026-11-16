@@ -1,7 +1,6 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.async;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -23,13 +22,11 @@ import androidx.lifecycle.Lifecycle;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
-import com.maxwai.nclientv3.UpdateCenterActivity;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,8 +65,6 @@ public class VersionChecker {
     }
 
     private static final String RELEASE_API_URL = "https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases";
-    private static final String LATEST_RELEASE_URL = "https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest";
-    private static String latest = null;
     private final AppCompatActivity context;
     private final UpdateStateStore stateStore;
     private final UpdateMetadataStore metadataStore;
@@ -110,12 +105,6 @@ public class VersionChecker {
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) return;
         restoreSelectedRelease();
         if (!startCheck) {
-            return;
-        }
-        if (latest != null && Global.hasStoragePermission(context)) {
-            downloadVersion(latest);
-            latest = null;
-            context.startActivity(new Intent(context, UpdateCenterActivity.class));
             return;
         }
         long revision = stateStore.revision();
@@ -268,8 +257,7 @@ public class VersionChecker {
                     release.sizeBytes
                 );
                 saveState(UpdateState.available(release.versionCode, System.currentTimeMillis()));
-                if (listener == null) createDialog(release);
-                else listener.onReleaseAvailable(release);
+                if (listener != null) listener.onReleaseAvailable(release);
             }
         }));
     }
@@ -626,43 +614,6 @@ public class VersionChecker {
     static boolean matchesFlavorAsset(String assetName, String flavor) {
         return assetName != null && flavor != null && assetName.endsWith(".apk")
             && assetName.contains("-" + flavor + "-");
-    }
-
-    private void createDialog(GitHubRelease release) {
-        String finalBody = release.body;
-        String latestVersion = release.versionCode;
-        boolean beta = release.beta;
-        if (finalBody == null) return;
-        finalBody = finalBody
-            .replace("\r\n", "\n")//Remove ugly newline
-            .replace("NReader " + latestVersion, "")//remove version header
-            .replaceAll("(\\s*\n\\s*)+", "\n")//remove multiple newline
-            .replaceAll("\\(.*\\)", "").trim();//remove things between ()
-        LogUtility.d("Evaluated: " + finalBody);
-        LogUtility.d("Creating dialog");
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
-        LogUtility.d("" + context);
-        builder.setTitle(beta ? R.string.new_beta_version_found : R.string.new_version_found);
-        builder.setIcon(R.drawable.ic_file);
-        builder.setMessage(context.getString(R.string.update_version_format, BuildConfig.VERSION_NAME, latestVersion, finalBody));
-        builder.setPositiveButton(R.string.install, (dialog, which) -> {
-            if (Global.hasStoragePermission(context)) {
-                downloadVersion(latestVersion);
-                context.startActivity(new Intent(context, UpdateCenterActivity.class));
-            }
-            else {
-                latest = latestVersion;
-                context.runOnUiThread(() -> context.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 2));
-            }
-        }).setNegativeButton(R.string.cancel, null);
-        if (!BuildConfig.UPDATE_REPOSITORY.isEmpty()) {
-            builder.setNeutralButton(R.string.github, (dialog, which) -> {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/" + BuildConfig.UPDATE_REPOSITORY + "/releases/latest"));
-                context.startActivity(browserIntent);
-            });
-        }
-        if (!context.isFinishing()) builder.show();
     }
 
     private void downloadVersion(String latestVersion) {

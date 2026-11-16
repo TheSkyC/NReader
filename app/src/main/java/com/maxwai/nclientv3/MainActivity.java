@@ -1154,8 +1154,6 @@ public class MainActivity extends BaseActivity
         Global.initStorage(this);
         if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
             startLocalActivity();
-        if (requestCode == 2 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            new VersionChecker(this, true);
     }
 
     private void startLocalActivity() {
