@@ -23,6 +23,7 @@ import androidx.lifecycle.Lifecycle;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.UpdateCenterActivity;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
@@ -31,9 +32,7 @@ import com.maxwai.nclientv3.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,7 +41,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -87,8 +85,6 @@ public class VersionChecker {
     private String downloadUrl;
     @Nullable private Call metadataCall;
     @Nullable private Call manifestCall;
-    @Nullable private volatile Call downloadCall;
-    @Nullable private volatile String downloadPath;
     private volatile boolean cancelled;
     private volatile long checkRevision = -1L;
 
@@ -119,6 +115,7 @@ public class VersionChecker {
         if (latest != null && Global.hasStoragePermission(context)) {
             downloadVersion(latest);
             latest = null;
+            context.startActivity(new Intent(context, UpdateCenterActivity.class));
             return;
         }
         long revision = stateStore.revision();
@@ -314,7 +311,7 @@ public class VersionChecker {
         installLauncher = launcher;
     }
 
-    private void restoreSelectedRelease() {
+    public void restoreSelectedRelease() {
         if (stateStore.load().getPhase() != UpdatePhase.AVAILABLE) return;
         String version = metadataStore.getSelectedVersion();
         String url = metadataStore.getSelectedUrl();
@@ -339,43 +336,19 @@ public class VersionChecker {
     }
 
     public boolean hasActiveDownload() {
-        Call call = downloadCall;
-        String path = downloadPath;
         UpdateState state = stateStore.load();
-        return call != null && !call.isCanceled() && path != null
-            && state.getPhase() == UpdatePhase.DOWNLOADING && path.equals(state.getFilePath());
+        return state.getPhase() == UpdatePhase.DOWNLOADING && UpdateDownloadManager.isActive(state.getFilePath());
     }
 
     public void cancel() {
         cancelled = true;
         if (metadataCall != null) metadataCall.cancel();
         if (manifestCall != null) manifestCall.cancel();
-        stopDownload(false);
     }
 
     public void cancelDownload() {
-        stopDownload(true);
-    }
-
-    private void stopDownload(boolean requestedByUser) {
-        String path = downloadPath;
-        Call call = downloadCall;
-        if (path != null) {
-            stateStore.runIfDownloading(path, () -> {
-                UpdateState state = stateStore.load();
-                if (requestedByUser && state.getVersion() != null) {
-                    saveState(UpdateState.available(state.getVersion(), System.currentTimeMillis()));
-                } else {
-                    saveState(UpdateState.error(state.getVersion(), path, "interrupted_download", System.currentTimeMillis()));
-                }
-                UpdateNotification.clear(context);
-            });
-        }
-        if (call != null) call.cancel();
-        if (path != null) {
-            //noinspection ResultOfMethodCallIgnored
-            new File(path).delete();
-        }
+        UpdateDownloadManager.cancel(context);
+        restoreSelectedRelease();
     }
 
     public boolean installReadyUpdate() {
@@ -477,7 +450,7 @@ public class VersionChecker {
         return invalid ? null : release;
     }
 
-    private static boolean isValidSha256(@Nullable String value) {
+    static boolean isValidSha256(@Nullable String value) {
         if (value == null) return false;
         String normalized = value.startsWith("sha256:") ? value.substring(7) : value;
         return normalized.matches("(?i)^[0-9a-f]{64}$");
@@ -671,7 +644,10 @@ public class VersionChecker {
         builder.setIcon(R.drawable.ic_file);
         builder.setMessage(context.getString(R.string.update_version_format, BuildConfig.VERSION_NAME, latestVersion, finalBody));
         builder.setPositiveButton(R.string.install, (dialog, which) -> {
-            if (Global.hasStoragePermission(context)) downloadVersion(latestVersion);
+            if (Global.hasStoragePermission(context)) {
+                downloadVersion(latestVersion);
+                context.startActivity(new Intent(context, UpdateCenterActivity.class));
+            }
             else {
                 latest = latestVersion;
                 context.runOnUiThread(() -> context.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 2));
@@ -688,106 +664,11 @@ public class VersionChecker {
     }
 
     private void downloadVersion(String latestVersion) {
-        if (hasActiveDownload() || downloadUrl == null) return;
+        if (downloadUrl == null) return;
         if (Global.UPDATEFOLDER == null) Global.initStorage(context);
-        if (Global.UPDATEFOLDER == null || (!Global.UPDATEFOLDER.isDirectory() && !Global.UPDATEFOLDER.mkdirs())) {
-            stateStore.runIfDownloadable(latestVersion, () ->
-                saveState(UpdateState.error(latestVersion, null, "download", System.currentTimeMillis())));
-            return;
-        }
-        String flavorSuffix = BuildConfig.FLAVOR.equals("minApi26") ? "-minApi26" : "-minApi28";
-        final File f = new File(Global.UPDATEFOLDER,
-            "NReader-" + latestVersion + flavorSuffix + "-" + UUID.randomUUID() + ".apk");
-        final File partial = new File(f.getAbsolutePath() + ".part");
-        final String expectedSha256 = metadataStore.getSelectedSha256();
-        final long expectedSize = metadataStore.getSelectedSize();
-        final Call attempt = updateClient.newCall(new Request.Builder()
-            .url(downloadUrl)
-            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
-            .build());
-        boolean started = stateStore.runIfDownloadable(latestVersion, () -> {
-            downloadPath = partial.getAbsolutePath();
-            downloadCall = attempt;
-            saveState(UpdateState.downloading(latestVersion, downloadPath, 0L, expectedSize, System.currentTimeMillis()));
-        });
-        if (!started) return;
-        attempt.enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                failDownload(partial, latestVersion, e);
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                try (Response ignored = response) {
-                    if (!response.isSuccessful() || response.body() == null) {
-                        throw new IOException("Unable to download update: HTTP " + response.code());
-                    }
-                    if (!stateStore.runIfDownloading(partial.getAbsolutePath(), () -> {})) return;
-                    long expectedLength = response.body().contentLength();
-                    if (expectedLength > MAX_UPDATE_SIZE_BYTES
-                        || (expectedSize > MAX_UPDATE_SIZE_BYTES)) {
-                        throw new IOException("Update package exceeds the maximum allowed size");
-                    }
-                    long writtenLength = 0L;
-                    try (FileOutputStream stream = new FileOutputStream(partial);
-                         InputStream stream1 = response.body().byteStream()) {
-                        int read;
-                        byte[] bytes = new byte[1024];
-                        while ((read = stream1.read(bytes)) != -1) {
-                            stream.write(bytes, 0, read);
-                            writtenLength += read;
-                            if (writtenLength > MAX_UPDATE_SIZE_BYTES) {
-                                throw new IOException("Update package exceeds the maximum allowed size");
-                            }
-                        }
-                        stream.flush();
-                    }
-                    if (expectedLength >= 0L && writtenLength != expectedLength) {
-                        throw new IOException("Downloaded update length does not match response");
-                    }
-                    if (expectedSize > 0L && writtenLength != expectedSize) {
-                        throw new IOException("Downloaded update size does not match release metadata");
-                    }
-                    if (!UpdateFileVerifier.matchesSha256(partial, expectedSha256)) {
-                        throw new IOException("Downloaded update checksum does not match release metadata");
-                    }
-                    boolean owned = stateStore.runIfDownloading(partial.getAbsolutePath(), () -> {
-                        if (!partial.renameTo(f)) throw new IllegalStateException("Unable to finalize downloaded update");
-                        saveState(UpdateState.readyToInstall(latestVersion, f.getAbsolutePath(), f.length(), System.currentTimeMillis()));
-                    });
-                    if (owned && listener == null) context.runOnUiThread(() -> {
-                        UpdateState state = stateStore.load();
-                        if (!context.isFinishing() && !context.isDestroyed()
-                            && state.isReadyToInstall() && f.getAbsolutePath().equals(state.getFilePath())) {
-                            installApp(f);
-                        }
-                    });
-                } catch (IOException | RuntimeException e) {
-                    failDownload(partial, latestVersion, e);
-                } finally {
-                    //noinspection ResultOfMethodCallIgnored
-                    partial.delete();
-                }
-            }
-        });
+        UpdateDownloadManager.start(context, latestVersion, downloadUrl,
+            metadataStore.getSelectedSha256(), metadataStore.getSelectedSize(), Global.UPDATEFOLDER);
     }
-
-    private void failDownload(File partial, String version, Exception exception) {
-        boolean owned = stateStore.runIfDownloading(partial.getAbsolutePath(), () ->
-            saveState(UpdateState.error(version, partial.getAbsolutePath(), "download", System.currentTimeMillis())));
-        //noinspection ResultOfMethodCallIgnored
-        partial.delete();
-        if (owned) notifyDownloadFailure(exception);
-    }
-
-    private void notifyDownloadFailure(Exception exception) {
-        context.runOnUiThread(() -> {
-            LogUtility.e("Update download failed: " + exception.getClass().getSimpleName());
-            Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show();
-        });
-    }
-
     private boolean installApp(File f) {
         if (!INSTALL_VALIDATION_ACTIVE.compareAndSet(false, true)) return false;
         long revision = stateStore.revision();

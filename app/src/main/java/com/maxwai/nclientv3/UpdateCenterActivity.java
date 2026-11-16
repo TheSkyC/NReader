@@ -2,7 +2,10 @@
 package com.maxwai.nclientv3;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.format.Formatter;
 import android.view.View;
 import android.widget.Button;
@@ -45,6 +48,18 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private VersionChecker checker;
     private VersionChecker.GitHubRelease release;
     private UpdateState currentState;
+    private UpdateStateStore stateStore;
+    private final Handler stateHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshState = () -> {
+        if (!isFinishing() && !isDestroyed()) {
+            currentState = stateStore.load();
+            render(currentState);
+        }
+    };
+    private final SharedPreferences.OnSharedPreferenceChangeListener stateListener = (preferences, key) -> {
+        stateHandler.removeCallbacks(refreshState);
+        stateHandler.post(refreshState);
+    };
     private final ActivityResultLauncher<Intent> installLauncher = registerForActivityResult(
         new ActivityResultContracts.StartActivityForResult(),
         result -> {
@@ -78,6 +93,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         action = findViewById(R.id.update_action);
         secondary = findViewById(R.id.update_secondary);
         skip = findViewById(R.id.update_skip);
+        stateStore = new UpdateStateStore(this);
+        stateStore.registerListener(stateListener);
 
         action.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.READY_TO_INSTALL) {
@@ -104,7 +121,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 finish();
             }
         });
-        currentState = new UpdateStateStore(this).load();
+        currentState = stateStore.load();
         render(currentState);
         boolean shouldCheck = currentState.getPhase() != UpdatePhase.READY_TO_INSTALL
             && currentState.getPhase() != UpdatePhase.DOWNLOADING
@@ -116,14 +133,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     @Override
     protected void onResume() {
         super.onResume();
-        currentState = new UpdateStateStore(this).load();
-        if (checker == null || !checker.hasActiveDownload()) {
-            UpdateState recovered = UpdateStateRecovery.reconcile(this, currentState);
-            if (recovered != currentState) {
-                new UpdateStateStore(this).save(recovered);
-                currentState = recovered;
-            }
-        }
+        currentState = UpdateStateRecovery.reconcileStored(this);
         render(currentState);
     }
 
@@ -140,6 +150,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     @Override
     protected void onDestroy() {
         if (checker != null) checker.cancel();
+        stateStore.unregisterListener(stateListener);
+        stateHandler.removeCallbacks(refreshState);
         super.onDestroy();
     }
 

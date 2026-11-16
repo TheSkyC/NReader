@@ -8,6 +8,7 @@ import android.content.Context;
 
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
+import com.maxwai.nclientv3.async.update.UpdateStateStore;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,6 +75,24 @@ public class UpdateStateRecoveryTest {
             assertEquals(UpdatePhase.ERROR, recovered.getPhase());
             assertEquals(false, file.exists());
         } finally {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+    }
+
+    @Test
+    public void storedDownloadWithoutAnActiveOwnerIsRecoveredAsInterrupted() throws IOException {
+        Context context = RuntimeEnvironment.getApplication();
+        UpdateStateStore store = new UpdateStateStore(context);
+        File file = File.createTempFile("nreader-update", ".apk.part", context.getCacheDir());
+        try {
+            store.save(UpdateState.downloading("99.0.0", file.getAbsolutePath(), 10L, 100L, 1L));
+            UpdateState recovered = UpdateStateRecovery.reconcileStored(context);
+            assertEquals(UpdatePhase.ERROR, recovered.getPhase());
+            assertEquals("interrupted_download", store.load().getErrorCode());
+            assertFalse(file.exists());
+        } finally {
+            store.clear();
             //noinspection ResultOfMethodCallIgnored
             file.delete();
         }

@@ -8,12 +8,32 @@ import androidx.annotation.NonNull;
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
+import com.maxwai.nclientv3.async.update.UpdateStateStore;
 
 import java.io.File;
 
 /** Reconciles persisted state with files and the version actually running. */
 public final class UpdateStateRecovery {
     private UpdateStateRecovery() {}
+
+    @NonNull
+    public static UpdateState reconcileStored(@NonNull Context context) {
+        UpdateStateStore store = new UpdateStateStore(context);
+        while (true) {
+            long revision = store.revision();
+            UpdateState[] result = new UpdateState[1];
+            if (store.runIfUnchanged(revision, () -> {
+                UpdateState state = store.load();
+                if (state.getPhase() == UpdatePhase.DOWNLOADING && UpdateDownloadManager.isActive(state.getFilePath())) {
+                    result[0] = state;
+                    return;
+                }
+                UpdateState recovered = reconcile(context, state);
+                if (recovered != state) store.save(recovered);
+                result[0] = recovered;
+            })) return result[0];
+        }
+    }
 
     @NonNull
     public static UpdateState reconcile(@NonNull Context context, @NonNull UpdateState state) {

@@ -27,6 +27,14 @@ public final class UpdateStateStore {
         preferences = context.getApplicationContext().getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
+    public void registerListener(@NonNull SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        preferences.registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public void unregisterListener(@NonNull SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        preferences.unregisterOnSharedPreferenceChangeListener(listener);
+    }
+
     @NonNull
     public UpdateState load() {
         synchronized (LOCK) {
