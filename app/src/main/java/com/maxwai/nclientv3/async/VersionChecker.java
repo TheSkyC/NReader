@@ -380,7 +380,10 @@ public class VersionChecker {
                 GitHubRelease release = parseVersion(jr, withPrerelease, flavor);
                 if (release != null) candidates.add(release);
             }
-        } catch (IllegalStateException ignore) {
+            jr.endArray();
+            if (jr.peek() != JsonToken.END_DOCUMENT) throw new IOException("Unexpected content after release list");
+        } catch (IllegalStateException exception) {
+            throw new IOException("Invalid release list", exception);
         }
         return selectNewestCompatible(candidates);
     }
@@ -412,7 +415,8 @@ public class VersionChecker {
                     release.versionCode = GitHubRelease.normalizeVersion(jr.nextString());
                     break;
                 case "body":
-                    release.body = jr.nextString();
+                    if (jr.peek() == JsonToken.NULL) jr.nextNull();
+                    else release.body = jr.nextString();
                     break;
                 case "prerelease":
                     release.beta = jr.nextBoolean();
@@ -595,8 +599,10 @@ public class VersionChecker {
                 name = jr.nextString();
             else if ("browser_download_url".equals(property))
                 url = jr.nextString();
-            else if ("digest".equals(property))
-                digest = jr.nextString();
+            else if ("digest".equals(property)) {
+                if (jr.peek() == JsonToken.NULL) jr.nextNull();
+                else digest = jr.nextString();
+            }
             else jr.skipValue();
         }
         jr.endObject();
