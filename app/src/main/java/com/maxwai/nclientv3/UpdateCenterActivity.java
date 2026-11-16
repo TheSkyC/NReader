@@ -52,6 +52,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private ImageView versionArrow;
     private View progressCard;
     private View errorCard;
+    private View releaseCard;
     private LinearLayout metaRow;
     private Button action;
     private Button secondary;
@@ -111,6 +112,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         versionArrow = findViewById(R.id.update_version_arrow);
         progressCard = findViewById(R.id.update_progress_card);
         errorCard = findViewById(R.id.update_error_card);
+        releaseCard = findViewById(R.id.update_release_card);
         metaRow = findViewById(R.id.update_meta_row);
         action = findViewById(R.id.update_action);
         secondary = findViewById(R.id.update_secondary);
@@ -211,6 +213,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         progressLabel.setVisibility(View.GONE);
         progressCard.setVisibility(View.GONE);
         errorCard.setVisibility(View.GONE);
+        releaseCard.setVisibility(View.GONE);
         errorDetail.setVisibility(View.GONE);
         secondary.setVisibility(View.VISIBLE);
         skip.setVisibility(View.GONE);
@@ -220,6 +223,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_checking);
                 action.setText(R.string.update_checking);
                 action.setEnabled(false);
+                progressCard.setVisibility(View.VISIBLE);
+                progress.setIndeterminate(true);
                 secondary.setVisibility(View.GONE);
                 break;
             case QUEUED:
@@ -316,6 +321,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         lastChecked.setText(checkedAt > 0L
             ? getString(R.string.update_last_checked_format, DateFormat.getDateTimeInstance().format(new Date(checkedAt)))
             : getString(R.string.update_last_checked_never));
+        releaseCard.setVisibility(notes.getText().length() == 0 ? View.GONE : View.VISIBLE);
         long sizeBytes = state.getTotalBytes() > 0L ? state.getTotalBytes()
             : matchesSelected ? metadataStore.getSelectedSize() : -1L;
         size.setText(sizeBytes > 0L ? getString(R.string.update_size_format, Formatter.formatFileSize(this, sizeBytes)) : "");
