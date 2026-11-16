@@ -21,11 +21,13 @@ public class UpdateReminderStoreTest {
     public void setUp() {
         context = RuntimeEnvironment.getApplication();
         context.getSharedPreferences("UpdateReminder", Context.MODE_PRIVATE).edit().clear().commit();
+        context.getSharedPreferences("UpdateNotification", Context.MODE_PRIVATE).edit().clear().commit();
     }
 
     @After
     public void tearDown() {
         context.getSharedPreferences("UpdateReminder", Context.MODE_PRIVATE).edit().clear().commit();
+        context.getSharedPreferences("UpdateNotification", Context.MODE_PRIVATE).edit().clear().commit();
     }
 
     @Test
@@ -44,5 +46,32 @@ public class UpdateReminderStoreTest {
 
         assertTrue(store.suppresses("1.1.0", 1000L + 60L * 60L * 1000L));
         assertFalse(store.suppresses("1.1.0", 1000L + 25L * 60L * 60L * 1000L));
+    }
+
+    @Test
+    public void remindedVersionNotifiesAgainAfterDeadlineButOnlyOncePerReminder() {
+        long day = 24L * 60L * 60L * 1000L;
+        UpdateReminderStore store = new UpdateReminderStore(context);
+
+        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 1000L));
+        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L));
+        store.remindLater(2000L);
+        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L + day - 1L));
+        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L + day));
+        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2001L + day));
+
+        store.remindLater(3000L + day);
+        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 3000L + 2L * day));
+        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 3001L + 2L * day));
+    }
+
+    @Test
+    public void skippedVersionStaysSuppressedAndNewVersionCanNotify() {
+        UpdateReminderStore store = new UpdateReminderStore(context);
+        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 1000L));
+        store.skip("1.1.0");
+
+        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", Long.MAX_VALUE));
+        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.2.0", Long.MAX_VALUE));
     }
 }

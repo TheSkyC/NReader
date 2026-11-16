@@ -18,7 +18,11 @@ public final class UpdateReminderStore {
 
     public boolean suppresses(@NonNull String version, long now) {
         if (version.equals(preferences.getString(SKIPPED_VERSION, null))) return true;
-        return now < preferences.getLong(REMIND_AFTER, 0L);
+        return now < getRemindAfter();
+    }
+
+    long getRemindAfter() {
+        return preferences.getLong(REMIND_AFTER, 0L);
     }
 
     public void remindLater(long now) {

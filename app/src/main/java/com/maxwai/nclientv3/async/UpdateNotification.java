@@ -4,6 +4,7 @@ package com.maxwai.nclientv3.async;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -19,6 +20,7 @@ public final class UpdateNotification {
     private static final int NOTIFICATION_ID = 1201;
     private static final String PREFERENCES = "UpdateNotification";
     private static final String NOTIFIED_AVAILABLE = "notified_available";
+    private static final String NOTIFIED_AVAILABLE_REMIND_AFTER = "notified_available_remind_after";
     private static final String NOTIFIED_READY = "notified_ready";
 
     private UpdateNotification() {}
@@ -28,8 +30,7 @@ public final class UpdateNotification {
         if (version == null) return;
         if (!NotificationSettings.canNotify(context)) return;
         if (state.getPhase() == UpdatePhase.AVAILABLE
-            && new UpdateReminderStore(context).suppresses(version, System.currentTimeMillis())) return;
-        if (state.getPhase() == UpdatePhase.AVAILABLE && !markOnce(context, NOTIFIED_AVAILABLE, version)) return;
+            && !shouldNotifyAvailable(context, version, System.currentTimeMillis())) return;
         if (state.getPhase() == UpdatePhase.READY_TO_INSTALL && !markOnce(context, NOTIFIED_READY, version)) return;
         if (state.getPhase() != UpdatePhase.AVAILABLE
             && state.getPhase() != UpdatePhase.DOWNLOADING
@@ -87,6 +88,20 @@ public final class UpdateNotification {
             .edit()
             .remove(NOTIFIED_READY)
             .apply();
+    }
+
+    static synchronized boolean shouldNotifyAvailable(@NonNull Context context, @NonNull String version, long now) {
+        UpdateReminderStore reminder = new UpdateReminderStore(context);
+        if (reminder.suppresses(version, now)) return false;
+        SharedPreferences preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
+        long remindAfter = reminder.getRemindAfter();
+        if (version.equals(preferences.getString(NOTIFIED_AVAILABLE, null))
+            && remindAfter == preferences.getLong(NOTIFIED_AVAILABLE_REMIND_AFTER, 0L)) return false;
+        preferences.edit()
+            .putString(NOTIFIED_AVAILABLE, version)
+            .putLong(NOTIFIED_AVAILABLE_REMIND_AFTER, remindAfter)
+            .apply();
+        return true;
     }
 
     private static boolean markOnce(Context context, String key, String version) {
