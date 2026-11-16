@@ -171,20 +171,12 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
 
     @Override
     public void onReleaseAvailable(@NonNull VersionChecker.GitHubRelease release) {
-        this.release = release;
-        version.setText(getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, release.getVersionCode()));
-        String body = release.getBody();
-        notes.setText(body == null || body.trim().isEmpty() ? getString(R.string.update_no_release_notes) : body.trim());
-        channel.setText(getString(
-            R.string.update_release_channel,
-            getString(release.isBeta() ? R.string.update_channel_prerelease : R.string.update_channel_stable)
-        ));
-        size.setText(release.getSizeBytes() > 0L
-            ? getString(R.string.update_size_format, Formatter.formatFileSize(this, release.getSizeBytes())) : "");
-        secondary.setText(R.string.update_remind_later);
-        skip.setVisibility(View.VISIBLE);
-        action.setText(R.string.update_download);
-        action.setEnabled(true);
+        currentState = stateStore.load();
+        if (currentState.getPhase() == UpdatePhase.AVAILABLE
+            && Objects.equals(currentState.getVersion(), release.getVersionCode())) {
+            this.release = release;
+        }
+        render(currentState);
     }
 
     private void render(@NonNull UpdateState state) {
@@ -199,6 +191,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_checking);
                 action.setText(R.string.update_checking);
                 action.setEnabled(false);
+                secondary.setVisibility(View.GONE);
                 break;
             case QUEUED:
                 status.setText(R.string.update_queued);
@@ -263,14 +256,15 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_up_to_date);
                 action.setText(R.string.check_for_updates);
                 action.setEnabled(true);
-                secondary.setText(R.string.check_for_updates);
+                secondary.setVisibility(View.GONE);
                 break;
         }
         version.setText(state.getVersion() == null
             ? getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME)
             : getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, state.getVersion()));
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(this);
-        if (state.getVersion() != null && state.getVersion().equals(metadataStore.getSelectedVersion())) {
+        boolean matchesSelected = state.getVersion() != null && state.getVersion().equals(metadataStore.getSelectedVersion());
+        if (matchesSelected) {
             String body = metadataStore.getSelectedBody();
             notes.setText(body == null || body.trim().isEmpty() ? getString(R.string.update_no_release_notes) : body.trim());
             channel.setText(getString(R.string.update_release_channel,
@@ -278,14 +272,17 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         } else if (state.getVersion() != null) {
             notes.setText(R.string.update_no_release_notes);
             channel.setText("");
+        } else {
+            notes.setText("");
+            channel.setText("");
         }
         long checkedAt = metadataStore.getLastSuccessfulCheck();
         lastChecked.setText(checkedAt > 0L
             ? getString(R.string.update_last_checked_format, DateFormat.getDateTimeInstance().format(new Date(checkedAt)))
             : getString(R.string.update_last_checked_never));
-        if (state.getTotalBytes() > 0L && size.getText().length() == 0) {
-            size.setText(getString(R.string.update_size_format, Formatter.formatFileSize(this, state.getTotalBytes())));
-        }
+        long sizeBytes = state.getTotalBytes() > 0L ? state.getTotalBytes()
+            : matchesSelected ? metadataStore.getSelectedSize() : -1L;
+        size.setText(sizeBytes > 0L ? getString(R.string.update_size_format, Formatter.formatFileSize(this, sizeBytes)) : "");
     }
 
     private String errorMessage(String errorCode) {

@@ -9,6 +9,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Looper;
+import android.view.View;
 import android.widget.TextView;
 
 import com.maxwai.nclientv3.R;
@@ -168,6 +169,68 @@ public class UpdateCheckWorkerPublicationTest {
             controller.pause().stop().destroy();
             //noinspection ResultOfMethodCallIgnored
             apk.delete();
+        }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void lateReleaseCallbackDoesNotReplaceInstallAction() throws Exception {
+        File apk = File.createTempFile("update-ready-", ".apk", context.getCacheDir());
+        metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/update.apk",
+            "ready notes", false, "0000000000000000000000000000000000000000000000000000000000000000", 42L);
+        state.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 42L, 1L));
+        ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
+        try {
+            controller.get().onReleaseAvailable(release("99.0.0"));
+            TextView action = controller.get().findViewById(R.id.update_action);
+            assertEquals(context.getString(R.string.update_install), action.getText().toString());
+            assertTrue(action.isEnabled());
+            assertEquals(View.GONE, controller.get().findViewById(R.id.update_skip).getVisibility());
+        } finally {
+            controller.pause().stop().destroy();
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void changingToReleaseWithoutSizeClearsPreviousSize() throws Exception {
+        File apk = File.createTempFile("update-ready-", ".apk", context.getCacheDir());
+        String digest = "0000000000000000000000000000000000000000000000000000000000000000";
+        metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/old.apk",
+            "old", false, digest, 1000000L);
+        state.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 1000000L, 1L));
+        ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
+        try {
+            TextView size = controller.get().findViewById(R.id.update_size);
+            assertFalse(size.getText().toString().isEmpty());
+            metadata.saveSelectedRelease("100.0.0", Integer.MAX_VALUE, "https://example.invalid/new.apk",
+                "new", false, digest, -1L);
+            state.save(UpdateState.available("100.0.0", 2L));
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("", size.getText().toString());
+        } finally {
+            controller.pause().stop().destroy();
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void checkingAndIdleDoNotShowDuplicateCheckAction() {
+        ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
+        try {
+            View secondary = controller.get().findViewById(R.id.update_secondary);
+            controller.get().onUpdateState(UpdateState.checking(1L));
+            assertEquals(View.GONE, secondary.getVisibility());
+            assertFalse(controller.get().findViewById(R.id.update_action).isEnabled());
+            controller.get().onUpdateState(UpdateState.idle(2L));
+            assertEquals(View.GONE, secondary.getVisibility());
+            assertTrue(controller.get().findViewById(R.id.update_action).isEnabled());
+        } finally {
+            controller.pause().stop().destroy();
         }
     }
 
