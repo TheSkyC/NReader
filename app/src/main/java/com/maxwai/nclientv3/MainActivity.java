@@ -784,6 +784,7 @@ public class MainActivity extends BaseActivity
         super.onResume();
         Login.initLogin(this);
         refreshAccountHeader();
+        showExpiredAccountNoticeIfNeeded();
         if (idOpenedGallery != -1) {
             adapter.updateColor(idOpenedGallery);
             idOpenedGallery = -1;
@@ -810,6 +811,21 @@ public class MainActivity extends BaseActivity
         }
         invalidateOptionsMenu();
         if (listGrid != null) listGrid.refresh();
+    }
+
+    private void showExpiredAccountNoticeIfNeeded() {
+        if (modeType != ModeType.NORMAL || !Login.isAccountTagEnabled() || Login.wantsAccountTag()
+            || !AuthSessionStore.hasStoredSession(this) || AuthSessionStore.identity(this) != null) return;
+        if (snackbar != null && snackbar.isShown()) return;
+        snackbar = Snackbar.make(masterLayout, R.string.online_blacklist_session_expired, Snackbar.LENGTH_INDEFINITE)
+            .setAction(R.string.account_sign_in, view -> {
+                Intent login = new Intent(this, AccountLoginActivity.class);
+                AccountVault.Account account = AccountRuntime.activeAccount();
+                if (account != null && account.type == AccountVault.Type.PASSWORD)
+                    login.putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, account.id);
+                startActivity(login);
+            });
+        snackbar.show();
     }
 
 

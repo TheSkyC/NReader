@@ -68,7 +68,11 @@ public class Login {
 
     public static boolean wantsAccountTag() {
         return accountTag && appContext != null
-            && (AuthSessionStore.hasStoredSession(appContext) || AuthStore.hasApiKey(appContext));
+            && AuthStore.hasOnlineIdentity(appContext);
+    }
+
+    public static boolean isAccountTagEnabled() {
+        return accountTag;
     }
 
     public static synchronized boolean hasCurrentOnlineTags() {

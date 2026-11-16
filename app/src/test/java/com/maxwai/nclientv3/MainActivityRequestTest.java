@@ -29,6 +29,30 @@ import static org.junit.Assert.*;
 @Config(sdk = 28, application = Application.class)
 @LooperMode(LooperMode.Mode.PAUSED)
 public class MainActivityRequestTest {
+    @Test public void expiredAccountTagsDoNotBlockPublicBrowse() {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(app.getString(R.string.preference_key_use_account_tag), true).commit();
+        Global.initFromShared(app);
+        com.maxwai.nclientv3.settings.Login.initLogin(app);
+        assertTrue(AuthSessionStore.replace(app,
+            AuthSessionStore.tokenCookies("fixture-access", "fixture-refresh"), null));
+        assertTrue(com.maxwai.nclientv3.settings.Login.wantsAccountTag());
+        app.getSharedPreferences("Auth", 0).edit().putBoolean("session_rejected", true).commit();
+        assertFalse(com.maxwai.nclientv3.settings.Login.wantsAccountTag());
+        try {
+            assertTrue(AuthSessionStore.hasStoredSession(app));
+            assertNull(AuthSessionStore.identity(app));
+        } finally {
+            AuthSessionStore.clear(app);
+            app.getSharedPreferences("Settings", 0).edit()
+                .remove(app.getString(R.string.preference_key_use_account_tag)).commit();
+            com.maxwai.nclientv3.settings.Login.initLogin(app);
+        }
+    }
+
     @Test public void restoreDuringBlacklistLoadRetriesAfterOldRequestFinishes() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);
@@ -571,7 +595,7 @@ public class MainActivityRequestTest {
         }
     }
 
-    @Test public void expiredSessionOffersSignInWithoutLoadingUnfilteredFeed() throws Exception {
+    @Test public void expiredSessionFallsBackToGuestFeedAndOffersSignIn() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);
         AuthStore.clear(app);
@@ -582,10 +606,16 @@ public class MainActivityRequestTest {
         app.getSharedPreferences("Auth", 0).edit().putBoolean("session_rejected", true).commit();
         com.maxwai.nclientv3.settings.Login.initLogin(app);
         OkHttpClient previous = Global.client;
-        AtomicInteger requests = new AtomicInteger();
+        AtomicInteger blacklistRequests = new AtomicInteger(), galleryRequests = new AtomicInteger();
         Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
-            requests.incrementAndGet();
-            throw new java.io.IOException("Unexpected request");
+            if (chain.request().url().encodedPath().endsWith("/blacklist")) {
+                blacklistRequests.incrementAndGet();
+                throw new java.io.IOException("Guest fallback must not load the blacklist");
+            }
+            galleryRequests.incrementAndGet();
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("fixture")
+                .body(ResponseBody.create("{\"num_pages\":1,\"result\":[{\"id\":42,\"media_id\":\"1\",\"num_pages\":1}]}", null)).build();
         }).build();
         java.lang.reflect.Field firstTime = MainActivity.class.getDeclaredField("firstTime");
         firstTime.setAccessible(true);
@@ -597,8 +627,7 @@ public class MainActivityRequestTest {
                      Robolectric.buildActivity(MainActivity.class).setup()) {
                 MainActivity activity = controller.get();
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-                while (activity.findViewById(com.google.android.material.R.id.snackbar_action) == null
-                    && System.nanoTime() < deadline) {
+                while (galleryRequests.get() == 0 && System.nanoTime() < deadline) {
                     Shadows.shadowOf(Looper.getMainLooper()).idle();
                     Thread.yield();
                 }
@@ -608,7 +637,8 @@ public class MainActivityRequestTest {
                 assertNotNull(action);
                 assertEquals(activity.getString(R.string.online_blacklist_session_expired), message.getText().toString());
                 assertEquals(activity.getString(R.string.account_sign_in), action.getText().toString());
-                assertEquals(0, requests.get());
+                assertEquals(0, blacklistRequests.get());
+                assertTrue(galleryRequests.get() > 0);
                 action.performClick();
                 assertEquals(AccountLoginActivity.class.getName(),
                     Shadows.shadowOf(activity).getNextStartedActivity().getComponent().getClassName());
