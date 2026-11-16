@@ -53,25 +53,37 @@ public class UpdateReminderStoreTest {
         long day = 24L * 60L * 60L * 1000L;
         UpdateReminderStore store = new UpdateReminderStore(context);
 
-        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 1000L));
-        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L));
+        assertTrue(shouldNotify("1.1.0", 1000L));
+        markNotified("1.1.0");
+        assertFalse(shouldNotify("1.1.0", 2000L));
         store.remindLater(2000L);
-        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L + day - 1L));
-        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2000L + day));
-        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 2001L + day));
+        assertFalse(shouldNotify("1.1.0", 2000L + day - 1L));
+        assertTrue(shouldNotify("1.1.0", 2000L + day));
+        markNotified("1.1.0");
+        assertFalse(shouldNotify("1.1.0", 2001L + day));
 
         store.remindLater(3000L + day);
-        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 3000L + 2L * day));
-        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 3001L + 2L * day));
+        assertTrue(shouldNotify("1.1.0", 3000L + 2L * day));
+        markNotified("1.1.0");
+        assertFalse(shouldNotify("1.1.0", 3001L + 2L * day));
     }
 
     @Test
     public void skippedVersionStaysSuppressedAndNewVersionCanNotify() {
         UpdateReminderStore store = new UpdateReminderStore(context);
-        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", 1000L));
+        assertTrue(shouldNotify("1.1.0", 1000L));
+        markNotified("1.1.0");
         store.skip("1.1.0");
 
-        assertFalse(UpdateNotification.shouldNotifyAvailable(context, "1.1.0", Long.MAX_VALUE));
-        assertTrue(UpdateNotification.shouldNotifyAvailable(context, "1.2.0", Long.MAX_VALUE));
+        assertFalse(shouldNotify("1.1.0", Long.MAX_VALUE));
+        assertTrue(shouldNotify("1.2.0", Long.MAX_VALUE));
+    }
+
+    private boolean shouldNotify(String version, long now) {
+        return UpdateNotification.shouldNotifyAvailable(context, version, now, new UpdateReminderStore(context).getRemindAfter());
+    }
+
+    private void markNotified(String version) {
+        UpdateNotification.markAvailable(context, version, new UpdateReminderStore(context).getRemindAfter());
     }
 }

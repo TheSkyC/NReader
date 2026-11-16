@@ -48,13 +48,14 @@ public final class UpdateNotification {
         return builder.build();
     }
 
-    public static void publish(@NonNull Context context, @NonNull UpdateState state) {
+    public static synchronized void publish(@NonNull Context context, @NonNull UpdateState state) {
         String version = state.getVersion();
         if (version == null) return;
         if (!NotificationSettings.canNotify(context)) return;
+        long remindAfter = new UpdateReminderStore(context).getRemindAfter();
         if (state.getPhase() == UpdatePhase.AVAILABLE
-            && !shouldNotifyAvailable(context, version, System.currentTimeMillis())) return;
-        if (state.getPhase() == UpdatePhase.READY_TO_INSTALL && !markOnce(context, NOTIFIED_READY, version)) return;
+            && !shouldNotifyAvailable(context, version, System.currentTimeMillis(), remindAfter)) return;
+        if (state.getPhase() == UpdatePhase.READY_TO_INSTALL && wasNotified(context, NOTIFIED_READY, version)) return;
         if (state.getPhase() != UpdatePhase.AVAILABLE
             && state.getPhase() != UpdatePhase.QUEUED
             && state.getPhase() != UpdatePhase.DOWNLOADING
@@ -105,38 +106,42 @@ public final class UpdateNotification {
             default:
                 return;
         }
-        NotificationSettings.notify(context, NOTIFICATION_ID, builder.build());
+        if (NotificationSettings.notifyIfChannelEnabled(context, NOTIFICATION_ID, builder.build(), Global.CHANNEL_ID4)) {
+            if (state.getPhase() == UpdatePhase.AVAILABLE) markAvailable(context, version, remindAfter);
+            if (state.getPhase() == UpdatePhase.READY_TO_INSTALL) {
+                context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit().putString(NOTIFIED_READY, version).apply();
+            }
+        }
     }
 
     public static void clear(@NonNull Context context) {
         NotificationSettings.cancel(NOTIFICATION_ID);
     }
 
-    public static void resetReady(@NonNull Context context) {
+    public static synchronized void resetReady(@NonNull Context context) {
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
             .edit()
             .remove(NOTIFIED_READY)
             .apply();
     }
 
-    static synchronized boolean shouldNotifyAvailable(@NonNull Context context, @NonNull String version, long now) {
+    static synchronized boolean shouldNotifyAvailable(@NonNull Context context, @NonNull String version, long now, long remindAfter) {
         UpdateReminderStore reminder = new UpdateReminderStore(context);
         if (reminder.suppresses(version, now)) return false;
         SharedPreferences preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
-        long remindAfter = reminder.getRemindAfter();
         if (version.equals(preferences.getString(NOTIFIED_AVAILABLE, null))
             && remindAfter == preferences.getLong(NOTIFIED_AVAILABLE_REMIND_AFTER, 0L)) return false;
-        preferences.edit()
-            .putString(NOTIFIED_AVAILABLE, version)
-            .putLong(NOTIFIED_AVAILABLE_REMIND_AFTER, remindAfter)
-            .apply();
         return true;
     }
 
-    private static boolean markOnce(Context context, String key, String version) {
-        String previous = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).getString(key, null);
-        if (version.equals(previous)) return false;
-        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit().putString(key, version).apply();
-        return true;
+    static synchronized void markAvailable(@NonNull Context context, @NonNull String version, long remindAfter) {
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit()
+            .putString(NOTIFIED_AVAILABLE, version)
+            .putLong(NOTIFIED_AVAILABLE_REMIND_AFTER, remindAfter)
+            .apply();
+    }
+
+    private static boolean wasNotified(Context context, String key, String version) {
+        return version.equals(context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).getString(key, null));
     }
 }
