@@ -34,6 +34,7 @@ import java.util.List;
 import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -184,11 +185,23 @@ final class GalleryCardActions {
             finished.run();
             return;
         }
-        resolve(anchor, gallery, current, resolved -> {
-            if (!active(anchor) || !current.getAsBoolean()) return;
+        BottomSheetDialog preparing = sheet(anchor.getContext(), gallery.getTitle(),
+            anchor.getContext().getString(R.string.gallery_loading_details));
+        AtomicBoolean settled = new AtomicBoolean();
+        Runnable complete = () -> {
+            if (!settled.compareAndSet(false, true)) return;
+            if (preparing.isShowing()) preparing.dismiss();
             finished.run();
+        };
+        preparing.setOnCancelListener(dialog -> complete.run());
+        preparing.show();
+
+        BooleanSupplier requestCurrent = () -> !settled.get() && active(anchor) && current.getAsBoolean();
+        resolve(anchor, gallery, requestCurrent, resolved -> {
+            if (!requestCurrent.getAsBoolean()) return;
+            complete.run();
             if (resolved.getPageCount() > 0) new RangeSelector(anchor.getContext(), resolved).show();
-        }, finished);
+        }, complete);
     }
 
     static void files(View anchor, GenericGallery gallery, int label, int detail,
