@@ -82,6 +82,7 @@ public class VersionChecker {
     @Nullable private Call manifestCall;
     private volatile boolean cancelled;
     private volatile long checkRevision = -1L;
+    private volatile long checkGeneration = -1L;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
         this(context, silent, null, true);
@@ -116,6 +117,7 @@ public class VersionChecker {
             metadataStore.markAttempt(System.currentTimeMillis());
             saveState(UpdateState.checking(System.currentTimeMillis()));
             checkRevision = stateStore.revision();
+            checkGeneration = UpdateCheckCoordinator.begin();
             started[0] = true;
         });
         if (!started[0]) return;
@@ -128,6 +130,7 @@ public class VersionChecker {
     }
 
     void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest, @NonNull String url) {
+        if (checkGeneration < 0L) checkGeneration = UpdateCheckCoordinator.begin();
         UpdateMetadataStore.CacheSnapshot cache = metadataStore.cacheSnapshot();
         Request.Builder request = new Request.Builder()
             .url(url)
@@ -168,6 +171,7 @@ public class VersionChecker {
                             throw new IOException("Unable to retrieve release metadata: HTTP " + response.code());
                         }
                     }
+                    if (!UpdateCheckCoordinator.isCurrent(checkGeneration) || cancelled) return;
                     if (retryWithoutCache) {
                         if (!useConditionalRequest) throw new IOException("Release metadata cache is unavailable");
                         requestReleases(withPrerelease, silent, false, url);
@@ -183,7 +187,12 @@ public class VersionChecker {
                         }
                         throw exception;
                     }
-                    if (!fromCache) metadataStore.save(json, etag);
+                    if (!fromCache) {
+                        String body = json;
+                        String responseEtag = etag;
+                        if (!UpdateCheckCoordinator.runIfCurrent(checkGeneration,
+                            () -> { if (!cancelled) metadataStore.save(body, responseEtag); })) return;
+                    }
                     if (release == null) {
                         release = new GitHubRelease();
                         release.versionCode = BuildConfig.VERSION_NAME;
@@ -282,11 +291,12 @@ public class VersionChecker {
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
         runIfCurrentCheck(() -> {
             saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
-            context.runOnUiThread(() -> {
-                LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());
-                if (!silent)
-                    Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
-            });
+            context.runOnUiThread(() -> UpdateCheckCoordinator.runIfCurrent(checkGeneration, () -> {
+                if (!cancelled) {
+                    LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());
+                    if (!silent) Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
+                }
+            }));
         });
     }
 
@@ -294,7 +304,9 @@ public class VersionChecker {
         long revision = checkRevision;
         if (revision < 0L) return;
         stateStore.runIfUnchanged(revision, () -> {
-            if (!cancelled && stateStore.load().getPhase() == UpdatePhase.CHECKING) action.run();
+            if (!cancelled && stateStore.load().getPhase() == UpdatePhase.CHECKING) {
+                UpdateCheckCoordinator.runIfCurrent(checkGeneration, action);
+            }
         });
     }
 

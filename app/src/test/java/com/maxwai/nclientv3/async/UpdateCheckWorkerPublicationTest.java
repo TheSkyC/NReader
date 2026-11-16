@@ -135,10 +135,11 @@ public class UpdateCheckWorkerPublicationTest {
     public void supersededBackgroundCheckDoesNotRefreshSuccessTime() {
         metadata.markSuccessfulCheck(123L);
         long revision = state.revision();
+        long generation = UpdateCheckCoordinator.begin();
         state.save(UpdateState.checking(1L));
 
-        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, null));
-        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, release("2.0.0")));
+        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, generation, null));
+        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, generation, release("2.0.0")));
         assertEquals(123L, metadata.getLastSuccessfulCheck());
         assertEquals(UpdatePhase.CHECKING, state.load().getPhase());
     }
@@ -146,13 +147,28 @@ public class UpdateCheckWorkerPublicationTest {
     @Test
     public void currentBackgroundCheckRecordsSuccessWithOrWithoutRelease() {
         metadata.markSuccessfulCheck(0L);
-        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), null));
+        long generation = UpdateCheckCoordinator.begin();
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), generation, null));
         assertTrue(metadata.getLastSuccessfulCheck() > 0L);
 
         metadata.markSuccessfulCheck(0L);
-        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), release("2.0.0")));
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), generation, release("2.0.0")));
         assertTrue(metadata.getLastSuccessfulCheck() > 0L);
         assertEquals(UpdatePhase.AVAILABLE, state.load().getPhase());
+    }
+
+    @Test
+    public void newerCheckPreventsOldBackgroundSuccessWithoutStateChange() {
+        metadata.markSuccessfulCheck(123L);
+        long revision = state.revision();
+        long older = UpdateCheckCoordinator.begin();
+        long newer = UpdateCheckCoordinator.begin();
+
+        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, older, release("2.0.0")));
+        assertEquals(123L, metadata.getLastSuccessfulCheck());
+        assertEquals(UpdatePhase.IDLE, state.load().getPhase());
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, newer, null));
+        assertTrue(metadata.getLastSuccessfulCheck() > 123L);
     }
 
     @Test

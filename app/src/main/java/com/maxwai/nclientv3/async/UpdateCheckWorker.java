@@ -99,17 +99,19 @@ public final class UpdateCheckWorker extends Worker {
         publishReadyIfUnchanged(context, stateStore, metadataStore, stateStore.revision());
         if (!Global.shouldCheckForUpdates(context)) return Result.success();
         long revision = stateStore.revision();
-        UpdatePhase phase = stateStore.load().getPhase();
-        if (phase != UpdatePhase.IDLE && phase != UpdatePhase.AVAILABLE) return Result.success();
-        metadataStore.markAttempt(System.currentTimeMillis());
+        long[] generation = {-1L};
+        if (!stateStore.runIfCheckableAndUnchanged(revision, () -> {
+            metadataStore.markAttempt(System.currentTimeMillis());
+            generation[0] = UpdateCheckCoordinator.begin();
+        })) return Result.success();
         try {
-            String json = fetchReleaseJson(metadataStore);
+            String json = fetchReleaseJson(metadataStore, false, releaseApiUrl(), generation[0]);
             VersionChecker.GitHubRelease release;
             try (JsonReader reader = new JsonReader(new StringReader(json))) {
                 release = VersionChecker.parseVersionJson(reader, Global.isEnableBeta(), BuildConfig.FLAVOR);
             }
             if (release == null) {
-                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, null);
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null);
                 return Result.success();
             }
             if (release.manifestUrl != null) {
@@ -117,13 +119,15 @@ public final class UpdateCheckWorker extends Worker {
                 if (manifestRelease != null) release = manifestRelease;
             }
             if (release.downloadUrl == null || !release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
-                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, null);
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null);
                 return Result.success();
             }
-            completeCheckIfUnchanged(context, stateStore, metadataStore, revision, release);
+            completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], release);
+            return Result.success();
+        } catch (SupersededCheckException exception) {
             return Result.success();
         } catch (IOException | RuntimeException exception) {
-            return Result.retry();
+            return UpdateCheckCoordinator.isCurrent(generation[0]) ? Result.retry() : Result.success();
         }
     }
 
@@ -132,12 +136,15 @@ public final class UpdateCheckWorker extends Worker {
         @NonNull UpdateStateStore stateStore,
         @NonNull UpdateMetadataStore metadataStore,
         long revision,
+        long generation,
         @Nullable VersionChecker.GitHubRelease selected
     ) {
-        return stateStore.runIfCheckableAndUnchanged(revision, () -> {
+        boolean[] completed = {false};
+        stateStore.runIfCheckableAndUnchanged(revision, () -> completed[0] = UpdateCheckCoordinator.runIfCurrent(generation, () -> {
             if (selected != null) publishIfUnchanged(context, stateStore, metadataStore, revision, selected);
             metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-        });
+        }));
+        return completed[0];
     }
 
     static boolean publishReadyIfUnchanged(@NonNull Context context, @NonNull UpdateStateStore stateStore,
@@ -185,12 +192,13 @@ public final class UpdateCheckWorker extends Worker {
     }
 
     @NonNull
-    private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore) throws IOException {
-        return fetchReleaseJson(metadataStore, false, releaseApiUrl());
+    String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url) throws IOException {
+        return fetchReleaseJson(metadataStore, unconditional, url, UpdateCheckCoordinator.begin());
     }
 
     @NonNull
-    String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url) throws IOException {
+    private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url,
+                                    long generation) throws IOException {
         UpdateMetadataStore.CacheSnapshot cache = metadataStore.cacheSnapshot();
         Request.Builder builder = new Request.Builder()
             .url(url)
@@ -198,6 +206,7 @@ public final class UpdateCheckWorker extends Worker {
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (!unconditional && cache.etag != null) builder.header("If-None-Match", cache.etag);
         try (Response response = UpdateRequestClient.newCall(client, builder.build()).execute()) {
+            if (!UpdateCheckCoordinator.isCurrent(generation)) throw new SupersededCheckException();
             if (response.code() == 304 && unconditional) throw new IOException("Unexpected HTTP 304");
             String cached = response.code() == 304 && cache.etag != null ? cache.body : null;
             if (cached != null) {
@@ -210,12 +219,17 @@ public final class UpdateCheckWorker extends Worker {
                 if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
                 String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
                 VersionChecker.parseReleaseList(body, Global.isEnableBeta());
-                metadataStore.save(body, response.header("ETag"));
+                String etag = response.header("ETag");
+                if (!UpdateCheckCoordinator.runIfCurrent(generation, () -> metadataStore.save(body, etag))) {
+                    throw new SupersededCheckException();
+                }
                 return body;
             }
         }
-        return fetchReleaseJson(metadataStore, true, url);
+        return fetchReleaseJson(metadataStore, true, url, generation);
     }
+
+    private static final class SupersededCheckException extends IOException { }
 
     private VersionChecker.GitHubRelease fetchManifest(
         @NonNull VersionChecker.GitHubRelease apiRelease,

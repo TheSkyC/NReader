@@ -73,6 +73,9 @@ public class VersionCheckerQuietCheckTest {
         Field revision = VersionChecker.class.getDeclaredField("checkRevision");
         revision.setAccessible(true);
         revision.setLong(checker, store.revision());
+        Field generation = VersionChecker.class.getDeclaredField("checkGeneration");
+        generation.setAccessible(true);
+        generation.setLong(checker, UpdateCheckCoordinator.begin());
         Method publish = VersionChecker.class.getDeclaredMethod("publishRelease", VersionChecker.GitHubRelease.class, boolean.class);
         publish.setAccessible(true);
         publish.invoke(checker, release, true);
