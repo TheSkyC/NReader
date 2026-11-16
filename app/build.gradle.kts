@@ -197,7 +197,7 @@ tasks.register("printNReaderMetadata") {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
-    testImplementation("androidx.work:work-testing:2.11.2")
+    testImplementation("androidx.work:work-testing:2.12.0")
 // Android
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.cardview:cardview:1.0.0")
@@ -206,7 +206,7 @@ dependencies {
     implementation("androidx.preference:preference:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
-    implementation("androidx.work:work-runtime:2.11.2")
+    implementation("androidx.work:work-runtime:2.12.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
     implementation("androidx.biometric:biometric:1.1.0")
