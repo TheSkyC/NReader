@@ -286,8 +286,7 @@ public class VersionChecker {
     }
 
     private void restoreSelectedRelease() {
-        UpdatePhase phase = stateStore.load().getPhase();
-        if (phase != UpdatePhase.AVAILABLE && phase != UpdatePhase.DOWNLOADING) return;
+        if (stateStore.load().getPhase() != UpdatePhase.AVAILABLE) return;
         String version = metadataStore.getSelectedVersion();
         String url = metadataStore.getSelectedUrl();
         String sha256 = metadataStore.getSelectedSha256();
@@ -310,11 +309,8 @@ public class VersionChecker {
         if (listener != null) listener.onReleaseAvailable(restored);
     }
 
-    /** Restarts a persisted download after activity recreation or process recovery. */
-    public void resumeDownload() {
-        if (stateStore.load().getPhase() != UpdatePhase.DOWNLOADING) return;
-        if (latestRelease == null || latestRelease.versionCode == null) return;
-        downloadVersion(latestRelease.versionCode);
+    public boolean hasActiveDownload() {
+        return downloadCall != null && !downloadCall.isCanceled();
     }
 
     public void cancel() {
