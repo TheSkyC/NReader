@@ -24,6 +24,14 @@ public final class UpdateStateStore {
     private static final String TASK_URL = "task_url";
     private static final String TASK_SHA256 = "task_sha256";
     private static final String TASK_SIZE = "task_size";
+    private static final String TASK_BACKEND = "task_backend";
+    private static final String CANCEL_ID = "cancel_id";
+    private static final String CANCEL_URL = "cancel_url";
+    private static final String CANCEL_SHA256 = "cancel_sha256";
+    private static final String CANCEL_PATH = "cancel_path";
+    private static final String CANCEL_VERSION = "cancel_version";
+    private static final String CANCEL_SIZE = "cancel_size";
+    private static final String WORK_MANAGER = "work_manager";
     // All update components run in the default app process; the revision only
     // guards concurrent work while that process is alive.
     private static final Object LOCK = new Object();
@@ -66,8 +74,8 @@ public final class UpdateStateStore {
     public void save(@NonNull UpdateState state) {
         synchronized (LOCK) {
             UpdateState previous = load();
-            boolean sameDownload = previous.getPhase() == UpdatePhase.DOWNLOADING
-                && state.getPhase() == UpdatePhase.DOWNLOADING
+            boolean sameDownload = isDownloadPhase(previous.getPhase())
+                && isDownloadPhase(state.getPhase())
                 && Objects.equals(previous.getVersion(), state.getVersion())
                 && Objects.equals(previous.getFilePath(), state.getFilePath());
             SharedPreferences.Editor editor = stateEditor(state);
@@ -77,16 +85,84 @@ public final class UpdateStateStore {
     }
 
     public boolean claimDownload(@NonNull UpdateDownloadRecord record, long now) {
+        return claimDownload(record, now, false);
+    }
+
+    public boolean claimScheduledDownload(@NonNull UpdateDownloadRecord record, long now) {
+        return claimDownload(record, now, true);
+    }
+
+    public void recordCancellation(@NonNull UpdateDownloadRecord record) {
+        synchronized (LOCK) {
+            commit(preferences.edit()
+                .putString(CANCEL_ID, record.getId().toString())
+                .putString(CANCEL_VERSION, record.getVersion())
+                .putString(CANCEL_PATH, record.getFilePath())
+                .putString(CANCEL_URL, record.getUrl())
+                .putString(CANCEL_SHA256, record.getSha256())
+                .putLong(CANCEL_SIZE, record.getSize()));
+        }
+    }
+
+    @Nullable
+    public UpdateDownloadRecord loadCancellation() {
+        synchronized (LOCK) {
+            try {
+                String id = preferences.getString(CANCEL_ID, null);
+                String version = preferences.getString(CANCEL_VERSION, null);
+                String path = preferences.getString(CANCEL_PATH, null);
+                String url = preferences.getString(CANCEL_URL, null);
+                String sha256 = preferences.getString(CANCEL_SHA256, null);
+                if (id == null || version == null || path == null || url == null || sha256 == null
+                    || !preferences.contains(CANCEL_SIZE)) return null;
+                UUID uuid = UUID.fromString(id);
+                if (!uuid.toString().equals(id)) return null;
+                return new UpdateDownloadRecord(uuid, version, path, url, sha256,
+                    preferences.getLong(CANCEL_SIZE, -1L));
+            } catch (IllegalArgumentException | ClassCastException exception) {
+                return null;
+            }
+        }
+    }
+
+    public void clearCancellation() {
+        synchronized (LOCK) {
+            commit(preferences.edit().remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
+                .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE));
+        }
+    }
+
+    public void clearCancellationIf(@NonNull UUID id) {
+        synchronized (LOCK) {
+            try {
+                String storedId = preferences.getString(CANCEL_ID, null);
+                if (id.toString().equals(storedId)) {
+                    commit(preferences.edit().remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
+                        .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE));
+                }
+            } catch (ClassCastException ignored) {
+                // Preserve malformed cancellation evidence for startup recovery.
+            }
+        }
+    }
+
+    private boolean claimDownload(@NonNull UpdateDownloadRecord record, long now, boolean scheduled) {
         synchronized (LOCK) {
             UpdateState current = load();
             if ((current.getPhase() != UpdatePhase.AVAILABLE && current.getPhase() != UpdatePhase.ERROR)
                 || !record.getVersion().equals(current.getVersion())) return false;
-            UpdateState state = UpdateState.downloading(record.getVersion(), record.getFilePath(), 0L, record.getSize(), now);
+            UpdateState state = scheduled
+                ? UpdateState.queued(record.getVersion(), record.getFilePath(), record.getSize(), now)
+                : UpdateState.downloading(record.getVersion(), record.getFilePath(), 0L, record.getSize(), now);
             SharedPreferences.Editor editor = stateEditor(state)
                 .putString(TASK_ID, record.getId().toString())
                 .putString(TASK_URL, record.getUrl())
                 .putString(TASK_SHA256, record.getSha256())
-                .putLong(TASK_SIZE, record.getSize());
+                .putLong(TASK_SIZE, record.getSize())
+                .remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
+                .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE);
+            if (scheduled) editor.putString(TASK_BACKEND, WORK_MANAGER);
+            else editor.remove(TASK_BACKEND);
             commit(editor);
             return true;
         }
@@ -96,20 +172,43 @@ public final class UpdateStateStore {
     public UpdateDownloadRecord loadDownloadRecord() {
         synchronized (LOCK) {
             UpdateState state = load();
-            if (state.getPhase() != UpdatePhase.DOWNLOADING || state.getVersion() == null || state.getFilePath() == null) return null;
-            String id = preferences.getString(TASK_ID, null);
-            String url = preferences.getString(TASK_URL, null);
-            String sha256 = preferences.getString(TASK_SHA256, null);
-            if (id == null || url == null || sha256 == null || !preferences.contains(TASK_SIZE)) return null;
+            if (!isDownloadPhase(state.getPhase()) || state.getVersion() == null || state.getFilePath() == null) return null;
             try {
+                String id = preferences.getString(TASK_ID, null);
+                String url = preferences.getString(TASK_URL, null);
+                String sha256 = preferences.getString(TASK_SHA256, null);
+                if (id == null || url == null || sha256 == null || !preferences.contains(TASK_SIZE)) return null;
                 UUID uuid = UUID.fromString(id);
                 if (!uuid.toString().equals(id)) return null;
                 return new UpdateDownloadRecord(uuid, state.getVersion(), state.getFilePath(), url, sha256,
                     preferences.getLong(TASK_SIZE, -1L));
-            } catch (IllegalArgumentException exception) {
+            } catch (IllegalArgumentException | ClassCastException exception) {
                 return null;
             }
         }
+    }
+
+    public boolean isScheduledDownload() {
+        synchronized (LOCK) {
+            try {
+                return isDownloadPhase(load().getPhase()) && WORK_MANAGER.equals(preferences.getString(TASK_BACKEND, null));
+            } catch (ClassCastException exception) {
+                return false;
+            }
+        }
+    }
+
+    public boolean runIfScheduledDownload(@NonNull UUID id, @NonNull Runnable action) {
+        synchronized (LOCK) {
+            UpdateDownloadRecord record = loadDownloadRecord();
+            if (!isScheduledDownload() || record == null || !id.equals(record.getId())) return false;
+            action.run();
+            return true;
+        }
+    }
+
+    private static boolean isDownloadPhase(UpdatePhase phase) {
+        return phase == UpdatePhase.QUEUED || phase == UpdatePhase.DOWNLOADING;
     }
 
     private SharedPreferences.Editor stateEditor(UpdateState state) {
@@ -125,7 +224,7 @@ public final class UpdateStateStore {
     }
 
     private static void clearDownloadRecord(SharedPreferences.Editor editor) {
-        editor.remove(TASK_ID).remove(TASK_URL).remove(TASK_SHA256).remove(TASK_SIZE);
+        editor.remove(TASK_ID).remove(TASK_URL).remove(TASK_SHA256).remove(TASK_SIZE).remove(TASK_BACKEND);
     }
 
     private static void commit(SharedPreferences.Editor editor) {
@@ -203,6 +302,9 @@ public final class UpdateStateStore {
                 return UpdateState.checking(updatedAt);
             case AVAILABLE:
                 return version == null ? UpdateState.idle(updatedAt) : UpdateState.available(version, updatedAt);
+            case QUEUED:
+                return version == null || filePath == null
+                    ? UpdateState.idle(updatedAt) : UpdateState.queued(version, filePath, totalBytes, updatedAt);
             case DOWNLOADING:
                 return version == null || filePath == null
                     ? UpdateState.idle(updatedAt)

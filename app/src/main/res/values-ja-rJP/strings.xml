@@ -480,4 +480,5 @@
     <string name="comment_send">コメントを投稿</string>
     <string name="comment_expired">%1$s · 再ログインが必要</string>
     <string name="comment_login_action">ログイン</string>
+    <string name="update_queued">ダウンロードを待機中…</string>
 </resources>

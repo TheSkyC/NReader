@@ -508,4 +508,5 @@
     <string name="online_blacklist_search_unavailable">在线标签偏好尚未加载。请刷新，或不使用这些偏好继续搜索。</string>
     <string name="online_blacklist_search_without">不使用在线标签搜索</string>
     <string name="online_blacklist_sign_in_required">请重新登录或检查 API 密钥，然后刷新在线屏蔽列表。</string>
+    <string name="update_queued">等待下载…</string>
 </resources>

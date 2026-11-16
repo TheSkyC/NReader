@@ -480,4 +480,5 @@
     <string name="comment_send">Опубликовать комментарий</string>
     <string name="comment_expired">%1$s · Войдите снова</string>
     <string name="comment_login_action">Войти</string>
+    <string name="update_queued">Ожидание загрузки…</string>
 </resources>

@@ -2,6 +2,7 @@
 package com.maxwai.nclientv3.async;
 
 import android.app.PendingIntent;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,6 +26,28 @@ public final class UpdateNotification {
 
     private UpdateNotification() {}
 
+    @NonNull
+    static Notification foreground(@NonNull Context context, @NonNull UpdateState state) {
+        Intent intent = new Intent(context, UpdateCenterActivity.class)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_ID, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Global.CHANNEL_ID4)
+            .setSmallIcon(R.drawable.ic_file)
+            .setContentIntent(pendingIntent)
+            .setContentTitle(context.getString(R.string.update_notification_downloading))
+            .setContentText(context.getString(R.string.update_notification_version, state.getVersion()))
+            .setOnlyAlertOnce(true)
+            .setOngoing(true);
+        if (state.hasKnownProgress()) {
+            int progress = (int) Math.min(100L, state.getDownloadedBytes() * 100L / state.getTotalBytes());
+            builder.setProgress(100, progress, false);
+        } else {
+            builder.setProgress(100, 0, true);
+        }
+        return builder.build();
+    }
+
     public static void publish(@NonNull Context context, @NonNull UpdateState state) {
         String version = state.getVersion();
         if (version == null) return;
@@ -33,6 +56,7 @@ public final class UpdateNotification {
             && !shouldNotifyAvailable(context, version, System.currentTimeMillis())) return;
         if (state.getPhase() == UpdatePhase.READY_TO_INSTALL && !markOnce(context, NOTIFIED_READY, version)) return;
         if (state.getPhase() != UpdatePhase.AVAILABLE
+            && state.getPhase() != UpdatePhase.QUEUED
             && state.getPhase() != UpdatePhase.DOWNLOADING
             && state.getPhase() != UpdatePhase.READY_TO_INSTALL
             && state.getPhase() != UpdatePhase.ERROR) return;
@@ -49,11 +73,16 @@ public final class UpdateNotification {
             .setSmallIcon(R.drawable.ic_file)
             .setContentIntent(pendingIntent)
             .setOnlyAlertOnce(true)
-            .setAutoCancel(state.getPhase() != UpdatePhase.DOWNLOADING);
+            .setAutoCancel(state.getPhase() != UpdatePhase.DOWNLOADING && state.getPhase() != UpdatePhase.QUEUED);
         switch (state.getPhase()) {
             case AVAILABLE:
                 builder.setContentTitle(context.getString(R.string.update_notification_available))
                     .setContentText(context.getString(R.string.update_notification_version, version));
+                break;
+            case QUEUED:
+                builder.setContentTitle(context.getString(R.string.update_queued))
+                    .setContentText(context.getString(R.string.update_notification_version, version))
+                    .setProgress(100, 0, true);
                 break;
             case DOWNLOADING:
                 builder.setContentTitle(context.getString(R.string.update_notification_downloading))

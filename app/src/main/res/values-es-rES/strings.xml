@@ -480,4 +480,5 @@
     <string name="comment_send">Publicar comentario</string>
     <string name="comment_expired">%1$s · Inicia sesión de nuevo</string>
     <string name="comment_login_action">Iniciar sesión</string>
+    <string name="update_queued">Descarga en espera…</string>
 </resources>

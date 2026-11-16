@@ -88,7 +88,7 @@ public class UpdateCheckWorkerPublicationTest {
     }
 
     @Test
-    @Config(sdk = 28)
+    @Config(sdk = 33)
     public void openUpdateCenterRendersNewBackgroundRelease() {
         String digest = "0000000000000000000000000000000000000000000000000000000000000000";
         metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/old.apk", "old notes", false, digest, 42L);

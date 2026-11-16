@@ -6,6 +6,7 @@ public enum UpdatePhase {
     IDLE,
     CHECKING,
     AVAILABLE,
+    QUEUED,
     DOWNLOADING,
     VERIFYING,
     READY_TO_INSTALL,

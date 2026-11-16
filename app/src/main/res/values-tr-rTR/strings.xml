@@ -480,4 +480,5 @@
     <string name="comment_send">Yorum yayınla</string>
     <string name="comment_expired">%1$s · Tekrar giriş yapın</string>
     <string name="comment_login_action">Giriş yap</string>
+    <string name="update_queued">İndirme bekleniyor…</string>
 </resources>

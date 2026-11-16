@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.maxwai.nclientv3.BuildConfig;
+import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -105,6 +106,47 @@ public class UpdateStateRecoveryTest {
             assertEquals(UpdatePhase.ERROR, recovered.getPhase());
             assertEquals("interrupted_download", store.load().getErrorCode());
             assertFalse(file.exists());
+        } finally {
+            store.clear();
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+    }
+
+    @Test
+    public void queuedStateWithoutSchedulerIdentityPreservesFileAndReportsInterruption() throws IOException {
+        File file = createFile(updateFolder, "NReader-99.0.0-minApi28-release.apk.part");
+        try {
+            UpdateState state = UpdateState.queued("99.0.0", file.getAbsolutePath(), 100L, 1L);
+            UpdateState recovered = UpdateStateRecovery.reconcile(context, state);
+            assertEquals(UpdatePhase.ERROR, recovered.getPhase());
+            assertEquals("interrupted_download", recovered.getErrorCode());
+            assertTrue(file.isFile());
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+    }
+
+    @Test
+    public void persistedCancellationIntentStopsQueuedWorkAndCleansItsPartial() throws IOException {
+        UpdateStateStore store = new UpdateStateStore(context);
+        UUID id = UUID.randomUUID();
+        String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
+        File file = createFile(updateFolder, "NReader-99.0.0-" + flavor + "-" + id + ".apk.part");
+        UpdateDownloadRecord record = new UpdateDownloadRecord(id, "99.0.0", file.getAbsolutePath(),
+            "https://example.invalid/update.apk",
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", 3L);
+        try {
+            store.save(UpdateState.available(record.getVersion(), 1L));
+            assertTrue(store.claimScheduledDownload(record, 2L));
+            store.recordCancellation(record);
+
+            UpdateState recovered = UpdateStateRecovery.reconcileStored(context);
+
+            assertEquals(UpdatePhase.AVAILABLE, recovered.getPhase());
+            assertFalse(file.exists());
+            assertTrue(store.loadCancellation() == null);
         } finally {
             store.clear();
             //noinspection ResultOfMethodCallIgnored

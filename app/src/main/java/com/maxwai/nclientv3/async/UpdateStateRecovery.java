@@ -6,6 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.maxwai.nclientv3.BuildConfig;
+import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -29,11 +30,23 @@ public final class UpdateStateRecovery {
     @NonNull
     public static UpdateState reconcileStored(@NonNull Context context) {
         UpdateStateStore store = new UpdateStateStore(context);
+        UpdateDownloadRecord cancellation = store.loadCancellation();
+        if (cancellation != null) {
+            store.runIfScheduledDownload(cancellation.getId(), () -> {
+                UpdateState state = store.load();
+                store.save(UpdateState.available(state.getVersion(), System.currentTimeMillis()));
+            });
+            UpdateDownloadScheduler.cleanupCancellation(context, cancellation);
+        }
         while (true) {
             long revision = store.revision();
             UpdateState[] result = new UpdateState[1];
             if (store.runIfUnchanged(revision, () -> {
                 UpdateState state = store.load();
+                if (store.isScheduledDownload()) {
+                    result[0] = state;
+                    return;
+                }
                 if (state.getPhase() == UpdatePhase.DOWNLOADING && UpdateDownloadManager.isActive(state.getFilePath())) {
                     result[0] = state;
                     return;
@@ -41,7 +54,10 @@ public final class UpdateStateRecovery {
                 UpdateState recovered = reconcile(context, state);
                 if (recovered != state) store.save(recovered);
                 result[0] = recovered;
-            })) return result[0];
+            })) {
+                if (store.isScheduledDownload()) UpdateDownloadScheduler.reconcile(context);
+                return result[0];
+            }
         }
     }
 
@@ -53,12 +69,7 @@ public final class UpdateStateRecovery {
         long now = System.currentTimeMillis();
 
         UpdateMetadataStore metadata = new UpdateMetadataStore(context);
-        long selectedVersionCode = metadata.getSelectedVersionCode();
-        boolean matchingSelection = version != null && version.equals(metadata.getSelectedVersion());
-        boolean installed = matchingSelection && selectedVersionCode > 0L
-            ? BuildConfig.VERSION_CODE >= selectedVersionCode
-            : version != null && VersionChecker.GitHubRelease.isVersionAtLeast(BuildConfig.VERSION_NAME, version);
-        if (installed) {
+        if (isInstalled(metadata, version)) {
             deleteUpdateArtifact(file);
             metadata.clearSelectedRelease();
             UpdateNotification.clear(context);
@@ -72,12 +83,25 @@ public final class UpdateStateRecovery {
             return UpdateState.error(version, filePath, version == null ? "missing_version" : "missing_file", now);
         }
 
+        if (state.getPhase() == UpdatePhase.QUEUED) {
+            UpdateNotification.clear(context);
+            return UpdateState.error(version, filePath, "interrupted_download", now);
+        }
+
         if (state.getPhase() == UpdatePhase.DOWNLOADING) {
             deletePartialFile(file);
             UpdateNotification.clear(context);
             return UpdateState.error(version, filePath, "interrupted_download", now);
         }
         return state;
+    }
+
+    static boolean isInstalled(UpdateMetadataStore metadata, String version) {
+        long selectedVersionCode = metadata.getSelectedVersionCode();
+        boolean matchingSelection = version != null && version.equals(metadata.getSelectedVersion());
+        return matchingSelection && selectedVersionCode > 0L
+            ? BuildConfig.VERSION_CODE >= selectedVersionCode
+            : version != null && VersionChecker.GitHubRelease.isVersionAtLeast(BuildConfig.VERSION_NAME, version);
     }
 
     private static void deletePartialFile(File file) {

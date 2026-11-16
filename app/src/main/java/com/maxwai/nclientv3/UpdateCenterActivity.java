@@ -109,7 +109,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             else startCheck();
         });
         secondary.setOnClickListener(view -> {
-            if (currentState != null && currentState.getPhase() == UpdatePhase.DOWNLOADING) {
+            if (currentState != null && (currentState.getPhase() == UpdatePhase.QUEUED
+                || currentState.getPhase() == UpdatePhase.DOWNLOADING)) {
                 checker.cancelDownload();
             } else if (currentState != null && currentState.getPhase() == UpdatePhase.AVAILABLE
                 && release != null && release.getVersionCode() != null) {
@@ -130,6 +131,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         currentState = stateStore.load();
         render(currentState);
         boolean shouldCheck = currentState.getPhase() != UpdatePhase.READY_TO_INSTALL
+            && currentState.getPhase() != UpdatePhase.QUEUED
             && currentState.getPhase() != UpdatePhase.DOWNLOADING
             && currentState.getPhase() != UpdatePhase.INSTALLING;
         checker = new VersionChecker(this, false, this, shouldCheck);
@@ -197,6 +199,14 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_checking);
                 action.setText(R.string.update_checking);
                 action.setEnabled(false);
+                break;
+            case QUEUED:
+                status.setText(R.string.update_queued);
+                action.setText(R.string.update_queued);
+                action.setEnabled(false);
+                progress.setVisibility(View.VISIBLE);
+                progress.setIndeterminate(true);
+                secondary.setText(R.string.update_cancel_download);
                 break;
             case DOWNLOADING:
                 status.setText(R.string.update_downloading);

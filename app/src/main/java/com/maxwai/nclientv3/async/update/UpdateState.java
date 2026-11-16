@@ -62,6 +62,10 @@ public final class UpdateState {
         );
     }
 
+    public static UpdateState queued(@NonNull String version, @NonNull String filePath, long totalBytes, long now) {
+        return new UpdateState(UpdatePhase.QUEUED, version, filePath, 0L, totalBytes, null, now);
+    }
+
     public static UpdateState readyToInstall(
         @NonNull String version,
         @NonNull String filePath,

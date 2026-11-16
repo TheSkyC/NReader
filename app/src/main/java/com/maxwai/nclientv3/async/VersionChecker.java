@@ -122,7 +122,7 @@ public class VersionChecker {
         boolean[] started = {false};
         stateStore.runIfUnchanged(revision, () -> {
             UpdatePhase phase = stateStore.load().getPhase();
-            if (phase == UpdatePhase.DOWNLOADING || phase == UpdatePhase.VERIFYING
+            if (phase == UpdatePhase.QUEUED || phase == UpdatePhase.DOWNLOADING || phase == UpdatePhase.VERIFYING
                 || phase == UpdatePhase.READY_TO_INSTALL || phase == UpdatePhase.INSTALLING) return;
             metadataStore.markAttempt(System.currentTimeMillis());
             saveState(UpdateState.checking(System.currentTimeMillis()));

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 
@@ -222,5 +223,26 @@ public class UpdateStateStoreTest {
             .putString("task_id", "invalid").putString("task_url", "https://example.invalid/update.apk")
             .putString("task_sha256", "digest").putLong("task_size", 42L).commit();
         assertNull(store.loadDownloadRecord());
+    }
+
+    @Test
+    public void scheduledAttemptRetainsIdentityAcrossQueueAndRunningTransitions() {
+        store.save(UpdateState.available("1.1.0", 1L));
+        UpdateDownloadRecord record = new UpdateDownloadRecord(UUID.randomUUID(), "1.1.0", "/data/update.part",
+            "https://example.invalid/update.apk", "digest", 42L);
+        assertTrue(store.claimScheduledDownload(record, 2L));
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        assertTrue(store.isScheduledDownload());
+        assertFalse(store.runIfScheduledDownload(UUID.randomUUID(), () -> fail("Wrong task must not run")));
+        assertTrue(store.runIfScheduledDownload(record.getId(), () ->
+            store.save(UpdateState.downloading(record.getVersion(), record.getFilePath(), 0L, 42L, 3L))));
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
+        assertTrue(store.runIfScheduledDownload(record.getId(), () ->
+            store.save(UpdateState.queued(record.getVersion(), record.getFilePath(), 42L, 4L))));
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
+        store.save(UpdateState.available(record.getVersion(), 5L));
+        assertFalse(store.isScheduledDownload());
+        assertFalse(store.runIfScheduledDownload(record.getId(), () -> fail("Canceled task must not run")));
     }
 }

@@ -480,4 +480,5 @@
     <string name="comment_send">نشر التعليق</string>
     <string name="comment_expired">%1$s · سجّل الدخول مرة أخرى</string>
     <string name="comment_login_action">تسجيل الدخول</string>
+    <string name="update_queued">في انتظار التنزيل…</string>
 </resources>

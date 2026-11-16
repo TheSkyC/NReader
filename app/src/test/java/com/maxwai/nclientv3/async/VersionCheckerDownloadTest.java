@@ -11,6 +11,13 @@ import static org.junit.Assert.assertTrue;
 import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.Configuration;
+import androidx.work.ListenableWorker;
+import androidx.work.WorkManager;
+import androidx.work.WorkerFactory;
+import androidx.work.WorkerParameters;
+import androidx.work.testing.TestDriver;
+import androidx.work.testing.WorkManagerTestInitHelper;
 
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.UpdateCenterActivity;
@@ -26,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.shadows.ShadowSystemClock;
@@ -40,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,15 +61,26 @@ public class VersionCheckerDownloadTest {
     private VersionChecker checker;
     private UpdateStateStore store;
     private File previousUpdateFolder;
+    private ExecutorService workExecutor;
 
     @Before
     public void setUp() throws Exception {
+        workExecutor = Executors.newFixedThreadPool(3);
+        WorkerFactory factory = new WorkerFactory() {
+            @Override public ListenableWorker createWorker(android.content.Context context, String name, WorkerParameters parameters) {
+                return name.equals(UpdateDownloadWorker.class.getName())
+                    ? new UpdateDownloadWorker(context, parameters, () -> true) : null;
+            }
+        };
+        WorkManagerTestInitHelper.initializeTestWorkManager(RuntimeEnvironment.getApplication(),
+            new Configuration.Builder().setExecutor(workExecutor).setWorkerFactory(factory).build(),
+            WorkManagerTestInitHelper.ExecutorsMode.PRESERVE_EXECUTORS);
         controller = Robolectric.buildActivity(AppCompatActivity.class).setup();
         AppCompatActivity activity = controller.get();
         store = new UpdateStateStore(activity);
         store.clear();
         store.save(UpdateState.available("99.0.0", 1L));
-        new UpdateMetadataStore(activity).saveSelectedRelease("99.0.0", 99L,
+        new UpdateMetadataStore(activity).saveSelectedRelease("99.0.0", Integer.MAX_VALUE,
             "http://127.0.0.1/update.apk", "", false, TEST_DIGEST, -1L);
         previousUpdateFolder = Global.UPDATEFOLDER;
         Global.UPDATEFOLDER = new File(activity.getCacheDir(), "update-download-test");
@@ -78,6 +98,7 @@ public class VersionCheckerDownloadTest {
         store.clear();
         Global.UPDATEFOLDER = previousUpdateFolder;
         controller.pause().stop().destroy();
+        workExecutor.shutdownNow();
     }
 
     @Test
@@ -89,6 +110,7 @@ public class VersionCheckerDownloadTest {
         setField("downloadUrl", "http://127.0.0.1:" + unusedPort + "/update.apk");
 
         checker.startDownload();
+        startScheduledWork();
         awaitPhase(UpdatePhase.ERROR);
 
         assertEquals("download", store.load().getErrorCode());
@@ -119,13 +141,14 @@ public class VersionCheckerDownloadTest {
             try {
                 UpdateDownloadManager.start(controller.get(), "99.0.0",
                     "http://127.0.0.1:" + origin.getLocalPort() + "/update.apk", TEST_DIGEST, -1L, Global.UPDATEFOLDER);
+                startScheduledWork();
                 awaitPhase(UpdatePhase.ERROR);
                 try (Socket ignored = destination.accept()) {
                     throw new AssertionError("Redirect destination must not be contacted");
                 } catch (SocketTimeoutException expected) {
                     // The original request must not connect to the redirect destination.
                 }
-                Field clientField = UpdateDownloadManager.class.getDeclaredField("CLIENT");
+                Field clientField = UpdateDownloadWorker.class.getDeclaredField("CLIENT");
                 clientField.setAccessible(true);
                 assertFalse(((OkHttpClient) clientField.get(null)).followSslRedirects());
             } finally {
@@ -172,6 +195,7 @@ public class VersionCheckerDownloadTest {
                 UpdateDownloadManager.start(controller.get(), "99.0.0",
                     "http://127.0.0.1:" + server.getLocalPort() + "/update.apk", digest,
                     payload.length, Global.UPDATEFOLDER);
+                startScheduledWork();
                 assertTrue(firstChunk.await(5, TimeUnit.SECONDS));
                 String partialPath = store.load().getFilePath();
                 UpdateDownloadRecord record = store.loadDownloadRecord();
@@ -228,6 +252,7 @@ public class VersionCheckerDownloadTest {
             try {
                 UpdateDownloadManager.start(controller.get(), "99.0.0",
                     "http://127.0.0.1:" + server.getLocalPort() + "/update.apk", TEST_DIGEST, -1L, Global.UPDATEFOLDER);
+                startScheduledWork();
                 assertTrue(accepted.await(5, TimeUnit.SECONDS));
                 String path = store.load().getFilePath();
                 center = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
@@ -238,6 +263,8 @@ public class VersionCheckerDownloadTest {
                 center.get().findViewById(R.id.update_secondary).performClick();
                 assertEquals(UpdatePhase.AVAILABLE, store.load().getPhase());
                 assertNull(store.loadDownloadRecord());
+                long stopDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (UpdateDownloadManager.isActive(path) && System.nanoTime() < stopDeadline) Thread.sleep(10L);
                 assertFalse(UpdateDownloadManager.isActive(path));
             } finally {
                 if (center != null) center.pause().stop().destroy();
@@ -270,6 +297,7 @@ public class VersionCheckerDownloadTest {
             try {
                 setField("downloadUrl", "http://127.0.0.1:" + server.getLocalPort() + "/update.apk");
                 checker.startDownload();
+                startScheduledWork();
                 assertTrue(firstAccepted.await(5, TimeUnit.SECONDS));
                 String firstPath = store.load().getFilePath();
                 long fileDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
@@ -285,6 +313,8 @@ public class VersionCheckerDownloadTest {
                 sameRelease.versionCode = "99.0.0";
                 setField(other, "latestRelease", sameRelease);
                 setField(other, "downloadUrl", "http://127.0.0.1:" + server.getLocalPort() + "/update.apk");
+                new UpdateMetadataStore(controller.get()).saveSelectedRelease("99.0.0", Integer.MAX_VALUE,
+                    "http://127.0.0.1:" + server.getLocalPort() + "/update.apk", "", false, TEST_DIGEST, -1L);
                 other.startDownload();
                 assertEquals(firstPath, store.load().getFilePath());
                 assertEquals(0, ((OkHttpClient) getField(other, "updateClient")).dispatcher().runningCallsCount());
@@ -303,10 +333,11 @@ public class VersionCheckerDownloadTest {
                 assertEquals(UpdatePhase.AVAILABLE, store.load().getPhase());
 
                 other.startDownload();
+                startScheduledWork();
                 assertTrue(secondAccepted.await(5, TimeUnit.SECONDS));
                 String secondPath = store.load().getFilePath();
                 assertNotEquals(firstPath, secondPath);
-                Field clientField = UpdateDownloadManager.class.getDeclaredField("CLIENT");
+                Field clientField = UpdateDownloadWorker.class.getDeclaredField("CLIENT");
                 clientField.setAccessible(true);
                 OkHttpClient client = (OkHttpClient) clientField.get(null);
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
@@ -413,6 +444,24 @@ public class VersionCheckerDownloadTest {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (store.load().getPhase() != phase && System.nanoTime() < deadline) Thread.sleep(10L);
         assertEquals(phase, store.load().getPhase());
+    }
+
+    private void startScheduledWork() throws Exception {
+        UpdateDownloadRecord record = store.loadDownloadRecord();
+        assertNotNull(record);
+        WorkManager manager = WorkManager.getInstance(controller.get());
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (manager.getWorkInfoById(record.getId()).get(2L, TimeUnit.SECONDS) == null
+            && System.nanoTime() < deadline) Thread.sleep(10L);
+        assertNotNull(manager.getWorkInfoById(record.getId()).get(2L, TimeUnit.SECONDS));
+        TestDriver driver = WorkManagerTestInitHelper.getTestDriver(controller.get());
+        assertNotNull(driver);
+        driver.setAllConstraintsMet(record.getId());
+        long startDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (store.load().getPhase() == UpdatePhase.QUEUED && System.nanoTime() < startDeadline) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            Thread.sleep(10L);
+        }
     }
 
     private void setField(String name, Object value) throws Exception {

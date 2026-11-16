@@ -480,4 +480,5 @@
     <string name="comment_send">Kommentar veröffentlichen</string>
     <string name="comment_expired">%1$s · Erneut anmelden</string>
     <string name="comment_login_action">Anmelden</string>
+    <string name="update_queued">Download in Warteschlange…</string>
 </resources>

@@ -480,4 +480,5 @@
     <string name="comment_send">Pubblica commento</string>
     <string name="comment_expired">%1$s · Accedi di nuovo</string>
     <string name="comment_login_action">Accedi</string>
+    <string name="update_queued">In attesa del download…</string>
 </resources>
