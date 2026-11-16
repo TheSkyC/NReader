@@ -138,8 +138,7 @@ public final class UpdateCheckWorker extends Worker {
             if (response.code() == 304 && metadataStore.getBody() != null) return metadataStore.getBody();
             if (response.code() == 304) return fetchReleaseJson(metadataStore, true);
             if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
-            if (response.body().contentLength() > 2L * 1024L * 1024L) throw new IOException("Metadata too large");
-            String body = response.body().string();
+            String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
             metadataStore.save(body, response.header("ETag"));
             return body;
         }
@@ -157,15 +156,18 @@ public final class UpdateCheckWorker extends Worker {
             .header("Accept", "application/json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
             .build()).execute()) {
-            if (!response.isSuccessful() || response.body() == null
-                || response.body().contentLength() > 1024L * 1024L) return null;
-            try (JsonReader reader = new JsonReader(new StringReader(response.body().string()))) {
+            if (!response.isSuccessful() || response.body() == null) return null;
+            try (JsonReader reader = new JsonReader(new StringReader(
+                UpdateResponseReader.read(response.body(), UpdateResponseReader.MANIFEST_LIMIT)
+            ))) {
                 return VersionChecker.parseManifestJson(
                     reader,
                     Global.isEnableBeta(),
                     BuildConfig.FLAVOR,
                     context.getPackageName()
                 );
+            } catch (IOException | RuntimeException exception) {
+                return null;
             }
         }
     }

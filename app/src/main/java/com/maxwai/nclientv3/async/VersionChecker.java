@@ -146,11 +146,7 @@ public class VersionChecker {
                             json = metadataStore.getBody();
                             retryWithoutCache = json == null;
                         } else if (response.isSuccessful() && response.body() != null) {
-                            long length = response.body().contentLength();
-                            if (length > 2L * 1024L * 1024L) {
-                                throw new IOException("Release metadata is too large");
-                            }
-                            json = response.body().string();
+                            json = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
                             metadataStore.save(json, response.header("ETag"));
                         } else {
                             throw new IOException("Unable to retrieve release metadata: HTTP " + response.code());
@@ -209,17 +205,19 @@ public class VersionChecker {
                     return;
                 }
                 try (Response ignored = response) {
-                    if (!response.isSuccessful() || response.body() == null
-                        || response.body().contentLength() > 1024L * 1024L) {
+                    if (!response.isSuccessful() || response.body() == null) {
                         publishRelease(apiRelease, silent);
                         return;
                     }
                     GitHubRelease manifestRelease;
-                    try (JsonReader reader = new JsonReader(new StringReader(response.body().string()))) {
+                    String manifest = UpdateResponseReader.read(response.body(), UpdateResponseReader.MANIFEST_LIMIT);
+                    try (JsonReader reader = new JsonReader(new StringReader(manifest))) {
                         manifestRelease = parseManifestJson(reader, withPrerelease, BuildConfig.FLAVOR, context.getPackageName());
                     }
+                    if (call.isCanceled() || call != manifestCall) return;
                     publishRelease(manifestRelease == null ? apiRelease : manifestRelease, silent);
-                } catch (RuntimeException ignored) {
+                } catch (IOException | RuntimeException ignored) {
+                    if (call.isCanceled() || call != manifestCall) return;
                     publishRelease(apiRelease, silent);
                 }
             }
