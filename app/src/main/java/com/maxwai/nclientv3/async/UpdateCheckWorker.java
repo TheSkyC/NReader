@@ -120,7 +120,9 @@ public final class UpdateCheckWorker extends Worker {
     ) {
         return stateStore.runIfCheckableAndUnchanged(revision, () -> {
             UpdateState available = UpdateState.available(selected.versionCode, System.currentTimeMillis());
-            if (stateStore.load().getPhase() == UpdatePhase.IDLE) {
+            UpdateState current = stateStore.load();
+            if (current.getPhase() == UpdatePhase.IDLE || !selected.versionCode.equals(current.getVersion())
+                || !selected.versionCode.equals(metadataStore.getSelectedVersion())) {
                 metadataStore.saveSelectedRelease(
                     selected.versionCode,
                     selected.releaseVersionCode,

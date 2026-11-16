@@ -312,11 +312,13 @@ public class VersionChecker {
     }
 
     public void restoreSelectedRelease() {
-        if (stateStore.load().getPhase() != UpdatePhase.AVAILABLE) return;
+        UpdateState state = stateStore.load();
+        if (state.getPhase() != UpdatePhase.AVAILABLE) return;
         String version = metadataStore.getSelectedVersion();
         String url = metadataStore.getSelectedUrl();
         String sha256 = metadataStore.getSelectedSha256();
-        if (version == null || url == null || !isAllowedUpdateUrl(url) || !isValidSha256(sha256)) return;
+        if (version == null || !version.equals(state.getVersion()) || url == null
+            || !isAllowedUpdateUrl(url) || !isValidSha256(sha256)) return;
         GitHubRelease restored = new GitHubRelease();
         restored.versionCode = version;
         restored.releaseVersionCode = metadataStore.getSelectedVersionCode();

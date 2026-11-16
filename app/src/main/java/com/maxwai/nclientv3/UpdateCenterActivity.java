@@ -53,6 +53,11 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private final Runnable refreshState = () -> {
         if (!isFinishing() && !isDestroyed()) {
             currentState = stateStore.load();
+            if (currentState.getPhase() == UpdatePhase.AVAILABLE && checker != null
+                && (release == null || !currentState.getVersion().equals(release.getVersionCode()))) {
+                release = null;
+                checker.restoreSelectedRelease();
+            }
             render(currentState);
         }
     };
@@ -99,7 +104,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         action.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.READY_TO_INSTALL) {
                 if (checker.installReadyUpdate()) action.setEnabled(false);
-            } else if (release != null) checker.startDownload();
+            } else if (release != null && currentState != null
+                && release.getVersionCode().equals(currentState.getVersion())) checker.startDownload();
             else startCheck();
         });
         secondary.setOnClickListener(view -> {
@@ -171,9 +177,8 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             R.string.update_release_channel,
             getString(release.isBeta() ? R.string.update_channel_prerelease : R.string.update_channel_stable)
         ));
-        if (release.getSizeBytes() > 0L) {
-            size.setText(getString(R.string.update_size_format, Formatter.formatFileSize(this, release.getSizeBytes())));
-        }
+        size.setText(release.getSizeBytes() > 0L
+            ? getString(R.string.update_size_format, Formatter.formatFileSize(this, release.getSizeBytes())) : "");
         secondary.setText(R.string.update_remind_later);
         skip.setVisibility(View.VISIBLE);
         action.setText(R.string.update_download);
@@ -235,7 +240,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             case AVAILABLE:
                 status.setText(R.string.update_available);
                 action.setText(R.string.update_download);
-                action.setEnabled(true);
+                action.setEnabled(release != null && state.getVersion().equals(release.getVersionCode()));
                 if (release != null && state.getVersion().equals(release.getVersionCode())) {
                     secondary.setText(R.string.update_remind_later);
                     skip.setVisibility(View.VISIBLE);
