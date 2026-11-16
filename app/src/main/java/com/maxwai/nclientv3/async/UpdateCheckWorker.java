@@ -19,7 +19,9 @@ import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.LogUtility;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
@@ -89,10 +91,12 @@ public final class UpdateCheckWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
-        if (sourceEnabled.getAsBoolean() && !reconcileDownload.getAsBoolean()) return Result.retry();
-        if (!Global.shouldCheckForUpdates(context)) return Result.success();
+        if (!sourceEnabled.getAsBoolean()) return Result.success();
+        if (!reconcileDownload.getAsBoolean()) return Result.retry();
         UpdateStateStore stateStore = new UpdateStateStore(context);
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(context);
+        publishReadyIfUnchanged(context, stateStore, metadataStore, stateStore.revision());
+        if (!Global.shouldCheckForUpdates(context)) return Result.success();
         long revision = stateStore.revision();
         UpdatePhase phase = stateStore.load().getPhase();
         if (phase != UpdatePhase.IDLE && phase != UpdatePhase.AVAILABLE) return Result.success();
@@ -121,6 +125,23 @@ public final class UpdateCheckWorker extends Worker {
         } catch (IOException | RuntimeException exception) {
             return Result.retry();
         }
+    }
+
+    static boolean publishReadyIfUnchanged(@NonNull Context context, @NonNull UpdateStateStore stateStore,
+                                           @NonNull UpdateMetadataStore metadataStore, long revision) {
+        return stateStore.runIfUnchanged(revision, () -> {
+            UpdateState state = stateStore.load();
+            if (state.getPhase() != UpdatePhase.READY_TO_INSTALL || state.getVersion() == null
+                || state.getFilePath() == null || UpdateStateRecovery.isInstalled(metadataStore, state.getVersion())) return;
+            boolean exists;
+            try {
+                exists = new File(state.getFilePath()).isFile();
+            } catch (SecurityException exception) {
+                LogUtility.w("Unable to inspect ready update: " + exception.getClass().getSimpleName());
+                return;
+            }
+            if (exists) UpdateNotification.publish(context, state);
+        });
     }
 
     static boolean publishIfUnchanged(

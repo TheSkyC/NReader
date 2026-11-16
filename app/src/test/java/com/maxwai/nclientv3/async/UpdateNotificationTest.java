@@ -10,8 +10,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 
+import androidx.work.Data;
+import androidx.work.ListenableWorker;
+import androidx.work.WorkerFactory;
+import androidx.work.WorkerParameters;
+import androidx.work.impl.utils.taskexecutor.WorkManagerTaskExecutor;
+
+import com.google.common.util.concurrent.Futures;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.update.UpdateState;
+import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.NotificationSettings;
 
@@ -24,14 +32,23 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.Executor;
+
+import kotlin.coroutines.EmptyCoroutineContext;
+
 @RunWith(RobolectricTestRunner.class)
 @Config(application = Application.class, sdk = 32)
 public class UpdateNotificationTest {
     private Context context;
     private NotificationManager manager;
+    private UpdateStateStore stateStore;
 
     @After
     public void tearDown() {
+        stateStore.clear();
         context.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
             .remove(context.getString(R.string.preference_key_maximum_notification)).commit();
         NotificationSettings.initializeNotificationManager(context);
@@ -41,6 +58,9 @@ public class UpdateNotificationTest {
     public void setUp() {
         Application application = RuntimeEnvironment.getApplication();
         context = application;
+        stateStore = new UpdateStateStore(context);
+        stateStore.clear();
+        new UpdateMetadataStore(context).clearSelectedRelease();
         Shadows.shadowOf(application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
         context.getSharedPreferences("UpdateReminder", Context.MODE_PRIVATE).edit().clear().commit();
         context.getSharedPreferences("UpdateNotification", Context.MODE_PRIVATE).edit().clear().commit();
@@ -103,6 +123,77 @@ public class UpdateNotificationTest {
         NotificationSettings.initializeNotificationManager(context);
         UpdateNotification.publish(context, state);
         assertEquals(1, manager.getActiveNotifications().length);
+    }
+
+    @Test
+    public void periodicWorkerRetriesReadyReminderWithAutomaticChecksDisabled() throws Exception {
+        File apk = File.createTempFile("ready-update-", ".apk", context.getCacheDir());
+        try {
+            context.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
+                .putBoolean(context.getString(R.string.preference_key_check_update), false).commit();
+            stateStore.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 3L, 1L));
+            assertEquals(ListenableWorker.Result.success(), worker(true).doWork());
+            assertEquals(0, manager.getActiveNotifications().length);
+            enableChannel();
+            assertEquals(ListenableWorker.Result.success(), worker(true).doWork());
+            assertEquals(1, manager.getActiveNotifications().length);
+            UpdateNotification.clear(context);
+            assertEquals(ListenableWorker.Result.success(), worker(true).doWork());
+            assertEquals(0, manager.getActiveNotifications().length);
+        } finally {
+            context.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
+                .remove(context.getString(R.string.preference_key_check_update)).commit();
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    @Test
+    public void periodicWorkerWithDisabledSourceDoesNotNotify() throws Exception {
+        File apk = File.createTempFile("ready-update-", ".apk", context.getCacheDir());
+        try {
+            enableChannel();
+            stateStore.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 3L, 1L));
+            assertEquals(ListenableWorker.Result.success(), worker(false).doWork());
+            assertEquals(0, manager.getActiveNotifications().length);
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    @Test
+    public void readyReminderRejectsStaleMissingAndInstalledUpdates() throws Exception {
+        File apk = File.createTempFile("ready-update-", ".apk", context.getCacheDir());
+        try {
+            enableChannel();
+            stateStore.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 3L, 1L));
+            long staleRevision = stateStore.revision();
+            stateStore.save(UpdateState.idle(2L));
+            assertFalse(UpdateCheckWorker.publishReadyIfUnchanged(context, stateStore, new UpdateMetadataStore(context), staleRevision));
+            stateStore.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath() + ".missing", 3L, 3L));
+            UpdateCheckWorker.publishReadyIfUnchanged(context, stateStore, new UpdateMetadataStore(context), stateStore.revision());
+            stateStore.save(UpdateState.readyToInstall("0.0.1", apk.getAbsolutePath(), 3L, 4L));
+            UpdateCheckWorker.publishReadyIfUnchanged(context, stateStore, new UpdateMetadataStore(context), stateStore.revision());
+            assertEquals(0, manager.getActiveNotifications().length);
+            assertFalse(context.getSharedPreferences("UpdateNotification", Context.MODE_PRIVATE).contains("notified_ready"));
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    private UpdateCheckWorker worker(boolean sourceEnabled) {
+        Executor direct = Runnable::run;
+        WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+            new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
+            new WorkManagerTaskExecutor(direct), new WorkerFactory() {
+                @Override public ListenableWorker createWorker(Context context, String name, WorkerParameters params) {
+                    return null;
+                }
+            }, (context, id, data) -> Futures.immediateFuture(null),
+            (context, id, info) -> Futures.immediateFuture(null));
+        return new UpdateCheckWorker(context, parameters, () -> sourceEnabled, () -> true);
     }
 
     private void enableChannel() {
