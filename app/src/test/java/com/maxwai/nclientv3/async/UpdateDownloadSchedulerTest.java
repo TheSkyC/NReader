@@ -223,6 +223,31 @@ public class UpdateDownloadSchedulerTest {
     }
 
     @Test
+    public void recoveryCancelsPersistedWorkBeforeRemovingCancellationRecord() throws Exception {
+        UpdateDownloadRecord record = record();
+        File partial = new File(record.getFilePath());
+        assertTrue(partial.createNewFile());
+        try {
+            assertTrue(store.claimScheduledDownload(record, 1L));
+            UpdateStateRecovery.reconcileStored(context);
+            assertNotNull(awaitWork(record.getId()));
+            store.recordCancellation(record);
+
+            assertEquals(UpdatePhase.AVAILABLE, UpdateStateRecovery.reconcileStored(context).getPhase());
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (!store.loadCancellations().isEmpty() && System.nanoTime() < deadline) Thread.sleep(10L);
+
+            assertTrue(store.loadCancellations().isEmpty());
+            assertTrue(!partial.exists());
+            assertEquals(WorkInfo.State.CANCELLED, manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS).getState());
+        } finally {
+            manager.cancelWorkById(record.getId()).getResult().get(5L, TimeUnit.SECONDS);
+            //noinspection ResultOfMethodCallIgnored
+            partial.delete();
+        }
+    }
+
+    @Test
     public void staleCleanupLeavesAnotherCancellationIntact() throws Exception {
         UpdateDownloadRecord first = record();
         UpdateDownloadRecord second = record();

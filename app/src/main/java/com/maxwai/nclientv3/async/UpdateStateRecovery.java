@@ -35,7 +35,7 @@ public final class UpdateStateRecovery {
                 UpdateState state = store.load();
                 store.save(UpdateState.available(state.getVersion(), System.currentTimeMillis()));
             });
-            UpdateDownloadScheduler.cleanupCancellation(context, cancellation);
+            UpdateDownloadScheduler.cancel(context, cancellation);
         }
         while (true) {
             long revision = store.revision();

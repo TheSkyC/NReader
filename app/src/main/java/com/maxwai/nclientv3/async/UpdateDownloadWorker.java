@@ -151,9 +151,10 @@ public final class UpdateDownloadWorker extends Worker {
         } finally {
             call = null;
             activePath = null;
-            boolean partialRemoved = partial != null
-                && (!partial.exists() || (partial.isFile() && partial.delete()));
-            if (partialRemoved && captured[0] != null) store.clearCancellationIf(captured[0].getId());
+            if (partial != null && partial.isFile()) {
+                //noinspection ResultOfMethodCallIgnored
+                partial.delete();
+            }
             if (isStopped() && captured[0] != null) {
                 UpdateDownloadRecord record = captured[0];
                 store.runIfScheduledDownload(id, () -> {
@@ -163,6 +164,14 @@ public final class UpdateDownloadWorker extends Worker {
                 });
             }
             ACTIVE.remove(id, this);
+            if (captured[0] != null) {
+                for (UpdateDownloadRecord cancellation : store.loadCancellations()) {
+                    if (id.equals(cancellation.getId())) {
+                        UpdateDownloadScheduler.cancel(context, cancellation);
+                        break;
+                    }
+                }
+            }
         }
     }
 

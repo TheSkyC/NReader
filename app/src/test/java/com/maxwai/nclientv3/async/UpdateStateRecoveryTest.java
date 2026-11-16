@@ -129,7 +129,7 @@ public class UpdateStateRecoveryTest {
     }
 
     @Test
-    public void persistedCancellationIntentStopsQueuedWorkAndCleansItsPartial() throws IOException {
+    public void persistedCancellationIntentStopsQueuedWorkAndCleansItsPartial() throws Exception {
         UpdateStateStore store = new UpdateStateStore(context);
         UUID id = UUID.randomUUID();
         String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
@@ -143,6 +143,7 @@ public class UpdateStateRecoveryTest {
             store.recordCancellation(record);
 
             UpdateState recovered = UpdateStateRecovery.reconcileStored(context);
+            awaitCancellations(store);
 
             assertEquals(UpdatePhase.AVAILABLE, recovered.getPhase());
             assertFalse(file.exists());
@@ -155,7 +156,7 @@ public class UpdateStateRecoveryTest {
     }
 
     @Test
-    public void consecutiveCanceledDownloadsRemainRecoverableAcrossRetries() throws IOException {
+    public void consecutiveCanceledDownloadsRemainRecoverableAcrossRetries() throws Exception {
         UpdateStateStore store = new UpdateStateStore(context);
         String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
         UUID firstId = UUID.randomUUID();
@@ -177,6 +178,7 @@ public class UpdateStateRecoveryTest {
             assertEquals(2, store.loadCancellations().size());
 
             assertEquals(UpdatePhase.AVAILABLE, UpdateStateRecovery.reconcileStored(context).getPhase());
+            awaitCancellations(store);
             assertFalse(first.exists());
             assertFalse(second.exists());
             assertTrue(store.loadCancellations().isEmpty());
@@ -190,7 +192,7 @@ public class UpdateStateRecoveryTest {
     }
 
     @Test
-    public void legacyCancellationIsRecovered() throws IOException {
+    public void legacyCancellationIsRecovered() throws Exception {
         UpdateStateStore store = new UpdateStateStore(context);
         UUID id = UUID.randomUUID();
         String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
@@ -203,6 +205,7 @@ public class UpdateStateRecoveryTest {
                 .putString("cancel_sha256", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
                 .putLong("cancel_size", 3L).commit();
             UpdateStateRecovery.reconcileStored(context);
+            awaitCancellations(store);
             assertFalse(file.exists());
             assertTrue(store.loadCancellations().isEmpty());
         } finally {
@@ -210,6 +213,11 @@ public class UpdateStateRecoveryTest {
             //noinspection ResultOfMethodCallIgnored
             file.delete();
         }
+    }
+
+    private static void awaitCancellations(UpdateStateStore store) throws InterruptedException {
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(10);
+        while (!store.loadCancellations().isEmpty() && System.nanoTime() < deadline) Thread.sleep(10L);
     }
 
     @Test
