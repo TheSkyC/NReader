@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -38,6 +40,10 @@ public final class UpdateCheckWorker extends Worker {
     private static final long INTERVAL_HOURS = 24L;
     private final BooleanSupplier sourceEnabled;
     private final BooleanSupplier reconcileDownload;
+    private final BooleanSupplier shouldCheck;
+    private final Supplier<String> releaseUrl;
+    private final Object lifecycleLock = new Object();
+    @Nullable private volatile Call activeCall;
     private final OkHttpClient client = new OkHttpClient.Builder()
         .connectTimeout(15L, TimeUnit.SECONDS)
         .readTimeout(60L, TimeUnit.SECONDS)
@@ -52,9 +58,18 @@ public final class UpdateCheckWorker extends Worker {
 
     UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
                       @NonNull BooleanSupplier reconcileDownload) {
+        this(context, parameters, sourceEnabled, reconcileDownload,
+            () -> Global.shouldCheckForUpdates(context), UpdateCheckWorker::releaseApiUrl);
+    }
+
+    UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
+                      @NonNull BooleanSupplier reconcileDownload, @NonNull BooleanSupplier shouldCheck,
+                      @NonNull Supplier<String> releaseUrl) {
         super(context, parameters);
         this.sourceEnabled = sourceEnabled;
         this.reconcileDownload = reconcileDownload;
+        this.shouldCheck = shouldCheck;
+        this.releaseUrl = releaseUrl;
     }
 
     public static void schedule(@NonNull Context context) {
@@ -92,26 +107,31 @@ public final class UpdateCheckWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
+        if (isStopped()) return Result.retry();
         if (!sourceEnabled.getAsBoolean()) return Result.success();
         if (!reconcileDownload.getAsBoolean()) return Result.retry();
         UpdateStateStore stateStore = new UpdateStateStore(context);
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(context);
-        publishReadyIfUnchanged(context, stateStore, metadataStore, stateStore.revision());
-        if (!Global.shouldCheckForUpdates(context)) return Result.success();
+        long readyRevision = stateStore.revision();
+        stateStore.runIfUnchanged(readyRevision,
+            () -> runIfActive(() -> publishReadyIfUnchanged(context, stateStore, metadataStore, readyRevision)));
+        if (isStopped()) return Result.retry();
+        if (!shouldCheck.getAsBoolean()) return Result.success();
         long revision = stateStore.revision();
         long[] generation = {-1L};
         if (!stateStore.runIfCheckableAndUnchanged(revision, () -> {
-            metadataStore.markAttempt(System.currentTimeMillis());
-            generation[0] = UpdateCheckCoordinator.begin();
+            generation[0] = UpdateCheckCoordinator.beginIfActive(this::runIfActive,
+                () -> metadataStore.markAttempt(System.currentTimeMillis()));
         })) return Result.success();
+        if (generation[0] < 0L) return Result.retry();
         try {
-            String json = fetchReleaseJson(metadataStore, false, releaseApiUrl(), generation[0]);
+            String json = fetchReleaseJson(metadataStore, false, releaseUrl.get(), generation[0]);
             VersionChecker.GitHubRelease release;
             try (JsonReader reader = new JsonReader(new StringReader(json))) {
                 release = VersionChecker.parseVersionJson(reader, Global.isEnableBeta(), BuildConfig.FLAVOR);
             }
             if (release == null) {
-                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null);
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null, this::runIfActive);
                 return Result.success();
             }
             if (release.manifestUrl != null) {
@@ -119,16 +139,37 @@ public final class UpdateCheckWorker extends Worker {
                 if (manifestRelease != null) release = manifestRelease;
             }
             if (release.downloadUrl == null || !release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
-                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null);
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null, this::runIfActive);
                 return Result.success();
             }
-            completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], release);
+            completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], release, this::runIfActive);
             return Result.success();
         } catch (SupersededCheckException exception) {
             return Result.success();
         } catch (IOException | RuntimeException exception) {
+            if (isStopped()) return Result.retry();
             return UpdateCheckCoordinator.isCurrent(generation[0]) ? Result.retry() : Result.success();
         }
+    }
+
+    @Override
+    public void onStopped() {
+        Call call = activeCall;
+        if (call != null) call.cancel();
+        // Wait for a state or cache publication that started before the stop.
+        synchronized (lifecycleLock) { }
+    }
+
+    private boolean runIfActive(@NonNull Runnable action) {
+        synchronized (lifecycleLock) {
+            if (isStopped()) return false;
+            action.run();
+            return true;
+        }
+    }
+
+    private interface CompletionGate {
+        boolean run(@NonNull Runnable action);
     }
 
     static boolean completeCheckIfUnchanged(
@@ -139,11 +180,21 @@ public final class UpdateCheckWorker extends Worker {
         long generation,
         @Nullable VersionChecker.GitHubRelease selected
     ) {
+        return completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation, selected, action -> {
+            action.run();
+            return true;
+        });
+    }
+
+    private static boolean completeCheckIfUnchanged(
+        @NonNull Context context, @NonNull UpdateStateStore stateStore, @NonNull UpdateMetadataStore metadataStore,
+        long revision, long generation, @Nullable VersionChecker.GitHubRelease selected, @NonNull CompletionGate gate
+    ) {
         boolean[] completed = {false};
-        stateStore.runIfCheckableAndUnchanged(revision, () -> completed[0] = UpdateCheckCoordinator.runIfCurrent(generation, () -> {
+        stateStore.runIfCheckableAndUnchanged(revision, () -> UpdateCheckCoordinator.runIfCurrent(generation, () -> completed[0] = gate.run(() -> {
             if (selected != null) publishIfUnchanged(context, stateStore, metadataStore, revision, selected);
             metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-        }));
+        })));
         return completed[0];
     }
 
@@ -205,7 +256,11 @@ public final class UpdateCheckWorker extends Worker {
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (!unconditional && cache.etag != null) builder.header("If-None-Match", cache.etag);
-        try (Response response = UpdateRequestClient.newCall(client, builder.build()).execute()) {
+        Call call = UpdateRequestClient.newCall(client, builder.build());
+        activeCall = call;
+        if (isStopped()) call.cancel();
+        try (Response response = call.execute()) {
+            if (isStopped()) throw new IOException("Update check stopped");
             if (!UpdateCheckCoordinator.isCurrent(generation)) throw new SupersededCheckException();
             if (response.code() == 304 && unconditional) throw new IOException("Unexpected HTTP 304");
             String cached = response.code() == 304 && cache.etag != null ? cache.body : null;
@@ -220,11 +275,16 @@ public final class UpdateCheckWorker extends Worker {
                 String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
                 VersionChecker.parseReleaseList(body, Global.isEnableBeta());
                 String etag = response.header("ETag");
-                if (!UpdateCheckCoordinator.runIfCurrent(generation, () -> metadataStore.save(body, etag))) {
+                boolean[] saved = {false};
+                if (!UpdateCheckCoordinator.runIfCurrent(generation,
+                    () -> saved[0] = runIfActive(() -> metadataStore.save(body, etag)))) {
                     throw new SupersededCheckException();
                 }
+                if (!saved[0]) throw new IOException("Update check stopped");
                 return body;
             }
+        } finally {
+            if (activeCall == call) activeCall = null;
         }
         return fetchReleaseJson(metadataStore, true, url, generation);
     }
@@ -238,11 +298,14 @@ public final class UpdateCheckWorker extends Worker {
         if (apiRelease.manifestUrl == null || !VersionChecker.isAllowedUpdateUrl(apiRelease.manifestUrl)) {
             return null;
         }
-        try (Response response = UpdateRequestClient.newCall(client, new Request.Builder()
+        Call call = UpdateRequestClient.newCall(client, new Request.Builder()
             .url(apiRelease.manifestUrl)
             .header("Accept", "application/json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
-            .build()).execute()) {
+            .build());
+        activeCall = call;
+        if (isStopped()) call.cancel();
+        try (Response response = call.execute()) {
             if (!response.isSuccessful() || response.body() == null) return null;
             try (JsonReader reader = new JsonReader(new StringReader(
                 UpdateResponseReader.read(response.body(), UpdateResponseReader.MANIFEST_LIMIT)
@@ -256,6 +319,8 @@ public final class UpdateCheckWorker extends Worker {
             } catch (IOException | RuntimeException exception) {
                 return null;
             }
+        } finally {
+            if (activeCall == call) activeCall = null;
         }
     }
 

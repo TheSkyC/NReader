@@ -12,11 +12,13 @@ import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.Data;
 import androidx.work.ListenableWorker;
+import androidx.work.WorkInfo;
 import androidx.work.WorkerFactory;
 import androidx.work.WorkerParameters;
 import androidx.work.impl.utils.taskexecutor.WorkManagerTaskExecutor;
 
 import com.google.common.util.concurrent.Futures;
+import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -47,6 +49,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import kotlin.coroutines.EmptyCoroutineContext;
 
@@ -179,6 +183,158 @@ public class UpdateCheckConcurrencyTest {
         }
     }
 
+    @Test
+    public void stoppedWorkerCancelsRequestBeforeResponseHeaders() throws Exception {
+        stoppedWorkerCancelsRequest(false);
+    }
+
+    @Test
+    public void stoppedWorkerCancelsRequestWhileReadingBody() throws Exception {
+        stoppedWorkerCancelsRequest(true);
+    }
+
+    private void stoppedWorkerCancelsRequest(boolean sendPartialBody) throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.save("[]", "initial");
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch requestStarted = new CountDownLatch(1);
+        CountDownLatch releaseServer = new CountDownLatch(1);
+        try (ServerSocket server = server()) {
+            Future<?> serverTask = executor.submit(() -> {
+                try (Socket socket = server.accept()) {
+                    readRequest(socket);
+                    if (sendPartialBody) {
+                        socket.getOutputStream().write(("HTTP/1.1 200 OK\r\nETag: new-tag\r\n"
+                            + "Content-Length: 2\r\nConnection: close\r\n\r\n[").getBytes(StandardCharsets.US_ASCII));
+                        socket.getOutputStream().flush();
+                    }
+                    requestStarted.countDown();
+                    if (!releaseServer.await(10, TimeUnit.SECONDS)) throw new IOException("Timed out waiting to close server");
+                }
+                return null;
+            });
+            String url = "http://127.0.0.1:" + server.getLocalPort() + "/releases";
+            UpdateCheckWorker worker = worker(context, url);
+            Future<ListenableWorker.Result> execution = executor.submit(worker::doWork);
+            assertTrue(requestStarted.await(5, TimeUnit.SECONDS));
+            worker.stop(WorkInfo.STOP_REASON_PREEMPT);
+            assertEquals(ListenableWorker.Result.retry(), execution.get(5, TimeUnit.SECONDS));
+            assertEquals("[]", metadata.getBody());
+            assertEquals("initial", metadata.getEtag());
+            assertEquals(0L, metadata.getLastSuccessfulCheck());
+            assertEquals(UpdatePhase.IDLE, state.load().getPhase());
+            releaseServer.countDown();
+            serverTask.get(5, TimeUnit.SECONDS);
+        } finally {
+            releaseServer.countDown();
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+
+    @Test
+    public void stoppedWorkerCancelsDelayedManifestWithoutPublishing() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch manifestStarted = new CountDownLatch(1);
+        CountDownLatch releaseServer = new CountDownLatch(1);
+        try (ServerSocket server = server()) {
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            String release = "[{\"tag_name\":\"99.0.0\",\"assets\":["
+                + "{\"name\":\"NReader-99.0.0-" + BuildConfig.FLAVOR + "-release.apk\","
+                + "\"browser_download_url\":\"https://example.invalid/update.apk\","
+                + "\"digest\":\"0000000000000000000000000000000000000000000000000000000000000000\"},"
+                + "{\"name\":\"nreader-update.json\",\"browser_download_url\":\"" + base + "/manifest\"}]}]";
+            Future<?> serverTask = executor.submit(() -> {
+                try (Socket list = server.accept()) {
+                    readRequest(list);
+                    writeResponse(list, release, "list-tag");
+                }
+                try (Socket manifest = server.accept()) {
+                    readRequest(manifest);
+                    manifestStarted.countDown();
+                    if (!releaseServer.await(10, TimeUnit.SECONDS)) throw new IOException("Timed out waiting to close server");
+                }
+                return null;
+            });
+            UpdateCheckWorker worker = worker(context, base + "/releases");
+            Future<ListenableWorker.Result> execution = executor.submit(worker::doWork);
+            assertTrue(manifestStarted.await(5, TimeUnit.SECONDS));
+            assertEquals("list-tag", metadata.getEtag());
+            worker.stop(WorkInfo.STOP_REASON_PREEMPT);
+            assertEquals(ListenableWorker.Result.retry(), execution.get(5, TimeUnit.SECONDS));
+            assertEquals(release, metadata.getBody());
+            assertEquals(0L, metadata.getLastSuccessfulCheck());
+            assertEquals(UpdatePhase.IDLE, state.load().getPhase());
+            releaseServer.countDown();
+            serverTask.get(5, TimeUnit.SECONDS);
+        } finally {
+            releaseServer.countDown();
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+
+    @Test
+    public void workerStoppedWhileWaitingToStartDoesNotSupersedeExistingCheck() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch coordinatorHeld = new CountDownLatch(1);
+        CountDownLatch releaseCoordinator = new CountDownLatch(1);
+        CountDownLatch checkReached = new CountDownLatch(1);
+        AtomicReference<Thread> executionThread = new AtomicReference<>();
+        long previous = UpdateCheckCoordinator.begin();
+        try {
+            Future<?> holding = executor.submit(() -> UpdateCheckCoordinator.runIfCurrent(previous, () -> {
+                coordinatorHeld.countDown();
+                try {
+                    if (!releaseCoordinator.await(10, TimeUnit.SECONDS)) throw new AssertionError("Coordinator timeout");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(exception);
+                }
+            }));
+            assertTrue(coordinatorHeld.await(5, TimeUnit.SECONDS));
+            UpdateCheckWorker worker = worker(context, "http://127.0.0.1:1/releases", () -> {
+                checkReached.countDown();
+                return true;
+            });
+            Future<ListenableWorker.Result> execution = executor.submit(() -> {
+                executionThread.set(Thread.currentThread());
+                return worker.doWork();
+            });
+            assertTrue(checkReached.await(5, TimeUnit.SECONDS));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (executionThread.get().getState() != Thread.State.BLOCKED && System.nanoTime() < deadline) Thread.yield();
+            assertEquals(Thread.State.BLOCKED, executionThread.get().getState());
+            worker.stop(WorkInfo.STOP_REASON_PREEMPT);
+            releaseCoordinator.countDown();
+            assertEquals(ListenableWorker.Result.retry(), execution.get(5, TimeUnit.SECONDS));
+            holding.get(5, TimeUnit.SECONDS);
+            assertTrue(UpdateCheckCoordinator.isCurrent(previous));
+            assertEquals(0L, metadata.getLastAttempt());
+        } finally {
+            releaseCoordinator.countDown();
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+
     private static ServerSocket server() throws IOException {
         ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
         server.setSoTimeout(10000);
@@ -225,12 +381,21 @@ public class UpdateCheckConcurrencyTest {
     }
 
     private static UpdateCheckWorker worker(Context context) {
+        return worker(context, null);
+    }
+
+    private static UpdateCheckWorker worker(Context context, String url) {
+        return worker(context, url, () -> true);
+    }
+
+    private static UpdateCheckWorker worker(Context context, String url, BooleanSupplier shouldCheck) {
         Executor direct = Runnable::run;
         WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
             new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
             new WorkManagerTaskExecutor(direct), new WorkerFactory() {
                 @Override public ListenableWorker createWorker(Context app, String name, WorkerParameters params) { return null; }
             }, (app, id, data) -> Futures.immediateFuture(null), (app, id, info) -> Futures.immediateFuture(null));
-        return new UpdateCheckWorker(context, parameters, () -> true, () -> true);
+        if (url == null) return new UpdateCheckWorker(context, parameters, () -> true, () -> true);
+        return new UpdateCheckWorker(context, parameters, () -> true, () -> true, shouldCheck, () -> url);
     }
 }

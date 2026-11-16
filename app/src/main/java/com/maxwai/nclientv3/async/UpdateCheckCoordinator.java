@@ -15,6 +15,21 @@ final class UpdateCheckCoordinator {
         }
     }
 
+    interface StartGate {
+        boolean run(@NonNull Runnable action);
+    }
+
+    static long beginIfActive(@NonNull StartGate gate, @NonNull Runnable onStart) {
+        synchronized (LOCK) {
+            long[] started = {-1L};
+            gate.run(() -> {
+                onStart.run();
+                started[0] = ++generation;
+            });
+            return started[0];
+        }
+    }
+
     static boolean runIfCurrent(long expected, @NonNull Runnable action) {
         synchronized (LOCK) {
             if (expected != generation) return false;
