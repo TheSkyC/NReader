@@ -274,6 +274,7 @@
                 android:layout_marginTop="24dp"
                 android:minHeight="52dp"
                 android:text="@string/check_for_updates"
+                android:textAllCaps="false"
                 app:cornerRadius="18dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -284,6 +285,7 @@
                 android:layout_marginTop="8dp"
                 android:minHeight="52dp"
                 android:text="@string/check_for_updates"
+                android:textAllCaps="false"
                 app:cornerRadius="18dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -294,6 +296,7 @@
                 android:layout_marginTop="4dp"
                 android:minHeight="48dp"
                 android:text="@string/update_skip_version"
+                android:textAllCaps="false"
                 android:visibility="gone"
                 app:cornerRadius="18dp" />
         </LinearLayout>
