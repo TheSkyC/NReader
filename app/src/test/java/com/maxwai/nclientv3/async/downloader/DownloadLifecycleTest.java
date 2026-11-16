@@ -24,6 +24,7 @@ import org.robolectric.annotation.GraphicsMode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +78,30 @@ public class DownloadLifecycleTest {
         assertEquals(GalleryDownloaderV2.Status.FAILED, downloader.getStatus());
         assertEquals(DownloadFailure.RATE_LIMIT, downloader.getFailure());
         assertFalse(downloader.canBeFetched());
+    }
+
+    @Test
+    public void longUnicodeTitlesUseSafeFolderNamesWithoutLosingDisplayTitle() throws Exception {
+        String title = "MistakeR ~Jimi de Kyonyuu na Osananajimi o Ero Gal na Kanojo ni Shite Tsuide ni Class no Bijin Gal made Get Shita node Hajimaru Yume no Harem Seikatsu!?~ | MistakeR ~把土气又巨乳的青梅变成色情辣妹女友就连同班的美人辣妹也搞到手了由此开始梦幻的后宫性生活！？～";
+        File originalRoot = Global.DOWNLOADFOLDER;
+        File shortRoot = new File(System.getProperty("java.io.tmpdir"), "nreader-d");
+        Global.DOWNLOADFOLDER = shortRoot;
+        try {
+            Gallery gallery = new Gallery(context, "{\"id\":679181,\"num_pages\":1,\"title\":{\"pretty\":\""
+                + title.replace("\\", "\\\\").replace("\"", "\\\"") + "\"},"
+                + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+                + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+            GalleryDownloaderV2 downloader = new GalleryDownloaderV2(context, gallery, 0, 0);
+
+            downloader.initDownload();
+
+            assertEquals(title, downloader.getTitle());
+            assertTrue(StandardCharsets.UTF_8.encode(downloader.getPathTitle()).remaining() <= 200);
+            assertTrue(downloader.getFolder().isDirectory());
+        } finally {
+            Global.recursiveDelete(shortRoot);
+            Global.DOWNLOADFOLDER = originalRoot;
+        }
     }
 
     @Test

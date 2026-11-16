@@ -60,8 +60,8 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         if (o1 == o2) return 0;
         boolean b1 = o1 instanceof LocalGallery;
         boolean b2 = o2 instanceof LocalGallery;
-        String s1 = b1 ? ((LocalGallery) o1).getTitle() : ((GalleryDownloaderV2) o1).getPathTitle();
-        String s2 = b2 ? ((LocalGallery) o2).getTitle() : ((GalleryDownloaderV2) o2).getPathTitle();
+        String s1 = b1 ? ((LocalGallery) o1).getTitle() : ((GalleryDownloaderV2) o1).getTitle();
+        String s2 = b2 ? ((LocalGallery) o2).getTitle() : ((GalleryDownloaderV2) o2).getTitle();
         return s1.compareTo(s2);
     };
     private final Comparator<Object> comparatorBySize = (o1, o2) -> {
@@ -236,7 +236,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         }
 
         for (GalleryDownloaderV2 gall : galleryDownloaders) {
-            if (gall != null && gall.getPathTitle().toLowerCase(Locale.US).contains(lastQuery))
+            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(lastQuery))
                 hashMap.put(gall.getTruePathTitle(), gall);
         }
 

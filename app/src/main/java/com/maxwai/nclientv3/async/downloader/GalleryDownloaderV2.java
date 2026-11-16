@@ -65,6 +65,7 @@ public class GalleryDownloaderV2 {
     private boolean restartRequested;
     private String retryAfter;
     private String title;
+    private String pathTitle;
     private Uri thumbnail;
     private int start = -1, end = -1;
     private Gallery gallery;
@@ -86,7 +87,8 @@ public class GalleryDownloaderV2 {
         this.context = context.getApplicationContext();
         this.id = id;
         this.thumbnail = thumbnail;
-        this.title = Gallery.getPathTitle(title, context.getString(R.string.download_gallery));
+        this.title = title == null ? context.getString(R.string.download_gallery) : title;
+        this.pathTitle = Gallery.getPathTitle(this.title, context.getString(R.string.download_gallery));
     }
 
     public GalleryDownloaderV2(Context context, Gallery gallery, int start, int end) {
@@ -150,7 +152,8 @@ public class GalleryDownloaderV2 {
     private void setGallery(Gallery gallery) {
         synchronized (lifecycleLock) {
             this.gallery = gallery;
-            title = gallery.getPathTitle();
+            title = gallery.getTitle();
+            pathTitle = gallery.getPathTitle();
             thumbnail = gallery.getThumbnail();
             if (start == -1) start = 0;
             if (end == -1) end = gallery.getPageCount() - 1;
@@ -370,7 +373,7 @@ public class GalleryDownloaderV2 {
 
     @NonNull
     public String getPathTitle() {
-        return title;
+        return pathTitle;
     }
 
     @NonNull
@@ -772,7 +775,7 @@ public class GalleryDownloaderV2 {
             if (!target.startsWith(root) || !repairFolder.isDirectory()
                 || !new File(repairFolder, "." + id).isFile()) throw new IOException("Repair target is unavailable");
             folder = repairFolder;
-        } else folder = findFolder(Global.DOWNLOADFOLDER, title, id);
+        } else folder = findFolder(Global.DOWNLOADFOLDER, pathTitle, id);
         if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Unable to create download folder");
         writeNoMedia();
         createIdFile();

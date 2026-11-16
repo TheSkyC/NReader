@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Gallery extends GenericGallery {
+    private static final int MAX_PATH_COMPONENT_BYTES = 200;
     public static final Creator<Gallery> CREATOR = new Creator<>() {
         @Override
         public Gallery createFromParcel(Parcel in) {
@@ -115,7 +116,20 @@ public class Gallery extends GenericGallery {
         String pathTitle = title.replace('/', ' ').replaceAll("[/|\\\\*\"'?:<>]", " ");
         while (pathTitle.contains("  "))
             pathTitle = pathTitle.replace("  ", " ");
-        return pathTitle.trim();
+        pathTitle = pathTitle.trim();
+        if (pathTitle.isEmpty()) return defaultValue;
+
+        StringBuilder limited = new StringBuilder(pathTitle.length());
+        int bytes = 0;
+        for (int offset = 0; offset < pathTitle.length();) {
+            int codePoint = pathTitle.codePointAt(offset);
+            int codePointBytes = codePoint <= 0x7f ? 1 : codePoint <= 0x7ff ? 2 : codePoint <= 0xffff ? 3 : 4;
+            if (bytes + codePointBytes > MAX_PATH_COMPONENT_BYTES) break;
+            limited.appendCodePoint(codePoint);
+            bytes += codePointBytes;
+            offset += Character.charCount(codePoint);
+        }
+        return limited.toString().trim();
     }
 
     public static String getPathTitle(@Nullable String title) {
