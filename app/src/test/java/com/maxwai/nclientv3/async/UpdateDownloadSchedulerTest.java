@@ -10,8 +10,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.work.Configuration;
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ListenableWorker;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkerFactory;
@@ -297,6 +300,71 @@ public class UpdateDownloadSchedulerTest {
         result.complete();
         assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
         assertEquals(record.getId(), store.loadDownloadRecord().getId());
+    }
+
+    @Test
+    public void cancellationWaitsForPendingEnqueueBeforeCancelingSystemWork() throws Exception {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        try {
+            UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+            store.recordCancellation(record);
+            store.save(UpdateState.available(record.getVersion(), 2L));
+            UpdateDownloadScheduler.cancelNow(context, record);
+            assertEquals(1, store.loadCancellations().size());
+
+            OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(UpdateDownloadWorker.class)
+                .setId(record.getId())
+                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .build();
+            manager.enqueue(work).getResult().get(5L, TimeUnit.SECONDS);
+            result.complete();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (!store.loadCancellations().isEmpty() && System.nanoTime() < deadline) Thread.sleep(10L);
+            assertTrue(store.loadCancellations().isEmpty());
+            assertEquals(WorkInfo.State.CANCELLED, manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS).getState());
+            assertEquals(UpdatePhase.AVAILABLE, store.load().getPhase());
+        } finally {
+            result.complete();
+            manager.cancelWorkById(record.getId()).getResult().get(5L, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void failedPendingEnqueueStillCompletesCancellation() throws Exception {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        try {
+            UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+            store.recordCancellation(record);
+            store.save(UpdateState.available(record.getVersion(), 2L));
+            UpdateDownloadScheduler.cancelNow(context, record);
+            assertEquals(1, store.loadCancellations().size());
+            result.fail();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (!store.loadCancellations().isEmpty() && System.nanoTime() < deadline) Thread.sleep(10L);
+            assertTrue(store.loadCancellations().isEmpty());
+            assertEquals(UpdatePhase.AVAILABLE, store.load().getPhase());
+        } finally {
+            result.fail();
+        }
+    }
+
+    @Test
+    public void reconciliationDoesNotEnqueueAgainWhileConfirmationIsPending() throws Exception {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        try {
+            UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+            assertTrue(UpdateDownloadScheduler.reconcileNow(context, id -> Futures.immediateFuture(null)));
+            assertEquals(null, manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS));
+            assertEquals(record.getId(), store.loadDownloadRecord().getId());
+        } finally {
+            result.complete();
+        }
     }
 
     @Test

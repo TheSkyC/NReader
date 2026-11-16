@@ -19,7 +19,9 @@ import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +33,7 @@ import java.util.function.Function;
 /** Coordinates persisted update attempts with WorkManager without blocking the UI. */
 final class UpdateDownloadScheduler {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final Set<UUID> PENDING_ENQUEUES = ConcurrentHashMap.newKeySet();
     private static final String WORK_PREFIX = "nreader_update_download_";
 
     private UpdateDownloadScheduler() {}
@@ -109,15 +112,18 @@ final class UpdateDownloadScheduler {
         Context app = context.getApplicationContext();
         UUID id = record.getId();
         UpdateDownloadWorker.cancel(id);
-        EXECUTOR.execute(() -> {
-            try {
-                WorkManager.getInstance(app).cancelWorkById(id).getResult().get(10L, TimeUnit.SECONDS);
-                cleanupCancellation(app, record);
-            } catch (Exception exception) {
-                if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
-                LogUtility.w("Unable to cancel update work: " + exception.getClass().getSimpleName());
-            }
-        });
+        EXECUTOR.execute(() -> cancelNow(app, record));
+    }
+
+    static void cancelNow(@NonNull Context context, @NonNull UpdateDownloadRecord record) {
+        if (PENDING_ENQUEUES.contains(record.getId())) return;
+        try {
+            WorkManager.getInstance(context).cancelWorkById(record.getId()).getResult().get(10L, TimeUnit.SECONDS);
+            cleanupCancellation(context, record);
+        } catch (Exception exception) {
+            if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
+            LogUtility.w("Unable to cancel update work: " + exception.getClass().getSimpleName());
+        }
     }
 
     static void cleanupCancellation(@NonNull Context context, @NonNull UpdateDownloadRecord fallback) {
@@ -136,6 +142,7 @@ final class UpdateDownloadScheduler {
     }
 
     private static void enqueueNow(Context context, UUID id) {
+        if (PENDING_ENQUEUES.contains(id)) return;
         UpdateStateStore store = new UpdateStateStore(context);
         if (!store.runIfScheduledDownload(id, () -> {})) return;
         WorkManager workManager;
@@ -180,6 +187,7 @@ final class UpdateDownloadScheduler {
     private static void observePendingEnqueue(@NonNull Context context, @NonNull UUID id,
                                               @NonNull ListenableFuture<?> result, @NonNull Executor executor) {
         Context app = context.getApplicationContext();
+        PENDING_ENQUEUES.add(id);
         result.addListener(() -> {
             try {
                 result.get();
@@ -187,6 +195,14 @@ final class UpdateDownloadScheduler {
                 if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
                 failIfCurrent(app, id, true);
                 LogUtility.w("Unable to enqueue update work: " + exception.getClass().getSimpleName());
+            } finally {
+                PENDING_ENQUEUES.remove(id);
+                for (UpdateDownloadRecord cancellation : new UpdateStateStore(app).loadCancellations()) {
+                    if (id.equals(cancellation.getId())) {
+                        cancel(app, cancellation);
+                        break;
+                    }
+                }
             }
         }, executor);
     }
