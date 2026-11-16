@@ -132,6 +132,30 @@ public class UpdateCheckWorkerPublicationTest {
     }
 
     @Test
+    public void supersededBackgroundCheckDoesNotRefreshSuccessTime() {
+        metadata.markSuccessfulCheck(123L);
+        long revision = state.revision();
+        state.save(UpdateState.checking(1L));
+
+        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, null));
+        assertFalse(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, revision, release("2.0.0")));
+        assertEquals(123L, metadata.getLastSuccessfulCheck());
+        assertEquals(UpdatePhase.CHECKING, state.load().getPhase());
+    }
+
+    @Test
+    public void currentBackgroundCheckRecordsSuccessWithOrWithoutRelease() {
+        metadata.markSuccessfulCheck(0L);
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), null));
+        assertTrue(metadata.getLastSuccessfulCheck() > 0L);
+
+        metadata.markSuccessfulCheck(0L);
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, state, metadata, state.revision(), release("2.0.0")));
+        assertTrue(metadata.getLastSuccessfulCheck() > 0L);
+        assertEquals(UpdatePhase.AVAILABLE, state.load().getPhase());
+    }
+
+    @Test
     @Config(sdk = 33)
     public void readyUpdateRestoresReleaseNotesWithoutChangingInstallAction() throws Exception {
         File apk = File.createTempFile("update-ready-", ".apk", context.getCacheDir());

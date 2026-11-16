@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.JsonReader;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
@@ -108,7 +109,7 @@ public final class UpdateCheckWorker extends Worker {
                 release = VersionChecker.parseVersionJson(reader, Global.isEnableBeta(), BuildConfig.FLAVOR);
             }
             if (release == null) {
-                metadataStore.markSuccessfulCheck(System.currentTimeMillis());
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, null);
                 return Result.success();
             }
             if (release.manifestUrl != null) {
@@ -116,15 +117,27 @@ public final class UpdateCheckWorker extends Worker {
                 if (manifestRelease != null) release = manifestRelease;
             }
             if (release.downloadUrl == null || !release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
-                metadataStore.markSuccessfulCheck(System.currentTimeMillis());
+                completeCheckIfUnchanged(context, stateStore, metadataStore, revision, null);
                 return Result.success();
             }
-            metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-            publishIfUnchanged(context, stateStore, metadataStore, revision, release);
+            completeCheckIfUnchanged(context, stateStore, metadataStore, revision, release);
             return Result.success();
         } catch (IOException | RuntimeException exception) {
             return Result.retry();
         }
+    }
+
+    static boolean completeCheckIfUnchanged(
+        @NonNull Context context,
+        @NonNull UpdateStateStore stateStore,
+        @NonNull UpdateMetadataStore metadataStore,
+        long revision,
+        @Nullable VersionChecker.GitHubRelease selected
+    ) {
+        return stateStore.runIfCheckableAndUnchanged(revision, () -> {
+            if (selected != null) publishIfUnchanged(context, stateStore, metadataStore, revision, selected);
+            metadataStore.markSuccessfulCheck(System.currentTimeMillis());
+        });
     }
 
     static boolean publishReadyIfUnchanged(@NonNull Context context, @NonNull UpdateStateStore stateStore,
