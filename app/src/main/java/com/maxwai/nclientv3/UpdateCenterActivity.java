@@ -117,9 +117,12 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         super.onResume();
         currentState = new UpdateStateStore(this).load();
         if (checker == null || !checker.hasActiveDownload()) {
-            currentState = UpdateStateRecovery.reconcile(this, currentState);
+            UpdateState recovered = UpdateStateRecovery.reconcile(this, currentState);
+            if (recovered != currentState) {
+                new UpdateStateStore(this).save(recovered);
+                currentState = recovered;
+            }
         }
-        new UpdateStateStore(this).save(currentState);
         render(currentState);
     }
 

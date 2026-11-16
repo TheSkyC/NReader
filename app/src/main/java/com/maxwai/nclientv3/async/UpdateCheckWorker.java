@@ -17,6 +17,7 @@ import androidx.work.WorkerParameters;
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
+import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.settings.Global;
 
 import java.io.IOException;
@@ -80,8 +81,10 @@ public final class UpdateCheckWorker extends Worker {
         if (!Global.shouldCheckForUpdates(context)) return Result.success();
         UpdateStateStore stateStore = new UpdateStateStore(context);
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(context);
+        long revision = stateStore.revision();
+        UpdatePhase phase = stateStore.load().getPhase();
+        if (phase != UpdatePhase.IDLE && phase != UpdatePhase.AVAILABLE) return Result.success();
         metadataStore.markAttempt(System.currentTimeMillis());
-        stateStore.save(UpdateState.checking(System.currentTimeMillis()));
         try {
             String json = fetchReleaseJson(metadataStore);
             VersionChecker.GitHubRelease release;
@@ -90,7 +93,6 @@ public final class UpdateCheckWorker extends Worker {
             }
             if (release == null) {
                 metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-                stateStore.save(UpdateState.idle(System.currentTimeMillis()));
                 return Result.success();
             }
             if (release.manifestUrl != null) {
@@ -99,27 +101,39 @@ public final class UpdateCheckWorker extends Worker {
             }
             if (release.downloadUrl == null || !release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
                 metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-                stateStore.save(UpdateState.idle(System.currentTimeMillis()));
                 return Result.success();
             }
-            metadataStore.saveSelectedRelease(
-                release.versionCode,
-                release.releaseVersionCode,
-                release.downloadUrl,
-                release.body,
-                release.beta,
-                release.sha256,
-                release.sizeBytes
-            );
             metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-            UpdateState available = UpdateState.available(release.versionCode, System.currentTimeMillis());
-            stateStore.save(available);
-            UpdateNotification.publish(context, available);
+            publishIfUnchanged(context, stateStore, metadataStore, revision, release);
             return Result.success();
         } catch (IOException | RuntimeException exception) {
-            stateStore.save(UpdateState.error(null, null, "background_metadata", System.currentTimeMillis()));
             return Result.retry();
         }
+    }
+
+    static boolean publishIfUnchanged(
+        @NonNull Context context,
+        @NonNull UpdateStateStore stateStore,
+        @NonNull UpdateMetadataStore metadataStore,
+        long revision,
+        @NonNull VersionChecker.GitHubRelease selected
+    ) {
+        return stateStore.runIfCheckableAndUnchanged(revision, () -> {
+            UpdateState available = UpdateState.available(selected.versionCode, System.currentTimeMillis());
+            if (stateStore.load().getPhase() == UpdatePhase.IDLE) {
+                metadataStore.saveSelectedRelease(
+                    selected.versionCode,
+                    selected.releaseVersionCode,
+                    selected.downloadUrl,
+                    selected.body,
+                    selected.beta,
+                    selected.sha256,
+                    selected.sizeBytes
+                );
+                stateStore.save(available);
+            }
+            UpdateNotification.publish(context, available);
+        });
     }
 
     @NonNull
