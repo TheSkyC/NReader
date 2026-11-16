@@ -270,6 +270,15 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             ? getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME)
             : getString(R.string.update_version_format_short, BuildConfig.VERSION_NAME, state.getVersion()));
         UpdateMetadataStore metadataStore = new UpdateMetadataStore(this);
+        if (state.getVersion() != null && state.getVersion().equals(metadataStore.getSelectedVersion())) {
+            String body = metadataStore.getSelectedBody();
+            notes.setText(body == null || body.trim().isEmpty() ? getString(R.string.update_no_release_notes) : body.trim());
+            channel.setText(getString(R.string.update_release_channel,
+                getString(metadataStore.isSelectedBeta() ? R.string.update_channel_prerelease : R.string.update_channel_stable)));
+        } else if (state.getVersion() != null) {
+            notes.setText(R.string.update_no_release_notes);
+            channel.setText("");
+        }
         long checkedAt = metadataStore.getLastSuccessfulCheck();
         lastChecked.setText(checkedAt > 0L
             ? getString(R.string.update_last_checked_format, DateFormat.getDateTimeInstance().format(new Date(checkedAt)))

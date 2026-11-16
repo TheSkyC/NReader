@@ -29,6 +29,8 @@ import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
+import java.io.File;
+
 @RunWith(RobolectricTestRunner.class)
 public class UpdateCheckWorkerPublicationTest {
     private Context context;
@@ -126,6 +128,47 @@ public class UpdateCheckWorkerPublicationTest {
         assertFalse(UpdateCheckWorker.publishIfUnchanged(context, state, metadata, revision, release("2.0.0")));
         assertEquals(UpdatePhase.DOWNLOADING, state.load().getPhase());
         assertEquals("old-digest", metadata.getSelectedSha256());
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void readyUpdateRestoresReleaseNotesWithoutChangingInstallAction() throws Exception {
+        File apk = File.createTempFile("update-ready-", ".apk", context.getCacheDir());
+        metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/update.apk",
+            "ready notes", false, "0000000000000000000000000000000000000000000000000000000000000000", 42L);
+        state.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 42L, 1L));
+        ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
+        try {
+            TextView notes = controller.get().findViewById(R.id.update_notes);
+            TextView action = controller.get().findViewById(R.id.update_action);
+            assertEquals("ready notes", notes.getText().toString());
+            assertEquals(context.getString(R.string.update_install), action.getText().toString());
+            assertTrue(action.isEnabled());
+        } finally {
+            controller.pause().stop().destroy();
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void readyUpdateDoesNotDisplayNotesFromAnotherRelease() throws Exception {
+        File apk = File.createTempFile("update-ready-", ".apk", context.getCacheDir());
+        metadata.saveSelectedRelease("98.0.0", Integer.MAX_VALUE, "https://example.invalid/update.apk",
+            "other release notes", false, "0000000000000000000000000000000000000000000000000000000000000000", 42L);
+        state.save(UpdateState.readyToInstall("99.0.0", apk.getAbsolutePath(), 42L, 1L));
+        ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
+        try {
+            TextView notes = controller.get().findViewById(R.id.update_notes);
+            TextView channel = controller.get().findViewById(R.id.update_channel);
+            assertEquals(context.getString(R.string.update_no_release_notes), notes.getText().toString());
+            assertEquals("", channel.getText().toString());
+        } finally {
+            controller.pause().stop().destroy();
+            //noinspection ResultOfMethodCallIgnored
+            apk.delete();
+        }
     }
 
     private static VersionChecker.GitHubRelease release(String version) {
