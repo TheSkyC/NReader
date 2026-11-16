@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /** Small durable store for update task recovery. */
 public final class UpdateStateStore {
@@ -16,6 +20,10 @@ public final class UpdateStateStore {
     private static final String TOTAL_BYTES = "total_bytes";
     private static final String ERROR_CODE = "error_code";
     private static final String UPDATED_AT = "updated_at";
+    private static final String TASK_ID = "task_id";
+    private static final String TASK_URL = "task_url";
+    private static final String TASK_SHA256 = "task_sha256";
+    private static final String TASK_SIZE = "task_size";
     // All update components run in the default app process; the revision only
     // guards concurrent work while that process is alive.
     private static final Object LOCK = new Object();
@@ -57,19 +65,72 @@ public final class UpdateStateStore {
 
     public void save(@NonNull UpdateState state) {
         synchronized (LOCK) {
-            SharedPreferences.Editor editor = preferences.edit()
-                .putString(PHASE, state.getPhase().name())
-                .putLong(DOWNLOADED_BYTES, state.getDownloadedBytes())
-                .putLong(TOTAL_BYTES, state.getTotalBytes())
-                .putLong(UPDATED_AT, state.getUpdatedAt());
-            putNullable(editor, VERSION, state.getVersion());
-            putNullable(editor, FILE_PATH, state.getFilePath());
-            putNullable(editor, ERROR_CODE, state.getErrorCode());
-            if (!editor.commit()) {
-                throw new IllegalStateException("Unable to persist update state");
-            }
-            revision++;
+            UpdateState previous = load();
+            boolean sameDownload = previous.getPhase() == UpdatePhase.DOWNLOADING
+                && state.getPhase() == UpdatePhase.DOWNLOADING
+                && Objects.equals(previous.getVersion(), state.getVersion())
+                && Objects.equals(previous.getFilePath(), state.getFilePath());
+            SharedPreferences.Editor editor = stateEditor(state);
+            if (!sameDownload) clearDownloadRecord(editor);
+            commit(editor);
         }
+    }
+
+    public boolean claimDownload(@NonNull UpdateDownloadRecord record, long now) {
+        synchronized (LOCK) {
+            UpdateState current = load();
+            if ((current.getPhase() != UpdatePhase.AVAILABLE && current.getPhase() != UpdatePhase.ERROR)
+                || !record.getVersion().equals(current.getVersion())) return false;
+            UpdateState state = UpdateState.downloading(record.getVersion(), record.getFilePath(), 0L, record.getSize(), now);
+            SharedPreferences.Editor editor = stateEditor(state)
+                .putString(TASK_ID, record.getId().toString())
+                .putString(TASK_URL, record.getUrl())
+                .putString(TASK_SHA256, record.getSha256())
+                .putLong(TASK_SIZE, record.getSize());
+            commit(editor);
+            return true;
+        }
+    }
+
+    @Nullable
+    public UpdateDownloadRecord loadDownloadRecord() {
+        synchronized (LOCK) {
+            UpdateState state = load();
+            if (state.getPhase() != UpdatePhase.DOWNLOADING || state.getVersion() == null || state.getFilePath() == null) return null;
+            String id = preferences.getString(TASK_ID, null);
+            String url = preferences.getString(TASK_URL, null);
+            String sha256 = preferences.getString(TASK_SHA256, null);
+            if (id == null || url == null || sha256 == null || !preferences.contains(TASK_SIZE)) return null;
+            try {
+                UUID uuid = UUID.fromString(id);
+                if (!uuid.toString().equals(id)) return null;
+                return new UpdateDownloadRecord(uuid, state.getVersion(), state.getFilePath(), url, sha256,
+                    preferences.getLong(TASK_SIZE, -1L));
+            } catch (IllegalArgumentException exception) {
+                return null;
+            }
+        }
+    }
+
+    private SharedPreferences.Editor stateEditor(UpdateState state) {
+        SharedPreferences.Editor editor = preferences.edit()
+            .putString(PHASE, state.getPhase().name())
+            .putLong(DOWNLOADED_BYTES, state.getDownloadedBytes())
+            .putLong(TOTAL_BYTES, state.getTotalBytes())
+            .putLong(UPDATED_AT, state.getUpdatedAt());
+        putNullable(editor, VERSION, state.getVersion());
+        putNullable(editor, FILE_PATH, state.getFilePath());
+        putNullable(editor, ERROR_CODE, state.getErrorCode());
+        return editor;
+    }
+
+    private static void clearDownloadRecord(SharedPreferences.Editor editor) {
+        editor.remove(TASK_ID).remove(TASK_URL).remove(TASK_SHA256).remove(TASK_SIZE);
+    }
+
+    private static void commit(SharedPreferences.Editor editor) {
+        if (!editor.commit()) throw new IllegalStateException("Unable to persist update state");
+        revision++;
     }
 
     public void clear() {

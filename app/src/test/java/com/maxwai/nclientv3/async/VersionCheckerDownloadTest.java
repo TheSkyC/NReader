@@ -4,6 +4,8 @@ package com.maxwai.nclientv3.async;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Looper;
@@ -12,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.UpdateCenterActivity;
+import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -171,6 +174,12 @@ public class VersionCheckerDownloadTest {
                     payload.length, Global.UPDATEFOLDER);
                 assertTrue(firstChunk.await(5, TimeUnit.SECONDS));
                 String partialPath = store.load().getFilePath();
+                UpdateDownloadRecord record = store.loadDownloadRecord();
+                assertNotNull(record);
+                assertEquals(partialPath, record.getFilePath());
+                assertTrue(partialPath.contains(record.getId().toString()));
+                assertEquals(digest, record.getSha256());
+                assertEquals(payload.length, record.getSize());
                 long firstDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
                 while (new File(partialPath).length() == 0L && System.nanoTime() < firstDeadline) Thread.sleep(10L);
                 assertTrue(new File(partialPath).length() > 0L);
@@ -186,6 +195,7 @@ public class VersionCheckerDownloadTest {
                 assertTrue(store.load().getDownloadedBytes() > 0L);
                 finish.countDown();
                 awaitPhase(UpdatePhase.READY_TO_INSTALL);
+                assertNull(store.loadDownloadRecord());
                 File downloaded = new File(store.load().getFilePath());
                 assertEquals(digest, UpdateFileVerifier.sha256(downloaded));
                 //noinspection ResultOfMethodCallIgnored
@@ -227,6 +237,7 @@ public class VersionCheckerDownloadTest {
                 assertTrue(UpdateDownloadManager.isActive(path));
                 center.get().findViewById(R.id.update_secondary).performClick();
                 assertEquals(UpdatePhase.AVAILABLE, store.load().getPhase());
+                assertNull(store.loadDownloadRecord());
                 assertFalse(UpdateDownloadManager.isActive(path));
             } finally {
                 if (center != null) center.pause().stop().destroy();

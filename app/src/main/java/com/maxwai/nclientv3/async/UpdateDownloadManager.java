@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.maxwai.nclientv3.BuildConfig;
+import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
@@ -56,9 +57,11 @@ public final class UpdateDownloadManager {
             return;
         }
         String suffix = BuildConfig.FLAVOR.equals("minApi26") ? "-minApi26" : "-minApi28";
-        File apk = new File(folder, "NReader-" + version + suffix + "-" + UUID.randomUUID() + ".apk");
+        UUID taskId = UUID.randomUUID();
+        File apk = new File(folder, "NReader-" + version + suffix + "-" + taskId + ".apk");
         File partial = new File(apk.getAbsolutePath() + ".part");
         String path = partial.getAbsolutePath();
+        UpdateDownloadRecord record = new UpdateDownloadRecord(taskId, version, path, url, sha256, size);
         OkHttpClient client = url.regionMatches(true, 0, "http:", 0, 5)
             ? CLIENT.newBuilder().followRedirects(false).build() : CLIENT;
         Call call = client.newCall(new Request.Builder().url(url)
@@ -67,7 +70,10 @@ public final class UpdateDownloadManager {
             ACTIVE.put(path, call);
             try {
                 UpdateNotification.resetReady(app);
-                publish(app, store, UpdateState.downloading(version, path, 0L, size, System.currentTimeMillis()));
+                if (!store.claimDownload(record, System.currentTimeMillis())) {
+                    throw new IllegalStateException("Unable to claim update download");
+                }
+                UpdateNotification.publish(app, store.load());
             } catch (RuntimeException exception) {
                 ACTIVE.remove(path, call);
                 throw exception;
@@ -89,7 +95,7 @@ public final class UpdateDownloadManager {
                 public void onResponse(@NonNull Call activeCall, @NonNull Response response) {
                     try (Response ignored = response) {
                         if (!store.runIfDownloading(path, () -> {})) return;
-                        if (!UpdateDownloadTransfer.receive(response, partial, size, sha256, (written, total) ->
+                        if (!UpdateDownloadTransfer.receive(response, partial, record.getSize(), record.getSha256(), (written, total) ->
                             store.runIfDownloading(path, () -> publish(app, store,
                                 UpdateState.downloading(version, path, written, total, System.currentTimeMillis()))))) return;
                         store.runIfDownloading(path, () -> {
