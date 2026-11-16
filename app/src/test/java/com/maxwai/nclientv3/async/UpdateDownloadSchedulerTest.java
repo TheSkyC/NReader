@@ -6,14 +6,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.work.Configuration;
+import androidx.work.Data;
+import androidx.work.ListenableWorker;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+import androidx.work.WorkerFactory;
+import androidx.work.WorkerParameters;
+import androidx.work.impl.utils.taskexecutor.WorkManagerTaskExecutor;
 import androidx.work.testing.WorkManagerTestInitHelper;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Futures;
 import com.maxwai.nclientv3.BuildConfig;
+import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
@@ -29,6 +37,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.io.File;
 import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +46,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import kotlin.coroutines.EmptyCoroutineContext;
 
 @RunWith(RobolectricTestRunner.class)
 public class UpdateDownloadSchedulerTest {
@@ -93,6 +104,49 @@ public class UpdateDownloadSchedulerTest {
             manager.cancelWorkById(record.getId()).getResult().get(5L, TimeUnit.SECONDS);
             //noinspection ResultOfMethodCallIgnored
             partial.delete();
+        }
+    }
+
+    @Test
+    public void periodicWorkerRepairsUserDownloadWhenAutomaticChecksAreDisabled() throws Exception {
+        SharedPreferences settings = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
+        String key = context.getString(R.string.preference_key_check_update);
+        boolean hadValue = settings.contains(key);
+        boolean previous = settings.getBoolean(key, true);
+        UpdateDownloadRecord record = record();
+        try {
+            settings.edit().putBoolean(key, false).commit();
+            assertTrue(store.claimScheduledDownload(record, 1L));
+            assertEquals(ListenableWorker.Result.success(), checkWorker(true).doWork());
+            assertNotNull(manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS));
+            assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        } finally {
+            manager.cancelWorkById(record.getId()).getResult().get(5L, TimeUnit.SECONDS);
+            SharedPreferences.Editor editor = settings.edit();
+            if (hadValue) editor.putBoolean(key, previous);
+            else editor.remove(key);
+            editor.commit();
+        }
+    }
+
+    @Test
+    public void periodicWorkerDoesNotRepairDownloadWhenSourceIsDisabled() throws Exception {
+        SharedPreferences settings = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
+        String key = context.getString(R.string.preference_key_check_update);
+        boolean hadValue = settings.contains(key);
+        boolean previous = settings.getBoolean(key, true);
+        UpdateDownloadRecord record = record();
+        try {
+            settings.edit().putBoolean(key, false).commit();
+            assertTrue(store.claimScheduledDownload(record, 1L));
+            assertEquals(ListenableWorker.Result.success(), checkWorker(false).doWork());
+            assertEquals(null, manager.getWorkInfoById(record.getId()).get(5L, TimeUnit.SECONDS));
+            assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        } finally {
+            SharedPreferences.Editor editor = settings.edit();
+            if (hadValue) editor.putBoolean(key, previous);
+            else editor.remove(key);
+            editor.commit();
         }
     }
 
@@ -227,6 +281,19 @@ public class UpdateDownloadSchedulerTest {
             if (info == null) Thread.sleep(10L);
         }
         return info;
+    }
+
+    private UpdateCheckWorker checkWorker(boolean sourceEnabled) {
+        Executor direct = Runnable::run;
+        WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+            new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
+            new WorkManagerTaskExecutor(direct), new WorkerFactory() {
+                @Override public ListenableWorker createWorker(Context context, String name, WorkerParameters params) {
+                    return null;
+                }
+            }, (context, id, data) -> Futures.immediateFuture(null),
+            (context, id, info) -> Futures.immediateFuture(null));
+        return new UpdateCheckWorker(context, parameters, () -> sourceEnabled);
     }
 
     private static final class DeferredResult implements ListenableFuture<Void> {

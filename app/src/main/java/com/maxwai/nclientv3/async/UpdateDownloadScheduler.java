@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -40,49 +41,67 @@ final class UpdateDownloadScheduler {
 
     static void reconcile(@NonNull Context context) {
         Context app = context.getApplicationContext();
-        EXECUTOR.execute(() -> {
-            UpdateStateStore store = new UpdateStateStore(app);
-            if (!store.isScheduledDownload()) return;
-            UpdateDownloadRecord record = store.loadDownloadRecord();
-            if (record == null) {
-                long revision = store.revision();
-                store.runIfUnchanged(revision, () -> {
-                    if (store.isScheduledDownload() && store.loadDownloadRecord() == null) {
-                        UpdateState current = store.load();
-                        store.save(UpdateState.error(current.getVersion(), current.getFilePath(), "interrupted_download", System.currentTimeMillis()));
-                        UpdateNotification.clear(app);
-                    }
-                });
-                return;
-            }
+        EXECUTOR.execute(() -> reconcileNow(app));
+    }
+
+    static boolean reconcileForWorker(@NonNull Context context) {
+        Context app = context.getApplicationContext();
+        Future<Boolean> result = EXECUTOR.submit(() -> reconcileNow(app));
+        try {
+            return result.get(30L, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
+            LogUtility.w("Unable to reconcile update work: " + exception.getClass().getSimpleName());
+            return false;
+        }
+    }
+
+    private static boolean reconcileNow(@NonNull Context context) {
+        Context app = context.getApplicationContext();
+        UpdateStateStore store = new UpdateStateStore(app);
+        if (!store.isScheduledDownload()) return true;
+        UpdateDownloadRecord record = store.loadDownloadRecord();
+        if (record == null) {
             long revision = store.revision();
-            try {
-                WorkInfo info = WorkManager.getInstance(app).getWorkInfoById(record.getId()).get(10L, TimeUnit.SECONDS);
-                if (info == null) {
-                    enqueueNow(app, record.getId());
-                } else if (info.getState().isFinished()) {
-                    store.runIfUnchanged(revision, () -> store.runIfScheduledDownload(record.getId(), () -> {
-                        UpdateState current = store.load();
-                        store.save(UpdateState.error(current.getVersion(), current.getFilePath(), "interrupted_download", System.currentTimeMillis()));
-                        UpdateNotification.clear(app);
-                    }));
-                } else if (info.getState() == WorkInfo.State.ENQUEUED || info.getState() == WorkInfo.State.BLOCKED) {
-                    store.runIfUnchanged(revision, () -> store.runIfScheduledDownload(record.getId(), () -> {
-                        if (store.load().getPhase() != UpdatePhase.QUEUED) {
-                            UpdateState queued = UpdateState.queued(record.getVersion(), record.getFilePath(), record.getSize(), System.currentTimeMillis());
-                            store.save(queued);
-                            UpdateNotification.publish(app, queued);
-                        }
-                    }));
+            store.runIfUnchanged(revision, () -> {
+                if (store.isScheduledDownload() && store.loadDownloadRecord() == null) {
+                    UpdateState current = store.load();
+                    store.save(UpdateState.error(current.getVersion(), current.getFilePath(), "interrupted_download", System.currentTimeMillis()));
+                    UpdateNotification.clear(app);
                 }
-            } catch (IllegalStateException exception) {
-                failIfCurrent(app, record.getId(), false);
-                LogUtility.w("Update work is unavailable: " + exception.getClass().getSimpleName());
-            } catch (Exception exception) {
-                if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
-                LogUtility.w("Unable to query update work: " + exception.getClass().getSimpleName());
+            });
+            return true;
+        }
+        long revision = store.revision();
+        try {
+            WorkInfo info = WorkManager.getInstance(app).getWorkInfoById(record.getId()).get(10L, TimeUnit.SECONDS);
+            if (info == null) {
+                enqueueNow(app, record.getId());
+            } else if (info.getState().isFinished()) {
+                store.runIfUnchanged(revision, () -> store.runIfScheduledDownload(record.getId(), () -> {
+                    UpdateState current = store.load();
+                    store.save(UpdateState.error(current.getVersion(), current.getFilePath(), "interrupted_download", System.currentTimeMillis()));
+                    UpdateNotification.clear(app);
+                }));
+            } else if (info.getState() == WorkInfo.State.ENQUEUED || info.getState() == WorkInfo.State.BLOCKED) {
+                store.runIfUnchanged(revision, () -> store.runIfScheduledDownload(record.getId(), () -> {
+                    if (store.load().getPhase() != UpdatePhase.QUEUED) {
+                        UpdateState queued = UpdateState.queued(record.getVersion(), record.getFilePath(), record.getSize(), System.currentTimeMillis());
+                        store.save(queued);
+                        UpdateNotification.publish(app, queued);
+                    }
+                }));
             }
-        });
+        } catch (IllegalStateException exception) {
+            failIfCurrent(app, record.getId(), false);
+            LogUtility.w("Update work is unavailable: " + exception.getClass().getSimpleName());
+            return false;
+        } catch (Exception exception) {
+            if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
+            LogUtility.w("Unable to query update work: " + exception.getClass().getSimpleName());
+            return false;
+        }
+        return true;
     }
 
     static void cancel(@NonNull Context context, @NonNull UpdateDownloadRecord record) {
