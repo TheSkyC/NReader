@@ -151,11 +151,9 @@ public final class UpdateDownloadWorker extends Worker {
         } finally {
             call = null;
             activePath = null;
-            if (partial != null) {
-                //noinspection ResultOfMethodCallIgnored
-                partial.delete();
-            }
-            if (captured[0] != null) store.clearCancellationIf(captured[0].getId());
+            boolean partialRemoved = partial != null
+                && (!partial.exists() || (partial.isFile() && partial.delete()));
+            if (partialRemoved && captured[0] != null) store.clearCancellationIf(captured[0].getId());
             if (isStopped() && captured[0] != null) {
                 UpdateDownloadRecord record = captured[0];
                 store.runIfScheduledDownload(id, () -> {

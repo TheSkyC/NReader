@@ -146,7 +146,65 @@ public class UpdateStateRecoveryTest {
 
             assertEquals(UpdatePhase.AVAILABLE, recovered.getPhase());
             assertFalse(file.exists());
-            assertTrue(store.loadCancellation() == null);
+            assertTrue(store.loadCancellations().isEmpty());
+        } finally {
+            store.clear();
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+    }
+
+    @Test
+    public void consecutiveCanceledDownloadsRemainRecoverableAcrossRetries() throws IOException {
+        UpdateStateStore store = new UpdateStateStore(context);
+        String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
+        UUID firstId = UUID.randomUUID();
+        UUID secondId = UUID.randomUUID();
+        File first = createFile(updateFolder, "NReader-99.0.0-" + flavor + "-" + firstId + ".apk.part");
+        File second = createFile(updateFolder, "NReader-99.0.0-" + flavor + "-" + secondId + ".apk.part");
+        String digest = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+        UpdateDownloadRecord firstRecord = new UpdateDownloadRecord(firstId, "99.0.0", first.getAbsolutePath(),
+            "https://example.invalid/update.apk", digest, 3L);
+        UpdateDownloadRecord secondRecord = new UpdateDownloadRecord(secondId, "99.0.0", second.getAbsolutePath(),
+            "https://example.invalid/update.apk", digest, 3L);
+        try {
+            store.save(UpdateState.available("99.0.0", 1L));
+            assertTrue(store.claimScheduledDownload(firstRecord, 2L));
+            store.recordCancellation(firstRecord);
+            store.save(UpdateState.available("99.0.0", 3L));
+            assertTrue(store.claimScheduledDownload(secondRecord, 4L));
+            store.recordCancellation(secondRecord);
+            assertEquals(2, store.loadCancellations().size());
+
+            assertEquals(UpdatePhase.AVAILABLE, UpdateStateRecovery.reconcileStored(context).getPhase());
+            assertFalse(first.exists());
+            assertFalse(second.exists());
+            assertTrue(store.loadCancellations().isEmpty());
+        } finally {
+            store.clear();
+            //noinspection ResultOfMethodCallIgnored
+            first.delete();
+            //noinspection ResultOfMethodCallIgnored
+            second.delete();
+        }
+    }
+
+    @Test
+    public void legacyCancellationIsRecovered() throws IOException {
+        UpdateStateStore store = new UpdateStateStore(context);
+        UUID id = UUID.randomUUID();
+        String flavor = BuildConfig.FLAVOR.equals("minApi26") ? "minApi26" : "minApi28";
+        File file = createFile(updateFolder, "NReader-99.0.0-" + flavor + "-" + id + ".apk.part");
+        try {
+            context.getSharedPreferences("UpdateState", Context.MODE_PRIVATE).edit()
+                .putString("cancel_id", id.toString()).putString("cancel_version", "99.0.0")
+                .putString("cancel_path", file.getAbsolutePath())
+                .putString("cancel_url", "https://example.invalid/update.apk")
+                .putString("cancel_sha256", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+                .putLong("cancel_size", 3L).commit();
+            UpdateStateRecovery.reconcileStored(context);
+            assertFalse(file.exists());
+            assertTrue(store.loadCancellations().isEmpty());
         } finally {
             store.clear();
             //noinspection ResultOfMethodCallIgnored

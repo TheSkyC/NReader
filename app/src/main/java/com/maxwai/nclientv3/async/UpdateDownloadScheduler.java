@@ -99,21 +99,17 @@ final class UpdateDownloadScheduler {
 
     static void cleanupCancellation(@NonNull Context context, @NonNull UpdateDownloadRecord fallback) {
         UpdateStateStore store = new UpdateStateStore(context);
-        UpdateDownloadRecord record = store.loadCancellation();
-        if (record == null) record = fallback;
+        UpdateDownloadRecord record = fallback;
         if (UpdateDownloadWorker.isActive(record.getFilePath())) return;
         try {
             if (!UpdateDownloadWorker.validRecord(record)) return;
             File partial = new File(record.getFilePath());
-            if (partial.isFile()) {
-                //noinspection ResultOfMethodCallIgnored
-                if (!partial.delete() && partial.exists()) return;
-            }
+            if (partial.exists() && (!partial.isFile() || !partial.delete())) return;
         } catch (Exception exception) {
             LogUtility.w("Unable to clean canceled update: " + exception.getClass().getSimpleName());
             return;
         }
-        store.clearCancellation();
+        store.clearCancellationIf(record.getId());
     }
 
     private static void enqueueNow(Context context, UUID id) {

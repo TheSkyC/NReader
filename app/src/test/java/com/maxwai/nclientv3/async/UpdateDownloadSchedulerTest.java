@@ -126,6 +126,46 @@ public class UpdateDownloadSchedulerTest {
         }
     }
 
+    @Test
+    public void staleCleanupLeavesAnotherCancellationIntact() throws Exception {
+        UpdateDownloadRecord first = record();
+        UpdateDownloadRecord second = record();
+        File firstFile = new File(first.getFilePath());
+        File secondFile = new File(second.getFilePath());
+        assertTrue(firstFile.createNewFile());
+        assertTrue(secondFile.createNewFile());
+        try {
+            store.recordCancellation(first);
+            store.recordCancellation(second);
+            UpdateDownloadScheduler.cleanupCancellation(context, first);
+            assertTrue(!firstFile.exists());
+            assertTrue(secondFile.exists());
+            assertEquals(1, store.loadCancellations().size());
+            assertEquals(second.getId(), store.loadCancellations().get(0).getId());
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            firstFile.delete();
+            //noinspection ResultOfMethodCallIgnored
+            secondFile.delete();
+        }
+    }
+
+    @Test
+    public void cleanupRetainsDirectoryAndCancellationRecord() throws Exception {
+        UpdateDownloadRecord record = record();
+        File directory = new File(record.getFilePath());
+        assertTrue(directory.mkdir());
+        try {
+            store.recordCancellation(record);
+            UpdateDownloadScheduler.cleanupCancellation(context, record);
+            assertTrue(directory.isDirectory());
+            assertEquals(record.getId(), store.loadCancellations().get(0).getId());
+        } finally {
+            //noinspection ResultOfMethodCallIgnored
+            directory.delete();
+        }
+    }
+
     private WorkInfo awaitWork(UUID id) throws Exception {
         WorkInfo info = null;
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);

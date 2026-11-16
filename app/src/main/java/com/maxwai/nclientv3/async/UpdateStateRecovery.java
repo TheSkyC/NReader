@@ -30,8 +30,7 @@ public final class UpdateStateRecovery {
     @NonNull
     public static UpdateState reconcileStored(@NonNull Context context) {
         UpdateStateStore store = new UpdateStateStore(context);
-        UpdateDownloadRecord cancellation = store.loadCancellation();
-        if (cancellation != null) {
+        for (UpdateDownloadRecord cancellation : store.loadCancellations()) {
             store.runIfScheduledDownload(cancellation.getId(), () -> {
                 UpdateState state = store.load();
                 store.save(UpdateState.available(state.getVersion(), System.currentTimeMillis()));

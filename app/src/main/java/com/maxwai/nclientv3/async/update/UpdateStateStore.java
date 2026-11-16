@@ -9,6 +9,12 @@ import androidx.annotation.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /** Small durable store for update task recovery. */
 public final class UpdateStateStore {
@@ -31,6 +37,7 @@ public final class UpdateStateStore {
     private static final String CANCEL_PATH = "cancel_path";
     private static final String CANCEL_VERSION = "cancel_version";
     private static final String CANCEL_SIZE = "cancel_size";
+    private static final String CANCEL_PREFIX = "canceled_task_";
     private static final String WORK_MANAGER = "work_manager";
     // All update components run in the default app process; the revision only
     // guards concurrent work while that process is alive.
@@ -94,13 +101,38 @@ public final class UpdateStateStore {
 
     public void recordCancellation(@NonNull UpdateDownloadRecord record) {
         synchronized (LOCK) {
-            commit(preferences.edit()
-                .putString(CANCEL_ID, record.getId().toString())
-                .putString(CANCEL_VERSION, record.getVersion())
-                .putString(CANCEL_PATH, record.getFilePath())
-                .putString(CANCEL_URL, record.getUrl())
-                .putString(CANCEL_SHA256, record.getSha256())
-                .putLong(CANCEL_SIZE, record.getSize()));
+            try {
+                JSONObject data = new JSONObject()
+                    .put("version", record.getVersion()).put("path", record.getFilePath())
+                    .put("url", record.getUrl()).put("sha256", record.getSha256())
+                    .put("size", record.getSize());
+                commit(preferences.edit().putString(CANCEL_PREFIX + record.getId(), data.toString()));
+            } catch (JSONException exception) {
+                throw new IllegalStateException("Unable to serialize canceled update", exception);
+            }
+        }
+    }
+
+    @NonNull
+    public List<UpdateDownloadRecord> loadCancellations() {
+        synchronized (LOCK) {
+            List<UpdateDownloadRecord> records = new ArrayList<>();
+            UpdateDownloadRecord legacy = loadCancellation();
+            if (legacy != null) records.add(legacy);
+            for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
+                if (!entry.getKey().startsWith(CANCEL_PREFIX) || !(entry.getValue() instanceof String)) continue;
+                try {
+                    String id = entry.getKey().substring(CANCEL_PREFIX.length());
+                    UUID uuid = UUID.fromString(id);
+                    if (!uuid.toString().equals(id)) continue;
+                    JSONObject data = new JSONObject((String) entry.getValue());
+                    records.add(new UpdateDownloadRecord(uuid, data.getString("version"), data.getString("path"),
+                        data.getString("url"), data.getString("sha256"), data.getLong("size")));
+                } catch (IllegalArgumentException | JSONException exception) {
+                    // Retain malformed records without using them for file operations.
+                }
+            }
+            return records;
         }
     }
 
@@ -136,10 +168,12 @@ public final class UpdateStateStore {
         synchronized (LOCK) {
             try {
                 String storedId = preferences.getString(CANCEL_ID, null);
+                SharedPreferences.Editor editor = preferences.edit().remove(CANCEL_PREFIX + id);
                 if (id.toString().equals(storedId)) {
-                    commit(preferences.edit().remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
-                        .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE));
+                    editor.remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
+                        .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE);
                 }
+                commit(editor);
             } catch (ClassCastException ignored) {
                 // Preserve malformed cancellation evidence for startup recovery.
             }
@@ -158,9 +192,7 @@ public final class UpdateStateStore {
                 .putString(TASK_ID, record.getId().toString())
                 .putString(TASK_URL, record.getUrl())
                 .putString(TASK_SHA256, record.getSha256())
-                .putLong(TASK_SIZE, record.getSize())
-                .remove(CANCEL_ID).remove(CANCEL_VERSION).remove(CANCEL_PATH)
-                .remove(CANCEL_URL).remove(CANCEL_SHA256).remove(CANCEL_SIZE);
+                .putLong(TASK_SIZE, record.getSize());
             if (scheduled) editor.putString(TASK_BACKEND, WORK_MANAGER);
             else editor.remove(TASK_BACKEND);
             commit(editor);
