@@ -88,11 +88,15 @@ public final class UpdateCheckWorker extends Worker {
             .setConstraints(constraints)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1L, TimeUnit.HOURS)
             .build();
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        );
+        try {
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            );
+        } catch (IllegalStateException ignored) {
+            // WorkManager may be intentionally disabled in local/unit-test processes.
+        }
     }
 
     private static void cancelScheduledWork(@NonNull Context context) {
@@ -192,7 +196,15 @@ public final class UpdateCheckWorker extends Worker {
     ) {
         boolean[] completed = {false};
         stateStore.runIfCheckableAndUnchanged(revision, () -> UpdateCheckCoordinator.runIfCurrent(generation, () -> completed[0] = gate.run(() -> {
-            if (selected != null) publishIfUnchanged(context, stateStore, metadataStore, revision, selected);
+            if (selected != null) {
+                publishIfUnchanged(context, stateStore, metadataStore, revision, selected);
+            } else {
+                metadataStore.clearSelectedRelease();
+                UpdateNotification.clearAvailable(context);
+                if (stateStore.load().getPhase() == UpdatePhase.AVAILABLE) {
+                    stateStore.save(UpdateState.idle(System.currentTimeMillis()));
+                }
+            }
             metadataStore.markSuccessfulCheck(System.currentTimeMillis());
         })));
         return completed[0];
@@ -227,6 +239,9 @@ public final class UpdateCheckWorker extends Worker {
             UpdateState current = stateStore.load();
             if (current.getPhase() == UpdatePhase.IDLE || !selected.versionCode.equals(current.getVersion())
                 || !selected.versionCode.equals(metadataStore.getSelectedVersion())) {
+                if (!selected.versionCode.equals(metadataStore.getSelectedVersion())) {
+                    UpdateNotification.clearAvailable(context);
+                }
                 metadataStore.saveSelectedRelease(
                     selected.versionCode,
                     selected.releaseVersionCode,

@@ -118,6 +118,14 @@ public final class UpdateNotification {
         NotificationSettings.cancel(NOTIFICATION_ID);
     }
 
+    static synchronized void clearAvailable(@NonNull Context context) {
+        clear(context);
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit()
+            .remove(NOTIFIED_AVAILABLE)
+            .remove(NOTIFIED_AVAILABLE_REMIND_AFTER)
+            .apply();
+    }
+
     public static synchronized void resetReady(@NonNull Context context) {
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
             .edit()

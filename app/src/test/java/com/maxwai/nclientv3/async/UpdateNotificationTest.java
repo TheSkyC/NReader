@@ -3,6 +3,8 @@ package com.maxwai.nclientv3.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
 import android.app.Application;
@@ -19,6 +21,7 @@ import androidx.work.impl.utils.taskexecutor.WorkManagerTaskExecutor;
 import com.google.common.util.concurrent.Futures;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.update.UpdateState;
+import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.settings.NotificationSettings;
@@ -123,6 +126,57 @@ public class UpdateNotificationTest {
         NotificationSettings.initializeNotificationManager(context);
         UpdateNotification.publish(context, state);
         assertEquals(1, manager.getActiveNotifications().length);
+    }
+
+    @Test
+    public void noCandidateClearsOldNotificationAndAllowsReappearance() {
+        enableChannel();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.saveSelectedRelease("2.0.0", 2L, "https://example.invalid/a.apk", "notes", false, "digest", 2L);
+        stateStore.save(UpdateState.available("2.0.0", 1L));
+        UpdateNotification.publish(context, stateStore.load());
+        assertEquals(1, manager.getActiveNotifications().length);
+        long generation = UpdateCheckCoordinator.begin();
+
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, stateStore, metadata, stateStore.revision(), generation, null));
+        assertEquals(UpdatePhase.IDLE, stateStore.load().getPhase());
+        assertNull(metadata.getSelectedVersion());
+        assertEquals(0, manager.getActiveNotifications().length);
+        assertTrue(metadata.getLastSuccessfulCheck() > 0L);
+
+        UpdateNotification.publish(context, UpdateState.available("2.0.0", 2L));
+        assertEquals(1, manager.getActiveNotifications().length);
+    }
+
+    @Test
+    public void noCandidatePreservesSkipPreference() {
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.saveSelectedRelease("2.0.0", 2L, "https://example.invalid/a.apk", "notes", false, "digest", 2L);
+        stateStore.save(UpdateState.available("2.0.0", 1L));
+        new UpdateReminderStore(context).skip("2.0.0");
+        long generation = UpdateCheckCoordinator.begin();
+
+        assertTrue(UpdateCheckWorker.completeCheckIfUnchanged(context, stateStore, metadata, stateStore.revision(), generation, null));
+        assertTrue(new UpdateReminderStore(context).suppresses("2.0.0", System.currentTimeMillis()));
+    }
+
+    @Test
+    public void skippedReplacementRemovesPreviousVersionNotification() {
+        enableChannel();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.saveSelectedRelease("1.0.0", 1L, "https://example.invalid/a.apk", "notes", false, "digest", 2L);
+        stateStore.save(UpdateState.available("1.0.0", 1L));
+        UpdateNotification.publish(context, stateStore.load());
+        assertEquals(1, manager.getActiveNotifications().length);
+        new UpdateReminderStore(context).skip("2.0.0");
+        VersionChecker.GitHubRelease replacement = new VersionChecker.GitHubRelease();
+        replacement.versionCode = "2.0.0";
+        replacement.downloadUrl = "https://example.invalid/b.apk";
+        replacement.sha256 = "digest";
+
+        assertTrue(UpdateCheckWorker.publishIfUnchanged(context, stateStore, metadata, stateStore.revision(), replacement));
+        assertEquals("2.0.0", stateStore.load().getVersion());
+        assertEquals(0, manager.getActiveNotifications().length);
     }
 
     @Test

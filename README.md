@@ -70,16 +70,19 @@ Export supported data in the old app and import it in NReader. The default share
 storage directory is `NReader`; back up and copy existing downloads manually if needed.
 The old application's files are not renamed or removed.
 
-The upstream application-update and bug-report destinations are not used for NReader.
-Until your own repository is available, update checks and the bug-report entry are
-hidden and no release-update requests are made. To enable them, edit these
-`defaultConfig` fields in [app/build.gradle.kts](app/build.gradle.kts):
+NReader uses its own GitHub Releases repository for application updates. Update
+checks and the update settings entry are enabled in release builds when this
+repository contains a compatible signed release. The issue-report destination
+remains independent and is still disabled until configured.
 
-- `UPDATE_REPOSITORY`: your GitHub `owner/repository` for NReader releases.
+The relevant fields in [app/build.gradle.kts](app/build.gradle.kts) are:
+
+- `UPDATE_REPOSITORY`: the GitHub `owner/repository` for NReader releases; it is
+  currently `TheSkyC/NReader`.
 - `ISSUE_TRACKER_URL`: your NReader issue-reporting URL.
 
-Leave either field empty to keep that feature disabled. Publish APKs built with
-NReader's application ID and your own signing key. Tag metadata continues to use
+Leave `ISSUE_TRACKER_URL` empty to keep issue reporting disabled. Publish APKs
+built with NReader's application ID and your own signing key. Tag metadata continues to use
 the upstream NClientV3 data feed; this is independent of APK updates.
 Translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream

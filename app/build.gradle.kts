@@ -56,7 +56,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = nreaderApplicationId
-        buildConfigField("String", "UPDATE_REPOSITORY", "\"\"")
+        buildConfigField("String", "UPDATE_REPOSITORY", "\"TheSkyC/NReader\"")
         buildConfigField("String", "UPDATE_ENDPOINT", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
         // Format: MmPPbb

@@ -94,12 +94,12 @@ public class UpdateCheckWorkerPublicationTest {
     @Config(sdk = 33)
     public void openUpdateCenterRendersNewBackgroundRelease() {
         String digest = "0000000000000000000000000000000000000000000000000000000000000000";
-        metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/old.apk", "old notes", false, digest, 42L);
-        state.save(UpdateState.available("99.0.0", 1L));
         ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
         try {
             Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS);
             NotificationSettings.initializeNotificationManager(context);
+            metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/old.apk", "old notes", false, digest, 42L);
+            state.save(UpdateState.available("99.0.0", 1L));
             VersionChecker.GitHubRelease selected = release("100.0.0");
             selected.releaseVersionCode = Integer.MAX_VALUE;
             selected.sha256 = digest;

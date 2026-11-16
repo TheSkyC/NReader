@@ -268,10 +268,16 @@ public class VersionChecker {
                 newer = false;
             }
             if (downloadUrl == null || !isAllowedUpdateUrl(downloadUrl) || !isValidSha256(release.sha256) || !newer) {
+                latestRelease = null;
+                downloadUrl = null;
                 metadataStore.clearSelectedRelease();
+                UpdateNotification.clearAvailable(context);
                 saveState(UpdateState.idle(System.currentTimeMillis()));
                 if (!silent) Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
             } else {
+                if (!release.versionCode.equals(metadataStore.getSelectedVersion())) {
+                    UpdateNotification.clearAvailable(context);
+                }
                 latestRelease = release;
                 metadataStore.saveSelectedRelease(
                     release.versionCode,
