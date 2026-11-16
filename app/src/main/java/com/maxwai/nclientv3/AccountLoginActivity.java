@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AccountLoginActivity extends GeneralActivity {
     public static final String EXTRA_ACCOUNT_ID = "account_id";
+    public static final String EXTRA_AUTO_REAUTH = "auto_reauthenticate";
     public static final String EXTRA_COMMENT_ACCOUNT = "comment_account";
     private static final String EDITED_CREDENTIALS = "edited_credentials";
     private static final String PENDING_PREFILL = "pending_prefill";
@@ -59,6 +60,8 @@ public final class AccountLoginActivity extends GeneralActivity {
     private boolean credentialsEdited;
     private boolean recreated;
     private boolean pendingPrefill;
+    private boolean automaticReauthentication;
+    private boolean automaticAttemptStarted;
     private boolean restoreSavedPassword = true;
     private boolean busy;
     private boolean stopped;
@@ -94,6 +97,7 @@ public final class AccountLoginActivity extends GeneralActivity {
             if (!restoredAccount) credentialsEdited = true;
         });
         targetAccountId = getIntent().getStringExtra(EXTRA_ACCOUNT_ID);
+        automaticReauthentication = getIntent().getBooleanExtra(EXTRA_AUTO_REAUTH, false);
         recreated = savedInstanceState != null;
         pendingPrefill = recreated && savedInstanceState.getBoolean(PENDING_PREFILL, false);
         restoreSavedPassword = !recreated || pendingPrefill || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
@@ -110,6 +114,7 @@ public final class AccountLoginActivity extends GeneralActivity {
         signOut.setOnClickListener(view -> confirmSignOut());
         showIdle();
         if (!pendingPrefill) restoreAccount();
+        maybeStartAutomaticReauthentication();
         AuthStore.observeChanges(this, authObserver);
         AuthStore.observeIdentityChanges(identityObserver);
     }
@@ -132,12 +137,23 @@ public final class AccountLoginActivity extends GeneralActivity {
         }
     }
 
+    private void maybeStartAutomaticReauthentication() {
+        if (!automaticReauthentication || automaticAttemptStarted || busy || credentialsEdited
+            || targetAccountId == null) return;
+        AccountVault.Account account = targetAccount();
+        if (account == null || account.type != AccountVault.Type.PASSWORD || account.password == null
+            || account.password.isEmpty() || AuthSessionStore.identity(this) != null) return;
+        automaticAttemptStarted = true;
+        postIfActive(this::start);
+    }
+
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         if (pendingPrefill) {
             credentialsEdited = false;
             restoreAccount();
+            maybeStartAutomaticReauthentication();
         }
     }
 
@@ -202,6 +218,7 @@ public final class AccountLoginActivity extends GeneralActivity {
     protected void onResume() {
         super.onResume();
         refreshSessionStatusIfChanged();
+        maybeStartAutomaticReauthentication();
     }
 
     private void start() {

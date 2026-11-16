@@ -41,6 +41,17 @@ public class AccountRepositoryTest {
             "access-" + id, "refresh-" + id, 100, 200, false, 0);
     }
 
+    @Test public void automaticReauthenticationRequiresSavedPasswordAndExpiredSession() {
+        AccountVault.Account saved = new AccountVault.Account("saved", AccountVault.Type.PASSWORD, "saved",
+            "password", null, null, "refresh", 0, 1, true, 1);
+        AccountVault.Account noPassword = new AccountVault.Account("manual", AccountVault.Type.PASSWORD, "manual",
+            null, null, null, "refresh", 0, 1, true, 2);
+        assertTrue(com.maxwai.nclientv3.components.activities.AccountReauthCoordinator
+            .canAutoReauthenticate(saved, 10));
+        assertFalse(com.maxwai.nclientv3.components.activities.AccountReauthCoordinator
+            .canAutoReauthenticate(noPassword, 10));
+    }
+
     @Test public void switchAndRemoveSurviveReopenWithoutChangingOtherRecords() throws Exception {
         assertTrue(repository.putAndSelect(account("one"), repository.identityGeneration()));
         assertTrue(repository.putAndSelect(account("two"), repository.identityGeneration()));

@@ -61,6 +61,7 @@ import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.SearchPlanStore;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
+import com.maxwai.nclientv3.components.activities.AccountReauthCoordinator;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
@@ -129,6 +130,10 @@ public class MainActivity extends BaseActivity
     private final Runnable accountFilterObserver = this::refreshAccountFilter;
     private final Runnable favoriteIdentityObserver = this::refreshFavoriteIdentity;
     private final Runnable accountHeaderObserver = this::refreshAccountHeader;
+    private final Runnable accountRecoveryObserver = () -> {
+        if (isFinishing() || isDestroyed()) return;
+        if (!AccountReauthCoordinator.maybeLaunch(this)) showExpiredAccountNoticeIfNeeded();
+    };
     private String headerProfileIdentity;
     private long headerProfileGeneration = -1;
     private long favoriteInspectorGeneration = -1;
@@ -287,6 +292,7 @@ public class MainActivity extends BaseActivity
         AuthStore.observeIdentityChanges(accountFilterObserver);
         AuthStore.observeIdentityChanges(favoriteIdentityObserver);
         AuthStore.observeIdentityChanges(accountHeaderObserver);
+        AuthStore.observeIdentityChanges(accountRecoveryObserver);
         refreshAccountFilter();
         refreshFavoriteIdentity();
         refreshAccountHeader();
@@ -298,6 +304,7 @@ public class MainActivity extends BaseActivity
         AuthStore.removeIdentityObserver(accountFilterObserver);
         AuthStore.removeIdentityObserver(favoriteIdentityObserver);
         AuthStore.removeIdentityObserver(accountHeaderObserver);
+        AuthStore.removeIdentityObserver(accountRecoveryObserver);
         if (Login.getUser() == null) {
             headerProfileIdentity = null;
             headerProfileGeneration = -1;
@@ -784,7 +791,7 @@ public class MainActivity extends BaseActivity
         super.onResume();
         Login.initLogin(this);
         refreshAccountHeader();
-        showExpiredAccountNoticeIfNeeded();
+        if (!AccountReauthCoordinator.maybeLaunch(this)) showExpiredAccountNoticeIfNeeded();
         if (idOpenedGallery != -1) {
             adapter.updateColor(idOpenedGallery);
             idOpenedGallery = -1;
