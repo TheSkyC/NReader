@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.Data;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -50,6 +52,72 @@ import kotlin.coroutines.EmptyCoroutineContext;
 @RunWith(RobolectricTestRunner.class)
 @Config(application = Application.class)
 public class UpdateMetadataRetryTest {
+    @Test
+    public void foregroundNotModifiedUsesCachedReleaseList() throws Exception {
+        foregroundCacheScenario(true);
+    }
+
+    @Test
+    public void foregroundMissingCacheRetriesWithoutEtagAndUsesResponse() throws Exception {
+        foregroundCacheScenario(false);
+    }
+
+    private void foregroundCacheScenario(boolean cached) throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        if (cached) metadata.save("[]", "test-tag");
+        else context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().putString("etag", "test-tag").commit();
+        ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class).setup();
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        state.save(UpdateState.checking(1L));
+        VersionChecker checker = new VersionChecker(controller.get(), true, null, false);
+        Field revision = VersionChecker.class.getDeclaredField("checkRevision");
+        revision.setAccessible(true);
+        revision.setLong(checker, state.revision());
+        ExecutorService serverExecutor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))) {
+            server.setSoTimeout(5000);
+            Future<String[]> requests = serverExecutor.submit(() -> {
+                String[] headers = new String[cached ? 1 : 2];
+                for (int i = 0; i < headers.length; i++) {
+                    try (Socket socket = server.accept()) {
+                        socket.setSoTimeout(5000);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
+                        StringBuilder request = new StringBuilder();
+                        String line;
+                        while ((line = input.readLine()) != null && !line.isEmpty()) request.append(line).append('\n');
+                        headers[i] = request.toString().toLowerCase(java.util.Locale.ROOT);
+                        String response = i == 0 ? "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n\r\n"
+                            : "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]";
+                        socket.getOutputStream().write(response.getBytes(StandardCharsets.US_ASCII));
+                        socket.getOutputStream().flush();
+                    }
+                }
+                return headers;
+            });
+            checker.requestReleases(false, true, true, "http://127.0.0.1:" + server.getLocalPort() + "/releases");
+            String[] headers = requests.get(5L, TimeUnit.SECONDS);
+            assertTrue(headers[0].contains("if-none-match: test-tag"));
+            if (!cached) assertFalse(headers[1].contains("if-none-match:"));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (state.load().getPhase() == UpdatePhase.CHECKING && System.nanoTime() < deadline) {
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Thread.sleep(10L);
+            }
+            assertEquals(UpdatePhase.IDLE, state.load().getPhase());
+            assertTrue(metadata.getLastSuccessfulCheck() > 0L);
+            assertEquals("[]", metadata.getBody());
+        } finally {
+            checker.cancel();
+            serverExecutor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+            controller.pause().stop().destroy();
+        }
+    }
+
     @Test
     public void backgroundUsesCacheAndRecoversMissingCache() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
