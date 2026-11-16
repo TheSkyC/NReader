@@ -2,7 +2,6 @@
 package com.maxwai.nclientv3.async;
 
 import android.content.Context;
-import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,9 +13,7 @@ import com.maxwai.nclientv3.async.update.UpdateStateStore;
 import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -37,8 +34,6 @@ public final class UpdateDownloadManager {
         .callTimeout(15L, TimeUnit.MINUTES)
         .followSslRedirects(false)
         .build();
-    private static final long PROGRESS_INTERVAL_MS = 500L;
-
     private UpdateDownloadManager() {}
 
     public static boolean isActive(@Nullable String path) {
@@ -93,46 +88,10 @@ public final class UpdateDownloadManager {
                 @Override
                 public void onResponse(@NonNull Call activeCall, @NonNull Response response) {
                     try (Response ignored = response) {
-                        if (!response.isSuccessful() || response.body() == null) {
-                            throw new IOException("Unable to download update: HTTP " + response.code());
-                        }
                         if (!store.runIfDownloading(path, () -> {})) return;
-                        long contentLength = response.body().contentLength();
-                        if (contentLength > VersionChecker.MAX_UPDATE_SIZE_BYTES || size > VersionChecker.MAX_UPDATE_SIZE_BYTES) {
-                            throw new IOException("Update package exceeds the maximum allowed size");
-                        }
-                        long total = size > 0L ? size : contentLength;
-                        long written = 0L;
-                        long lastProgress = SystemClock.elapsedRealtime();
-                        try (FileOutputStream output = new FileOutputStream(partial);
-                             InputStream input = response.body().byteStream()) {
-                            byte[] buffer = new byte[8192];
-                            int count;
-                            while ((count = input.read(buffer)) != -1) {
-                                output.write(buffer, 0, count);
-                                written += count;
-                                if (written > VersionChecker.MAX_UPDATE_SIZE_BYTES) {
-                                    throw new IOException("Update package exceeds the maximum allowed size");
-                                }
-                                long now = SystemClock.elapsedRealtime();
-                                if (now - lastProgress >= PROGRESS_INTERVAL_MS) {
-                                    long progress = written;
-                                    if (!store.runIfDownloading(path, () -> publish(app, store,
-                                        UpdateState.downloading(version, path, progress, total, System.currentTimeMillis())))) return;
-                                    lastProgress = now;
-                                }
-                            }
-                            output.flush();
-                        }
-                        if (contentLength >= 0L && written != contentLength) {
-                            throw new IOException("Downloaded update length does not match response");
-                        }
-                        if (size > 0L && written != size) {
-                            throw new IOException("Downloaded update size does not match release metadata");
-                        }
-                        if (!UpdateFileVerifier.matchesSha256(partial, sha256)) {
-                            throw new IOException("Downloaded update checksum does not match release metadata");
-                        }
+                        if (!UpdateDownloadTransfer.receive(response, partial, size, sha256, (written, total) ->
+                            store.runIfDownloading(path, () -> publish(app, store,
+                                UpdateState.downloading(version, path, written, total, System.currentTimeMillis()))))) return;
                         store.runIfDownloading(path, () -> {
                             if (!partial.renameTo(apk)) throw new IllegalStateException("Unable to finalize downloaded update");
                             publish(app, store, UpdateState.readyToInstall(version, apk.getAbsolutePath(), apk.length(), System.currentTimeMillis()));
