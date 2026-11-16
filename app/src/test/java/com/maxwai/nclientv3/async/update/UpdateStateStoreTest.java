@@ -127,4 +127,49 @@ public class UpdateStateStoreTest {
         assertFalse(published.get());
         assertEquals(UpdatePhase.DOWNLOADING, store.load().getPhase());
     }
+
+    @Test
+    public void canceledAttemptCannotPublishOverRetry() throws Exception {
+        String oldPath = "/data/old.apk.part";
+        String newPath = "/data/new.apk.part";
+        store.save(UpdateState.downloading("1.1.0", oldPath, 0L, 42L, 1L));
+        CountDownLatch paused = new CountDownLatch(1);
+        CountDownLatch resume = new CountDownLatch(1);
+        AtomicBoolean published = new AtomicBoolean();
+        Thread oldDownload = new Thread(() -> {
+            paused.countDown();
+            try {
+                if (resume.await(5, TimeUnit.SECONDS)) {
+                    published.set(store.runIfDownloading(oldPath,
+                        () -> store.save(UpdateState.error("1.1.0", oldPath, "download", 4L))));
+                }
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        oldDownload.start();
+        assertTrue(paused.await(5, TimeUnit.SECONDS));
+        assertTrue(store.runIfDownloading(oldPath, () -> store.save(UpdateState.available("1.1.0", 2L))));
+        store.save(UpdateState.downloading("1.1.0", newPath, 0L, 42L, 3L));
+        resume.countDown();
+        oldDownload.join(5000L);
+
+        assertFalse(oldDownload.isAlive());
+        assertFalse(published.get());
+        assertEquals(UpdatePhase.DOWNLOADING, store.load().getPhase());
+        assertEquals(newPath, store.load().getFilePath());
+    }
+
+    @Test
+    public void staleForegroundCheckCannotReplaceDownload() {
+        store.save(UpdateState.checking(1L));
+        long revision = store.revision();
+        store.save(UpdateState.available("1.1.0", 2L));
+        assertTrue(store.runIfDownloadable("1.1.0", () ->
+            store.save(UpdateState.downloading("1.1.0", "/data/current.part", 0L, 42L, 3L))));
+
+        assertFalse(store.runIfUnchanged(revision, () -> store.save(UpdateState.idle(4L))));
+        assertFalse(store.runIfDownloadable("1.1.0", () -> store.save(UpdateState.idle(5L))));
+        assertEquals("/data/current.part", store.load().getFilePath());
+    }
 }

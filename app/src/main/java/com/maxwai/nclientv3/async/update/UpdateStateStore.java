@@ -88,6 +88,33 @@ public final class UpdateStateStore {
         }
     }
 
+    public boolean runIfDownloading(@NonNull String filePath, @NonNull Runnable action) {
+        synchronized (LOCK) {
+            UpdateState state = load();
+            if (state.getPhase() != UpdatePhase.DOWNLOADING || !filePath.equals(state.getFilePath())) return false;
+            action.run();
+            return true;
+        }
+    }
+
+    public boolean runIfUnchanged(long expectedRevision, @NonNull Runnable action) {
+        synchronized (LOCK) {
+            if (revision != expectedRevision) return false;
+            action.run();
+            return true;
+        }
+    }
+
+    public boolean runIfDownloadable(@NonNull String version, @NonNull Runnable action) {
+        synchronized (LOCK) {
+            UpdateState state = load();
+            if ((state.getPhase() != UpdatePhase.AVAILABLE && state.getPhase() != UpdatePhase.ERROR)
+                || !version.equals(state.getVersion())) return false;
+            action.run();
+            return true;
+        }
+    }
+
     private static void putNullable(SharedPreferences.Editor editor, String key, String value) {
         if (value == null) editor.remove(key);
         else editor.putString(key, value);

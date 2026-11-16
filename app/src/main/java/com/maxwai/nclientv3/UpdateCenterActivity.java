@@ -81,14 +81,15 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
 
         action.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.READY_TO_INSTALL) {
-                checker.installReadyUpdate();
+                if (checker.installReadyUpdate()) action.setEnabled(false);
             } else if (release != null) checker.startDownload();
             else startCheck();
         });
         secondary.setOnClickListener(view -> {
             if (currentState != null && currentState.getPhase() == UpdatePhase.DOWNLOADING) {
                 checker.cancelDownload();
-            } else if (release != null && release.getVersionCode() != null) {
+            } else if (currentState != null && currentState.getPhase() == UpdatePhase.AVAILABLE
+                && release != null && release.getVersionCode() != null) {
                 new UpdateReminderStore(this).remindLater(System.currentTimeMillis());
                 UpdateNotification.clear(this);
                 finish();
@@ -203,11 +204,13 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_ready_to_install);
                 action.setText(R.string.update_install);
                 action.setEnabled(true);
+                secondary.setVisibility(View.GONE);
                 break;
             case INSTALLING:
                 status.setText(R.string.update_installing);
                 action.setText(R.string.update_installing);
                 action.setEnabled(false);
+                secondary.setVisibility(View.GONE);
                 break;
             case ERROR:
                 status.setText(R.string.update_error);
@@ -221,7 +224,12 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_available);
                 action.setText(R.string.update_download);
                 action.setEnabled(true);
-                secondary.setText(R.string.check_for_updates);
+                if (release != null && state.getVersion().equals(release.getVersionCode())) {
+                    secondary.setText(R.string.update_remind_later);
+                    skip.setVisibility(View.VISIBLE);
+                } else {
+                    secondary.setText(R.string.check_for_updates);
+                }
                 break;
             case IDLE:
             default:

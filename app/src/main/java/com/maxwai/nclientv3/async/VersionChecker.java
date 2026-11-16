@@ -3,6 +3,7 @@ package com.maxwai.nclientv3.async;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -18,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.Lifecycle;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
@@ -40,7 +42,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,6 +59,8 @@ import okhttp3.Response;
 public class VersionChecker {
     private static final int INSTALL_REQUEST_CODE = 1202;
     static final long MAX_UPDATE_SIZE_BYTES = 256L * 1024L * 1024L;
+    private static final ExecutorService INSTALL_VALIDATOR = Executors.newSingleThreadExecutor();
+    private static final AtomicBoolean INSTALL_VALIDATION_ACTIVE = new AtomicBoolean();
     public interface InstallLauncher {
         void launch(@NonNull Intent intent);
     }
@@ -79,7 +87,10 @@ public class VersionChecker {
     private String downloadUrl;
     @Nullable private Call metadataCall;
     @Nullable private Call manifestCall;
-    @Nullable private Call downloadCall;
+    @Nullable private volatile Call downloadCall;
+    @Nullable private volatile String downloadPath;
+    private volatile boolean cancelled;
+    private volatile long checkRevision = -1L;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
         this(context, silent, null, true);
@@ -110,8 +121,18 @@ public class VersionChecker {
             latest = null;
             return;
         }
-        metadataStore.markAttempt(System.currentTimeMillis());
-        saveState(UpdateState.checking(System.currentTimeMillis()));
+        long revision = stateStore.revision();
+        boolean[] started = {false};
+        stateStore.runIfUnchanged(revision, () -> {
+            UpdatePhase phase = stateStore.load().getPhase();
+            if (phase == UpdatePhase.DOWNLOADING || phase == UpdatePhase.VERIFYING
+                || phase == UpdatePhase.READY_TO_INSTALL || phase == UpdatePhase.INSTALLING) return;
+            metadataStore.markAttempt(System.currentTimeMillis());
+            saveState(UpdateState.checking(System.currentTimeMillis()));
+            checkRevision = stateStore.revision();
+            started[0] = true;
+        });
+        if (!started[0]) return;
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
         requestReleases(withPrerelease, silent, true);
     }
@@ -225,9 +246,9 @@ public class VersionChecker {
     }
 
     private void publishRelease(@NonNull GitHubRelease release, boolean silent) {
-        downloadUrl = release.downloadUrl;
-        metadataStore.markSuccessfulCheck(System.currentTimeMillis());
-        context.runOnUiThread(() -> {
+        context.runOnUiThread(() -> runIfCurrentCheck(() -> {
+            downloadUrl = release.downloadUrl;
+            metadataStore.markSuccessfulCheck(System.currentTimeMillis());
             boolean newer;
             try {
                 newer = release.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
@@ -253,15 +274,25 @@ public class VersionChecker {
                 if (listener == null) createDialog(release);
                 else listener.onReleaseAvailable(release);
             }
-        });
+        }));
     }
 
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
-        saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
-        context.runOnUiThread(() -> {
-            LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());
-            if (!silent)
-                Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
+        runIfCurrentCheck(() -> {
+            saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
+            context.runOnUiThread(() -> {
+                LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());
+                if (!silent)
+                    Toast.makeText(context, R.string.error_retrieving, Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    private void runIfCurrentCheck(@NonNull Runnable action) {
+        long revision = checkRevision;
+        if (revision < 0L) return;
+        stateStore.runIfUnchanged(revision, () -> {
+            if (!cancelled && stateStore.load().getPhase() == UpdatePhase.CHECKING) action.run();
         });
     }
 
@@ -269,7 +300,7 @@ public class VersionChecker {
         stateStore.save(state);
         UpdateNotification.publish(context, state);
         if (listener != null) {
-            context.runOnUiThread(() -> listener.onUpdateState(state));
+            context.runOnUiThread(() -> listener.onUpdateState(stateStore.load()));
         }
     }
 
@@ -308,37 +339,54 @@ public class VersionChecker {
     }
 
     public boolean hasActiveDownload() {
-        return downloadCall != null && !downloadCall.isCanceled();
+        Call call = downloadCall;
+        String path = downloadPath;
+        UpdateState state = stateStore.load();
+        return call != null && !call.isCanceled() && path != null
+            && state.getPhase() == UpdatePhase.DOWNLOADING && path.equals(state.getFilePath());
     }
 
     public void cancel() {
+        cancelled = true;
         if (metadataCall != null) metadataCall.cancel();
         if (manifestCall != null) manifestCall.cancel();
-        if (downloadCall != null) downloadCall.cancel();
+        stopDownload(false);
     }
 
     public void cancelDownload() {
-        if (downloadCall != null) downloadCall.cancel();
-        UpdateState state = stateStore.load();
-        if (state.getFilePath() != null) {
-            //noinspection ResultOfMethodCallIgnored
-            new File(state.getFilePath()).delete();
-        }
-        saveState(UpdateState.idle(System.currentTimeMillis()));
-        metadataStore.clearSelectedRelease();
-        UpdateNotification.clear(context);
+        stopDownload(true);
     }
 
-    public void installReadyUpdate() {
-        UpdateState state = UpdateStateRecovery.reconcile(context, stateStore.load());
-        stateStore.save(state);
-        if (!state.isReadyToInstall() || state.getFilePath() == null) return;
+    private void stopDownload(boolean requestedByUser) {
+        String path = downloadPath;
+        Call call = downloadCall;
+        if (path != null) {
+            stateStore.runIfDownloading(path, () -> {
+                UpdateState state = stateStore.load();
+                if (requestedByUser && state.getVersion() != null) {
+                    saveState(UpdateState.available(state.getVersion(), System.currentTimeMillis()));
+                } else {
+                    saveState(UpdateState.error(state.getVersion(), path, "interrupted_download", System.currentTimeMillis()));
+                }
+                UpdateNotification.clear(context);
+            });
+        }
+        if (call != null) call.cancel();
+        if (path != null) {
+            //noinspection ResultOfMethodCallIgnored
+            new File(path).delete();
+        }
+    }
+
+    public boolean installReadyUpdate() {
+        UpdateState state = stateStore.load();
+        if (!state.isReadyToInstall() || state.getFilePath() == null) return false;
         File file = new File(state.getFilePath());
         if (!file.isFile()) {
             saveState(UpdateState.error(state.getVersion(), state.getFilePath(), "missing_file", System.currentTimeMillis()));
-            return;
+            return false;
         }
-        installApp(file);
+        return installApp(file);
     }
 
     public void onInstallActivityResult(int resultCode) {
@@ -640,63 +688,42 @@ public class VersionChecker {
     }
 
     private void downloadVersion(String latestVersion) {
+        if (hasActiveDownload() || downloadUrl == null) return;
+        if (Global.UPDATEFOLDER == null) Global.initStorage(context);
+        if (Global.UPDATEFOLDER == null || (!Global.UPDATEFOLDER.isDirectory() && !Global.UPDATEFOLDER.mkdirs())) {
+            stateStore.runIfDownloadable(latestVersion, () ->
+                saveState(UpdateState.error(latestVersion, null, "download", System.currentTimeMillis())));
+            return;
+        }
         String flavorSuffix = BuildConfig.FLAVOR.equals("minApi26") ? "-minApi26" : "-minApi28";
         final File f = new File(Global.UPDATEFOLDER,
-            "NReader-" + latestVersion + flavorSuffix + "-release.apk");
+            "NReader-" + latestVersion + flavorSuffix + "-" + UUID.randomUUID() + ".apk");
         final File partial = new File(f.getAbsolutePath() + ".part");
         final String expectedSha256 = metadataStore.getSelectedSha256();
-        if (f.exists()) {
-            UpdateState savedState = stateStore.load();
-            if (savedState.isReadyToInstall()
-                && latestVersion.equals(savedState.getVersion())
-                && f.getAbsolutePath().equals(savedState.getFilePath())) {
-                installApp(f);
-                return;
-            }
-            //noinspection ResultOfMethodCallIgnored
-            f.delete();
-        }
-        //noinspection ResultOfMethodCallIgnored
-        partial.delete();
-        if (downloadUrl == null) return;
         final long expectedSize = metadataStore.getSelectedSize();
-        LogUtility.d(f.getAbsolutePath());
-        downloadCall = updateClient.newCall(new Request.Builder()
+        final Call attempt = updateClient.newCall(new Request.Builder()
             .url(downloadUrl)
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
             .build());
-        downloadCall.enqueue(new Callback() {
+        boolean started = stateStore.runIfDownloadable(latestVersion, () -> {
+            downloadPath = partial.getAbsolutePath();
+            downloadCall = attempt;
+            saveState(UpdateState.downloading(latestVersion, downloadPath, 0L, expectedSize, System.currentTimeMillis()));
+        });
+        if (!started) return;
+        attempt.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                if (call.isCanceled() || call != downloadCall) return;
-                notifyDownloadFailure(e);
+                failDownload(partial, latestVersion, e);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (call != downloadCall) {
-                    response.close();
-                    return;
-                }
                 try (Response ignored = response) {
                     if (!response.isSuccessful() || response.body() == null) {
                         throw new IOException("Unable to download update: HTTP " + response.code());
                     }
-                    context.getSharedPreferences("Settings", 0).edit().putBoolean("downloaded", false).apply();
-                    if (Global.UPDATEFOLDER == null) {
-                        Global.initStorage(context);
-                    }
-                    //noinspection ResultOfMethodCallIgnored
-                    Global.UPDATEFOLDER.mkdirs();
-                    //noinspection ResultOfMethodCallIgnored
-                    partial.createNewFile();
-                    saveState(UpdateState.downloading(
-                        latestVersion,
-                        partial.getAbsolutePath(),
-                        0L,
-                        response.body().contentLength(),
-                        System.currentTimeMillis()
-                    ));
+                    if (!stateStore.runIfDownloading(partial.getAbsolutePath(), () -> {})) return;
                     long expectedLength = response.body().contentLength();
                     if (expectedLength > MAX_UPDATE_SIZE_BYTES
                         || (expectedSize > MAX_UPDATE_SIZE_BYTES)) {
@@ -725,34 +752,33 @@ public class VersionChecker {
                     if (!UpdateFileVerifier.matchesSha256(partial, expectedSha256)) {
                         throw new IOException("Downloaded update checksum does not match release metadata");
                     }
-                    if (f.exists() && !f.delete()) {
-                        throw new IOException("Unable to replace previous update");
-                    }
-                    if (!partial.renameTo(f)) {
-                        throw new IOException("Unable to finalize downloaded update");
-                    }
-                    saveState(UpdateState.readyToInstall(
-                        latestVersion,
-                        f.getAbsolutePath(),
-                        f.length(),
-                        System.currentTimeMillis()
-                    ));
-                    installApp(f);
+                    boolean owned = stateStore.runIfDownloading(partial.getAbsolutePath(), () -> {
+                        if (!partial.renameTo(f)) throw new IllegalStateException("Unable to finalize downloaded update");
+                        saveState(UpdateState.readyToInstall(latestVersion, f.getAbsolutePath(), f.length(), System.currentTimeMillis()));
+                    });
+                    if (owned && listener == null) context.runOnUiThread(() -> {
+                        UpdateState state = stateStore.load();
+                        if (!context.isFinishing() && !context.isDestroyed()
+                            && state.isReadyToInstall() && f.getAbsolutePath().equals(state.getFilePath())) {
+                            installApp(f);
+                        }
+                    });
                 } catch (IOException | RuntimeException e) {
+                    failDownload(partial, latestVersion, e);
+                } finally {
                     //noinspection ResultOfMethodCallIgnored
                     partial.delete();
-                    //noinspection ResultOfMethodCallIgnored
-                    f.delete();
-                    saveState(UpdateState.error(
-                        latestVersion,
-                        f.getAbsolutePath(),
-                        "download",
-                        System.currentTimeMillis()
-                    ));
-                    notifyDownloadFailure(e);
                 }
             }
         });
+    }
+
+    private void failDownload(File partial, String version, Exception exception) {
+        boolean owned = stateStore.runIfDownloading(partial.getAbsolutePath(), () ->
+            saveState(UpdateState.error(version, partial.getAbsolutePath(), "download", System.currentTimeMillis())));
+        //noinspection ResultOfMethodCallIgnored
+        partial.delete();
+        if (owned) notifyDownloadFailure(exception);
     }
 
     private void notifyDownloadFailure(Exception exception) {
@@ -762,33 +788,75 @@ public class VersionChecker {
         });
     }
 
-    private void installApp(File f) {
+    private boolean installApp(File f) {
+        if (!INSTALL_VALIDATION_ACTIVE.compareAndSet(false, true)) return false;
+        long revision = stateStore.revision();
+        INSTALL_VALIDATOR.execute(() -> {
+            try {
+                validateInstall(f);
+                context.runOnUiThread(() -> {
+                    try {
+                        runIfReadyForInstall(revision, f, () -> launchInstaller(f));
+                    } finally {
+                        INSTALL_VALIDATION_ACTIVE.set(false);
+                    }
+                });
+            } catch (IOException | RuntimeException exception) {
+                context.runOnUiThread(() -> {
+                    try {
+                        runIfReadyForInstall(revision, f, () -> {
+                            saveState(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
+                            Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show();
+                        });
+                    } finally {
+                        INSTALL_VALIDATION_ACTIVE.set(false);
+                    }
+                });
+            }
+        });
+        return true;
+    }
+
+    private void runIfReadyForInstall(long revision, File file, Runnable action) {
+        stateStore.runIfUnchanged(revision, () -> {
+            UpdateState state = stateStore.load();
+            if (!cancelled && !context.isFinishing() && !context.isDestroyed()
+                && context.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
+                && state.isReadyToInstall()
+                && file.getAbsolutePath().equals(state.getFilePath())) action.run();
+        });
+    }
+
+    private void validateInstall(File f) throws IOException {
+        String expectedSha256 = metadataStore.getSelectedSha256();
+        if (!isValidSha256(expectedSha256)
+            || !UpdateFileVerifier.matchesSha256(f, expectedSha256)) {
+            throw new IOException("Cached update checksum does not match release metadata");
+        }
+        int signingFlags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+            ? PackageManager.GET_SIGNING_CERTIFICATES
+            : PackageManager.GET_SIGNATURES;
+        PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), signingFlags);
+        if (archive == null || !context.getPackageName().equals(archive.packageName)) {
+            throw new IOException("Update package name does not match the installed application");
+        }
+        long archiveVersion = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+            ? archive.getLongVersionCode()
+            : archive.versionCode;
+        if (archiveVersion <= BuildConfig.VERSION_CODE) {
+            throw new IOException("Update package version is not newer than the installed application");
+        }
+        long expectedReleaseVersionCode = metadataStore.getSelectedVersionCode();
+        if (expectedReleaseVersionCode > 0L && archiveVersion != expectedReleaseVersionCode) {
+            throw new IOException("Update package version does not match release metadata");
+        }
+        if (!hasMatchingSigner(archive)) {
+            throw new IOException("Update package signer does not match the installed application");
+        }
+    }
+
+    private void launchInstaller(File f) {
         try {
-            String expectedSha256 = metadataStore.getSelectedSha256();
-            if (!isValidSha256(expectedSha256)
-                || !UpdateFileVerifier.matchesSha256(f, expectedSha256)) {
-                throw new IOException("Cached update checksum does not match release metadata");
-            }
-            int signingFlags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
-                ? PackageManager.GET_SIGNING_CERTIFICATES
-                : PackageManager.GET_SIGNATURES;
-            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), signingFlags);
-            if (archive == null || !context.getPackageName().equals(archive.packageName)) {
-                throw new IOException("Update package name does not match the installed application");
-            }
-            long archiveVersion = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
-                ? archive.getLongVersionCode()
-                : archive.versionCode;
-            if (archiveVersion <= BuildConfig.VERSION_CODE) {
-                throw new IOException("Update package version is not newer than the installed application");
-            }
-            long expectedReleaseVersionCode = metadataStore.getSelectedVersionCode();
-            if (expectedReleaseVersionCode > 0L && archiveVersion != expectedReleaseVersionCode) {
-                throw new IOException("Update package version does not match release metadata");
-            }
-            if (!hasMatchingSigner(archive)) {
-                throw new IOException("Update package signer does not match the installed application");
-            }
             UpdateState savedState = stateStore.load();
             String version = savedState.getVersion() == null ? f.getName() : savedState.getVersion();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
@@ -807,7 +875,7 @@ public class VersionChecker {
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             if (installLauncher != null) installLauncher.launch(intent);
             else context.startActivityForResult(intent, INSTALL_REQUEST_CODE);
-        } catch (IOException | IllegalArgumentException | SecurityException exception) {
+        } catch (IllegalArgumentException | SecurityException | ActivityNotFoundException exception) {
             saveState(UpdateState.error(null, f.getAbsolutePath(), "install_validation", System.currentTimeMillis()));
             context.runOnUiThread(() -> Toast.makeText(context, R.string.download_update_failed, Toast.LENGTH_LONG).show());
 
