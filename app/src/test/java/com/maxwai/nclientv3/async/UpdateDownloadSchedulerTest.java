@@ -173,6 +173,21 @@ public class UpdateDownloadSchedulerTest {
     }
 
     @Test
+    @Config(application = Application.class)
+    public void synchronousWorkQueryFailurePreservesRunningDownloadAndRequestsRetry() {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        store.save(UpdateState.downloading(record.getVersion(), record.getFilePath(), 1L, record.getSize(), 2L));
+        BooleanSupplier reconciliation = () -> UpdateDownloadScheduler.reconcileNow(context, id -> {
+            throw new IllegalStateException("fixture failure");
+        });
+        assertEquals(ListenableWorker.Result.retry(), checkWorker(true, reconciliation).doWork());
+        assertEquals(UpdatePhase.DOWNLOADING, store.load().getPhase());
+        assertEquals(1L, store.load().getDownloadedBytes());
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
+    }
+
+    @Test
     public void canceledSystemWorkBecomesRetryableError() throws Exception {
         UpdateDownloadRecord record = record();
         assertTrue(store.claimScheduledDownload(record, 1L));

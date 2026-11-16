@@ -97,10 +97,6 @@ final class UpdateDownloadScheduler {
                     }
                 }));
             }
-        } catch (IllegalStateException exception) {
-            failIfCurrent(app, record.getId(), false);
-            LogUtility.w("Update work is unavailable: " + exception.getClass().getSimpleName());
-            return false;
         } catch (Exception exception) {
             if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
             LogUtility.w("Unable to query update work: " + exception.getClass().getSimpleName());
