@@ -173,24 +173,26 @@ public final class UpdateCheckWorker extends Worker {
 
     @NonNull
     private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore) throws IOException {
-        return fetchReleaseJson(metadataStore, false);
+        return fetchReleaseJson(metadataStore, false, releaseApiUrl());
     }
 
     @NonNull
-    private String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional) throws IOException {
+    String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url) throws IOException {
         Request.Builder builder = new Request.Builder()
-            .url(releaseApiUrl())
+            .url(url)
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (!unconditional && metadataStore.getEtag() != null) builder.header("If-None-Match", metadataStore.getEtag());
         try (Response response = UpdateRequestClient.newCall(client, builder.build()).execute()) {
             if (response.code() == 304 && metadataStore.getBody() != null) return metadataStore.getBody();
-            if (response.code() == 304) return fetchReleaseJson(metadataStore, true);
-            if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
-            String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
-            metadataStore.save(body, response.header("ETag"));
-            return body;
+            if (response.code() != 304 || unconditional) {
+                if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
+                String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
+                metadataStore.save(body, response.header("ETag"));
+                return body;
+            }
         }
+        return fetchReleaseJson(metadataStore, true, url);
     }
 
     private VersionChecker.GitHubRelease fetchManifest(

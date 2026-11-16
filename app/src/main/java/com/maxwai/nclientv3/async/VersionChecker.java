@@ -124,8 +124,12 @@ public class VersionChecker {
     }
 
     private void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest) {
+        requestReleases(withPrerelease, silent, useConditionalRequest, releaseApiUrl());
+    }
+
+    void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest, @NonNull String url) {
         Request.Builder request = new Request.Builder()
-            .url(releaseApiUrl())
+            .url(url)
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (useConditionalRequest && metadataStore.getEtag() != null) {
@@ -160,7 +164,8 @@ public class VersionChecker {
                         }
                     }
                     if (retryWithoutCache) {
-                        requestReleases(withPrerelease, silent, false);
+                        if (!useConditionalRequest) throw new IOException("Release metadata cache is unavailable");
+                        requestReleases(withPrerelease, silent, false, url);
                         return;
                     }
                     GitHubRelease release;
