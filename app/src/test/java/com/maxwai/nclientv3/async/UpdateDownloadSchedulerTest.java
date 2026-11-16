@@ -12,6 +12,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.testing.WorkManagerTestInitHelper;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
@@ -29,9 +30,13 @@ import org.robolectric.RuntimeEnvironment;
 import java.io.File;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @RunWith(RobolectricTestRunner.class)
 public class UpdateDownloadSchedulerTest {
@@ -166,6 +171,54 @@ public class UpdateDownloadSchedulerTest {
         }
     }
 
+    @Test
+    public void delayedEnqueueSuccessKeepsTheCurrentAttempt() {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        result.complete();
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
+    }
+
+    @Test
+    public void delayedEnqueueFailureReportsRetryableError() {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+        result.fail();
+        assertEquals(UpdatePhase.ERROR, store.load().getPhase());
+        assertEquals("interrupted_download", store.load().getErrorCode());
+    }
+
+    @Test
+    public void delayedEnqueueFailureDoesNotInterruptRunningDownload() {
+        UpdateDownloadRecord record = record();
+        assertTrue(store.claimScheduledDownload(record, 1L));
+        DeferredResult result = new DeferredResult();
+        UpdateDownloadScheduler.awaitEnqueue(context, record.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+        store.save(UpdateState.downloading(record.getVersion(), record.getFilePath(), 1L, record.getSize(), 2L));
+        result.fail();
+        assertEquals(UpdatePhase.DOWNLOADING, store.load().getPhase());
+        assertEquals(record.getId(), store.loadDownloadRecord().getId());
+    }
+
+    @Test
+    public void delayedFailureFromOldEnqueueCannotOverwriteNewAttempt() {
+        UpdateDownloadRecord first = record();
+        assertTrue(store.claimScheduledDownload(first, 1L));
+        DeferredResult result = new DeferredResult();
+        UpdateDownloadScheduler.awaitEnqueue(context, first.getId(), result, 0L, TimeUnit.MILLISECONDS, Runnable::run);
+        UpdateDownloadRecord second = record();
+        assertTrue(store.claimScheduledDownload(second, 2L));
+        result.fail();
+        assertEquals(UpdatePhase.QUEUED, store.load().getPhase());
+        assertEquals(second.getId(), store.loadDownloadRecord().getId());
+    }
+
     private WorkInfo awaitWork(UUID id) throws Exception {
         WorkInfo info = null;
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
@@ -174,6 +227,26 @@ public class UpdateDownloadSchedulerTest {
             if (info == null) Thread.sleep(10L);
         }
         return info;
+    }
+
+    private static final class DeferredResult implements ListenableFuture<Void> {
+        private final CompletableFuture<Void> future = new CompletableFuture<>();
+
+        void complete() { future.complete(null); }
+        void fail() { future.completeExceptionally(new IllegalStateException("fixture failure")); }
+
+        @Override public void addListener(Runnable listener, Executor executor) {
+            future.whenComplete((value, failure) -> executor.execute(listener));
+        }
+
+        @Override public boolean cancel(boolean interrupt) { return future.cancel(interrupt); }
+        @Override public boolean isCancelled() { return future.isCancelled(); }
+        @Override public boolean isDone() { return future.isDone(); }
+        @Override public Void get() throws InterruptedException, ExecutionException { return future.get(); }
+        @Override public Void get(long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
+            return future.get(timeout, unit);
+        }
     }
 
     private UpdateDownloadRecord record() {

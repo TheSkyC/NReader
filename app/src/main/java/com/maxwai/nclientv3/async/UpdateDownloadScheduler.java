@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.maxwai.nclientv3.async.update.UpdateDownloadRecord;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
@@ -19,9 +20,11 @@ import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Coordinates persisted update attempts with WorkManager without blocking the UI. */
 final class UpdateDownloadScheduler {
@@ -73,7 +76,7 @@ final class UpdateDownloadScheduler {
                     }));
                 }
             } catch (IllegalStateException exception) {
-                failIfCurrent(app, record.getId());
+                failIfCurrent(app, record.getId(), false);
                 LogUtility.w("Update work is unavailable: " + exception.getClass().getSimpleName());
             } catch (Exception exception) {
                 if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
@@ -119,27 +122,60 @@ final class UpdateDownloadScheduler {
         try {
             workManager = WorkManager.getInstance(context);
         } catch (IllegalStateException exception) {
-            failIfCurrent(context, id);
+            failIfCurrent(context, id, false);
             LogUtility.w("Update work is unavailable: " + exception.getClass().getSimpleName());
             return;
         }
+        ListenableFuture<?> enqueueResult;
         try {
             Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
             OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateDownloadWorker.class)
                 .setId(id).setConstraints(constraints).build();
-            workManager.enqueueUniqueWork(WORK_PREFIX + id, ExistingWorkPolicy.KEEP, request)
-                .getResult().get(10L, TimeUnit.SECONDS);
+            enqueueResult = workManager.enqueueUniqueWork(WORK_PREFIX + id, ExistingWorkPolicy.KEEP, request).getResult();
         } catch (Exception exception) {
-            if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
-            failIfCurrent(context, id);
+            failIfCurrent(context, id, true);
+            LogUtility.w("Unable to enqueue update work: " + exception.getClass().getSimpleName());
+            return;
+        }
+        awaitEnqueue(context, id, enqueueResult, 10L, TimeUnit.SECONDS, EXECUTOR);
+    }
+
+    static void awaitEnqueue(@NonNull Context context, @NonNull UUID id, @NonNull ListenableFuture<?> enqueueResult,
+                             long timeout, @NonNull TimeUnit unit, @NonNull Executor executor) {
+        try {
+            enqueueResult.get(timeout, unit);
+        } catch (TimeoutException exception) {
+            // A timeout does not establish whether WorkManager persisted the request.
+            LogUtility.w("Update work enqueue confirmation is pending");
+            observePendingEnqueue(context, id, enqueueResult, executor);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            observePendingEnqueue(context, id, enqueueResult, executor);
+        } catch (Exception exception) {
+            failIfCurrent(context, id, true);
             LogUtility.w("Unable to enqueue update work: " + exception.getClass().getSimpleName());
         }
     }
 
-    private static void failIfCurrent(Context context, UUID id) {
+    private static void observePendingEnqueue(@NonNull Context context, @NonNull UUID id,
+                                              @NonNull ListenableFuture<?> result, @NonNull Executor executor) {
+        Context app = context.getApplicationContext();
+        result.addListener(() -> {
+            try {
+                result.get();
+            } catch (Exception exception) {
+                if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
+                failIfCurrent(app, id, true);
+                LogUtility.w("Unable to enqueue update work: " + exception.getClass().getSimpleName());
+            }
+        }, executor);
+    }
+
+    private static void failIfCurrent(Context context, UUID id, boolean queuedOnly) {
         UpdateStateStore store = new UpdateStateStore(context);
         store.runIfScheduledDownload(id, () -> {
             UpdateState state = store.load();
+            if (queuedOnly && state.getPhase() != UpdatePhase.QUEUED) return;
             UpdateState error = UpdateState.error(state.getVersion(), state.getFilePath(), "interrupted_download", System.currentTimeMillis());
             store.save(error);
             UpdateNotification.publish(context, error);
