@@ -22,6 +22,7 @@ import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.async.UpdateCheckWorker;
+import com.maxwai.nclientv3.async.UpdateStateRecovery;
 import com.maxwai.nclientv3.settings.Database;
 import com.maxwai.nclientv3.settings.AccountRuntime;
 import com.maxwai.nclientv3.settings.Global;
@@ -56,6 +57,7 @@ public class CrashApplication extends Application {
             afterUpdateChecks(preferences, version);
 
         Global.initFromShared(this);
+        UpdateStateRecovery.reconcileStored(this);
         NetworkUtil.initConnectivity(this);
         TagV2.initMinCount(this);
         TagV2.initSortByName(this);
@@ -70,20 +72,12 @@ public class CrashApplication extends Application {
 
     private void afterUpdateChecks(SharedPreferences preferences, String oldVersion) {
         SharedPreferences.Editor editor = preferences.edit();
-        removeOldUpdates();
         if ("0.0.0".equals(oldVersion))
             editor.putBoolean(getString(R.string.preference_key_check_update), true);
         editor.apply();
         Global.setLastVersion(this);
     }
 
-
-    private void removeOldUpdates() {
-        if (!Global.hasStoragePermission(this)) return;
-        Global.recursiveDelete(Global.UPDATEFOLDER);
-        //noinspection ResultOfMethodCallIgnored
-        Global.UPDATEFOLDER.mkdir();
-    }
 
     private static class CustomActivityLifecycleCallback implements ActivityLifecycleCallbacks {
 

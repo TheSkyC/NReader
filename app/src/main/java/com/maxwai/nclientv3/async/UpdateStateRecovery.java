@@ -9,11 +9,21 @@ import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.async.update.UpdatePhase;
 import com.maxwai.nclientv3.async.update.UpdateState;
 import com.maxwai.nclientv3.async.update.UpdateStateStore;
+import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.regex.Pattern;
 
 /** Reconciles persisted state with files and the version actually running. */
 public final class UpdateStateRecovery {
+    private static final Pattern OWNED_ARTIFACT = Pattern.compile(
+        "(?i)^NReader-v?\\d+\\.\\d+\\.\\d+(?:-(?:pre\\d+|(?:alpha|beta|rc)\\.\\d+))?"
+            + "(?:-(?:debug|relwithdebinfo))?-(?:minApi26|minApi28)-"
+            + "(?:release|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+            + "\\.apk(?:\\.part)?$"
+    );
     private UpdateStateRecovery() {}
 
     @NonNull
@@ -42,9 +52,15 @@ public final class UpdateStateRecovery {
         File file = filePath == null ? null : new File(filePath);
         long now = System.currentTimeMillis();
 
-        if (version != null && VersionChecker.GitHubRelease.isVersionAtLeast(BuildConfig.VERSION_NAME, version)) {
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        long selectedVersionCode = metadata.getSelectedVersionCode();
+        boolean matchingSelection = version != null && version.equals(metadata.getSelectedVersion());
+        boolean installed = matchingSelection && selectedVersionCode > 0L
+            ? BuildConfig.VERSION_CODE >= selectedVersionCode
+            : version != null && VersionChecker.GitHubRelease.isVersionAtLeast(BuildConfig.VERSION_NAME, version);
+        if (installed) {
             deleteUpdateArtifact(file);
-            new UpdateMetadataStore(context).clearSelectedRelease();
+            metadata.clearSelectedRelease();
             UpdateNotification.clear(context);
             return UpdateState.idle(now);
         }
@@ -58,23 +74,25 @@ public final class UpdateStateRecovery {
 
         if (state.getPhase() == UpdatePhase.DOWNLOADING) {
             deletePartialFile(file);
+            UpdateNotification.clear(context);
             return UpdateState.error(version, filePath, "interrupted_download", now);
         }
         return state;
     }
 
     private static void deletePartialFile(File file) {
-        if (file == null || !file.getName().endsWith(".part")) return;
-        // Only remove the temporary download artifact created by VersionChecker.
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
+        if (file != null && file.getName().endsWith(".part")) deleteUpdateArtifact(file);
     }
 
     private static void deleteUpdateArtifact(File file) {
-        if (file == null) return;
-        String name = file.getName();
-        if (!name.startsWith("NReader-") || !(name.endsWith(".apk") || name.endsWith(".part"))) return;
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
+        if (file == null || Global.UPDATEFOLDER == null || !OWNED_ARTIFACT.matcher(file.getName()).matches()) return;
+        try {
+            File canonical = file.getCanonicalFile();
+            if (!Global.UPDATEFOLDER.getCanonicalFile().equals(canonical.getParentFile()) || !canonical.isFile()) return;
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        } catch (IOException | SecurityException exception) {
+            LogUtility.w("Unable to verify update artifact location: " + exception.getClass().getSimpleName());
+        }
     }
 }
