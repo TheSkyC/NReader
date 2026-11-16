@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Map;
+
 /** Conditional-request cache for release metadata, separate from task state. */
 public final class UpdateMetadataStore {
     private static final String PREFERENCES = "UpdateMetadata";
@@ -30,6 +32,22 @@ public final class UpdateMetadataStore {
 
     @Nullable public String getBody() { return preferences.getString(BODY, null); }
     @Nullable public String getEtag() { return preferences.getString(ETAG, null); }
+    @NonNull CacheSnapshot cacheSnapshot() {
+        Map<String, ?> values = preferences.getAll();
+        Object body = values.get(BODY);
+        Object etag = values.get(ETAG);
+        return new CacheSnapshot(body instanceof String ? (String) body : null, etag instanceof String ? (String) etag : null);
+    }
+
+    static final class CacheSnapshot {
+        @Nullable final String body;
+        @Nullable final String etag;
+
+        CacheSnapshot(@Nullable String body, @Nullable String etag) {
+            this.body = body;
+            this.etag = etag;
+        }
+    }
     @Nullable public String getSelectedSha256() { return preferences.getString(SELECTED_SHA256, null); }
     @Nullable public String getSelectedVersion() { return preferences.getString(SELECTED_VERSION, null); }
     @Nullable public String getSelectedUrl() { return preferences.getString(SELECTED_URL, null); }

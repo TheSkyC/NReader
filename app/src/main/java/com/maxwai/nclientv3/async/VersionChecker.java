@@ -128,12 +128,13 @@ public class VersionChecker {
     }
 
     void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest, @NonNull String url) {
+        UpdateMetadataStore.CacheSnapshot cache = metadataStore.cacheSnapshot();
         Request.Builder request = new Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
-        if (useConditionalRequest && metadataStore.getEtag() != null) {
-            request.header("If-None-Match", metadataStore.getEtag());
+        if (useConditionalRequest && cache.etag != null) {
+            request.header("If-None-Match", cache.etag);
         }
         metadataCall = UpdateRequestClient.newCall(updateClient, request.build());
         metadataCall.enqueue(new Callback() {
@@ -151,14 +152,18 @@ public class VersionChecker {
                 }
                 try {
                     String json;
+                    String etag = null;
+                    boolean fromCache = false;
                     boolean retryWithoutCache = false;
                     try (Response ignored = response) {
                         if (response.code() == 304) {
-                            json = metadataStore.getBody();
+                            if (!useConditionalRequest) throw new IOException("Unexpected HTTP 304");
+                            json = cache.etag == null ? null : cache.body;
                             retryWithoutCache = json == null;
+                            fromCache = true;
                         } else if (response.isSuccessful() && response.body() != null) {
                             json = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
-                            metadataStore.save(json, response.header("ETag"));
+                            etag = response.header("ETag");
                         } else {
                             throw new IOException("Unable to retrieve release metadata: HTTP " + response.code());
                         }
@@ -169,9 +174,16 @@ public class VersionChecker {
                         return;
                     }
                     GitHubRelease release;
-                    try (JsonReader jr = new JsonReader(new StringReader(json))) {
-                        release = parseVersionJson(jr, withPrerelease, BuildConfig.FLAVOR);
+                    try {
+                        release = parseReleaseList(json, withPrerelease);
+                    } catch (IOException | RuntimeException exception) {
+                        if (fromCache && useConditionalRequest) {
+                            requestReleases(withPrerelease, silent, false, url);
+                            return;
+                        }
+                        throw exception;
                     }
+                    if (!fromCache) metadataStore.save(json, etag);
                     if (release == null) {
                         release = new GitHubRelease();
                         release.versionCode = BuildConfig.VERSION_NAME;
@@ -369,6 +381,12 @@ public class VersionChecker {
                     System.currentTimeMillis()
                 ));
             }
+        }
+    }
+
+    static GitHubRelease parseReleaseList(@NonNull String json, boolean withPrerelease) throws IOException {
+        try (JsonReader reader = new JsonReader(new StringReader(json))) {
+            return parseVersionJson(reader, withPrerelease, BuildConfig.FLAVOR);
         }
     }
 

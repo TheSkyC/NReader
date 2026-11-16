@@ -53,20 +53,112 @@ import kotlin.coroutines.EmptyCoroutineContext;
 @Config(application = Application.class)
 public class UpdateMetadataRetryTest {
     @Test
+    public void invalidForegroundResponseDoesNotReplaceValidCache() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.save("[]", "old-tag");
+        ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class).setup();
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        state.save(UpdateState.checking(1L));
+        VersionChecker checker = new VersionChecker(controller.get(), true, null, false);
+        Field revision = VersionChecker.class.getDeclaredField("checkRevision");
+        revision.setAccessible(true);
+        revision.setLong(checker, state.revision());
+        ExecutorService serverExecutor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))) {
+            server.setSoTimeout(5000);
+            Future<?> response = serverExecutor.submit(() -> {
+                try (Socket socket = server.accept()) {
+                    socket.setSoTimeout(5000);
+                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
+                    String line;
+                    while ((line = input.readLine()) != null && !line.isEmpty()) { }
+                    socket.getOutputStream().write("HTTP/1.1 200 OK\r\nETag: bad-tag\r\nContent-Length: 1\r\nConnection: close\r\n\r\n{".getBytes(StandardCharsets.US_ASCII));
+                    socket.getOutputStream().flush();
+                }
+                return null;
+            });
+            checker.requestReleases(false, true, true, "http://127.0.0.1:" + server.getLocalPort() + "/releases");
+            response.get(5L, TimeUnit.SECONDS);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (state.load().getPhase() == UpdatePhase.CHECKING && System.nanoTime() < deadline) Thread.sleep(10L);
+            assertEquals(UpdatePhase.ERROR, state.load().getPhase());
+            assertEquals("[]", metadata.getBody());
+            assertEquals("old-tag", metadata.getEtag());
+            assertEquals(0L, metadata.getLastSuccessfulCheck());
+        } finally {
+            checker.cancel();
+            serverExecutor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+            controller.pause().stop().destroy();
+        }
+    }
+
+    @Test
+    public void invalidBackgroundResponseDoesNotReplaceValidCache() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.save("[]", "old-tag");
+        Executor direct = Runnable::run;
+        WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+            new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
+            new WorkManagerTaskExecutor(direct), new WorkerFactory() {
+                @Override public ListenableWorker createWorker(Context app, String name, WorkerParameters params) { return null; }
+            }, (app, id, data) -> Futures.immediateFuture(null), (app, id, info) -> Futures.immediateFuture(null));
+        UpdateCheckWorker worker = new UpdateCheckWorker(context, parameters, () -> true, () -> true);
+        ExecutorService serverExecutor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))) {
+            server.setSoTimeout(5000);
+            Future<?> response = serverExecutor.submit(() -> {
+                try (Socket socket = server.accept()) {
+                    socket.setSoTimeout(5000);
+                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
+                    String line;
+                    while ((line = input.readLine()) != null && !line.isEmpty()) { }
+                    socket.getOutputStream().write("HTTP/1.1 200 OK\r\nETag: bad-tag\r\nContent-Length: 1\r\nConnection: close\r\n\r\n{".getBytes(StandardCharsets.US_ASCII));
+                }
+                return null;
+            });
+            try {
+                worker.fetchReleaseJson(metadata, false, "http://127.0.0.1:" + server.getLocalPort() + "/releases");
+                fail("Malformed release metadata must fail");
+            } catch (IOException expected) {
+                assertEquals("[]", metadata.getBody());
+                assertEquals("old-tag", metadata.getEtag());
+                assertEquals(0L, metadata.getLastSuccessfulCheck());
+            }
+            response.get(5L, TimeUnit.SECONDS);
+        } finally {
+            serverExecutor.shutdownNow();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+
+    @Test
     public void foregroundNotModifiedUsesCachedReleaseList() throws Exception {
-        foregroundCacheScenario(true);
+        foregroundCacheScenario("[]");
     }
 
     @Test
     public void foregroundMissingCacheRetriesWithoutEtagAndUsesResponse() throws Exception {
-        foregroundCacheScenario(false);
+        foregroundCacheScenario(null);
     }
 
-    private void foregroundCacheScenario(boolean cached) throws Exception {
+    @Test
+    public void foregroundCorruptCacheRetriesWithoutEtag() throws Exception {
+        foregroundCacheScenario("{");
+    }
+
+    private void foregroundCacheScenario(String cachedBody) throws Exception {
+        boolean cached = "[]".equals(cachedBody);
         Context context = RuntimeEnvironment.getApplication();
         context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
         UpdateMetadataStore metadata = new UpdateMetadataStore(context);
-        if (cached) metadata.save("[]", "test-tag");
+        if (cachedBody != null) metadata.save(cachedBody, "test-tag");
         else context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().putString("etag", "test-tag").commit();
         ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class).setup();
         UpdateStateStore state = new UpdateStateStore(context);
@@ -89,6 +181,7 @@ public class UpdateMetadataRetryTest {
                         String line;
                         while ((line = input.readLine()) != null && !line.isEmpty()) request.append(line).append('\n');
                         headers[i] = request.toString().toLowerCase(java.util.Locale.ROOT);
+                        if (cached && i == 0) metadata.save("{", "concurrent-tag");
                         String response = i == 0 ? "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n\r\n"
                             : "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]";
                         socket.getOutputStream().write(response.getBytes(StandardCharsets.US_ASCII));
@@ -108,7 +201,7 @@ public class UpdateMetadataRetryTest {
             }
             assertEquals(UpdatePhase.IDLE, state.load().getPhase());
             assertTrue(metadata.getLastSuccessfulCheck() > 0L);
-            assertEquals("[]", metadata.getBody());
+            assertEquals(cached ? "{" : "[]", metadata.getBody());
         } finally {
             checker.cancel();
             serverExecutor.shutdownNow();
@@ -140,6 +233,7 @@ public class UpdateMetadataRetryTest {
                         BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
                         String line;
                         while ((line = input.readLine()) != null && !line.isEmpty()) { }
+                        if (i == 0) metadata.save("[ ]", "concurrent-tag");
                         String response = i < 2 ? "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n\r\n"
                             : "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]";
                         socket.getOutputStream().write(response.getBytes(StandardCharsets.US_ASCII));
@@ -148,9 +242,10 @@ public class UpdateMetadataRetryTest {
                 return null;
             });
             String url = "http://127.0.0.1:" + server.getLocalPort() + "/releases";
-            metadata.save("cached", "test-tag");
-            assertEquals("cached", worker.fetchReleaseJson(metadata, false, url));
-            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().remove("body").commit();
+            metadata.save("[]", "test-tag");
+            assertEquals("[]", worker.fetchReleaseJson(metadata, false, url));
+            assertEquals("[ ]", metadata.getBody());
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().putString("body", "{").commit();
             assertEquals("[]", worker.fetchReleaseJson(metadata, false, url));
             assertEquals("[]", metadata.getBody());
             responses.get(5L, TimeUnit.SECONDS);

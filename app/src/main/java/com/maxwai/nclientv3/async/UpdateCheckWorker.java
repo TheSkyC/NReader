@@ -178,16 +178,25 @@ public final class UpdateCheckWorker extends Worker {
 
     @NonNull
     String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url) throws IOException {
+        UpdateMetadataStore.CacheSnapshot cache = metadataStore.cacheSnapshot();
         Request.Builder builder = new Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
-        if (!unconditional && metadataStore.getEtag() != null) builder.header("If-None-Match", metadataStore.getEtag());
+        if (!unconditional && cache.etag != null) builder.header("If-None-Match", cache.etag);
         try (Response response = UpdateRequestClient.newCall(client, builder.build()).execute()) {
-            if (response.code() == 304 && metadataStore.getBody() != null) return metadataStore.getBody();
+            if (response.code() == 304 && unconditional) throw new IOException("Unexpected HTTP 304");
+            String cached = response.code() == 304 && cache.etag != null ? cache.body : null;
+            if (cached != null) {
+                try {
+                    VersionChecker.parseReleaseList(cached, Global.isEnableBeta());
+                    return cached;
+                } catch (IOException | RuntimeException ignored) { }
+            }
             if (response.code() != 304 || unconditional) {
                 if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
                 String body = UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT);
+                VersionChecker.parseReleaseList(body, Global.isEnableBeta());
                 metadataStore.save(body, response.header("ETag"));
                 return body;
             }
