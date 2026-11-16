@@ -148,7 +148,7 @@ public final class UpdateCheckWorker extends Worker {
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
         if (!unconditional && metadataStore.getEtag() != null) builder.header("If-None-Match", metadataStore.getEtag());
-        try (Response response = client.newCall(builder.build()).execute()) {
+        try (Response response = UpdateRequestClient.newCall(client, builder.build()).execute()) {
             if (response.code() == 304 && metadataStore.getBody() != null) return metadataStore.getBody();
             if (response.code() == 304) return fetchReleaseJson(metadataStore, true);
             if (!response.isSuccessful() || response.body() == null) throw new IOException("HTTP " + response.code());
@@ -165,7 +165,7 @@ public final class UpdateCheckWorker extends Worker {
         if (apiRelease.manifestUrl == null || !VersionChecker.isAllowedUpdateUrl(apiRelease.manifestUrl)) {
             return null;
         }
-        try (Response response = client.newCall(new Request.Builder()
+        try (Response response = UpdateRequestClient.newCall(client, new Request.Builder()
             .url(apiRelease.manifestUrl)
             .header("Accept", "application/json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)

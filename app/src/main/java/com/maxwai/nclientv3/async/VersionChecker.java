@@ -142,7 +142,7 @@ public class VersionChecker {
         if (useConditionalRequest && metadataStore.getEtag() != null) {
             request.header("If-None-Match", metadataStore.getEtag());
         }
-        metadataCall = updateClient.newCall(request.build());
+        metadataCall = UpdateRequestClient.newCall(updateClient, request.build());
         metadataCall.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -204,7 +204,7 @@ public class VersionChecker {
             return;
         }
         if (manifestCall != null) manifestCall.cancel();
-        manifestCall = updateClient.newCall(new Request.Builder()
+        manifestCall = UpdateRequestClient.newCall(updateClient, new Request.Builder()
             .url(apiRelease.manifestUrl)
             .header("Accept", "application/json")
             .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME)
