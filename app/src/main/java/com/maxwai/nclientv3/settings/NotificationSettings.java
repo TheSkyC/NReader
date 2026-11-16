@@ -41,7 +41,12 @@ public class NotificationSettings {
         notificationArray.add(notificationId);
         trimArray();
         LogUtility.d("Notification count: " + notificationArray.size());
-        notificationSettings.notificationManager.notify(notificationId, notification);
+        try {
+            notificationSettings.notificationManager.notify(notificationId, notification);
+        } catch (SecurityException exception) {
+            notificationArray.remove(Integer.valueOf(notificationId));
+            LogUtility.w("Notification permission changed before posting");
+        }
     }
 
     public static boolean canNotify(Context context) {
