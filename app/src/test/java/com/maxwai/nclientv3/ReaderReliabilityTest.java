@@ -503,6 +503,49 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void continuousViewportStaysClearOfVisibleControls() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                View content = activity.findViewById(android.R.id.content);
+                content.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+                content.layout(0, 0, 1080, 1920);
+                View viewport = activity.findViewById(R.id.continuous_reader);
+                View toolbar = activity.findViewById(R.id.toolbar);
+                View controls = activity.findViewById(R.id.master_layout);
+                View pageSwitcher = activity.findViewById(R.id.page_switcher);
+                assertTrue(viewport.getTop() >= toolbar.getBottom());
+                assertTrue(viewport.getBottom() <= controls.getTop());
+                int visibleHeight = viewport.getHeight();
+                assertTrue(visibleHeight > 0);
+                toolbar.setVisibility(View.GONE);
+                pageSwitcher.setVisibility(View.GONE);
+                content.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+                content.layout(0, 0, 1080, 1920);
+                assertTrue("hidden=" + viewport.getHeight() + ", visible=" + visibleHeight,
+                    viewport.getHeight() > visibleHeight);
+                toolbar.setVisibility(View.VISIBLE);
+                pageSwitcher.setVisibility(View.VISIBLE);
+                content.requestLayout();
+                content.measure(View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY));
+                content.layout(0, 0, 1920, 1080);
+                assertTrue(viewport.getTop() >= toolbar.getBottom());
+                assertTrue(viewport.getBottom() <= controls.getTop());
+                assertTrue(viewport.getHeight() > 0);
+            }
+        }
+    }
+
+    @Test
     public void continuousPageEdgeTapsFollowReaderSetting() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
