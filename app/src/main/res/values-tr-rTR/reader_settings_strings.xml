@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Okuma ayarları</string>
     <string name="reader_continuous_vertical">Sürekli dikey kaydırma</string>
-    <string name="reader_continuous_summary">Sürekli okuma konumunuzu hatırlar. Yakınlaştırma, döndürme, kaydetme ve paylaşma sayfalı modda kullanılabilir.</string>
+    <string name="reader_continuous_summary">Sürekli okuma konumunuzu hatırlar. Yakınlaştırma ve döndürme sayfalı modda kullanılabilir.</string>
 </resources>

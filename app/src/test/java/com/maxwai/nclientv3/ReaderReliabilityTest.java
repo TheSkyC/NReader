@@ -2,7 +2,9 @@
 package com.maxwai.nclientv3;
 
 import android.app.Application;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
@@ -42,20 +44,24 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.shadows.ShadowToast;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import android.util.Base64;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -372,6 +378,117 @@ public class ReaderReliabilityTest {
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.container).getVisibility());
                 assertEquals(1, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
             }
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void continuousSaveUsesSelectedSourceAfterPageChange() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".82129").createNewFile());
+        try (FileOutputStream output = new FileOutputStream(new File(folder, "2.png"))) {
+            assertTrue(Bitmap.createBitmap(8, 12, Bitmap.Config.ARGB_8888)
+                .compress(Bitmap.CompressFormat.PNG, 100, output));
+            output.write(new byte[]{7, 8, 9});
+        }
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", false).commit();
+        Shadows.shadowOf(application).grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE);
+        Global.initFromShared(application);
+        File previousScreenFolder = Global.SCREENFOLDER;
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                Global.SCREENFOLDER = temporaryFolder.newFolder("screens");
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(1, false);
+                layoutActivity(activity);
+                RecyclerView list = activity.findViewById(R.id.continuous_reader);
+                RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(1);
+                assertNotNull(holder);
+                holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.VISIBLE);
+                assertFalse(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                    ReflectionHelpers.ClassParameter.from(int.class, 1)));
+                holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                android.widget.ImageView image = holder.itemView.findViewById(R.id.continuous_page_image);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)));
+                application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", true).commit();
+                assertFalse(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                    ReflectionHelpers.ClassParameter.from(int.class, 1)));
+                application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", false).commit();
+                Menu menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                activity.onOptionsItemSelected(menu.findItem(R.id.save_page));
+                Future<?> task = ReflectionHelpers.getField(activity, "pageExportTask");
+                assertNotNull(task);
+                navigation.goToPage(2, false);
+                task.get(10, TimeUnit.SECONDS);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                File saved = new File(Global.SCREENFOLDER, "82129-2.png");
+                assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), Files.readAllBytes(saved.toPath()));
+                assertFalse(new File(Global.SCREENFOLDER, "82129-3.png").exists());
+
+                navigation.goToPage(1, false);
+                layoutActivity(activity);
+                holder = list.findViewHolderForAdapterPosition(1);
+                assertNotNull(holder);
+                holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                image = holder.itemView.findViewById(R.id.continuous_page_image);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)));
+                assertEquals(1, navigation.currentPage());
+                assertTrue(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                    ReflectionHelpers.ClassParameter.from(int.class, 1)));
+                activity.onOptionsItemSelected(menu.findItem(R.id.share));
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(dialog.isShowing());
+                navigation.goToPage(2, false);
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Future<?> shareTask = ReflectionHelpers.getField(activity, "pageExportTask");
+                assertTrue("Share did not start: " + ShadowToast.getTextOfLatestToast(), shareTask != task);
+                task = shareTask;
+                task.get(10, TimeUnit.SECONDS);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Intent chooser = Shadows.shadowOf(activity).getNextStartedActivity();
+                File[] sharedFiles = new File(application.getCacheDir(), "reader-share").listFiles();
+                assertNotNull(sharedFiles);
+                assertEquals(1, sharedFiles.length);
+                assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()),
+                    Files.readAllBytes(sharedFiles[0].toPath()));
+                // AndroidX FileProvider cannot resolve the Windows-hosted Robolectric cache path.
+                if (File.separatorChar == '/') {
+                    assertNotNull(chooser);
+                    assertEquals(Intent.ACTION_CHOOSER, chooser.getAction());
+                    Intent share = chooser.getParcelableExtra(Intent.EXTRA_INTENT);
+                    assertEquals("image/png", share.getType());
+                    android.net.Uri shared = share.getParcelableExtra(Intent.EXTRA_STREAM);
+                    try (java.io.InputStream stream = activity.getContentResolver().openInputStream(shared)) {
+                        assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), stream.readAllBytes());
+                    }
+                }
+
+                ReflectionHelpers.setField(activity, "pendingContinuousSave", 1);
+                controller.recreate();
+                activity = controller.get();
+                assertEquals(Integer.valueOf(1), ReflectionHelpers.getField(activity, "pendingContinuousSave"));
+                activity.onRequestPermissionsResult(1, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    new int[]{PackageManager.PERMISSION_GRANTED});
+                task = ReflectionHelpers.getField(activity, "pageExportTask");
+                assertNotNull(task);
+                task.get(10, TimeUnit.SECONDS);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                saved = new File(Global.SCREENFOLDER, "82129-2.png");
+                assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), Files.readAllBytes(saved.toPath()));
+            }
+        } finally {
+            Global.SCREENFOLDER = previousScreenFolder;
+            application.getSharedPreferences("DebugDisplay", 0).edit().clear().commit();
         }
     }
 

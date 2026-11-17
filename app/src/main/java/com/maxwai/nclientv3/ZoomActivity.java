@@ -4,13 +4,19 @@ package com.maxwai.nclientv3;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +25,7 @@ import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.RadioGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +34,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -46,11 +54,13 @@ import com.maxwai.nclientv3.components.reader.PagedReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousPageAdapter;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ReaderPageExport;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
+import com.maxwai.nclientv3.utility.DebugImageMask;
 import com.maxwai.nclientv3.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -59,7 +69,12 @@ import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ZoomActivity extends GeneralActivity {
     private final static int hideFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -74,7 +89,9 @@ public class ZoomActivity extends GeneralActivity {
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
     private static final String READER_OFFSET_STATE = "readerOffset";
     private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
+    private static final String PENDING_CONTINUOUS_SAVE = "pendingContinuousSave";
     private static final float PAGE_TAP_EDGE = .2f;
+    private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
     private GenericGallery gallery;
     private int actualPage = 0;
     private ReadingPosition initialPosition;
@@ -94,10 +111,13 @@ public class ZoomActivity extends GeneralActivity {
     @ViewPager2.Orientation
     private int tmpScrollType;
     private boolean up = false, down = false, side;
+    private int pendingContinuousSave = -1;
+    @Nullable private Future<?> pageExportTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) pendingContinuousSave = savedInstanceState.getInt(PENDING_CONTINUOUS_SAVE, -1);
         //Global.initActivity(this);
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
         side = preferences.getBoolean(VOLUME_SIDE_KEY, true);
@@ -343,6 +363,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
+        state.putInt(PENDING_CONTINUOUS_SAVE, pendingContinuousSave);
         if (readerNavigation != null) {
             ReadingPosition position = currentPosition();
             if (position == null) position = initialPosition;
@@ -351,6 +372,12 @@ public class ZoomActivity extends GeneralActivity {
         }
         savePosition();
         super.onSaveInstanceState(state);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (pageExportTask != null) pageExportTask.cancel(true);
+        super.onDestroy();
     }
 
     private void setPageText(int page) {
@@ -554,13 +581,26 @@ public class ZoomActivity extends GeneralActivity {
             if (fragment == null || fragment.getView() == null) showPageUnavailable();
             else fragment.rotate();
         } else if (id == R.id.save_page) {
-            if (getAvailablePageImage() == null) {
+            if (continuousMode) {
+                int page = readerNavigation.currentPage();
+                if (!canExportContinuousPage(page)) showPageUnavailable();
+                else if (Global.hasStoragePermission(this)) exportContinuousPage(page, false, false);
+                else {
+                    pendingContinuousSave = page;
+                    requestStorage();
+                }
+            } else if (getAvailablePageImage() == null) {
                 showPageUnavailable();
             } else if (Global.hasStoragePermission(this)) {
                 downloadPage();
             } else requestStorage();
         } else if (id == R.id.share) {
-            if (getAvailablePageImage() == null) showPageUnavailable();
+            if (continuousMode) {
+                int page = readerNavigation.currentPage();
+                if (!canExportContinuousPage(page)) showPageUnavailable();
+                else if (gallery.getId() <= 0) exportContinuousPage(page, true, false);
+                else openContinuousShareDialog(page);
+            } else if (getAvailablePageImage() == null) showPageUnavailable();
             else if (gallery.getId() <= 0) sendImage(false);
             else openSendImageDialog();
         } else if (id == android.R.id.home) {
@@ -584,6 +624,15 @@ public class ZoomActivity extends GeneralActivity {
             .show();
     }
 
+    private void openContinuousShareDialog(int page) {
+        new MaterialAlertDialogBuilder(this)
+            .setPositiveButton(R.string.yes, (dialog, which) -> exportContinuousPage(page, true, true))
+            .setNegativeButton(R.string.no, (dialog, which) -> exportContinuousPage(page, true, false))
+            .setCancelable(true).setTitle(R.string.send_with_title)
+            .setMessage(R.string.caption_send_with_title)
+            .show();
+    }
+
     private void requestStorage() {
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
     }
@@ -592,8 +641,14 @@ public class ZoomActivity extends GeneralActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Global.initStorage(this);
-        if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            downloadPage();
+        if (requestCode == 1) {
+            int page = pendingContinuousSave;
+            pendingContinuousSave = -1;
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (page >= 0) exportContinuousPage(page, false, false);
+                else downloadPage();
+            }
+        }
 
     }
 
@@ -653,6 +708,73 @@ public class ZoomActivity extends GeneralActivity {
         ZoomFragment fragment = getActualFragment();
         Drawable image = fragment == null ? null : fragment.getDrawable();
         return image instanceof BitmapDrawable ? image : null;
+    }
+
+    private boolean canExportContinuousPage(int page) {
+        RecyclerView.ViewHolder holder = continuousReader.findViewHolderForAdapterPosition(page);
+        if (holder == null || DebugImageMask.isEnabled(this)) return false;
+        View status = holder.itemView.findViewById(R.id.continuous_page_status);
+        ImageView image = holder.itemView.findViewById(R.id.continuous_page_image);
+        return status != null && status.getVisibility() == View.GONE && image != null && image.getDrawable() != null
+            && ContinuousPageAdapter.pageSource(gallery, directory, page) != null;
+    }
+
+    private void exportContinuousPage(int page, boolean share, boolean withText) {
+        Object source = ContinuousPageAdapter.pageSource(gallery, directory, page);
+        if (source == null || DebugImageMask.isEnabled(this)) {
+            showPageUnavailable();
+            return;
+        }
+        if (pageExportTask != null && !pageExportTask.isDone()) {
+            Toast.makeText(this, R.string.reader_page_loading, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Context app = getApplicationContext();
+        File destination = share ? new File(app.getCacheDir(), "reader-share") : Global.SCREENFOLDER;
+        if (destination == null) {
+            Toast.makeText(this, R.string.download_error_storage, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String name = gallery.getId() + "-" + (page + 1);
+        boolean unique = share || gallery.getId() <= 0;
+        String caption = share && withText ? gallery.sharePageUrl(page) : null;
+        WeakReference<ZoomActivity> activity = new WeakReference<>(this);
+        Handler main = new Handler(Looper.getMainLooper());
+        Toast.makeText(this, R.string.reader_page_loading, Toast.LENGTH_SHORT).show();
+        pageExportTask = PAGE_EXPORT_EXECUTOR.submit(() -> {
+            try {
+                ReaderPageExport.Result result = ReaderPageExport.prepare(app, source, destination, name, unique);
+                if (Thread.currentThread().isInterrupted()) return;
+                main.post(() -> {
+                    ZoomActivity current = activity.get();
+                    if (current == null || current.isFinishing() || current.isDestroyed()) return;
+                    if (share) current.shareContinuousPage(result, caption);
+                    else Toast.makeText(current, R.string.export_finished, Toast.LENGTH_SHORT).show();
+                });
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            } catch (IOException | RuntimeException exception) {
+                LogUtility.e("Reader page export failed: " + exception.getClass().getSimpleName());
+                main.post(() -> {
+                    ZoomActivity current = activity.get();
+                    if (current != null && !current.isFinishing() && !current.isDestroyed())
+                        Toast.makeText(current, share ? R.string.send_image_error : R.string.download_failed, Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void shareContinuousPage(ReaderPageExport.Result result, @Nullable String caption) {
+        try {
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", result.file);
+            Intent intent = new Intent(Intent.ACTION_SEND).setType(result.mimeType)
+                .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (caption != null) intent.putExtra(Intent.EXTRA_TEXT, caption);
+            startActivity(Intent.createChooser(intent, getString(R.string.share_with)));
+        } catch (IllegalArgumentException | ActivityNotFoundException exception) {
+            LogUtility.e("Reader share failed: " + exception.getClass().getSimpleName());
+            Toast.makeText(this, R.string.send_image_error, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showPageUnavailable() {

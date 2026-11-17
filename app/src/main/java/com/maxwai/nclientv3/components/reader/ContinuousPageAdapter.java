@@ -69,11 +69,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         int generation = holder.generation;
         if (manager != null) manager.clear(holder.image);
         holder.image.setImageDrawable(null);
-        PageFile local = directory == null ? null : directory.getPage(position + 1);
-        Object source = local;
-        if (source == null && gallery instanceof Gallery && Global.getDownloadPolicy() != Global.DataUsageType.NONE) {
-            source = ((Gallery) gallery).getPageUrl(position);
-        }
+        Object source = pageSource(gallery, directory, position);
         if (source == null || manager == null) {
             holder.showError();
             return;
@@ -100,6 +96,16 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     return false;
                 }
             }).into(DebugImageMask.target(holder.image));
+    }
+
+    @Nullable
+    public static Object pageSource(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory, int position) {
+        if (position < 0 || position >= gallery.getPageCount()) return null;
+        PageFile local = directory == null ? null : directory.getPage(position + 1);
+        if (local != null) return local;
+        if (gallery instanceof Gallery && Global.getDownloadPolicy() != Global.DataUsageType.NONE)
+            return ((Gallery) gallery).getPageUrl(position);
+        return null;
     }
 
     @Override
