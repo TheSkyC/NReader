@@ -56,6 +56,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
     private int filterMode = ReaderImageFilter.NONE;
+    private boolean autoCrop;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     @Nullable private RecyclerView recycler;
 
@@ -79,6 +80,14 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                           int filterMode) {
         this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
         this.filterMode = ReaderImageFilter.sanitize(filterMode);
+    }
+
+    public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                          @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull ReaderPageRotations rotations,
+                          int filterMode, boolean autoCrop) {
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
+        this.filterMode = ReaderImageFilter.sanitize(filterMode);
+        this.autoCrop = autoCrop;
     }
 
     private ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
@@ -147,6 +156,18 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         for (int index = 0; index < recycler.getChildCount(); index++) {
             RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
             if (viewHolder instanceof Holder) ((Holder) viewHolder).applyFilter(filterMode);
+        }
+    }
+
+    public void setAutoCrop(boolean enabled) {
+        if (autoCrop == enabled) return;
+        autoCrop = enabled;
+        if (recycler == null) return;
+        for (int index = 0; index < recycler.getChildCount(); index++) {
+            RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
+            if (!(viewHolder instanceof Holder)) continue;
+            int page = viewHolder.getBindingAdapterPosition();
+            if (page != RecyclerView.NO_POSITION) load((Holder) viewHolder, page);
         }
     }
 
@@ -229,8 +250,11 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         boolean quarterTurn = angle == 90 || angle == 270;
         int targetWidth = quarterTurn ? MAX_DECODE_HEIGHT : width;
         int targetHeight = quarterTurn ? width : MAX_DECODE_HEIGHT;
+        MultiTransformation<android.graphics.Bitmap> transforms = autoCrop
+            ? new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle), new ReaderAutoCropTransformation()))
+            : new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle)));
         manager.load(source).override(targetWidth, targetHeight).fitCenter()
-            .transform(new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle))))
+            .transform(transforms)
             .addListener(new RequestListener<Drawable>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException exception, Object model,

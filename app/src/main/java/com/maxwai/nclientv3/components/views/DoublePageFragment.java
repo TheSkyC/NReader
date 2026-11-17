@@ -27,6 +27,7 @@ public final class DoublePageFragment extends Fragment {
     private static final String SECOND_PAGE_KEY = "SECOND_PAGE";
     private static final String SCALE_MODE_KEY = "SCALE_MODE";
     private static final String FILTER_MODE_KEY = "FILTER_MODE";
+    private static final String AUTO_CROP_KEY = "AUTO_CROP";
 
     private int firstPage;
     private int secondPage;
@@ -40,6 +41,12 @@ public final class DoublePageFragment extends Fragment {
     public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
                                                  int secondPage, @Nullable GalleryFolder directory,
                                                  int scaleMode, int filterMode) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, filterMode, false);
+    }
+
+    public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                 int secondPage, @Nullable GalleryFolder directory,
+                                                 int scaleMode, int filterMode, boolean autoCrop) {
         Bundle args = new Bundle();
         args.putParcelable(GALLERY_KEY, gallery);
         args.putParcelable(DIRECTORY_KEY, directory);
@@ -47,6 +54,7 @@ public final class DoublePageFragment extends Fragment {
         args.putInt(SECOND_PAGE_KEY, secondPage);
         args.putInt(SCALE_MODE_KEY, ReaderScaleMode.sanitize(scaleMode));
         args.putInt(FILTER_MODE_KEY, ReaderImageFilter.sanitize(filterMode));
+        args.putBoolean(AUTO_CROP_KEY, autoCrop);
         DoublePageFragment fragment = new DoublePageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -79,6 +87,7 @@ public final class DoublePageFragment extends Fragment {
         secondPage = args.getInt(SECOND_PAGE_KEY, -1);
         int scaleMode = ReaderScaleMode.sanitize(args.getInt(SCALE_MODE_KEY, ReaderScaleMode.SMART));
         int filterMode = ReaderImageFilter.sanitize(args.getInt(FILTER_MODE_KEY, ReaderImageFilter.NONE));
+        boolean autoCrop = args.getBoolean(AUTO_CROP_KEY, false);
         LinearLayout root = view.findViewById(R.id.double_page_root);
         FrameLayout secondContainer = view.findViewById(R.id.double_page_second);
         if (secondPage < 0) {
@@ -87,12 +96,12 @@ public final class DoublePageFragment extends Fragment {
         }
         if (getChildFragmentManager().findFragmentByTag(pageTag(firstPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory, scaleMode, filterMode), pageTag(firstPage))
+                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory, scaleMode, filterMode, autoCrop), pageTag(firstPage))
                 .commitNow();
         }
         if (secondPage >= 0 && getChildFragmentManager().findFragmentByTag(pageTag(secondPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory, scaleMode, filterMode), pageTag(secondPage))
+                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory, scaleMode, filterMode, autoCrop), pageTag(secondPage))
                 .commitNow();
         }
     }
@@ -114,5 +123,14 @@ public final class DoublePageFragment extends Fragment {
 
     public int secondPage() {
         return secondPage;
+    }
+
+    public void setAutoCrop(boolean enabled) {
+        ZoomFragment first = pageFragment(firstPage);
+        if (first != null) first.setAutoCrop(enabled);
+        if (secondPage >= 0) {
+            ZoomFragment second = pageFragment(secondPage);
+            if (second != null) second.setAutoCrop(enabled);
+        }
     }
 }

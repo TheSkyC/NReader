@@ -418,6 +418,9 @@ public class ReaderReliabilityTest {
                 dialog.findViewById(R.id.reader_scale_width).performClick();
                 assertEquals(ReaderScaleMode.FIT_WIDTH,
                     application.getSharedPreferences("Settings", 0).getInt("reader_scale_mode", -1));
+                ((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).setChecked(true);
+                assertTrue(application.getSharedPreferences("Settings", 0)
+                    .getBoolean("reader_auto_crop", false));
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).setChecked(true);
@@ -439,6 +442,7 @@ public class ReaderReliabilityTest {
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_vertical)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_scale_width)).isChecked());
+                assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());

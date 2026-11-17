@@ -117,6 +117,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_SCALE_MODE_KEY_PREFIX = "reader_scale_mode_";
     private static final String READER_FILTER_KEY = "reader_filter";
     private static final String READER_FILTER_KEY_PREFIX = "reader_filter_";
+    private static final String READER_AUTO_CROP_KEY = "reader_auto_crop";
+    private static final String READER_AUTO_CROP_KEY_PREFIX = "reader_auto_crop_";
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -158,6 +160,7 @@ public class ZoomActivity extends GeneralActivity {
     private int autoScrollSpeedIndex;
     private int readerScaleMode = ReaderScaleMode.SMART;
     private int readerFilterMode = ReaderImageFilter.NONE;
+    private boolean readerAutoCrop;
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
@@ -222,6 +225,7 @@ public class ZoomActivity extends GeneralActivity {
         if (directory == null) directory = gallery.getGalleryFolder();
         readerScaleMode = getReaderScaleMode(preferences);
         readerFilterMode = getReaderFilterMode(preferences);
+        readerAutoCrop = getReaderAutoCrop(preferences);
         spreadMode = getSpreadMode(preferences);
         doublePageMode = isDoublePageEffective();
         //toolbar setup
@@ -379,7 +383,7 @@ public class ZoomActivity extends GeneralActivity {
             continuousReader.setLayoutManager(layout);
             ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, directory,
                 (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations,
-                readerFilterMode);
+                readerFilterMode, readerAutoCrop);
             adapter.setOnPageDoubleTapListener((ignored, x, y) -> continuousZoomViewport.toggleDoubleTapZoom(x, y));
             continuousReader.setAdapter(adapter);
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
@@ -838,6 +842,10 @@ public class ZoomActivity extends GeneralActivity {
             id == R.id.reader_filter_grayscale ? ReaderImageFilter.GRAYSCALE
                 : id == R.id.reader_filter_invert ? ReaderImageFilter.INVERT : ReaderImageFilter.NONE));
 
+        SwitchMaterial autoCrop = Objects.requireNonNull(dialog.findViewById(R.id.reader_auto_crop));
+        autoCrop.setChecked(readerAutoCrop);
+        autoCrop.setOnCheckedChangeListener((button, checked) -> setReaderAutoCrop(checked));
+
         MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
         MaterialRadioButton backgroundBlack = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_black));
         MaterialRadioButton backgroundGray = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_gray));
@@ -953,6 +961,29 @@ public class ZoomActivity extends GeneralActivity {
         applyReaderFilterMode();
     }
 
+    private boolean getReaderAutoCrop(@NonNull SharedPreferences preferences) {
+        String key = readerAutoCropPreferenceKey();
+        try {
+            if (preferences.contains(key)) return preferences.getBoolean(key, false);
+            return preferences.getBoolean(READER_AUTO_CROP_KEY, false);
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
+
+    @NonNull
+    private String readerAutoCropPreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_AUTO_CROP_KEY_PREFIX + gallery.getId() : READER_AUTO_CROP_KEY;
+    }
+
+    private void setReaderAutoCrop(boolean enabled) {
+        readerAutoCrop = enabled;
+        getSharedPreferences("Settings", 0).edit()
+            .putBoolean(readerAutoCropPreferenceKey(), enabled).apply();
+        applyReaderAutoCrop();
+    }
+
     private int backgroundId(int value) {
         return value == READER_BACKGROUND_BLACK ? R.id.reader_background_black
             : value == READER_BACKGROUND_GRAY ? R.id.reader_background_gray
@@ -1009,6 +1040,22 @@ public class ZoomActivity extends GeneralActivity {
                     ZoomFragment second = spread.pageFragment(spread.secondPage());
                     if (second != null) second.setFilterMode(readerFilterMode);
                 }
+            }
+        }
+    }
+
+    private void applyReaderAutoCrop() {
+        if (continuousMode) {
+            RecyclerView.Adapter<?> adapter = continuousReader.getAdapter();
+            if (adapter instanceof ContinuousPageAdapter)
+                ((ContinuousPageAdapter) adapter).setAutoCrop(readerAutoCrop);
+            return;
+        }
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ZoomFragment) {
+                ((ZoomFragment) fragment).setAutoCrop(readerAutoCrop);
+            } else if (fragment instanceof DoublePageFragment) {
+                ((DoublePageFragment) fragment).setAutoCrop(readerAutoCrop);
             }
         }
     }
@@ -1369,7 +1416,8 @@ public class ZoomActivity extends GeneralActivity {
         public Fragment createFragment(int position) {
             int firstPage = SpreadReaderNavigation.firstPageForSpread(position, gallery.getPageCount());
             int secondPage = SpreadReaderNavigation.secondPageForSpread(position, gallery.getPageCount());
-            return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory, readerScaleMode, readerFilterMode);
+            return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory,
+                readerScaleMode, readerFilterMode, readerAutoCrop);
         }
 
         @Override
@@ -1387,7 +1435,8 @@ public class ZoomActivity extends GeneralActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode, readerFilterMode);
+            return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode,
+                readerFilterMode, readerAutoCrop);
         }
 
         @Override

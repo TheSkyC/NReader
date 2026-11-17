@@ -28,4 +28,6 @@
     <string name="reader_filter_none">Original</string>
     <string name="reader_filter_grayscale">Niveaux de gris</string>
     <string name="reader_filter_invert">Inverser les couleurs</string>
+    <string name="reader_auto_crop_title">Rogner automatiquement les marges blanches</string>
+    <string name="reader_auto_crop_summary">Rogne les bordures blanches simples à l affichage uniquement. Les originaux et exports restent inchangés.</string>
 </resources>

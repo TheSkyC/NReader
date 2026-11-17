@@ -53,6 +53,20 @@
                 android:text="@string/reader_continuous_vertical" />
         </RadioGroup>
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/reader_auto_crop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="@string/reader_auto_crop_title" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/reader_auto_crop_summary"
+            android:textAppearance="?attr/textAppearanceBody2" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

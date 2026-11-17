@@ -28,4 +28,6 @@
     <string name="reader_filter_none">Оригінал</string>
     <string name="reader_filter_grayscale">Відтінки сірого</string>
     <string name="reader_filter_invert">Інвертувати кольори</string>
+    <string name="reader_auto_crop_title">Автоматично обрізати білі поля</string>
+    <string name="reader_auto_crop_summary">Обрізає прості білі поля лише під час перегляду. Оригінали та експорт не змінюються.</string>
 </resources>

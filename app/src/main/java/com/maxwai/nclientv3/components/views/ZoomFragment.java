@@ -21,6 +21,7 @@ import com.bumptech.glide.Priority;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.RequestListener;
@@ -34,6 +35,7 @@ import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.components.reader.ReaderImageFilter;
+import com.maxwai.nclientv3.components.reader.ReaderAutoCropTransformation;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
@@ -53,6 +55,7 @@ public class ZoomFragment extends Fragment {
     private int degree = 0;
     private int scaleMode = ReaderScaleMode.SMART;
     private int filterMode = ReaderImageFilter.NONE;
+    private boolean autoCrop;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
 
@@ -71,12 +74,18 @@ public class ZoomFragment extends Fragment {
 
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
                                            int scaleMode, int filterMode) {
+        return newInstance(gallery, page, directory, scaleMode, filterMode, false);
+    }
+
+    public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode, int filterMode, boolean autoCrop) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
         args.putInt("PAGE", page);
         args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
         args.putInt("FILTER_MODE", ReaderImageFilter.sanitize(filterMode));
+        args.putBoolean("AUTO_CROP", autoCrop);
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
@@ -99,6 +108,7 @@ public class ZoomFragment extends Fragment {
         pageIndex = getArguments().getInt("PAGE", -1);
         scaleMode = ReaderScaleMode.sanitize(getArguments().getInt("SCALE_MODE", ReaderScaleMode.SMART));
         filterMode = ReaderImageFilter.sanitize(getArguments().getInt("FILTER_MODE", ReaderImageFilter.NONE));
+        autoCrop = getArguments().getBoolean("AUTO_CROP", false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {
@@ -184,6 +194,13 @@ public class ZoomFragment extends Fragment {
         if (photoView != null) ReaderImageFilter.apply(photoView, filterMode);
     }
 
+    public void setAutoCrop(boolean enabled) {
+        if (autoCrop == enabled) return;
+        autoCrop = enabled;
+        completedDownload = false;
+        loadImage();
+    }
+
     public int getPageIndex() {
         return pageIndex;
     }
@@ -201,8 +218,12 @@ public class ZoomFragment extends Fragment {
         }
         RequestBuilder<Drawable> dra = loadPage();
         if (dra == null) return;
+        if (autoCrop) {
+            dra = dra.transform(new MultiTransformation<>(new Rotate(degree), new ReaderAutoCropTransformation()));
+        } else {
+            dra = dra.transform(new Rotate(degree));
+        }
         dra
-            .transform(new Rotate(degree))
             .priority(priority)
             .addListener(new RequestListener<>() {
                 @Override

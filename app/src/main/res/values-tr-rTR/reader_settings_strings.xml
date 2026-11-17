@@ -28,4 +28,6 @@
     <string name="reader_filter_none">Özgün</string>
     <string name="reader_filter_grayscale">Gri tonlama</string>
     <string name="reader_filter_invert">Renkleri ters çevir</string>
+    <string name="reader_auto_crop_title">Beyaz kenarları otomatik kırp</string>
+    <string name="reader_auto_crop_summary">Basit beyaz kenarları yalnızca görüntüleme sırasında kırpar. Dosyalar ve dışa aktarımlar değişmez.</string>
 </resources>

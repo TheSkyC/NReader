@@ -28,4 +28,6 @@
     <string name="reader_filter_none">Originale</string>
     <string name="reader_filter_grayscale">Scala di grigi</string>
     <string name="reader_filter_invert">Inverti colori</string>
+    <string name="reader_auto_crop_title">Ritaglia automaticamente i margini bianchi</string>
+    <string name="reader_auto_crop_summary">Ritaglia i bordi bianchi semplici solo nella visualizzazione. File originali ed esportazioni restano invariati.</string>
 </resources>
