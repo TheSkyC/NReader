@@ -45,6 +45,7 @@ import java.util.function.BiConsumer;
 public final class ContinuousPageAdapter extends RecyclerView.Adapter<ContinuousPageAdapter.Holder> {
     private static final int MAX_DECODE_WIDTH = 2048;
     private static final int MAX_DECODE_HEIGHT = 4096;
+    private static final int PAGE_GAP_DP = 8;
     private static final Executor RETRY_EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final GenericGallery gallery;
@@ -93,6 +94,12 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         holder.cancelSingleTap();
         holder.suppressNextClick = false;
+        ViewGroup.LayoutParams rawParams = holder.itemView.getLayoutParams();
+        if (rawParams instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) rawParams;
+            params.bottomMargin = position == getItemCount() - 1 ? 0 : pageGapPx(holder.itemView.getContext());
+            holder.itemView.setLayoutParams(params);
+        }
         holder.itemView.setMinimumHeight(position == getItemCount() - 1 ? viewportHeight() : 0);
         holder.tapPosition = 0.5f;
         holder.itemView.setContentDescription(holder.itemView.getContext().getString(R.string.bookmark_page_format, position + 1));
@@ -115,6 +122,10 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
+    }
+
+    private int pageGapPx(@NonNull Context context) {
+        return Math.round(PAGE_GAP_DP * context.getResources().getDisplayMetrics().density);
     }
 
     public void setOnPageDoubleTapListener(@Nullable OnPageDoubleTapListener listener) {

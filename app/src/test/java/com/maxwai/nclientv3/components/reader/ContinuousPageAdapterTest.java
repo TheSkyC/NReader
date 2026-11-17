@@ -10,6 +10,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewConfiguration;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -77,9 +79,12 @@ public class ContinuousPageAdapterTest {
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_retry).getVisibility());
         missing.itemView.findViewById(R.id.continuous_page_retry).performClick();
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_loading).getVisibility());
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_error).getVisibility());
         first.itemView.performClick();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(0, tapped.get());
         assertEquals(0.5f, horizontal.get(), 0.001f);
         float leftEdge = first.itemView.getWidth() * 0.05f;
@@ -89,9 +94,11 @@ public class ContinuousPageAdapterTest {
         first.itemView.dispatchTouchEvent(up);
         down.recycle();
         up.recycle();
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(0.05f, horizontal.get(), 0.001f);
         first.itemView.performClick();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50, java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(0.5f, horizontal.get(), 0.001f);
         float rightEdge = first.itemView.getWidth() * 0.95f;
         down = MotionEvent.obtain(200, 200, MotionEvent.ACTION_DOWN, rightEdge, 10, 0);
@@ -100,7 +107,7 @@ public class ContinuousPageAdapterTest {
         first.itemView.dispatchTouchEvent(up);
         down.recycle();
         up.recycle();
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50, java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(0.95f, horizontal.get(), 0.001f);
         down = MotionEvent.obtain(300, 300, MotionEvent.ACTION_DOWN, 30, 10, 0);
         MotionEvent cancel = MotionEvent.obtain(300, 320, MotionEvent.ACTION_CANCEL, 30, 10, 0);
@@ -109,6 +116,8 @@ public class ContinuousPageAdapterTest {
         down.recycle();
         cancel.recycle();
         first.itemView.performClick();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(0.5f, horizontal.get(), 0.001f);
         recycler.setAdapter(null);
     }
@@ -140,7 +149,7 @@ public class ContinuousPageAdapterTest {
         File added = new File(folder, "2.png");
         assertTrue(added.createNewFile());
         queued.getAndSet(null).run();
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50, java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(added.getAbsolutePath(), ((PageFile) missing.source).getAbsolutePath());
         adapter.onBindViewHolder(missing, 1);
         assertEquals(added.getAbsolutePath(), ((PageFile) missing.source).getAbsolutePath());
@@ -149,7 +158,7 @@ public class ContinuousPageAdapterTest {
         assertNotNull(queued.get());
         recycler.setAdapter(null);
         queued.getAndSet(null).run();
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50, java.util.concurrent.TimeUnit.MILLISECONDS);
         assertNull(missing.source);
     }
 
@@ -241,6 +250,29 @@ public class ContinuousPageAdapterTest {
         assertEquals(900, last.itemView.getMinimumHeight());
         assertEquals(900, last.itemView.getHeight());
         navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void pageGapIsAppliedBetweenPagesButNotAfterFinalPage() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        assertTrue(new File(folder, "2.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), (page, x) -> {}));
+        activity.setContentView(recycler);
+        measureRecycler(recycler, 1200);
+        RecyclerView.ViewHolder first = recycler.findViewHolderForAdapterPosition(0);
+        RecyclerView.ViewHolder last = recycler.findViewHolderForAdapterPosition(1);
+        assertNotNull(first);
+        assertNotNull(last);
+        assertEquals(Math.round(8 * activity.getResources().getDisplayMetrics().density),
+            ((ViewGroup.MarginLayoutParams) first.itemView.getLayoutParams()).bottomMargin);
+        assertEquals(0, ((ViewGroup.MarginLayoutParams) last.itemView.getLayoutParams()).bottomMargin);
         recycler.setAdapter(null);
     }
 
