@@ -35,12 +35,11 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:context=".ZoomActivity" />
 
-        <com.maxwai.nclientv3.components.reader.ContinuousReaderView
+        <com.maxwai.nclientv3.components.reader.ContinuousZoomViewport
             android:id="@+id/continuous_reader"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:fitsSystemWindows="true"
-            android:saveEnabled="false"
             android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/master_layout"
             app:layout_constraintEnd_toEndOf="parent"

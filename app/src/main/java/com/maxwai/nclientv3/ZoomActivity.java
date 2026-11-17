@@ -53,6 +53,7 @@ import com.maxwai.nclientv3.components.reader.PagedReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousPageAdapter;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ContinuousZoomViewport;
 import com.maxwai.nclientv3.components.reader.ReaderPageExport;
 import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
@@ -101,6 +102,7 @@ public class ZoomActivity extends GeneralActivity {
     private boolean isHidden = false;
     private ViewPager2 mViewPager;
     private RecyclerView continuousReader;
+    private ContinuousZoomViewport continuousZoomViewport;
     private boolean continuousMode;
     private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
@@ -179,6 +181,7 @@ public class ZoomActivity extends GeneralActivity {
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(this);
         mViewPager = findViewById(R.id.container);
         continuousReader = findViewById(R.id.continuous_reader);
+        continuousZoomViewport = (ContinuousZoomViewport) continuousReader;
         mViewPager.setAdapter(mSectionsPagerAdapter);
         readerNavigation = new PagedReaderNavigation(mViewPager);
         int orientation;
@@ -293,11 +296,13 @@ public class ZoomActivity extends GeneralActivity {
                 (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations));
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
             mViewPager.setVisibility(View.GONE);
+            continuousZoomViewport.setVisibility(View.VISIBLE);
             continuousReader.setVisibility(View.VISIBLE);
             ((ContinuousReaderNavigation) readerNavigation).goToPosition(initialPosition);
         } else {
             ((ContinuousReaderNavigation) readerNavigation).dispose();
             initialPosition = new ReadingPosition(page + 1, 0f);
+            continuousZoomViewport.setVisibility(View.GONE);
             continuousReader.setVisibility(View.GONE);
             continuousReader.setAdapter(null);
             continuousReader.clearOnScrollListeners();

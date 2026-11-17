@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-public final class ContinuousReaderView extends RecyclerView {
+public class ContinuousReaderView extends RecyclerView {
     public ContinuousReaderView(@NonNull Context context, @Nullable AttributeSet attributes) {
         super(context, attributes);
     }
