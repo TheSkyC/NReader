@@ -6,6 +6,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
@@ -285,6 +286,48 @@ public class ReaderReliabilityTest {
                 activity = controller.get();
                 assertEquals(android.graphics.Color.BLACK,
                     ((ColorDrawable) activity.findViewById(R.id.container).getBackground()).getColor());
+            }
+        }
+    }
+
+    @Test
+    public void readerBackgroundPreferenceIsScopedPerGalleryWithGlobalFallback() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File darkFolder = galleryFolder();
+        File lightFolder = galleryFolder();
+        assertTrue(new File(darkFolder, ".83201").createNewFile());
+        assertTrue(new File(lightFolder, ".83202").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putInt("reader_background", 3).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> darkController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, darkFolder)).setup()) {
+                ZoomActivity dark = darkController.get();
+                GenericGallery darkGallery = ReflectionHelpers.getField(dark, "gallery");
+                dark.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                dialog.findViewById(R.id.reader_background_black).performClick();
+                assertEquals(1, application.getSharedPreferences("Settings", 0)
+                    .getInt("reader_background_" + darkGallery.getId(), -1));
+                assertEquals(Color.BLACK,
+                    ((ColorDrawable) dark.findViewById(R.id.container).getBackground()).getColor());
+                dialog.dismiss();
+            }
+            try (ActivityController<ZoomActivity> lightController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, lightFolder)).setup()) {
+                ZoomActivity light = lightController.get();
+                GenericGallery lightGallery = ReflectionHelpers.getField(light, "gallery");
+                assertEquals(Color.WHITE,
+                    ((ColorDrawable) light.findViewById(R.id.container).getBackground()).getColor());
+                assertFalse(application.getSharedPreferences("Settings", 0)
+                    .contains("reader_background_" + lightGallery.getId()));
+            }
+            try (ActivityController<ZoomActivity> restoredController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, darkFolder)).setup()) {
+                assertEquals(Color.BLACK,
+                    ((ColorDrawable) restoredController.get().findViewById(R.id.container).getBackground()).getColor());
             }
         }
     }

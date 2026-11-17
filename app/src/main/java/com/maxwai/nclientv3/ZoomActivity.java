@@ -100,6 +100,7 @@ public class ZoomActivity extends GeneralActivity {
     private static final float PAGE_TAP_EDGE = .2f;
     private static final String AUTO_SCROLL_SPEED_KEY = "reader_auto_scroll_speed";
     private static final String READER_BACKGROUND_KEY = "reader_background";
+    private static final String READER_BACKGROUND_KEY_PREFIX = "reader_background_";
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -659,7 +660,7 @@ public class ZoomActivity extends GeneralActivity {
             int value = id == R.id.reader_background_black ? READER_BACKGROUND_BLACK
                 : id == R.id.reader_background_gray ? READER_BACKGROUND_GRAY
                 : id == R.id.reader_background_white ? READER_BACKGROUND_WHITE : READER_BACKGROUND_AUTO;
-            getSharedPreferences("Settings", 0).edit().putInt(READER_BACKGROUND_KEY, value).apply();
+            getSharedPreferences("Settings", 0).edit().putInt(readerBackgroundPreferenceKey(), value).apply();
             applyReaderBackground();
         });
 
@@ -683,12 +684,29 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private int getReaderBackground() {
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        String key = readerBackgroundPreferenceKey();
+        if (preferences.contains(key)) {
+            try {
+                int value = preferences.getInt(key, READER_BACKGROUND_AUTO);
+                return value >= READER_BACKGROUND_AUTO && value <= READER_BACKGROUND_WHITE
+                    ? value : READER_BACKGROUND_AUTO;
+            } catch (ClassCastException exception) {
+                return READER_BACKGROUND_AUTO;
+            }
+        }
         try {
-            int value = getSharedPreferences("Settings", 0).getInt(READER_BACKGROUND_KEY, READER_BACKGROUND_AUTO);
+            int value = preferences.getInt(READER_BACKGROUND_KEY, READER_BACKGROUND_AUTO);
             return value >= READER_BACKGROUND_AUTO && value <= READER_BACKGROUND_WHITE ? value : READER_BACKGROUND_AUTO;
         } catch (ClassCastException exception) {
             return READER_BACKGROUND_AUTO;
         }
+    }
+
+    @NonNull
+    private String readerBackgroundPreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_BACKGROUND_KEY_PREFIX + gallery.getId() : READER_BACKGROUND_KEY;
     }
 
     private int backgroundId(int value) {
