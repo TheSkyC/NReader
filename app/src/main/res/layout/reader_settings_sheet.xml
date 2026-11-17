@@ -74,6 +74,46 @@
             android:text="@string/reader_filter_title"
             android:textAppearance="?attr/textAppearanceSubtitle1" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/reader_preset_title"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/reader_preset_default"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/reader_preset_default" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/reader_preset_night"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/reader_preset_night" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/reader_preset_scan"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/reader_preset_scan" />
+        </LinearLayout>
+
         <RadioGroup
             android:id="@+id/reader_filter"
             android:layout_width="match_parent"

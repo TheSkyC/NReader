@@ -44,4 +44,8 @@
     <string name="reader_bookmark_note_hint">ملاحظة (اختياري)</string>
     <string name="reader_bookmark_default_title">الصفحة %1$d</string>
     <string name="reader_bookmark_delete">حذف</string>
+    <string name="reader_preset_title">إعدادات القراءة المسبقة</string>
+    <string name="reader_preset_default">الافتراضي</string>
+    <string name="reader_preset_night">ليلي</string>
+    <string name="reader_preset_scan">تحسين المسح</string>
 </resources>

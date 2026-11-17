@@ -44,4 +44,8 @@
     <string name="reader_bookmark_note_hint">備註（選填）</string>
     <string name="reader_bookmark_default_title">第 %1$d 頁</string>
     <string name="reader_bookmark_delete">刪除</string>
+    <string name="reader_preset_title">閱讀預設</string>
+    <string name="reader_preset_default">預設</string>
+    <string name="reader_preset_night">夜間</string>
+    <string name="reader_preset_scan">掃描修復</string>
 </resources>

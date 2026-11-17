@@ -44,4 +44,8 @@
     <string name="reader_bookmark_note_hint">Нотатка (необов язково)</string>
     <string name="reader_bookmark_default_title">Сторінка %1$d</string>
     <string name="reader_bookmark_delete">Видалити</string>
+    <string name="reader_preset_title">Пресети читання</string>
+    <string name="reader_preset_default">Типовий</string>
+    <string name="reader_preset_night">Нічний</string>
+    <string name="reader_preset_scan">Покращити скан</string>
 </resources>

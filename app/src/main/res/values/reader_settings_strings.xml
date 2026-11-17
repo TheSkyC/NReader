@@ -44,4 +44,8 @@
     <string name="reader_bookmark_note_hint">Note (optional)</string>
     <string name="reader_bookmark_default_title">Page %1$d</string>
     <string name="reader_bookmark_delete">Delete</string>
+    <string name="reader_preset_title">Reading presets</string>
+    <string name="reader_preset_default">Default</string>
+    <string name="reader_preset_night">Night</string>
+    <string name="reader_preset_scan">Scan cleanup</string>
 </resources>

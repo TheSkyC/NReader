@@ -135,6 +135,9 @@ public class ZoomActivity extends GeneralActivity {
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
     private static final int READER_BACKGROUND_WHITE = 3;
+    private static final int READER_PRESET_DEFAULT = 0;
+    private static final int READER_PRESET_NIGHT = 1;
+    private static final int READER_PRESET_SCAN = 2;
     private static final int[] AUTO_SCROLL_SPEEDS = {40, 100, 220};
     private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
     private GenericGallery gallery;
@@ -864,6 +867,10 @@ public class ZoomActivity extends GeneralActivity {
         autoCrop.setChecked(readerAutoCrop);
         autoCrop.setOnCheckedChangeListener((button, checked) -> setReaderAutoCrop(checked));
 
+        dialog.findViewById(R.id.reader_preset_default).setOnClickListener(view -> applyReaderPreset(READER_PRESET_DEFAULT));
+        dialog.findViewById(R.id.reader_preset_night).setOnClickListener(view -> applyReaderPreset(READER_PRESET_NIGHT));
+        dialog.findViewById(R.id.reader_preset_scan).setOnClickListener(view -> applyReaderPreset(READER_PRESET_SCAN));
+
         bindAdjustment(dialog.findViewById(R.id.reader_brightness),
             dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness);
         bindAdjustment(dialog.findViewById(R.id.reader_contrast),
@@ -1063,6 +1070,45 @@ public class ZoomActivity extends GeneralActivity {
     private void setReaderSaturation(int value) {
         readerSaturation = ReaderImageFilter.sanitizeAdjustment(value);
         getSharedPreferences("Settings", 0).edit().putInt(readerSaturationPreferenceKey(), readerSaturation).apply();
+        applyReaderAdjustments();
+    }
+
+    private void applyReaderPreset(int preset) {
+        int background = READER_BACKGROUND_AUTO;
+        int filter = ReaderImageFilter.NONE;
+        boolean crop = false;
+        int brightness = 0;
+        int contrast = 0;
+        int saturation = 0;
+        if (preset == READER_PRESET_NIGHT) {
+            background = READER_BACKGROUND_BLACK;
+            brightness = -12;
+            contrast = 8;
+            saturation = -8;
+        } else if (preset == READER_PRESET_SCAN) {
+            background = READER_BACKGROUND_WHITE;
+            filter = ReaderImageFilter.GRAYSCALE;
+            crop = true;
+            brightness = 4;
+            contrast = 18;
+            saturation = -100;
+        }
+        readerBrightness = brightness;
+        readerContrast = contrast;
+        readerSaturation = saturation;
+        readerFilterMode = filter;
+        readerAutoCrop = crop;
+        getSharedPreferences("Settings", 0).edit()
+            .putInt(readerBrightnessPreferenceKey(), brightness)
+            .putInt(readerContrastPreferenceKey(), contrast)
+            .putInt(readerSaturationPreferenceKey(), saturation)
+            .putInt(readerFilterPreferenceKey(), filter)
+            .putBoolean(readerAutoCropPreferenceKey(), crop)
+            .putInt(readerBackgroundPreferenceKey(), background)
+            .apply();
+        applyReaderBackground();
+        applyReaderFilterMode();
+        applyReaderAutoCrop();
         applyReaderAdjustments();
     }
 
