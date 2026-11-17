@@ -55,6 +55,15 @@ public final class DoublePageFragment extends Fragment {
                                                  int secondPage, @Nullable GalleryFolder directory,
                                                  int scaleMode, int filterMode, boolean autoCrop,
                                                  int brightness, int contrast, int saturation) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, filterMode,
+            autoCrop, brightness, contrast, saturation, 0f);
+    }
+
+    public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                 int secondPage, @Nullable GalleryFolder directory,
+                                                 int scaleMode, int filterMode, boolean autoCrop,
+                                                 int brightness, int contrast, int saturation,
+                                                 float initialScale) {
         Bundle args = new Bundle();
         args.putParcelable(GALLERY_KEY, gallery);
         args.putParcelable(DIRECTORY_KEY, directory);
@@ -66,6 +75,7 @@ public final class DoublePageFragment extends Fragment {
         args.putInt("BRIGHTNESS", ReaderImageFilter.sanitizeAdjustment(brightness));
         args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
         args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
+        args.putFloat("INITIAL_SCALE", initialScale);
         DoublePageFragment fragment = new DoublePageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -102,6 +112,7 @@ public final class DoublePageFragment extends Fragment {
         int brightness = ReaderImageFilter.sanitizeAdjustment(args.getInt("BRIGHTNESS", 0));
         int contrast = ReaderImageFilter.sanitizeAdjustment(args.getInt("CONTRAST", 0));
         int saturation = ReaderImageFilter.sanitizeAdjustment(args.getInt("SATURATION", 0));
+        float initialScale = args.getFloat("INITIAL_SCALE", 0f);
         LinearLayout root = view.findViewById(R.id.double_page_root);
         FrameLayout secondContainer = view.findViewById(R.id.double_page_second);
         if (secondPage < 0) {
@@ -111,13 +122,13 @@ public final class DoublePageFragment extends Fragment {
         if (getChildFragmentManager().findFragmentByTag(pageTag(firstPage)) == null) {
             getChildFragmentManager().beginTransaction()
                 .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory,
-                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation), pageTag(firstPage))
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale), pageTag(firstPage))
                 .commitNow();
         }
         if (secondPage >= 0 && getChildFragmentManager().findFragmentByTag(pageTag(secondPage)) == null) {
             getChildFragmentManager().beginTransaction()
                 .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory,
-                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation), pageTag(secondPage))
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale), pageTag(secondPage))
                 .commitNow();
         }
     }

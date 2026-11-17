@@ -131,6 +131,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_CONTRAST_KEY_PREFIX = "reader_contrast_";
     private static final String READER_SATURATION_KEY = "reader_saturation";
     private static final String READER_SATURATION_KEY_PREFIX = "reader_saturation_";
+    private static final String READER_ZOOM_SCALE_KEY = "reader_zoom_scale";
+    private static final String READER_ZOOM_SCALE_KEY_PREFIX = "reader_zoom_scale_";
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -179,6 +181,7 @@ public class ZoomActivity extends GeneralActivity {
     private int readerBrightness;
     private int readerContrast;
     private int readerSaturation;
+    private float readerZoomScale;
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
@@ -247,6 +250,7 @@ public class ZoomActivity extends GeneralActivity {
         readerBrightness = getReaderAdjustment(preferences, READER_BRIGHTNESS_KEY, READER_BRIGHTNESS_KEY_PREFIX);
         readerContrast = getReaderAdjustment(preferences, READER_CONTRAST_KEY, READER_CONTRAST_KEY_PREFIX);
         readerSaturation = getReaderAdjustment(preferences, READER_SATURATION_KEY, READER_SATURATION_KEY_PREFIX);
+        readerZoomScale = getReaderZoomScale(preferences);
         spreadMode = getSpreadMode(preferences);
         doublePageMode = isDoublePageEffective();
         //toolbar setup
@@ -1027,6 +1031,24 @@ public class ZoomActivity extends GeneralActivity {
         }
     }
 
+    private float getReaderZoomScale(@NonNull SharedPreferences preferences) {
+        String key = gallery != null && gallery.getId() > 0
+            ? READER_ZOOM_SCALE_KEY_PREFIX + gallery.getId() : READER_ZOOM_SCALE_KEY;
+        try {
+            float value = preferences.getFloat(key, 0f);
+            return value >= 0.1f && value <= 8f ? value : 0f;
+        } catch (ClassCastException exception) {
+            return 0f;
+        }
+    }
+
+    public void onReaderScaleChanged(float scale) {
+        if (continuousMode || gallery == null || gallery.getId() <= 0 || scale < 0.1f || scale > 8f) return;
+        readerZoomScale = scale;
+        getSharedPreferences("Settings", 0).edit()
+            .putFloat(READER_ZOOM_SCALE_KEY_PREFIX + gallery.getId(), scale).apply();
+    }
+
     private void bindAdjustment(@NonNull SeekBar bar, @NonNull TextView valueView, int value,
                                 @NonNull IntConsumer setter) {
         int safeValue = ReaderImageFilter.sanitizeAdjustment(value);
@@ -1664,7 +1686,7 @@ public class ZoomActivity extends GeneralActivity {
             int secondPage = SpreadReaderNavigation.secondPageForSpread(position, gallery.getPageCount());
             return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory,
                 readerScaleMode, readerFilterMode, readerAutoCrop,
-                readerBrightness, readerContrast, readerSaturation);
+                readerBrightness, readerContrast, readerSaturation, readerZoomScale);
         }
 
         @Override
@@ -1683,7 +1705,8 @@ public class ZoomActivity extends GeneralActivity {
         @Override
         public Fragment createFragment(int position) {
             return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode,
-                readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation);
+                readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation,
+                readerZoomScale);
         }
 
         @Override

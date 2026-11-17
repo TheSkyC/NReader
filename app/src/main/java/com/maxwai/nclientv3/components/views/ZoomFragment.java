@@ -59,6 +59,7 @@ public class ZoomFragment extends Fragment {
     private int brightness;
     private int contrast;
     private int saturation;
+    private float initialScale;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
 
@@ -88,6 +89,13 @@ public class ZoomFragment extends Fragment {
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
                                            int scaleMode, int filterMode, boolean autoCrop,
                                            int brightness, int contrast, int saturation) {
+        return newInstance(gallery, page, directory, scaleMode, filterMode, autoCrop,
+            brightness, contrast, saturation, 0f);
+    }
+
+    public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode, int filterMode, boolean autoCrop,
+                                           int brightness, int contrast, int saturation, float initialScale) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
@@ -98,6 +106,7 @@ public class ZoomFragment extends Fragment {
         args.putInt("BRIGHTNESS", ReaderImageFilter.sanitizeAdjustment(brightness));
         args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
         args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
+        args.putFloat("INITIAL_SCALE", initialScale);
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
@@ -124,6 +133,7 @@ public class ZoomFragment extends Fragment {
         brightness = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("BRIGHTNESS", 0));
         contrast = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("CONTRAST", 0));
         saturation = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("SATURATION", 0));
+        initialScale = sanitizeInitialScale(getArguments().getFloat("INITIAL_SCALE", 0f));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {
@@ -136,6 +146,11 @@ public class ZoomFragment extends Fragment {
         });
 
         photoView.setMaximumScale(MAX_SCALE);
+        photoView.setOnScaleChangeListener((factor, focusX, focusY) -> {
+            if (getActivity() instanceof ZoomActivity) {
+                ((ZoomActivity) getActivity()).onReaderScaleChanged(photoView.getScale());
+            }
+        });
         rootView.findViewById(R.id.reader_retry).setOnClickListener(v -> loadImage());
         createTarget();
         loadImage();
@@ -185,7 +200,12 @@ public class ZoomFragment extends Fragment {
     }
 
     private void scalePhoto(Drawable drawable) {
-        photoView.setScale(calculateScaleFactor(drawable), 0, 0, false);
+        photoView.setScale(initialScale > 0f ? initialScale : calculateScaleFactor(drawable), 0, 0, false);
+        initialScale = 0f;
+    }
+
+    private float sanitizeInitialScale(float value) {
+        return value >= 0.1f && value <= MAX_SCALE ? value : 0f;
     }
 
     private float calculateScaleFactor(@NonNull Drawable drawable) {
