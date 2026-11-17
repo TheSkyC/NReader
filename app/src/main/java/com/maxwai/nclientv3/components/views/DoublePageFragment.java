@@ -17,6 +17,7 @@ import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.files.GalleryFolder;
+import com.maxwai.nclientv3.settings.Global;
 
 public final class DoublePageFragment extends Fragment {
     private static final String GALLERY_KEY = "GALLERY";
@@ -52,6 +53,8 @@ public final class DoublePageFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        view.findViewById(R.id.double_page_root).setLayoutDirection(
+            Global.useRtl() ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         Bundle args = requireArguments();
         GenericGallery gallery;
         GalleryFolder directory;

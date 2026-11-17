@@ -261,6 +261,32 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void doublePageFragmentFollowsRtlReadingDirection() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        String rtlKey = application.getString(R.string.preference_key_use_rtl);
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean(rtlKey, true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                LocalGallery gallery = new LocalGallery(folder, true);
+                DoublePageFragment fragment = DoublePageFragment.newInstance(gallery, 1, 2,
+                    gallery.getGalleryFolder(), ReaderScaleMode.SMART);
+                controller.get().getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "rtl-spread").commitNow();
+                assertEquals(View.LAYOUT_DIRECTION_RTL,
+                    fragment.requireView().findViewById(R.id.double_page_root).getLayoutDirection());
+            }
+        } finally {
+            application.getSharedPreferences("Settings", 0).edit().putBoolean(rtlKey, false).commit();
+            Global.initFromShared(application);
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
