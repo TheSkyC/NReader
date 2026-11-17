@@ -43,20 +43,13 @@ import com.maxwai.nclientv3.utility.DebugImageMask;
 
 public class ZoomFragment extends Fragment {
 
-    public interface OnZoomChangeListener {
-        void onZoomChange(View v, float zoomLevel);
-    }
-
     private static final float MAX_SCALE = 8f;
-    private static final float CHANGE_PAGE_THRESHOLD = .2f;
     private PhotoView photoView = null;
     private ImageButton retryButton;
     private PageFile pageFile = null;
     private Uri url;
     private int degree = 0;
     private boolean completedDownload = false;
-    private View.OnClickListener clickListener;
-    private OnZoomChangeListener zoomChangeListener;
     private ImageViewTarget<Drawable> target = null;
 
 
@@ -70,15 +63,6 @@ public class ZoomFragment extends Fragment {
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    public void setClickListener(View.OnClickListener clickListener) {
-        this.clickListener = clickListener;
-    }
-
-
-    public void setZoomChangeListener(OnZoomChangeListener zoomChangeListener) {
-        this.zoomChangeListener = zoomChangeListener;
     }
 
     private float calculateScaleFactor(int width, int height) {
@@ -112,22 +96,10 @@ public class ZoomFragment extends Fragment {
             pageFile = getArguments().getParcelable("FOLDER");
         }
         photoView.setAllowParentInterceptOnEdge(true);
-        photoView.setOnPhotoTapListener((view, x, y) -> {
-            boolean prev = x < CHANGE_PAGE_THRESHOLD;
-            boolean next = x > 1f - CHANGE_PAGE_THRESHOLD;
-            if ((prev || next) && Global.isButtonChangePage()) {
-                activity.changeClosePage(next);
-            } else if (clickListener != null) {
-                clickListener.onClick(view);
-            }
-            LogUtility.d(view, x, y, prev, next);
+        photoView.setParentInterceptVertical(activity.isVerticalPageTurn());
+        photoView.setOnViewTapListener((view, x, y) -> {
+            if (view.getWidth() > 0) activity.onReaderPageTap(this, x / view.getWidth());
         });
-
-        photoView.setOnScaleChangeListener((float scaleFactor, float focusX, float focusY)->{
-            if(this.zoomChangeListener!=null) {
-                this.zoomChangeListener.onZoomChange(rootView, photoView.getScale());
-            }
-            });
 
         photoView.setMaximumScale(MAX_SCALE);
         retryButton.setOnClickListener(v -> loadImage());
@@ -235,6 +207,10 @@ public class ZoomFragment extends Fragment {
 
     public Drawable getDrawable() {
         return photoView.getDrawable();
+    }
+
+    public void setVerticalPageTurn(boolean vertical) {
+        if (photoView != null) photoView.setParentInterceptVertical(vertical);
     }
 
     public void cancelRequest() {

@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.github.chrisbanes.photoview;
 
 import android.content.Context;
@@ -68,6 +69,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private float mMidScale = DEFAULT_MID_SCALE;
     private float mMaxScale = DEFAULT_MAX_SCALE;
     private boolean mAllowParentInterceptOnEdge = true;
+    private Boolean mParentInterceptVertical;
     private boolean mBlockParentIntercept = false;
     // Gesture Detectors
     private GestureDetector mGestureDetector;
@@ -114,14 +116,21 @@ public class PhotoViewAttacher implements View.OnTouchListener,
              */
             ViewParent parent = mImageView.getParent();
             if (mAllowParentInterceptOnEdge && !mScaleDragDetector.isScaling() && !mBlockParentIntercept) {
-                if (mHorizontalScrollEdge == HORIZONTAL_EDGE_BOTH
+                boolean horizontalEdge = mHorizontalScrollEdge == HORIZONTAL_EDGE_BOTH
                     || (mHorizontalScrollEdge == HORIZONTAL_EDGE_LEFT && dx >= 1f)
-                    || (mHorizontalScrollEdge == HORIZONTAL_EDGE_RIGHT && dx <= -1f)
+                    || (mHorizontalScrollEdge == HORIZONTAL_EDGE_RIGHT && dx <= -1f);
+                boolean verticalEdge = mVerticalScrollEdge == VERTICAL_EDGE_BOTH
                     || (mVerticalScrollEdge == VERTICAL_EDGE_TOP && dy >= 1f)
-                    || (mVerticalScrollEdge == VERTICAL_EDGE_BOTTOM && dy <= -1f)) {
+                    || (mVerticalScrollEdge == VERTICAL_EDGE_BOTTOM && dy <= -1f);
+                boolean atPageEdge = mParentInterceptVertical == null
+                    ? horizontalEdge || (mVerticalScrollEdge != VERTICAL_EDGE_BOTH && verticalEdge)
+                    : mParentInterceptVertical ? verticalEdge : horizontalEdge;
+                if (atPageEdge) {
                     if (parent != null) {
                         parent.requestDisallowInterceptTouchEvent(false);
                     }
+                } else if (parent != null) {
+                    parent.requestDisallowInterceptTouchEvent(true);
                 }
             } else {
                 if (parent != null) {
@@ -145,6 +154,8 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
         @Override
         public void onScale(float scaleFactor, float focusX, float focusY, float dx, float dy) {
+            ViewParent parent = mImageView.getParent();
+            if (parent != null) parent.requestDisallowInterceptTouchEvent(true);
             if (getScale() < mMaxScale || scaleFactor < 1f) {
                 if (mScaleChangeListener != null) {
                     mScaleChangeListener.onScaleChange(scaleFactor, focusX, focusY);
@@ -407,6 +418,10 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
     public void setAllowParentInterceptOnEdge(boolean allow) {
         mAllowParentInterceptOnEdge = allow;
+    }
+
+    public void setParentInterceptVertical(boolean vertical) {
+        mParentInterceptVertical = vertical;
     }
 
     public void setScaleLevels(float minimumScale, float mediumScale, float maximumScale) {

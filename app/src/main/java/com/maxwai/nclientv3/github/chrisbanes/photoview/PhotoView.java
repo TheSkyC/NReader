@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.github.chrisbanes.photoview;
 
 import android.content.Context;
@@ -205,6 +206,10 @@ public class PhotoView extends AppCompatImageView {
 
     public void setAllowParentInterceptOnEdge(boolean allow) {
         attacher.setAllowParentInterceptOnEdge(allow);
+    }
+
+    public void setParentInterceptVertical(boolean vertical) {
+        attacher.setParentInterceptVertical(vertical);
     }
 
     public void setScaleLevels(float minimumScale, float mediumScale, float maximumScale) {

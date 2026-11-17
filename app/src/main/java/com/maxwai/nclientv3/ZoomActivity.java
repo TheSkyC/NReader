@@ -55,6 +55,7 @@ public class ZoomActivity extends GeneralActivity {
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
+    private static final float PAGE_TAP_EDGE = .2f;
     private GenericGallery gallery;
     private int actualPage = 0;
     private boolean isHidden = false;
@@ -127,6 +128,7 @@ public class ZoomActivity extends GeneralActivity {
         }
         mViewPager.setOrientation(orientation == ViewPager2.ORIENTATION_VERTICAL
             ? ViewPager2.ORIENTATION_VERTICAL : ViewPager2.ORIENTATION_HORIZONTAL);
+        updateReaderDirection();
         mViewPager.setOffscreenPageLimit(Global.getOffscreenLimit());
         pageSwitcher = findViewById(R.id.page_switcher);
         pageManagerLabel = findViewById(R.id.pages);
@@ -197,8 +199,28 @@ public class ZoomActivity extends GeneralActivity {
         seekBar.setProgress(page);
     }
 
-    private void setUserInput(boolean enabled) {
-        mViewPager.setUserInputEnabled(enabled);
+    public void onReaderPageTap(ZoomFragment source, float horizontalPosition) {
+        if (source != getActualFragment()) return;
+        if (Global.isButtonChangePage() && (horizontalPosition < PAGE_TAP_EDGE
+            || horizontalPosition > 1f - PAGE_TAP_EDGE)) {
+            changeClosePage(horizontalPosition > 1f - PAGE_TAP_EDGE);
+        } else {
+            isHidden = !isHidden;
+            applyVisibilityFlag();
+            animateLayout();
+        }
+    }
+
+    public boolean isVerticalPageTurn() {
+        return mViewPager != null && mViewPager.getOrientation() == ViewPager2.ORIENTATION_VERTICAL;
+    }
+
+    private void updateReaderDirection() {
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ZoomFragment) {
+                ((ZoomFragment) fragment).setVerticalPageTurn(isVerticalPageTurn());
+            }
+        }
     }
 
     private void savePosition() {
@@ -308,6 +330,7 @@ public class ZoomActivity extends GeneralActivity {
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
             if (tmpScrollType != scrollType) {
                 mViewPager.setOrientation(tmpScrollType);
+                updateReaderDirection();
                 getSharedPreferences("Settings", 0).edit().putInt(SCROLL_TYPE_KEY, tmpScrollType).apply();
             }
         }).setNegativeButton(R.string.cancel, null);
@@ -446,31 +469,10 @@ public class ZoomActivity extends GeneralActivity {
 
         }
 
-        private boolean allowScroll = true;
-
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            ZoomFragment f = ZoomFragment.newInstance(gallery, position, directory);
-
-            f.setZoomChangeListener((v, zoomLevel) -> {
-                try {
-                    boolean _allowScroll = zoomLevel < 1.1f;
-                    if (_allowScroll != allowScroll) {
-                        setUserInput(!allowScroll);
-                        allowScroll = _allowScroll;
-                    }
-                } catch (Exception ignored) {
-                }
-            });
-
-            f.setClickListener(v -> {
-                isHidden = !isHidden;
-                LogUtility.d("Clicked " + isHidden);
-                applyVisibilityFlag();
-                animateLayout();
-            });
-            return f;
+            return ZoomFragment.newInstance(gallery, position, directory);
         }
 
         @Override
