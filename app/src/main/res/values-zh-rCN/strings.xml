@@ -511,4 +511,16 @@
     <string name="online_blacklist_search_without">不使用在线标签搜索</string>
     <string name="online_blacklist_sign_in_required">请重新登录或检查 API 密钥，然后刷新在线屏蔽列表。</string>
     <string name="update_queued">等待下载…</string>
+    <string name="reader_auto_scroll">自动滚动</string>
+    <string name="reader_auto_scroll_start">开始自动滚动</string>
+    <string name="reader_auto_scroll_stop">停止自动滚动</string>
+    <string name="reader_auto_scroll_speed">自动滚动速度</string>
+    <string name="reader_auto_scroll_slow">慢</string>
+    <string name="reader_auto_scroll_medium">中</string>
+    <string name="reader_auto_scroll_fast">快</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

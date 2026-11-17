@@ -66,6 +66,17 @@
             app:srcCompat="@drawable/ic_reader_grid" />
 
         <ImageButton
+            android:id="@+id/reader_auto_scroll"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:minHeight="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/reader_auto_scroll_start"
+            android:visibility="gone"
+            app:tint="?android:attr/colorForeground"
+            app:srcCompat="@drawable/ic_play" />
+
+        <ImageButton
             android:id="@+id/reader_settings"
             android:layout_width="48dp"
             android:layout_height="match_parent"

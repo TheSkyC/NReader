@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · 再ログインが必要</string>
     <string name="comment_login_action">ログイン</string>
     <string name="update_queued">ダウンロードを待機中…</string>
+    <string name="reader_auto_scroll">自動スクロール</string>
+    <string name="reader_auto_scroll_start">自動スクロールを開始</string>
+    <string name="reader_auto_scroll_stop">自動スクロールを停止</string>
+    <string name="reader_auto_scroll_speed">自動スクロール速度</string>
+    <string name="reader_auto_scroll_slow">遅い</string>
+    <string name="reader_auto_scroll_medium">標準</string>
+    <string name="reader_auto_scroll_fast">速い</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

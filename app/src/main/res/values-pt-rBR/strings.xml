@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Entre novamente</string>
     <string name="comment_login_action">Entrar</string>
     <string name="update_queued">Aguardando download…</string>
+    <string name="reader_auto_scroll">Rolagem automática</string>
+    <string name="reader_auto_scroll_start">Iniciar rolagem automática</string>
+    <string name="reader_auto_scroll_stop">Parar rolagem automática</string>
+    <string name="reader_auto_scroll_speed">Velocidade da rolagem automática</string>
+    <string name="reader_auto_scroll_slow">Lenta</string>
+    <string name="reader_auto_scroll_medium">Média</string>
+    <string name="reader_auto_scroll_fast">Rápida</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

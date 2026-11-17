@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Erneut anmelden</string>
     <string name="comment_login_action">Anmelden</string>
     <string name="update_queued">Download in Warteschlange…</string>
+    <string name="reader_auto_scroll">Automatisch scrollen</string>
+    <string name="reader_auto_scroll_start">Automatisches Scrollen starten</string>
+    <string name="reader_auto_scroll_stop">Automatisches Scrollen stoppen</string>
+    <string name="reader_auto_scroll_speed">Geschwindigkeit des automatischen Scrollens</string>
+    <string name="reader_auto_scroll_slow">Langsam</string>
+    <string name="reader_auto_scroll_medium">Mittel</string>
+    <string name="reader_auto_scroll_fast">Schnell</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

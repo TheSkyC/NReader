@@ -603,6 +603,34 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void autoScrollControlIsLimitedToContinuousMode() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                View autoScroll = activity.findViewById(R.id.reader_auto_scroll);
+                assertEquals(View.VISIBLE, autoScroll.getVisibility());
+                assertTrue(autoScroll.hasOnClickListeners());
+                assertTrue(autoScroll.performLongClick());
+                assertNotNull(ShadowDialog.getLatestDialog());
+                ShadowDialog.getLatestDialog().dismiss();
+
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                ReflectionHelpers.callInstanceMethod(activity, "setContinuousMode",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, false),
+                    ReflectionHelpers.ClassParameter.from(int.class, navigation.currentPage()));
+                assertEquals(View.GONE, autoScroll.getVisibility());
+            }
+        }
+    }
+
+    @Test
     public void togglingReaderControlsKeepsSystemBarLayoutStable() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

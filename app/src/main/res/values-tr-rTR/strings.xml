@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Tekrar giriş yapın</string>
     <string name="comment_login_action">Giriş yap</string>
     <string name="update_queued">İndirme bekleniyor…</string>
+    <string name="reader_auto_scroll">Otomatik kaydırma</string>
+    <string name="reader_auto_scroll_start">Otomatik kaydırmayı başlat</string>
+    <string name="reader_auto_scroll_stop">Otomatik kaydırmayı durdur</string>
+    <string name="reader_auto_scroll_speed">Otomatik kaydırma hızı</string>
+    <string name="reader_auto_scroll_slow">Yavaş</string>
+    <string name="reader_auto_scroll_medium">Orta</string>
+    <string name="reader_auto_scroll_fast">Hızlı</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

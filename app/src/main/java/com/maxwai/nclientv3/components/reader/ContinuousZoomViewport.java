@@ -31,6 +31,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     private float downY;
     private float downOffset;
     private int viewportWidth;
+    @Nullable private Runnable onUserInteraction;
     private final int touchSlop;
     private final ScaleGestureDetector scaleDetector;
 
@@ -53,6 +54,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     public boolean dispatchTouchEvent(@NonNull MotionEvent event) {
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN) {
+            if (onUserInteraction != null) onUserInteraction.run();
             pinchActive = false;
             horizontalPan = false;
             verticalDrag = false;
@@ -111,6 +113,10 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
 
     private @Nullable RecyclerView reader() {
         return this;
+    }
+
+    public void setOnUserInteractionListener(@Nullable Runnable listener) {
+        onUserInteraction = listener;
     }
 
     @Override

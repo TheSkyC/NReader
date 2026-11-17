@@ -651,4 +651,16 @@
     <string name="debug_mask_images_summary">Cover images and reading pages with an opaque checkerboard. Applies when a screen is reopened; downloaded files are unchanged.</string>
     <string name="cover_group_credit">Group: %1$s</string>
     <string name="update_queued">Waiting to download…</string>
+    <string name="reader_auto_scroll">Auto-scroll</string>
+    <string name="reader_auto_scroll_start">Start auto-scroll</string>
+    <string name="reader_auto_scroll_stop">Stop auto-scroll</string>
+    <string name="reader_auto_scroll_speed">Auto-scroll speed</string>
+    <string name="reader_auto_scroll_slow">Slow</string>
+    <string name="reader_auto_scroll_medium">Medium</string>
+    <string name="reader_auto_scroll_fast">Fast</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

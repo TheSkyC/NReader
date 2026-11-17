@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · سجّل الدخول مرة أخرى</string>
     <string name="comment_login_action">تسجيل الدخول</string>
     <string name="update_queued">في انتظار التنزيل…</string>
+    <string name="reader_auto_scroll">التمرير التلقائي</string>
+    <string name="reader_auto_scroll_start">بدء التمرير التلقائي</string>
+    <string name="reader_auto_scroll_stop">إيقاف التمرير التلقائي</string>
+    <string name="reader_auto_scroll_speed">سرعة التمرير التلقائي</string>
+    <string name="reader_auto_scroll_slow">بطيء</string>
+    <string name="reader_auto_scroll_medium">متوسط</string>
+    <string name="reader_auto_scroll_fast">سريع</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

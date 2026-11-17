@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Inicia sesión de nuevo</string>
     <string name="comment_login_action">Iniciar sesión</string>
     <string name="update_queued">Descarga en espera…</string>
+    <string name="reader_auto_scroll">Desplazamiento automático</string>
+    <string name="reader_auto_scroll_start">Iniciar desplazamiento automático</string>
+    <string name="reader_auto_scroll_stop">Detener desplazamiento automático</string>
+    <string name="reader_auto_scroll_speed">Velocidad del desplazamiento automático</string>
+    <string name="reader_auto_scroll_slow">Lento</string>
+    <string name="reader_auto_scroll_medium">Medio</string>
+    <string name="reader_auto_scroll_fast">Rápido</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

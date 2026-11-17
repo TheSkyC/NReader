@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Reconnectez-vous</string>
     <string name="comment_login_action">Se connecter</string>
     <string name="update_queued">En attente de téléchargement…</string>
+    <string name="reader_auto_scroll">Défilement automatique</string>
+    <string name="reader_auto_scroll_start">Démarrer le défilement automatique</string>
+    <string name="reader_auto_scroll_stop">Arrêter le défilement automatique</string>
+    <string name="reader_auto_scroll_speed">Vitesse du défilement automatique</string>
+    <string name="reader_auto_scroll_slow">Lente</string>
+    <string name="reader_auto_scroll_medium">Moyenne</string>
+    <string name="reader_auto_scroll_fast">Rapide</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

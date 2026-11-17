@@ -483,4 +483,16 @@
     <string name="comment_expired">%1$s · Увійдіть знову</string>
     <string name="comment_login_action">Увійти</string>
     <string name="update_queued">Очікування завантаження…</string>
+    <string name="reader_auto_scroll">Автопрокручування</string>
+    <string name="reader_auto_scroll_start">Почати автопрокручування</string>
+    <string name="reader_auto_scroll_stop">Зупинити автопрокручування</string>
+    <string name="reader_auto_scroll_speed">Швидкість автопрокручування</string>
+    <string name="reader_auto_scroll_slow">Повільно</string>
+    <string name="reader_auto_scroll_medium">Середньо</string>
+    <string name="reader_auto_scroll_fast">Швидко</string>
+    <string-array name="reader_auto_scroll_speeds">
+        <item>@string/reader_auto_scroll_slow</item>
+        <item>@string/reader_auto_scroll_medium</item>
+        <item>@string/reader_auto_scroll_fast</item>
+    </string-array>
 </resources>

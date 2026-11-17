@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -95,6 +97,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String PENDING_CONTINUOUS_SOURCE = "pendingContinuousSource";
     private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
     private static final float PAGE_TAP_EDGE = .2f;
+    private static final String AUTO_SCROLL_SPEED_KEY = "reader_auto_scroll_speed";
+    private static final int[] AUTO_SCROLL_SPEEDS = {40, 100, 220};
     private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
     private GenericGallery gallery;
     private int actualPage = 0;
@@ -113,6 +117,7 @@ public class ZoomActivity extends GeneralActivity {
     private SeekBar seekBar;
     private Toolbar toolbar;
     private View view;
+    private ImageButton autoScrollButton;
     private GalleryFolder directory;
     @ViewPager2.Orientation
     private int tmpScrollType;
@@ -120,6 +125,32 @@ public class ZoomActivity extends GeneralActivity {
     private int pendingContinuousSave = -1;
     @Nullable private Object pendingContinuousSource;
     @Nullable private Future<?> pageExportTask;
+    private final Handler readerHandler = new Handler(Looper.getMainLooper());
+    private boolean autoScrolling;
+    private long autoScrollLastFrame;
+    private float autoScrollRemainder;
+    private int autoScrollSpeedIndex;
+    private final Runnable autoScrollTask = new Runnable() {
+        @Override
+        public void run() {
+            if (!autoScrolling || !continuousMode || continuousReader.getVisibility() != View.VISIBLE) return;
+            long now = SystemClock.uptimeMillis();
+            long elapsed = autoScrollLastFrame == 0 ? 16 : Math.min(100, Math.max(1, now - autoScrollLastFrame));
+            autoScrollLastFrame = now;
+            float pixels = AUTO_SCROLL_SPEEDS[autoScrollSpeedIndex] * elapsed / 1000f + autoScrollRemainder;
+            int distance = (int) pixels;
+            autoScrollRemainder = pixels - distance;
+            int before = continuousReader.computeVerticalScrollOffset();
+            if (distance > 0) continuousReader.scrollBy(0, distance);
+            int after = continuousReader.computeVerticalScrollOffset();
+            if ((after == before && !continuousReader.canScrollVertically(1))
+                || !continuousReader.canScrollVertically(1)) {
+                stopAutoScroll();
+                return;
+            }
+            readerHandler.postDelayed(this, 16);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,6 +231,20 @@ public class ZoomActivity extends GeneralActivity {
         cornerPageViewer = findViewById(R.id.page_text);
         seekBar = findViewById(R.id.seekBar);
         view = findViewById(R.id.view);
+        autoScrollButton = findViewById(R.id.reader_auto_scroll);
+        try {
+            autoScrollSpeedIndex = Math.max(0, Math.min(AUTO_SCROLL_SPEEDS.length - 1,
+                preferences.getInt(AUTO_SCROLL_SPEED_KEY, 1)));
+        } catch (ClassCastException exception) {
+            autoScrollSpeedIndex = 1;
+        }
+        autoScrollButton.setOnClickListener(v -> toggleAutoScroll());
+        autoScrollButton.setOnLongClickListener(v -> {
+            showAutoScrollSpeedDialog();
+            return true;
+        });
+        autoScrollButton.setVisibility(View.GONE);
+        continuousZoomViewport.setOnUserInteractionListener(this::stopAutoScroll);
 
         //initial setup for views
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -289,6 +334,7 @@ public class ZoomActivity extends GeneralActivity {
         if (continuousMode == enabled) return;
         switchingReaderMode = true;
         continuousMode = enabled;
+        stopAutoScroll();
         continuousZoomViewport.resetZoom();
         if (enabled) {
             mViewPager.setAdapter(null);
@@ -300,12 +346,14 @@ public class ZoomActivity extends GeneralActivity {
             mViewPager.setVisibility(View.GONE);
             continuousZoomViewport.setVisibility(View.VISIBLE);
             continuousReader.setVisibility(View.VISIBLE);
+            autoScrollButton.setVisibility(View.VISIBLE);
             ((ContinuousReaderNavigation) readerNavigation).goToPosition(initialPosition);
         } else {
             ((ContinuousReaderNavigation) readerNavigation).dispose();
             initialPosition = new ReadingPosition(page + 1, 0f);
             continuousZoomViewport.setVisibility(View.GONE);
             continuousReader.setVisibility(View.GONE);
+            autoScrollButton.setVisibility(View.GONE);
             continuousReader.setAdapter(null);
             continuousReader.clearOnScrollListeners();
             mViewPager.setAdapter(new SectionsPagerAdapter(this));
@@ -375,6 +423,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onPause() {
+        stopAutoScroll();
         savePosition();
         super.onPause();
     }
@@ -397,6 +446,8 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onDestroy() {
+        stopAutoScroll();
+        continuousZoomViewport.setOnUserInteractionListener(null);
         if (pageExportTask != null) pageExportTask.cancel(true);
         super.onDestroy();
     }
@@ -455,6 +506,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        stopAutoScroll();
         ReadingPosition position = continuousMode ? currentPosition() : null;
         super.onConfigurationChanged(newConfig);
         changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -582,6 +634,45 @@ public class ZoomActivity extends GeneralActivity {
             preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
         dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
         dialog.show();
+    }
+
+    private void toggleAutoScroll() {
+        if (!continuousMode) return;
+        if (autoScrolling) stopAutoScroll();
+        else startAutoScroll();
+    }
+
+    private void startAutoScroll() {
+        if (!continuousMode || autoScrolling || !continuousReader.canScrollVertically(1)) return;
+        autoScrolling = true;
+        autoScrollLastFrame = 0;
+        autoScrollRemainder = 0f;
+        autoScrollButton.setImageResource(R.drawable.ic_pause);
+        autoScrollButton.setContentDescription(getString(R.string.reader_auto_scroll_stop));
+        readerHandler.post(autoScrollTask);
+    }
+
+    private void stopAutoScroll() {
+        if (!autoScrolling) return;
+        autoScrolling = false;
+        autoScrollLastFrame = 0;
+        autoScrollRemainder = 0f;
+        readerHandler.removeCallbacks(autoScrollTask);
+        if (autoScrollButton != null) {
+            autoScrollButton.setImageResource(R.drawable.ic_play);
+            autoScrollButton.setContentDescription(getString(R.string.reader_auto_scroll_start));
+        }
+    }
+
+    private void showAutoScrollSpeedDialog() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.reader_auto_scroll_speed)
+            .setSingleChoiceItems(R.array.reader_auto_scroll_speeds, autoScrollSpeedIndex, (dialog, which) -> {
+                autoScrollSpeedIndex = Math.max(0, Math.min(AUTO_SCROLL_SPEEDS.length - 1, which));
+                getSharedPreferences("Settings", 0).edit().putInt(AUTO_SCROLL_SPEED_KEY, autoScrollSpeedIndex).apply();
+                dialog.dismiss();
+            })
+            .show();
     }
 
     @Override
