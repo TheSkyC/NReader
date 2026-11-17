@@ -36,6 +36,18 @@ before installation or distribution. Keep the same private signing key for futur
 NReader releases. Keystores, passwords, local SDK configuration, build outputs, and
 IDE caches were not imported from the source working directory and must not be committed.
 
+For a machine-local signing directory, you can keep `nreader-release.jks`,
+`store-password.txt`, and `key-password.txt` outside the checkout and build without
+creating `keystore.properties`:
+
+```powershell
+.\gradlew.bat :app:assembleMinApi28Release -PnreaderSigningDir=C:/Users/User/.nreader-signing
+```
+
+Gradle reads those files inside the build process; their contents are not written to
+the repository or command output. The default key alias is `nreader`; override it with
+`-PnreaderSigningKeyAlias=...` when necessary.
+
 The current test release uses version `1.0.0-beta.2`. Pushing a matching Git tag runs
 the prerelease workflow and publishes both SDK flavor APKs and the minApi28 AAB. The
 The earlier `1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.

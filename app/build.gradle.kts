@@ -2,6 +2,7 @@
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.internal.extensions.stdlib.capitalized
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -14,6 +15,14 @@ val keystoreProperties = Properties().apply {
         keystorePropertiesFile.inputStream().use { load(it) }
     }
 }
+val externalSigningDirectory = providers.gradleProperty("nreaderSigningDir")
+    .orNull?.let(::File)
+val externalSigningKeystore = externalSigningDirectory?.resolve("nreader-release.jks")
+val externalSigningStorePassword = externalSigningDirectory?.resolve("store-password.txt")
+val externalSigningKeyPassword = externalSigningDirectory?.resolve("key-password.txt")
+val hasExternalSigning = externalSigningKeystore?.isFile == true
+    && externalSigningStorePassword?.isFile == true
+    && externalSigningKeyPassword?.isFile == true
 
 val nreaderApplicationId = "com.theskyc.nreader"
 val updateEndpoint = providers.gradleProperty("nreaderUpdateEndpoint").orNull ?: ""
@@ -44,7 +53,14 @@ val computedVersionCode = majorVersion * 1_000_000 + minorVersion * 10_000 + pat
 
 android {
     signingConfigs {
-        if (keystorePropertiesFile.isFile) {
+        if (hasExternalSigning) {
+            create("release") {
+                keyAlias = providers.gradleProperty("nreaderSigningKeyAlias").orNull ?: "nreader"
+                keyPassword = externalSigningKeyPassword!!.readText().trim()
+                storeFile = externalSigningKeystore
+                storePassword = externalSigningStorePassword!!.readText().trim()
+            }
+        } else if (keystorePropertiesFile.isFile) {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
