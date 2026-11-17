@@ -25,9 +25,7 @@ import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
@@ -150,7 +148,7 @@ public class ZoomFragment extends Fragment {
                 toShow.setVisibility(View.VISIBLE);
                 toHide.setVisibility(View.GONE);
                 toShow.setImageDrawable(toShow == photoView ? DebugImageMask.wrap(toShow.getContext(), drawable) : drawable);
-                if (toShow instanceof PhotoView)
+                if (toShow instanceof PhotoView && drawable != null)
                     scalePhoto(drawable);
             }
 
@@ -170,7 +168,7 @@ public class ZoomFragment extends Fragment {
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 applyDrawable(photoView, retryButton, resource);
                 if (resource instanceof Animatable)
-                    ((GifDrawable) resource).start();
+                    ((Animatable) resource).start();
             }
 
             @Override
@@ -193,13 +191,12 @@ public class ZoomFragment extends Fragment {
     }
 
     public void loadImage(Priority priority) {
-        if (completedDownload) return;
+        if (completedDownload || photoView == null || target == null) return;
         cancelRequest();
         RequestBuilder<Drawable> dra = loadPage();
         if (dra == null) return;
         dra
             .transform(new Rotate(degree))
-            .apply(new RequestOptions().fitCenter())
             .placeholder(R.drawable.ic_launcher_foreground)
             .error(R.drawable.ic_refresh)
             .priority(priority)
@@ -248,8 +245,22 @@ public class ZoomFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if (photoView != null && target != null) {
+            RequestManager manager = GlideX.with(photoView);
+            if (manager != null) manager.clear(target);
+        }
+        completedDownload = false;
+        target = null;
+        photoView = null;
+        retryButton = null;
+        super.onDestroyView();
+    }
+
     private void updateDegree() {
         degree = (degree + 270) % 360;
+        completedDownload = false;
         loadImage();
     }
 

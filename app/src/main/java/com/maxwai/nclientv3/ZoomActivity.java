@@ -121,7 +121,7 @@ public class ZoomActivity extends GeneralActivity {
         mViewPager.setAdapter(mSectionsPagerAdapter);
         int orientation;
         try {
-            orientation = preferences.getInt(SCROLL_TYPE_KEY, ScrollType.HORIZONTAL.ordinal());
+            orientation = preferences.getInt(SCROLL_TYPE_KEY, ViewPager2.ORIENTATION_HORIZONTAL);
         } catch (ClassCastException exception) {
             orientation = ViewPager2.ORIENTATION_HORIZONTAL;
         }
@@ -309,9 +309,6 @@ public class ZoomActivity extends GeneralActivity {
             if (tmpScrollType != scrollType) {
                 mViewPager.setOrientation(tmpScrollType);
                 getSharedPreferences("Settings", 0).edit().putInt(SCROLL_TYPE_KEY, tmpScrollType).apply();
-                int page = actualPage;
-                changePage(page + 1);
-                changePage(page);
             }
         }).setNegativeButton(R.string.cancel, null);
         builder.show();
@@ -442,8 +439,6 @@ public class ZoomActivity extends GeneralActivity {
     private void applyVisibilityFlag() {
         getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
     }
-
-    private enum ScrollType {HORIZONTAL}
 
     public class SectionsPagerAdapter extends FragmentStateAdapter {
         public SectionsPagerAdapter(ZoomActivity activity) {
