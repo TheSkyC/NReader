@@ -219,12 +219,12 @@ public class ReaderReliabilityTest {
             try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
                 ZoomActivity.class, readerIntent(application, folder)).setup()) {
                 LocalGallery gallery = new LocalGallery(folder, true);
-                DoublePageFragment spread = DoublePageFragment.newInstance(gallery, 0, 1,
+                DoublePageFragment spread = DoublePageFragment.newInstance(gallery, 1, 2,
                     gallery.getGalleryFolder(), ReaderScaleMode.SMART);
                 controller.get().getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, spread, "double-spread").commitNow();
-                assertNotNull(spread.pageFragment(0));
                 assertNotNull(spread.pageFragment(1));
+                assertNotNull(spread.pageFragment(2));
 
                 DoublePageFragment last = DoublePageFragment.newInstance(gallery, 2, -1,
                     gallery.getGalleryFolder(), ReaderScaleMode.SMART);

@@ -1226,14 +1226,14 @@ public class ZoomActivity extends GeneralActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            int firstPage = position * 2;
-            int secondPage = firstPage + 1 < gallery.getPageCount() ? firstPage + 1 : -1;
+            int firstPage = SpreadReaderNavigation.firstPageForSpread(position, gallery.getPageCount());
+            int secondPage = SpreadReaderNavigation.secondPageForSpread(position, gallery.getPageCount());
             return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory, readerScaleMode);
         }
 
         @Override
         public int getItemCount() {
-            return (gallery.getPageCount() + 1) / 2;
+            return SpreadReaderNavigation.spreadCount(gallery.getPageCount());
         }
     }
 

@@ -31,13 +31,20 @@ public class SpreadReaderNavigationTest {
             @Override public int getItemCount() { return 2; }
         });
         SpreadReaderNavigation navigation = new SpreadReaderNavigation(pager, 3);
+        assertEquals(2, navigation.spreadCount());
+        assertEquals(0, SpreadReaderNavigation.firstPageForSpread(0, 3));
+        assertEquals(-1, SpreadReaderNavigation.secondPageForSpread(0, 3));
+        assertEquals(1, SpreadReaderNavigation.firstPageForSpread(1, 3));
+        assertEquals(2, SpreadReaderNavigation.secondPageForSpread(1, 3));
         navigation.goToPage(2, false);
         assertEquals(1, pager.getCurrentItem());
         assertEquals(2, navigation.currentPage());
         assertEquals(3, navigation.pageCount());
         navigation.goToPage(1, false);
-        assertEquals(0, pager.getCurrentItem());
+        assertEquals(1, pager.getCurrentItem());
         assertEquals(1, navigation.currentPage());
+        navigation.goToPage(0, false);
+        assertEquals(0, pager.getCurrentItem());
         navigation.selectPage(0);
         assertEquals(0, navigation.currentPage());
     }
