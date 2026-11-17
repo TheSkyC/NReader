@@ -87,6 +87,26 @@ public class ContinuousReaderNavigationTest {
         assertNotNull(navigation.currentPosition());
         assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
 
+        recycler.scrollBy(0, 200);
+        assertEquals(-200, target.getTop());
+        navigation.goToPosition(new ReadingPosition(2, 0.4f));
+        MotionEvent immediateDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 250, 0);
+        recycler.onInterceptTouchEvent(immediateDown);
+        immediateDown.recycle();
+        MotionEvent immediateDrag = MotionEvent.obtain(0, 20, MotionEvent.ACTION_MOVE, 300, 100, 0);
+        recycler.onInterceptTouchEvent(immediateDrag);
+        immediateDrag.recycle();
+        layoutRecycler(recycler);
+        assertEquals(-200, layout.findViewByPosition(1).getTop());
+        MotionEvent immediateCancel = MotionEvent.obtain(0, 21, MotionEvent.ACTION_CANCEL, 300, 100, 0);
+        recycler.onInterceptTouchEvent(immediateCancel);
+        immediateCancel.recycle();
+        navigation.goToPosition(new ReadingPosition(2, 0.4f));
+        layoutRecycler(recycler);
+
+        pageDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 250, 0);
+        recycler.onInterceptTouchEvent(pageDown);
+        pageDown.recycle();
         MotionEvent drag = MotionEvent.obtain(0, 20, MotionEvent.ACTION_MOVE, 300, 100, 0);
         recycler.onInterceptTouchEvent(drag);
         drag.recycle();

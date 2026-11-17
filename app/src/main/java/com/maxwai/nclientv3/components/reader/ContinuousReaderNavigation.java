@@ -40,7 +40,7 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView view, int state) {
                 if (state == RecyclerView.SCROLL_STATE_DRAGGING || state == RecyclerView.SCROLL_STATE_SETTLING)
-                    cancelPendingPosition();
+                    interruptRestore();
             }
 
             @Override
