@@ -28,6 +28,7 @@ import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -378,6 +379,62 @@ public class ReaderReliabilityTest {
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.container).getVisibility());
                 assertEquals(1, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
             }
+        }
+    }
+
+    @Test
+    public void continuousRotationSurvivesRecreationAndDisclosesOriginalExport() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", false).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                layoutActivity(activity);
+                RecyclerView list = activity.findViewById(R.id.continuous_reader);
+                RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(0);
+                assertNotNull(holder);
+                holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                android.widget.ImageView image = holder.itemView.findViewById(R.id.continuous_page_image);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(20, 30, Bitmap.Config.ARGB_8888)));
+                Menu menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                activity.onOptionsItemSelected(menu.findItem(R.id.rotate));
+                ReaderPageRotations rotations = ReflectionHelpers.getField(activity, "continuousRotations");
+                assertEquals(270, rotations.angle(0));
+                assertEquals(0, rotations.angle(1));
+                assertEquals(View.VISIBLE, holder.itemView.findViewById(R.id.continuous_page_status).getVisibility());
+
+                controller.recreate();
+                activity = controller.get();
+                rotations = ReflectionHelpers.getField(activity, "continuousRotations");
+                assertEquals(270, rotations.angle(0));
+                layoutActivity(activity);
+                list = activity.findViewById(R.id.continuous_reader);
+                holder = list.findViewHolderForAdapterPosition(0);
+                assertNotNull(holder);
+                holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                image = holder.itemView.findViewById(R.id.continuous_page_image);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(20, 30, Bitmap.Config.ARGB_8888)));
+                menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                activity.onOptionsItemSelected(menu.findItem(R.id.share));
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(dialog.isShowing());
+                assertEquals(activity.getString(R.string.reader_export_original_rotation),
+                    ((android.widget.TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                assertNull(ReflectionHelpers.getField(activity, "pageExportTask"));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+                assertNull(ReflectionHelpers.getField(activity, "pageExportTask"));
+            }
+        } finally {
+            application.getSharedPreferences("DebugDisplay", 0).edit().clear().commit();
         }
     }
 

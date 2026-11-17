@@ -3,4 +3,5 @@
     <string name="reader_page_loading">正在加载页面…</string>
     <string name="reader_page_load_failed">无法加载此页面。</string>
     <string name="reader_page_unavailable">当前页面图片无法用于此操作。</string>
+    <string name="reader_export_original_rotation">保存或分享将使用未经旋转的原图。是否继续？</string>
 </resources>

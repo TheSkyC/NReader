@@ -54,6 +54,7 @@ import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousPageAdapter;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderPageExport;
+import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
@@ -103,6 +104,7 @@ public class ZoomActivity extends GeneralActivity {
     private boolean continuousMode;
     private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
+    private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
     private TextView pageManagerLabel, cornerPageViewer;
     private View pageSwitcher;
     private SeekBar seekBar;
@@ -140,6 +142,7 @@ public class ZoomActivity extends GeneralActivity {
             finish();
             return;
         }
+        continuousRotations.restore(savedInstanceState, gallery.getPageCount());
         int requestedPage = savedInstanceState == null
             ? getIntent().getIntExtra(getPackageName() + ".PAGE", 1)
             : savedInstanceState.getInt("readerPage", 1);
@@ -287,7 +290,7 @@ public class ZoomActivity extends GeneralActivity {
             LinearLayoutManager layout = new LinearLayoutManager(this);
             continuousReader.setLayoutManager(layout);
             continuousReader.setAdapter(new ContinuousPageAdapter(gallery, directory,
-                (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition)));
+                (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations));
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
             mViewPager.setVisibility(View.GONE);
             continuousReader.setVisibility(View.VISIBLE);
@@ -371,6 +374,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
+        continuousRotations.save(state);
         state.putInt(PENDING_CONTINUOUS_SAVE, pendingContinuousSave);
         if (pendingContinuousSource != null) state.putString(PENDING_CONTINUOUS_SOURCE, pendingContinuousSource.toString());
         state.putBoolean(PENDING_SOURCE_IS_FILE, pendingContinuousSource instanceof File);
@@ -587,20 +591,25 @@ public class ZoomActivity extends GeneralActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.rotate) {
-            ZoomFragment fragment = continuousMode ? null : getActualFragment();
-            if (fragment == null || fragment.getView() == null) showPageUnavailable();
-            else fragment.rotate();
+            if (continuousMode) {
+                int page = readerNavigation.currentPage();
+                RecyclerView.ViewHolder holder = continuousReader.findViewHolderForAdapterPosition(page);
+                RecyclerView.Adapter<?> adapter = continuousReader.getAdapter();
+                ReadingPosition position = currentPosition();
+                if (holder == null || position == null || !(adapter instanceof ContinuousPageAdapter)
+                    || !((ContinuousPageAdapter) adapter).rotate(holder)) showPageUnavailable();
+                else ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
+            } else {
+                ZoomFragment fragment = getActualFragment();
+                if (fragment == null || fragment.getView() == null) showPageUnavailable();
+                else fragment.rotate();
+            }
         } else if (id == R.id.save_page) {
             if (continuousMode) {
                 int page = readerNavigation.currentPage();
                 Object source = continuousPageSource(page);
                 if (source == null) showPageUnavailable();
-                else if (Global.hasStoragePermission(this)) exportContinuousPage(page, source, false, false);
-                else {
-                    pendingContinuousSave = page;
-                    pendingContinuousSource = source;
-                    requestStorage();
-                }
+                else confirmOriginalExport(page, () -> saveContinuousPage(page, source));
             } else if (getAvailablePageImage() == null) {
                 showPageUnavailable();
             } else if (Global.hasStoragePermission(this)) {
@@ -611,8 +620,10 @@ public class ZoomActivity extends GeneralActivity {
                 int page = readerNavigation.currentPage();
                 Object source = continuousPageSource(page);
                 if (source == null) showPageUnavailable();
-                else if (gallery.getId() <= 0) exportContinuousPage(page, source, true, false);
-                else openContinuousShareDialog(page, source);
+                else confirmOriginalExport(page, () -> {
+                    if (gallery.getId() <= 0) exportContinuousPage(page, source, true, false);
+                    else openContinuousShareDialog(page, source);
+                });
             } else if (getAvailablePageImage() == null) showPageUnavailable();
             else if (gallery.getId() <= 0) sendImage(false);
             else openSendImageDialog();
@@ -635,6 +646,27 @@ public class ZoomActivity extends GeneralActivity {
             .setCancelable(true).setTitle(R.string.send_with_title)
             .setMessage(R.string.caption_send_with_title)
             .show();
+    }
+
+    private void confirmOriginalExport(int page, @NonNull Runnable action) {
+        if (continuousRotations.angle(page) == 0) {
+            action.run();
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+            .setMessage(R.string.reader_export_original_rotation)
+            .setPositiveButton(R.string.yes, (dialog, which) -> action.run())
+            .setNegativeButton(R.string.no, null)
+            .show();
+    }
+
+    private void saveContinuousPage(int page, @NonNull Object source) {
+        if (Global.hasStoragePermission(this)) exportContinuousPage(page, source, false, false);
+        else {
+            pendingContinuousSave = page;
+            pendingContinuousSource = source;
+            requestStorage();
+        }
     }
 
     private void openContinuousShareDialog(int page, @NonNull Object source) {

@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Réglages de lecture</string>
     <string name="reader_continuous_vertical">Défilement vertical continu</string>
-    <string name="reader_continuous_summary">La lecture continue mémorise votre position. Le zoom et la rotation sont disponibles en mode page.</string>
+    <string name="reader_continuous_summary">La lecture continue mémorise votre position. Le zoom est disponible en mode page.</string>
 </resources>

@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Настройки чтения</string>
     <string name="reader_continuous_vertical">Непрерывная вертикальная прокрутка</string>
-    <string name="reader_continuous_summary">Непрерывное чтение запоминает позицию. Масштабирование и поворот доступны в постраничном режиме.</string>
+    <string name="reader_continuous_summary">Непрерывное чтение запоминает позицию. Масштабирование доступно в постраничном режиме.</string>
 </resources>

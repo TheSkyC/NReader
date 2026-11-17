@@ -19,7 +19,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.bitmap.FitCenter;
+import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.maxwai.nclientv3.R;
@@ -33,6 +36,7 @@ import com.maxwai.nclientv3.utility.DebugImageMask;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -47,20 +51,33 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Nullable private final File directoryPath;
     private final BiConsumer<Integer, Float> onPageTap;
     private final Executor retryExecutor;
+    private final ReaderPageRotations rotations;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                                  @NonNull BiConsumer<Integer, Float> onPageTap) {
-        this(gallery, directory, onPageTap, RETRY_EXECUTOR);
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR, new ReaderPageRotations());
+    }
+
+    public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                                 @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull ReaderPageRotations rotations) {
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
     }
 
     ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                           @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull Executor retryExecutor) {
+        this(gallery, directory, onPageTap, retryExecutor, new ReaderPageRotations());
+    }
+
+    private ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                          @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull Executor retryExecutor,
+                          @NonNull ReaderPageRotations rotations) {
         this.gallery = gallery;
         this.directory = directory;
         this.directoryPath = directory == null ? null : directory.getFolder();
         this.onPageTap = onPageTap;
         this.retryExecutor = retryExecutor;
+        this.rotations = rotations;
     }
 
     @NonNull
@@ -135,7 +152,12 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         holder.showLoading();
         Context context = holder.image.getContext();
         int width = Math.max(1, Math.min(MAX_DECODE_WIDTH, context.getResources().getDisplayMetrics().widthPixels));
-        manager.load(source).override(width, MAX_DECODE_HEIGHT).fitCenter()
+        int angle = rotations.angle(position);
+        boolean quarterTurn = angle == 90 || angle == 270;
+        int targetWidth = quarterTurn ? MAX_DECODE_HEIGHT : width;
+        int targetHeight = quarterTurn ? width : MAX_DECODE_HEIGHT;
+        manager.load(source).override(targetWidth, targetHeight).fitCenter()
+            .transform(new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle))))
             .addListener(new RequestListener<Drawable>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException exception, Object model,
@@ -154,6 +176,17 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     return false;
                 }
             }).into(DebugImageMask.target(holder.image));
+    }
+
+    public boolean rotate(@NonNull RecyclerView.ViewHolder viewHolder) {
+        if (!(viewHolder instanceof Holder) || loadedSource(viewHolder) == null) return false;
+        Holder holder = (Holder) viewHolder;
+        int page = holder.getBindingAdapterPosition();
+        if (holder.getBindingAdapter() != this || page == RecyclerView.NO_POSITION) return false;
+        int evicted = rotations.rotate(page);
+        load(holder, page);
+        if (evicted >= 0) notifyItemChanged(evicted);
+        return true;
     }
 
     @Nullable

@@ -3,4 +3,5 @@
     <string name="reader_page_loading">Carregando página…</string>
     <string name="reader_page_load_failed">Não foi possível carregar esta página.</string>
     <string name="reader_page_unavailable">A imagem desta página não está disponível para esta ação.</string>
+    <string name="reader_export_original_rotation">Ao salvar ou compartilhar, a imagem original será usada sem rotação. Continuar?</string>
 </resources>

@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Impostazioni di lettura</string>
     <string name="reader_continuous_vertical">Scorrimento verticale continuo</string>
-    <string name="reader_continuous_summary">La lettura continua ricorda la posizione. Zoom e rotazione sono disponibili nella modalità a pagine.</string>
+    <string name="reader_continuous_summary">La lettura continua ricorda la posizione. Lo zoom è disponibile nella modalità a pagine.</string>
 </resources>

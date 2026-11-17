@@ -3,6 +3,8 @@ package com.maxwai.nclientv3.components.reader;
 
 import android.app.Activity;
 import android.app.Application;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
@@ -10,6 +12,8 @@ import android.view.View;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.request.BaseRequestOptions;
+import com.bumptech.glide.request.Request;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.files.PageFile;
@@ -24,6 +28,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.util.ReflectionHelpers;
 
 import java.io.File;
 import java.util.concurrent.Executor;
@@ -31,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -142,5 +148,53 @@ public class ContinuousPageAdapterTest {
         queued.getAndSet(null).run();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertNull(missing.source);
+    }
+
+    @Test
+    public void rotationFollowsPageAndRejectsUnloadedOrRecycledHolders() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        assertTrue(new File(folder, "2.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        ReaderPageRotations rotations = new ReaderPageRotations();
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> {}, rotations);
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 1200);
+        ContinuousPageAdapter.Holder first = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(0);
+        ContinuousPageAdapter.Holder second = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(1);
+        assertNotNull(first);
+        assertNotNull(second);
+        Request originalRequest = (Request) first.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(originalRequest);
+        BaseRequestOptions<?> originalOptions = ReflectionHelpers.getField(originalRequest, "requestOptions");
+        int screenWidth = Math.max(1, Math.min(2048, activity.getResources().getDisplayMetrics().widthPixels));
+        assertEquals(screenWidth, originalOptions.getOverrideWidth());
+        assertEquals(4096, originalOptions.getOverrideHeight());
+        assertFalse(adapter.rotate(first));
+        first.image.setImageDrawable(new ColorDrawable(Color.RED));
+        first.showImage();
+        assertTrue(adapter.rotate(first));
+        Request rotatedRequest = (Request) first.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(rotatedRequest);
+        BaseRequestOptions<?> rotatedOptions = ReflectionHelpers.getField(rotatedRequest, "requestOptions");
+        assertEquals(4096, rotatedOptions.getOverrideWidth());
+        assertEquals(screenWidth, rotatedOptions.getOverrideHeight());
+        assertEquals(270, rotations.angle(0));
+        assertEquals(0, rotations.angle(1));
+        assertFalse(adapter.rotate(first));
+        adapter.onBindViewHolder(second, 1);
+        assertEquals(0, rotations.angle(1));
+        adapter.onBindViewHolder(first, 0);
+        assertEquals(270, rotations.angle(0));
+        recycler.setAdapter(null);
+        assertFalse(adapter.rotate(first));
     }
 }

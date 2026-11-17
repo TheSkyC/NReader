@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">إعدادات القراءة</string>
     <string name="reader_continuous_vertical">تمرير عمودي متواصل</string>
-    <string name="reader_continuous_summary">تحفظ القراءة المتواصلة موضعك. يتوفر التكبير والتدوير في وضع الصفحات.</string>
+    <string name="reader_continuous_summary">تحفظ القراءة المتواصلة موضعك. يتوفر التكبير في وضع الصفحات.</string>
 </resources>
