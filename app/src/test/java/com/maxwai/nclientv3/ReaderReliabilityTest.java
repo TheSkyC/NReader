@@ -15,6 +15,8 @@ import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.BaseRequestOptions;
 import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.target.ImageViewTarget;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
@@ -185,6 +187,73 @@ public class ReaderReliabilityTest {
                 assertNotNull(tap);
                 tap.onViewTap(photo, 150, 250);
                 assertTrue(ReflectionHelpers.getField(restored, "isHidden"));
+            }
+        }
+    }
+
+    @Test
+    public void readerSettingsApplyImmediatelyAndPersistAcrossRecreation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ViewPager2 pager = activity.findViewById(R.id.container);
+                pager.setCurrentItem(1, false);
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                dialog.findViewById(R.id.reader_vertical).performClick();
+                assertEquals(ViewPager2.ORIENTATION_VERTICAL, pager.getOrientation());
+                assertEquals(1, pager.getCurrentItem());
+                ((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).setChecked(false);
+                ((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).setChecked(false);
+                ((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).setChecked(true);
+                assertFalse(Global.isButtonChangePage());
+                assertFalse(Global.volumeOverride());
+                assertTrue(application.getSharedPreferences("Settings", 0).getBoolean("instant_page_turn", false));
+                assertFalse(application.getSharedPreferences("Settings", 0).getBoolean("change_page_buttons", true));
+                assertFalse(application.getSharedPreferences("Settings", 0).getBoolean("volume_override", true));
+                Global.initFromShared(application);
+                assertFalse(Global.isButtonChangePage());
+                assertFalse(Global.volumeOverride());
+                dialog.dismiss();
+                controller.recreate();
+                activity = controller.get();
+                assertEquals(ViewPager2.ORIENTATION_VERTICAL,
+                    ((ViewPager2) activity.findViewById(R.id.container)).getOrientation());
+                activity.findViewById(R.id.reader_settings).performClick();
+                dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_vertical)).isChecked());
+                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
+                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
+                assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());
+                dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
+    public void invalidInstantTurnPreferenceFallsBackAndCanBeReplaced() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putString("instant_page_turn", "invalid").commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                SwitchMaterial instant = dialog.findViewById(R.id.reader_instant_turn);
+                assertFalse(instant.isChecked());
+                instant.setChecked(true);
+                assertTrue(application.getSharedPreferences("Settings", 0).getBoolean("instant_page_turn", false));
+                dialog.dismiss();
             }
         }
     }

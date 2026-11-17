@@ -336,6 +336,18 @@ public class Global {
         return buttonChangePage;
     }
 
+    public static void setButtonChangePage(Context context, boolean enabled) {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(context.getString(R.string.preference_key_change_page_buttons), enabled).apply();
+        buttonChangePage = enabled;
+    }
+
+    public static void setVolumeOverride(Context context, boolean enabled) {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(context.getString(R.string.preference_key_override_volume), enabled).apply();
+        volumeOverride = enabled;
+    }
+
     public static boolean hideMultitask() {
         return hideMultitask;
     }

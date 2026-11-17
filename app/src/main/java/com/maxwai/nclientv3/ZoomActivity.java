@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.SeekBar;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,10 @@ import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.radiobutton.MaterialRadioButton;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.util.Objects;
@@ -141,6 +146,7 @@ public class ZoomActivity extends GeneralActivity {
         mViewPager.setKeepScreenOn(Global.isLockScreen());
         findViewById(R.id.prev).setOnClickListener(v -> changeClosePage(false));
         findViewById(R.id.next).setOnClickListener(v -> changeClosePage(true));
+        findViewById(R.id.reader_settings).setOnClickListener(v -> showReaderSettings());
         seekBar.setMax(gallery.getPageCount() - 1);
         if (Global.useRtl()) {
             seekBar.setRotationY(180);
@@ -317,8 +323,16 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changePage(int newPage) {
-        boolean instant = getSharedPreferences("Settings", 0).getBoolean(INSTANT_PAGE_TURN_KEY, false);
+        boolean instant = isInstantPageTurn(getSharedPreferences("Settings", 0));
         mViewPager.setCurrentItem(newPage, !instant);
+    }
+
+    private boolean isInstantPageTurn(SharedPreferences preferences) {
+        try {
+            return preferences.getBoolean(INSTANT_PAGE_TURN_KEY, false);
+        } catch (ClassCastException exception) {
+            return false;
+        }
     }
 
     private void changeScrollTypeDialog() {
@@ -329,12 +343,51 @@ public class ZoomActivity extends GeneralActivity {
         builder.setSingleChoiceItems(R.array.scroll_type, scrollType, (dialog, which) -> tmpScrollType = which);
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
             if (tmpScrollType != scrollType) {
-                mViewPager.setOrientation(tmpScrollType);
-                updateReaderDirection();
-                getSharedPreferences("Settings", 0).edit().putInt(SCROLL_TYPE_KEY, tmpScrollType).apply();
+                setReaderOrientation(tmpScrollType);
             }
         }).setNegativeButton(R.string.cancel, null);
         builder.show();
+    }
+
+    private void setReaderOrientation(@ViewPager2.Orientation int orientation) {
+        if (mViewPager.getOrientation() == orientation) return;
+        mViewPager.setOrientation(orientation);
+        updateReaderDirection();
+        getSharedPreferences("Settings", 0).edit().putInt(SCROLL_TYPE_KEY, orientation).apply();
+    }
+
+    private void showReaderSettings() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.reader_settings_sheet);
+        String[] directions = getResources().getStringArray(R.array.scroll_type);
+        MaterialRadioButton horizontal = Objects.requireNonNull(dialog.findViewById(R.id.reader_horizontal));
+        MaterialRadioButton vertical = Objects.requireNonNull(dialog.findViewById(R.id.reader_vertical));
+        horizontal.setText(directions[ViewPager2.ORIENTATION_HORIZONTAL]);
+        vertical.setText(directions[ViewPager2.ORIENTATION_VERTICAL]);
+        RadioGroup direction = Objects.requireNonNull(dialog.findViewById(R.id.reader_direction));
+        direction.check(isVerticalPageTurn() ? R.id.reader_vertical : R.id.reader_horizontal);
+        direction.setOnCheckedChangeListener((group, id) -> {
+            if (id == R.id.reader_horizontal) setReaderOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
+            else if (id == R.id.reader_vertical) setReaderOrientation(ViewPager2.ORIENTATION_VERTICAL);
+        });
+
+        SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
+        tap.setChecked(Global.isButtonChangePage());
+        tap.setOnCheckedChangeListener((button, checked) -> Global.setButtonChangePage(this, checked));
+        SwitchMaterial volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
+        volume.setChecked(Global.volumeOverride());
+        volume.setOnCheckedChangeListener((button, checked) -> {
+            up = false;
+            down = false;
+            Global.setVolumeOverride(this, checked);
+        });
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        SwitchMaterial instant = Objects.requireNonNull(dialog.findViewById(R.id.reader_instant_turn));
+        instant.setChecked(isInstantPageTurn(preferences));
+        instant.setOnCheckedChangeListener((button, checked) ->
+            preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
+        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        dialog.show();
     }
 
     @Override
