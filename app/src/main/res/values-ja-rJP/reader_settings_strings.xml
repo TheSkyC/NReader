@@ -24,4 +24,8 @@
     <string name="reader_end_message">最後のページに到達しました。</string>
     <string name="reader_end_restart">もう一度読む</string>
     <string name="reader_end_close">戻る</string>
+    <string name="reader_filter_title">表示フィルター</string>
+    <string name="reader_filter_none">オリジナル</string>
+    <string name="reader_filter_grayscale">グレースケール</string>
+    <string name="reader_filter_invert">色を反転</string>
 </resources>

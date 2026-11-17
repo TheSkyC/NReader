@@ -24,4 +24,8 @@
     <string name="reader_end_message">Son sayfaya ulaştınız.</string>
     <string name="reader_end_restart">Yeniden oku</string>
     <string name="reader_end_close">Geri dön</string>
+    <string name="reader_filter_title">Görüntü filtresi</string>
+    <string name="reader_filter_none">Özgün</string>
+    <string name="reader_filter_grayscale">Gri tonlama</string>
+    <string name="reader_filter_invert">Renkleri ters çevir</string>
 </resources>

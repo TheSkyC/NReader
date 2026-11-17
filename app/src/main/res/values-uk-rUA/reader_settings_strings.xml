@@ -24,4 +24,8 @@
     <string name="reader_end_message">Ви досягли останньої сторінки.</string>
     <string name="reader_end_restart">Читати знову</string>
     <string name="reader_end_close">Назад</string>
+    <string name="reader_filter_title">Фільтр відображення</string>
+    <string name="reader_filter_none">Оригінал</string>
+    <string name="reader_filter_grayscale">Відтінки сірого</string>
+    <string name="reader_filter_invert">Інвертувати кольори</string>
 </resources>

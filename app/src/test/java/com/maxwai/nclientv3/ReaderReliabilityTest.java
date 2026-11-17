@@ -389,6 +389,9 @@ public class ReaderReliabilityTest {
                 dialog.findViewById(R.id.reader_vertical).performClick();
                 assertEquals(ViewPager2.ORIENTATION_VERTICAL, pager.getOrientation());
                 assertEquals(1, pager.getCurrentItem());
+                dialog.findViewById(R.id.reader_filter_grayscale).performClick();
+                assertEquals(1, application.getSharedPreferences("Settings", 0)
+                    .getInt("reader_filter", -1));
                 dialog.findViewById(R.id.reader_scale_width).performClick();
                 assertEquals(ReaderScaleMode.FIT_WIDTH,
                     application.getSharedPreferences("Settings", 0).getInt("reader_scale_mode", -1));
@@ -411,6 +414,7 @@ public class ReaderReliabilityTest {
                 activity.findViewById(R.id.reader_settings).performClick();
                 dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_vertical)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_scale_width)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());

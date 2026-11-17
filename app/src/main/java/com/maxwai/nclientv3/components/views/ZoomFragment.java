@@ -33,6 +33,7 @@ import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
+import com.maxwai.nclientv3.components.reader.ReaderImageFilter;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
@@ -51,6 +52,7 @@ public class ZoomFragment extends Fragment {
     private int pageIndex = -1;
     private int degree = 0;
     private int scaleMode = ReaderScaleMode.SMART;
+    private int filterMode = ReaderImageFilter.NONE;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
 
@@ -64,11 +66,17 @@ public class ZoomFragment extends Fragment {
 
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
                                            int scaleMode) {
+        return newInstance(gallery, page, directory, scaleMode, ReaderImageFilter.NONE);
+    }
+
+    public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode, int filterMode) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
         args.putInt("PAGE", page);
         args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
+        args.putInt("FILTER_MODE", ReaderImageFilter.sanitize(filterMode));
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
@@ -90,6 +98,7 @@ public class ZoomFragment extends Fragment {
         url = str == null ? null : Uri.parse(str);
         pageIndex = getArguments().getInt("PAGE", -1);
         scaleMode = ReaderScaleMode.sanitize(getArguments().getInt("SCALE_MODE", ReaderScaleMode.SMART));
+        filterMode = ReaderImageFilter.sanitize(getArguments().getInt("FILTER_MODE", ReaderImageFilter.NONE));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {
@@ -133,6 +142,7 @@ public class ZoomFragment extends Fragment {
             @Override
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 setResource(resource);
+                ReaderImageFilter.apply(photoView, filterMode);
                 loadingView.setVisibility(View.GONE);
                 errorView.setVisibility(View.GONE);
                 scalePhoto(resource);
@@ -167,6 +177,11 @@ public class ZoomFragment extends Fragment {
     public void setScaleMode(int mode) {
         scaleMode = ReaderScaleMode.sanitize(mode);
         if (photoView != null && photoView.getDrawable() != null) scalePhoto(photoView.getDrawable());
+    }
+
+    public void setFilterMode(int mode) {
+        filterMode = ReaderImageFilter.sanitize(mode);
+        if (photoView != null) ReaderImageFilter.apply(photoView, filterMode);
     }
 
     public int getPageIndex() {

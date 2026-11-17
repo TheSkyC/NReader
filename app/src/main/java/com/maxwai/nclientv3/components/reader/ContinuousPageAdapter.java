@@ -55,6 +55,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Nullable private OnPageDoubleTapListener onPageDoubleTap;
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
+    private int filterMode = ReaderImageFilter.NONE;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     @Nullable private RecyclerView recycler;
 
@@ -68,9 +69,16 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
     }
 
-    ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+    public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                           @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull Executor retryExecutor) {
         this(gallery, directory, onPageTap, retryExecutor, new ReaderPageRotations());
+    }
+
+    public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                          @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull ReaderPageRotations rotations,
+                          int filterMode) {
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
+        this.filterMode = ReaderImageFilter.sanitize(filterMode);
     }
 
     private ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
@@ -122,6 +130,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
+        holder.applyFilter(filterMode);
     }
 
     private int pageGapPx(@NonNull Context context) {
@@ -130,6 +139,15 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     public void setOnPageDoubleTapListener(@Nullable OnPageDoubleTapListener listener) {
         onPageDoubleTap = listener;
+    }
+
+    public void setFilterMode(int mode) {
+        filterMode = ReaderImageFilter.sanitize(mode);
+        if (recycler == null) return;
+        for (int index = 0; index < recycler.getChildCount(); index++) {
+            RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
+            if (viewHolder instanceof Holder) ((Holder) viewHolder).applyFilter(filterMode);
+        }
     }
 
     @Override
@@ -369,6 +387,10 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
         void showImage() {
             status.setVisibility(View.GONE);
+        }
+
+        void applyFilter(int mode) {
+            ReaderImageFilter.apply(image, mode);
         }
     }
 

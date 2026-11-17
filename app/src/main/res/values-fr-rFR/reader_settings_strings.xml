@@ -24,4 +24,8 @@
     <string name="reader_end_message">Vous avez atteint la dernière page.</string>
     <string name="reader_end_restart">Relire</string>
     <string name="reader_end_close">Retour</string>
+    <string name="reader_filter_title">Filtre d affichage</string>
+    <string name="reader_filter_none">Original</string>
+    <string name="reader_filter_grayscale">Niveaux de gris</string>
+    <string name="reader_filter_invert">Inverser les couleurs</string>
 </resources>

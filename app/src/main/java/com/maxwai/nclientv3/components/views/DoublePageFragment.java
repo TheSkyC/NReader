@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
+import com.maxwai.nclientv3.components.reader.ReaderImageFilter;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.Global;
 
@@ -25,6 +26,7 @@ public final class DoublePageFragment extends Fragment {
     private static final String FIRST_PAGE_KEY = "FIRST_PAGE";
     private static final String SECOND_PAGE_KEY = "SECOND_PAGE";
     private static final String SCALE_MODE_KEY = "SCALE_MODE";
+    private static final String FILTER_MODE_KEY = "FILTER_MODE";
 
     private int firstPage;
     private int secondPage;
@@ -32,12 +34,19 @@ public final class DoublePageFragment extends Fragment {
     public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
                                                  int secondPage, @Nullable GalleryFolder directory,
                                                  int scaleMode) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, ReaderImageFilter.NONE);
+    }
+
+    public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                 int secondPage, @Nullable GalleryFolder directory,
+                                                 int scaleMode, int filterMode) {
         Bundle args = new Bundle();
         args.putParcelable(GALLERY_KEY, gallery);
         args.putParcelable(DIRECTORY_KEY, directory);
         args.putInt(FIRST_PAGE_KEY, firstPage);
         args.putInt(SECOND_PAGE_KEY, secondPage);
         args.putInt(SCALE_MODE_KEY, ReaderScaleMode.sanitize(scaleMode));
+        args.putInt(FILTER_MODE_KEY, ReaderImageFilter.sanitize(filterMode));
         DoublePageFragment fragment = new DoublePageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -69,6 +78,7 @@ public final class DoublePageFragment extends Fragment {
         firstPage = args.getInt(FIRST_PAGE_KEY, 0);
         secondPage = args.getInt(SECOND_PAGE_KEY, -1);
         int scaleMode = ReaderScaleMode.sanitize(args.getInt(SCALE_MODE_KEY, ReaderScaleMode.SMART));
+        int filterMode = ReaderImageFilter.sanitize(args.getInt(FILTER_MODE_KEY, ReaderImageFilter.NONE));
         LinearLayout root = view.findViewById(R.id.double_page_root);
         FrameLayout secondContainer = view.findViewById(R.id.double_page_second);
         if (secondPage < 0) {
@@ -77,12 +87,12 @@ public final class DoublePageFragment extends Fragment {
         }
         if (getChildFragmentManager().findFragmentByTag(pageTag(firstPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory, scaleMode), pageTag(firstPage))
+                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory, scaleMode, filterMode), pageTag(firstPage))
                 .commitNow();
         }
         if (secondPage >= 0 && getChildFragmentManager().findFragmentByTag(pageTag(secondPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory, scaleMode), pageTag(secondPage))
+                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory, scaleMode, filterMode), pageTag(secondPage))
                 .commitNow();
         }
     }

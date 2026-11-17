@@ -24,4 +24,8 @@
     <string name="reader_end_message">لقد وصلت إلى الصفحة الأخيرة.</string>
     <string name="reader_end_restart">اقرأ مجددًا</string>
     <string name="reader_end_close">عودة</string>
+    <string name="reader_filter_title">مرشح العرض</string>
+    <string name="reader_filter_none">الأصلية</string>
+    <string name="reader_filter_grayscale">تدرج رمادي</string>
+    <string name="reader_filter_invert">عكس الألوان</string>
 </resources>

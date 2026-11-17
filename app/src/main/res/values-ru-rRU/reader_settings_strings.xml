@@ -24,4 +24,8 @@
     <string name="reader_end_message">Вы достигли последней страницы.</string>
     <string name="reader_end_restart">Читать снова</string>
     <string name="reader_end_close">Назад</string>
+    <string name="reader_filter_title">Фильтр отображения</string>
+    <string name="reader_filter_none">Оригинал</string>
+    <string name="reader_filter_grayscale">Оттенки серого</string>
+    <string name="reader_filter_invert">Инверсия цветов</string>
 </resources>

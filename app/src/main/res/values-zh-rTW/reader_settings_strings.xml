@@ -24,4 +24,8 @@
     <string name="reader_end_message">你已到達最後一頁。</string>
     <string name="reader_end_restart">從頭再讀</string>
     <string name="reader_end_close">返回</string>
+    <string name="reader_filter_title">顯示濾鏡</string>
+    <string name="reader_filter_none">原圖</string>
+    <string name="reader_filter_grayscale">灰階</string>
+    <string name="reader_filter_invert">反色</string>
 </resources>
