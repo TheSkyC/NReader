@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">ログインを自動的に復元</string>
+    <string name="auto_reauthenticate_summary">パスワードを保存したアカウントのセッションが期限切れになると、フォアグラウンドで認証を開始します。操作が必要な場合があります。</string>
     <string name="gallery_loading_details">ギャラリーの詳細を読み込み中</string>
     <string name="setting_on_ignore_tags">ギャラリーメニューからタグを選択した場合、他のタグは照会されません（言語を除く）</string>
     <string name="setting_off_ignore_tags">ギャラリーメニューからタグを選択すると、他のタグが照会されます</string>

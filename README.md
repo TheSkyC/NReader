@@ -109,6 +109,11 @@ catalogs, quantity handling and terminology.
   remain shared on the device. Password storage is optional. Account credentials
   and sessions are encrypted with a device-local Android Keystore key and excluded
   from backups; sign in again after moving to another device.
+- When an account session expires, public browsing continues without its online
+  tag filter. Settings offers an opt-in automatic sign-in recovery for the active
+  account when its password was saved. Recovery starts in the foreground and may
+  require completing the site's verification. Cancelling leaves manual sign-in
+  available; the app does not repeatedly retry the same expired session.
 - Save reading positions automatically in paged and single-column reading,
   with a separate Continue action and preserved manual page bookmarks.
 - Read gallery comments and post or delete your own comments with a separately

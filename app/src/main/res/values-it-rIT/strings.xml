@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">Ripristina automaticamente l’accesso</string>
+    <string name="auto_reauthenticate_summary">Quando scade una sessione con password salvata, avvia la verifica in primo piano. Potresti doverla completare.</string>
     <string name="gallery_loading_details">Caricamento dei dettagli della galleria</string>
     <string name="setting_on_ignore_tags">Non verranno aggiunti ulteriori tag quando un tag è scelto da una galleria (tranne la lingua)</string>
     <string name="setting_off_ignore_tags">Verranno aggiunti ulteriori tag quando un tag è scelto da una galleria (tranne la lingua)</string>

@@ -19,6 +19,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
+import com.maxwai.nclientv3.components.activities.AccountReauthCoordinator;
 import com.maxwai.nclientv3.components.views.TurnstileDialog;
 import com.maxwai.nclientv3.loginapi.NhentaiLoginApi;
 import com.maxwai.nclientv3.loginapi.PowSolver;
@@ -39,9 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class AccountLoginActivity extends GeneralActivity {
     public static final String EXTRA_ACCOUNT_ID = "account_id";
     public static final String EXTRA_AUTO_REAUTH = "auto_reauthenticate";
+    public static final String EXTRA_AUTO_REAUTH_GENERATION = "auto_reauthenticate_generation";
     public static final String EXTRA_COMMENT_ACCOUNT = "comment_account";
     private static final String EDITED_CREDENTIALS = "edited_credentials";
     private static final String PENDING_PREFILL = "pending_prefill";
+    private static final String AUTO_ATTEMPT_STARTED = "auto_attempt_started";
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private EditText username;
@@ -62,12 +65,21 @@ public final class AccountLoginActivity extends GeneralActivity {
     private boolean pendingPrefill;
     private boolean automaticReauthentication;
     private boolean automaticAttemptStarted;
+    private long automaticGeneration;
     private boolean restoreSavedPassword = true;
     private boolean busy;
     private boolean stopped;
     private boolean displayedSession;
     @Nullable private String displayedIdentity;
     private final Runnable identityObserver = () -> postIfActive(() -> {
+        if (automaticReauthentication && busy && !automaticAttemptCurrent()) {
+            cancelled.set(true);
+            if (requestHandle != null) requestHandle.cancel();
+            AuthSessionStore.cancelAttempt(attempt);
+            if (verification != null) verification.dismiss();
+            finish();
+            return;
+        }
         restoreAccount();
         refreshSessionStatusIfChanged();
     });
@@ -98,6 +110,8 @@ public final class AccountLoginActivity extends GeneralActivity {
         });
         targetAccountId = getIntent().getStringExtra(EXTRA_ACCOUNT_ID);
         automaticReauthentication = getIntent().getBooleanExtra(EXTRA_AUTO_REAUTH, false);
+        automaticGeneration = getIntent().getLongExtra(EXTRA_AUTO_REAUTH_GENERATION, -1);
+        automaticAttemptStarted = savedInstanceState != null && savedInstanceState.getBoolean(AUTO_ATTEMPT_STARTED);
         recreated = savedInstanceState != null;
         pendingPrefill = recreated && savedInstanceState.getBoolean(PENDING_PREFILL, false);
         restoreSavedPassword = !recreated || pendingPrefill || !savedInstanceState.getBoolean(EDITED_CREDENTIALS, true);
@@ -114,7 +128,6 @@ public final class AccountLoginActivity extends GeneralActivity {
         signOut.setOnClickListener(view -> confirmSignOut());
         showIdle();
         if (!pendingPrefill) restoreAccount();
-        maybeStartAutomaticReauthentication();
         AuthStore.observeChanges(this, authObserver);
         AuthStore.observeIdentityChanges(identityObserver);
     }
@@ -140,11 +153,23 @@ public final class AccountLoginActivity extends GeneralActivity {
     private void maybeStartAutomaticReauthentication() {
         if (!automaticReauthentication || automaticAttemptStarted || busy || credentialsEdited
             || targetAccountId == null) return;
-        AccountVault.Account account = targetAccount();
-        if (account == null || account.type != AccountVault.Type.PASSWORD || account.password == null
-            || account.password.isEmpty() || AuthSessionStore.identity(this) != null) return;
+        if (!automaticAttemptCurrent()) {
+            finish();
+            return;
+        }
+        if (username.length() == 0 || password.length() == 0) return;
         automaticAttemptStarted = true;
-        postIfActive(this::start);
+        start();
+    }
+
+    private boolean automaticAttemptCurrent() {
+        AccountRepository repository = AccountRuntime.repository();
+        AccountVault.State state = repository == null ? null : repository.snapshot();
+        AccountVault.Account account = state == null ? null : state.activeAccount();
+        return AccountReauthCoordinator.isEnabled(this) && repository != null
+            && automaticGeneration >= 0 && automaticGeneration == repository.identityGeneration()
+            && account != null && account.id.equals(targetAccountId)
+            && AccountReauthCoordinator.canAutoReauthenticate(account, System.currentTimeMillis());
     }
 
     @Override
@@ -153,7 +178,6 @@ public final class AccountLoginActivity extends GeneralActivity {
         if (pendingPrefill) {
             credentialsEdited = false;
             restoreAccount();
-            maybeStartAutomaticReauthentication();
         }
     }
 
@@ -166,6 +190,7 @@ public final class AccountLoginActivity extends GeneralActivity {
             || !savedPassword.equals(password.getText().toString());
         outState.putBoolean(PENDING_PREFILL, targetAccountId != null && !restoredAccount && !credentialsEdited);
         outState.putBoolean(EDITED_CREDENTIALS, edited);
+        outState.putBoolean(AUTO_ATTEMPT_STARTED, automaticAttemptStarted);
         super.onSaveInstanceState(outState);
     }
 
@@ -223,6 +248,10 @@ public final class AccountLoginActivity extends GeneralActivity {
 
     private void start() {
         if (busy) return;
+        if (automaticReauthentication && automaticAttemptStarted && !automaticAttemptCurrent()) {
+            finish();
+            return;
+        }
         if (username.getText().toString().trim().isEmpty()) {
             username.setError(getString(R.string.account_enter_username));
             return;
@@ -237,7 +266,8 @@ public final class AccountLoginActivity extends GeneralActivity {
             status.setText(R.string.account_storage_error);
             return;
         }
-        accountGeneration = repository == null ? -1 : repository.identityGeneration();
+        accountGeneration = automaticReauthentication && automaticAttemptStarted
+            ? automaticGeneration : repository == null ? -1 : repository.identityGeneration();
         attempt = AuthSessionStore.beginAttempt();
         requestHandle = new NhentaiLoginApi.CancelHandle();
         setBusy(true);
@@ -282,7 +312,7 @@ public final class AccountLoginActivity extends GeneralActivity {
                 } else {
                     NhentaiLoginApi.LoginResult result = NhentaiLoginApi.authenticate(getApplicationContext(),
                         user, pass, captcha, challenge, nonce, requestHandle, userAgent, protectionCookies);
-                    savedCommentAccount = cancelled.get() ? null : AuthSessionStore.completeAccountAttemptForRole(result.cookies, currentAttempt,
+                    savedCommentAccount = cancelled.get() || (automaticReauthentication && !automaticAttemptCurrent()) ? null : AuthSessionStore.completeAccountAttemptForRole(result.cookies, currentAttempt,
                         accountGeneration, user, result.username == null ? user : result.username, result.avatarUrl,
                         remember ? pass : null, result.userId, targetAccountId,
                         !getIntent().getBooleanExtra(EXTRA_COMMENT_ACCOUNT, false));

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">Автоматично відновлювати вхід</string>
+    <string name="auto_reauthenticate_summary">Коли сеанс зі збереженим паролем завершиться, перевірка почнеться на екрані застосунку. Можливо, її потрібно буде завершити вручну.</string>
     <string name="gallery_loading_details">Завантаження відомостей про галерею</string>
     <string name="setting_on_ignore_tags">Інші теги не будуть використані, якщо тег вибрано з меню галереї(окрім мови)</string>
     <string name="setting_off_ignore_tags">Інші теги будуть використані, якщо тег вибрано з меню галереї</string>

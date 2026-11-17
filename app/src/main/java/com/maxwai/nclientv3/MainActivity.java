@@ -791,7 +791,7 @@ public class MainActivity extends BaseActivity
         super.onResume();
         Login.initLogin(this);
         refreshAccountHeader();
-        if (!AccountReauthCoordinator.maybeLaunch(this)) showExpiredAccountNoticeIfNeeded();
+        showExpiredAccountNoticeIfNeeded();
         if (idOpenedGallery != -1) {
             adapter.updateColor(idOpenedGallery);
             idOpenedGallery = -1;
@@ -833,6 +833,12 @@ public class MainActivity extends BaseActivity
                 startActivity(login);
             });
         snackbar.show();
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        AccountReauthCoordinator.maybeLaunch(this);
     }
 
 
@@ -1212,7 +1218,10 @@ public class MainActivity extends BaseActivity
 
         @Override
         public void onEnd() {
-            runOnUiThread(() -> refresher.setRefreshing(false));
+            runOnUiThread(() -> {
+                refresher.setRefreshing(false);
+                showExpiredAccountNoticeIfNeeded();
+            });
             inspecting = false;
         }
 

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">自動恢復登入</string>
+    <string name="auto_reauthenticate_summary">已儲存密碼的帳號過期時，在前景自動開始驗證。你可能需要手動完成驗證。</string>
     <string name="comment_choose_account">登入後發表留言</string>
     <string name="comment_as">留言帳號：%1$s</string>
     <string name="comment_input_hint">寫下留言</string>

@@ -33,6 +33,12 @@
             android:title="@string/accounts_title"
             android:summary="@string/accounts_shared_data"
             app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="@string/preference_key_auto_reauthenticate"
+            android:title="@string/auto_reauthenticate_title"
+            android:summary="@string/auto_reauthenticate_summary"
+            app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="local"
             android:entries="@array/favorite_action_modes"

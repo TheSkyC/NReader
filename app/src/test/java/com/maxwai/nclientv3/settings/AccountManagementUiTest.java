@@ -64,6 +64,8 @@ public class AccountManagementUiTest {
     }
 
     @After public void tearDown() throws Exception {
+        application.getSharedPreferences("Settings", 0).edit()
+            .remove(application.getString(R.string.preference_key_auto_reauthenticate)).commit();
         runtimeRepository.set(null, null);
     }
 
@@ -71,6 +73,25 @@ public class AccountManagementUiTest {
         long expiry = System.currentTimeMillis() + 600000;
         return new AccountVault.Account(id, AccountVault.Type.PASSWORD, "Display name", "fixture-password", null,
             "access", "refresh", expiry, expiry, rejected, 7, "login-name", null);
+    }
+
+    @Test public void automaticRecoveryRequiresOptInAndRejectsStaleAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        try (ActivityController<AccountsActivity> controller = Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity activity = controller.get();
+            assertFalse(com.maxwai.nclientv3.components.activities.AccountReauthCoordinator.maybeLaunch(activity));
+            application.getSharedPreferences("Settings", 0).edit()
+                .putBoolean(application.getString(R.string.preference_key_auto_reauthenticate), true).commit();
+            assertTrue(com.maxwai.nclientv3.components.activities.AccountReauthCoordinator.maybeLaunch(activity));
+            Intent recovery = Shadows.shadowOf(activity).getNextStartedActivity();
+            assertEquals("first", recovery.getStringExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID));
+            repository.select(null);
+            try (ActivityController<AccountLoginActivity> login =
+                     Robolectric.buildActivity(AccountLoginActivity.class, recovery).setup()) {
+                assertTrue(login.get().isFinishing());
+                assertNull(repository.snapshot().activeId);
+            }
+        }
     }
 
     @Test public void selectedExpiredAccountShowsBothCurrentAndRecoveryStates() throws Exception {

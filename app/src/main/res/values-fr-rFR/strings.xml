@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">Rétablir automatiquement la connexion</string>
+    <string name="auto_reauthenticate_summary">À l’expiration d’une session avec mot de passe enregistré, la vérification démarre au premier plan. Vous devrez peut-être la terminer.</string>
     <string name="gallery_loading_details">Chargement des détails de la galerie</string>
     <string name="setting_on_ignore_tags">Les autres tags ne seront pas pris en compte quand un tag est sélectionné depuis la galerie (sauf la langue)</string>
     <string name="setting_off_ignore_tags">Les autres tags seront pris en compte quand un tag est sélectionné depuis la galerie</string>

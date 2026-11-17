@@ -3,6 +3,9 @@
 
 <resources>
     <string name="account_remember_password">Remember password on this device</string>
+    <string name="preference_key_auto_reauthenticate" translatable="false">auto_reauthenticate</string>
+    <string name="auto_reauthenticate_title">Automatically restore sign-in</string>
+    <string name="auto_reauthenticate_summary">When a saved-password session expires, start verification in the foreground. You may need to complete it.</string>
     <string name="account_storage_error">Could not save the account. Please try again.</string>
     <string name="account_login_description">Sign in to use online favorites and tags. You can choose whether to remember your password on this device.</string>
     <string name="account_remove_message">Remove this account and its saved credentials from this device?</string>

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">自动恢复登录</string>
+    <string name="auto_reauthenticate_summary">保存密码的账号过期时，在前台自动开始验证。你可能需要手动完成验证。</string>
     <string name="comment_choose_account">登录后发表评论</string>
     <string name="comment_as">评论账号：%1$s</string>
     <string name="comment_input_hint">写下评论</string>

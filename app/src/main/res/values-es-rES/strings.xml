@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="auto_reauthenticate_title">Restablecer la sesión automáticamente</string>
+    <string name="auto_reauthenticate_summary">Cuando caduque una sesión con contraseña guardada, se iniciará la verificación en primer plano. Puede que debas completarla.</string>
     <string name="gallery_loading_details">Cargando detalles de la galería</string>
     <string name="setting_on_ignore_tags">Al seleccionar una etiqueta desde el menú de la galería, no se aplicarán las demás condiciones de etiquetas (excepto el idioma).</string>
     <string name="setting_off_ignore_tags">Al seleccionar una etiqueta desde el menú de la galería, también se aplicarán las demás condiciones de etiquetas.</string>
