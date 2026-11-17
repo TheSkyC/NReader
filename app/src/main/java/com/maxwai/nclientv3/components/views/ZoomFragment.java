@@ -144,6 +144,12 @@ public class ZoomFragment extends Fragment {
         photoView.setOnViewTapListener((view, x, y) -> {
             if (view.getWidth() > 0) activity.onReaderPageTap(this, x / view.getWidth());
         });
+        photoView.setOnLongClickListener(view -> {
+            View settings = activity.findViewById(R.id.reader_settings);
+            if (settings == null) return false;
+            settings.performClick();
+            return true;
+        });
 
         photoView.setMaximumScale(MAX_SCALE);
         photoView.setOnScaleChangeListener((factor, focusX, focusY) -> {
