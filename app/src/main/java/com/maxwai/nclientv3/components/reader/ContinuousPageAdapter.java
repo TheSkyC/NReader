@@ -309,6 +309,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     if (status.getVisibility() != View.GONE || image.getDrawable() == null) return false;
                     suppressNextClick = true;
                     cancelSingleTap();
+                    gestureHandler.postDelayed(() -> suppressNextClick = false,
+                        ViewConfiguration.getDoubleTapTimeout());
                     int page = getBindingAdapterPosition();
                     if (page != RecyclerView.NO_POSITION && doubleTapListener != null) {
                         doubleTapListener.onDoubleTap(page,
