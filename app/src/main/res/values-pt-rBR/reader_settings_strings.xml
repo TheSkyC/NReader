@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Duas páginas</string>
     <string name="reader_spread_auto">Automático</string>
     <string name="reader_spread_summary">O modo automático usa duas páginas no modo paisagem e uma no retrato.</string>
+    <string name="reader_end_title">Galeria concluída</string>
+    <string name="reader_end_message">Você chegou à última página.</string>
+    <string name="reader_end_restart">Ler novamente</string>
+    <string name="reader_end_close">Voltar</string>
 </resources>

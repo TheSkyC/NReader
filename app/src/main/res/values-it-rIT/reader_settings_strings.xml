@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Doppia pagina</string>
     <string name="reader_spread_auto">Automatico</string>
     <string name="reader_spread_summary">La modalità automatica usa due pagine in orizzontale e una in verticale.</string>
+    <string name="reader_end_title">Galleria completata</string>
+    <string name="reader_end_message">Hai raggiunto l ultima pagina.</string>
+    <string name="reader_end_restart">Leggi di nuovo</string>
+    <string name="reader_end_close">Indietro</string>
 </resources>

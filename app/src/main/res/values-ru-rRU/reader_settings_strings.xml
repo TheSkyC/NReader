@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Две страницы</string>
     <string name="reader_spread_auto">Авто</string>
     <string name="reader_spread_summary">Авто использует две страницы в альбомной ориентации и одну в книжной.</string>
+    <string name="reader_end_title">Галерея завершена</string>
+    <string name="reader_end_message">Вы достигли последней страницы.</string>
+    <string name="reader_end_restart">Читать снова</string>
+    <string name="reader_end_close">Назад</string>
 </resources>

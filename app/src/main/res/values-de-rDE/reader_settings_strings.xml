@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Doppelseite</string>
     <string name="reader_spread_auto">Automatisch</string>
     <string name="reader_spread_summary">Automatisch nutzt im Querformat Doppelseiten und im Hochformat Einzelne.</string>
+    <string name="reader_end_title">Galerie abgeschlossen</string>
+    <string name="reader_end_message">Du hast die letzte Seite erreicht.</string>
+    <string name="reader_end_restart">Erneut lesen</string>
+    <string name="reader_end_close">Zurück</string>
 </resources>

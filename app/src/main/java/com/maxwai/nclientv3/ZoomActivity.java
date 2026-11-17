@@ -33,6 +33,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
@@ -148,6 +149,7 @@ public class ZoomActivity extends GeneralActivity {
     @Nullable private Future<?> pageExportTask;
     private final Handler readerHandler = new Handler(Looper.getMainLooper());
     private boolean autoScrolling;
+    @Nullable private AlertDialog completionDialog;
     private long autoScrollLastFrame;
     private float autoScrollRemainder;
     private int autoScrollSpeedIndex;
@@ -651,6 +653,19 @@ public class ZoomActivity extends GeneralActivity {
         int current = readerNavigation.currentPage();
         if (next && current < readerNavigation.pageCount() - 1) changePage(current + 1);
         if (!next && current > 0) changePage(current - 1);
+        if (next && current >= readerNavigation.pageCount() - 1) showCompletionDialog();
+    }
+
+    private void showCompletionDialog() {
+        if (completionDialog != null && completionDialog.isShowing()) return;
+        completionDialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.reader_end_title)
+            .setMessage(R.string.reader_end_message)
+            .setPositiveButton(R.string.reader_end_restart, (dialog, which) -> changePage(0))
+            .setNegativeButton(R.string.reader_end_close, (dialog, which) -> finish())
+            .create();
+        completionDialog.setOnDismissListener(dialog -> completionDialog = null);
+        completionDialog.show();
     }
 
     @Override

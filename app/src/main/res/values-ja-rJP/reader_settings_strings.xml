@@ -20,4 +20,8 @@
     <string name="reader_spread_double">見開き</string>
     <string name="reader_spread_auto">自動</string>
     <string name="reader_spread_summary">自動では横向きで見開き、縦向きで1ページ表示になります。</string>
+    <string name="reader_end_title">読了</string>
+    <string name="reader_end_message">最後のページに到達しました。</string>
+    <string name="reader_end_restart">もう一度読む</string>
+    <string name="reader_end_close">戻る</string>
 </resources>

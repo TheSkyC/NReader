@@ -20,4 +20,8 @@
     <string name="reader_spread_double">双页</string>
     <string name="reader_spread_auto">自动</string>
     <string name="reader_spread_summary">自动模式在横屏使用双页，竖屏使用单页。</string>
+    <string name="reader_end_title">画廊已读完</string>
+    <string name="reader_end_message">你已到达最后一页。</string>
+    <string name="reader_end_restart">从头再读</string>
+    <string name="reader_end_close">返回</string>
 </resources>

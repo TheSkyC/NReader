@@ -309,6 +309,34 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void reachingTheEndShowsRestartAndReturnActions() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("instant_page_turn", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(navigation.pageCount() - 1, false);
+                activity.changeClosePage(true);
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                assertEquals(activity.getString(R.string.reader_end_restart),
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).getText().toString());
+                assertEquals(activity.getString(R.string.reader_end_close),
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).getText().toString());
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(0, ((ReaderNavigation) ReflectionHelpers.getField(activity, "readerNavigation")).currentPage());
+            }
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),

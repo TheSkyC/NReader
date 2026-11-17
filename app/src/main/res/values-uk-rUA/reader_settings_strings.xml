@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Дві сторінки</string>
     <string name="reader_spread_auto">Автоматично</string>
     <string name="reader_spread_summary">Автоматично використовує дві сторінки в альбомній орієнтації та одну в книжковій.</string>
+    <string name="reader_end_title">Галерею завершено</string>
+    <string name="reader_end_message">Ви досягли останньої сторінки.</string>
+    <string name="reader_end_restart">Читати знову</string>
+    <string name="reader_end_close">Назад</string>
 </resources>

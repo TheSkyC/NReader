@@ -20,4 +20,8 @@
     <string name="reader_spread_double">Double page</string>
     <string name="reader_spread_auto">Automatic</string>
     <string name="reader_spread_summary">Automatic uses double pages in landscape and single pages in portrait.</string>
+    <string name="reader_end_title">Gallery complete</string>
+    <string name="reader_end_message">You reached the last page.</string>
+    <string name="reader_end_restart">Read again</string>
+    <string name="reader_end_close">Return</string>
 </resources>

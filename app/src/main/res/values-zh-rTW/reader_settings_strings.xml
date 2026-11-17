@@ -20,4 +20,8 @@
     <string name="reader_spread_double">雙頁</string>
     <string name="reader_spread_auto">自動</string>
     <string name="reader_spread_summary">自動模式在橫向使用雙頁，直向使用單頁。</string>
+    <string name="reader_end_title">畫廊已讀完</string>
+    <string name="reader_end_message">你已到達最後一頁。</string>
+    <string name="reader_end_restart">從頭再讀</string>
+    <string name="reader_end_close">返回</string>
 </resources>

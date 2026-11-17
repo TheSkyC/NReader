@@ -20,4 +20,8 @@
     <string name="reader_spread_double">İki sayfa</string>
     <string name="reader_spread_auto">Otomatik</string>
     <string name="reader_spread_summary">Otomatik, yatayda iki sayfa ve dikeyde tek sayfa kullanır.</string>
+    <string name="reader_end_title">Galeri tamamlandı</string>
+    <string name="reader_end_message">Son sayfaya ulaştınız.</string>
+    <string name="reader_end_restart">Yeniden oku</string>
+    <string name="reader_end_close">Geri dön</string>
 </resources>

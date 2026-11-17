@@ -20,4 +20,8 @@
     <string name="reader_spread_double">صفحتان</string>
     <string name="reader_spread_auto">تلقائي</string>
     <string name="reader_spread_summary">يستخدم التلقائي صفحتين في الوضع الأفقي وصفحة واحدة في الوضع الرأسي.</string>
+    <string name="reader_end_title">اكتمل المعرض</string>
+    <string name="reader_end_message">لقد وصلت إلى الصفحة الأخيرة.</string>
+    <string name="reader_end_restart">اقرأ مجددًا</string>
+    <string name="reader_end_close">عودة</string>
 </resources>
