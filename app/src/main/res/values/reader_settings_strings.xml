@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Invert colors</string>
     <string name="reader_auto_crop_title">Auto-crop white margins</string>
     <string name="reader_auto_crop_summary">Trim plain white borders for display. Original files and exports stay unchanged.</string>
+    <string name="reader_adjustments_title">Image adjustments</string>
+    <string name="reader_brightness">Brightness</string>
+    <string name="reader_contrast">Contrast</string>
+    <string name="reader_saturation">Saturation</string>
+    <string name="reader_adjustments_summary">Adjustments affect display only and do not change saved or shared originals.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

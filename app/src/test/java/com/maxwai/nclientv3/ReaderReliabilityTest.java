@@ -421,6 +421,12 @@ public class ReaderReliabilityTest {
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).setChecked(true);
                 assertTrue(application.getSharedPreferences("Settings", 0)
                     .getBoolean("reader_auto_crop", false));
+                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).setProgress(140);
+                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).setProgress(70);
+                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).setProgress(125);
+                assertEquals(40, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", 0));
+                assertEquals(-30, application.getSharedPreferences("Settings", 0).getInt("reader_contrast", 0));
+                assertEquals(25, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).setChecked(true);
@@ -443,6 +449,9 @@ public class ReaderReliabilityTest {
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_scale_width)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
+                assertEquals(140, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
+                assertEquals(70, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
+                assertEquals(125, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());

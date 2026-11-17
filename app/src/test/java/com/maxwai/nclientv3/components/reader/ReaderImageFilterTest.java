@@ -12,4 +12,11 @@ public class ReaderImageFilterTest {
         assertEquals(ReaderImageFilter.NONE, ReaderImageFilter.sanitize(99));
         assertEquals(ReaderImageFilter.GRAYSCALE, ReaderImageFilter.sanitize(ReaderImageFilter.GRAYSCALE));
     }
+
+    @Test
+    public void imageAdjustmentsAreClampedToTheReaderRange() {
+        assertEquals(-100, ReaderImageFilter.sanitizeAdjustment(-500));
+        assertEquals(100, ReaderImageFilter.sanitizeAdjustment(500));
+        assertEquals(0, ReaderImageFilter.sanitizeAdjustment(0));
+    }
 }

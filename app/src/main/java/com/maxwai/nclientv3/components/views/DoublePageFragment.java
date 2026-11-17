@@ -47,6 +47,14 @@ public final class DoublePageFragment extends Fragment {
     public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
                                                  int secondPage, @Nullable GalleryFolder directory,
                                                  int scaleMode, int filterMode, boolean autoCrop) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, filterMode,
+            autoCrop, 0, 0, 0);
+    }
+
+    public static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                 int secondPage, @Nullable GalleryFolder directory,
+                                                 int scaleMode, int filterMode, boolean autoCrop,
+                                                 int brightness, int contrast, int saturation) {
         Bundle args = new Bundle();
         args.putParcelable(GALLERY_KEY, gallery);
         args.putParcelable(DIRECTORY_KEY, directory);
@@ -55,6 +63,9 @@ public final class DoublePageFragment extends Fragment {
         args.putInt(SCALE_MODE_KEY, ReaderScaleMode.sanitize(scaleMode));
         args.putInt(FILTER_MODE_KEY, ReaderImageFilter.sanitize(filterMode));
         args.putBoolean(AUTO_CROP_KEY, autoCrop);
+        args.putInt("BRIGHTNESS", ReaderImageFilter.sanitizeAdjustment(brightness));
+        args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
+        args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
         DoublePageFragment fragment = new DoublePageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -88,6 +99,9 @@ public final class DoublePageFragment extends Fragment {
         int scaleMode = ReaderScaleMode.sanitize(args.getInt(SCALE_MODE_KEY, ReaderScaleMode.SMART));
         int filterMode = ReaderImageFilter.sanitize(args.getInt(FILTER_MODE_KEY, ReaderImageFilter.NONE));
         boolean autoCrop = args.getBoolean(AUTO_CROP_KEY, false);
+        int brightness = ReaderImageFilter.sanitizeAdjustment(args.getInt("BRIGHTNESS", 0));
+        int contrast = ReaderImageFilter.sanitizeAdjustment(args.getInt("CONTRAST", 0));
+        int saturation = ReaderImageFilter.sanitizeAdjustment(args.getInt("SATURATION", 0));
         LinearLayout root = view.findViewById(R.id.double_page_root);
         FrameLayout secondContainer = view.findViewById(R.id.double_page_second);
         if (secondPage < 0) {
@@ -96,12 +110,14 @@ public final class DoublePageFragment extends Fragment {
         }
         if (getChildFragmentManager().findFragmentByTag(pageTag(firstPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory, scaleMode, filterMode, autoCrop), pageTag(firstPage))
+                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation), pageTag(firstPage))
                 .commitNow();
         }
         if (secondPage >= 0 && getChildFragmentManager().findFragmentByTag(pageTag(secondPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory, scaleMode, filterMode, autoCrop), pageTag(secondPage))
+                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation), pageTag(secondPage))
                 .commitNow();
         }
     }
@@ -131,6 +147,15 @@ public final class DoublePageFragment extends Fragment {
         if (secondPage >= 0) {
             ZoomFragment second = pageFragment(secondPage);
             if (second != null) second.setAutoCrop(enabled);
+        }
+    }
+
+    public void setAdjustments(int brightness, int contrast, int saturation) {
+        ZoomFragment first = pageFragment(firstPage);
+        if (first != null) first.setAdjustments(brightness, contrast, saturation);
+        if (secondPage >= 0) {
+            ZoomFragment second = pageFragment(secondPage);
+            if (second != null) second.setAdjustments(brightness, contrast, saturation);
         }
     }
 }

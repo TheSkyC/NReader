@@ -20,23 +20,44 @@ public final class ReaderImageFilter {
     }
 
     public static void apply(@NonNull ImageView image, int mode) {
-        switch (sanitize(mode)) {
-            case GRAYSCALE:
-                ColorMatrix gray = new ColorMatrix();
-                gray.setSaturation(0f);
-                image.setColorFilter(new ColorMatrixColorFilter(gray));
-                break;
-            case INVERT:
-                image.setColorFilter(new ColorMatrixColorFilter(new float[]{
-                    -1f, 0f, 0f, 0f, 255f,
-                    0f, -1f, 0f, 0f, 255f,
-                    0f, 0f, -1f, 0f, 255f,
-                    0f, 0f, 0f, 1f, 0f
-                }));
-                break;
-            default:
-                image.clearColorFilter();
-                break;
+        apply(image, mode, 0, 0, 0);
+    }
+
+    public static void apply(@NonNull ImageView image, int mode, int brightness,
+                             int contrast, int saturation) {
+        int safeBrightness = sanitizeAdjustment(brightness);
+        int safeContrast = sanitizeAdjustment(contrast);
+        int safeSaturation = sanitizeAdjustment(saturation);
+        int safeMode = sanitize(mode);
+        if (safeMode == NONE && safeBrightness == 0 && safeContrast == 0 && safeSaturation == 0) {
+            image.clearColorFilter();
+            return;
         }
+        ColorMatrix matrix = new ColorMatrix();
+        if (safeMode == GRAYSCALE) {
+            matrix.setSaturation(0f);
+        } else if (safeMode == INVERT) {
+            matrix.set(new float[]{
+                -1f, 0f, 0f, 0f, 255f,
+                0f, -1f, 0f, 0f, 255f,
+                0f, 0f, -1f, 0f, 255f,
+                0f, 0f, 0f, 1f, 0f
+            });
+        } else {
+            matrix.setSaturation(1f + safeSaturation / 100f);
+        }
+        float contrastScale = (safeContrast + 100f) / 100f;
+        float brightnessOffset = safeBrightness * 2.55f;
+        matrix.postConcat(new ColorMatrix(new float[]{
+            contrastScale, 0f, 0f, 0f, brightnessOffset,
+            0f, contrastScale, 0f, 0f, brightnessOffset,
+            0f, 0f, contrastScale, 0f, brightnessOffset,
+            0f, 0f, 0f, 1f, 0f
+        }));
+        image.setColorFilter(new ColorMatrixColorFilter(matrix));
+    }
+
+    public static int sanitizeAdjustment(int value) {
+        return Math.max(-100, Math.min(100, value));
     }
 }

@@ -56,6 +56,9 @@ public class ZoomFragment extends Fragment {
     private int scaleMode = ReaderScaleMode.SMART;
     private int filterMode = ReaderImageFilter.NONE;
     private boolean autoCrop;
+    private int brightness;
+    private int contrast;
+    private int saturation;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
 
@@ -79,6 +82,12 @@ public class ZoomFragment extends Fragment {
 
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
                                            int scaleMode, int filterMode, boolean autoCrop) {
+        return newInstance(gallery, page, directory, scaleMode, filterMode, autoCrop, 0, 0, 0);
+    }
+
+    public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode, int filterMode, boolean autoCrop,
+                                           int brightness, int contrast, int saturation) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
@@ -86,6 +95,9 @@ public class ZoomFragment extends Fragment {
         args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
         args.putInt("FILTER_MODE", ReaderImageFilter.sanitize(filterMode));
         args.putBoolean("AUTO_CROP", autoCrop);
+        args.putInt("BRIGHTNESS", ReaderImageFilter.sanitizeAdjustment(brightness));
+        args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
+        args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
@@ -109,6 +121,9 @@ public class ZoomFragment extends Fragment {
         scaleMode = ReaderScaleMode.sanitize(getArguments().getInt("SCALE_MODE", ReaderScaleMode.SMART));
         filterMode = ReaderImageFilter.sanitize(getArguments().getInt("FILTER_MODE", ReaderImageFilter.NONE));
         autoCrop = getArguments().getBoolean("AUTO_CROP", false);
+        brightness = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("BRIGHTNESS", 0));
+        contrast = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("CONTRAST", 0));
+        saturation = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("SATURATION", 0));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {
@@ -152,7 +167,7 @@ public class ZoomFragment extends Fragment {
             @Override
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 setResource(resource);
-                ReaderImageFilter.apply(photoView, filterMode);
+                applyAppearance();
                 loadingView.setVisibility(View.GONE);
                 errorView.setVisibility(View.GONE);
                 scalePhoto(resource);
@@ -191,7 +206,18 @@ public class ZoomFragment extends Fragment {
 
     public void setFilterMode(int mode) {
         filterMode = ReaderImageFilter.sanitize(mode);
-        if (photoView != null) ReaderImageFilter.apply(photoView, filterMode);
+        applyAppearance();
+    }
+
+    public void setAdjustments(int brightness, int contrast, int saturation) {
+        this.brightness = ReaderImageFilter.sanitizeAdjustment(brightness);
+        this.contrast = ReaderImageFilter.sanitizeAdjustment(contrast);
+        this.saturation = ReaderImageFilter.sanitizeAdjustment(saturation);
+        applyAppearance();
+    }
+
+    private void applyAppearance() {
+        if (photoView != null) ReaderImageFilter.apply(photoView, filterMode, brightness, contrast, saturation);
     }
 
     public void setAutoCrop(boolean enabled) {

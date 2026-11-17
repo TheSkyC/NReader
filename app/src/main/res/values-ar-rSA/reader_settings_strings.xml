@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">عكس الألوان</string>
     <string name="reader_auto_crop_title">قص الهوامش البيضاء تلقائيًا</string>
     <string name="reader_auto_crop_summary">يقتص الهوامش البيضاء البسيطة للعرض فقط. لا تتغير الملفات الأصلية أو التصديرات.</string>
+    <string name="reader_adjustments_title">ضبط الصورة</string>
+    <string name="reader_brightness">السطوع</string>
+    <string name="reader_contrast">التباين</string>
+    <string name="reader_saturation">التشبع</string>
+    <string name="reader_adjustments_summary">تؤثر الضبطات على العرض فقط، ولا تغيّر النسخ الأصلية المحفوظة أو المشتركة.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

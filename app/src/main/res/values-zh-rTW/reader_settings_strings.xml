@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">反色</string>
     <string name="reader_auto_crop_title">自動裁剪白邊</string>
     <string name="reader_auto_crop_summary">只裁剪顯示中的純白邊緣，原始檔案和匯出內容不變。</string>
+    <string name="reader_adjustments_title">影像調整</string>
+    <string name="reader_brightness">亮度</string>
+    <string name="reader_contrast">對比度</string>
+    <string name="reader_saturation">飽和度</string>
+    <string name="reader_adjustments_summary">調整只影響顯示，不會修改儲存或分享的原圖。</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

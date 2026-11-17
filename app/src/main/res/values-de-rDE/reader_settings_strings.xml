@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Farben umkehren</string>
     <string name="reader_auto_crop_title">Weiße Ränder automatisch beschneiden</string>
     <string name="reader_auto_crop_summary">Schneidet einfache weiße Ränder nur für die Anzeige ab. Originale und Exporte bleiben unverändert.</string>
+    <string name="reader_adjustments_title">Bildeinstellungen</string>
+    <string name="reader_brightness">Helligkeit</string>
+    <string name="reader_contrast">Kontrast</string>
+    <string name="reader_saturation">Sättigung</string>
+    <string name="reader_adjustments_summary">Die Einstellungen wirken nur auf die Anzeige. Gespeicherte und geteilte Originale bleiben unverändert.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

@@ -83,6 +83,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.IntConsumer;
 
 public class ZoomActivity extends GeneralActivity {
     private final static int hideFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -119,6 +120,12 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_FILTER_KEY_PREFIX = "reader_filter_";
     private static final String READER_AUTO_CROP_KEY = "reader_auto_crop";
     private static final String READER_AUTO_CROP_KEY_PREFIX = "reader_auto_crop_";
+    private static final String READER_BRIGHTNESS_KEY = "reader_brightness";
+    private static final String READER_BRIGHTNESS_KEY_PREFIX = "reader_brightness_";
+    private static final String READER_CONTRAST_KEY = "reader_contrast";
+    private static final String READER_CONTRAST_KEY_PREFIX = "reader_contrast_";
+    private static final String READER_SATURATION_KEY = "reader_saturation";
+    private static final String READER_SATURATION_KEY_PREFIX = "reader_saturation_";
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -161,6 +168,9 @@ public class ZoomActivity extends GeneralActivity {
     private int readerScaleMode = ReaderScaleMode.SMART;
     private int readerFilterMode = ReaderImageFilter.NONE;
     private boolean readerAutoCrop;
+    private int readerBrightness;
+    private int readerContrast;
+    private int readerSaturation;
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
@@ -226,6 +236,9 @@ public class ZoomActivity extends GeneralActivity {
         readerScaleMode = getReaderScaleMode(preferences);
         readerFilterMode = getReaderFilterMode(preferences);
         readerAutoCrop = getReaderAutoCrop(preferences);
+        readerBrightness = getReaderAdjustment(preferences, READER_BRIGHTNESS_KEY, READER_BRIGHTNESS_KEY_PREFIX);
+        readerContrast = getReaderAdjustment(preferences, READER_CONTRAST_KEY, READER_CONTRAST_KEY_PREFIX);
+        readerSaturation = getReaderAdjustment(preferences, READER_SATURATION_KEY, READER_SATURATION_KEY_PREFIX);
         spreadMode = getSpreadMode(preferences);
         doublePageMode = isDoublePageEffective();
         //toolbar setup
@@ -383,7 +396,7 @@ public class ZoomActivity extends GeneralActivity {
             continuousReader.setLayoutManager(layout);
             ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, directory,
                 (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations,
-                readerFilterMode, readerAutoCrop);
+                readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation);
             adapter.setOnPageDoubleTapListener((ignored, x, y) -> continuousZoomViewport.toggleDoubleTapZoom(x, y));
             continuousReader.setAdapter(adapter);
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
@@ -846,6 +859,13 @@ public class ZoomActivity extends GeneralActivity {
         autoCrop.setChecked(readerAutoCrop);
         autoCrop.setOnCheckedChangeListener((button, checked) -> setReaderAutoCrop(checked));
 
+        bindAdjustment(dialog.findViewById(R.id.reader_brightness),
+            dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness);
+        bindAdjustment(dialog.findViewById(R.id.reader_contrast),
+            dialog.findViewById(R.id.reader_contrast_value), readerContrast, this::setReaderContrast);
+        bindAdjustment(dialog.findViewById(R.id.reader_saturation),
+            dialog.findViewById(R.id.reader_saturation_value), readerSaturation, this::setReaderSaturation);
+
         MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
         MaterialRadioButton backgroundBlack = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_black));
         MaterialRadioButton backgroundGray = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_gray));
@@ -984,6 +1004,78 @@ public class ZoomActivity extends GeneralActivity {
         applyReaderAutoCrop();
     }
 
+    private int getReaderAdjustment(@NonNull SharedPreferences preferences, @NonNull String key,
+                                    @NonNull String prefix) {
+        String scopedKey = gallery != null && gallery.getId() > 0 ? prefix + gallery.getId() : key;
+        try {
+            int value = preferences.contains(scopedKey) ? preferences.getInt(scopedKey, 0) : preferences.getInt(key, 0);
+            return ReaderImageFilter.sanitizeAdjustment(value);
+        } catch (ClassCastException exception) {
+            return 0;
+        }
+    }
+
+    private void bindAdjustment(@NonNull SeekBar bar, @NonNull TextView valueView, int value,
+                                @NonNull IntConsumer setter) {
+        int safeValue = ReaderImageFilter.sanitizeAdjustment(value);
+        bar.setMax(200);
+        bar.setProgress(safeValue + 100);
+        updateAdjustmentLabel(valueView, safeValue);
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int current = ReaderImageFilter.sanitizeAdjustment(progress - 100);
+                updateAdjustmentLabel(valueView, current);
+                setter.accept(current);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+    }
+
+    private void updateAdjustmentLabel(@NonNull TextView valueView, int value) {
+        valueView.setText(getString(R.string.reader_adjustment_value, value));
+    }
+
+    private void setReaderBrightness(int value) {
+        readerBrightness = ReaderImageFilter.sanitizeAdjustment(value);
+        getSharedPreferences("Settings", 0).edit().putInt(readerBrightnessPreferenceKey(), readerBrightness).apply();
+        applyReaderAdjustments();
+    }
+
+    private void setReaderContrast(int value) {
+        readerContrast = ReaderImageFilter.sanitizeAdjustment(value);
+        getSharedPreferences("Settings", 0).edit().putInt(readerContrastPreferenceKey(), readerContrast).apply();
+        applyReaderAdjustments();
+    }
+
+    private void setReaderSaturation(int value) {
+        readerSaturation = ReaderImageFilter.sanitizeAdjustment(value);
+        getSharedPreferences("Settings", 0).edit().putInt(readerSaturationPreferenceKey(), readerSaturation).apply();
+        applyReaderAdjustments();
+    }
+
+    @NonNull
+    private String readerBrightnessPreferenceKey() {
+        return gallery != null && gallery.getId() > 0 ? READER_BRIGHTNESS_KEY_PREFIX + gallery.getId() : READER_BRIGHTNESS_KEY;
+    }
+
+    @NonNull
+    private String readerContrastPreferenceKey() {
+        return gallery != null && gallery.getId() > 0 ? READER_CONTRAST_KEY_PREFIX + gallery.getId() : READER_CONTRAST_KEY;
+    }
+
+    @NonNull
+    private String readerSaturationPreferenceKey() {
+        return gallery != null && gallery.getId() > 0 ? READER_SATURATION_KEY_PREFIX + gallery.getId() : READER_SATURATION_KEY;
+    }
+
     private int backgroundId(int value) {
         return value == READER_BACKGROUND_BLACK ? R.id.reader_background_black
             : value == READER_BACKGROUND_GRAY ? R.id.reader_background_gray
@@ -1056,6 +1148,25 @@ public class ZoomActivity extends GeneralActivity {
                 ((ZoomFragment) fragment).setAutoCrop(readerAutoCrop);
             } else if (fragment instanceof DoublePageFragment) {
                 ((DoublePageFragment) fragment).setAutoCrop(readerAutoCrop);
+            }
+        }
+    }
+
+    private void applyReaderAdjustments() {
+        if (continuousMode) {
+            RecyclerView.Adapter<?> adapter = continuousReader.getAdapter();
+            if (adapter instanceof ContinuousPageAdapter) {
+                ((ContinuousPageAdapter) adapter).setAdjustments(
+                    readerBrightness, readerContrast, readerSaturation);
+            }
+            return;
+        }
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ZoomFragment) {
+                ((ZoomFragment) fragment).setAdjustments(readerBrightness, readerContrast, readerSaturation);
+            } else if (fragment instanceof DoublePageFragment) {
+                ((DoublePageFragment) fragment).setAdjustments(
+                    readerBrightness, readerContrast, readerSaturation);
             }
         }
     }
@@ -1417,7 +1528,8 @@ public class ZoomActivity extends GeneralActivity {
             int firstPage = SpreadReaderNavigation.firstPageForSpread(position, gallery.getPageCount());
             int secondPage = SpreadReaderNavigation.secondPageForSpread(position, gallery.getPageCount());
             return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory,
-                readerScaleMode, readerFilterMode, readerAutoCrop);
+                readerScaleMode, readerFilterMode, readerAutoCrop,
+                readerBrightness, readerContrast, readerSaturation);
         }
 
         @Override
@@ -1436,7 +1548,7 @@ public class ZoomActivity extends GeneralActivity {
         @Override
         public Fragment createFragment(int position) {
             return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode,
-                readerFilterMode, readerAutoCrop);
+                readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation);
         }
 
         @Override

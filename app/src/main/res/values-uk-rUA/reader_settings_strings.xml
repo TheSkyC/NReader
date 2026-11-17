@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Інвертувати кольори</string>
     <string name="reader_auto_crop_title">Автоматично обрізати білі поля</string>
     <string name="reader_auto_crop_summary">Обрізає прості білі поля лише під час перегляду. Оригінали та експорт не змінюються.</string>
+    <string name="reader_adjustments_title">Налаштування зображення</string>
+    <string name="reader_brightness">Яскравість</string>
+    <string name="reader_contrast">Контраст</string>
+    <string name="reader_saturation">Насиченість</string>
+    <string name="reader_adjustments_summary">Налаштування впливають лише на відображення. Збережені та надіслані оригінали не змінюються.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

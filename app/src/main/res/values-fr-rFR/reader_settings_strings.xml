@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Inverser les couleurs</string>
     <string name="reader_auto_crop_title">Rogner automatiquement les marges blanches</string>
     <string name="reader_auto_crop_summary">Rogne les bordures blanches simples à l affichage uniquement. Les originaux et exports restent inchangés.</string>
+    <string name="reader_adjustments_title">Réglages de l image</string>
+    <string name="reader_brightness">Luminosité</string>
+    <string name="reader_contrast">Contraste</string>
+    <string name="reader_saturation">Saturation</string>
+    <string name="reader_adjustments_summary">Ces réglages concernent uniquement l affichage. Les originaux enregistrés et partagés restent inchangés.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

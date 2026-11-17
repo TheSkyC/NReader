@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Renkleri ters çevir</string>
     <string name="reader_auto_crop_title">Beyaz kenarları otomatik kırp</string>
     <string name="reader_auto_crop_summary">Basit beyaz kenarları yalnızca görüntüleme sırasında kırpar. Dosyalar ve dışa aktarımlar değişmez.</string>
+    <string name="reader_adjustments_title">Görüntü ayarları</string>
+    <string name="reader_brightness">Parlaklık</string>
+    <string name="reader_contrast">Kontrast</string>
+    <string name="reader_saturation">Doygunluk</string>
+    <string name="reader_adjustments_summary">Ayarlar yalnızca görüntüyü etkiler. Kaydedilen ve paylaşılan orijinaller değişmez.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>

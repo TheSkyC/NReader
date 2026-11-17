@@ -57,6 +57,9 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private final ReaderPageRotations rotations;
     private int filterMode = ReaderImageFilter.NONE;
     private boolean autoCrop;
+    private int brightness;
+    private int contrast;
+    private int saturation;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     @Nullable private RecyclerView recycler;
 
@@ -88,6 +91,15 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
         this.filterMode = ReaderImageFilter.sanitize(filterMode);
         this.autoCrop = autoCrop;
+    }
+
+    public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                          @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull ReaderPageRotations rotations,
+                          int filterMode, boolean autoCrop, int brightness, int contrast, int saturation) {
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR, rotations);
+        this.filterMode = ReaderImageFilter.sanitize(filterMode);
+        this.autoCrop = autoCrop;
+        setAdjustmentValues(brightness, contrast, saturation);
     }
 
     private ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
@@ -139,7 +151,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
-        holder.applyFilter(filterMode);
+        holder.applyAppearance(filterMode, brightness, contrast, saturation);
     }
 
     private int pageGapPx(@NonNull Context context) {
@@ -155,8 +167,25 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         if (recycler == null) return;
         for (int index = 0; index < recycler.getChildCount(); index++) {
             RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
-            if (viewHolder instanceof Holder) ((Holder) viewHolder).applyFilter(filterMode);
+            if (viewHolder instanceof Holder)
+                ((Holder) viewHolder).applyAppearance(filterMode, brightness, contrast, saturation);
         }
+    }
+
+    public void setAdjustments(int brightness, int contrast, int saturation) {
+        setAdjustmentValues(brightness, contrast, saturation);
+        if (recycler == null) return;
+        for (int index = 0; index < recycler.getChildCount(); index++) {
+            RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
+            if (viewHolder instanceof Holder)
+                ((Holder) viewHolder).applyAppearance(filterMode, this.brightness, this.contrast, this.saturation);
+        }
+    }
+
+    private void setAdjustmentValues(int brightness, int contrast, int saturation) {
+        this.brightness = ReaderImageFilter.sanitizeAdjustment(brightness);
+        this.contrast = ReaderImageFilter.sanitizeAdjustment(contrast);
+        this.saturation = ReaderImageFilter.sanitizeAdjustment(saturation);
     }
 
     public void setAutoCrop(boolean enabled) {
@@ -413,8 +442,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             status.setVisibility(View.GONE);
         }
 
-        void applyFilter(int mode) {
-            ReaderImageFilter.apply(image, mode);
+        void applyAppearance(int mode, int brightness, int contrast, int saturation) {
+            ReaderImageFilter.apply(image, mode, brightness, contrast, saturation);
         }
     }
 

@@ -30,4 +30,10 @@
     <string name="reader_filter_invert">Inverter cores</string>
     <string name="reader_auto_crop_title">Cortar margens brancas automaticamente</string>
     <string name="reader_auto_crop_summary">Corta bordas brancas simples apenas na exibição. Arquivos originais e exportações não mudam.</string>
+    <string name="reader_adjustments_title">Ajustes de imagem</string>
+    <string name="reader_brightness">Brilho</string>
+    <string name="reader_contrast">Contraste</string>
+    <string name="reader_saturation">Saturação</string>
+    <string name="reader_adjustments_summary">Os ajustes afetam apenas a exibição. Os originais salvos e compartilhados permanecem iguais.</string>
+    <string name="reader_adjustment_value">%1$d</string>
 </resources>
