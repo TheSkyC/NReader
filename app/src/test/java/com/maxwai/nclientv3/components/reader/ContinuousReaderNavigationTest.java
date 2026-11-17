@@ -24,6 +24,8 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -35,6 +37,7 @@ public class ContinuousReaderNavigationTest {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         RecyclerView recycler = new RecyclerView(activity);
         LinearLayoutManager layout = new LinearLayoutManager(activity);
+        AtomicInteger retries = new AtomicInteger();
         recycler.setLayoutManager(layout);
         recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @NonNull
@@ -46,9 +49,14 @@ public class ContinuousReaderNavigationTest {
                 image.setImageDrawable(new ColorDrawable(Color.BLUE));
                 item.addView(image, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
-                View status = new View(parent.getContext());
+                FrameLayout status = new FrameLayout(parent.getContext());
                 status.setId(R.id.continuous_page_status);
-                item.addView(status);
+                View retry = new View(parent.getContext());
+                retry.setId(R.id.continuous_page_retry);
+                retry.setOnClickListener(view -> retries.incrementAndGet());
+                status.addView(retry, new FrameLayout.LayoutParams(100, 100));
+                item.addView(status, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
                 return new RecyclerView.ViewHolder(item) {};
             }
             @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {}
@@ -64,6 +72,13 @@ public class ContinuousReaderNavigationTest {
         recycler.getViewTreeObserver().dispatchOnGlobalLayout();
         layoutRecycler(recycler);
         assertEquals(0, target.getTop());
+
+        MotionEvent retryDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 50, 50, 0);
+        recycler.onInterceptTouchEvent(retryDown);
+        retryDown.recycle();
+        target.findViewById(R.id.continuous_page_retry).performClick();
+        assertEquals(1, retries.get());
+        assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
 
         target.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
         recycler.getViewTreeObserver().dispatchOnGlobalLayout();
