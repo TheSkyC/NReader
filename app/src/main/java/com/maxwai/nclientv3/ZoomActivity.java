@@ -25,7 +25,6 @@ import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.RadioGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -90,6 +89,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_OFFSET_STATE = "readerOffset";
     private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
     private static final String PENDING_CONTINUOUS_SAVE = "pendingContinuousSave";
+    private static final String PENDING_CONTINUOUS_SOURCE = "pendingContinuousSource";
+    private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
     private static final float PAGE_TAP_EDGE = .2f;
     private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
     private GenericGallery gallery;
@@ -112,12 +113,18 @@ public class ZoomActivity extends GeneralActivity {
     private int tmpScrollType;
     private boolean up = false, down = false, side;
     private int pendingContinuousSave = -1;
+    @Nullable private Object pendingContinuousSource;
     @Nullable private Future<?> pageExportTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) pendingContinuousSave = savedInstanceState.getInt(PENDING_CONTINUOUS_SAVE, -1);
+        if (savedInstanceState != null) {
+            pendingContinuousSave = savedInstanceState.getInt(PENDING_CONTINUOUS_SAVE, -1);
+            String source = savedInstanceState.getString(PENDING_CONTINUOUS_SOURCE);
+            if (source != null) pendingContinuousSource = savedInstanceState.getBoolean(PENDING_SOURCE_IS_FILE)
+                ? new File(source) : Uri.parse(source);
+        }
         //Global.initActivity(this);
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
         side = preferences.getBoolean(VOLUME_SIDE_KEY, true);
@@ -364,6 +371,8 @@ public class ZoomActivity extends GeneralActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
         state.putInt(PENDING_CONTINUOUS_SAVE, pendingContinuousSave);
+        if (pendingContinuousSource != null) state.putString(PENDING_CONTINUOUS_SOURCE, pendingContinuousSource.toString());
+        state.putBoolean(PENDING_SOURCE_IS_FILE, pendingContinuousSource instanceof File);
         if (readerNavigation != null) {
             ReadingPosition position = currentPosition();
             if (position == null) position = initialPosition;
@@ -583,10 +592,12 @@ public class ZoomActivity extends GeneralActivity {
         } else if (id == R.id.save_page) {
             if (continuousMode) {
                 int page = readerNavigation.currentPage();
-                if (!canExportContinuousPage(page)) showPageUnavailable();
-                else if (Global.hasStoragePermission(this)) exportContinuousPage(page, false, false);
+                Object source = continuousPageSource(page);
+                if (source == null) showPageUnavailable();
+                else if (Global.hasStoragePermission(this)) exportContinuousPage(page, source, false, false);
                 else {
                     pendingContinuousSave = page;
+                    pendingContinuousSource = source;
                     requestStorage();
                 }
             } else if (getAvailablePageImage() == null) {
@@ -597,9 +608,10 @@ public class ZoomActivity extends GeneralActivity {
         } else if (id == R.id.share) {
             if (continuousMode) {
                 int page = readerNavigation.currentPage();
-                if (!canExportContinuousPage(page)) showPageUnavailable();
-                else if (gallery.getId() <= 0) exportContinuousPage(page, true, false);
-                else openContinuousShareDialog(page);
+                Object source = continuousPageSource(page);
+                if (source == null) showPageUnavailable();
+                else if (gallery.getId() <= 0) exportContinuousPage(page, source, true, false);
+                else openContinuousShareDialog(page, source);
             } else if (getAvailablePageImage() == null) showPageUnavailable();
             else if (gallery.getId() <= 0) sendImage(false);
             else openSendImageDialog();
@@ -624,10 +636,10 @@ public class ZoomActivity extends GeneralActivity {
             .show();
     }
 
-    private void openContinuousShareDialog(int page) {
+    private void openContinuousShareDialog(int page, @NonNull Object source) {
         new MaterialAlertDialogBuilder(this)
-            .setPositiveButton(R.string.yes, (dialog, which) -> exportContinuousPage(page, true, true))
-            .setNegativeButton(R.string.no, (dialog, which) -> exportContinuousPage(page, true, false))
+            .setPositiveButton(R.string.yes, (dialog, which) -> exportContinuousPage(page, source, true, true))
+            .setNegativeButton(R.string.no, (dialog, which) -> exportContinuousPage(page, source, true, false))
             .setCancelable(true).setTitle(R.string.send_with_title)
             .setMessage(R.string.caption_send_with_title)
             .show();
@@ -643,9 +655,12 @@ public class ZoomActivity extends GeneralActivity {
         Global.initStorage(this);
         if (requestCode == 1) {
             int page = pendingContinuousSave;
+            Object source = pendingContinuousSource;
             pendingContinuousSave = -1;
+            pendingContinuousSource = null;
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (page >= 0) exportContinuousPage(page, false, false);
+                if (page >= 0 && source != null) exportContinuousPage(page, source, false, false);
+                else if (page >= 0) showPageUnavailable();
                 else downloadPage();
             }
         }
@@ -710,18 +725,18 @@ public class ZoomActivity extends GeneralActivity {
         return image instanceof BitmapDrawable ? image : null;
     }
 
-    private boolean canExportContinuousPage(int page) {
+    @Nullable
+    private Object continuousPageSource(int page) {
         RecyclerView.ViewHolder holder = continuousReader.findViewHolderForAdapterPosition(page);
-        if (holder == null || DebugImageMask.isEnabled(this)) return false;
-        View status = holder.itemView.findViewById(R.id.continuous_page_status);
-        ImageView image = holder.itemView.findViewById(R.id.continuous_page_image);
-        return status != null && status.getVisibility() == View.GONE && image != null && image.getDrawable() != null
-            && ContinuousPageAdapter.pageSource(gallery, directory, page) != null;
+        RecyclerView.Adapter<?> adapter = continuousReader.getAdapter();
+        if (holder == null || !(adapter instanceof ContinuousPageAdapter) || DebugImageMask.isEnabled(this)) return null;
+        return ((ContinuousPageAdapter) adapter).loadedSource(holder);
     }
 
-    private void exportContinuousPage(int page, boolean share, boolean withText) {
-        Object source = ContinuousPageAdapter.pageSource(gallery, directory, page);
-        if (source == null || DebugImageMask.isEnabled(this)) {
+    private void exportContinuousPage(int page, @NonNull Object source, boolean share, boolean withText) {
+        boolean local = source instanceof File || (source instanceof Uri && "file".equals(((Uri) source).getScheme()));
+        if (DebugImageMask.isEnabled(this) || (!local
+            && !source.equals(ContinuousPageAdapter.pageSource(gallery, directory, page)))) {
             showPageUnavailable();
             return;
         }

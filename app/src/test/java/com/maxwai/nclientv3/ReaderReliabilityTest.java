@@ -411,14 +411,14 @@ public class ReaderReliabilityTest {
                 RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(1);
                 assertNotNull(holder);
                 holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.VISIBLE);
-                assertFalse(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                assertNull(ReflectionHelpers.callInstanceMethod(activity, "continuousPageSource",
                     ReflectionHelpers.ClassParameter.from(int.class, 1)));
                 holder.itemView.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
                 android.widget.ImageView image = holder.itemView.findViewById(R.id.continuous_page_image);
                 image.setImageDrawable(new BitmapDrawable(activity.getResources(),
                     Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)));
                 application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", true).commit();
-                assertFalse(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                assertNull(ReflectionHelpers.callInstanceMethod(activity, "continuousPageSource",
                     ReflectionHelpers.ClassParameter.from(int.class, 1)));
                 application.getSharedPreferences("DebugDisplay", 0).edit().putBoolean("mask_images", false).commit();
                 Menu menu = new MenuBuilder(activity);
@@ -432,6 +432,13 @@ public class ReaderReliabilityTest {
                 File saved = new File(Global.SCREENFOLDER, "82129-2.png");
                 assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), Files.readAllBytes(saved.toPath()));
                 assertFalse(new File(Global.SCREENFOLDER, "82129-3.png").exists());
+                ReflectionHelpers.callInstanceMethod(activity, "exportContinuousPage",
+                    ReflectionHelpers.ClassParameter.from(int.class, 1),
+                    ReflectionHelpers.ClassParameter.from(Object.class, android.net.Uri.parse("https://example.invalid/page.png")),
+                    ReflectionHelpers.ClassParameter.from(boolean.class, true),
+                    ReflectionHelpers.ClassParameter.from(boolean.class, false));
+                assertSame(task, ReflectionHelpers.getField(activity, "pageExportTask"));
+                assertEquals(activity.getString(R.string.reader_page_unavailable), ShadowToast.getTextOfLatestToast());
 
                 navigation.goToPage(1, false);
                 layoutActivity(activity);
@@ -442,11 +449,13 @@ public class ReaderReliabilityTest {
                 image.setImageDrawable(new BitmapDrawable(activity.getResources(),
                     Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)));
                 assertEquals(1, navigation.currentPage());
-                assertTrue(ReflectionHelpers.callInstanceMethod(activity, "canExportContinuousPage",
+                ReflectionHelpers.setField(holder, "source", new PageFile(new File(folder, "1.png"), 1));
+                assertNotNull(ReflectionHelpers.callInstanceMethod(activity, "continuousPageSource",
                     ReflectionHelpers.ClassParameter.from(int.class, 1)));
                 activity.onOptionsItemSelected(menu.findItem(R.id.share));
                 AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
                 assertTrue(dialog.isShowing());
+                ReflectionHelpers.setField(holder, "source", new PageFile(new File(folder, "2.png"), 2));
                 navigation.goToPage(2, false);
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
@@ -459,7 +468,7 @@ public class ReaderReliabilityTest {
                 File[] sharedFiles = new File(application.getCacheDir(), "reader-share").listFiles();
                 assertNotNull(sharedFiles);
                 assertEquals(1, sharedFiles.length);
-                assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()),
+                assertArrayEquals(Files.readAllBytes(new File(folder, "1.png").toPath()),
                     Files.readAllBytes(sharedFiles[0].toPath()));
                 // AndroidX FileProvider cannot resolve the Windows-hosted Robolectric cache path.
                 if (File.separatorChar == '/') {
@@ -469,11 +478,12 @@ public class ReaderReliabilityTest {
                     assertEquals("image/png", share.getType());
                     android.net.Uri shared = share.getParcelableExtra(Intent.EXTRA_STREAM);
                     try (java.io.InputStream stream = activity.getContentResolver().openInputStream(shared)) {
-                        assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), stream.readAllBytes());
+                        assertArrayEquals(Files.readAllBytes(new File(folder, "1.png").toPath()), stream.readAllBytes());
                     }
                 }
 
                 ReflectionHelpers.setField(activity, "pendingContinuousSave", 1);
+                ReflectionHelpers.setField(activity, "pendingContinuousSource", new File(folder, "1.png"));
                 controller.recreate();
                 activity = controller.get();
                 assertEquals(Integer.valueOf(1), ReflectionHelpers.getField(activity, "pendingContinuousSave"));
@@ -484,7 +494,7 @@ public class ReaderReliabilityTest {
                 task.get(10, TimeUnit.SECONDS);
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 saved = new File(Global.SCREENFOLDER, "82129-2.png");
-                assertArrayEquals(Files.readAllBytes(new File(folder, "2.png").toPath()), Files.readAllBytes(saved.toPath()));
+                assertArrayEquals(Files.readAllBytes(new File(folder, "1.png").toPath()), Files.readAllBytes(saved.toPath()));
             }
         } finally {
             Global.SCREENFOLDER = previousScreenFolder;

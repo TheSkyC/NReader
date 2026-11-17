@@ -70,6 +70,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         if (manager != null) manager.clear(holder.image);
         holder.image.setImageDrawable(null);
         Object source = pageSource(gallery, directory, position);
+        holder.source = source;
         if (source == null || manager == null) {
             holder.showError();
             return;
@@ -99,6 +100,15 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     }
 
     @Nullable
+    public Object loadedSource(@NonNull RecyclerView.ViewHolder viewHolder) {
+        if (!(viewHolder instanceof Holder)) return null;
+        Holder holder = (Holder) viewHolder;
+        if (holder.getBindingAdapterPosition() == RecyclerView.NO_POSITION
+            || holder.status.getVisibility() != View.GONE || holder.image.getDrawable() == null) return null;
+        return holder.source;
+    }
+
+    @Nullable
     public static Object pageSource(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory, int position) {
         if (position < 0 || position >= gallery.getPageCount()) return null;
         PageFile local = directory == null ? null : directory.getPage(position + 1);
@@ -111,6 +121,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Override
     public void onViewRecycled(@NonNull Holder holder) {
         holder.generation++;
+        holder.source = null;
         RequestManager manager = GlideX.with(holder.image);
         if (manager != null) manager.clear(holder.image);
         holder.image.setImageDrawable(null);
@@ -129,6 +140,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         final View error;
         final View retry;
         int generation;
+        @Nullable Object source;
 
         Holder(View view) {
             super(view);
