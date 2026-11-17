@@ -25,6 +25,8 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
     private int lastAppliedHeight = -1;
     private int lastObservedTop = Integer.MIN_VALUE;
     private final ViewTreeObserver.OnGlobalLayoutListener restoreListener = this::applyPendingPosition;
+    private final ViewTreeObserver.OnGlobalLayoutListener interruptLayoutListener = this::finishInterruptLayout;
+    private boolean interruptLayoutPending;
     private final RecyclerView.OnItemTouchListener touchListener = new RecyclerView.SimpleOnItemTouchListener() {
         @Override
         public boolean onInterceptTouchEvent(@NonNull RecyclerView view, @NonNull MotionEvent event) {
@@ -47,6 +49,7 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
                     if (dx == 0 && dy == 0) return;
                     cancelPendingPosition();
                 }
+                if (interruptLayoutPending && (dx != 0 || dy != 0)) anchorVisiblePage();
                 updateVisiblePage();
             }
         };
@@ -83,6 +86,7 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
         int count = pageCount();
         if (count == 0) return;
         ReadingPosition target = position.clamp(count);
+        finishInterruptLayout();
         page = target.page - 1;
         cancelPendingPosition();
         pendingPosition = target;
@@ -104,14 +108,34 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
 
     public void dispose() {
         cancelPendingPosition();
+        finishInterruptLayout();
         recycler.removeOnItemTouchListener(touchListener);
         recycler.removeOnScrollListener(scrollListener);
     }
 
     private void interruptRestore() {
         if (pendingPosition == null) return;
+        if (anchorVisiblePage()) {
+            finishInterruptLayout();
+            interruptLayoutPending = true;
+            recycler.getViewTreeObserver().addOnGlobalLayoutListener(interruptLayoutListener);
+        }
         cancelPendingPosition();
         updateVisiblePage();
+    }
+
+    private boolean anchorVisiblePage() {
+        int visible = layout.findFirstVisibleItemPosition();
+        View anchor = visible == RecyclerView.NO_POSITION ? null : layout.findViewByPosition(visible);
+        if (anchor == null) return false;
+        layout.scrollToPositionWithOffset(visible, layout.getDecoratedTop(anchor) - recycler.getPaddingTop());
+        return true;
+    }
+
+    private void finishInterruptLayout() {
+        interruptLayoutPending = false;
+        if (recycler.getViewTreeObserver().isAlive())
+            recycler.getViewTreeObserver().removeOnGlobalLayoutListener(interruptLayoutListener);
     }
 
     private boolean isPendingUnloadedPageTouch(@NonNull MotionEvent event) {

@@ -134,6 +134,18 @@ public class ContinuousReaderNavigationTest {
         recycler.dispatchTouchEvent(secondDown);
         secondDown.recycle();
         assertEquals(1, navigation.currentPage());
+        recycler.scrollBy(0, 80);
+        float interruptedOffset = navigation.currentPosition().offset;
+        layoutRecycler(recycler);
+        assertEquals(1, layout.findFirstVisibleItemPosition());
+        assertEquals(1, navigation.currentPage());
+        assertEquals(interruptedOffset, navigation.currentPosition().offset, 0.001f);
+        navigation.goToPosition(new ReadingPosition(1, 0f));
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+        assertEquals(0, layout.findFirstVisibleItemPosition());
+        assertEquals(0, navigation.currentPage());
         navigation.dispose();
     }
 
