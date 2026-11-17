@@ -213,6 +213,15 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         return contentOffset;
     }
 
+    public void toggleDoubleTapZoom(float focusX, float focusY) {
+        if (scale > 1f) {
+            resetZoom();
+            return;
+        }
+        if (beginScale(focusX, focusY)) scaleTo(2f, focusX, focusY);
+        endScale();
+    }
+
     private void panTo(float requestedOffset) {
         RecyclerView reader = reader();
         if (reader == null || !Float.isFinite(requestedOffset)) return;

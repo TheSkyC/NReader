@@ -108,6 +108,41 @@ public class ContinuousZoomViewportTest {
         assertEquals(0f, initialPage.getTranslationX(), 0.001f);
     }
 
+    @Test
+    public void doubleTapZoomTogglesBetweenDefaultAndFocusedScale() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ContinuousZoomViewport viewport = new ContinuousZoomViewport(activity, null);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        viewport.setLayoutManager(layout);
+        viewport.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull
+            @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                FrameLayout page = new FrameLayout(activity);
+                page.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 400));
+                ImageView image = new ImageView(activity);
+                image.setId(R.id.continuous_page_image);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888)));
+                page.addView(image, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 400));
+                View status = new View(activity);
+                status.setId(R.id.continuous_page_status);
+                status.setVisibility(View.GONE);
+                page.addView(status);
+                return new RecyclerView.ViewHolder(page) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {}
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(viewport);
+        layoutViewport(viewport);
+        assertTrue(viewport.beginScale(300, 200));
+        viewport.endScale();
+        viewport.toggleDoubleTapZoom(300, 200);
+        assertEquals(2f, viewport.currentScale(), 0.001f);
+        viewport.toggleDoubleTapZoom(300, 200);
+        assertEquals(1f, viewport.currentScale(), 0.001f);
+    }
+
     private void dispatchPointers(View view, long time, int action, float x1, float y1,
                                   float x2, float y2, int count) {
         MotionEvent.PointerProperties[] properties = new MotionEvent.PointerProperties[count];

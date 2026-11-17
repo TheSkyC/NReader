@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewConfiguration;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -50,6 +51,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Nullable private GalleryFolder directory;
     @Nullable private final File directoryPath;
     private final BiConsumer<Integer, Float> onPageTap;
+    @Nullable private OnPageDoubleTapListener onPageDoubleTap;
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -89,20 +91,34 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        holder.cancelSingleTap();
+        holder.suppressNextClick = false;
         holder.itemView.setMinimumHeight(position == getItemCount() - 1 ? viewportHeight() : 0);
         holder.tapPosition = 0.5f;
         holder.itemView.setContentDescription(holder.itemView.getContext().getString(R.string.bookmark_page_format, position + 1));
         holder.itemView.setOnClickListener(view -> {
+            if (holder.suppressNextClick) {
+                holder.suppressNextClick = false;
+                holder.cancelSingleTap();
+                return;
+            }
             int page = holder.getBindingAdapterPosition();
             float horizontalPosition = holder.tapPosition;
             holder.tapPosition = 0.5f;
-            if (page != RecyclerView.NO_POSITION) onPageTap.accept(page, horizontalPosition);
+            if (page != RecyclerView.NO_POSITION) {
+                holder.scheduleSingleTap(() -> onPageTap.accept(page, horizontalPosition));
+            }
         });
+        holder.doubleTapListener = onPageDoubleTap;
         holder.retry.setOnClickListener(view -> {
             int page = holder.getBindingAdapterPosition();
             if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
+    }
+
+    public void setOnPageDoubleTapListener(@Nullable OnPageDoubleTapListener listener) {
+        onPageDoubleTap = listener;
     }
 
     @Override
@@ -238,6 +254,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     @Override
     public void onViewRecycled(@NonNull Holder holder) {
+        holder.cancelSingleTap();
+        holder.suppressNextClick = false;
         holder.generation++;
         holder.source = null;
         RequestManager manager = GlideX.with(holder.image);
@@ -260,6 +278,10 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         int generation;
         @Nullable Object source;
         float tapPosition = 0.5f;
+        @Nullable OnPageDoubleTapListener doubleTapListener;
+        @Nullable Runnable pendingSingleTap;
+        boolean suppressNextClick;
+        final Handler gestureHandler = new Handler(Looper.getMainLooper());
 
         @SuppressLint("ClickableViewAccessibility") // Touch observation does not consume events; the view performs clicks normally.
         Holder(View view) {
@@ -281,12 +303,41 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     if (view.getWidth() > 0) tapPosition = Math.max(0f, Math.min(1f, event.getX() / view.getWidth()));
                     return false;
                 }
+
+                @Override
+                public boolean onDoubleTap(@NonNull MotionEvent event) {
+                    if (status.getVisibility() != View.GONE || image.getDrawable() == null) return false;
+                    suppressNextClick = true;
+                    cancelSingleTap();
+                    int page = getBindingAdapterPosition();
+                    if (page != RecyclerView.NO_POSITION && doubleTapListener != null) {
+                        doubleTapListener.onDoubleTap(page,
+                            view.getLeft() + view.getTranslationX() + event.getX(),
+                            view.getTop() + event.getY());
+                    }
+                    return true;
+                }
             });
             view.setOnTouchListener((touched, event) -> {
                 detector.onTouchEvent(event);
                 if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) tapPosition = 0.5f;
                 return false;
             });
+        }
+
+        void scheduleSingleTap(@NonNull Runnable action) {
+            cancelSingleTap();
+            pendingSingleTap = action;
+            gestureHandler.postDelayed(() -> {
+                Runnable pending = pendingSingleTap;
+                pendingSingleTap = null;
+                if (pending != null) pending.run();
+            }, ViewConfiguration.getDoubleTapTimeout());
+        }
+
+        void cancelSingleTap() {
+            pendingSingleTap = null;
+            gestureHandler.removeCallbacksAndMessages(null);
         }
 
         void showLoading() {
@@ -306,5 +357,9 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         void showImage() {
             status.setVisibility(View.GONE);
         }
+    }
+
+    public interface OnPageDoubleTapListener {
+        void onDoubleTap(int page, float x, float y);
     }
 }
