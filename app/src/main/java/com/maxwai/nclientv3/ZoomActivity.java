@@ -279,6 +279,7 @@ public class ZoomActivity extends GeneralActivity {
                 LogUtility.d("Page selected: " + newPage + " from page " + oldPage);
                 setPageText(newPage + 1);
                 seekBar.setProgress(newPage);
+                invalidateOptionsMenu();
                 clearFarRequests(oldPage, newPage);
                 makeNearRequests(newPage);
                 if (!initializingPager) savePosition();
@@ -381,6 +382,7 @@ public class ZoomActivity extends GeneralActivity {
         actualPage = page;
         setPageText(page + 1);
         seekBar.setProgress(page);
+        invalidateOptionsMenu();
         if (!switchingReaderMode) savePosition();
     }
 
@@ -731,7 +733,24 @@ public class ZoomActivity extends GeneralActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_zoom, menu);
         Utility.tintMenu(this, menu);
+        updateBookmarkMenu(menu.findItem(R.id.bookmark));
         return true;
+    }
+
+    private void updateBookmarkMenu(@Nullable MenuItem item) {
+        if (item == null || gallery == null) return;
+        boolean bookmarked = gallery.getId() > 0
+            && Queries.ResumeTable.pageFromId(gallery.getId()) == readerNavigation.currentPage() + 1;
+        item.setIcon(bookmarked ? R.drawable.ic_bookmark : R.drawable.ic_bookmark_border);
+    }
+
+    private void toggleCurrentBookmark() {
+        if (gallery == null || gallery.getId() <= 0 || readerNavigation == null) return;
+        int id = gallery.getId();
+        int page = readerNavigation.currentPage() + 1;
+        if (Queries.ResumeTable.pageFromId(id) == page) Queries.ResumeTable.remove(id);
+        else Queries.ResumeTable.insert(id, page);
+        invalidateOptionsMenu();
     }
 
     @Override
@@ -781,7 +800,7 @@ public class ZoomActivity extends GeneralActivity {
             finish();
             return true;
         } else if (id == R.id.bookmark) {
-            Queries.ResumeTable.insert(gallery.getId(), readerNavigation.currentPage() + 1);
+            toggleCurrentBookmark();
         } else if (id == R.id.scrollType) {
             changeScrollTypeDialog();
         }

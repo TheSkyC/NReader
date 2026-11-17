@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
 import android.view.View;
 import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.menu.MenuBuilder;
@@ -24,7 +25,9 @@ import com.bumptech.glide.request.target.ImageViewTarget;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.maxwai.nclientv3.api.local.LocalGallery;
+import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
+import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
@@ -282,6 +285,39 @@ public class ReaderReliabilityTest {
                 activity = controller.get();
                 assertEquals(android.graphics.Color.BLACK,
                     ((ColorDrawable) activity.findViewById(R.id.container).getBackground()).getColor());
+            }
+        }
+    }
+
+    @Test
+    public void readerBookmarkTogglesAndUpdatesIcon() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                Menu menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                MenuItem bookmark = menu.findItem(R.id.bookmark);
+                activity.onCreateOptionsMenu(menu);
+                assertEquals(R.drawable.ic_bookmark_border,
+                    ((Integer) ReflectionHelpers.getField(bookmark, "mIconResId")).intValue());
+                int galleryId = ((GenericGallery) ReflectionHelpers.getField(activity, "gallery")).getId();
+                activity.onOptionsItemSelected(bookmark);
+                if (galleryId > 0) {
+                    assertEquals(1, Queries.ResumeTable.pageFromId(galleryId));
+                    activity.onCreateOptionsMenu(menu);
+                    assertEquals(R.drawable.ic_bookmark,
+                        ((Integer) ReflectionHelpers.getField(bookmark, "mIconResId")).intValue());
+                    activity.onOptionsItemSelected(bookmark);
+                    assertEquals(-1, Queries.ResumeTable.pageFromId(galleryId));
+                } else {
+                    assertEquals(-1, Queries.ResumeTable.pageFromId(galleryId));
+                }
             }
         }
     }
