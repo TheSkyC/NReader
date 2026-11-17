@@ -53,6 +53,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    @Nullable private RecyclerView recycler;
 
     public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                                  @NonNull BiConsumer<Integer, Float> onPageTap) {
@@ -88,6 +89,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        holder.itemView.setMinimumHeight(position == getItemCount() - 1 ? viewportHeight() : 0);
         holder.tapPosition = 0.5f;
         holder.itemView.setContentDescription(holder.itemView.getContext().getString(R.string.bookmark_page_format, position + 1));
         holder.itemView.setOnClickListener(view -> {
@@ -101,6 +103,32 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        recycler = recyclerView;
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        if (recycler == recyclerView) recycler = null;
+        super.onDetachedFromRecyclerView(recyclerView);
+    }
+
+    private int viewportHeight() {
+        return recycler == null ? 0
+            : Math.max(0, recycler.getHeight() - recycler.getPaddingTop() - recycler.getPaddingBottom());
+    }
+
+    void updateViewportHeight(int height) {
+        if (recycler == null || getItemCount() == 0) return;
+        RecyclerView.ViewHolder holder = recycler.findViewHolderForAdapterPosition(getItemCount() - 1);
+        if (holder != null && holder.itemView.getMinimumHeight() != height) {
+            holder.itemView.setMinimumHeight(height);
+            holder.itemView.requestLayout();
+        }
     }
 
     private void retry(@NonNull Holder holder, int page) {

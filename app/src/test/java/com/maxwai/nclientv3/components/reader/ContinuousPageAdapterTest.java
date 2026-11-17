@@ -4,6 +4,8 @@ package com.maxwai.nclientv3.components.reader;
 import android.app.Activity;
 import android.app.Application;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Looper;
 import android.view.MotionEvent;
@@ -16,6 +18,7 @@ import com.bumptech.glide.request.BaseRequestOptions;
 import com.bumptech.glide.request.Request;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.local.LocalGallery;
+import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
 
@@ -196,5 +199,54 @@ public class ContinuousPageAdapterTest {
         assertEquals(270, rotations.angle(0));
         recycler.setAdapter(null);
         assertFalse(adapter.rotate(first));
+    }
+
+    @Test
+    public void shortFinalPageCanStaySelectedAndTracksViewportChanges() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        assertTrue(new File(folder, "2.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new ContinuousReaderView(activity, null);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), (page, x) -> {}));
+        activity.setContentView(recycler);
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        measureRecycler(recycler, 600);
+        navigation.goToPosition(new ReadingPosition(2, 0f));
+        measureRecycler(recycler, 600);
+        ContinuousPageAdapter.Holder last = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(1);
+        assertNotNull(last);
+        last.image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+            Bitmap.createBitmap(100, 40, Bitmap.Config.ARGB_8888)));
+        last.showImage();
+        measureRecycler(recycler, 600);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        measureRecycler(recycler, 600);
+        assertEquals(600, last.itemView.getHeight());
+        assertEquals(0, last.itemView.getTop());
+        MotionEvent tap = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 100, 0);
+        recycler.dispatchTouchEvent(tap);
+        tap.recycle();
+        measureRecycler(recycler, 600);
+        assertEquals(1, navigation.currentPage());
+        assertEquals(1, layout.findFirstVisibleItemPosition());
+
+        measureRecycler(recycler, 900);
+        recycler.requestLayout();
+        measureRecycler(recycler, 900);
+        assertEquals(900, last.itemView.getMinimumHeight());
+        assertEquals(900, last.itemView.getHeight());
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    private void measureRecycler(RecyclerView recycler, int height) {
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, height);
     }
 }
