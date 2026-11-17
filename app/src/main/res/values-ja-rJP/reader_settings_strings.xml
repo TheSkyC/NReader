@@ -30,6 +30,7 @@
     <string name="reader_filter_none">オリジナル</string>
     <string name="reader_filter_grayscale">グレースケール</string>
     <string name="reader_filter_invert">色を反転</string>
+    <string name="reader_filter_sepia">セピア</string>
     <string name="reader_auto_crop_title">白い余白を自動トリミング</string>
     <string name="reader_auto_crop_summary">表示時のみ白い余白を削除します。元ファイルと書き出し内容は変わりません。</string>
     <string name="reader_adjustments_title">画像調整</string>

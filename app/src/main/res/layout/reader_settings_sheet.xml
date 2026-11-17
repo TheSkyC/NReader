@@ -137,6 +137,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_filter_sepia"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
         </RadioGroup>
 
         <TextView

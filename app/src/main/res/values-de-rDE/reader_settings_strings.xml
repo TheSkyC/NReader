@@ -30,6 +30,7 @@
     <string name="reader_filter_none">Original</string>
     <string name="reader_filter_grayscale">Graustufen</string>
     <string name="reader_filter_invert">Farben umkehren</string>
+    <string name="reader_filter_sepia">Sepia</string>
     <string name="reader_auto_crop_title">Weiße Ränder automatisch beschneiden</string>
     <string name="reader_auto_crop_summary">Schneidet einfache weiße Ränder nur für die Anzeige ab. Originale und Exporte bleiben unverändert.</string>
     <string name="reader_adjustments_title">Bildeinstellungen</string>

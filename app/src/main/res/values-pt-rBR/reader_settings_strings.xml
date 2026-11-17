@@ -30,6 +30,7 @@
     <string name="reader_filter_none">Original</string>
     <string name="reader_filter_grayscale">Escala de cinza</string>
     <string name="reader_filter_invert">Inverter cores</string>
+    <string name="reader_filter_sepia">Sépia</string>
     <string name="reader_auto_crop_title">Cortar margens brancas automaticamente</string>
     <string name="reader_auto_crop_summary">Corta bordas brancas simples apenas na exibição. Arquivos originais e exportações não mudam.</string>
     <string name="reader_adjustments_title">Ajustes de imagem</string>

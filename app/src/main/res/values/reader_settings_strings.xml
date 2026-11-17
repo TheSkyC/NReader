@@ -30,6 +30,7 @@
     <string name="reader_filter_none">Original</string>
     <string name="reader_filter_grayscale">Grayscale</string>
     <string name="reader_filter_invert">Invert colors</string>
+    <string name="reader_filter_sepia">Sepia</string>
     <string name="reader_auto_crop_title">Auto-crop white margins</string>
     <string name="reader_auto_crop_summary">Trim plain white borders for display. Original files and exports stay unchanged.</string>
     <string name="reader_adjustments_title">Image adjustments</string>

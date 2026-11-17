@@ -864,14 +864,17 @@ public class ZoomActivity extends GeneralActivity {
         MaterialRadioButton filterNone = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter_none));
         MaterialRadioButton filterGray = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter_grayscale));
         MaterialRadioButton filterInvert = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter_invert));
+        MaterialRadioButton filterSepia = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter_sepia));
         filterNone.setText(R.string.reader_filter_none);
         filterGray.setText(R.string.reader_filter_grayscale);
         filterInvert.setText(R.string.reader_filter_invert);
+        filterSepia.setText(R.string.reader_filter_sepia);
         RadioGroup filter = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter));
         filter.check(filterId(readerFilterMode));
         filter.setOnCheckedChangeListener((group, id) -> setReaderFilterMode(
             id == R.id.reader_filter_grayscale ? ReaderImageFilter.GRAYSCALE
-                : id == R.id.reader_filter_invert ? ReaderImageFilter.INVERT : ReaderImageFilter.NONE));
+                : id == R.id.reader_filter_invert ? ReaderImageFilter.INVERT
+                : id == R.id.reader_filter_sepia ? ReaderImageFilter.SEPIA : ReaderImageFilter.NONE));
 
         SwitchMaterial autoCrop = Objects.requireNonNull(dialog.findViewById(R.id.reader_auto_crop));
         autoCrop.setChecked(readerAutoCrop);
@@ -1171,7 +1174,8 @@ public class ZoomActivity extends GeneralActivity {
 
     private int filterId(int value) {
         return value == ReaderImageFilter.GRAYSCALE ? R.id.reader_filter_grayscale
-            : value == ReaderImageFilter.INVERT ? R.id.reader_filter_invert : R.id.reader_filter_none;
+            : value == ReaderImageFilter.INVERT ? R.id.reader_filter_invert
+            : value == ReaderImageFilter.SEPIA ? R.id.reader_filter_sepia : R.id.reader_filter_none;
     }
 
     private int spreadId(int value) {

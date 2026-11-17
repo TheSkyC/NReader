@@ -11,6 +11,7 @@ public class ReaderImageFilterTest {
         assertEquals(ReaderImageFilter.NONE, ReaderImageFilter.sanitize(-1));
         assertEquals(ReaderImageFilter.NONE, ReaderImageFilter.sanitize(99));
         assertEquals(ReaderImageFilter.GRAYSCALE, ReaderImageFilter.sanitize(ReaderImageFilter.GRAYSCALE));
+        assertEquals(ReaderImageFilter.SEPIA, ReaderImageFilter.sanitize(ReaderImageFilter.SEPIA));
     }
 
     @Test

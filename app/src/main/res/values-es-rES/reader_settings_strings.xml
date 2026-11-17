@@ -30,6 +30,7 @@
     <string name="reader_filter_none">Original</string>
     <string name="reader_filter_grayscale">Escala de grises</string>
     <string name="reader_filter_invert">Invertir colores</string>
+    <string name="reader_filter_sepia">Sepia</string>
     <string name="reader_auto_crop_title">Recortar márgenes blancos automáticamente</string>
     <string name="reader_auto_crop_summary">Recorta los bordes blancos simples solo al mostrar. Los archivos y exportaciones no cambian.</string>
     <string name="reader_adjustments_title">Ajustes de imagen</string>

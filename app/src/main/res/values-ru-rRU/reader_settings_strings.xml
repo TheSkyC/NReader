@@ -30,6 +30,7 @@
     <string name="reader_filter_none">Оригинал</string>
     <string name="reader_filter_grayscale">Оттенки серого</string>
     <string name="reader_filter_invert">Инверсия цветов</string>
+    <string name="reader_filter_sepia">Сепия</string>
     <string name="reader_auto_crop_title">Автоматически обрезать белые поля</string>
     <string name="reader_auto_crop_summary">Обрезает простые белые поля только при просмотре. Исходные файлы и экспорт не изменяются.</string>
     <string name="reader_adjustments_title">Настройка изображения</string>

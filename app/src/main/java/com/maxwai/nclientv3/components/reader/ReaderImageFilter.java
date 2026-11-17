@@ -11,12 +11,13 @@ public final class ReaderImageFilter {
     public static final int NONE = 0;
     public static final int GRAYSCALE = 1;
     public static final int INVERT = 2;
+    public static final int SEPIA = 3;
 
     private ReaderImageFilter() {
     }
 
     public static int sanitize(int mode) {
-        return mode >= NONE && mode <= INVERT ? mode : NONE;
+        return mode >= NONE && mode <= SEPIA ? mode : NONE;
     }
 
     public static void apply(@NonNull ImageView image, int mode) {
@@ -41,6 +42,13 @@ public final class ReaderImageFilter {
                 -1f, 0f, 0f, 0f, 255f,
                 0f, -1f, 0f, 0f, 255f,
                 0f, 0f, -1f, 0f, 255f,
+                0f, 0f, 0f, 1f, 0f
+            });
+        } else if (safeMode == SEPIA) {
+            matrix.set(new float[]{
+                0.393f, 0.769f, 0.189f, 0f, 0f,
+                0.349f, 0.686f, 0.168f, 0f, 0f,
+                0.272f, 0.534f, 0.131f, 0f, 0f,
                 0f, 0f, 0f, 1f, 0f
             });
         } else {
