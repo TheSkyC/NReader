@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Ajustes de lectura</string>
     <string name="reader_continuous_vertical">Desplazamiento vertical continuo</string>
-    <string name="reader_continuous_summary">La lectura continua se reanuda por página. El zoom, el giro, el guardado y el uso compartido están disponibles en el modo de páginas.</string>
+    <string name="reader_continuous_summary">La lectura continua recuerda tu posición. El zoom, el giro, el guardado y el uso compartido están disponibles en el modo de páginas.</string>
 </resources>

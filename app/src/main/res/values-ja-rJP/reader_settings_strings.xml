@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">閲覧設定</string>
     <string name="reader_continuous_vertical">縦スクロール</string>
-    <string name="reader_continuous_summary">縦スクロールはページ単位で再開します。拡大、回転、保存、共有はページ表示で利用できます。</string>
+    <string name="reader_continuous_summary">縦スクロールはページ内の位置を記憶します。拡大、回転、保存、共有はページ表示で利用できます。</string>
 </resources>

@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Leseeinstellungen</string>
     <string name="reader_continuous_vertical">Vertikal fortlaufend</string>
-    <string name="reader_continuous_summary">Fortlaufendes Lesen wird seitenweise fortgesetzt. Zoom, Drehen, Speichern und Teilen sind im Seitenmodus verfügbar.</string>
+    <string name="reader_continuous_summary">Fortlaufendes Lesen merkt sich die Position. Zoom, Drehen, Speichern und Teilen sind im Seitenmodus verfügbar.</string>
 </resources>

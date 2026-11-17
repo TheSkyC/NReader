@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">Configurações de leitura</string>
     <string name="reader_continuous_vertical">Rolagem vertical contínua</string>
-    <string name="reader_continuous_summary">A leitura contínua é retomada por página. Zoom, rotação, salvamento e compartilhamento estão disponíveis no modo de páginas.</string>
+    <string name="reader_continuous_summary">A leitura contínua lembra sua posição. Zoom, rotação, salvamento e compartilhamento estão disponíveis no modo de páginas.</string>
 </resources>

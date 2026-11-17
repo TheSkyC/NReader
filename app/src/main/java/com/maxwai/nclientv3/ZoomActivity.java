@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -245,6 +246,8 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void setContinuousMode(boolean enabled) {
+        if (enabled && !continuousMode)
+            initialPosition = new ReadingPosition(readerNavigation.currentPage() + 1, 0f);
         setContinuousMode(enabled, readerNavigation.currentPage());
     }
 
@@ -253,7 +256,6 @@ public class ZoomActivity extends GeneralActivity {
         switchingReaderMode = true;
         continuousMode = enabled;
         if (enabled) {
-            initialPosition = new ReadingPosition(page + 1, 0f);
             mViewPager.setAdapter(null);
             LinearLayoutManager layout = new LinearLayoutManager(this);
             continuousReader.setLayoutManager(layout);
@@ -265,8 +267,10 @@ public class ZoomActivity extends GeneralActivity {
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
             mViewPager.setVisibility(View.GONE);
             continuousReader.setVisibility(View.VISIBLE);
-            readerNavigation.goToPage(page, false);
+            ((ContinuousReaderNavigation) readerNavigation).goToPosition(initialPosition);
         } else {
+            ((ContinuousReaderNavigation) readerNavigation).dispose();
+            initialPosition = new ReadingPosition(page + 1, 0f);
             continuousReader.setVisibility(View.GONE);
             continuousReader.setAdapter(null);
             continuousReader.clearOnScrollListeners();
@@ -287,10 +291,7 @@ public class ZoomActivity extends GeneralActivity {
         actualPage = page;
         setPageText(page + 1);
         seekBar.setProgress(page);
-        if (!switchingReaderMode && initialPosition.page != page + 1) {
-            initialPosition = new ReadingPosition(page + 1, 0f);
-            savePosition();
-        }
+        if (!switchingReaderMode) savePosition();
     }
 
     public void onReaderPageTap(ZoomFragment source, float horizontalPosition) {
@@ -319,10 +320,19 @@ public class ZoomActivity extends GeneralActivity {
 
     private void savePosition() {
         if (gallery != null && readerNavigation != null && initialPosition != null) {
-            int page = readerNavigation.currentPage() + 1;
-            ReadingProgress.save(gallery.getId(), initialPosition.page == page
-                ? initialPosition : new ReadingPosition(page, 0f));
+            ReadingPosition position = currentPosition();
+            if (position != null) {
+                initialPosition = position;
+                ReadingProgress.save(gallery.getId(), position);
+            }
         }
+    }
+
+    @Nullable
+    private ReadingPosition currentPosition() {
+        if (continuousMode) return ((ContinuousReaderNavigation) readerNavigation).currentPosition();
+        int page = readerNavigation.currentPage() + 1;
+        return initialPosition.page == page ? initialPosition : new ReadingPosition(page, 0f);
     }
 
     @Override
@@ -334,10 +344,10 @@ public class ZoomActivity extends GeneralActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
         if (readerNavigation != null) {
-            int page = readerNavigation.currentPage() + 1;
-            state.putInt("readerPage", page);
-            state.putFloat(READER_OFFSET_STATE, initialPosition != null && initialPosition.page == page
-                ? initialPosition.offset : 0f);
+            ReadingPosition position = currentPosition();
+            if (position == null) position = initialPosition;
+            state.putInt("readerPage", position.page);
+            state.putFloat(READER_OFFSET_STATE, position.offset);
         }
         savePosition();
         super.onSaveInstanceState(state);
@@ -397,8 +407,10 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        ReadingPosition position = continuousMode ? currentPosition() : null;
         super.onConfigurationChanged(newConfig);
         changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        if (position != null) ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
     }
 
     private boolean hardwareKeys() {

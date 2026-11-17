@@ -2,5 +2,5 @@
 <resources>
     <string name="reader_settings_title">閱讀設定</string>
     <string name="reader_continuous_vertical">縱向連續捲動</string>
-    <string name="reader_continuous_summary">連續閱讀按頁恢復進度。縮放、旋轉、儲存和分享可在分頁模式下使用。</string>
+    <string name="reader_continuous_summary">連續閱讀會記錄頁內位置。縮放、旋轉、儲存和分享可在分頁模式下使用。</string>
 </resources>

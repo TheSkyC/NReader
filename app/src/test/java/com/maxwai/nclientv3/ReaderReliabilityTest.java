@@ -444,6 +444,38 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void continuousPositionSurvivesRecreationWhileImageIsLoading() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".82128").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Intent intent = readerIntent(application, folder);
+            intent.putExtra(application.getPackageName() + ".PAGE", 2);
+            intent.putExtra(application.getPackageName() + ".OFFSET", 0.4f);
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, intent).setup()) {
+                controller.pause();
+                ReadingPosition position = loadProgress(82128);
+                assertEquals(2, position.page);
+                assertEquals(0.4f, position.offset, 0.001f);
+                controller.resume().recreate().pause();
+                position = loadProgress(82128);
+                assertEquals(2, position.page);
+                assertEquals(0.4f, position.offset, 0.001f);
+                controller.resume();
+                ReaderNavigation navigation = ReflectionHelpers.getField(controller.get(), "readerNavigation");
+                navigation.goToPage(2, false);
+                position = loadProgress(82128);
+                assertEquals(3, position.page);
+                assertEquals(0f, position.offset, 0f);
+            }
+        }
+    }
+
     private ReadingPosition loadProgress(int id) throws Exception {
         CountDownLatch finished = new CountDownLatch(1);
         AtomicReference<ReadingPosition> position = new AtomicReference<>();
