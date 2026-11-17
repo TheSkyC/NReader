@@ -638,7 +638,7 @@ public class GalleryActivity extends BaseActivity {
             recycler.getViewTreeObserver().addOnGlobalLayoutListener(restoreListener);
             manager.scrollToPositionWithOffset(target.page, 0);
             ReadingProgress.save(gallery.getId(), target);
-        } else openPagedReader(target.page);
+        } else openPagedReader(target);
     }
 
     private void stopRestoringPosition() {
@@ -740,23 +740,33 @@ public class GalleryActivity extends BaseActivity {
         read.setEnabled(detailReady && positionReady && gallery.getPageCount() > 0);
         read.setText(automaticPosition == null ? getString(R.string.gallery_start_reading)
             : getString(R.string.gallery_continue_page, automaticPosition.page));
-        read.setOnClickListener(v -> openPagedReader(automaticPosition == null ? 1 : automaticPosition.page));
+        read.setOnClickListener(v -> openPagedReader(automaticPosition == null
+            ? new ReadingPosition(1, 0f) : automaticPosition));
         start.setVisibility(automaticPosition == null ? View.GONE : View.VISIBLE);
         start.setEnabled(detailReady && positionReady);
         start.setOnClickListener(v -> openPagedReader(1));
     }
 
     private void openPagedReader(int page) {
+        openPagedReader(new ReadingPosition(page, 0f));
+    }
+
+    private void openPagedReader(ReadingPosition position) {
         if (!detailReady || adapter == null || gallery.getPageCount() <= 0) return;
+        ReadingPosition target = position.clamp(gallery.getPageCount());
+        int page = target.page;
         if (!gallery.isLocal() && Global.getDownloadPolicy() == Global.DataUsageType.NONE
             && (adapter.getDirectory() == null || adapter.getDirectory().getPage(page) == null)) {
             Toast.makeText(this, R.string.enable_network_to_continue, Toast.LENGTH_SHORT).show();
             return;
         }
         Intent intent = new Intent(this, ZoomActivity.class);
+        saveScrollPosition();
+        scrollDirty = false;
         intent.putExtra(getPackageName() + ".GALLERY", gallery);
         intent.putExtra(getPackageName() + ".DIRECTORY", adapter.getDirectory());
         intent.putExtra(getPackageName() + ".PAGE", page);
+        intent.putExtra(getPackageName() + ".OFFSET", target.offset);
         startActivity(intent);
     }
 

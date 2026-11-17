@@ -20,6 +20,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
+import com.maxwai.nclientv3.async.database.ReadingProgress;
+import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -43,6 +45,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import android.util.Base64;
 
 import static org.junit.Assert.assertEquals;
@@ -293,6 +298,54 @@ public class ReaderReliabilityTest {
                 assertFalse(dialog.isShowing());
             }
         }
+    }
+
+    @Test
+    public void continuedOffsetSurvivesRecreationUntilPageChanges() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".82127").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Intent intent = readerIntent(application, folder);
+            intent.putExtra(application.getPackageName() + ".PAGE", 2);
+            intent.putExtra(application.getPackageName() + ".OFFSET", 0.4f);
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, intent).setup()) {
+                controller.pause();
+                ReadingPosition saved = loadProgress(82127);
+                assertEquals(2, saved.page);
+                assertEquals(0.4f, saved.offset, 0.001f);
+                controller.resume();
+                controller.recreate();
+                controller.pause();
+                saved = loadProgress(82127);
+                assertEquals(2, saved.page);
+                assertEquals(0.4f, saved.offset, 0.001f);
+                controller.resume();
+                ((ViewPager2) controller.get().findViewById(R.id.container)).setCurrentItem(2, false);
+                saved = loadProgress(82127);
+                assertEquals(3, saved.page);
+                assertEquals(0f, saved.offset, 0f);
+                ((ViewPager2) controller.get().findViewById(R.id.container)).setCurrentItem(1, false);
+                saved = loadProgress(82127);
+                assertEquals(2, saved.page);
+                assertEquals(0f, saved.offset, 0f);
+            }
+        }
+    }
+
+    private ReadingPosition loadProgress(int id) throws Exception {
+        CountDownLatch finished = new CountDownLatch(1);
+        AtomicReference<ReadingPosition> position = new AtomicReference<>();
+        ReadingProgress.load(id, result -> {
+            position.set(result);
+            finished.countDown();
+        });
+        assertTrue(finished.await(5, TimeUnit.SECONDS));
+        assertNotNull(position.get());
+        return position.get();
     }
 
     @Test

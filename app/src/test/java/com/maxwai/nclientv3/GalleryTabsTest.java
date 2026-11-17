@@ -88,6 +88,14 @@ public class GalleryTabsTest {
                 assertNotNull(reader);
                 assertEquals(ZoomActivity.class.getName(), reader.getComponent().getClassName());
                 assertEquals(1, reader.getIntExtra(application.getPackageName() + ".PAGE", -1));
+                ReflectionHelpers.setField(activity, "automaticPosition", new ReadingPosition(1, 0.4f));
+                activity.bindReadingActions(activity.findViewById(android.R.id.content));
+                read.performClick();
+                reader = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertEquals(0.4f, reader.getFloatExtra(application.getPackageName() + ".OFFSET", -1f), 0f);
+                activity.findViewById(R.id.gallery_read_from_start).performClick();
+                reader = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertEquals(0f, reader.getFloatExtra(application.getPackageName() + ".OFFSET", -1f), 0f);
                 assertNotNull(tabs.getTabAt(1));
                 tabs.getTabAt(1).select();
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_preview).getVisibility());

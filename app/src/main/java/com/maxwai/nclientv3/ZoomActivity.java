@@ -64,9 +64,12 @@ public class ZoomActivity extends GeneralActivity {
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
+    private static final String READER_OFFSET_STATE = "readerOffset";
     private static final float PAGE_TAP_EDGE = .2f;
     private GenericGallery gallery;
     private int actualPage = 0;
+    private ReadingPosition initialPosition;
+    private boolean initializingPager = true;
     private boolean isHidden = false;
     private ViewPager2 mViewPager;
     private TextView pageManagerLabel, cornerPageViewer;
@@ -100,7 +103,11 @@ public class ZoomActivity extends GeneralActivity {
         int requestedPage = savedInstanceState == null
             ? getIntent().getIntExtra(getPackageName() + ".PAGE", 1)
             : savedInstanceState.getInt("readerPage", 1);
-        final int page = new ReadingPosition(requestedPage, 0f).clamp(gallery.getPageCount()).page - 1;
+        float requestedOffset = savedInstanceState == null
+            ? getIntent().getFloatExtra(getPackageName() + ".OFFSET", 0f)
+            : savedInstanceState.getFloat(READER_OFFSET_STATE, 0f);
+        initialPosition = new ReadingPosition(requestedPage, requestedOffset).clamp(gallery.getPageCount());
+        final int page = initialPosition.page - 1;
         actualPage = page;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             directory = getIntent().getParcelableExtra(getPackageName() + ".DIRECTORY", GalleryFolder.class);
@@ -164,12 +171,15 @@ public class ZoomActivity extends GeneralActivity {
             public void onPageSelected(int newPage) {
                 int oldPage = actualPage;
                 actualPage = newPage;
+                if (!initializingPager && initialPosition.page != newPage + 1) {
+                    initialPosition = new ReadingPosition(newPage + 1, 0f);
+                }
                 LogUtility.d("Page selected: " + newPage + " from page " + oldPage);
                 setPageText(newPage + 1);
                 seekBar.setProgress(newPage);
                 clearFarRequests(oldPage, newPage);
                 makeNearRequests(newPage);
-                savePosition();
+                if (!initializingPager) savePosition();
             }
         });
         pageManagerLabel.setOnClickListener(v -> DefaultDialogs.pageChangerDialog(
@@ -205,7 +215,8 @@ public class ZoomActivity extends GeneralActivity {
         });
 
 
-        changePage(page);
+        mViewPager.setCurrentItem(page, false);
+        initializingPager = false;
         setPageText(page + 1);
         seekBar.setProgress(page);
     }
@@ -235,8 +246,11 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void savePosition() {
-        if (gallery != null && mViewPager != null)
-            ReadingProgress.save(gallery.getId(), new ReadingPosition(mViewPager.getCurrentItem() + 1, 0f));
+        if (gallery != null && mViewPager != null && initialPosition != null) {
+            int page = mViewPager.getCurrentItem() + 1;
+            ReadingProgress.save(gallery.getId(), initialPosition.page == page
+                ? initialPosition : new ReadingPosition(page, 0f));
+        }
     }
 
     @Override
@@ -247,7 +261,12 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
-        if (mViewPager != null) state.putInt("readerPage", mViewPager.getCurrentItem() + 1);
+        if (mViewPager != null) {
+            int page = mViewPager.getCurrentItem() + 1;
+            state.putInt("readerPage", page);
+            state.putFloat(READER_OFFSET_STATE, initialPosition != null && initialPosition.page == page
+                ? initialPosition.offset : 0f);
+        }
         savePosition();
         super.onSaveInstanceState(state);
     }
