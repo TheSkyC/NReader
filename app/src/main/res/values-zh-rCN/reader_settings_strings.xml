@@ -13,4 +13,6 @@
     <string name="reader_scale_screen">适应屏幕</string>
     <string name="reader_scale_width">适应宽度</string>
     <string name="reader_scale_original">原始尺寸</string>
+    <string name="reader_double_page">双页阅读</string>
+    <string name="reader_double_page_summary">在分页模式下并排显示两页。</string>
 </resources>

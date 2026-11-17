@@ -13,4 +13,6 @@
     <string name="reader_scale_screen">Ekrana sığdır</string>
     <string name="reader_scale_width">Genişliğe sığdır</string>
     <string name="reader_scale_original">Özgün boyut</string>
+    <string name="reader_double_page">İki sayfa</string>
+    <string name="reader_double_page_summary">Sayfalı modda iki sayfayı yan yana göster.</string>
 </resources>

@@ -48,6 +48,7 @@ public class ZoomFragment extends Fragment {
     private View errorView;
     private PageFile pageFile = null;
     private Uri url;
+    private int pageIndex = -1;
     private int degree = 0;
     private int scaleMode = ReaderScaleMode.SMART;
     private boolean completedDownload = false;
@@ -66,6 +67,7 @@ public class ZoomFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
+        args.putInt("PAGE", page);
         args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
@@ -86,6 +88,7 @@ public class ZoomFragment extends Fragment {
         //read arguments
         String str = getArguments().getString("URL");
         url = str == null ? null : Uri.parse(str);
+        pageIndex = getArguments().getInt("PAGE", -1);
         scaleMode = ReaderScaleMode.sanitize(getArguments().getInt("SCALE_MODE", ReaderScaleMode.SMART));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
@@ -164,6 +167,10 @@ public class ZoomFragment extends Fragment {
     public void setScaleMode(int mode) {
         scaleMode = ReaderScaleMode.sanitize(mode);
         if (photoView != null && photoView.getDrawable() != null) scalePhoto(photoView.getDrawable());
+    }
+
+    public int getPageIndex() {
+        return pageIndex;
     }
 
     public void loadImage() {

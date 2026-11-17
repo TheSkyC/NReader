@@ -35,6 +35,8 @@ import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
+import com.maxwai.nclientv3.components.reader.SpreadReaderNavigation;
+import com.maxwai.nclientv3.components.views.DoublePageFragment;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -203,6 +205,58 @@ public class ReaderReliabilityTest {
                 assertEquals(1.2f, photo.getScale(), 0.01f);
                 fragment.setScaleMode(ReaderScaleMode.FIT_SCREEN);
                 assertEquals(1f, photo.getScale(), 0.01f);
+            }
+        }
+    }
+
+    @Test
+    public void doublePageFragmentHostsBothPagesAndAnOddFinalPage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                LocalGallery gallery = new LocalGallery(folder, true);
+                DoublePageFragment spread = DoublePageFragment.newInstance(gallery, 0, 1,
+                    gallery.getGalleryFolder(), ReaderScaleMode.SMART);
+                controller.get().getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, spread, "double-spread").commitNow();
+                assertNotNull(spread.pageFragment(0));
+                assertNotNull(spread.pageFragment(1));
+
+                DoublePageFragment last = DoublePageFragment.newInstance(gallery, 2, -1,
+                    gallery.getGalleryFolder(), ReaderScaleMode.SMART);
+                controller.get().getSupportFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, last, "double-last").commitNow();
+                assertNotNull(last.pageFragment(2));
+                assertNull(last.pageFragment(1));
+            }
+        }
+    }
+
+    @Test
+    public void doublePageModeUsesSpreadNavigationAndCanReturnToSinglePage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_double_page", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertTrue(navigation instanceof SpreadReaderNavigation);
+                assertEquals(0, navigation.currentPage());
+                assertEquals(2, ((ViewPager2) activity.findViewById(R.id.container)).getAdapter().getItemCount());
+                ReflectionHelpers.callInstanceMethod(activity, "setDoublePageMode",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, false));
+                navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertFalse(navigation instanceof SpreadReaderNavigation);
+                assertEquals(3, navigation.pageCount());
             }
         }
     }

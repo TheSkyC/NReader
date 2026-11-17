@@ -59,7 +59,9 @@ import com.maxwai.nclientv3.components.reader.ContinuousZoomViewport;
 import com.maxwai.nclientv3.components.reader.ReaderPageExport;
 import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
+import com.maxwai.nclientv3.components.reader.SpreadReaderNavigation;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
+import com.maxwai.nclientv3.components.views.DoublePageFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
 import com.maxwai.nclientv3.settings.Global;
@@ -95,6 +97,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_OFFSET_STATE = "readerOffset";
     private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
     private static final String READER_MODE_KEY_PREFIX = "reader_mode_";
+    private static final String DOUBLE_PAGE_MODE_KEY = "reader_double_page";
+    private static final String DOUBLE_PAGE_MODE_KEY_PREFIX = "reader_double_page_";
     private static final String PENDING_CONTINUOUS_SAVE = "pendingContinuousSave";
     private static final String PENDING_CONTINUOUS_SOURCE = "pendingContinuousSource";
     private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
@@ -119,6 +123,7 @@ public class ZoomActivity extends GeneralActivity {
     private RecyclerView continuousReader;
     private ContinuousZoomViewport continuousZoomViewport;
     private boolean continuousMode;
+    private boolean doublePageMode;
     private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
     private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
@@ -204,6 +209,7 @@ public class ZoomActivity extends GeneralActivity {
         }
         if (directory == null) directory = gallery.getGalleryFolder();
         readerScaleMode = getReaderScaleMode(preferences);
+        doublePageMode = getDoublePageMode(preferences);
         //toolbar setup
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -222,12 +228,11 @@ public class ZoomActivity extends GeneralActivity {
 
 
         //find views
-        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(this);
         mViewPager = findViewById(R.id.container);
         continuousReader = findViewById(R.id.continuous_reader);
         continuousZoomViewport = (ContinuousZoomViewport) continuousReader;
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-        readerNavigation = new PagedReaderNavigation(mViewPager);
+        mViewPager.setAdapter(createPagedAdapter());
+        readerNavigation = createPagedNavigation();
         int orientation;
         try {
             orientation = preferences.getInt(SCROLL_TYPE_KEY, ViewPager2.ORIENTATION_HORIZONTAL);
@@ -279,16 +284,16 @@ public class ZoomActivity extends GeneralActivity {
             public void onPageSelected(int newPage) {
                 if (continuousMode || switchingReaderMode) return;
                 int oldPage = actualPage;
-                actualPage = newPage;
-                if (!initializingPager && initialPosition.page != newPage + 1) {
-                    initialPosition = new ReadingPosition(newPage + 1, 0f);
+                actualPage = readerNavigation.currentPage();
+                if (!initializingPager && initialPosition.page != actualPage + 1) {
+                    initialPosition = new ReadingPosition(actualPage + 1, 0f);
                 }
-                LogUtility.d("Page selected: " + newPage + " from page " + oldPage);
-                setPageText(newPage + 1);
-                seekBar.setProgress(newPage);
+                LogUtility.d("Page selected: " + actualPage + " from page " + oldPage);
+                setPageText(actualPage + 1);
+                seekBar.setProgress(actualPage);
                 invalidateOptionsMenu();
-                clearFarRequests(oldPage, newPage);
-                makeNearRequests(newPage);
+                clearFarRequests(oldPage, actualPage);
+                makeNearRequests(actualPage);
                 if (!initializingPager) savePosition();
             }
         });
@@ -333,6 +338,15 @@ public class ZoomActivity extends GeneralActivity {
         if (continuous) setContinuousMode(true, page);
     }
 
+    private FragmentStateAdapter createPagedAdapter() {
+        return doublePageMode ? new DoublePagePagerAdapter(this) : new SectionsPagerAdapter(this);
+    }
+
+    private ReaderNavigation createPagedNavigation() {
+        return doublePageMode ? new SpreadReaderNavigation(mViewPager, gallery.getPageCount())
+            : new PagedReaderNavigation(mViewPager);
+    }
+
     private void setContinuousMode(boolean enabled) {
         if (enabled && !continuousMode)
             initialPosition = new ReadingPosition(readerNavigation.currentPage() + 1, 0f);
@@ -367,8 +381,8 @@ public class ZoomActivity extends GeneralActivity {
             autoScrollButton.setVisibility(View.GONE);
             continuousReader.setAdapter(null);
             continuousReader.clearOnScrollListeners();
-            mViewPager.setAdapter(new SectionsPagerAdapter(this));
-            readerNavigation = new PagedReaderNavigation(mViewPager);
+            mViewPager.setAdapter(createPagedAdapter());
+            readerNavigation = createPagedNavigation();
             mViewPager.setVisibility(View.VISIBLE);
             readerNavigation.goToPage(page, false);
         }
@@ -377,6 +391,25 @@ public class ZoomActivity extends GeneralActivity {
         seekBar.setProgress(page);
         switchingReaderMode = false;
         getSharedPreferences("Settings", 0).edit().putBoolean(readerModePreferenceKey(), enabled).apply();
+    }
+
+    private void setDoublePageMode(boolean enabled) {
+        if (continuousMode) setContinuousMode(false);
+        if (doublePageMode == enabled) return;
+        switchingReaderMode = true;
+        int page = readerNavigation.currentPage();
+        doublePageMode = enabled;
+        mViewPager.setAdapter(createPagedAdapter());
+        readerNavigation = createPagedNavigation();
+        readerNavigation.goToPage(page, false);
+        actualPage = readerNavigation.currentPage();
+        initialPosition = new ReadingPosition(actualPage + 1, 0f);
+        mViewPager.setVisibility(View.VISIBLE);
+        setPageText(actualPage + 1);
+        seekBar.setProgress(actualPage);
+        switchingReaderMode = false;
+        getSharedPreferences("Settings", 0).edit()
+            .putBoolean(doublePagePreferenceKey(), enabled).apply();
     }
 
     private boolean isContinuousModeEnabled(@NonNull SharedPreferences preferences) {
@@ -395,6 +428,28 @@ public class ZoomActivity extends GeneralActivity {
         }
     }
 
+    private boolean getDoublePageMode(@NonNull SharedPreferences preferences) {
+        String key = doublePagePreferenceKey();
+        if (preferences.contains(key)) {
+            try {
+                return preferences.getBoolean(key, false);
+            } catch (ClassCastException exception) {
+                return false;
+            }
+        }
+        try {
+            return preferences.getBoolean(DOUBLE_PAGE_MODE_KEY, false);
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
+
+    @NonNull
+    private String doublePagePreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? DOUBLE_PAGE_MODE_KEY_PREFIX + gallery.getId() : DOUBLE_PAGE_MODE_KEY;
+    }
+
     @NonNull
     private String readerModePreferenceKey() {
         return gallery != null && gallery.getId() > 0
@@ -411,8 +466,23 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     public void onReaderPageTap(ZoomFragment source, float horizontalPosition) {
-        if (source != getActualFragment()) return;
+        if (!isCurrentPagedFragment(source)) return;
+        if (doublePageMode && !continuousMode) {
+            SpreadReaderNavigation spread = (SpreadReaderNavigation) readerNavigation;
+            spread.selectPage(source.getPageIndex());
+            actualPage = readerNavigation.currentPage();
+            setPageText(actualPage + 1);
+            seekBar.setProgress(actualPage);
+            invalidateOptionsMenu();
+        }
         handleReaderPageTap(horizontalPosition);
+    }
+
+    private boolean isCurrentPagedFragment(@NonNull ZoomFragment source) {
+        if (continuousMode) return false;
+        if (!doublePageMode) return source == getActualFragment();
+        int current = readerNavigation.currentPage();
+        return source.getPageIndex() == current || source.getPageIndex() == current + 1;
     }
 
     private void handleReaderPageTap(float horizontalPosition) {
@@ -434,6 +504,14 @@ public class ZoomActivity extends GeneralActivity {
         for (Fragment fragment : getSupportFragmentManager().getFragments()) {
             if (fragment instanceof ZoomFragment) {
                 ((ZoomFragment) fragment).setVerticalPageTurn(isVerticalPageTurn());
+            } else if (fragment instanceof DoublePageFragment) {
+                DoublePageFragment spread = (DoublePageFragment) fragment;
+                ZoomFragment first = spread.pageFragment(spread.firstPage());
+                if (first != null) first.setVerticalPageTurn(isVerticalPageTurn());
+                if (spread.secondPage() >= 0) {
+                    ZoomFragment second = spread.pageFragment(spread.secondPage());
+                    if (second != null) second.setVerticalPageTurn(isVerticalPageTurn());
+                }
             }
         }
     }
@@ -569,6 +647,13 @@ public class ZoomActivity extends GeneralActivity {
     private void changePage(int newPage) {
         boolean instant = isInstantPageTurn(getSharedPreferences("Settings", 0));
         readerNavigation.goToPage(newPage, !instant);
+        if (doublePageMode && !continuousMode) {
+            actualPage = readerNavigation.currentPage();
+            setPageText(actualPage + 1);
+            seekBar.setProgress(actualPage);
+            invalidateOptionsMenu();
+            if (!switchingReaderMode) savePosition();
+        }
     }
 
     private boolean isInstantPageTurn(SharedPreferences preferences) {
@@ -651,6 +736,10 @@ public class ZoomActivity extends GeneralActivity {
             else if (id == R.id.reader_vertical) setReaderOrientation(ViewPager2.ORIENTATION_VERTICAL);
             else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
+
+        SwitchMaterial doublePage = Objects.requireNonNull(dialog.findViewById(R.id.reader_double_page));
+        doublePage.setChecked(doublePageMode);
+        doublePage.setOnCheckedChangeListener((button, checked) -> setDoublePageMode(checked));
 
         MaterialRadioButton scaleSmart = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_smart));
         MaterialRadioButton scaleScreen = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_screen));
@@ -995,6 +1084,11 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private ZoomFragment getActualFragment(int position) {
+        if (doublePageMode && !continuousMode) {
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + (position / 2));
+            return fragment instanceof DoublePageFragment
+                ? ((DoublePageFragment) fragment).pageFragment(position) : null;
+        }
         return (ZoomFragment) getSupportFragmentManager().findFragmentByTag("f" + position);
     }
 
@@ -1122,6 +1216,25 @@ public class ZoomActivity extends GeneralActivity {
 
     private void applyVisibilityFlag() {
         getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
+    }
+
+    public class DoublePagePagerAdapter extends FragmentStateAdapter {
+        public DoublePagePagerAdapter(ZoomActivity activity) {
+            super(activity.getSupportFragmentManager(), activity.getLifecycle());
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            int firstPage = position * 2;
+            int secondPage = firstPage + 1 < gallery.getPageCount() ? firstPage + 1 : -1;
+            return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory, readerScaleMode);
+        }
+
+        @Override
+        public int getItemCount() {
+            return (gallery.getPageCount() + 1) / 2;
+        }
     }
 
     public class SectionsPagerAdapter extends FragmentStateAdapter {

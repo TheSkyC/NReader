@@ -13,4 +13,6 @@
     <string name="reader_scale_screen">An Bildschirm anpassen</string>
     <string name="reader_scale_width">An Breite anpassen</string>
     <string name="reader_scale_original">Originalgröße</string>
+    <string name="reader_double_page">Doppelseitenmodus</string>
+    <string name="reader_double_page_summary">Zwei Seiten im Seitenmodus nebeneinander anzeigen.</string>
 </resources>

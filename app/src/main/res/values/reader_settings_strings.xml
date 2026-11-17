@@ -13,4 +13,6 @@
     <string name="reader_scale_screen">Fit screen</string>
     <string name="reader_scale_width">Fit width</string>
     <string name="reader_scale_original">Original size</string>
+    <string name="reader_double_page">Double-page</string>
+    <string name="reader_double_page_summary">Show two pages side by side in paged mode.</string>
 </resources>

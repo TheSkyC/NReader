@@ -13,4 +13,6 @@
     <string name="reader_scale_screen">Ajustar à tela</string>
     <string name="reader_scale_width">Ajustar à largura</string>
     <string name="reader_scale_original">Tamanho original</string>
+    <string name="reader_double_page">Duas páginas</string>
+    <string name="reader_double_page_summary">Mostrar duas páginas lado a lado no modo de páginas.</string>
 </resources>
