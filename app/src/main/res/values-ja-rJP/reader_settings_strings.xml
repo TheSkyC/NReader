@@ -3,4 +3,9 @@
     <string name="reader_settings_title">閲覧設定</string>
     <string name="reader_continuous_vertical">縦スクロール</string>
     <string name="reader_continuous_summary">縦スクロールはページ内の位置を記憶します。拡大はページ表示で利用できます。</string>
+    <string name="reader_background_title">背景</string>
+    <string name="reader_background_auto">自動</string>
+    <string name="reader_background_black">黒</string>
+    <string name="reader_background_gray">グレー</string>
+    <string name="reader_background_white">白</string>
 </resources>

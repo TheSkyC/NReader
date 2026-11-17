@@ -98,6 +98,11 @@ public class ZoomActivity extends GeneralActivity {
     private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
     private static final float PAGE_TAP_EDGE = .2f;
     private static final String AUTO_SCROLL_SPEED_KEY = "reader_auto_scroll_speed";
+    private static final String READER_BACKGROUND_KEY = "reader_background";
+    private static final int READER_BACKGROUND_AUTO = 0;
+    private static final int READER_BACKGROUND_BLACK = 1;
+    private static final int READER_BACKGROUND_GRAY = 2;
+    private static final int READER_BACKGROUND_WHITE = 3;
     private static final int[] AUTO_SCROLL_SPEEDS = {40, 100, 220};
     private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
     private GenericGallery gallery;
@@ -245,6 +250,7 @@ public class ZoomActivity extends GeneralActivity {
         });
         autoScrollButton.setVisibility(View.GONE);
         continuousZoomViewport.setOnUserInteractionListener(this::stopAutoScroll);
+        applyReaderBackground();
 
         //initial setup for views
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -617,6 +623,24 @@ public class ZoomActivity extends GeneralActivity {
             else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
 
+        MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
+        MaterialRadioButton backgroundBlack = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_black));
+        MaterialRadioButton backgroundGray = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_gray));
+        MaterialRadioButton backgroundWhite = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_white));
+        backgroundAuto.setText(R.string.reader_background_auto);
+        backgroundBlack.setText(R.string.reader_background_black);
+        backgroundGray.setText(R.string.reader_background_gray);
+        backgroundWhite.setText(R.string.reader_background_white);
+        RadioGroup background = Objects.requireNonNull(dialog.findViewById(R.id.reader_background));
+        background.check(backgroundId(getReaderBackground()));
+        background.setOnCheckedChangeListener((group, id) -> {
+            int value = id == R.id.reader_background_black ? READER_BACKGROUND_BLACK
+                : id == R.id.reader_background_gray ? READER_BACKGROUND_GRAY
+                : id == R.id.reader_background_white ? READER_BACKGROUND_WHITE : READER_BACKGROUND_AUTO;
+            getSharedPreferences("Settings", 0).edit().putInt(READER_BACKGROUND_KEY, value).apply();
+            applyReaderBackground();
+        });
+
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
         tap.setChecked(Global.isButtonChangePage());
         tap.setOnCheckedChangeListener((button, checked) -> Global.setButtonChangePage(this, checked));
@@ -634,6 +658,31 @@ public class ZoomActivity extends GeneralActivity {
             preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
         dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
         dialog.show();
+    }
+
+    private int getReaderBackground() {
+        try {
+            int value = getSharedPreferences("Settings", 0).getInt(READER_BACKGROUND_KEY, READER_BACKGROUND_AUTO);
+            return value >= READER_BACKGROUND_AUTO && value <= READER_BACKGROUND_WHITE ? value : READER_BACKGROUND_AUTO;
+        } catch (ClassCastException exception) {
+            return READER_BACKGROUND_AUTO;
+        }
+    }
+
+    private int backgroundId(int value) {
+        return value == READER_BACKGROUND_BLACK ? R.id.reader_background_black
+            : value == READER_BACKGROUND_GRAY ? R.id.reader_background_gray
+            : value == READER_BACKGROUND_WHITE ? R.id.reader_background_white : R.id.reader_background_auto;
+    }
+
+    private void applyReaderBackground() {
+        int color = getReaderBackground() == READER_BACKGROUND_BLACK ? android.R.color.black
+            : getReaderBackground() == READER_BACKGROUND_GRAY ? R.color.theme_reader_gray_background
+            : getReaderBackground() == READER_BACKGROUND_WHITE ? android.R.color.white
+            : R.color.theme_reader_background;
+        int resolved = getColor(color);
+        mViewPager.setBackgroundColor(resolved);
+        continuousReader.setBackgroundColor(resolved);
     }
 
     private void toggleAutoScroll() {

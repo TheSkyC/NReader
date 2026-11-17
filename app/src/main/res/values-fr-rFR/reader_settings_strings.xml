@@ -3,4 +3,9 @@
     <string name="reader_settings_title">Réglages de lecture</string>
     <string name="reader_continuous_vertical">Défilement vertical continu</string>
     <string name="reader_continuous_summary">La lecture continue mémorise votre position. Le zoom est disponible en mode page.</string>
+    <string name="reader_background_title">Arrière-plan</string>
+    <string name="reader_background_auto">Automatique</string>
+    <string name="reader_background_black">Noir</string>
+    <string name="reader_background_gray">Gris</string>
+    <string name="reader_background_white">Blanc</string>
 </resources>

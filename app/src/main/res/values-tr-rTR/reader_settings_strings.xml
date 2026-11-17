@@ -3,4 +3,9 @@
     <string name="reader_settings_title">Okuma ayarları</string>
     <string name="reader_continuous_vertical">Sürekli dikey kaydırma</string>
     <string name="reader_continuous_summary">Sürekli okuma konumunuzu hatırlar. Yakınlaştırma sayfalı modda kullanılabilir.</string>
+    <string name="reader_background_title">Arka plan</string>
+    <string name="reader_background_auto">Otomatik</string>
+    <string name="reader_background_black">Siyah</string>
+    <string name="reader_background_gray">Gri</string>
+    <string name="reader_background_white">Beyaz</string>
 </resources>

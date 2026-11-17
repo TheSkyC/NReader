@@ -60,6 +60,44 @@
             android:text="@string/reader_continuous_summary"
             android:textAppearance="?attr/textAppearanceBody2" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/reader_background_title"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <RadioGroup
+            android:id="@+id/reader_background"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_background_auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_background_black"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_background_gray"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_background_white"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+        </RadioGroup>
+
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/reader_tap_turn"
             android:layout_width="match_parent"

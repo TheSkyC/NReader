@@ -3,4 +3,9 @@
     <string name="reader_settings_title">Настройки чтения</string>
     <string name="reader_continuous_vertical">Непрерывная вертикальная прокрутка</string>
     <string name="reader_continuous_summary">Непрерывное чтение запоминает позицию. Масштабирование доступно в постраничном режиме.</string>
+    <string name="reader_background_title">Фон</string>
+    <string name="reader_background_auto">Авто</string>
+    <string name="reader_background_black">Чёрный</string>
+    <string name="reader_background_gray">Серый</string>
+    <string name="reader_background_white">Белый</string>
 </resources>

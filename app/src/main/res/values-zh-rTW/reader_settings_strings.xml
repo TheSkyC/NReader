@@ -3,4 +3,9 @@
     <string name="reader_settings_title">閱讀設定</string>
     <string name="reader_continuous_vertical">縱向連續捲動</string>
     <string name="reader_continuous_summary">連續閱讀會記錄頁內位置。縮放可在分頁模式下使用。</string>
+    <string name="reader_background_title">背景</string>
+    <string name="reader_background_auto">自動</string>
+    <string name="reader_background_black">黑色</string>
+    <string name="reader_background_gray">灰色</string>
+    <string name="reader_background_white">白色</string>
 </resources>

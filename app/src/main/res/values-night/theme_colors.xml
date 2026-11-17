@@ -19,6 +19,8 @@
     <color name="theme_image_scrim_medium">#66000000</color>
     <color name="theme_reader_overlay">#5F000000</color>
     <color name="theme_on_image_overlay">@android:color/white</color>
+    <color name="theme_reader_background">@color/theme_background</color>
+    <color name="theme_reader_gray_background">#808080</color>
     <color name="theme_image_progress_track">#40FFFFFF</color>
     <color name="theme_splash_background">#1F1F1F</color>
     <color name="theme_nav_header_start">#0D0D0D</color>

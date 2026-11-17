@@ -3,4 +3,9 @@
     <string name="reader_settings_title">阅读设置</string>
     <string name="reader_continuous_vertical">纵向连续滚动</string>
     <string name="reader_continuous_summary">连续阅读会记录页内位置。缩放可在分页模式下使用。</string>
+    <string name="reader_background_title">背景</string>
+    <string name="reader_background_auto">自动</string>
+    <string name="reader_background_black">黑色</string>
+    <string name="reader_background_gray">灰色</string>
+    <string name="reader_background_white">白色</string>
 </resources>

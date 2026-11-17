@@ -6,6 +6,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
 import android.view.View;
@@ -253,6 +254,34 @@ public class ReaderReliabilityTest {
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());
                 dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
+    public void readerBackgroundAppliesAndPersistsAcrossRecreation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                dialog.findViewById(R.id.reader_background_black).performClick();
+                assertEquals(android.graphics.Color.BLACK,
+                    ((ColorDrawable) activity.findViewById(R.id.container).getBackground()).getColor());
+                assertEquals(1, application.getSharedPreferences("Settings", 0)
+                    .getInt("reader_background", 0));
+                dialog.dismiss();
+                controller.recreate();
+                activity = controller.get();
+                assertEquals(android.graphics.Color.BLACK,
+                    ((ColorDrawable) activity.findViewById(R.id.container).getBackground()).getColor());
             }
         }
     }

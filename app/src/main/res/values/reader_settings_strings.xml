@@ -3,4 +3,9 @@
     <string name="reader_settings_title">Reader settings</string>
     <string name="reader_continuous_vertical">Continuous vertical</string>
     <string name="reader_continuous_summary">Continuous reading remembers your position. Zoom is available in paged mode.</string>
+    <string name="reader_background_title">Background</string>
+    <string name="reader_background_auto">Auto</string>
+    <string name="reader_background_black">Black</string>
+    <string name="reader_background_gray">Gray</string>
+    <string name="reader_background_white">White</string>
 </resources>
