@@ -119,6 +119,16 @@ public class ContinuousReaderNavigationTest {
         recycler.scrollBy(0, 120);
         assertEquals(0.475f, navigation.currentPosition().offset, 0.01f);
 
+        navigation.goToPosition(new ReadingPosition(2, 0.475f));
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 80);
+        assertEquals(0.525f, navigation.currentPosition().offset, 0.01f);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+        assertEquals(0.525f, navigation.currentPosition().offset, 0.01f);
+
         navigation.goToPosition(new ReadingPosition(3, 0.2f));
         MotionEvent secondDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 250, 0);
         recycler.dispatchTouchEvent(secondDown);

@@ -43,7 +43,10 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
 
             @Override
             public void onScrolled(@NonNull RecyclerView view, int dx, int dy) {
-                if (pendingPosition != null) return;
+                if (pendingPosition != null) {
+                    if (dx == 0 && dy == 0) return;
+                    cancelPendingPosition();
+                }
                 updateVisiblePage();
             }
         };
