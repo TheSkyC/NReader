@@ -4,6 +4,8 @@ package com.maxwai.nclientv3.components.reader;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -29,21 +31,36 @@ import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.DebugImageMask;
 
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 public final class ContinuousPageAdapter extends RecyclerView.Adapter<ContinuousPageAdapter.Holder> {
     private static final int MAX_DECODE_WIDTH = 2048;
     private static final int MAX_DECODE_HEIGHT = 4096;
+    private static final Executor RETRY_EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final GenericGallery gallery;
-    @Nullable private final GalleryFolder directory;
+    @Nullable private GalleryFolder directory;
+    @Nullable private final File directoryPath;
     private final BiConsumer<Integer, Float> onPageTap;
+    private final Executor retryExecutor;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                                  @NonNull BiConsumer<Integer, Float> onPageTap) {
+        this(gallery, directory, onPageTap, RETRY_EXECUTOR);
+    }
+
+    ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
+                          @NonNull BiConsumer<Integer, Float> onPageTap, @NonNull Executor retryExecutor) {
         this.gallery = gallery;
         this.directory = directory;
+        this.directoryPath = directory == null ? null : directory.getFolder();
         this.onPageTap = onPageTap;
+        this.retryExecutor = retryExecutor;
     }
 
     @NonNull
@@ -64,9 +81,43 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         });
         holder.retry.setOnClickListener(view -> {
             int page = holder.getBindingAdapterPosition();
-            if (page != RecyclerView.NO_POSITION) load(holder, page);
+            if (page != RecyclerView.NO_POSITION) retry(holder, page);
         });
         load(holder, position);
+    }
+
+    private void retry(@NonNull Holder holder, int page) {
+        if (directoryPath == null) {
+            load(holder, page);
+            return;
+        }
+        int generation = ++holder.generation;
+        holder.source = null;
+        RequestManager manager = GlideX.with(holder.image);
+        if (manager != null) manager.clear(holder.image);
+        holder.image.setImageDrawable(null);
+        holder.showLoading();
+        File path = directoryPath;
+        Handler handler = mainHandler;
+        WeakReference<ContinuousPageAdapter> adapterRef = new WeakReference<>(this);
+        WeakReference<Holder> holderRef = new WeakReference<>(holder);
+        retryExecutor.execute(() -> {
+            GalleryFolder refreshed;
+            try {
+                refreshed = new GalleryFolder(path);
+            } catch (IllegalArgumentException | SecurityException exception) {
+                refreshed = null;
+            }
+            GalleryFolder result = refreshed;
+            handler.post(() -> {
+                ContinuousPageAdapter adapter = adapterRef.get();
+                Holder current = holderRef.get();
+                if (adapter == null || current == null || current.generation != generation
+                    || current.getBindingAdapter() != adapter || current.getBindingAdapterPosition() != page) return;
+                adapter.directory = result;
+                adapter.load(current, page);
+            });
+        });
     }
 
     private void load(Holder holder, int position) {
