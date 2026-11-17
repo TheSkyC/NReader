@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reader_page_preview">Vista previa de páginas</string>
+    <string name="reader_preview_current_page">Página actual %1$d</string>
+</resources>

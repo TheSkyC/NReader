@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.load.resource.bitmap.Rotate;
@@ -255,6 +256,41 @@ public class ReaderReliabilityTest {
                 instant.setChecked(true);
                 assertTrue(application.getSharedPreferences("Settings", 0).getBoolean("instant_page_turn", false));
                 dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
+    public void pagePreviewMarksCurrentPageAndJumpsToSelectedPage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("instant_page_turn", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ViewPager2 pager = activity.findViewById(R.id.container);
+                pager.setCurrentItem(1, false);
+                activity.findViewById(R.id.reader_page_preview).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                RecyclerView grid = dialog.findViewById(R.id.reader_page_grid);
+                assertNotNull(grid);
+                assertEquals(3, grid.getAdapter().getItemCount());
+                grid.measure(View.MeasureSpec.makeMeasureSpec(900, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY));
+                grid.layout(0, 0, 900, 1000);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                RecyclerView.ViewHolder current = grid.findViewHolderForAdapterPosition(1);
+                RecyclerView.ViewHolder third = grid.findViewHolderForAdapterPosition(2);
+                assertNotNull(current);
+                assertNotNull(third);
+                assertEquals(activity.getString(R.string.reader_preview_current_page, 2),
+                    current.itemView.getContentDescription());
+                third.itemView.performClick();
+                assertEquals(2, pager.getCurrentItem());
+                assertFalse(dialog.isShowing());
             }
         }
     }

@@ -25,15 +25,19 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Priority;
+import com.maxwai.nclientv3.adapters.ReaderPagePreviewAdapter;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
+import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
@@ -146,6 +150,7 @@ public class ZoomActivity extends GeneralActivity {
         mViewPager.setKeepScreenOn(Global.isLockScreen());
         findViewById(R.id.prev).setOnClickListener(v -> changeClosePage(false));
         findViewById(R.id.next).setOnClickListener(v -> changeClosePage(true));
+        findViewById(R.id.reader_page_preview).setOnClickListener(v -> showPagePreview());
         findViewById(R.id.reader_settings).setOnClickListener(v -> showReaderSettings());
         seekBar.setMax(gallery.getPageCount() - 1);
         if (Global.useRtl()) {
@@ -354,6 +359,40 @@ public class ZoomActivity extends GeneralActivity {
         mViewPager.setOrientation(orientation);
         updateReaderDirection();
         getSharedPreferences("Settings", 0).edit().putInt(SCROLL_TYPE_KEY, orientation).apply();
+    }
+
+    private void showPagePreview() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.reader_page_preview_sheet);
+        RecyclerView grid = Objects.requireNonNull(dialog.findViewById(R.id.reader_page_grid));
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
+        grid.setLayoutManager(layoutManager);
+        boolean[] firstLayout = {true};
+        grid.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int columns = Math.max(2, Math.min(6,
+                (int) ((right - left) / getResources().getDisplayMetrics().density / 120)));
+            if (columns != layoutManager.getSpanCount()) {
+                int first = firstLayout[0] ? mViewPager.getCurrentItem() : layoutManager.findFirstVisibleItemPosition();
+                layoutManager.setSpanCount(columns);
+                grid.scrollToPosition(first == RecyclerView.NO_POSITION ? mViewPager.getCurrentItem() : first);
+            }
+            firstLayout[0] = false;
+        });
+        grid.setAdapter(new ReaderPagePreviewAdapter(gallery, directory, mViewPager.getCurrentItem(), page -> {
+            changePage(page);
+            dialog.dismiss();
+        }));
+        grid.scrollToPosition(mViewPager.getCurrentItem());
+        dialog.setOnDismissListener(ignored -> {
+            for (int index = 0; index < grid.getChildCount(); index++) {
+                View image = grid.getChildAt(index).findViewById(R.id.reader_preview_image);
+                com.bumptech.glide.RequestManager glide = GlideX.with(image);
+                if (glide != null) glide.clear(image);
+            }
+            grid.setAdapter(null);
+        });
+        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        dialog.show();
     }
 
     private void showReaderSettings() {
