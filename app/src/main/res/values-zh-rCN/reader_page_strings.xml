@@ -4,4 +4,6 @@
     <string name="reader_page_load_failed">无法加载此页面。</string>
     <string name="reader_page_unavailable">当前页面图片无法用于此操作。</string>
     <string name="reader_export_original_rotation">保存或分享将使用未经旋转的原图。是否继续？</string>
+    <string name="jump_first_page">跳到第一页</string>
+    <string name="jump_last_page">跳到最后一页</string>
 </resources>

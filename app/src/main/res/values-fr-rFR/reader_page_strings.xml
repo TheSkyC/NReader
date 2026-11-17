@@ -4,4 +4,6 @@
     <string name="reader_page_load_failed">Impossible de charger cette page.</string>
     <string name="reader_page_unavailable">L’image de cette page est indisponible pour cette action.</string>
     <string name="reader_export_original_rotation">L’enregistrement ou le partage utilisera l’image d’origine sans rotation. Continuer ?</string>
+    <string name="jump_first_page">Aller à la première page</string>
+    <string name="jump_last_page">Aller à la dernière page</string>
 </resources>

@@ -1127,6 +1127,10 @@ public class ZoomActivity extends GeneralActivity {
             toggleCurrentBookmark();
         } else if (id == R.id.scrollType) {
             changeScrollTypeDialog();
+        } else if (id == R.id.jump_first_page) {
+            changePage(0);
+        } else if (id == R.id.jump_last_page) {
+            changePage(readerNavigation.pageCount() - 1);
         }
 
         return super.onOptionsItemSelected(item);

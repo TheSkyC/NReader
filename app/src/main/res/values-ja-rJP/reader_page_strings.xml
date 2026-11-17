@@ -4,4 +4,6 @@
     <string name="reader_page_load_failed">このページを読み込めませんでした。</string>
     <string name="reader_page_unavailable">このページの画像はこの操作に使用できません。</string>
     <string name="reader_export_original_rotation">保存または共有には回転前の元画像が使用されます。続行しますか？</string>
+    <string name="jump_first_page">最初のページへ</string>
+    <string name="jump_last_page">最後のページへ</string>
 </resources>

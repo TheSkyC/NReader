@@ -337,6 +337,29 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void readerMenuJumpsToFirstAndLastPages() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                Menu menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                activity.onOptionsItemSelected(menu.findItem(R.id.jump_last_page));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertEquals(navigation.pageCount() - 1, navigation.currentPage());
+                activity.onOptionsItemSelected(menu.findItem(R.id.jump_first_page));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(0, navigation.currentPage());
+            }
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),

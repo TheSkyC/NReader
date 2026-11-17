@@ -26,4 +26,12 @@
         android:id="@+id/scrollType"
         android:title="@string/change_scroll_type"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/jump_first_page"
+        android:title="@string/jump_first_page"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/jump_last_page"
+        android:title="@string/jump_last_page"
+        app:showAsAction="never" />
 </menu>
