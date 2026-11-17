@@ -130,6 +130,26 @@ public class ContinuousReaderNavigationTest {
         assertEquals(0.525f, navigation.currentPosition().offset, 0.01f);
 
         navigation.goToPosition(new ReadingPosition(3, 0.2f));
+        recycler.scrollBy(0, 80);
+        assertEquals(1, navigation.currentPage());
+        float programmaticOffset = navigation.currentPosition().offset;
+        layoutRecycler(recycler);
+        assertEquals(1, layout.findFirstVisibleItemPosition());
+        assertEquals(programmaticOffset, navigation.currentPosition().offset, 0.001f);
+
+        navigation.goToPosition(new ReadingPosition(1, 0f));
+        recycler.scrollBy(0, 900);
+        assertEquals(2, navigation.currentPage());
+        layoutRecycler(recycler);
+        assertEquals(2, layout.findFirstVisibleItemPosition());
+        assertEquals(2, navigation.currentPage());
+
+        navigation.goToPosition(new ReadingPosition(2, 0.525f));
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+
+        navigation.goToPosition(new ReadingPosition(3, 0.2f));
         MotionEvent secondDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 250, 0);
         recycler.dispatchTouchEvent(secondDown);
         secondDown.recycle();
