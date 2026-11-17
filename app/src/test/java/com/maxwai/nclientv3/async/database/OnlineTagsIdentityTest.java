@@ -318,7 +318,7 @@ public class OnlineTagsIdentityTest {
         }
     }
 
-    @Test public void enabledAccountFilterRemainsRequestedWhenCredentialsAreRejected() {
+    @Test public void enabledAccountFilterFallsBackWhenCredentialsAreRejected() {
         Application context = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(context);
         AuthStore.clear(context);
@@ -328,13 +328,13 @@ public class OnlineTagsIdentityTest {
         try {
             assertFalse(Login.wantsAccountTag());
             AuthStore.saveApiKey(context, "rejected-test-key", false);
-            assertTrue(Login.wantsAccountTag());
+            assertFalse(Login.wantsAccountTag());
             assertFalse(Login.useAccountTag());
             AuthStore.clear(context);
             assertTrue(AuthSessionStore.replace(context,
                 AuthSessionStore.tokenCookies("test-access", "test-refresh"), null));
             context.getSharedPreferences("Auth", 0).edit().putBoolean("session_rejected", true).commit();
-            assertTrue(Login.wantsAccountTag());
+            assertFalse(Login.wantsAccountTag());
             assertFalse(Login.useAccountTag());
         } finally {
             AuthSessionStore.clear(context);
