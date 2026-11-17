@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">Налаштування читання</string>
+    <string name="reader_continuous_vertical">Безперервне вертикальне прокручування</string>
+    <string name="reader_continuous_summary">Безперервне читання поновлюється зі сторінки. Масштабування, обертання, збереження й поширення доступні в посторінковому режимі.</string>
 </resources>

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">Настройки чтения</string>
+    <string name="reader_continuous_vertical">Непрерывная вертикальная прокрутка</string>
+    <string name="reader_continuous_summary">Непрерывное чтение возобновляется со страницы. Масштабирование, поворот, сохранение и отправка доступны в постраничном режиме.</string>
 </resources>

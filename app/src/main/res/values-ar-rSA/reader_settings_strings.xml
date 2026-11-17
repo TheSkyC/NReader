@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">إعدادات القراءة</string>
+    <string name="reader_continuous_vertical">تمرير عمودي متواصل</string>
+    <string name="reader_continuous_summary">تستأنف القراءة المتواصلة من الصفحة. يتوفر التكبير والتدوير والحفظ والمشاركة في وضع الصفحات.</string>
 </resources>

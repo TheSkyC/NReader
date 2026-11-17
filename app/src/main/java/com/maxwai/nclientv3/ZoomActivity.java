@@ -28,6 +28,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
@@ -42,6 +43,8 @@ import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.reader.PagedReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ContinuousPageAdapter;
+import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
@@ -69,6 +72,7 @@ public class ZoomActivity extends GeneralActivity {
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
     private static final String READER_OFFSET_STATE = "readerOffset";
+    private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
     private static final float PAGE_TAP_EDGE = .2f;
     private GenericGallery gallery;
     private int actualPage = 0;
@@ -76,6 +80,9 @@ public class ZoomActivity extends GeneralActivity {
     private boolean initializingPager = true;
     private boolean isHidden = false;
     private ViewPager2 mViewPager;
+    private RecyclerView continuousReader;
+    private boolean continuousMode;
+    private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
     private TextView pageManagerLabel, cornerPageViewer;
     private View pageSwitcher;
@@ -140,6 +147,7 @@ public class ZoomActivity extends GeneralActivity {
         //find views
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(this);
         mViewPager = findViewById(R.id.container);
+        continuousReader = findViewById(R.id.continuous_reader);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         readerNavigation = new PagedReaderNavigation(mViewPager);
         int orientation;
@@ -161,6 +169,7 @@ public class ZoomActivity extends GeneralActivity {
         //initial setup for views
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         mViewPager.setKeepScreenOn(Global.isLockScreen());
+        continuousReader.setKeepScreenOn(Global.isLockScreen());
         findViewById(R.id.prev).setOnClickListener(v -> changeClosePage(false));
         findViewById(R.id.next).setOnClickListener(v -> changeClosePage(true));
         findViewById(R.id.reader_page_preview).setOnClickListener(v -> showPagePreview());
@@ -175,6 +184,7 @@ public class ZoomActivity extends GeneralActivity {
         mViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int newPage) {
+                if (continuousMode || switchingReaderMode) return;
                 int oldPage = actualPage;
                 actualPage = newPage;
                 if (!initializingPager && initialPosition.page != newPage + 1) {
@@ -225,6 +235,62 @@ public class ZoomActivity extends GeneralActivity {
         initializingPager = false;
         setPageText(page + 1);
         seekBar.setProgress(page);
+        boolean continuous;
+        try {
+            continuous = preferences.getBoolean(CONTINUOUS_MODE_KEY, false);
+        } catch (ClassCastException exception) {
+            continuous = false;
+        }
+        if (continuous) setContinuousMode(true, page);
+    }
+
+    private void setContinuousMode(boolean enabled) {
+        setContinuousMode(enabled, readerNavigation.currentPage());
+    }
+
+    private void setContinuousMode(boolean enabled, int page) {
+        if (continuousMode == enabled) return;
+        switchingReaderMode = true;
+        continuousMode = enabled;
+        if (enabled) {
+            initialPosition = new ReadingPosition(page + 1, 0f);
+            mViewPager.setAdapter(null);
+            LinearLayoutManager layout = new LinearLayoutManager(this);
+            continuousReader.setLayoutManager(layout);
+            continuousReader.setAdapter(new ContinuousPageAdapter(gallery, directory, ignored -> {
+                isHidden = !isHidden;
+                applyVisibilityFlag();
+                animateLayout();
+            }));
+            readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
+            mViewPager.setVisibility(View.GONE);
+            continuousReader.setVisibility(View.VISIBLE);
+            readerNavigation.goToPage(page, false);
+        } else {
+            continuousReader.setVisibility(View.GONE);
+            continuousReader.setAdapter(null);
+            continuousReader.clearOnScrollListeners();
+            mViewPager.setAdapter(new SectionsPagerAdapter(this));
+            readerNavigation = new PagedReaderNavigation(mViewPager);
+            mViewPager.setVisibility(View.VISIBLE);
+            readerNavigation.goToPage(page, false);
+        }
+        actualPage = page;
+        setPageText(page + 1);
+        seekBar.setProgress(page);
+        switchingReaderMode = false;
+        getSharedPreferences("Settings", 0).edit().putBoolean(CONTINUOUS_MODE_KEY, enabled).apply();
+    }
+
+    private void onContinuousPageChanged(int page) {
+        if (!continuousMode) return;
+        actualPage = page;
+        setPageText(page + 1);
+        seekBar.setProgress(page);
+        if (!switchingReaderMode && initialPosition.page != page + 1) {
+            initialPosition = new ReadingPosition(page + 1, 0f);
+            savePosition();
+        }
     }
 
     public void onReaderPageTap(ZoomFragment source, float horizontalPosition) {
@@ -323,7 +389,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     public void changeClosePage(boolean next) {
-        if (Global.useRtl()) next = !next;
+        if (!continuousMode && Global.useRtl()) next = !next;
         int current = readerNavigation.currentPage();
         if (next && current < readerNavigation.pageCount() - 1) changePage(current + 1);
         if (!next && current > 0) changePage(current - 1);
@@ -372,7 +438,7 @@ public class ZoomActivity extends GeneralActivity {
         builder.setTitle(getString(R.string.change_scroll_type) + ":");
         builder.setSingleChoiceItems(R.array.scroll_type, scrollType, (dialog, which) -> tmpScrollType = which);
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            if (tmpScrollType != scrollType) {
+            if (continuousMode || tmpScrollType != scrollType) {
                 setReaderOrientation(tmpScrollType);
             }
         }).setNegativeButton(R.string.cancel, null);
@@ -380,6 +446,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void setReaderOrientation(@ViewPager2.Orientation int orientation) {
+        if (continuousMode) setContinuousMode(false);
         if (mViewPager.getOrientation() == orientation) return;
         mViewPager.setOrientation(orientation);
         updateReaderDirection();
@@ -429,10 +496,12 @@ public class ZoomActivity extends GeneralActivity {
         horizontal.setText(directions[ViewPager2.ORIENTATION_HORIZONTAL]);
         vertical.setText(directions[ViewPager2.ORIENTATION_VERTICAL]);
         RadioGroup direction = Objects.requireNonNull(dialog.findViewById(R.id.reader_direction));
-        direction.check(isVerticalPageTurn() ? R.id.reader_vertical : R.id.reader_horizontal);
+        direction.check(continuousMode ? R.id.reader_continuous
+            : isVerticalPageTurn() ? R.id.reader_vertical : R.id.reader_horizontal);
         direction.setOnCheckedChangeListener((group, id) -> {
             if (id == R.id.reader_horizontal) setReaderOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
             else if (id == R.id.reader_vertical) setReaderOrientation(ViewPager2.ORIENTATION_VERTICAL);
+            else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
 
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
@@ -469,7 +538,7 @@ public class ZoomActivity extends GeneralActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.rotate) {
-            ZoomFragment fragment = getActualFragment();
+            ZoomFragment fragment = continuousMode ? null : getActualFragment();
             if (fragment == null || fragment.getView() == null) showPageUnavailable();
             else fragment.rotate();
         } else if (id == R.id.save_page) {
@@ -568,6 +637,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private Drawable getAvailablePageImage() {
+        if (continuousMode) return null;
         ZoomFragment fragment = getActualFragment();
         Drawable image = fragment == null ? null : fragment.getDrawable();
         return image instanceof BitmapDrawable ? image : null;

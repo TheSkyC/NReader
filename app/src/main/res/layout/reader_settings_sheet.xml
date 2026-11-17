@@ -44,7 +44,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_continuous"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/reader_continuous_vertical" />
         </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/reader_continuous_summary"
+            android:textAppearance="?attr/textAppearanceBody2" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/reader_tap_turn"

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">Okuma ayarları</string>
+    <string name="reader_continuous_vertical">Sürekli dikey kaydırma</string>
+    <string name="reader_continuous_summary">Sürekli okuma sayfa üzerinden devam eder. Yakınlaştırma, döndürme, kaydetme ve paylaşma sayfalı modda kullanılabilir.</string>
 </resources>

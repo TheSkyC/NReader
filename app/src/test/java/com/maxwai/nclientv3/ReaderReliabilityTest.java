@@ -25,6 +25,7 @@ import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -320,6 +321,56 @@ public class ReaderReliabilityTest {
                 assertEquals(2, navigation.currentPage());
                 navigation.goToPage(-1, false);
                 assertEquals(0, navigation.currentPage());
+            }
+        }
+    }
+
+    @Test
+    public void continuousModeSwitchesAndRetainsCurrentPage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ((ViewPager2) activity.findViewById(R.id.container)).setCurrentItem(1, false);
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                dialog.findViewById(R.id.reader_continuous).performClick();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertTrue(navigation instanceof ContinuousReaderNavigation);
+                assertEquals(1, navigation.currentPage());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.continuous_reader).getVisibility());
+                navigation.goToPage(2, false);
+                assertEquals(2, navigation.currentPage());
+                dialog.findViewById(R.id.reader_vertical).performClick();
+                assertEquals(2, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
+                assertEquals(View.GONE, activity.findViewById(R.id.continuous_reader).getVisibility());
+                dialog.findViewById(R.id.reader_continuous).performClick();
+                dialog.dismiss();
+                navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertEquals(2, navigation.currentPage());
+                controller.recreate();
+                activity = controller.get();
+                navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertTrue(navigation instanceof ContinuousReaderNavigation);
+                assertEquals(2, navigation.currentPage());
+                navigation.goToPage(1, false);
+                activity.findViewById(R.id.reader_settings).performClick();
+                dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                dialog.findViewById(R.id.reader_horizontal).performClick();
+                dialog.dismiss();
+                assertEquals(1, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
+                ReflectionHelpers.callInstanceMethod(activity, "setContinuousMode",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, true));
+                ReflectionHelpers.callInstanceMethod(activity, "changeScrollTypeDialog");
+                AlertDialog direction = (AlertDialog) ShadowDialog.getLatestDialog();
+                direction.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.container).getVisibility());
+                assertEquals(1, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
             }
         }
     }

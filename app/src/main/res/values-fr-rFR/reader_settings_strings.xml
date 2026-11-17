@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">Réglages de lecture</string>
+    <string name="reader_continuous_vertical">Défilement vertical continu</string>
+    <string name="reader_continuous_summary">La lecture continue reprend à la page. Le zoom, la rotation, l’enregistrement et le partage sont disponibles en mode page.</string>
 </resources>
