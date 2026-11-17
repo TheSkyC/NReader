@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reader_page_loading">Seite wird geladen…</string>
+    <string name="reader_page_load_failed">Diese Seite konnte nicht geladen werden.</string>
+</resources>

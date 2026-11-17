@@ -11,8 +11,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -45,7 +43,8 @@ public class ZoomFragment extends Fragment {
 
     private static final float MAX_SCALE = 8f;
     private PhotoView photoView = null;
-    private ImageButton retryButton;
+    private View loadingView;
+    private View errorView;
     private PageFile pageFile = null;
     private Uri url;
     private int degree = 0;
@@ -86,7 +85,8 @@ public class ZoomFragment extends Fragment {
         assert activity != null;
         //find views
         photoView = rootView.findViewById(R.id.image);
-        retryButton = rootView.findViewById(R.id.imageView);
+        loadingView = rootView.findViewById(R.id.reader_loading);
+        errorView = rootView.findViewById(R.id.reader_load_error);
         //read arguments
         String str = getArguments().getString("URL");
         url = str == null ? null : Uri.parse(str);
@@ -102,7 +102,7 @@ public class ZoomFragment extends Fragment {
         });
 
         photoView.setMaximumScale(MAX_SCALE);
-        retryButton.setOnClickListener(v -> loadImage());
+        rootView.findViewById(R.id.reader_retry).setOnClickListener(v -> loadImage());
         createTarget();
         loadImage();
         return rootView;
@@ -116,29 +116,26 @@ public class ZoomFragment extends Fragment {
                 photoView.setImageDrawable(DebugImageMask.wrap(photoView.getContext(), resource));
             }
 
-            void applyDrawable(ImageView toShow, ImageView toHide, Drawable drawable) {
-                toShow.setVisibility(View.VISIBLE);
-                toHide.setVisibility(View.GONE);
-                toShow.setImageDrawable(toShow == photoView ? DebugImageMask.wrap(toShow.getContext(), drawable) : drawable);
-                if (toShow instanceof PhotoView && drawable != null)
-                    scalePhoto(drawable);
-            }
-
             @Override
             public void onLoadStarted(@Nullable Drawable placeholder) {
                 super.onLoadStarted(placeholder);
-                applyDrawable(photoView, retryButton, placeholder);
+                loadingView.setVisibility(View.VISIBLE);
+                errorView.setVisibility(View.GONE);
             }
 
             @Override
             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                 super.onLoadFailed(errorDrawable);
-                applyDrawable(retryButton, photoView, errorDrawable);
+                loadingView.setVisibility(View.GONE);
+                errorView.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                applyDrawable(photoView, retryButton, resource);
+                setResource(resource);
+                loadingView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
+                scalePhoto(resource);
                 if (resource instanceof Animatable)
                     ((Animatable) resource).start();
             }
@@ -146,7 +143,8 @@ public class ZoomFragment extends Fragment {
             @Override
             public void onLoadCleared(@Nullable Drawable placeholder) {
                 super.onLoadCleared(placeholder);
-                applyDrawable(photoView, retryButton, placeholder);
+                loadingView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
             }
         };
     }
@@ -165,12 +163,14 @@ public class ZoomFragment extends Fragment {
     public void loadImage(Priority priority) {
         if (completedDownload || photoView == null || target == null) return;
         cancelRequest();
+        if (pageFile == null && url == null) {
+            target.onLoadFailed(null);
+            return;
+        }
         RequestBuilder<Drawable> dra = loadPage();
         if (dra == null) return;
         dra
             .transform(new Rotate(degree))
-            .placeholder(R.drawable.ic_launcher_foreground)
-            .error(R.drawable.ic_refresh)
             .priority(priority)
             .addListener(new RequestListener<>() {
                 @Override
@@ -196,11 +196,8 @@ public class ZoomFragment extends Fragment {
             request = glide.load(pageFile);
             LogUtility.d("Requested file glide: " + pageFile);
         } else {
-            if (url == null) request = glide.load(R.drawable.ic_launcher_foreground);
-            else {
-                LogUtility.d("Requested url glide: " + url);
-                request = glide.load(url);
-            }
+            LogUtility.d("Requested url glide: " + url);
+            request = glide.load(url);
         }
         return request.override(SIZE_ORIGINAL);
     }
@@ -230,7 +227,8 @@ public class ZoomFragment extends Fragment {
         completedDownload = false;
         target = null;
         photoView = null;
-        retryButton = null;
+        loadingView = null;
+        errorView = null;
         super.onDestroyView();
     }
 

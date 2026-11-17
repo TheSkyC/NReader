@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reader_page_loading">正在載入頁面…</string>
+    <string name="reader_page_load_failed">無法載入此頁面。</string>
+</resources>

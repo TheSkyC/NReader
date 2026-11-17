@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reader_page_loading">جارٍ تحميل الصفحة…</string>
+    <string name="reader_page_load_failed">تعذّر تحميل هذه الصفحة.</string>
+</resources>

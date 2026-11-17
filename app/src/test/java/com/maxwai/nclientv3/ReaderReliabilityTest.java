@@ -20,6 +20,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
+import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
 import com.maxwai.nclientv3.settings.Global;
@@ -254,6 +255,45 @@ public class ReaderReliabilityTest {
                 instant.setChecked(true);
                 assertTrue(application.getSharedPreferences("Settings", 0).getBoolean("instant_page_turn", false));
                 dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
+    public void missingPageShowsRetryAndSuccessfulRetryClearsError() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ZoomFragment fragment = ZoomFragment.newInstance(new LocalGallery(folder, true), 0, null);
+                activity.getSupportFragmentManager().beginTransaction().add(android.R.id.content, fragment, "missing-page").commitNow();
+                View root = fragment.requireView();
+                View error = root.findViewById(R.id.reader_load_error);
+                View loading = root.findViewById(R.id.reader_loading);
+                assertEquals(View.VISIBLE, error.getVisibility());
+                assertEquals(View.GONE, loading.getVisibility());
+                root.findViewById(R.id.reader_retry).performClick();
+                assertEquals(View.VISIBLE, error.getVisibility());
+
+                ReflectionHelpers.setField(fragment, "pageFile", new PageFile(new File(folder, "1.png"), 1));
+                root.findViewById(R.id.reader_retry).performClick();
+                ImageViewTarget<android.graphics.drawable.Drawable> target = ReflectionHelpers.getField(fragment, "target");
+                assertNotNull(target.getRequest());
+                target.onLoadStarted(null);
+                assertEquals(View.GONE, error.getVisibility());
+                assertEquals(View.VISIBLE, loading.getVisibility());
+                target.onResourceReady(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888)), null);
+                assertEquals(View.GONE, error.getVisibility());
+                assertEquals(View.GONE, loading.getVisibility());
+                target.onLoadFailed(null);
+                assertEquals(View.VISIBLE, error.getVisibility());
+                target.onLoadCleared(null);
+                assertEquals(View.GONE, error.getVisibility());
+                assertEquals(View.GONE, loading.getVisibility());
             }
         }
     }
