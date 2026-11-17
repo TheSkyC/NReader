@@ -43,4 +43,5 @@
     <string name="reader_bookmark_title_hint">Yer imi başlığı</string>
     <string name="reader_bookmark_note_hint">Not (isteğe bağlı)</string>
     <string name="reader_bookmark_default_title">Sayfa %1$d</string>
+    <string name="reader_bookmark_delete">Sil</string>
 </resources>

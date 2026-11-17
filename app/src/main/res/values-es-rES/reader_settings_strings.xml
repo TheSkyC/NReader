@@ -43,4 +43,5 @@
     <string name="reader_bookmark_title_hint">Título del marcador</string>
     <string name="reader_bookmark_note_hint">Nota (opcional)</string>
     <string name="reader_bookmark_default_title">Página %1$d</string>
+    <string name="reader_bookmark_delete">Eliminar</string>
 </resources>

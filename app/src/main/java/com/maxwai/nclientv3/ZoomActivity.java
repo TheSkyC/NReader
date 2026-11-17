@@ -1263,15 +1263,27 @@ public class ZoomActivity extends GeneralActivity {
             root.addView(empty);
         } else {
             for (ReaderBookmark bookmark : bookmarks) {
-                Button row = new Button(this);
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
                 String label = bookmark.title + "  ·  " + getString(R.string.bookmark_page_format, bookmark.page)
                     + (bookmark.note.isEmpty() ? "" : "\n" + bookmark.note);
-                row.setText(label);
-                row.setAllCaps(false);
-                row.setOnClickListener(view -> {
+                Button open = new Button(this);
+                open.setText(label);
+                open.setAllCaps(false);
+                open.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                open.setOnClickListener(view -> {
                     changePage(bookmark.page - 1);
                     dialog.dismiss();
                 });
+                Button remove = new Button(this);
+                remove.setText(R.string.reader_bookmark_delete);
+                remove.setOnClickListener(view -> {
+                    Queries.ReaderBookmarkTable.delete(bookmark.id);
+                    dialog.dismiss();
+                    showReaderBookmarks();
+                });
+                row.addView(open);
+                row.addView(remove);
                 root.addView(row);
             }
         }
