@@ -93,6 +93,7 @@ public class ZoomActivity extends GeneralActivity {
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
     private static final String READER_OFFSET_STATE = "readerOffset";
     private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
+    private static final String READER_MODE_KEY_PREFIX = "reader_mode_";
     private static final String PENDING_CONTINUOUS_SAVE = "pendingContinuousSave";
     private static final String PENDING_CONTINUOUS_SOURCE = "pendingContinuousSource";
     private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
@@ -322,12 +323,7 @@ public class ZoomActivity extends GeneralActivity {
         initializingPager = false;
         setPageText(page + 1);
         seekBar.setProgress(page);
-        boolean continuous;
-        try {
-            continuous = preferences.getBoolean(CONTINUOUS_MODE_KEY, false);
-        } catch (ClassCastException exception) {
-            continuous = false;
-        }
+        boolean continuous = isContinuousModeEnabled(preferences);
         if (continuous) setContinuousMode(true, page);
     }
 
@@ -374,7 +370,29 @@ public class ZoomActivity extends GeneralActivity {
         setPageText(page + 1);
         seekBar.setProgress(page);
         switchingReaderMode = false;
-        getSharedPreferences("Settings", 0).edit().putBoolean(CONTINUOUS_MODE_KEY, enabled).apply();
+        getSharedPreferences("Settings", 0).edit().putBoolean(readerModePreferenceKey(), enabled).apply();
+    }
+
+    private boolean isContinuousModeEnabled(@NonNull SharedPreferences preferences) {
+        String key = readerModePreferenceKey();
+        if (preferences.contains(key)) {
+            try {
+                return preferences.getBoolean(key, false);
+            } catch (ClassCastException exception) {
+                return false;
+            }
+        }
+        try {
+            return preferences.getBoolean(CONTINUOUS_MODE_KEY, false);
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
+
+    @NonNull
+    private String readerModePreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_MODE_KEY_PREFIX + gallery.getId() : CONTINUOUS_MODE_KEY;
     }
 
     private void onContinuousPageChanged(int page) {

@@ -448,6 +448,46 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void readerModePreferenceIsScopedPerGalleryWithGlobalFallback() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File continuousFolder = galleryFolder();
+        File pagedFolder = galleryFolder();
+        assertTrue(new File(continuousFolder, ".83101").createNewFile());
+        assertTrue(new File(pagedFolder, ".83102").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", false).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> firstController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, continuousFolder)).setup()) {
+                ZoomActivity first = firstController.get();
+                GenericGallery firstGallery = ReflectionHelpers.getField(first, "gallery");
+                assertTrue(firstGallery.getId() > 0);
+                assertFalse((boolean) ReflectionHelpers.getField(first, "continuousMode"));
+                ReflectionHelpers.callInstanceMethod(first, "setContinuousMode",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, true));
+                assertTrue((boolean) ReflectionHelpers.getField(first, "continuousMode"));
+                assertTrue(application.getSharedPreferences("Settings", 0)
+                    .getBoolean("reader_mode_" + firstGallery.getId(), false));
+            }
+            try (ActivityController<ZoomActivity> secondController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, pagedFolder)).setup()) {
+                ZoomActivity second = secondController.get();
+                GenericGallery secondGallery = ReflectionHelpers.getField(second, "gallery");
+                assertTrue(secondGallery.getId() > 0);
+                assertFalse((boolean) ReflectionHelpers.getField(second, "continuousMode"));
+                assertFalse(application.getSharedPreferences("Settings", 0)
+                    .getBoolean("reader_mode_" + secondGallery.getId(), false));
+            }
+            try (ActivityController<ZoomActivity> restoredController = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, continuousFolder)).setup()) {
+                assertTrue((boolean) ReflectionHelpers.getField(restoredController.get(), "continuousMode"));
+            }
+        }
+    }
+
+    @Test
     public void continuousRotationSurvivesRecreationAndDisclosesOriginalExport() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
