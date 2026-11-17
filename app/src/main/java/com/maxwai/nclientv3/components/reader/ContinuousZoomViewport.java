@@ -31,6 +31,8 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     private float downY;
     private float downOffset;
     private int viewportWidth;
+    private int contentWidth;
+    private float contentOffset;
     @Nullable private Runnable onUserInteraction;
     private final int touchSlop;
     private final ScaleGestureDetector scaleDetector;
@@ -60,8 +62,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
             verticalDrag = false;
             downX = event.getX();
             downY = event.getY();
-            RecyclerView reader = reader();
-            downOffset = reader == null ? 0f : reader.getTranslationX();
+            downOffset = contentOffset;
             endScale();
         } else if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
             float focusX = (event.getX(0) + event.getX(1)) / 2f;
@@ -122,7 +123,11 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
-        if (scale == 1f) viewportWidth = resolveViewportWidth(width);
+        if (scale == 1f) {
+            viewportWidth = width;
+            contentWidth = 0;
+            contentOffset = 0f;
+        }
     }
 
     private int resolveViewportWidth(int fallback) {
@@ -132,7 +137,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     boolean beginScale(float focusX, float focusY) {
         RecyclerView reader = reader();
         if (reader == null || !(reader.getLayoutManager() instanceof LinearLayoutManager)) return false;
-        float localX = focusX - reader.getLeft() - reader.getTranslationX();
+        float localX = focusX - reader.getLeft();
         float localY = focusY - reader.getTop();
         View page = reader.findChildViewUnder(localX, localY);
         if (page == null) return false;
@@ -142,7 +147,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         if (status == null || status.getVisibility() != View.GONE || image == null || image.getDrawable() == null
             || position == RecyclerView.NO_POSITION) return false;
         anchor = ContinuousZoomAnchor.capture(position, focusX, focusY,
-            reader.getLeft() + reader.getTranslationX() + page.getLeft() + image.getLeft(),
+            reader.getLeft() + page.getLeft() + page.getTranslationX() + image.getLeft(),
             reader.getTop() + page.getTop() + image.getTop(), image.getWidth(), image.getHeight());
         if (anchor == null) return false;
         anchorImageWidth = image.getWidth();
@@ -162,12 +167,9 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         float factor = width / (float) anchorImageWidth;
         long imageHeight = Math.round(anchorImageHeight * (double) factor);
         if (imageHeight <= 0 || imageHeight > Integer.MAX_VALUE) return false;
-        ViewGroup.LayoutParams params = reader.getLayoutParams();
-        if (params == null) return false;
-        params.width = width;
-        reader.setLayoutParams(params);
-        reader.requestLayout();
-        reader.setTranslationX(anchor.horizontalOffset(focusX, width, viewportWidth));
+        contentWidth = width;
+        contentOffset = anchor.horizontalOffset(focusX, width, viewportWidth);
+        applyContentState();
         ((LinearLayoutManager) reader.getLayoutManager()).scrollToPositionWithOffset(anchor.page,
             anchor.pageTop(focusY, 0, (int) imageHeight, reader.getTop() + reader.getPaddingTop()));
         scale = nextScale;
@@ -186,17 +188,17 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         anchor = null;
         RecyclerView reader = reader();
         if (reader == null) return;
-        ViewGroup.LayoutParams params = reader.getLayoutParams();
-        if (params != null) {
-            params.width = 0;
-            reader.setLayoutParams(params);
-        }
-        reader.setTranslationX(0f);
-        reader.requestLayout();
+        contentWidth = 0;
+        contentOffset = 0f;
+        applyContentState();
     }
 
     float currentScale() {
         return scale;
+    }
+
+    float currentContentOffset() {
+        return contentOffset;
     }
 
     private void panTo(float requestedOffset) {
@@ -204,9 +206,34 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         if (reader == null || !Float.isFinite(requestedOffset)) return;
         viewportWidth = resolveViewportWidth(getWidth());
         if (viewportWidth <= 0) return;
-        int width = reader.getLayoutParams().width;
+        int width = contentWidth;
         if (width <= 0) width = Math.round(viewportWidth * scale);
         float minimum = Math.min(0, viewportWidth - Math.max(width, viewportWidth));
-        reader.setTranslationX(Math.max(minimum, Math.min(0f, requestedOffset)));
+        contentOffset = Math.max(minimum, Math.min(0f, requestedOffset));
+        applyContentState();
+    }
+
+    @Override
+    public void onChildAttachedToWindow(@NonNull View child) {
+        super.onChildAttachedToWindow(child);
+        applyContentState(child);
+    }
+
+    private void applyContentState() {
+        for (int index = 0; index < getChildCount(); index++) {
+            applyContentState(getChildAt(index));
+        }
+        requestLayout();
+    }
+
+    private void applyContentState(@NonNull View child) {
+        ViewGroup.LayoutParams params = child.getLayoutParams();
+        if (params == null) return;
+        int targetWidth = contentWidth > 0 ? contentWidth : ViewGroup.LayoutParams.MATCH_PARENT;
+        if (params.width != targetWidth) {
+            params.width = targetWidth;
+            child.setLayoutParams(params);
+        }
+        child.setTranslationX(contentOffset);
     }
 }

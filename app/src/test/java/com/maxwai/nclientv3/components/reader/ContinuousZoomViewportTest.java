@@ -69,8 +69,9 @@ public class ContinuousZoomViewportTest {
         assertEquals(1200, initialImage.getHeight());
         assertTrue(viewport.beginScale(300, 200));
         assertTrue(viewport.scaleTo(2f, 300, 200));
-        assertEquals(1200, reader.getLayoutParams().width);
-        assertEquals(-300f, reader.getTranslationX(), 0.001f);
+        assertEquals(600, reader.getWidth());
+        assertEquals(1200, initialPage.getLayoutParams().width);
+        assertEquals(-300f, initialPage.getTranslationX(), 0.001f);
         assertEquals(2f, viewport.currentScale(), 0.001f);
         viewport.endScale();
         assertFalse(viewport.scaleTo(3f, 300, 200));
@@ -87,17 +88,17 @@ public class ContinuousZoomViewportTest {
             150, 200, 450, 200, 2);
         dispatchPointers(viewport, 200, MotionEvent.ACTION_UP, 150, 200, 0, 0, 1);
 
-        float previousOffset = reader.getTranslationX();
+        float previousOffset = viewport.currentContentOffset();
         dispatchPointers(viewport, 300, MotionEvent.ACTION_DOWN, 300, 250, 0, 0, 1);
         dispatchPointers(viewport, 320, MotionEvent.ACTION_MOVE, 500, 250, 0, 0, 1);
-        assertTrue(reader.getTranslationX() > previousOffset);
-        assertTrue(reader.getTranslationX() <= 0f);
+        assertTrue(viewport.currentContentOffset() > previousOffset);
+        assertTrue(viewport.currentContentOffset() <= 0f);
         dispatchPointers(viewport, 340, MotionEvent.ACTION_UP, 500, 250, 0, 0, 1);
 
-        previousOffset = reader.getTranslationX();
+        previousOffset = viewport.currentContentOffset();
         dispatchPointers(viewport, 400, MotionEvent.ACTION_DOWN, 300, 250, 0, 0, 1);
         dispatchPointers(viewport, 420, MotionEvent.ACTION_MOVE, 300, 100, 0, 0, 1);
-        assertEquals(previousOffset, reader.getTranslationX(), 0.001f);
+        assertEquals(previousOffset, viewport.currentContentOffset(), 0.001f);
         dispatchPointers(viewport, 440, MotionEvent.ACTION_UP, 300, 100, 0, 0, 1);
     }
 
