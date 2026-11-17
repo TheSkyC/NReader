@@ -48,4 +48,5 @@
     <string name="reader_preset_default">預設</string>
     <string name="reader_preset_night">夜間</string>
     <string name="reader_preset_scan">掃描修復</string>
+    <string name="reader_jump_saved_position">跳轉到已儲存進度</string>
 </resources>

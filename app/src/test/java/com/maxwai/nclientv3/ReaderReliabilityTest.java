@@ -360,6 +360,30 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void readerMenuJumpsToSavedProgress() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".84001").createNewFile());
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                GenericGallery gallery = ReflectionHelpers.getField(activity, "gallery");
+                Queries.ReadingProgressTable.insert(gallery.getId(), new ReadingPosition(3, 0f));
+                Menu menu = new MenuBuilder(activity);
+                activity.onCreateOptionsMenu(menu);
+                MenuItem jump = menu.findItem(R.id.jump_saved_position);
+                assertTrue(jump.isVisible());
+                activity.onOptionsItemSelected(jump);
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                assertEquals(2, navigation.currentPage());
+            }
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),

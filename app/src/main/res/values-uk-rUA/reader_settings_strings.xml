@@ -48,4 +48,5 @@
     <string name="reader_preset_default">Типовий</string>
     <string name="reader_preset_night">Нічний</string>
     <string name="reader_preset_scan">Покращити скан</string>
+    <string name="reader_jump_saved_position">Перейти до збереженого прогресу</string>
 </resources>

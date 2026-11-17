@@ -48,4 +48,5 @@
     <string name="reader_preset_default">Default</string>
     <string name="reader_preset_night">Night</string>
     <string name="reader_preset_scan">Scan cleanup</string>
+    <string name="reader_jump_saved_position">Jump to saved progress</string>
 </resources>

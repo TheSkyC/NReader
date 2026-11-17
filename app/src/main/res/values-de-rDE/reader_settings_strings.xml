@@ -48,4 +48,5 @@
     <string name="reader_preset_default">Standard</string>
     <string name="reader_preset_night">Nacht</string>
     <string name="reader_preset_scan">Scan verbessern</string>
+    <string name="reader_jump_saved_position">Zu gespeichertem Fortschritt springen</string>
 </resources>

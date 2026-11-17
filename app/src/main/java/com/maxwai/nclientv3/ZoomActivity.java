@@ -1289,7 +1289,32 @@ public class ZoomActivity extends GeneralActivity {
         getMenuInflater().inflate(R.menu.menu_zoom, menu);
         Utility.tintMenu(this, menu);
         updateBookmarkMenu(menu.findItem(R.id.bookmark));
+        updateSavedPositionMenu(menu.findItem(R.id.jump_saved_position));
         return true;
+    }
+
+    private void updateSavedPositionMenu(@Nullable MenuItem item) {
+        if (item == null || gallery == null || gallery.getId() <= 0 || readerNavigation == null) {
+            if (item != null) item.setVisible(false);
+            return;
+        }
+        ReadingPosition saved = Queries.ReadingProgressTable.fromId(gallery.getId());
+        if (saved == null) {
+            item.setVisible(false);
+            return;
+        }
+        ReadingPosition current = currentPosition();
+        boolean different = current == null || saved.page != current.page
+            || continuousMode && Math.abs(saved.offset - current.offset) > 0.01f;
+        item.setVisible(different);
+    }
+
+    private void jumpSavedPosition() {
+        if (gallery == null || gallery.getId() <= 0) return;
+        ReadingPosition saved = Queries.ReadingProgressTable.fromId(gallery.getId());
+        if (saved == null) return;
+        if (continuousMode) ((ContinuousReaderNavigation) readerNavigation).goToPosition(saved);
+        else changePage(saved.page - 1);
     }
 
     private void updateBookmarkMenu(@Nullable MenuItem item) {
@@ -1444,6 +1469,8 @@ public class ZoomActivity extends GeneralActivity {
             changePage(0);
         } else if (id == R.id.jump_last_page) {
             changePage(readerNavigation.pageCount() - 1);
+        } else if (id == R.id.jump_saved_position) {
+            jumpSavedPosition();
         } else if (id == R.id.reader_bookmarks) {
             showReaderBookmarks();
         }
