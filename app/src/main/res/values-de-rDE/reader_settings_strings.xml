@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Originalgröße</string>
     <string name="reader_double_page">Doppelseitenmodus</string>
     <string name="reader_double_page_summary">Zwei Seiten im Seitenmodus nebeneinander anzeigen.</string>
+    <string name="reader_spread_title">Seitenlayout</string>
+    <string name="reader_spread_single">Einzelne Seite</string>
+    <string name="reader_spread_double">Doppelseite</string>
+    <string name="reader_spread_auto">Automatisch</string>
+    <string name="reader_spread_summary">Automatisch nutzt im Querformat Doppelseiten und im Hochformat Einzelne.</string>
 </resources>

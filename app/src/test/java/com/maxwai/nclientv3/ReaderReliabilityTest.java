@@ -287,6 +287,28 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void automaticSpreadModeIsRestoredAndShownInSettings() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putInt("reader_spread_mode", 2).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                assertEquals(2, ((Integer) ReflectionHelpers.getField(activity, "spreadMode")).intValue());
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "doublePageMode"));
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_spread_auto)).isChecked());
+                dialog.dismiss();
+            }
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),

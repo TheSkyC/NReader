@@ -60,18 +60,43 @@
             android:text="@string/reader_continuous_summary"
             android:textAppearance="?attr/textAppearanceBody2" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/reader_double_page"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:text="@string/reader_double_page" />
+            android:layout_marginTop="8dp"
+            android:text="@string/reader_spread_title"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <RadioGroup
+            android:id="@+id/reader_spread_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_single"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_double"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+        </RadioGroup>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="@string/reader_double_page_summary"
+            android:text="@string/reader_spread_summary"
             android:textAppearance="?attr/textAppearanceBody2" />
 
         <TextView

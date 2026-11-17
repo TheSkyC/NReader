@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Özgün boyut</string>
     <string name="reader_double_page">İki sayfa</string>
     <string name="reader_double_page_summary">Sayfalı modda iki sayfayı yan yana göster.</string>
+    <string name="reader_spread_title">Sayfa düzeni</string>
+    <string name="reader_spread_single">Tek sayfa</string>
+    <string name="reader_spread_double">İki sayfa</string>
+    <string name="reader_spread_auto">Otomatik</string>
+    <string name="reader_spread_summary">Otomatik, yatayda iki sayfa ve dikeyde tek sayfa kullanır.</string>
 </resources>

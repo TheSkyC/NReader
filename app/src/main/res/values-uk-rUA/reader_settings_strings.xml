@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Оригінальний розмір</string>
     <string name="reader_double_page">Подвійна сторінка</string>
     <string name="reader_double_page_summary">Показувати дві сторінки поруч у посторінковому режимі.</string>
+    <string name="reader_spread_title">Макет сторінок</string>
+    <string name="reader_spread_single">Одна сторінка</string>
+    <string name="reader_spread_double">Дві сторінки</string>
+    <string name="reader_spread_auto">Автоматично</string>
+    <string name="reader_spread_summary">Автоматично використовує дві сторінки в альбомній орієнтації та одну в книжковій.</string>
 </resources>

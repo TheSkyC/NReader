@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Исходный размер</string>
     <string name="reader_double_page">Две страницы</string>
     <string name="reader_double_page_summary">Показывать две страницы рядом в постраничном режиме.</string>
+    <string name="reader_spread_title">Макет страниц</string>
+    <string name="reader_spread_single">Одна страница</string>
+    <string name="reader_spread_double">Две страницы</string>
+    <string name="reader_spread_auto">Авто</string>
+    <string name="reader_spread_summary">Авто использует две страницы в альбомной ориентации и одну в книжной.</string>
 </resources>

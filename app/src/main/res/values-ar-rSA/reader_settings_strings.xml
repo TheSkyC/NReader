@@ -15,4 +15,9 @@
     <string name="reader_scale_original">الحجم الأصلي</string>
     <string name="reader_double_page">صفحتان</string>
     <string name="reader_double_page_summary">عرض صفحتين جنبًا إلى جنب في وضع الصفحات.</string>
+    <string name="reader_spread_title">تخطيط الصفحة</string>
+    <string name="reader_spread_single">صفحة واحدة</string>
+    <string name="reader_spread_double">صفحتان</string>
+    <string name="reader_spread_auto">تلقائي</string>
+    <string name="reader_spread_summary">يستخدم التلقائي صفحتين في الوضع الأفقي وصفحة واحدة في الوضع الرأسي.</string>
 </resources>

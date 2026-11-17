@@ -99,6 +99,11 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_MODE_KEY_PREFIX = "reader_mode_";
     private static final String DOUBLE_PAGE_MODE_KEY = "reader_double_page";
     private static final String DOUBLE_PAGE_MODE_KEY_PREFIX = "reader_double_page_";
+    private static final String SPREAD_MODE_KEY = "reader_spread_mode";
+    private static final String SPREAD_MODE_KEY_PREFIX = "reader_spread_mode_";
+    private static final int SPREAD_MODE_SINGLE = 0;
+    private static final int SPREAD_MODE_DOUBLE = 1;
+    private static final int SPREAD_MODE_AUTO = 2;
     private static final String PENDING_CONTINUOUS_SAVE = "pendingContinuousSave";
     private static final String PENDING_CONTINUOUS_SOURCE = "pendingContinuousSource";
     private static final String PENDING_SOURCE_IS_FILE = "pendingContinuousSourceIsFile";
@@ -124,6 +129,7 @@ public class ZoomActivity extends GeneralActivity {
     private ContinuousZoomViewport continuousZoomViewport;
     private boolean continuousMode;
     private boolean doublePageMode;
+    private int spreadMode = SPREAD_MODE_SINGLE;
     private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
     private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
@@ -209,7 +215,8 @@ public class ZoomActivity extends GeneralActivity {
         }
         if (directory == null) directory = gallery.getGalleryFolder();
         readerScaleMode = getReaderScaleMode(preferences);
-        doublePageMode = getDoublePageMode(preferences);
+        spreadMode = getSpreadMode(preferences);
+        doublePageMode = isDoublePageEffective();
         //toolbar setup
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -394,7 +401,22 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void setDoublePageMode(boolean enabled) {
+        setSpreadMode(enabled ? SPREAD_MODE_DOUBLE : SPREAD_MODE_SINGLE);
+    }
+
+    private void setSpreadMode(int mode) {
         if (continuousMode) setContinuousMode(false);
+        spreadMode = mode < SPREAD_MODE_SINGLE || mode > SPREAD_MODE_AUTO ? SPREAD_MODE_SINGLE : mode;
+        boolean enabled = isDoublePageEffective();
+        if (doublePageMode == enabled) {
+            getSharedPreferences("Settings", 0).edit().putInt(spreadModePreferenceKey(), spreadMode).apply();
+            return;
+        }
+        applyDoublePageMode(enabled);
+        getSharedPreferences("Settings", 0).edit().putInt(spreadModePreferenceKey(), spreadMode).apply();
+    }
+
+    private void applyDoublePageMode(boolean enabled) {
         if (doublePageMode == enabled) return;
         switchingReaderMode = true;
         int page = readerNavigation.currentPage();
@@ -408,8 +430,6 @@ public class ZoomActivity extends GeneralActivity {
         setPageText(actualPage + 1);
         seekBar.setProgress(actualPage);
         switchingReaderMode = false;
-        getSharedPreferences("Settings", 0).edit()
-            .putBoolean(doublePagePreferenceKey(), enabled).apply();
     }
 
     private boolean isContinuousModeEnabled(@NonNull SharedPreferences preferences) {
@@ -428,20 +448,37 @@ public class ZoomActivity extends GeneralActivity {
         }
     }
 
-    private boolean getDoublePageMode(@NonNull SharedPreferences preferences) {
-        String key = doublePagePreferenceKey();
+    private int getSpreadMode(@NonNull SharedPreferences preferences) {
+        String key = spreadModePreferenceKey();
         if (preferences.contains(key)) {
             try {
-                return preferences.getBoolean(key, false);
+                int value = preferences.getInt(key, SPREAD_MODE_SINGLE);
+                return value >= SPREAD_MODE_SINGLE && value <= SPREAD_MODE_AUTO ? value : SPREAD_MODE_SINGLE;
             } catch (ClassCastException exception) {
-                return false;
+                return SPREAD_MODE_SINGLE;
             }
         }
-        try {
-            return preferences.getBoolean(DOUBLE_PAGE_MODE_KEY, false);
-        } catch (ClassCastException exception) {
-            return false;
+        String legacyKey = doublePagePreferenceKey();
+        if (preferences.contains(legacyKey)) {
+            try {
+                return preferences.getBoolean(legacyKey, false) ? SPREAD_MODE_DOUBLE : SPREAD_MODE_SINGLE;
+            } catch (ClassCastException exception) {
+                return SPREAD_MODE_SINGLE;
+            }
         }
+        return SPREAD_MODE_SINGLE;
+    }
+
+    private boolean isDoublePageEffective() {
+        return spreadMode == SPREAD_MODE_DOUBLE
+            || (spreadMode == SPREAD_MODE_AUTO
+                && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+    }
+
+    @NonNull
+    private String spreadModePreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? SPREAD_MODE_KEY_PREFIX + gallery.getId() : SPREAD_MODE_KEY;
     }
 
     @NonNull
@@ -622,6 +659,10 @@ public class ZoomActivity extends GeneralActivity {
         ReadingPosition position = continuousMode ? currentPosition() : null;
         super.onConfigurationChanged(newConfig);
         changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        if (!continuousMode && spreadMode == SPREAD_MODE_AUTO) {
+            boolean desiredDoublePage = isDoublePageEffective();
+            if (desiredDoublePage != doublePageMode) applyDoublePageMode(desiredDoublePage);
+        }
         if (continuousMode) continuousZoomViewport.resetZoom();
         else applyReaderScaleMode();
         if (position != null) ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
@@ -737,9 +778,17 @@ public class ZoomActivity extends GeneralActivity {
             else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
 
-        SwitchMaterial doublePage = Objects.requireNonNull(dialog.findViewById(R.id.reader_double_page));
-        doublePage.setChecked(doublePageMode);
-        doublePage.setOnCheckedChangeListener((button, checked) -> setDoublePageMode(checked));
+        MaterialRadioButton spreadSingle = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_single));
+        MaterialRadioButton spreadDouble = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_double));
+        MaterialRadioButton spreadAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_auto));
+        spreadSingle.setText(R.string.reader_spread_single);
+        spreadDouble.setText(R.string.reader_spread_double);
+        spreadAuto.setText(R.string.reader_spread_auto);
+        RadioGroup spread = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_mode));
+        spread.check(spreadId(spreadMode));
+        spread.setOnCheckedChangeListener((group, id) -> setSpreadMode(
+            id == R.id.reader_spread_double ? SPREAD_MODE_DOUBLE
+                : id == R.id.reader_spread_auto ? SPREAD_MODE_AUTO : SPREAD_MODE_SINGLE));
 
         MaterialRadioButton scaleSmart = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_smart));
         MaterialRadioButton scaleScreen = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_screen));
@@ -858,6 +907,11 @@ public class ZoomActivity extends GeneralActivity {
         return value == ReaderScaleMode.FIT_SCREEN ? R.id.reader_scale_screen
             : value == ReaderScaleMode.FIT_WIDTH ? R.id.reader_scale_width
             : value == ReaderScaleMode.ORIGINAL ? R.id.reader_scale_original : R.id.reader_scale_smart;
+    }
+
+    private int spreadId(int value) {
+        return value == SPREAD_MODE_DOUBLE ? R.id.reader_spread_double
+            : value == SPREAD_MODE_AUTO ? R.id.reader_spread_auto : R.id.reader_spread_single;
     }
 
     private void applyReaderBackground() {

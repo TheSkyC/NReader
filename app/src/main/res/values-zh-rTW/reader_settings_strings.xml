@@ -15,4 +15,9 @@
     <string name="reader_scale_original">原始尺寸</string>
     <string name="reader_double_page">雙頁閱讀</string>
     <string name="reader_double_page_summary">在分頁模式下並排顯示兩頁。</string>
+    <string name="reader_spread_title">頁面版面</string>
+    <string name="reader_spread_single">單頁</string>
+    <string name="reader_spread_double">雙頁</string>
+    <string name="reader_spread_auto">自動</string>
+    <string name="reader_spread_summary">自動模式在橫向使用雙頁，直向使用單頁。</string>
 </resources>

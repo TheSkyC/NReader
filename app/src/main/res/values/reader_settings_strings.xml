@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Original size</string>
     <string name="reader_double_page">Double-page</string>
     <string name="reader_double_page_summary">Show two pages side by side in paged mode.</string>
+    <string name="reader_spread_title">Page layout</string>
+    <string name="reader_spread_single">Single page</string>
+    <string name="reader_spread_double">Double page</string>
+    <string name="reader_spread_auto">Automatic</string>
+    <string name="reader_spread_summary">Automatic uses double pages in landscape and single pages in portrait.</string>
 </resources>

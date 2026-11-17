@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Dimensione originale</string>
     <string name="reader_double_page">Doppia pagina</string>
     <string name="reader_double_page_summary">Mostra due pagine affiancate nella modalità a pagine.</string>
+    <string name="reader_spread_title">Layout pagina</string>
+    <string name="reader_spread_single">Pagina singola</string>
+    <string name="reader_spread_double">Doppia pagina</string>
+    <string name="reader_spread_auto">Automatico</string>
+    <string name="reader_spread_summary">La modalità automatica usa due pagine in orizzontale e una in verticale.</string>
 </resources>

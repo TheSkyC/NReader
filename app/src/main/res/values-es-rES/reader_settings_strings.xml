@@ -15,4 +15,9 @@
     <string name="reader_scale_original">Tamaño original</string>
     <string name="reader_double_page">Doble página</string>
     <string name="reader_double_page_summary">Mostrar dos páginas una al lado de la otra en el modo paginado.</string>
+    <string name="reader_spread_title">Diseño de página</string>
+    <string name="reader_spread_single">Una página</string>
+    <string name="reader_spread_double">Dos páginas</string>
+    <string name="reader_spread_auto">Automático</string>
+    <string name="reader_spread_summary">El modo automático usa dos páginas en horizontal y una en vertical.</string>
 </resources>
