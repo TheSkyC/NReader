@@ -100,6 +100,12 @@ public class ContinuousZoomViewportTest {
         dispatchPointers(viewport, 420, MotionEvent.ACTION_MOVE, 300, 100, 0, 0, 1);
         assertEquals(previousOffset, viewport.currentContentOffset(), 0.001f);
         dispatchPointers(viewport, 440, MotionEvent.ACTION_UP, 300, 100, 0, 0, 1);
+
+        viewport.resetZoom();
+        assertEquals(1f, viewport.currentScale(), 0.001f);
+        assertEquals(0f, viewport.currentContentOffset(), 0.001f);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, initialPage.getLayoutParams().width);
+        assertEquals(0f, initialPage.getTranslationX(), 0.001f);
     }
 
     private void dispatchPointers(View view, long time, int action, float x1, float y1,

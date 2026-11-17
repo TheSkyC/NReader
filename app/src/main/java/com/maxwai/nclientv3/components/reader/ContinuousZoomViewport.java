@@ -123,10 +123,22 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
-        if (scale == 1f) {
+        if (width <= 0) return;
+        if (scale == 1f || viewportWidth <= 0) {
             viewportWidth = width;
             contentWidth = 0;
             contentOffset = 0f;
+            applyContentState();
+            return;
+        }
+        if (width != viewportWidth) {
+            float widthRatio = width / (float) viewportWidth;
+            contentWidth = Math.max(width, Math.round(contentWidth * widthRatio));
+            contentOffset *= widthRatio;
+            viewportWidth = width;
+            float minimum = Math.min(0, viewportWidth - contentWidth);
+            contentOffset = Math.max(minimum, Math.min(0f, contentOffset));
+            applyContentState();
         }
     }
 
