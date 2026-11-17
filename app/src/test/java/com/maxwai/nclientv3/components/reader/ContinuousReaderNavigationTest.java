@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
@@ -79,6 +80,24 @@ public class ContinuousReaderNavigationTest {
         target.findViewById(R.id.continuous_page_retry).performClick();
         assertEquals(1, retries.get());
         assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
+
+        MotionEvent pageDown = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 300, 250, 0);
+        recycler.onInterceptTouchEvent(pageDown);
+        pageDown.recycle();
+        assertNotNull(navigation.currentPosition());
+        assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
+
+        MotionEvent drag = MotionEvent.obtain(0, 20, MotionEvent.ACTION_MOVE, 300, 100, 0);
+        recycler.onInterceptTouchEvent(drag);
+        drag.recycle();
+        assertNull(navigation.currentPosition());
+        MotionEvent cancel = MotionEvent.obtain(0, 21, MotionEvent.ACTION_CANCEL, 300, 100, 0);
+        recycler.onInterceptTouchEvent(cancel);
+        cancel.recycle();
+        navigation.goToPosition(new ReadingPosition(2, 0.4f));
+        layoutRecycler(recycler);
+        target = layout.findViewByPosition(1);
+        assertNotNull(target);
 
         target.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
         recycler.getViewTreeObserver().dispatchOnGlobalLayout();

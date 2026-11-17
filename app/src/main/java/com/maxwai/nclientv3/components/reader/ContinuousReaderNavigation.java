@@ -1,7 +1,6 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.reader;
 
-import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -29,7 +28,8 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
     private final RecyclerView.OnItemTouchListener touchListener = new RecyclerView.SimpleOnItemTouchListener() {
         @Override
         public boolean onInterceptTouchEvent(@NonNull RecyclerView view, @NonNull MotionEvent event) {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN && !isRetryTouch(event)) interruptRestore();
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN && !isPendingUnloadedPageTouch(event))
+                interruptRestore();
             return false;
         }
     };
@@ -111,16 +111,10 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
         updateVisiblePage();
     }
 
-    private boolean isRetryTouch(@NonNull MotionEvent event) {
+    private boolean isPendingUnloadedPageTouch(@NonNull MotionEvent event) {
         if (pendingPosition == null) return false;
         View item = layout.findViewByPosition(page);
-        if (item == null) return false;
-        View retry = item.findViewById(R.id.continuous_page_retry);
-        if (retry == null || !retry.isShown()) return false;
-        Rect bounds = new Rect();
-        retry.getDrawingRect(bounds);
-        recycler.offsetDescendantRectToMyCoords(retry, bounds);
-        return bounds.contains((int) event.getX(), (int) event.getY());
+        return item != null && !isLoaded(item) && recycler.findChildViewUnder(event.getX(), event.getY()) == item;
     }
 
     private void updateVisiblePage() {
