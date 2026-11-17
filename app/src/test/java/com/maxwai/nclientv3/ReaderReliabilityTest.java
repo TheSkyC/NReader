@@ -503,6 +503,36 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void continuousPageEdgeTapsFollowReaderSetting() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        Global.setButtonChangePage(application, true);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(1, false);
+                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
+                    ReflectionHelpers.ClassParameter.from(float.class, 0.95f));
+                assertEquals(2, navigation.currentPage());
+                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
+                    ReflectionHelpers.ClassParameter.from(float.class, 0.05f));
+                assertEquals(1, navigation.currentPage());
+                Global.setButtonChangePage(application, false);
+                boolean wasHidden = ReflectionHelpers.getField(activity, "isHidden");
+                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
+                    ReflectionHelpers.ClassParameter.from(float.class, 0.95f));
+                assertEquals(1, navigation.currentPage());
+                assertEquals(!wasHidden, (boolean) ReflectionHelpers.getField(activity, "isHidden"));
+            }
+        }
+    }
+
+    @Test
     public void pageActionsHandleMissingAndUnloadedFragments() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

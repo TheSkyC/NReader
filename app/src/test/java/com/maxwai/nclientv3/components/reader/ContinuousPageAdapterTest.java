@@ -3,6 +3,8 @@ package com.maxwai.nclientv3.components.reader;
 
 import android.app.Activity;
 import android.app.Application;
+import android.os.Looper;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,10 +21,12 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -44,7 +48,11 @@ public class ContinuousPageAdapterTest {
         RecyclerView recycler = new RecyclerView(activity);
         recycler.setLayoutManager(new LinearLayoutManager(activity));
         AtomicInteger tapped = new AtomicInteger(-1);
-        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), tapped::set));
+        AtomicReference<Float> horizontal = new AtomicReference<>();
+        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), (page, x) -> {
+            tapped.set(page);
+            horizontal.set(x);
+        }));
         activity.setContentView(recycler);
         recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
@@ -59,6 +67,34 @@ public class ContinuousPageAdapterTest {
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_error).getVisibility());
         first.itemView.performClick();
         assertEquals(0, tapped.get());
+        assertEquals(0.5f, horizontal.get(), 0.001f);
+        MotionEvent down = MotionEvent.obtain(100, 100, MotionEvent.ACTION_DOWN, 30, 10, 0);
+        MotionEvent up = MotionEvent.obtain(100, 120, MotionEvent.ACTION_UP, 30, 10, 0);
+        first.itemView.dispatchTouchEvent(down);
+        first.itemView.dispatchTouchEvent(up);
+        down.recycle();
+        up.recycle();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(0.05f, horizontal.get(), 0.001f);
+        first.itemView.performClick();
+        assertEquals(0.5f, horizontal.get(), 0.001f);
+        float rightEdge = first.itemView.getWidth() * 0.95f;
+        down = MotionEvent.obtain(200, 200, MotionEvent.ACTION_DOWN, rightEdge, 10, 0);
+        up = MotionEvent.obtain(200, 220, MotionEvent.ACTION_UP, rightEdge, 10, 0);
+        first.itemView.dispatchTouchEvent(down);
+        first.itemView.dispatchTouchEvent(up);
+        down.recycle();
+        up.recycle();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(0.95f, horizontal.get(), 0.001f);
+        down = MotionEvent.obtain(300, 300, MotionEvent.ACTION_DOWN, 30, 10, 0);
+        MotionEvent cancel = MotionEvent.obtain(300, 320, MotionEvent.ACTION_CANCEL, 30, 10, 0);
+        first.itemView.dispatchTouchEvent(down);
+        first.itemView.dispatchTouchEvent(cancel);
+        down.recycle();
+        cancel.recycle();
+        first.itemView.performClick();
+        assertEquals(0.5f, horizontal.get(), 0.001f);
         recycler.setAdapter(null);
     }
 }

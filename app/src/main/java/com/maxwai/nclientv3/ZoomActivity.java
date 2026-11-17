@@ -286,11 +286,8 @@ public class ZoomActivity extends GeneralActivity {
             mViewPager.setAdapter(null);
             LinearLayoutManager layout = new LinearLayoutManager(this);
             continuousReader.setLayoutManager(layout);
-            continuousReader.setAdapter(new ContinuousPageAdapter(gallery, directory, ignored -> {
-                isHidden = !isHidden;
-                applyVisibilityFlag();
-                animateLayout();
-            }));
+            continuousReader.setAdapter(new ContinuousPageAdapter(gallery, directory,
+                (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition)));
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
             mViewPager.setVisibility(View.GONE);
             continuousReader.setVisibility(View.VISIBLE);
@@ -323,6 +320,10 @@ public class ZoomActivity extends GeneralActivity {
 
     public void onReaderPageTap(ZoomFragment source, float horizontalPosition) {
         if (source != getActualFragment()) return;
+        handleReaderPageTap(horizontalPosition);
+    }
+
+    private void handleReaderPageTap(float horizontalPosition) {
         if (Global.isButtonChangePage() && (horizontalPosition < PAGE_TAP_EDGE
             || horizontalPosition > 1f - PAGE_TAP_EDGE)) {
             changeClosePage(horizontalPosition > 1f - PAGE_TAP_EDGE);

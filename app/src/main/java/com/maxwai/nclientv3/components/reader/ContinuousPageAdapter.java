@@ -1,9 +1,12 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.reader;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -26,7 +29,7 @@ import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.DebugImageMask;
 
-import java.util.function.IntConsumer;
+import java.util.function.BiConsumer;
 
 public final class ContinuousPageAdapter extends RecyclerView.Adapter<ContinuousPageAdapter.Holder> {
     private static final int MAX_DECODE_WIDTH = 2048;
@@ -34,10 +37,10 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     private final GenericGallery gallery;
     @Nullable private final GalleryFolder directory;
-    private final IntConsumer onPageTap;
+    private final BiConsumer<Integer, Float> onPageTap;
 
     public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
-                                 @NonNull IntConsumer onPageTap) {
+                                 @NonNull BiConsumer<Integer, Float> onPageTap) {
         this.gallery = gallery;
         this.directory = directory;
         this.onPageTap = onPageTap;
@@ -51,10 +54,13 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
+        holder.tapPosition = 0.5f;
         holder.itemView.setContentDescription(holder.itemView.getContext().getString(R.string.bookmark_page_format, position + 1));
         holder.itemView.setOnClickListener(view -> {
             int page = holder.getBindingAdapterPosition();
-            if (page != RecyclerView.NO_POSITION) onPageTap.accept(page);
+            float horizontalPosition = holder.tapPosition;
+            holder.tapPosition = 0.5f;
+            if (page != RecyclerView.NO_POSITION) onPageTap.accept(page, horizontalPosition);
         });
         holder.retry.setOnClickListener(view -> {
             int page = holder.getBindingAdapterPosition();
@@ -141,7 +147,9 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         final View retry;
         int generation;
         @Nullable Object source;
+        float tapPosition = 0.5f;
 
+        @SuppressLint("ClickableViewAccessibility") // Touch observation does not consume events; the view performs clicks normally.
         Holder(View view) {
             super(view);
             image = view.findViewById(R.id.continuous_page_image);
@@ -149,6 +157,24 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             loading = view.findViewById(R.id.continuous_page_loading);
             error = view.findViewById(R.id.continuous_page_error);
             retry = view.findViewById(R.id.continuous_page_retry);
+            GestureDetector detector = new GestureDetector(view.getContext(), new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onDown(@NonNull MotionEvent event) {
+                    tapPosition = 0.5f;
+                    return true;
+                }
+
+                @Override
+                public boolean onSingleTapUp(@NonNull MotionEvent event) {
+                    if (view.getWidth() > 0) tapPosition = Math.max(0f, Math.min(1f, event.getX() / view.getWidth()));
+                    return false;
+                }
+            });
+            view.setOnTouchListener((touched, event) -> {
+                detector.onTouchEvent(event);
+                if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) tapPosition = 0.5f;
+                return false;
+            });
         }
 
         void showLoading() {
