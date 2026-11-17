@@ -2,4 +2,5 @@
 <resources>
     <string name="reader_page_loading">正在載入頁面…</string>
     <string name="reader_page_load_failed">無法載入此頁面。</string>
+    <string name="reader_page_unavailable">目前頁面的圖片無法用於此操作。</string>
 </resources>

@@ -202,8 +202,9 @@ public class ZoomFragment extends Fragment {
         return request.override(SIZE_ORIGINAL);
     }
 
+    @Nullable
     public Drawable getDrawable() {
-        return photoView.getDrawable();
+        return completedDownload && photoView != null ? photoView.getDrawable() : null;
     }
 
     public void setVerticalPageTurn(boolean vertical) {

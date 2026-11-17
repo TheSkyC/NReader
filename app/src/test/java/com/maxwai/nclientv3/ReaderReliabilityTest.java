@@ -7,8 +7,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
 import android.view.View;
+import android.view.Menu;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -40,6 +42,7 @@ import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowDialog;
+import org.robolectric.shadows.ShadowToast;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.io.File;
@@ -54,6 +57,8 @@ import android.util.Base64;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -315,6 +320,39 @@ public class ReaderReliabilityTest {
                 assertEquals(2, navigation.currentPage());
                 navigation.goToPage(-1, false);
                 assertEquals(0, navigation.currentPage());
+            }
+        }
+    }
+
+    @Test
+    public void pageActionsHandleMissingAndUnloadedFragments() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ZoomFragment existing = (ZoomFragment) activity.getSupportFragmentManager().findFragmentByTag("f0");
+                if (existing != null) activity.getSupportFragmentManager().beginTransaction().remove(existing).commitNow();
+                Menu menu = new MenuBuilder(activity);
+                activity.getMenuInflater().inflate(R.menu.menu_zoom, menu);
+                for (int id : new int[]{R.id.rotate, R.id.save_page, R.id.share}) {
+                    activity.onOptionsItemSelected(menu.findItem(id));
+                    assertEquals(activity.getString(R.string.reader_page_unavailable), ShadowToast.getTextOfLatestToast());
+                }
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 0, gallery.getGalleryFolder());
+                activity.getSupportFragmentManager().beginTransaction().add(android.R.id.content, fragment, "f0").commitNow();
+                PhotoView photo = preparePhoto(fragment);
+                ReflectionHelpers.setField(fragment, "completedDownload", false);
+                assertNull(ReflectionHelpers.callInstanceMethod(activity, "getAvailablePageImage"));
+                ReflectionHelpers.setField(fragment, "completedDownload", true);
+                assertSame(photo.getDrawable(), ReflectionHelpers.callInstanceMethod(activity, "getAvailablePageImage"));
+                activity.getSupportFragmentManager().beginTransaction().detach(fragment).commitNow();
+                assertNull(fragment.getDrawable());
+                activity.onOptionsItemSelected(menu.findItem(R.id.rotate));
+                assertEquals(activity.getString(R.string.reader_page_unavailable), ShadowToast.getTextOfLatestToast());
             }
         }
     }

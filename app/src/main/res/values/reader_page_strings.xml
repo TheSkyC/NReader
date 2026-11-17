@@ -2,4 +2,5 @@
 <resources>
     <string name="reader_page_loading">Loading page…</string>
     <string name="reader_page_load_failed">Could not load this page.</string>
+    <string name="reader_page_unavailable">This page image is unavailable for this action.</string>
 </resources>

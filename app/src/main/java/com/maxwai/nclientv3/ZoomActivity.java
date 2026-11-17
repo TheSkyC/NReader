@@ -7,6 +7,8 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -467,13 +469,18 @@ public class ZoomActivity extends GeneralActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.rotate) {
-            getActualFragment().rotate();
+            ZoomFragment fragment = getActualFragment();
+            if (fragment == null || fragment.getView() == null) showPageUnavailable();
+            else fragment.rotate();
         } else if (id == R.id.save_page) {
-            if (Global.hasStoragePermission(this)) {
+            if (getAvailablePageImage() == null) {
+                showPageUnavailable();
+            } else if (Global.hasStoragePermission(this)) {
                 downloadPage();
             } else requestStorage();
         } else if (id == R.id.share) {
-            if (gallery.getId() <= 0) sendImage(false);
+            if (getAvailablePageImage() == null) showPageUnavailable();
+            else if (gallery.getId() <= 0) sendImage(false);
             else openSendImageDialog();
         } else if (id == android.R.id.home) {
             finish();
@@ -541,13 +548,33 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void sendImage(boolean withText) {
+        Drawable image = getAvailablePageImage();
+        if (image == null) {
+            showPageUnavailable();
+            return;
+        }
         int pageNum = readerNavigation.currentPage();
-        Utility.sendImage(this, getActualFragment().getDrawable(), withText ? gallery.sharePageUrl(pageNum) : null);
+        Utility.sendImage(this, image, withText ? gallery.sharePageUrl(pageNum) : null);
     }
 
     private void downloadPage() {
+        Drawable image = getAvailablePageImage();
+        if (image == null) {
+            showPageUnavailable();
+            return;
+        }
         final File output = new File(Global.SCREENFOLDER, gallery.getId() + "-" + (readerNavigation.currentPage() + 1) + ".jpg");
-        Utility.saveImage(getActualFragment().getDrawable(), output);
+        Utility.saveImage(image, output);
+    }
+
+    private Drawable getAvailablePageImage() {
+        ZoomFragment fragment = getActualFragment();
+        Drawable image = fragment == null ? null : fragment.getDrawable();
+        return image instanceof BitmapDrawable ? image : null;
+    }
+
+    private void showPageUnavailable() {
+        Toast.makeText(this, R.string.reader_page_unavailable, Toast.LENGTH_SHORT).show();
     }
 
     private void animateLayout() {

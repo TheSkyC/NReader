@@ -2,4 +2,5 @@
 <resources>
     <string name="reader_page_loading">Завантаження сторінки…</string>
     <string name="reader_page_load_failed">Не вдалося завантажити цю сторінку.</string>
+    <string name="reader_page_unavailable">Зображення сторінки недоступне для цієї дії.</string>
 </resources>
