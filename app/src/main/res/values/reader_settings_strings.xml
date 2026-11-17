@@ -36,4 +36,11 @@
     <string name="reader_saturation">Saturation</string>
     <string name="reader_adjustments_summary">Adjustments affect display only and do not change saved or shared originals.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Page bookmarks</string>
+    <string name="reader_bookmarks_empty">No page bookmarks yet.</string>
+    <string name="reader_bookmarks_unavailable">Bookmarks require a saved gallery.</string>
+    <string name="reader_bookmark_add">Add bookmark</string>
+    <string name="reader_bookmark_title_hint">Bookmark title</string>
+    <string name="reader_bookmark_note_hint">Note (optional)</string>
+    <string name="reader_bookmark_default_title">Page %1$d</string>
 </resources>

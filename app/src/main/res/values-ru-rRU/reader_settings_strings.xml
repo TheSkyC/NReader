@@ -36,4 +36,11 @@
     <string name="reader_saturation">Насыщенность</string>
     <string name="reader_adjustments_summary">Настройки влияют только на отображение. Сохранённые и отправленные оригиналы не изменяются.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Закладки страниц</string>
+    <string name="reader_bookmarks_empty">Закладок пока нет.</string>
+    <string name="reader_bookmarks_unavailable">Для закладок нужна сохранённая галерея.</string>
+    <string name="reader_bookmark_add">Добавить закладку</string>
+    <string name="reader_bookmark_title_hint">Название закладки</string>
+    <string name="reader_bookmark_note_hint">Заметка (необязательно)</string>
+    <string name="reader_bookmark_default_title">Страница %1$d</string>
 </resources>

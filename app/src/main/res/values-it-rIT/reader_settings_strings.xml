@@ -36,4 +36,11 @@
     <string name="reader_saturation">Saturazione</string>
     <string name="reader_adjustments_summary">Le regolazioni riguardano solo la visualizzazione. Gli originali salvati e condivisi non cambiano.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Segnalibri di pagina</string>
+    <string name="reader_bookmarks_empty">Nessun segnalibro ancora.</string>
+    <string name="reader_bookmarks_unavailable">I segnalibri richiedono una galleria salvata.</string>
+    <string name="reader_bookmark_add">Aggiungi segnalibro</string>
+    <string name="reader_bookmark_title_hint">Titolo segnalibro</string>
+    <string name="reader_bookmark_note_hint">Nota (facoltativa)</string>
+    <string name="reader_bookmark_default_title">Pagina %1$d</string>
 </resources>

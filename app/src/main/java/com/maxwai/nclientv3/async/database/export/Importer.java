@@ -158,6 +158,7 @@ public class Importer {
                         }
                     }
                     if (tableName.equals(Queries.ReadingProgressTable.TABLE_NAME)) validateReadingPosition(values);
+                    if (tableName.equals(Queries.ReaderBookmarkTable.TABLE_NAME)) validateReaderBookmark(values);
                     if (tableName.equals(DownloadTaskStore.TABLE_NAME)) validateDownloadTask(values);
                     if (tableName.equals(SearchPlanStore.TABLE_NAME) && !SearchPlanStore.isValid(values, true))
                         throw new IOException("Invalid search plan");
@@ -186,6 +187,21 @@ public class Importer {
         if (id == null || id <= 0 || id > Integer.MAX_VALUE || page == null || page <= 0 || page > Integer.MAX_VALUE
             || updatedAt == null || updatedAt < 0 || (offset != null && (!Double.isFinite(offset) || offset < 0 || offset >= 1)))
             throw new IOException("Invalid reading position values");
+    }
+
+    private static void validateReaderBookmark(ContentValues values) throws IOException {
+        Long id = values.getAsLong("id");
+        Long galleryId = values.getAsLong("id_gallery");
+        Long page = values.getAsLong("page");
+        String title = values.getAsString("title");
+        String note = values.getAsString("note");
+        Long createdAt = values.getAsLong("created_at");
+        Long updatedAt = values.getAsLong("updated_at");
+        if (id == null || id <= 0 || galleryId == null || galleryId <= 0 || galleryId > Integer.MAX_VALUE
+            || page == null || page <= 0 || page > 10000 || title == null || title.trim().isEmpty()
+            || title.length() > 200 || note == null || note.length() > 2000
+            || createdAt == null || createdAt < 0 || updatedAt == null || updatedAt < 0)
+            throw new IOException("Invalid reader bookmark values");
     }
 
     private static void validateDownloadTask(ContentValues values) throws IOException {

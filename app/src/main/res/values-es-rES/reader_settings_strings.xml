@@ -36,4 +36,11 @@
     <string name="reader_saturation">Saturación</string>
     <string name="reader_adjustments_summary">Los ajustes solo afectan a la pantalla. Los originales guardados y compartidos no cambian.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Marcadores de página</string>
+    <string name="reader_bookmarks_empty">Aún no hay marcadores.</string>
+    <string name="reader_bookmarks_unavailable">Los marcadores requieren una galería guardada.</string>
+    <string name="reader_bookmark_add">Añadir marcador</string>
+    <string name="reader_bookmark_title_hint">Título del marcador</string>
+    <string name="reader_bookmark_note_hint">Nota (opcional)</string>
+    <string name="reader_bookmark_default_title">Página %1$d</string>
 </resources>

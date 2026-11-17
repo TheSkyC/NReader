@@ -36,4 +36,11 @@
     <string name="reader_saturation">飽和度</string>
     <string name="reader_adjustments_summary">調整只影響顯示，不會修改儲存或分享的原圖。</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">頁面書籤</string>
+    <string name="reader_bookmarks_empty">尚無頁面書籤。</string>
+    <string name="reader_bookmarks_unavailable">儲存後的作品才支援書籤。</string>
+    <string name="reader_bookmark_add">新增書籤</string>
+    <string name="reader_bookmark_title_hint">書籤標題</string>
+    <string name="reader_bookmark_note_hint">備註（選填）</string>
+    <string name="reader_bookmark_default_title">第 %1$d 頁</string>
 </resources>

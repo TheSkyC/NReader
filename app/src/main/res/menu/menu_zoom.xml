@@ -34,4 +34,8 @@
         android:id="@+id/jump_last_page"
         android:title="@string/jump_last_page"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/reader_bookmarks"
+        android:title="@string/reader_bookmarks"
+        app:showAsAction="never" />
 </menu>

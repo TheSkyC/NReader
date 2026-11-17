@@ -28,6 +28,9 @@ import android.widget.SeekBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ImageButton;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -50,6 +53,7 @@ import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
+import com.maxwai.nclientv3.components.classes.ReaderBookmark;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.reader.PagedReaderNavigation;
@@ -80,6 +84,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -1235,6 +1240,76 @@ public class ZoomActivity extends GeneralActivity {
         invalidateOptionsMenu();
     }
 
+    private void showReaderBookmarks() {
+        if (gallery == null || gallery.getId() <= 0) {
+            Toast.makeText(this, R.string.reader_bookmarks_unavailable, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
+        root.setPadding(padding, padding, padding, padding);
+        TextView title = new TextView(this);
+        title.setText(R.string.reader_bookmarks);
+        root.addView(title);
+        Button add = new Button(this);
+        add.setText(R.string.reader_bookmark_add);
+        root.addView(add);
+        List<ReaderBookmark> bookmarks = Queries.ReaderBookmarkTable.getForGallery(gallery.getId());
+        if (bookmarks.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.reader_bookmarks_empty);
+            root.addView(empty);
+        } else {
+            for (ReaderBookmark bookmark : bookmarks) {
+                Button row = new Button(this);
+                String label = bookmark.title + "  ·  " + getString(R.string.bookmark_page_format, bookmark.page)
+                    + (bookmark.note.isEmpty() ? "" : "\n" + bookmark.note);
+                row.setText(label);
+                row.setAllCaps(false);
+                row.setOnClickListener(view -> {
+                    changePage(bookmark.page - 1);
+                    dialog.dismiss();
+                });
+                root.addView(row);
+            }
+        }
+        add.setOnClickListener(view -> showAddReaderBookmarkDialog(dialog));
+        dialog.setContentView(root);
+        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        dialog.show();
+    }
+
+    private void showAddReaderBookmarkDialog(@NonNull BottomSheetDialog parent) {
+        if (gallery == null || gallery.getId() <= 0) return;
+        LinearLayout fields = new LinearLayout(this);
+        fields.setOrientation(LinearLayout.VERTICAL);
+        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
+        fields.setPadding(padding, padding, padding, 0);
+        EditText title = new EditText(this);
+        title.setHint(R.string.reader_bookmark_title_hint);
+        title.setSingleLine(true);
+        title.setText(getString(R.string.reader_bookmark_default_title, readerNavigation.currentPage() + 1));
+        fields.addView(title);
+        EditText note = new EditText(this);
+        note.setHint(R.string.reader_bookmark_note_hint);
+        note.setMinLines(2);
+        note.setGravity(android.view.Gravity.TOP);
+        fields.addView(note);
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.reader_bookmark_add)
+            .setView(fields)
+            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                Queries.ReaderBookmarkTable.upsert(gallery.getId(), readerNavigation.currentPage() + 1,
+                    title.getText().toString(), note.getText().toString());
+                parent.dismiss();
+                showReaderBookmarks();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -1289,6 +1364,8 @@ public class ZoomActivity extends GeneralActivity {
             changePage(0);
         } else if (id == R.id.jump_last_page) {
             changePage(readerNavigation.pageCount() - 1);
+        } else if (id == R.id.reader_bookmarks) {
+            showReaderBookmarks();
         }
 
         return super.onOptionsItemSelected(item);

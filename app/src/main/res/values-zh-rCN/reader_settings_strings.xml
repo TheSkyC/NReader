@@ -36,4 +36,11 @@
     <string name="reader_saturation">饱和度</string>
     <string name="reader_adjustments_summary">调节只影响显示，不会修改保存或分享的原图。</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">页面书签</string>
+    <string name="reader_bookmarks_empty">还没有页面书签。</string>
+    <string name="reader_bookmarks_unavailable">保存后的作品才支持书签。</string>
+    <string name="reader_bookmark_add">添加书签</string>
+    <string name="reader_bookmark_title_hint">书签标题</string>
+    <string name="reader_bookmark_note_hint">备注（可选）</string>
+    <string name="reader_bookmark_default_title">第 %1$d 页</string>
 </resources>

@@ -36,4 +36,11 @@
     <string name="reader_saturation">Насиченість</string>
     <string name="reader_adjustments_summary">Налаштування впливають лише на відображення. Збережені та надіслані оригінали не змінюються.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Закладки сторінок</string>
+    <string name="reader_bookmarks_empty">Закладок ще немає.</string>
+    <string name="reader_bookmarks_unavailable">Для закладок потрібна збережена галерея.</string>
+    <string name="reader_bookmark_add">Додати закладку</string>
+    <string name="reader_bookmark_title_hint">Назва закладки</string>
+    <string name="reader_bookmark_note_hint">Нотатка (необов язково)</string>
+    <string name="reader_bookmark_default_title">Сторінка %1$d</string>
 </resources>

@@ -36,4 +36,11 @@
     <string name="reader_saturation">Sättigung</string>
     <string name="reader_adjustments_summary">Die Einstellungen wirken nur auf die Anzeige. Gespeicherte und geteilte Originale bleiben unverändert.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Seitenlesezeichen</string>
+    <string name="reader_bookmarks_empty">Noch keine Seitenlesezeichen.</string>
+    <string name="reader_bookmarks_unavailable">Lesezeichen benötigen eine gespeicherte Galerie.</string>
+    <string name="reader_bookmark_add">Lesezeichen hinzufügen</string>
+    <string name="reader_bookmark_title_hint">Titel des Lesezeichens</string>
+    <string name="reader_bookmark_note_hint">Notiz (optional)</string>
+    <string name="reader_bookmark_default_title">Seite %1$d</string>
 </resources>

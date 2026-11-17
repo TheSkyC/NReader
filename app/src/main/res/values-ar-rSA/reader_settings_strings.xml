@@ -36,4 +36,11 @@
     <string name="reader_saturation">التشبع</string>
     <string name="reader_adjustments_summary">تؤثر الضبطات على العرض فقط، ولا تغيّر النسخ الأصلية المحفوظة أو المشتركة.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">إشارات الصفحات</string>
+    <string name="reader_bookmarks_empty">لا توجد إشارات صفحات بعد.</string>
+    <string name="reader_bookmarks_unavailable">تتطلب الإشارات معرضًا محفوظًا.</string>
+    <string name="reader_bookmark_add">إضافة إشارة</string>
+    <string name="reader_bookmark_title_hint">عنوان الإشارة</string>
+    <string name="reader_bookmark_note_hint">ملاحظة (اختياري)</string>
+    <string name="reader_bookmark_default_title">الصفحة %1$d</string>
 </resources>

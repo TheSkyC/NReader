@@ -36,4 +36,11 @@
     <string name="reader_saturation">Saturation</string>
     <string name="reader_adjustments_summary">Ces réglages concernent uniquement l affichage. Les originaux enregistrés et partagés restent inchangés.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Signets de page</string>
+    <string name="reader_bookmarks_empty">Aucun signet pour le moment.</string>
+    <string name="reader_bookmarks_unavailable">Les signets nécessitent une galerie enregistrée.</string>
+    <string name="reader_bookmark_add">Ajouter un signet</string>
+    <string name="reader_bookmark_title_hint">Titre du signet</string>
+    <string name="reader_bookmark_note_hint">Note (facultatif)</string>
+    <string name="reader_bookmark_default_title">Page %1$d</string>
 </resources>

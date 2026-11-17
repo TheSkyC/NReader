@@ -26,6 +26,7 @@ import com.maxwai.nclientv3.async.downloader.GalleryDownloaderManager;
 import com.maxwai.nclientv3.async.downloader.GalleryDownloaderV2;
 import com.maxwai.nclientv3.components.classes.Bookmark;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
+import com.maxwai.nclientv3.components.classes.ReaderBookmark;
 import com.maxwai.nclientv3.components.status.Status;
 import com.maxwai.nclientv3.components.status.StatusManager;
 import com.maxwai.nclientv3.settings.Global;
@@ -133,6 +134,8 @@ public class Queries {
                     "%s NOT IN (SELECT %s FROM %s)",
                     DownloadTable.ID_GALLERY, GalleryTable.IDGALLERY, GalleryTable.TABLE_NAME)
                 , null);
+            db.delete(ReaderBookmarkTable.TABLE_NAME, String.format(Locale.US,
+                    "id_gallery NOT IN (SELECT %s FROM %s)", GalleryTable.IDGALLERY, GalleryTable.TABLE_NAME), null);
         }
 
         /**
@@ -280,6 +283,7 @@ public class Queries {
         public static void delete(int id) {
             db.delete(TABLE_NAME, IDGALLERY + "=?", new String[]{"" + id});
             GalleryBridgeTable.deleteGallery(id);
+            ReaderBookmarkTable.deleteForGallery(id);
         }
 
 
@@ -1010,6 +1014,77 @@ public class Queries {
         public static void removeAllFavorite() {
             db.delete(TABLE_NAME, null, null);
             GalleryStateRepository.invalidate();
+        }
+    }
+
+    public static class ReaderBookmarkTable {
+        public static final String TABLE_NAME = "ReaderBookmarks";
+        public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `ReaderBookmarks` (" +
+            "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "`id_gallery` INT NOT NULL CHECK (`id_gallery` > 0), " +
+            "`page` INT NOT NULL CHECK (`page` > 0), " +
+            "`title` TEXT NOT NULL, " +
+            "`note` TEXT NOT NULL DEFAULT '', " +
+            "`created_at` INT NOT NULL, " +
+            "`updated_at` INT NOT NULL, " +
+            "UNIQUE (`id_gallery`, `page`)" +
+            ");";
+
+        private static final String[] COLUMNS = {
+            "id", "id_gallery", "page", "title", "note", "created_at", "updated_at"
+        };
+
+        @NonNull
+        public static List<ReaderBookmark> getForGallery(int galleryId) {
+            List<ReaderBookmark> result = new ArrayList<>();
+            if (galleryId <= 0) return result;
+            try (Cursor cursor = db.query(TABLE_NAME, COLUMNS, "id_gallery=?",
+                new String[]{Integer.toString(galleryId)}, null, null, "page ASC, updated_at DESC")) {
+                if (cursor.moveToFirst()) {
+                    do {
+                        result.add(fromCursor(cursor));
+                    } while (cursor.moveToNext());
+                }
+            }
+            return result;
+        }
+
+        public static long upsert(int galleryId, int page, @Nullable String title, @Nullable String note) {
+            if (galleryId <= 0 || page <= 0) return -1;
+            long now = System.currentTimeMillis();
+            String safeTitle = normalize(title, 200, "Page " + page);
+            String safeNote = normalize(note, 2000, "");
+            ContentValues values = new ContentValues(6);
+            values.put("id_gallery", galleryId);
+            values.put("page", page);
+            values.put("title", safeTitle);
+            values.put("note", safeNote);
+            values.put("created_at", now);
+            values.put("updated_at", now);
+            return db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        }
+
+        public static void delete(long id) {
+            if (id > 0) db.delete(TABLE_NAME, "id=?", new String[]{Long.toString(id)});
+        }
+
+        public static void deleteForGallery(int galleryId) {
+            if (galleryId > 0) db.delete(TABLE_NAME, "id_gallery=?", new String[]{Integer.toString(galleryId)});
+        }
+
+        @NonNull
+        private static ReaderBookmark fromCursor(@NonNull Cursor cursor) {
+            return new ReaderBookmark(
+                cursor.getLong(0), cursor.getInt(1), cursor.getInt(2),
+                cursor.getString(3), cursor.getString(4), cursor.getLong(5), cursor.getLong(6));
+        }
+
+        @NonNull
+        private static String normalize(@Nullable String value, int maxLength, @NonNull String fallback) {
+            if (value == null) return fallback;
+            String trimmed = value.trim();
+            if (trimmed.isEmpty()) return fallback;
+            return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
         }
     }
 

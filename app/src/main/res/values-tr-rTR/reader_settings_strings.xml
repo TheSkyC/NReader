@@ -36,4 +36,11 @@
     <string name="reader_saturation">Doygunluk</string>
     <string name="reader_adjustments_summary">Ayarlar yalnızca görüntüyü etkiler. Kaydedilen ve paylaşılan orijinaller değişmez.</string>
     <string name="reader_adjustment_value">%1$d</string>
+    <string name="reader_bookmarks">Sayfa yer imleri</string>
+    <string name="reader_bookmarks_empty">Henüz sayfa yer imi yok.</string>
+    <string name="reader_bookmarks_unavailable">Yer imleri kayıtlı bir galeri gerektirir.</string>
+    <string name="reader_bookmark_add">Yer imi ekle</string>
+    <string name="reader_bookmark_title_hint">Yer imi başlığı</string>
+    <string name="reader_bookmark_note_hint">Not (isteğe bağlı)</string>
+    <string name="reader_bookmark_default_title">Sayfa %1$d</string>
 </resources>

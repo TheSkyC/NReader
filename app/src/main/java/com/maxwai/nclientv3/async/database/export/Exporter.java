@@ -32,7 +32,7 @@ import java.util.zip.ZipOutputStream;
 public class Exporter {
     static final String DB_ZIP_FILE = "Database.json";
     static final String MANIFEST_ZIP_FILE = "Manifest.json";
-    static final int BACKUP_FORMAT_VERSION = 2;
+    static final int BACKUP_FORMAT_VERSION = 3;
     private static final String[] SHARED_FILES = new String[]{
         "Settings",
         "ScrapedTags",
@@ -48,6 +48,7 @@ public class Exporter {
         Queries.HistoryTable.TABLE_NAME,
         Queries.FavoriteTable.TABLE_NAME,
         Queries.ResumeTable.TABLE_NAME,
+        Queries.ReaderBookmarkTable.TABLE_NAME,
         Queries.ReadingProgressTable.TABLE_NAME,
         Queries.StatusTable.TABLE_NAME,
         Queries.StatusMangaTable.TABLE_NAME,
