@@ -38,6 +38,8 @@ import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.activities.GeneralActivity;
 import com.maxwai.nclientv3.components.GlideX;
+import com.maxwai.nclientv3.components.reader.PagedReaderNavigation;
+import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
@@ -72,6 +74,7 @@ public class ZoomActivity extends GeneralActivity {
     private boolean initializingPager = true;
     private boolean isHidden = false;
     private ViewPager2 mViewPager;
+    private ReaderNavigation readerNavigation;
     private TextView pageManagerLabel, cornerPageViewer;
     private View pageSwitcher;
     private SeekBar seekBar;
@@ -136,6 +139,7 @@ public class ZoomActivity extends GeneralActivity {
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(this);
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        readerNavigation = new PagedReaderNavigation(mViewPager);
         int orientation;
         try {
             orientation = preferences.getInt(SCROLL_TYPE_KEY, ViewPager2.ORIENTATION_HORIZONTAL);
@@ -215,7 +219,7 @@ public class ZoomActivity extends GeneralActivity {
         });
 
 
-        mViewPager.setCurrentItem(page, false);
+        readerNavigation.goToPage(page, false);
         initializingPager = false;
         setPageText(page + 1);
         seekBar.setProgress(page);
@@ -246,8 +250,8 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void savePosition() {
-        if (gallery != null && mViewPager != null && initialPosition != null) {
-            int page = mViewPager.getCurrentItem() + 1;
+        if (gallery != null && readerNavigation != null && initialPosition != null) {
+            int page = readerNavigation.currentPage() + 1;
             ReadingProgress.save(gallery.getId(), initialPosition.page == page
                 ? initialPosition : new ReadingPosition(page, 0f));
         }
@@ -261,8 +265,8 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
-        if (mViewPager != null) {
-            int page = mViewPager.getCurrentItem() + 1;
+        if (readerNavigation != null) {
+            int page = readerNavigation.currentPage() + 1;
             state.putInt("readerPage", page);
             state.putFloat(READER_OFFSET_STATE, initialPosition != null && initialPosition.page == page
                 ? initialPosition.offset : 0f);
@@ -318,9 +322,9 @@ public class ZoomActivity extends GeneralActivity {
 
     public void changeClosePage(boolean next) {
         if (Global.useRtl()) next = !next;
-        if (next && mViewPager.getCurrentItem() < (Objects.requireNonNull(mViewPager.getAdapter()).getItemCount() - 1))
-            changePage(mViewPager.getCurrentItem() + 1);
-        if (!next && mViewPager.getCurrentItem() > 0) changePage(mViewPager.getCurrentItem() - 1);
+        int current = readerNavigation.currentPage();
+        if (next && current < readerNavigation.pageCount() - 1) changePage(current + 1);
+        if (!next && current > 0) changePage(current - 1);
     }
 
     @Override
@@ -348,7 +352,7 @@ public class ZoomActivity extends GeneralActivity {
 
     private void changePage(int newPage) {
         boolean instant = isInstantPageTurn(getSharedPreferences("Settings", 0));
-        mViewPager.setCurrentItem(newPage, !instant);
+        readerNavigation.goToPage(newPage, !instant);
     }
 
     private boolean isInstantPageTurn(SharedPreferences preferences) {
@@ -391,17 +395,17 @@ public class ZoomActivity extends GeneralActivity {
             int columns = Math.max(2, Math.min(6,
                 (int) ((right - left) / getResources().getDisplayMetrics().density / 120)));
             if (columns != layoutManager.getSpanCount()) {
-                int first = firstLayout[0] ? mViewPager.getCurrentItem() : layoutManager.findFirstVisibleItemPosition();
+                int first = firstLayout[0] ? readerNavigation.currentPage() : layoutManager.findFirstVisibleItemPosition();
                 layoutManager.setSpanCount(columns);
-                grid.scrollToPosition(first == RecyclerView.NO_POSITION ? mViewPager.getCurrentItem() : first);
+                grid.scrollToPosition(first == RecyclerView.NO_POSITION ? readerNavigation.currentPage() : first);
             }
             firstLayout[0] = false;
         });
-        grid.setAdapter(new ReaderPagePreviewAdapter(gallery, directory, mViewPager.getCurrentItem(), page -> {
+        grid.setAdapter(new ReaderPagePreviewAdapter(gallery, directory, readerNavigation.currentPage(), page -> {
             changePage(page);
             dialog.dismiss();
         }));
-        grid.scrollToPosition(mViewPager.getCurrentItem());
+        grid.scrollToPosition(readerNavigation.currentPage());
         dialog.setOnDismissListener(ignored -> {
             for (int index = 0; index < grid.getChildCount(); index++) {
                 View image = grid.getChildAt(index).findViewById(R.id.reader_preview_image);
@@ -475,7 +479,7 @@ public class ZoomActivity extends GeneralActivity {
             finish();
             return true;
         } else if (id == R.id.bookmark) {
-            Queries.ResumeTable.insert(gallery.getId(), actualPage + 1);
+            Queries.ResumeTable.insert(gallery.getId(), readerNavigation.currentPage() + 1);
         } else if (id == R.id.scrollType) {
             changeScrollTypeDialog();
         }
@@ -506,7 +510,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private ZoomFragment getActualFragment() {
-        return getActualFragment(mViewPager.getCurrentItem());
+        return getActualFragment(readerNavigation.currentPage());
     }
 
     private void makeNearRequests(int newPage) {
@@ -537,12 +541,12 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void sendImage(boolean withText) {
-        int pageNum = mViewPager.getCurrentItem();
+        int pageNum = readerNavigation.currentPage();
         Utility.sendImage(this, getActualFragment().getDrawable(), withText ? gallery.sharePageUrl(pageNum) : null);
     }
 
     private void downloadPage() {
-        final File output = new File(Global.SCREENFOLDER, gallery.getId() + "-" + (mViewPager.getCurrentItem() + 1) + ".jpg");
+        final File output = new File(Global.SCREENFOLDER, gallery.getId() + "-" + (readerNavigation.currentPage() + 1) + ".jpg");
         Utility.saveImage(getActualFragment().getDrawable(), output);
     }
 

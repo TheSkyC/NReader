@@ -22,6 +22,7 @@ import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
+import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -296,6 +297,24 @@ public class ReaderReliabilityTest {
                 third.itemView.performClick();
                 assertEquals(2, pager.getCurrentItem());
                 assertFalse(dialog.isShowing());
+            }
+        }
+    }
+
+    @Test
+    public void readerNavigationBoundsPageRequests() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ReaderNavigation navigation = ReflectionHelpers.getField(controller.get(), "readerNavigation");
+                assertEquals(3, navigation.pageCount());
+                navigation.goToPage(99, false);
+                assertEquals(2, navigation.currentPage());
+                navigation.goToPage(-1, false);
+                assertEquals(0, navigation.currentPage());
             }
         }
     }
