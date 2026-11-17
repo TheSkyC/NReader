@@ -52,4 +52,8 @@
     <string name="reader_preset_night">ليلي</string>
     <string name="reader_preset_scan">تحسين المسح</string>
     <string name="reader_jump_saved_position">الانتقال إلى التقدم المحفوظ</string>
+    <string name="reader_orientation_title">اتجاه الشاشة</string>
+    <string name="reader_orientation_system">اتباع النظام</string>
+    <string name="reader_orientation_portrait">تثبيت عمودي</string>
+    <string name="reader_orientation_landscape">تثبيت أفقي</string>
 </resources>

@@ -52,4 +52,8 @@
     <string name="reader_preset_night">夜间</string>
     <string name="reader_preset_scan">扫描修复</string>
     <string name="reader_jump_saved_position">跳转到已保存进度</string>
+    <string name="reader_orientation_title">屏幕方向</string>
+    <string name="reader_orientation_system">跟随系统</string>
+    <string name="reader_orientation_portrait">锁定竖屏</string>
+    <string name="reader_orientation_landscape">锁定横屏</string>
 </resources>

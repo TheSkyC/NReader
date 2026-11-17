@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Nacht</string>
     <string name="reader_preset_scan">Scan verbessern</string>
     <string name="reader_jump_saved_position">Zu gespeichertem Fortschritt springen</string>
+    <string name="reader_orientation_title">Bildschirmausrichtung</string>
+    <string name="reader_orientation_system">Systemeinstellung</string>
+    <string name="reader_orientation_portrait">Hochformat sperren</string>
+    <string name="reader_orientation_landscape">Querformat sperren</string>
 </resources>

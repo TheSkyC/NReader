@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Noche</string>
     <string name="reader_preset_scan">Mejorar escaneo</string>
     <string name="reader_jump_saved_position">Ir al progreso guardado</string>
+    <string name="reader_orientation_title">Orientación de pantalla</string>
+    <string name="reader_orientation_system">Seguir sistema</string>
+    <string name="reader_orientation_portrait">Bloquear vertical</string>
+    <string name="reader_orientation_landscape">Bloquear horizontal</string>
 </resources>

@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Night</string>
     <string name="reader_preset_scan">Scan cleanup</string>
     <string name="reader_jump_saved_position">Jump to saved progress</string>
+    <string name="reader_orientation_title">Screen orientation</string>
+    <string name="reader_orientation_system">Follow system</string>
+    <string name="reader_orientation_portrait">Lock portrait</string>
+    <string name="reader_orientation_landscape">Lock landscape</string>
 </resources>

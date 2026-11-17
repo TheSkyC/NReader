@@ -53,6 +53,41 @@
                 android:text="@string/reader_continuous_vertical" />
         </RadioGroup>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/reader_orientation_title"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <RadioGroup
+            android:id="@+id/reader_orientation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_orientation_system"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/reader_orientation_system" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_orientation_portrait"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/reader_orientation_portrait" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_orientation_landscape"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/reader_orientation_landscape" />
+        </RadioGroup>
+
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/reader_auto_crop"
             android:layout_width="match_parent"

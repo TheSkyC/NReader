@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -133,6 +134,11 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_SATURATION_KEY_PREFIX = "reader_saturation_";
     private static final String READER_ZOOM_SCALE_KEY = "reader_zoom_scale";
     private static final String READER_ZOOM_SCALE_KEY_PREFIX = "reader_zoom_scale_";
+    private static final String READER_ORIENTATION_KEY = "reader_orientation";
+    private static final String READER_ORIENTATION_KEY_PREFIX = "reader_orientation_";
+    private static final int READER_ORIENTATION_SYSTEM = 0;
+    private static final int READER_ORIENTATION_PORTRAIT = 1;
+    private static final int READER_ORIENTATION_LANDSCAPE = 2;
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -251,6 +257,7 @@ public class ZoomActivity extends GeneralActivity {
         readerContrast = getReaderAdjustment(preferences, READER_CONTRAST_KEY, READER_CONTRAST_KEY_PREFIX);
         readerSaturation = getReaderAdjustment(preferences, READER_SATURATION_KEY, READER_SATURATION_KEY_PREFIX);
         readerZoomScale = getReaderZoomScale(preferences);
+        applyReaderOrientationLock(preferences);
         spreadMode = getSpreadMode(preferences);
         doublePageMode = isDoublePageEffective();
         //toolbar setup
@@ -828,6 +835,13 @@ public class ZoomActivity extends GeneralActivity {
             else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
 
+        RadioGroup orientation = Objects.requireNonNull(dialog.findViewById(R.id.reader_orientation));
+        orientation.check(readerOrientationId(getReaderOrientation(getSharedPreferences("Settings", 0))));
+        orientation.setOnCheckedChangeListener((group, id) -> setReaderOrientationLock(
+            id == R.id.reader_orientation_portrait ? READER_ORIENTATION_PORTRAIT
+                : id == R.id.reader_orientation_landscape ? READER_ORIENTATION_LANDSCAPE
+                : READER_ORIENTATION_SYSTEM));
+
         MaterialRadioButton spreadSingle = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_single));
         MaterialRadioButton spreadDouble = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_double));
         MaterialRadioButton spreadAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_auto));
@@ -1051,6 +1065,40 @@ public class ZoomActivity extends GeneralActivity {
         }
     }
 
+    private int getReaderOrientation(@NonNull SharedPreferences preferences) {
+        String key = readerOrientationPreferenceKey();
+        try {
+            int value = preferences.contains(key)
+                ? preferences.getInt(key, READER_ORIENTATION_SYSTEM)
+                : preferences.getInt(READER_ORIENTATION_KEY, READER_ORIENTATION_SYSTEM);
+            return value >= READER_ORIENTATION_SYSTEM && value <= READER_ORIENTATION_LANDSCAPE
+                ? value : READER_ORIENTATION_SYSTEM;
+        } catch (ClassCastException exception) {
+            return READER_ORIENTATION_SYSTEM;
+        }
+    }
+
+    @NonNull
+    private String readerOrientationPreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_ORIENTATION_KEY_PREFIX + gallery.getId() : READER_ORIENTATION_KEY;
+    }
+
+    private void applyReaderOrientationLock(@NonNull SharedPreferences preferences) {
+        int value = getReaderOrientation(preferences);
+        setRequestedOrientation(value == READER_ORIENTATION_PORTRAIT ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            : value == READER_ORIENTATION_LANDSCAPE ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+    }
+
+    private void setReaderOrientationLock(int value) {
+        int safe = value >= READER_ORIENTATION_SYSTEM && value <= READER_ORIENTATION_LANDSCAPE
+            ? value : READER_ORIENTATION_SYSTEM;
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        preferences.edit().putInt(readerOrientationPreferenceKey(), safe).apply();
+        applyReaderOrientationLock(preferences);
+    }
+
     public void onReaderScaleChanged(float scale) {
         if (continuousMode || gallery == null || gallery.getId() <= 0 || scale < 0.1f || scale > 8f) return;
         readerZoomScale = scale;
@@ -1162,6 +1210,12 @@ public class ZoomActivity extends GeneralActivity {
         return value == READER_BACKGROUND_BLACK ? R.id.reader_background_black
             : value == READER_BACKGROUND_GRAY ? R.id.reader_background_gray
             : value == READER_BACKGROUND_WHITE ? R.id.reader_background_white : R.id.reader_background_auto;
+    }
+
+    private int readerOrientationId(int value) {
+        return value == READER_ORIENTATION_PORTRAIT ? R.id.reader_orientation_portrait
+            : value == READER_ORIENTATION_LANDSCAPE ? R.id.reader_orientation_landscape
+            : R.id.reader_orientation_system;
     }
 
     private int scaleId(int value) {

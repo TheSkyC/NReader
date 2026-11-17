@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Ночной</string>
     <string name="reader_preset_scan">Улучшить скан</string>
     <string name="reader_jump_saved_position">Перейти к сохранённому прогрессу</string>
+    <string name="reader_orientation_title">Ориентация экрана</string>
+    <string name="reader_orientation_system">Как в системе</string>
+    <string name="reader_orientation_portrait">Зафиксировать портретную</string>
+    <string name="reader_orientation_landscape">Зафиксировать альбомную</string>
 </resources>

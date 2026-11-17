@@ -52,4 +52,8 @@
     <string name="reader_preset_night">夜間</string>
     <string name="reader_preset_scan">スキャン補正</string>
     <string name="reader_jump_saved_position">保存した進捗へ移動</string>
+    <string name="reader_orientation_title">画面の向き</string>
+    <string name="reader_orientation_system">システムに従う</string>
+    <string name="reader_orientation_portrait">縦向きに固定</string>
+    <string name="reader_orientation_landscape">横向きに固定</string>
 </resources>

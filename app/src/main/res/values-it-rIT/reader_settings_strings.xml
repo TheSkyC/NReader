@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Notte</string>
     <string name="reader_preset_scan">Migliora scansione</string>
     <string name="reader_jump_saved_position">Vai al progresso salvato</string>
+    <string name="reader_orientation_title">Orientamento dello schermo</string>
+    <string name="reader_orientation_system">Segui il sistema</string>
+    <string name="reader_orientation_portrait">Blocca verticale</string>
+    <string name="reader_orientation_landscape">Blocca orizzontale</string>
 </resources>

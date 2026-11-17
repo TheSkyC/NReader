@@ -52,4 +52,8 @@
     <string name="reader_preset_night">Nuit</string>
     <string name="reader_preset_scan">Améliorer le scan</string>
     <string name="reader_jump_saved_position">Aller à la progression enregistrée</string>
+    <string name="reader_orientation_title">Orientation de l écran</string>
+    <string name="reader_orientation_system">Suivre le système</string>
+    <string name="reader_orientation_portrait">Verrouiller en portrait</string>
+    <string name="reader_orientation_landscape">Verrouiller en paysage</string>
 </resources>
