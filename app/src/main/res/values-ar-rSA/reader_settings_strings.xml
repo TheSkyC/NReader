@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">ذكي</string>
     <string name="reader_scale_screen">ملاءمة للشاشة</string>
     <string name="reader_scale_width">ملاءمة للعرض</string>
+    <string name="reader_scale_height">ملاءمة للارتفاع</string>
+    <string name="reader_scale_fill">ملء الشاشة</string>
     <string name="reader_scale_original">الحجم الأصلي</string>
     <string name="reader_double_page">صفحتان</string>
     <string name="reader_double_page_summary">عرض صفحتين جنبًا إلى جنب في وضع الصفحات.</string>

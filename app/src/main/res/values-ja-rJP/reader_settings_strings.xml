@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">スマート</string>
     <string name="reader_scale_screen">画面に合わせる</string>
     <string name="reader_scale_width">幅に合わせる</string>
+    <string name="reader_scale_height">高さに合わせる</string>
+    <string name="reader_scale_fill">画面いっぱい</string>
     <string name="reader_scale_original">元のサイズ</string>
     <string name="reader_double_page">見開き表示</string>
     <string name="reader_double_page_summary">ページモードで2ページを並べて表示します。</string>

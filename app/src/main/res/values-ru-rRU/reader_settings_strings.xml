@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">Умный режим</string>
     <string name="reader_scale_screen">По размеру экрана</string>
     <string name="reader_scale_width">По ширине</string>
+    <string name="reader_scale_height">По высоте</string>
+    <string name="reader_scale_fill">Заполнить экран</string>
     <string name="reader_scale_original">Исходный размер</string>
     <string name="reader_double_page">Две страницы</string>
     <string name="reader_double_page_summary">Показывать две страницы рядом в постраничном режиме.</string>

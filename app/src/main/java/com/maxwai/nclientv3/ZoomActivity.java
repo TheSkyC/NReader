@@ -843,16 +843,22 @@ public class ZoomActivity extends GeneralActivity {
         MaterialRadioButton scaleSmart = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_smart));
         MaterialRadioButton scaleScreen = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_screen));
         MaterialRadioButton scaleWidth = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_width));
+        MaterialRadioButton scaleHeight = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_height));
+        MaterialRadioButton scaleFill = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_fill));
         MaterialRadioButton scaleOriginal = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_original));
         scaleSmart.setText(R.string.reader_scale_smart);
         scaleScreen.setText(R.string.reader_scale_screen);
         scaleWidth.setText(R.string.reader_scale_width);
+        scaleHeight.setText(R.string.reader_scale_height);
+        scaleFill.setText(R.string.reader_scale_fill);
         scaleOriginal.setText(R.string.reader_scale_original);
         RadioGroup scale = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale));
         scale.check(scaleId(readerScaleMode));
         scale.setOnCheckedChangeListener((group, id) -> setReaderScaleMode(
             id == R.id.reader_scale_screen ? ReaderScaleMode.FIT_SCREEN
                 : id == R.id.reader_scale_width ? ReaderScaleMode.FIT_WIDTH
+                : id == R.id.reader_scale_height ? ReaderScaleMode.FIT_HEIGHT
+                : id == R.id.reader_scale_fill ? ReaderScaleMode.FILL
                 : id == R.id.reader_scale_original ? ReaderScaleMode.ORIGINAL : ReaderScaleMode.SMART));
 
         MaterialRadioButton filterNone = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter_none));
@@ -1158,6 +1164,8 @@ public class ZoomActivity extends GeneralActivity {
     private int scaleId(int value) {
         return value == ReaderScaleMode.FIT_SCREEN ? R.id.reader_scale_screen
             : value == ReaderScaleMode.FIT_WIDTH ? R.id.reader_scale_width
+            : value == ReaderScaleMode.FIT_HEIGHT ? R.id.reader_scale_height
+            : value == ReaderScaleMode.FILL ? R.id.reader_scale_fill
             : value == ReaderScaleMode.ORIGINAL ? R.id.reader_scale_original : R.id.reader_scale_smart;
     }
 

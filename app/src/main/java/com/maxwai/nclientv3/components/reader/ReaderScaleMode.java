@@ -6,12 +6,14 @@ public final class ReaderScaleMode {
     public static final int FIT_SCREEN = 1;
     public static final int FIT_WIDTH = 2;
     public static final int ORIGINAL = 3;
+    public static final int FIT_HEIGHT = 4;
+    public static final int FILL = 5;
 
     private ReaderScaleMode() {
     }
 
     public static int sanitize(int mode) {
-        return mode >= SMART && mode <= ORIGINAL ? mode : SMART;
+        return mode >= SMART && mode <= FILL ? mode : SMART;
     }
 
     public static float calculate(int mode, int drawableWidth, int drawableHeight,
@@ -27,6 +29,12 @@ public final class ReaderScaleMode {
                 break;
             case FIT_WIDTH:
                 scale = ((float) viewWidth / drawableWidth) / fitScale;
+                break;
+            case FIT_HEIGHT:
+                scale = ((float) viewHeight / drawableHeight) / fitScale;
+                break;
+            case FILL:
+                scale = Math.max((float) viewWidth / drawableWidth, (float) viewHeight / drawableHeight) / fitScale;
                 break;
             case ORIGINAL:
                 scale = 1f / fitScale;

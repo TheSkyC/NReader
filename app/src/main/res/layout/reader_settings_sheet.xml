@@ -306,6 +306,18 @@
                 android:minHeight="48dp" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_height"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_fill"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_original"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

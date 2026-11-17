@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">Intelligent</string>
     <string name="reader_scale_screen">Adapter à la fenêtre</string>
     <string name="reader_scale_width">Adapter à la largeur</string>
+    <string name="reader_scale_height">Adapter à la hauteur</string>
+    <string name="reader_scale_fill">Remplir l écran</string>
     <string name="reader_scale_original">Taille originale</string>
     <string name="reader_double_page">Lecture double page</string>
     <string name="reader_double_page_summary">Afficher deux pages côte à côte en mode paginé.</string>

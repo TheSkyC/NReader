@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">Akıllı</string>
     <string name="reader_scale_screen">Ekrana sığdır</string>
     <string name="reader_scale_width">Genişliğe sığdır</string>
+    <string name="reader_scale_height">Yüksekliğe sığdır</string>
+    <string name="reader_scale_fill">Ekranı doldur</string>
     <string name="reader_scale_original">Özgün boyut</string>
     <string name="reader_double_page">İki sayfa</string>
     <string name="reader_double_page_summary">Sayfalı modda iki sayfayı yan yana göster.</string>

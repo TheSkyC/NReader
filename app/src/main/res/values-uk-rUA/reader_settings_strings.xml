@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">Розумний</string>
     <string name="reader_scale_screen">За розміром екрана</string>
     <string name="reader_scale_width">За шириною</string>
+    <string name="reader_scale_height">За висотою</string>
+    <string name="reader_scale_fill">Заповнити екран</string>
     <string name="reader_scale_original">Оригінальний розмір</string>
     <string name="reader_double_page">Подвійна сторінка</string>
     <string name="reader_double_page_summary">Показувати дві сторінки поруч у посторінковому режимі.</string>

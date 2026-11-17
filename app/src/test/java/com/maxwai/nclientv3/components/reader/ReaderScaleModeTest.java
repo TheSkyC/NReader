@@ -12,6 +12,10 @@ public class ReaderScaleModeTest {
             1200, 2400, 600, 1000, 600, 1000, 1f, 8f), 0.001f);
         assertEquals(1.2f, ReaderScaleMode.calculate(ReaderScaleMode.FIT_WIDTH,
             1200, 2400, 600, 1000, 600, 1000, 1f, 8f), 0.001f);
+        assertEquals(1f, ReaderScaleMode.calculate(ReaderScaleMode.FIT_HEIGHT,
+            1200, 2400, 600, 1000, 600, 1000, 1f, 8f), 0.001f);
+        assertEquals(1.2f, ReaderScaleMode.calculate(ReaderScaleMode.FILL,
+            1200, 2400, 600, 1000, 600, 1000, 1f, 8f), 0.001f);
         assertEquals(2.4f, ReaderScaleMode.calculate(ReaderScaleMode.ORIGINAL,
             1200, 2400, 600, 1000, 600, 1000, 1f, 8f), 0.001f);
     }

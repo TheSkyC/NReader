@@ -12,6 +12,8 @@
     <string name="reader_scale_smart">Inteligente</string>
     <string name="reader_scale_screen">Ajustar a la pantalla</string>
     <string name="reader_scale_width">Ajustar al ancho</string>
+    <string name="reader_scale_height">Ajustar a la altura</string>
+    <string name="reader_scale_fill">Rellenar pantalla</string>
     <string name="reader_scale_original">Tamaño original</string>
     <string name="reader_double_page">Doble página</string>
     <string name="reader_double_page_summary">Mostrar dos páginas una al lado de la otra en el modo paginado.</string>
