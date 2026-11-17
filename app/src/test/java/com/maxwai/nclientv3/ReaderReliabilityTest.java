@@ -603,6 +603,32 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void togglingReaderControlsKeepsSystemBarLayoutStable() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                int layoutFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+                int before = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
+                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
+                    ReflectionHelpers.ClassParameter.from(float.class, 0.5f));
+                int hidden = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
+                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
+                    ReflectionHelpers.ClassParameter.from(float.class, 0.5f));
+                int shown = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
+                assertEquals(hidden, shown);
+            }
+        }
+    }
+
+    @Test
     public void continuousPageEdgeTapsFollowReaderSetting() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

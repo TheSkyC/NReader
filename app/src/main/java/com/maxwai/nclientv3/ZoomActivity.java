@@ -84,7 +84,8 @@ public class ZoomActivity extends GeneralActivity {
         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         | View.SYSTEM_UI_FLAG_FULLSCREEN
         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-    private final static int showFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+    private final static int showFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
@@ -288,6 +289,7 @@ public class ZoomActivity extends GeneralActivity {
         if (continuousMode == enabled) return;
         switchingReaderMode = true;
         continuousMode = enabled;
+        continuousZoomViewport.resetZoom();
         if (enabled) {
             mViewPager.setAdapter(null);
             LinearLayoutManager layout = new LinearLayoutManager(this);
@@ -456,6 +458,7 @@ public class ZoomActivity extends GeneralActivity {
         ReadingPosition position = continuousMode ? currentPosition() : null;
         super.onConfigurationChanged(newConfig);
         changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        if (continuousMode) continuousZoomViewport.resetZoom();
         if (position != null) ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
     }
 
