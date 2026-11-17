@@ -34,6 +34,7 @@ import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.components.reader.ReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
+import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
@@ -183,6 +184,29 @@ public class ReaderReliabilityTest {
         }
     }
 
+    @Test
+    public void pagedScaleModeRecalculatesALoadedImage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 0, gallery.getGalleryFolder(),
+                    ReaderScaleMode.FIT_WIDTH);
+                controller.get().getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "scale-page").commitNow();
+                PhotoView photo = preparePhoto(fragment);
+                fragment.setScaleMode(ReaderScaleMode.FIT_WIDTH);
+                assertEquals(1.2f, photo.getScale(), 0.01f);
+                fragment.setScaleMode(ReaderScaleMode.FIT_SCREEN);
+                assertEquals(1f, photo.getScale(), 0.01f);
+            }
+        }
+    }
+
     private PhotoView preparePhoto(ZoomFragment fragment) {
         PhotoView photo = fragment.requireView().findViewById(R.id.image);
         photo.measure(View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
@@ -235,6 +259,9 @@ public class ReaderReliabilityTest {
                 dialog.findViewById(R.id.reader_vertical).performClick();
                 assertEquals(ViewPager2.ORIENTATION_VERTICAL, pager.getOrientation());
                 assertEquals(1, pager.getCurrentItem());
+                dialog.findViewById(R.id.reader_scale_width).performClick();
+                assertEquals(ReaderScaleMode.FIT_WIDTH,
+                    application.getSharedPreferences("Settings", 0).getInt("reader_scale_mode", -1));
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).setChecked(true);
@@ -254,6 +281,7 @@ public class ReaderReliabilityTest {
                 activity.findViewById(R.id.reader_settings).performClick();
                 dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_vertical)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_scale_width)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());

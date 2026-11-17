@@ -32,6 +32,7 @@ import com.maxwai.nclientv3.ZoomActivity;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.components.GlideX;
+import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
@@ -48,6 +49,7 @@ public class ZoomFragment extends Fragment {
     private PageFile pageFile = null;
     private Uri url;
     private int degree = 0;
+    private int scaleMode = ReaderScaleMode.SMART;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
 
@@ -56,24 +58,18 @@ public class ZoomFragment extends Fragment {
     }
 
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory) {
+        return newInstance(gallery, page, directory, ReaderScaleMode.SMART);
+    }
+
+    public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
+        args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private float calculateScaleFactor(int width, int height) {
-        FragmentActivity activity = getActivity();
-        if (height < width * 2) return Global.getDefaultZoom();
-        float finalSize =
-            ((float) Global.getDeviceWidth(activity) * height) /
-                ((float) Global.getDeviceHeight(activity) * width);
-        finalSize = Math.max(finalSize, Global.getDefaultZoom());
-        finalSize = Math.min(finalSize, MAX_SCALE);
-        LogUtility.d("Final scale: " + finalSize);
-        return (float) Math.floor(finalSize);
     }
 
     @Nullable
@@ -90,6 +86,7 @@ public class ZoomFragment extends Fragment {
         //read arguments
         String str = getArguments().getString("URL");
         url = str == null ? null : Uri.parse(str);
+        scaleMode = ReaderScaleMode.sanitize(getArguments().getInt("SCALE_MODE", ReaderScaleMode.SMART));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {
@@ -150,10 +147,23 @@ public class ZoomFragment extends Fragment {
     }
 
     private void scalePhoto(Drawable drawable) {
-        photoView.setScale(calculateScaleFactor(
-            drawable.getIntrinsicWidth(),
-            drawable.getIntrinsicHeight()
-        ), 0, 0, false);
+        photoView.setScale(calculateScaleFactor(drawable), 0, 0, false);
+    }
+
+    private float calculateScaleFactor(@NonNull Drawable drawable) {
+        FragmentActivity activity = getActivity();
+        int deviceWidth = activity == null ? 0 : Global.getDeviceWidth(activity);
+        int deviceHeight = activity == null ? 0 : Global.getDeviceHeight(activity);
+        int viewWidth = photoView.getWidth() > 0 ? photoView.getWidth() : deviceWidth;
+        int viewHeight = photoView.getHeight() > 0 ? photoView.getHeight() : deviceHeight;
+        return ReaderScaleMode.calculate(scaleMode, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+            viewWidth, viewHeight, deviceWidth, deviceHeight,
+            Global.getDefaultZoom(), MAX_SCALE);
+    }
+
+    public void setScaleMode(int mode) {
+        scaleMode = ReaderScaleMode.sanitize(mode);
+        if (photoView != null && photoView.getDrawable() != null) scalePhoto(photoView.getDrawable());
     }
 
     public void loadImage() {

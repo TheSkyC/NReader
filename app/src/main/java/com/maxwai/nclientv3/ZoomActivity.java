@@ -58,6 +58,7 @@ import com.maxwai.nclientv3.components.reader.ContinuousReaderNavigation;
 import com.maxwai.nclientv3.components.reader.ContinuousZoomViewport;
 import com.maxwai.nclientv3.components.reader.ReaderPageExport;
 import com.maxwai.nclientv3.components.reader.ReaderPageRotations;
+import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.components.views.ZoomFragment;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.settings.DefaultDialogs;
@@ -101,6 +102,8 @@ public class ZoomActivity extends GeneralActivity {
     private static final String AUTO_SCROLL_SPEED_KEY = "reader_auto_scroll_speed";
     private static final String READER_BACKGROUND_KEY = "reader_background";
     private static final String READER_BACKGROUND_KEY_PREFIX = "reader_background_";
+    private static final String READER_SCALE_MODE_KEY = "reader_scale_mode";
+    private static final String READER_SCALE_MODE_KEY_PREFIX = "reader_scale_mode_";
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -137,6 +140,7 @@ public class ZoomActivity extends GeneralActivity {
     private long autoScrollLastFrame;
     private float autoScrollRemainder;
     private int autoScrollSpeedIndex;
+    private int readerScaleMode = ReaderScaleMode.SMART;
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
@@ -199,6 +203,7 @@ public class ZoomActivity extends GeneralActivity {
             directory = getIntent().getParcelableExtra(getPackageName() + ".DIRECTORY");
         }
         if (directory == null) directory = gallery.getGalleryFolder();
+        readerScaleMode = getReaderScaleMode(preferences);
         //toolbar setup
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -540,6 +545,7 @@ public class ZoomActivity extends GeneralActivity {
         super.onConfigurationChanged(newConfig);
         changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
         if (continuousMode) continuousZoomViewport.resetZoom();
+        else applyReaderScaleMode();
         if (position != null) ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
     }
 
@@ -646,6 +652,21 @@ public class ZoomActivity extends GeneralActivity {
             else if (id == R.id.reader_continuous) setContinuousMode(true);
         });
 
+        MaterialRadioButton scaleSmart = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_smart));
+        MaterialRadioButton scaleScreen = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_screen));
+        MaterialRadioButton scaleWidth = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_width));
+        MaterialRadioButton scaleOriginal = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_original));
+        scaleSmart.setText(R.string.reader_scale_smart);
+        scaleScreen.setText(R.string.reader_scale_screen);
+        scaleWidth.setText(R.string.reader_scale_width);
+        scaleOriginal.setText(R.string.reader_scale_original);
+        RadioGroup scale = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale));
+        scale.check(scaleId(readerScaleMode));
+        scale.setOnCheckedChangeListener((group, id) -> setReaderScaleMode(
+            id == R.id.reader_scale_screen ? ReaderScaleMode.FIT_SCREEN
+                : id == R.id.reader_scale_width ? ReaderScaleMode.FIT_WIDTH
+                : id == R.id.reader_scale_original ? ReaderScaleMode.ORIGINAL : ReaderScaleMode.SMART));
+
         MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
         MaterialRadioButton backgroundBlack = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_black));
         MaterialRadioButton backgroundGray = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_gray));
@@ -709,10 +730,45 @@ public class ZoomActivity extends GeneralActivity {
             ? READER_BACKGROUND_KEY_PREFIX + gallery.getId() : READER_BACKGROUND_KEY;
     }
 
+    private int getReaderScaleMode(@NonNull SharedPreferences preferences) {
+        String key = readerScaleModePreferenceKey();
+        if (preferences.contains(key)) {
+            try {
+                return ReaderScaleMode.sanitize(preferences.getInt(key, ReaderScaleMode.SMART));
+            } catch (ClassCastException exception) {
+                return ReaderScaleMode.SMART;
+            }
+        }
+        try {
+            return ReaderScaleMode.sanitize(preferences.getInt(READER_SCALE_MODE_KEY, ReaderScaleMode.SMART));
+        } catch (ClassCastException exception) {
+            return ReaderScaleMode.SMART;
+        }
+    }
+
+    @NonNull
+    private String readerScaleModePreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_SCALE_MODE_KEY_PREFIX + gallery.getId() : READER_SCALE_MODE_KEY;
+    }
+
+    private void setReaderScaleMode(int mode) {
+        readerScaleMode = ReaderScaleMode.sanitize(mode);
+        getSharedPreferences("Settings", 0).edit()
+            .putInt(readerScaleModePreferenceKey(), readerScaleMode).apply();
+        applyReaderScaleMode();
+    }
+
     private int backgroundId(int value) {
         return value == READER_BACKGROUND_BLACK ? R.id.reader_background_black
             : value == READER_BACKGROUND_GRAY ? R.id.reader_background_gray
             : value == READER_BACKGROUND_WHITE ? R.id.reader_background_white : R.id.reader_background_auto;
+    }
+
+    private int scaleId(int value) {
+        return value == ReaderScaleMode.FIT_SCREEN ? R.id.reader_scale_screen
+            : value == ReaderScaleMode.FIT_WIDTH ? R.id.reader_scale_width
+            : value == ReaderScaleMode.ORIGINAL ? R.id.reader_scale_original : R.id.reader_scale_smart;
     }
 
     private void applyReaderBackground() {
@@ -723,6 +779,12 @@ public class ZoomActivity extends GeneralActivity {
         int resolved = getColor(color);
         mViewPager.setBackgroundColor(resolved);
         continuousReader.setBackgroundColor(resolved);
+    }
+
+    private void applyReaderScaleMode() {
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ZoomFragment) ((ZoomFragment) fragment).setScaleMode(readerScaleMode);
+        }
     }
 
     private void toggleAutoScroll() {
@@ -1071,7 +1133,7 @@ public class ZoomActivity extends GeneralActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return ZoomFragment.newInstance(gallery, position, directory);
+            return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode);
         }
 
         @Override

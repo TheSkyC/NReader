@@ -8,4 +8,9 @@
     <string name="reader_background_black">黒</string>
     <string name="reader_background_gray">グレー</string>
     <string name="reader_background_white">白</string>
+    <string name="reader_scale_title">ページ表示</string>
+    <string name="reader_scale_smart">スマート</string>
+    <string name="reader_scale_screen">画面に合わせる</string>
+    <string name="reader_scale_width">幅に合わせる</string>
+    <string name="reader_scale_original">元のサイズ</string>
 </resources>

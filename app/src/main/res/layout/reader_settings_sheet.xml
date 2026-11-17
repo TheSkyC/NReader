@@ -64,6 +64,44 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:text="@string/reader_scale_title"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <RadioGroup
+            android:id="@+id/reader_scale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_smart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_screen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_width"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_scale_original"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:text="@string/reader_background_title"
             android:textAppearance="?attr/textAppearanceSubtitle1" />
 

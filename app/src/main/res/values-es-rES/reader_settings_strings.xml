@@ -8,4 +8,9 @@
     <string name="reader_background_black">Negro</string>
     <string name="reader_background_gray">Gris</string>
     <string name="reader_background_white">Blanco</string>
+    <string name="reader_scale_title">Visualización de página</string>
+    <string name="reader_scale_smart">Inteligente</string>
+    <string name="reader_scale_screen">Ajustar a la pantalla</string>
+    <string name="reader_scale_width">Ajustar al ancho</string>
+    <string name="reader_scale_original">Tamaño original</string>
 </resources>
