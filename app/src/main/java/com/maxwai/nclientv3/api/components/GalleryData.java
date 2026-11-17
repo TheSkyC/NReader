@@ -37,6 +37,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class GalleryData implements Parcelable {
+    private static final int MAX_INFERRED_LOCAL_PAGES = 10000;
     public static final Creator<GalleryData> CREATOR = new Creator<>() {
         @Override
         public GalleryData createFromParcel(Parcel in) {
@@ -249,7 +250,10 @@ public class GalleryData implements Parcelable {
     }
 
     public void setPageInfo(GalleryFolder folder) {
-        if (pageCount <= 0) this.pageCount = folder.getPageCount();
+        if (pageCount <= 0) {
+            this.pageCount = folder.getMax() > 0 && folder.getMax() <= MAX_INFERRED_LOCAL_PAGES
+                ? folder.getMax() : folder.getPageCount();
+        }
         if (folder.getPageCount() > 0) {
             Uri firstPage = folder.getFirstPage().toUri();
             this.cover.setImagePath(firstPage);
