@@ -1840,6 +1840,47 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void changingAppearanceDuringLocalRetryKeepsThePendingScan() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, "2.png").delete());
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 1, gallery.getGalleryFolder());
+                activity.getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "retry-crop-test").commitNow();
+                AtomicReference<Runnable> task = new AtomicReference<>();
+                ReflectionHelpers.setField(fragment, "retryExecutor", (java.util.concurrent.Executor) task::set);
+                Files.copy(new File(folder, "1.png").toPath(), new File(folder, "2.png").toPath());
+                fragment.requireView().findViewById(R.id.reader_retry).performClick();
+                assertNotNull(task.get());
+                fragment.setAutoCrop(true);
+                fragment.rotate();
+                task.getAndSet(null).run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                PageFile found = ReflectionHelpers.getField(fragment, "pageFile");
+                assertNotNull(found);
+                assertEquals(new File(folder, "2.png").getAbsolutePath(), found.getAbsolutePath());
+                ImageViewTarget<?> target = ReflectionHelpers.getField(fragment, "target");
+                assertNotNull(target.getRequest());
+                BaseRequestOptions<?> options = ReflectionHelpers.getField(target.getRequest(), "requestOptions");
+                Object transform = options.getTransformations().get(Bitmap.class);
+                assertTrue(transform instanceof com.bumptech.glide.load.MultiTransformation);
+                java.util.Collection<?> transforms = ReflectionHelpers.getField(transform, "transformations");
+                assertTrue(transforms.contains(new Rotate(270)));
+                assertTrue(transforms.stream().anyMatch(value -> value instanceof
+                    com.maxwai.nclientv3.components.reader.ReaderAutoCropTransformation));
+                assertTrue((boolean) ReflectionHelpers.getField(fragment, "autoCrop"));
+            }
+        }
+    }
+
+    @Test
     public void pagedRetryFindsAFileAddedAfterOpeningAndIgnoresDestroyedView() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

@@ -281,6 +281,7 @@ public class ZoomFragment extends Fragment {
         if (autoCrop == enabled) return;
         autoCrop = enabled;
         completedDownload = false;
+        if (retryPending) return;
         loadImage(Priority.NORMAL, true);
     }
 
@@ -426,6 +427,7 @@ public class ZoomFragment extends Fragment {
     private void updateDegree() {
         degree = (degree + 270) % 360;
         completedDownload = false;
+        if (retryPending) return;
         loadImage(Priority.NORMAL, true);
     }
 
