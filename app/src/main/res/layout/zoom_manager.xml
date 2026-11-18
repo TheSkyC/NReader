@@ -62,6 +62,7 @@
             android:minHeight="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/reader_page_preview"
+            android:visibility="gone"
             app:tint="?android:attr/colorForeground"
             app:srcCompat="@drawable/ic_reader_grid" />
 
@@ -83,6 +84,7 @@
             android:minHeight="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/reader_settings_title"
+            android:visibility="gone"
             app:tint="?android:attr/colorForeground"
             app:srcCompat="@drawable/ic_reader_sliders" />
 

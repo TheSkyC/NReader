@@ -97,6 +97,8 @@ public class ReaderReliabilityTest {
             Intent intent = readerIntent(application, folder);
             try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, intent).setup()) {
                 ZoomActivity activity = controller.get();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.reader_page_preview).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.reader_settings).getVisibility());
                 ViewPager2 pager = activity.findViewById(R.id.container);
                 pager.setCurrentItem(1, false);
                 List<Integer> selected = new ArrayList<>();

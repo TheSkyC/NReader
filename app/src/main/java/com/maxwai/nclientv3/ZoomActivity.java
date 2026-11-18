@@ -327,8 +327,12 @@ public class ZoomActivity extends GeneralActivity {
         continuousReader.setKeepScreenOn(Global.isLockScreen());
         findViewById(R.id.prev).setOnClickListener(v -> changeClosePage(false));
         findViewById(R.id.next).setOnClickListener(v -> changeClosePage(true));
-        findViewById(R.id.reader_page_preview).setOnClickListener(v -> showPagePreview());
-        findViewById(R.id.reader_settings).setOnClickListener(v -> showReaderSettings());
+        View previewButton = findViewById(R.id.reader_page_preview);
+        previewButton.setVisibility(View.VISIBLE);
+        previewButton.setOnClickListener(v -> showPagePreview());
+        View settingsButton = findViewById(R.id.reader_settings);
+        settingsButton.setVisibility(View.VISIBLE);
+        settingsButton.setOnClickListener(v -> showReaderSettings());
         seekBar.setMax(gallery.getPageCount() - 1);
         if (Global.useRtl()) {
             seekBar.setRotationY(180);
