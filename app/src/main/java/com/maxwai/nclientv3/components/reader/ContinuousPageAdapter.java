@@ -17,6 +17,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.RequestManager;
@@ -54,6 +56,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Nullable private final File directoryPath;
     private final BiConsumer<Integer, Float> onPageTap;
     @Nullable private OnPageDoubleTapListener onPageDoubleTap;
+    @Nullable private Runnable onAccessibilityToggleControls;
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
     private int filterMode = ReaderImageFilter.NONE;
@@ -146,6 +149,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                 holder.scheduleSingleTap(() -> onPageTap.accept(page, horizontalPosition));
             }
         });
+        updateAccessibilityAction(holder);
         holder.doubleTapListener = onPageDoubleTap;
         holder.retry.setOnClickListener(view -> {
             int page = holder.getBindingAdapterPosition();
@@ -155,12 +159,37 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         holder.applyAppearance(filterMode, brightness, contrast, saturation);
     }
 
+    private void updateAccessibilityAction(@NonNull Holder holder) {
+        if (onAccessibilityToggleControls != null) {
+            ViewCompat.replaceAccessibilityAction(holder.itemView,
+                AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+                holder.itemView.getContext().getString(R.string.reader_tap_action_controls), (view, arguments) -> {
+                    if (holder.getBindingAdapter() != this || holder.getBindingAdapterPosition() == RecyclerView.NO_POSITION
+                        || onAccessibilityToggleControls == null) return false;
+                    holder.cancelSingleTap();
+                    onAccessibilityToggleControls.run();
+                    return true;
+                });
+        } else {
+            ViewCompat.removeAccessibilityAction(holder.itemView, AccessibilityNodeInfoCompat.ACTION_CLICK);
+        }
+    }
+
     private int pageGapPx(@NonNull Context context) {
         return Math.round(PAGE_GAP_DP * context.getResources().getDisplayMetrics().density);
     }
 
     public void setOnPageDoubleTapListener(@Nullable OnPageDoubleTapListener listener) {
         onPageDoubleTap = listener;
+    }
+
+    public void setOnAccessibilityToggleControls(@Nullable Runnable listener) {
+        onAccessibilityToggleControls = listener;
+        if (recycler == null) return;
+        for (int index = 0; index < recycler.getChildCount(); index++) {
+            RecyclerView.ViewHolder holder = recycler.getChildViewHolder(recycler.getChildAt(index));
+            if (holder instanceof Holder) updateAccessibilityAction((Holder) holder);
+        }
     }
 
     public void setFilterMode(int mode) {

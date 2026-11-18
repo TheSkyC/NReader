@@ -13,6 +13,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -463,6 +464,49 @@ public class ReaderReliabilityTest {
                 assertTrue(ReflectionHelpers.getField(activity, "isHidden"));
                 assertTrue(androidx.core.view.ViewCompat.performAccessibilityAction(photo,
                     android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+                assertFalse(ReflectionHelpers.getField(activity, "isHidden"));
+            }
+        }
+    }
+
+    @Test
+    public void continuousAccessibilityActionTogglesControlsAndCancelsPendingTap() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).putInt("reader_tap_action", 2).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup().visible()) {
+                ZoomActivity activity = controller.get();
+                layoutActivity(activity);
+                RecyclerView list = activity.findViewById(R.id.continuous_reader);
+                RecyclerView.ViewHolder first = list.findViewHolderForAdapterPosition(0);
+                assertNotNull(first);
+                assertEquals(activity.getString(R.string.bookmark_page_format, 1), first.itemView.getContentDescription());
+                android.view.accessibility.AccessibilityNodeInfo info = first.itemView.createAccessibilityNodeInfo();
+                boolean hasLabeledAction = false;
+                for (android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction action : info.getActionList()) {
+                    if (action.getId() == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK
+                        && activity.getString(R.string.reader_tap_action_controls).contentEquals(action.getLabel())) {
+                        hasLabeledAction = true;
+                    }
+                }
+                assertTrue(hasLabeledAction);
+                first.itemView.performClick();
+                assertTrue(androidx.core.view.ViewCompat.performAccessibilityAction(first.itemView,
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+                assertTrue(ReflectionHelpers.getField(activity, "isHidden"));
+                Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50, TimeUnit.MILLISECONDS);
+                assertTrue(ReflectionHelpers.getField(activity, "isHidden"));
+                assertTrue(androidx.core.view.ViewCompat.performAccessibilityAction(first.itemView,
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+                assertFalse(ReflectionHelpers.getField(activity, "isHidden"));
+                list.setAdapter(null);
+                androidx.core.view.ViewCompat.performAccessibilityAction(first.itemView,
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null);
                 assertFalse(ReflectionHelpers.getField(activity, "isHidden"));
             }
         }

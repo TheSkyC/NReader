@@ -424,6 +424,7 @@ public class ZoomActivity extends GeneralActivity {
                 (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations,
                 readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation);
             adapter.setOnPageDoubleTapListener((ignored, x, y) -> continuousZoomViewport.toggleDoubleTapZoom(x, y));
+            adapter.setOnAccessibilityToggleControls(this::toggleReaderControls);
             continuousReader.setAdapter(adapter);
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
             mViewPager.setVisibility(View.GONE);

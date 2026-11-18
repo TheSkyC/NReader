@@ -127,6 +127,39 @@ public class ContinuousPageAdapterTest {
     }
 
     @Test
+    public void accessibilityActionCanBeAddedAndRemovedFromBoundPages() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        AtomicInteger taps = new AtomicInteger();
+        AtomicInteger actions = new AtomicInteger();
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> taps.incrementAndGet(), Runnable::run);
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 1200);
+        RecyclerView.ViewHolder page = recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(page);
+        adapter.setOnAccessibilityToggleControls(actions::incrementAndGet);
+        assertTrue(page.itemView.performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+        assertEquals(1, actions.get());
+        assertEquals(0, taps.get());
+        adapter.setOnAccessibilityToggleControls(null);
+        assertTrue(page.itemView.performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertEquals(1, actions.get());
+        assertEquals(1, taps.get());
+        recycler.setAdapter(null);
+    }
+
+    @Test
     public void retryFindsNewLocalPageAndIgnoresResultsAfterRecycling() throws Exception {
         File folder = temporaryFolder.newFolder();
         assertTrue(new File(folder, "1.png").createNewFile());
