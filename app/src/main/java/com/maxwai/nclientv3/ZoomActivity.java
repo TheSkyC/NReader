@@ -668,6 +668,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (isExternalReaderKey(keyCode)) return true;
         if (Global.volumeOverride()) {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_VOLUME_UP:
@@ -683,6 +684,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (handleExternalReaderKey(keyCode, event)) return true;
         if (Global.volumeOverride()) {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_VOLUME_UP:
@@ -700,6 +702,49 @@ public class ZoomActivity extends GeneralActivity {
         return super.onKeyDown(keyCode, event);
     }
 
+    private boolean handleExternalReaderKey(int keyCode, @NonNull KeyEvent event) {
+        if (!isExternalReaderKey(keyCode)) return false;
+        if (event.getRepeatCount() > 0) return true;
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                changeClosePage(false);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                changeClosePage(true);
+                return true;
+            case KeyEvent.KEYCODE_PAGE_UP:
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+            case KeyEvent.KEYCODE_BUTTON_L1:
+                changeLogicalPage(false);
+                return true;
+            case KeyEvent.KEYCODE_PAGE_DOWN:
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+            case KeyEvent.KEYCODE_BUTTON_R1:
+                changeLogicalPage(true);
+                return true;
+            case KeyEvent.KEYCODE_SPACE:
+                changeLogicalPage(!event.isShiftPressed());
+                return true;
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+                isHidden = !isHidden;
+                applyVisibilityFlag();
+                animateLayout();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isExternalReaderKey(int keyCode) {
+        return keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+            || keyCode == KeyEvent.KEYCODE_PAGE_UP || keyCode == KeyEvent.KEYCODE_PAGE_DOWN
+            || keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS || keyCode == KeyEvent.KEYCODE_MEDIA_NEXT
+            || keyCode == KeyEvent.KEYCODE_BUTTON_L1 || keyCode == KeyEvent.KEYCODE_BUTTON_R1
+            || keyCode == KeyEvent.KEYCODE_SPACE || keyCode == KeyEvent.KEYCODE_ENTER
+            || keyCode == KeyEvent.KEYCODE_DPAD_CENTER;
+    }
+
     private void changeSide() {
         getSharedPreferences("Settings", 0).edit().putBoolean(VOLUME_SIDE_KEY, side = !side).apply();
         Toast.makeText(this, side ? R.string.next_page_volume_up : R.string.next_page_volume_down, Toast.LENGTH_SHORT).show();
@@ -707,6 +752,10 @@ public class ZoomActivity extends GeneralActivity {
 
     public void changeClosePage(boolean next) {
         if (!continuousMode && Global.useRtl()) next = !next;
+        changeLogicalPage(next);
+    }
+
+    private void changeLogicalPage(boolean next) {
         int current = readerNavigation.currentPage();
         if (next && current < readerNavigation.pageCount() - 1) changePage(current + 1);
         if (!next && current > 0) changePage(current - 1);

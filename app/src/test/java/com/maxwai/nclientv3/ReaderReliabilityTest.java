@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Looper;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -1086,6 +1087,67 @@ public class ReaderReliabilityTest {
                 assertEquals(1, navigation.currentPage());
                 assertEquals(wasHidden, (boolean) ReflectionHelpers.getField(activity, "isHidden"));
             }
+        }
+    }
+
+    @Test
+    public void externalReaderKeysTurnPagesAndToggleControls() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("instant_page_turn", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(1, false);
+                assertTrue(activity.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT)));
+                assertEquals(2, navigation.currentPage());
+                assertTrue(activity.onKeyDown(KeyEvent.KEYCODE_PAGE_UP,
+                    new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_UP, 1)));
+                assertEquals(2, navigation.currentPage());
+                assertTrue(activity.onKeyDown(KeyEvent.KEYCODE_SPACE,
+                    new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SPACE, 0, KeyEvent.META_SHIFT_ON)));
+                assertEquals(1, navigation.currentPage());
+                boolean wasHidden = ReflectionHelpers.getField(activity, "isHidden");
+                assertTrue(activity.onKeyDown(KeyEvent.KEYCODE_ENTER,
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)));
+                assertEquals(!wasHidden, (boolean) ReflectionHelpers.getField(activity, "isHidden"));
+                assertTrue(activity.onKeyUp(KeyEvent.KEYCODE_ENTER,
+                    new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER)));
+            }
+        }
+    }
+
+    @Test
+    public void externalLogicalKeysKeepPageOrderInRtl() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean(application.getString(R.string.preference_key_use_rtl), true)
+            .putBoolean("instant_page_turn", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(1, false);
+                activity.onKeyDown(KeyEvent.KEYCODE_PAGE_DOWN,
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_DOWN));
+                assertEquals(2, navigation.currentPage());
+                activity.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT));
+                assertEquals(1, navigation.currentPage());
+            }
+        } finally {
+            application.getSharedPreferences("Settings", 0).edit().clear().commit();
+            Global.initFromShared(application);
         }
     }
 
