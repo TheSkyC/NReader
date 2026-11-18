@@ -45,6 +45,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -268,6 +269,54 @@ public class ContinuousPageAdapterTest {
             java.util.concurrent.TimeUnit.MILLISECONDS);
         assertEquals(1, actions.get());
         assertEquals(1, taps.get());
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void cropChangeDuringRetryKeepsTheDirectoryRefresh() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        assertTrue(new File(folder, "3.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        AtomicReference<Runnable> queued = new AtomicReference<>();
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> {}, queued::set);
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 1200);
+        ContinuousPageAdapter.Holder missing = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(1);
+        assertNotNull(missing);
+        File added = new File(folder, "2.png");
+        assertTrue(added.createNewFile());
+        missing.retry.performClick();
+        assertNotNull(queued.get());
+        adapter.setAutoCrop(true);
+        queued.getAndSet(null).run();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertNotNull(missing.source);
+        assertEquals(added.getAbsolutePath(), ((PageFile) missing.source).getAbsolutePath());
+        Request request = (Request) missing.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(request);
+        BaseRequestOptions<?> options = ReflectionHelpers.getField(request, "requestOptions");
+        Object transform = options.getTransformations().get(Bitmap.class);
+        java.util.Collection<?> transforms = ReflectionHelpers.getField(transform, "transformations");
+        assertTrue(transforms.stream().anyMatch(value -> value instanceof ReaderAutoCropTransformation));
+        missing.retry.performClick();
+        assertNotNull(queued.get());
+        adapter.onBindViewHolder(missing, 1);
+        Request reboundRequest = (Request) missing.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(reboundRequest);
+        queued.getAndSet(null).run();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(added.getAbsolutePath(), ((PageFile) missing.source).getAbsolutePath());
+        assertSame(reboundRequest, missing.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag));
+        assertFalse(missing.retryPending);
         recycler.setAdapter(null);
     }
 

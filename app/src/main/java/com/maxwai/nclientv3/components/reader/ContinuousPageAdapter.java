@@ -236,7 +236,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
             if (!(viewHolder instanceof Holder)) continue;
             int page = viewHolder.getBindingAdapterPosition();
-            if (page != RecyclerView.NO_POSITION) load((Holder) viewHolder, page);
+            if (page != RecyclerView.NO_POSITION && !((Holder) viewHolder).retryPending) load((Holder) viewHolder, page);
         }
     }
 
@@ -292,6 +292,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             return;
         }
         int generation = ++holder.generation;
+        holder.retryPending = true;
         holder.source = null;
         RequestManager manager = GlideX.with(holder.image);
         if (manager != null) manager.clear(holder.image);
@@ -314,6 +315,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                 Holder current = holderRef.get();
                 if (adapter == null || current == null || current.generation != generation
                     || current.getBindingAdapter() != adapter || current.getBindingAdapterPosition() != page) return;
+                current.retryPending = false;
                 adapter.directory = result;
                 adapter.load(current, page);
             });
@@ -323,6 +325,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private void load(Holder holder, int position) {
         RequestManager manager = GlideX.with(holder.image);
         holder.generation++;
+        holder.retryPending = false;
         int generation = holder.generation;
         if (manager != null) manager.clear(holder.image);
         holder.image.setImageDrawable(null);
@@ -400,6 +403,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         holder.gestureHandler.removeCallbacks(holder.clearClickSuppression);
         holder.suppressNextClick = false;
         holder.generation++;
+        holder.retryPending = false;
         holder.source = null;
         RequestManager manager = GlideX.with(holder.image);
         if (manager != null) manager.clear(holder.image);
@@ -419,6 +423,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         final TextView error;
         final View retry;
         int generation;
+        boolean retryPending;
         @Nullable Object source;
         float tapPosition = 0.5f;
         @Nullable OnPageDoubleTapListener doubleTapListener;
