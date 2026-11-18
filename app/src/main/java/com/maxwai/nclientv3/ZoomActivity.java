@@ -589,10 +589,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private int effectiveReaderTapAction() {
-        SharedPreferences preferences = getSharedPreferences("Settings", 0);
-        if (!preferences.contains(readerTapActionPreferenceKey()))
-            return Global.isButtonChangePage() ? READER_TAP_EDGE : READER_TAP_CONTROLS;
-        return readerTapAction;
+        return getReaderTapAction(getSharedPreferences("Settings", 0));
     }
 
     public boolean isVerticalPageTurn() {
@@ -1014,17 +1011,26 @@ public class ZoomActivity extends GeneralActivity {
         dialog.findViewById(R.id.reader_preset_scan).setOnClickListener(presetListener);
 
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
+        readerTapAction = effectiveReaderTapAction();
         tap.setChecked(readerTapAction == READER_TAP_EDGE);
-        tap.setOnCheckedChangeListener((button, checked) -> {
-            if (button.isPressed()) setReaderTapAction(checked ? READER_TAP_EDGE : READER_TAP_CONTROLS);
-        });
         RadioGroup tapAction = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_action));
         tapAction.check(readerTapActionId(readerTapAction));
+        boolean[] updatingTapControl = {false};
+        tap.setOnCheckedChangeListener((button, checked) -> {
+            if (!updatingTapControl[0]) {
+                tapAction.check(readerTapActionId(checked ? READER_TAP_EDGE : READER_TAP_CONTROLS));
+            }
+        });
         tapAction.setOnCheckedChangeListener((group, id) -> {
             int action = id == R.id.reader_tap_action_edge ? READER_TAP_EDGE
                 : id == R.id.reader_tap_action_none ? READER_TAP_NONE : READER_TAP_CONTROLS;
             setReaderTapAction(action);
-            tap.setChecked(action == READER_TAP_EDGE);
+            updatingTapControl[0] = true;
+            try {
+                tap.setChecked(action == READER_TAP_EDGE);
+            } finally {
+                updatingTapControl[0] = false;
+            }
         });
         SwitchMaterial volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
         volume.setChecked(Global.volumeOverride());
@@ -1202,6 +1208,9 @@ public class ZoomActivity extends GeneralActivity {
     private int getReaderTapAction(@NonNull SharedPreferences preferences) {
         String key = readerTapActionPreferenceKey();
         try {
+            if (!preferences.contains(key) && preferences.contains(READER_TAP_ACTION_KEY)) {
+                key = READER_TAP_ACTION_KEY;
+            }
             if (preferences.contains(key)) {
                 int value = preferences.getInt(key, READER_TAP_CONTROLS);
                 return value >= READER_TAP_CONTROLS && value <= READER_TAP_NONE ? value : READER_TAP_CONTROLS;
@@ -1223,7 +1232,9 @@ public class ZoomActivity extends GeneralActivity {
             ? value : READER_TAP_CONTROLS;
         getSharedPreferences("Settings", 0).edit()
             .putInt(readerTapActionPreferenceKey(), readerTapAction).apply();
-        Global.setButtonChangePage(this, readerTapAction == READER_TAP_EDGE);
+        if (gallery == null || gallery.getId() <= 0) {
+            Global.setButtonChangePage(this, readerTapAction == READER_TAP_EDGE);
+        }
     }
 
     public void onReaderScaleChanged(float scale) {

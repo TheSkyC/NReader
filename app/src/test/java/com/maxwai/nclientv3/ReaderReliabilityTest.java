@@ -531,6 +531,59 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void tapActionControlsStayInSyncAndDoNotChangeOtherGalleries() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File firstFolder = galleryFolder();
+        File secondFolder = galleryFolder();
+        assertTrue(new File(firstFolder, ".82128").createNewFile());
+        assertTrue(new File(secondFolder, ".82129").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putInt("reader_tap_action", 2).putBoolean("change_page_buttons", false).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> first = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, firstFolder)).setup()) {
+                ZoomActivity activity = first.get();
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                SwitchMaterial tap = dialog.findViewById(R.id.reader_tap_turn);
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_none)).isChecked());
+                tap.setChecked(true);
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_edge)).isChecked());
+                assertEquals(1, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action_82128", -1));
+                assertEquals(2, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action", -1));
+                assertFalse(Global.isButtonChangePage());
+                dialog.findViewById(R.id.reader_tap_action_none).performClick();
+                assertFalse(tap.isChecked());
+                assertEquals(2, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action_82128", -1));
+                tap.setChecked(true);
+                tap.setChecked(false);
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_controls)).isChecked());
+                dialog.dismiss();
+            }
+            try (ActivityController<ZoomActivity> second = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, secondFolder)).setup()) {
+                ZoomActivity activity = second.get();
+                assertEquals(2, (int) ReflectionHelpers.callInstanceMethod(activity, "effectiveReaderTapAction"));
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_none)).isChecked());
+                dialog.dismiss();
+                application.getSharedPreferences("Settings", 0).edit().remove("reader_tap_action").apply();
+                Global.setButtonChangePage(application, true);
+                assertEquals(1, (int) ReflectionHelpers.callInstanceMethod(activity, "effectiveReaderTapAction"));
+                Global.setButtonChangePage(application, false);
+                assertEquals(0, (int) ReflectionHelpers.callInstanceMethod(activity, "effectiveReaderTapAction"));
+            }
+            try (ActivityController<ZoomActivity> first = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, firstFolder)).setup()) {
+                assertEquals(0, (int) ReflectionHelpers.callInstanceMethod(first.get(), "effectiveReaderTapAction"));
+            }
+        }
+    }
+
+    @Test
     public void readerPresetUpdatesControlsAndAllowsFurtherChanges() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
