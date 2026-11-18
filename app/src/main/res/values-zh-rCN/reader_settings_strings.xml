@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">跟随系统</string>
     <string name="reader_orientation_portrait">锁定竖屏</string>
     <string name="reader_orientation_landscape">锁定横屏</string>
+    <string name="reader_tap_action_title">点击行为</string>
+    <string name="reader_tap_action_edge">点击屏幕边缘翻页</string>
+    <string name="reader_tap_action_controls">显示或隐藏控件</string>
+    <string name="reader_tap_action_none">无操作</string>
 </resources>

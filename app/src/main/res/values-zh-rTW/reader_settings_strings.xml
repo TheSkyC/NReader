@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">跟隨系統</string>
     <string name="reader_orientation_portrait">鎖定直向</string>
     <string name="reader_orientation_landscape">鎖定橫向</string>
+    <string name="reader_tap_action_title">點擊行為</string>
+    <string name="reader_tap_action_edge">點擊螢幕邊緣翻頁</string>
+    <string name="reader_tap_action_controls">顯示或隱藏控制項</string>
+    <string name="reader_tap_action_none">無操作</string>
 </resources>

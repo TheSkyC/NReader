@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">Suivre le système</string>
     <string name="reader_orientation_portrait">Verrouiller en portrait</string>
     <string name="reader_orientation_landscape">Verrouiller en paysage</string>
+    <string name="reader_tap_action_title">Action au toucher</string>
+    <string name="reader_tap_action_edge">Tourner aux bords de l écran</string>
+    <string name="reader_tap_action_controls">Afficher ou masquer les contrôles</string>
+    <string name="reader_tap_action_none">Aucune action</string>
 </resources>

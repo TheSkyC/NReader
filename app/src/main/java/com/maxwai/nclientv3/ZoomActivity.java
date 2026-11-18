@@ -136,9 +136,14 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_ZOOM_SCALE_KEY_PREFIX = "reader_zoom_scale_";
     private static final String READER_ORIENTATION_KEY = "reader_orientation";
     private static final String READER_ORIENTATION_KEY_PREFIX = "reader_orientation_";
+    private static final String READER_TAP_ACTION_KEY = "reader_tap_action";
+    private static final String READER_TAP_ACTION_KEY_PREFIX = "reader_tap_action_";
     private static final int READER_ORIENTATION_SYSTEM = 0;
     private static final int READER_ORIENTATION_PORTRAIT = 1;
     private static final int READER_ORIENTATION_LANDSCAPE = 2;
+    private static final int READER_TAP_CONTROLS = 0;
+    private static final int READER_TAP_EDGE = 1;
+    private static final int READER_TAP_NONE = 2;
     private static final int READER_BACKGROUND_AUTO = 0;
     private static final int READER_BACKGROUND_BLACK = 1;
     private static final int READER_BACKGROUND_GRAY = 2;
@@ -188,6 +193,7 @@ public class ZoomActivity extends GeneralActivity {
     private int readerContrast;
     private int readerSaturation;
     private float readerZoomScale;
+    private int readerTapAction = READER_TAP_CONTROLS;
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
@@ -257,6 +263,7 @@ public class ZoomActivity extends GeneralActivity {
         readerContrast = getReaderAdjustment(preferences, READER_CONTRAST_KEY, READER_CONTRAST_KEY_PREFIX);
         readerSaturation = getReaderAdjustment(preferences, READER_SATURATION_KEY, READER_SATURATION_KEY_PREFIX);
         readerZoomScale = getReaderZoomScale(preferences);
+        readerTapAction = getReaderTapAction(preferences);
         applyReaderOrientationLock(preferences);
         spreadMode = getSpreadMode(preferences);
         doublePageMode = isDoublePageEffective();
@@ -567,10 +574,10 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void handleReaderPageTap(float horizontalPosition) {
-        if (Global.isButtonChangePage() && (horizontalPosition < PAGE_TAP_EDGE
+        if (readerTapAction == READER_TAP_EDGE && (horizontalPosition < PAGE_TAP_EDGE
             || horizontalPosition > 1f - PAGE_TAP_EDGE)) {
             changeClosePage(horizontalPosition > 1f - PAGE_TAP_EDGE);
-        } else {
+        } else if (readerTapAction == READER_TAP_CONTROLS) {
             isHidden = !isHidden;
             applyVisibilityFlag();
             animateLayout();
@@ -924,8 +931,14 @@ public class ZoomActivity extends GeneralActivity {
         });
 
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
-        tap.setChecked(Global.isButtonChangePage());
-        tap.setOnCheckedChangeListener((button, checked) -> Global.setButtonChangePage(this, checked));
+        tap.setChecked(readerTapAction == READER_TAP_EDGE);
+        tap.setOnCheckedChangeListener((button, checked) -> setReaderTapAction(
+            checked ? READER_TAP_EDGE : READER_TAP_CONTROLS));
+        RadioGroup tapAction = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_action));
+        tapAction.check(readerTapActionId(readerTapAction));
+        tapAction.setOnCheckedChangeListener((group, id) -> setReaderTapAction(
+            id == R.id.reader_tap_action_edge ? READER_TAP_EDGE
+                : id == R.id.reader_tap_action_none ? READER_TAP_NONE : READER_TAP_CONTROLS));
         SwitchMaterial volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
         volume.setChecked(Global.volumeOverride());
         volume.setOnCheckedChangeListener((button, checked) -> {
@@ -1099,6 +1112,33 @@ public class ZoomActivity extends GeneralActivity {
         applyReaderOrientationLock(preferences);
     }
 
+    private int getReaderTapAction(@NonNull SharedPreferences preferences) {
+        String key = readerTapActionPreferenceKey();
+        try {
+            if (preferences.contains(key)) {
+                int value = preferences.getInt(key, READER_TAP_CONTROLS);
+                return value >= READER_TAP_CONTROLS && value <= READER_TAP_NONE ? value : READER_TAP_CONTROLS;
+            }
+        } catch (ClassCastException ignored) {
+            return READER_TAP_CONTROLS;
+        }
+        return Global.isButtonChangePage() ? READER_TAP_EDGE : READER_TAP_CONTROLS;
+    }
+
+    @NonNull
+    private String readerTapActionPreferenceKey() {
+        return gallery != null && gallery.getId() > 0
+            ? READER_TAP_ACTION_KEY_PREFIX + gallery.getId() : READER_TAP_ACTION_KEY;
+    }
+
+    private void setReaderTapAction(int value) {
+        readerTapAction = value >= READER_TAP_CONTROLS && value <= READER_TAP_NONE
+            ? value : READER_TAP_CONTROLS;
+        getSharedPreferences("Settings", 0).edit()
+            .putInt(readerTapActionPreferenceKey(), readerTapAction).apply();
+        Global.setButtonChangePage(this, readerTapAction == READER_TAP_EDGE);
+    }
+
     public void onReaderScaleChanged(float scale) {
         if (continuousMode || gallery == null || gallery.getId() <= 0 || scale < 0.1f || scale > 8f) return;
         readerZoomScale = scale;
@@ -1216,6 +1256,11 @@ public class ZoomActivity extends GeneralActivity {
         return value == READER_ORIENTATION_PORTRAIT ? R.id.reader_orientation_portrait
             : value == READER_ORIENTATION_LANDSCAPE ? R.id.reader_orientation_landscape
             : R.id.reader_orientation_system;
+    }
+
+    private int readerTapActionId(int value) {
+        return value == READER_TAP_EDGE ? R.id.reader_tap_action_edge
+            : value == READER_TAP_NONE ? R.id.reader_tap_action_none : R.id.reader_tap_action_controls;
     }
 
     private int scaleId(int value) {

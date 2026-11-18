@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">Follow system</string>
     <string name="reader_orientation_portrait">Lock portrait</string>
     <string name="reader_orientation_landscape">Lock landscape</string>
+    <string name="reader_tap_action_title">Tap behavior</string>
+    <string name="reader_tap_action_edge">Turn pages at screen edges</string>
+    <string name="reader_tap_action_controls">Show or hide controls</string>
+    <string name="reader_tap_action_none">No action</string>
 </resources>

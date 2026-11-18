@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">Segui il sistema</string>
     <string name="reader_orientation_portrait">Blocca verticale</string>
     <string name="reader_orientation_landscape">Blocca orizzontale</string>
+    <string name="reader_tap_action_title">Comportamento del tocco</string>
+    <string name="reader_tap_action_edge">Cambia pagina ai bordi</string>
+    <string name="reader_tap_action_controls">Mostra o nascondi controlli</string>
+    <string name="reader_tap_action_none">Nessuna azione</string>
 </resources>

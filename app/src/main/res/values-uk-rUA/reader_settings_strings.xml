@@ -56,4 +56,8 @@
     <string name="reader_orientation_system">Як у системі</string>
     <string name="reader_orientation_portrait">Зафіксувати книжкову</string>
     <string name="reader_orientation_landscape">Зафіксувати альбомну</string>
+    <string name="reader_tap_action_title">Дія дотику</string>
+    <string name="reader_tap_action_edge">Гортати біля країв екрана</string>
+    <string name="reader_tap_action_controls">Показувати або приховувати елементи</string>
+    <string name="reader_tap_action_none">Без дії</string>
 </resources>
