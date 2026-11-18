@@ -69,6 +69,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
             float focusY = (event.getY(0) + event.getY(1)) / 2f;
             pinchActive = beginScale(focusX, focusY);
             if (pinchActive) {
+                cancelPendingPageTaps();
                 RecyclerView reader = reader();
                 if (reader != null) reader.stopScroll();
                 requestDisallowInterceptTouchEvent(true);
@@ -79,6 +80,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
             if (!horizontalPan && !verticalDrag) {
                 if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)) {
                     horizontalPan = true;
+                    cancelPendingPageTaps();
                     requestDisallowInterceptTouchEvent(true);
                 } else if (Math.abs(dy) > touchSlop) {
                     verticalDrag = true;
@@ -114,6 +116,11 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
 
     private @Nullable RecyclerView reader() {
         return this;
+    }
+
+    private void cancelPendingPageTaps() {
+        Adapter<?> adapter = getAdapter();
+        if (adapter instanceof ContinuousPageAdapter) ((ContinuousPageAdapter) adapter).cancelPendingPageTaps();
     }
 
     public void setOnUserInteractionListener(@Nullable Runnable listener) {

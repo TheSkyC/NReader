@@ -66,6 +66,15 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private int saturation;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     @Nullable private RecyclerView recycler;
+    private final RecyclerView.OnScrollListener tapCancellationListener = new RecyclerView.OnScrollListener() {
+        @Override public void onScrollStateChanged(@NonNull RecyclerView view, int state) {
+            if (state == RecyclerView.SCROLL_STATE_DRAGGING) cancelVisiblePageTaps(view);
+        }
+
+        @Override public void onScrolled(@NonNull RecyclerView view, int dx, int dy) {
+            if (dx != 0 || dy != 0) cancelVisiblePageTaps(view);
+        }
+    };
 
     public ContinuousPageAdapter(@NonNull GenericGallery gallery, @Nullable GalleryFolder directory,
                                  @NonNull BiConsumer<Integer, Float> onPageTap) {
@@ -126,6 +135,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         holder.cancelSingleTap();
+        holder.gestureHandler.removeCallbacks(holder.clearClickSuppression);
         holder.suppressNextClick = false;
         ViewGroup.LayoutParams rawParams = holder.itemView.getLayoutParams();
         if (rawParams instanceof ViewGroup.MarginLayoutParams) {
@@ -234,12 +244,32 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         recycler = recyclerView;
+        recyclerView.addOnScrollListener(tapCancellationListener);
     }
 
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        cancelVisiblePageTaps(recyclerView);
+        recyclerView.removeOnScrollListener(tapCancellationListener);
         if (recycler == recyclerView) recycler = null;
         super.onDetachedFromRecyclerView(recyclerView);
+    }
+
+    private void cancelVisiblePageTaps(@NonNull RecyclerView view) {
+        for (int index = 0; index < view.getChildCount(); index++) {
+            RecyclerView.ViewHolder holder = view.getChildViewHolder(view.getChildAt(index));
+            if (holder instanceof Holder) ((Holder) holder).cancelSingleTap();
+        }
+    }
+
+    void cancelPendingPageTaps() {
+        if (recycler != null) cancelVisiblePageTaps(recycler);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull Holder holder) {
+        holder.cancelSingleTap();
+        super.onViewDetachedFromWindow(holder);
     }
 
     private int viewportHeight() {
@@ -367,6 +397,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Override
     public void onViewRecycled(@NonNull Holder holder) {
         holder.cancelSingleTap();
+        holder.gestureHandler.removeCallbacks(holder.clearClickSuppression);
         holder.suppressNextClick = false;
         holder.generation++;
         holder.source = null;
@@ -394,6 +425,12 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         @Nullable Runnable pendingSingleTap;
         boolean suppressNextClick;
         final Handler gestureHandler = new Handler(Looper.getMainLooper());
+        final Runnable clearClickSuppression = () -> suppressNextClick = false;
+        final Runnable singleTapDispatch = () -> {
+            Runnable pending = pendingSingleTap;
+            pendingSingleTap = null;
+            if (pending != null) pending.run();
+        };
 
         @SuppressLint("ClickableViewAccessibility") // Touch observation does not consume events; the view performs clicks normally.
         Holder(View view) {
@@ -429,8 +466,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     if (status.getVisibility() != View.GONE || image.getDrawable() == null) return false;
                     suppressNextClick = true;
                     cancelSingleTap();
-                    gestureHandler.postDelayed(() -> suppressNextClick = false,
-                        ViewConfiguration.getDoubleTapTimeout());
+                    gestureHandler.removeCallbacks(clearClickSuppression);
+                    gestureHandler.postDelayed(clearClickSuppression, ViewConfiguration.getDoubleTapTimeout());
                     int page = getBindingAdapterPosition();
                     if (page != RecyclerView.NO_POSITION && doubleTapListener != null) {
                         doubleTapListener.onDoubleTap(page,
@@ -450,16 +487,12 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         void scheduleSingleTap(@NonNull Runnable action) {
             cancelSingleTap();
             pendingSingleTap = action;
-            gestureHandler.postDelayed(() -> {
-                Runnable pending = pendingSingleTap;
-                pendingSingleTap = null;
-                if (pending != null) pending.run();
-            }, ViewConfiguration.getDoubleTapTimeout());
+            gestureHandler.postDelayed(singleTapDispatch, ViewConfiguration.getDoubleTapTimeout());
         }
 
         void cancelSingleTap() {
             pendingSingleTap = null;
-            gestureHandler.removeCallbacksAndMessages(null);
+            gestureHandler.removeCallbacks(singleTapDispatch);
         }
 
         void showLoading() {

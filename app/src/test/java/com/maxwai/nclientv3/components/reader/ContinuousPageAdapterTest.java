@@ -127,6 +127,82 @@ public class ContinuousPageAdapterTest {
     }
 
     @Test
+    public void zoomPanCancelsPendingPageTap() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ContinuousZoomViewport viewport = new ContinuousZoomViewport(activity, null);
+        viewport.setLayoutManager(new LinearLayoutManager(activity));
+        AtomicInteger taps = new AtomicInteger();
+        viewport.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> taps.incrementAndGet(), Runnable::run));
+        activity.setContentView(viewport);
+        viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        viewport.layout(0, 0, 600, 500);
+        ContinuousPageAdapter.Holder holder = (ContinuousPageAdapter.Holder) viewport.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        holder.status.setVisibility(View.GONE);
+        holder.image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+            Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888)));
+        viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        viewport.layout(0, 0, 600, 500);
+        viewport.toggleDoubleTapZoom(300, 200);
+        viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        viewport.layout(0, 0, 600, 500);
+        assertTrue(viewport.currentScale() > 1f);
+        holder.itemView.performClick();
+        MotionEvent down = MotionEvent.obtain(100, 100, MotionEvent.ACTION_DOWN, 300, 200, 0);
+        MotionEvent move = MotionEvent.obtain(100, 120, MotionEvent.ACTION_MOVE, 450, 200, 0);
+        viewport.dispatchTouchEvent(down);
+        viewport.dispatchTouchEvent(move);
+        down.recycle();
+        move.recycle();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertEquals(0, taps.get());
+        viewport.setAdapter(null);
+    }
+
+    @Test
+    public void scrollingCancelsPendingPageTap() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        for (int page = 1; page <= 8; page++) assertTrue(new File(folder, page + ".png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        AtomicInteger taps = new AtomicInteger();
+        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> taps.incrementAndGet(), Runnable::run));
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 500);
+        RecyclerView.ViewHolder first = recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(first);
+        first.itemView.performClick();
+        recycler.scrollBy(0, 40);
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertEquals(0, taps.get());
+        first.itemView.performClick();
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertEquals(1, taps.get());
+        first.itemView.performClick();
+        recycler.setAdapter(null);
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertEquals(1, taps.get());
+    }
+
+    @Test
     public void pageTapUsesViewportEdgesWhenZoomedAndPanned() throws Exception {
         File folder = temporaryFolder.newFolder();
         assertTrue(new File(folder, "1.png").createNewFile());
