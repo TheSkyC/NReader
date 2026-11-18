@@ -51,9 +51,10 @@ public final class ReaderImageFilter {
                 0.272f, 0.534f, 0.131f, 0f, 0f,
                 0f, 0f, 0f, 1f, 0f
             });
-        } else {
-            matrix.setSaturation(1f + safeSaturation / 100f);
         }
+        ColorMatrix saturationMatrix = new ColorMatrix();
+        saturationMatrix.setSaturation(1f + safeSaturation / 100f);
+        matrix.postConcat(saturationMatrix);
         float contrastScale = (safeContrast + 100f) / 100f;
         float brightnessOffset = safeBrightness * 2.55f;
         matrix.postConcat(new ColorMatrix(new float[]{
