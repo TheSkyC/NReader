@@ -932,13 +932,17 @@ public class ZoomActivity extends GeneralActivity {
 
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
         tap.setChecked(readerTapAction == READER_TAP_EDGE);
-        tap.setOnCheckedChangeListener((button, checked) -> setReaderTapAction(
-            checked ? READER_TAP_EDGE : READER_TAP_CONTROLS));
+        tap.setOnCheckedChangeListener((button, checked) -> {
+            if (button.isPressed()) setReaderTapAction(checked ? READER_TAP_EDGE : READER_TAP_CONTROLS);
+        });
         RadioGroup tapAction = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_action));
         tapAction.check(readerTapActionId(readerTapAction));
-        tapAction.setOnCheckedChangeListener((group, id) -> setReaderTapAction(
-            id == R.id.reader_tap_action_edge ? READER_TAP_EDGE
-                : id == R.id.reader_tap_action_none ? READER_TAP_NONE : READER_TAP_CONTROLS));
+        tapAction.setOnCheckedChangeListener((group, id) -> {
+            int action = id == R.id.reader_tap_action_edge ? READER_TAP_EDGE
+                : id == R.id.reader_tap_action_none ? READER_TAP_NONE : READER_TAP_CONTROLS;
+            setReaderTapAction(action);
+            tap.setChecked(action == READER_TAP_EDGE);
+        });
         SwitchMaterial volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
         volume.setChecked(Global.volumeOverride());
         volume.setOnCheckedChangeListener((button, checked) -> {

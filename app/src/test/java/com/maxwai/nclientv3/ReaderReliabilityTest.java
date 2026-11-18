@@ -441,6 +441,10 @@ public class ReaderReliabilityTest {
                 assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, activity.getRequestedOrientation());
                 assertEquals(1, application.getSharedPreferences("Settings", 0)
                     .getInt("reader_orientation", -1));
+                dialog.findViewById(R.id.reader_tap_action_none).performClick();
+                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
+                assertEquals(2, application.getSharedPreferences("Settings", 0)
+                    .getInt("reader_tap_action", -1));
                 dialog.findViewById(R.id.reader_filter_grayscale).performClick();
                 assertEquals(1, application.getSharedPreferences("Settings", 0)
                     .getInt("reader_filter", -1));
