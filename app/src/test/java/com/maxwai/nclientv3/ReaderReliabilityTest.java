@@ -87,6 +87,55 @@ public class ReaderReliabilityTest {
     @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
+    public void repeatedPageRequestsKeepTheActiveLoadButRotationReplacesIt() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 0, gallery.getGalleryFolder());
+                activity.getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "active-request-test").commitNow();
+                ImageViewTarget<?> target = ReflectionHelpers.getField(fragment, "target");
+                com.bumptech.glide.Glide.with(activity).clear(target);
+                java.util.concurrent.atomic.AtomicInteger cleared = new java.util.concurrent.atomic.AtomicInteger();
+                Request active = (Request) java.lang.reflect.Proxy.newProxyInstance(
+                    Request.class.getClassLoader(), new Class<?>[]{Request.class}, (proxy, method, arguments) -> {
+                        if (method.getName().equals("isRunning")) return true;
+                        if (method.getName().equals("clear")) { cleared.incrementAndGet(); return null; }
+                        if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
+                        if (method.getName().equals("equals")) return proxy == arguments[0];
+                        if (method.getReturnType() == boolean.class) return false;
+                        return null;
+                    });
+                target.setRequest(active);
+                fragment.loadImage();
+                fragment.loadImage(com.bumptech.glide.Priority.IMMEDIATE);
+                assertSame(active, target.getRequest());
+                assertEquals(0, cleared.get());
+                fragment.cancelRequest();
+                assertEquals(1, cleared.get());
+                target.setRequest(active);
+                fragment.rotate();
+                assertEquals(2, cleared.get());
+                assertNotNull(target.getRequest());
+                assertFalse(target.getRequest() == active);
+                BaseRequestOptions<?> options = ReflectionHelpers.getField(target.getRequest(), "requestOptions");
+                assertEquals(new Rotate(270), options.getTransformations().get(Bitmap.class));
+                com.bumptech.glide.Glide.with(activity).clear(target);
+                target.setRequest(active);
+                fragment.setAutoCrop(true);
+                assertEquals(3, cleared.get());
+                assertFalse(target.getRequest() == active);
+            }
+        }
+    }
+
+    @Test
     public void switchingDirectionKeepsTheCurrentPageWithoutVisitingAnother() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

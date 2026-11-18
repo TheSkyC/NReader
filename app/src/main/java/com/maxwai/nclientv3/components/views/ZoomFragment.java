@@ -269,7 +269,7 @@ public class ZoomFragment extends Fragment {
         if (autoCrop == enabled) return;
         autoCrop = enabled;
         completedDownload = false;
-        loadImage();
+        loadImage(Priority.NORMAL, true);
     }
 
     public int getPageIndex() {
@@ -281,8 +281,14 @@ public class ZoomFragment extends Fragment {
     }
 
     public void loadImage(Priority priority) {
+        loadImage(priority, false);
+    }
+
+    private void loadImage(Priority priority, boolean force) {
         if (completedDownload || photoView == null || target == null) return;
-        cancelRequest();
+        com.bumptech.glide.request.Request current = target.getRequest();
+        if (!force && current != null && current.isRunning()) return;
+        if (force) clearRequest();
         if (pageFile == null && url == null) {
             target.onLoadFailed(null);
             return;
@@ -337,6 +343,10 @@ public class ZoomFragment extends Fragment {
 
     public void cancelRequest() {
         if (completedDownload) return;
+        clearRequest();
+    }
+
+    private void clearRequest() {
         if (photoView != null && target != null) {
             RequestManager manager = GlideX.with(photoView);
             if (manager != null) manager.clear(target);
@@ -361,7 +371,7 @@ public class ZoomFragment extends Fragment {
     private void updateDegree() {
         degree = (degree + 270) % 360;
         completedDownload = false;
-        loadImage();
+        loadImage(Priority.NORMAL, true);
     }
 
     public void rotate() {
