@@ -5,6 +5,7 @@ import android.app.Application;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -436,6 +437,10 @@ public class ReaderReliabilityTest {
                 dialog.findViewById(R.id.reader_vertical).performClick();
                 assertEquals(ViewPager2.ORIENTATION_VERTICAL, pager.getOrientation());
                 assertEquals(1, pager.getCurrentItem());
+                dialog.findViewById(R.id.reader_orientation_portrait).performClick();
+                assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, activity.getRequestedOrientation());
+                assertEquals(1, application.getSharedPreferences("Settings", 0)
+                    .getInt("reader_orientation", -1));
                 dialog.findViewById(R.id.reader_filter_grayscale).performClick();
                 assertEquals(1, application.getSharedPreferences("Settings", 0)
                     .getInt("reader_filter", -1));
