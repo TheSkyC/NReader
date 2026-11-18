@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +37,7 @@ import com.maxwai.nclientv3.components.GlideX;
 import com.maxwai.nclientv3.components.reader.ReaderScaleMode;
 import com.maxwai.nclientv3.components.reader.ReaderImageFilter;
 import com.maxwai.nclientv3.components.reader.ReaderAutoCropTransformation;
+import com.maxwai.nclientv3.components.reader.ReaderLoadErrorMessage;
 import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
@@ -49,6 +51,7 @@ public class ZoomFragment extends Fragment {
     private PhotoView photoView = null;
     private View loadingView;
     private View errorView;
+    private TextView errorMessage;
     private PageFile pageFile = null;
     private Uri url;
     private int pageIndex = -1;
@@ -123,6 +126,7 @@ public class ZoomFragment extends Fragment {
         photoView = rootView.findViewById(R.id.image);
         loadingView = rootView.findViewById(R.id.reader_loading);
         errorView = rootView.findViewById(R.id.reader_load_error);
+        errorMessage = rootView.findViewById(R.id.reader_load_error_message);
         //read arguments
         String str = getArguments().getString("URL");
         url = str == null ? null : Uri.parse(str);
@@ -182,6 +186,7 @@ public class ZoomFragment extends Fragment {
             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                 super.onLoadFailed(errorDrawable);
                 loadingView.setVisibility(View.GONE);
+                ReaderLoadErrorMessage.apply(errorMessage);
                 errorView.setVisibility(View.VISIBLE);
             }
 
@@ -335,6 +340,7 @@ public class ZoomFragment extends Fragment {
         photoView = null;
         loadingView = null;
         errorView = null;
+        errorMessage = null;
         super.onDestroyView();
     }
 

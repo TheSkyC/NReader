@@ -2,6 +2,7 @@
 <resources>
     <string name="reader_page_loading">Cargando página…</string>
     <string name="reader_page_load_failed">No se pudo cargar esta página.</string>
+    <string name="reader_page_load_offline">No hay conexión de red. Comprueba tu conexión y vuelve a intentarlo.</string>
     <string name="reader_page_unavailable">La imagen de esta página no está disponible para esta acción.</string>
     <string name="reader_export_original_rotation">Al guardar o compartir se usará la imagen original sin girar. ¿Continuar?</string>
     <string name="jump_first_page">Ir a la primera página</string>

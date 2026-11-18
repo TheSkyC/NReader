@@ -2,6 +2,7 @@
 <resources>
     <string name="reader_page_loading">Sayfa yükleniyor…</string>
     <string name="reader_page_load_failed">Bu sayfa yüklenemedi.</string>
+    <string name="reader_page_load_offline">Ağ bağlantısı yok. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="reader_page_unavailable">Bu sayfanın görseli bu işlem için kullanılamıyor.</string>
     <string name="reader_export_original_rotation">Kaydederken veya paylaşırken döndürülmemiş özgün görsel kullanılır. Devam edilsin mi?</string>
     <string name="jump_first_page">İlk sayfaya git</string>

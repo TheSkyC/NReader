@@ -2,6 +2,7 @@
 <resources>
     <string name="reader_page_loading">Завантаження сторінки…</string>
     <string name="reader_page_load_failed">Не вдалося завантажити цю сторінку.</string>
+    <string name="reader_page_load_offline">Немає підключення до мережі. Перевірте підключення та повторіть спробу.</string>
     <string name="reader_page_unavailable">Зображення сторінки недоступне для цієї дії.</string>
     <string name="reader_export_original_rotation">Для збереження або поширення буде використано оригінальне зображення без обертання. Продовжити?</string>
     <string name="jump_first_page">Перейти до першої сторінки</string>

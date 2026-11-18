@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewConfiguration;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -355,7 +356,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         final ImageView image;
         final View status;
         final View loading;
-        final View error;
+        final TextView error;
         final View retry;
         int generation;
         @Nullable Object source;
@@ -434,6 +435,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         void showError() {
             status.setVisibility(View.VISIBLE);
             loading.setVisibility(View.GONE);
+            ReaderLoadErrorMessage.apply(error);
             error.setVisibility(View.VISIBLE);
             retry.setVisibility(View.VISIBLE);
         }

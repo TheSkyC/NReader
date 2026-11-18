@@ -39,6 +39,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
+            android:id="@+id/reader_load_error_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:accessibilityLiveRegion="polite"
