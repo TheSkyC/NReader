@@ -432,6 +432,43 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void pagedImageAccessibilityActionTogglesControlsWhenTouchIsDisabled() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putInt("reader_tap_action", 2).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup().visible()) {
+                ZoomActivity activity = controller.get();
+                layoutActivity(activity);
+                ZoomFragment page = (ZoomFragment) activity.getSupportFragmentManager().findFragmentByTag("f0");
+                assertNotNull(page);
+                PhotoView photo = page.requireView().findViewById(R.id.image);
+                assertEquals(activity.getString(R.string.bookmark_page_format, 1), photo.getContentDescription());
+                android.view.accessibility.AccessibilityNodeInfo info = photo.createAccessibilityNodeInfo();
+                assertTrue(info.isClickable());
+                boolean hasLabeledAction = false;
+                for (android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction action : info.getActionList()) {
+                    if (action.getId() == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK
+                        && activity.getString(R.string.reader_tap_action_controls).contentEquals(action.getLabel())) {
+                        hasLabeledAction = true;
+                    }
+                }
+                assertTrue(hasLabeledAction);
+                assertTrue(androidx.core.view.ViewCompat.performAccessibilityAction(photo,
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+                assertTrue(ReflectionHelpers.getField(activity, "isHidden"));
+                assertTrue(androidx.core.view.ViewCompat.performAccessibilityAction(photo,
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK, null));
+                assertFalse(ReflectionHelpers.getField(activity, "isHidden"));
+            }
+        }
+    }
+
+    @Test
     public void pagerRestorationRebindsTheCurrentPagesTapHandler() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

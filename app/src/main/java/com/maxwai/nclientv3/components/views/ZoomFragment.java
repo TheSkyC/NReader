@@ -15,6 +15,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -138,6 +140,12 @@ public class ZoomFragment extends Fragment {
         contrast = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("CONTRAST", 0));
         saturation = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("SATURATION", 0));
         initialScale = sanitizeInitialScale(getArguments().getFloat("INITIAL_SCALE", 0f));
+        photoView.setContentDescription(getString(R.string.bookmark_page_format, pageIndex + 1));
+        photoView.setClickable(true);
+        ViewCompat.replaceAccessibilityAction(photoView,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+            getString(R.string.reader_tap_action_controls),
+            (view, arguments) -> activity.onReaderAccessibilityToggleControls(this));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pageFile = getArguments().getParcelable("FOLDER", PageFile.class);
         } else {

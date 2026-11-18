@@ -581,10 +581,20 @@ public class ZoomActivity extends GeneralActivity {
             || horizontalPosition > 1f - PAGE_TAP_EDGE)) {
             changeClosePage(horizontalPosition > 1f - PAGE_TAP_EDGE);
         } else if (action != READER_TAP_NONE) {
-            isHidden = !isHidden;
-            applyVisibilityFlag();
-            animateLayout();
+            toggleReaderControls();
         }
+    }
+
+    public boolean onReaderAccessibilityToggleControls(@NonNull ZoomFragment source) {
+        if (!isCurrentPagedFragment(source)) return false;
+        toggleReaderControls();
+        return true;
+    }
+
+    private void toggleReaderControls() {
+        isHidden = !isHidden;
+        applyVisibilityFlag();
+        animateLayout();
     }
 
     private int effectiveReaderTapAction() {
@@ -726,9 +736,7 @@ public class ZoomActivity extends GeneralActivity {
                 return true;
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_DPAD_CENTER:
-                isHidden = !isHidden;
-                applyVisibilityFlag();
-                animateLayout();
+                toggleReaderControls();
                 return true;
             default:
                 return false;
