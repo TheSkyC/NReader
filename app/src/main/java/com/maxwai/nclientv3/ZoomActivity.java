@@ -888,6 +888,7 @@ public class ZoomActivity extends GeneralActivity {
     private void showReaderSettings() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(R.layout.reader_settings_sheet);
+        boolean[] updatingPresetControls = {false};
         String[] directions = getResources().getStringArray(R.array.scroll_type);
         MaterialRadioButton horizontal = Objects.requireNonNull(dialog.findViewById(R.id.reader_horizontal));
         MaterialRadioButton vertical = Objects.requireNonNull(dialog.findViewById(R.id.reader_vertical));
@@ -952,25 +953,26 @@ public class ZoomActivity extends GeneralActivity {
         filterSepia.setText(R.string.reader_filter_sepia);
         RadioGroup filter = Objects.requireNonNull(dialog.findViewById(R.id.reader_filter));
         filter.check(filterId(readerFilterMode));
-        filter.setOnCheckedChangeListener((group, id) -> setReaderFilterMode(
-            id == R.id.reader_filter_grayscale ? ReaderImageFilter.GRAYSCALE
-                : id == R.id.reader_filter_invert ? ReaderImageFilter.INVERT
-                : id == R.id.reader_filter_sepia ? ReaderImageFilter.SEPIA : ReaderImageFilter.NONE));
+        filter.setOnCheckedChangeListener((group, id) -> {
+            if (!updatingPresetControls[0]) {
+                setReaderFilterMode(id == R.id.reader_filter_grayscale ? ReaderImageFilter.GRAYSCALE
+                    : id == R.id.reader_filter_invert ? ReaderImageFilter.INVERT
+                    : id == R.id.reader_filter_sepia ? ReaderImageFilter.SEPIA : ReaderImageFilter.NONE);
+            }
+        });
 
         SwitchMaterial autoCrop = Objects.requireNonNull(dialog.findViewById(R.id.reader_auto_crop));
         autoCrop.setChecked(readerAutoCrop);
-        autoCrop.setOnCheckedChangeListener((button, checked) -> setReaderAutoCrop(checked));
-
-        dialog.findViewById(R.id.reader_preset_default).setOnClickListener(view -> applyReaderPreset(READER_PRESET_DEFAULT));
-        dialog.findViewById(R.id.reader_preset_night).setOnClickListener(view -> applyReaderPreset(READER_PRESET_NIGHT));
-        dialog.findViewById(R.id.reader_preset_scan).setOnClickListener(view -> applyReaderPreset(READER_PRESET_SCAN));
+        autoCrop.setOnCheckedChangeListener((button, checked) -> {
+            if (!updatingPresetControls[0]) setReaderAutoCrop(checked);
+        });
 
         bindAdjustment(dialog.findViewById(R.id.reader_brightness),
-            dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness);
+            dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness, updatingPresetControls);
         bindAdjustment(dialog.findViewById(R.id.reader_contrast),
-            dialog.findViewById(R.id.reader_contrast_value), readerContrast, this::setReaderContrast);
+            dialog.findViewById(R.id.reader_contrast_value), readerContrast, this::setReaderContrast, updatingPresetControls);
         bindAdjustment(dialog.findViewById(R.id.reader_saturation),
-            dialog.findViewById(R.id.reader_saturation_value), readerSaturation, this::setReaderSaturation);
+            dialog.findViewById(R.id.reader_saturation_value), readerSaturation, this::setReaderSaturation, updatingPresetControls);
 
         MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
         MaterialRadioButton backgroundBlack = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_black));
@@ -983,12 +985,33 @@ public class ZoomActivity extends GeneralActivity {
         RadioGroup background = Objects.requireNonNull(dialog.findViewById(R.id.reader_background));
         background.check(backgroundId(getReaderBackground()));
         background.setOnCheckedChangeListener((group, id) -> {
+            if (updatingPresetControls[0]) return;
             int value = id == R.id.reader_background_black ? READER_BACKGROUND_BLACK
                 : id == R.id.reader_background_gray ? READER_BACKGROUND_GRAY
                 : id == R.id.reader_background_white ? READER_BACKGROUND_WHITE : READER_BACKGROUND_AUTO;
             getSharedPreferences("Settings", 0).edit().putInt(readerBackgroundPreferenceKey(), value).apply();
             applyReaderBackground();
         });
+
+        View.OnClickListener presetListener = view -> {
+            int id = view.getId();
+            applyReaderPreset(id == R.id.reader_preset_night ? READER_PRESET_NIGHT
+                : id == R.id.reader_preset_scan ? READER_PRESET_SCAN : READER_PRESET_DEFAULT);
+            updatingPresetControls[0] = true;
+            try {
+                filter.check(filterId(readerFilterMode));
+                background.check(backgroundId(getReaderBackground()));
+                autoCrop.setChecked(readerAutoCrop);
+                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness))).setProgress(readerBrightness + 100);
+                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast))).setProgress(readerContrast + 100);
+                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation))).setProgress(readerSaturation + 100);
+            } finally {
+                updatingPresetControls[0] = false;
+            }
+        };
+        dialog.findViewById(R.id.reader_preset_default).setOnClickListener(presetListener);
+        dialog.findViewById(R.id.reader_preset_night).setOnClickListener(presetListener);
+        dialog.findViewById(R.id.reader_preset_scan).setOnClickListener(presetListener);
 
         SwitchMaterial tap = Objects.requireNonNull(dialog.findViewById(R.id.reader_tap_turn));
         tap.setChecked(readerTapAction == READER_TAP_EDGE);
@@ -1211,7 +1234,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void bindAdjustment(@NonNull SeekBar bar, @NonNull TextView valueView, int value,
-                                @NonNull IntConsumer setter) {
+                                @NonNull IntConsumer setter, @NonNull boolean[] updatingPresetControls) {
         int safeValue = ReaderImageFilter.sanitizeAdjustment(value);
         bar.setMax(200);
         bar.setProgress(safeValue + 100);
@@ -1221,7 +1244,7 @@ public class ZoomActivity extends GeneralActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 int current = ReaderImageFilter.sanitizeAdjustment(progress - 100);
                 updateAdjustmentLabel(valueView, current);
-                setter.accept(current);
+                if (!updatingPresetControls[0]) setter.accept(current);
             }
 
             @Override

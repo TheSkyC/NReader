@@ -531,6 +531,48 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void readerPresetUpdatesControlsAndAllowsFurtherChanges() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                dialog.findViewById(R.id.reader_preset_scan).performClick();
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_white)).isChecked());
+                assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
+                assertEquals(104, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
+                assertEquals(118, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
+                assertEquals(0, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                assertEquals("-100", ((android.widget.TextView) dialog.findViewById(R.id.reader_saturation_value)).getText().toString());
+                assertEquals(-100, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
+
+                dialog.findViewById(R.id.reader_preset_night).performClick();
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_none)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_black)).isChecked());
+                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
+                assertEquals(88, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
+                assertEquals(108, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
+                assertEquals(92, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).setProgress(120);
+                assertEquals(20, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
+                dialog.dismiss();
+                activity.findViewById(R.id.reader_settings).performClick();
+                dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                assertEquals(120, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_black)).isChecked());
+                dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
     public void readerBackgroundAppliesAndPersistsAcrossRecreation() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
