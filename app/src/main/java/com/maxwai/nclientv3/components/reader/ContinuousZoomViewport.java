@@ -149,9 +149,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     boolean beginScale(float focusX, float focusY) {
         RecyclerView reader = reader();
         if (reader == null || !(reader.getLayoutManager() instanceof LinearLayoutManager)) return false;
-        float localX = focusX - reader.getLeft();
-        float localY = focusY - reader.getTop();
-        View page = reader.findChildViewUnder(localX, localY);
+        View page = reader.findChildViewUnder(focusX, focusY);
         if (page == null) return false;
         View status = page.findViewById(R.id.continuous_page_status);
         ImageView image = page.findViewById(R.id.continuous_page_image);
@@ -159,8 +157,8 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         if (status == null || status.getVisibility() != View.GONE || image == null || image.getDrawable() == null
             || position == RecyclerView.NO_POSITION) return false;
         anchor = ContinuousZoomAnchor.capture(position, focusX, focusY,
-            reader.getLeft() + page.getLeft() + page.getTranslationX() + image.getLeft(),
-            reader.getTop() + page.getTop() + image.getTop(), image.getWidth(), image.getHeight());
+            page.getLeft() + page.getTranslationX() + image.getLeft(),
+            page.getTop() + image.getTop(), image.getWidth(), image.getHeight());
         if (anchor == null) return false;
         anchorImageWidth = image.getWidth();
         anchorImageHeight = image.getHeight();
@@ -183,7 +181,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         contentOffset = anchor.horizontalOffset(focusX, width, viewportWidth);
         applyContentState();
         ((LinearLayoutManager) reader.getLayoutManager()).scrollToPositionWithOffset(anchor.page,
-            anchor.pageTop(focusY, 0, (int) imageHeight, reader.getTop() + reader.getPaddingTop()));
+            anchor.pageTop(focusY, 0, (int) imageHeight, reader.getPaddingTop()));
         scale = nextScale;
         return true;
     }
@@ -215,7 +213,8 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
 
     public void toggleDoubleTapZoom(float focusX, float focusY) {
         if (scale > 1f) {
-            resetZoom();
+            if (!beginScale(focusX, focusY) || !scaleTo(1f, focusX, focusY)) resetZoom();
+            endScale();
             return;
         }
         if (beginScale(focusX, focusY)) scaleTo(2f, focusX, focusY);

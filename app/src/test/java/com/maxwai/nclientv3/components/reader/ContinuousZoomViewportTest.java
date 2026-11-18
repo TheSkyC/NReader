@@ -109,6 +109,62 @@ public class ContinuousZoomViewportTest {
     }
 
     @Test
+    public void doubleTapToResetKeepsTheFocusedImagePoint() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ContinuousZoomViewport viewport = new ContinuousZoomViewport(activity, null);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        viewport.setLayoutManager(layout);
+        viewport.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull
+            @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                FrameLayout page = new FrameLayout(activity);
+                page.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                ImageView image = new ImageView(activity);
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setImageDrawable(new BitmapDrawable(activity.getResources(),
+                    Bitmap.createBitmap(100, 400, Bitmap.Config.ARGB_8888)));
+                page.addView(image, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                View status = new View(activity);
+                status.setId(R.id.continuous_page_status);
+                status.setVisibility(View.GONE);
+                page.addView(status);
+                return new RecyclerView.ViewHolder(page) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {}
+            @Override public int getItemCount() { return 3; }
+        });
+        activity.setContentView(viewport);
+        layoutOffsetViewport(viewport);
+        View initialPage = layout.findViewByPosition(0);
+        assertNotNull(initialPage);
+        ImageView initialImage = initialPage.findViewById(R.id.continuous_page_image);
+        float initialPoint = (200f - initialPage.getTop() - initialImage.getTop()) / initialImage.getHeight();
+        viewport.toggleDoubleTapZoom(300, 200);
+        layoutOffsetViewport(viewport);
+        initialPage = layout.findViewByPosition(0);
+        assertNotNull(initialPage);
+        initialImage = initialPage.findViewById(R.id.continuous_page_image);
+        assertEquals(initialPoint, (200f - initialPage.getTop() - initialImage.getTop()) / initialImage.getHeight(), 0.002f);
+        layout.scrollToPositionWithOffset(1, -1600);
+        layoutOffsetViewport(viewport);
+        View page = layout.findViewByPosition(1);
+        assertNotNull(page);
+        ImageView image = page.findViewById(R.id.continuous_page_image);
+        float before = (200f - page.getTop() - image.getTop()) / image.getHeight();
+        viewport.toggleDoubleTapZoom(300, 200);
+        layoutOffsetViewport(viewport);
+        page = layout.findViewByPosition(1);
+        assertNotNull(page);
+        image = page.findViewById(R.id.continuous_page_image);
+        float after = (200f - page.getTop() - image.getTop()) / image.getHeight();
+        assertEquals(1f, viewport.currentScale(), 0.001f);
+        assertEquals(before, after, 0.002f);
+    }
+
+    @Test
     public void doubleTapZoomTogglesBetweenDefaultAndFocusedScale() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         ContinuousZoomViewport viewport = new ContinuousZoomViewport(activity, null);
@@ -167,5 +223,11 @@ public class ContinuousZoomViewportTest {
         viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
         viewport.layout(0, 0, 600, 500);
+    }
+
+    private void layoutOffsetViewport(View viewport) {
+        viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        viewport.layout(40, 100, 640, 600);
     }
 }
