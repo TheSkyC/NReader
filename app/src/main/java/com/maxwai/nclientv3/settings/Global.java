@@ -55,6 +55,7 @@ import okhttp3.OkHttpClient;
 public class Global {
     public static final String CHANNEL_ID1 = "download_gallery", CHANNEL_ID2 = "create_pdf", CHANNEL_ID3 = "create_zip", CHANNEL_ID4 = "application_updates";
     public static final String MAINFOLDER_NAME = "NReader";
+    public static final String READER_TAP_ACTION_KEY = "reader_tap_action";
     private static final String DOWNLOADFOLDER_NAME = "Download";
     private static final String SCREENFOLDER_NAME = "Screen";
     private static final String PDFFOLDER_NAME = "PDF";
@@ -339,6 +340,13 @@ public class Global {
     public static void setButtonChangePage(Context context, boolean enabled) {
         context.getSharedPreferences("Settings", 0).edit()
             .putBoolean(context.getString(R.string.preference_key_change_page_buttons), enabled).apply();
+        buttonChangePage = enabled;
+    }
+
+    public static void setDefaultButtonChangePage(Context context, boolean enabled) {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(context.getString(R.string.preference_key_change_page_buttons), enabled)
+            .remove(READER_TAP_ACTION_KEY).apply();
         buttonChangePage = enabled;
     }
 

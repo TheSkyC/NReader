@@ -531,6 +531,40 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void globalTapSwitchReplacesDefaultActionWithoutChangingGalleryOverrides() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File firstFolder = galleryFolder();
+        File secondFolder = galleryFolder();
+        assertTrue(new File(firstFolder, ".82128").createNewFile());
+        assertTrue(new File(secondFolder, ".82129").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("change_page_buttons", false).putInt("reader_tap_action", 2)
+            .putInt("reader_tap_action_82128", 2).commit();
+        Global.initFromShared(application);
+        try (ActivityController<SettingsActivity> settings = Robolectric.buildActivity(SettingsActivity.class).setup()) {
+            androidx.preference.SwitchPreferenceCompat tapTurn = settings.get().fragment.findPreference("change_page_buttons");
+            assertNotNull(tapTurn);
+            assertFalse(tapTurn.isChecked());
+            tapTurn.performClick();
+            assertTrue(tapTurn.isChecked());
+            assertTrue(Global.isButtonChangePage());
+            assertFalse(application.getSharedPreferences("Settings", 0).contains("reader_tap_action"));
+            assertEquals(2, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action_82128", -1));
+        }
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> first = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, firstFolder)).setup()) {
+                assertEquals(2, (int) ReflectionHelpers.callInstanceMethod(first.get(), "effectiveReaderTapAction"));
+            }
+            try (ActivityController<ZoomActivity> second = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, secondFolder)).setup()) {
+                assertEquals(1, (int) ReflectionHelpers.callInstanceMethod(second.get(), "effectiveReaderTapAction"));
+            }
+        }
+    }
+
+    @Test
     public void tapActionControlsStayInSyncAndDoNotChangeOtherGalleries() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File firstFolder = galleryFolder();

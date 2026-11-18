@@ -137,7 +137,6 @@ public class ZoomActivity extends GeneralActivity {
     private static final String READER_ZOOM_SCALE_KEY_PREFIX = "reader_zoom_scale_";
     private static final String READER_ORIENTATION_KEY = "reader_orientation";
     private static final String READER_ORIENTATION_KEY_PREFIX = "reader_orientation_";
-    private static final String READER_TAP_ACTION_KEY = "reader_tap_action";
     private static final String READER_TAP_ACTION_KEY_PREFIX = "reader_tap_action_";
     private static final int READER_ORIENTATION_SYSTEM = 0;
     private static final int READER_ORIENTATION_PORTRAIT = 1;
@@ -1208,8 +1207,8 @@ public class ZoomActivity extends GeneralActivity {
     private int getReaderTapAction(@NonNull SharedPreferences preferences) {
         String key = readerTapActionPreferenceKey();
         try {
-            if (!preferences.contains(key) && preferences.contains(READER_TAP_ACTION_KEY)) {
-                key = READER_TAP_ACTION_KEY;
+            if (!preferences.contains(key) && preferences.contains(Global.READER_TAP_ACTION_KEY)) {
+                key = Global.READER_TAP_ACTION_KEY;
             }
             if (preferences.contains(key)) {
                 int value = preferences.getInt(key, READER_TAP_CONTROLS);
@@ -1224,7 +1223,7 @@ public class ZoomActivity extends GeneralActivity {
     @NonNull
     private String readerTapActionPreferenceKey() {
         return gallery != null && gallery.getId() > 0
-            ? READER_TAP_ACTION_KEY_PREFIX + gallery.getId() : READER_TAP_ACTION_KEY;
+            ? READER_TAP_ACTION_KEY_PREFIX + gallery.getId() : Global.READER_TAP_ACTION_KEY;
     }
 
     private void setReaderTapAction(int value) {

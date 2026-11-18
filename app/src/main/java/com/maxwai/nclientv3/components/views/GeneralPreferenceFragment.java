@@ -179,6 +179,12 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private void mainMenu() {
         addPreferencesFromResource(R.xml.settings);
 
+        Preference tapTurn = Objects.requireNonNull(findPreference(getString(R.string.preference_key_change_page_buttons)));
+        tapTurn.setOnPreferenceChangeListener((preference, value) -> {
+            Global.setDefaultButtonChangePage(requireContext(), (Boolean) value);
+            return true;
+        });
+
         Preference notifications = Objects.requireNonNull(findPreference(getString(R.string.preference_key_notification_permission)));
         notifications.setOnPreferenceClickListener(preference -> {
             act.manageNotifications();
