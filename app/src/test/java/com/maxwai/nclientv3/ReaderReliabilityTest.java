@@ -1373,6 +1373,43 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void manualNavigationAndPreviewStopAutoScroll() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                ReflectionHelpers.setField(activity, "autoScrolling", true);
+                ReflectionHelpers.callInstanceMethod(activity, "changePage",
+                    ReflectionHelpers.ClassParameter.from(int.class, 2));
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+                assertEquals(2, navigation.currentPage());
+                assertEquals(activity.getString(R.string.reader_auto_scroll_start),
+                    activity.findViewById(R.id.reader_auto_scroll).getContentDescription());
+
+                ReflectionHelpers.setField(activity, "autoScrolling", true);
+                activity.findViewById(R.id.reader_page_preview).performClick();
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+                assertNotNull(ShadowDialog.getLatestDialog());
+                ShadowDialog.getLatestDialog().dismiss();
+
+                ReflectionHelpers.setField(activity, "autoScrolling", true);
+                android.widget.SeekBar seek = activity.findViewById(R.id.seekBar);
+                android.widget.SeekBar.OnSeekBarChangeListener listener =
+                    ReflectionHelpers.getField(seek, "mOnSeekBarChangeListener");
+                listener.onStartTrackingTouch(seek);
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+            }
+        }
+    }
+
+    @Test
     public void autoScrollControlIsLimitedToContinuousMode() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

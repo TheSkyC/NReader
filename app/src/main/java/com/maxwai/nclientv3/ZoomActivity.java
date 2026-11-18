@@ -358,8 +358,9 @@ public class ZoomActivity extends GeneralActivity {
                 if (!initializingPager) savePosition();
             }
         });
-        pageManagerLabel.setOnClickListener(v -> DefaultDialogs.pageChangerDialog(
-            new DefaultDialogs.Builder(this)
+        pageManagerLabel.setOnClickListener(v -> {
+            stopAutoScroll();
+            DefaultDialogs.pageChangerDialog(new DefaultDialogs.Builder(this)
                 .setActual(actualPage + 1)
                 .setMin(1)
                 .setMax(gallery.getPageCount())
@@ -370,8 +371,8 @@ public class ZoomActivity extends GeneralActivity {
                     public void positive(int actual) {
                         changePage(actual - 1);
                     }
-                })
-        ));
+                }));
+        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -382,6 +383,7 @@ public class ZoomActivity extends GeneralActivity {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                stopAutoScroll();
             }
 
             @Override
@@ -768,6 +770,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changeLogicalPage(boolean next) {
+        stopAutoScroll();
         int current = readerNavigation.currentPage();
         if (next && current < readerNavigation.pageCount() - 1) changePage(current + 1);
         if (!next && current > 0) changePage(current - 1);
@@ -819,6 +822,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changePage(int newPage) {
+        stopAutoScroll();
         boolean instant = isInstantPageTurn(getSharedPreferences("Settings", 0));
         readerNavigation.goToPage(newPage, !instant);
         if (doublePageMode && !continuousMode) {
@@ -861,6 +865,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void showPagePreview() {
+        stopAutoScroll();
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(R.layout.reader_page_preview_sheet);
         RecyclerView grid = Objects.requireNonNull(dialog.findViewById(R.id.reader_page_grid));
@@ -895,6 +900,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void showReaderSettings() {
+        stopAutoScroll();
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(R.layout.reader_settings_sheet);
         boolean[] updatingPresetControls = {false};
@@ -1612,6 +1618,7 @@ public class ZoomActivity extends GeneralActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        stopAutoScroll();
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
