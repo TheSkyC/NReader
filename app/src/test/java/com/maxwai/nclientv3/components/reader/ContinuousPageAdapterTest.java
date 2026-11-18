@@ -127,6 +127,42 @@ public class ContinuousPageAdapterTest {
     }
 
     @Test
+    public void pageTapUsesViewportEdgesWhenZoomedAndPanned() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        AtomicReference<Float> horizontal = new AtomicReference<>();
+        recycler.setAdapter(new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(),
+            (page, x) -> horizontal.set(x), Runnable::run));
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 1200);
+        RecyclerView.ViewHolder page = recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(page);
+        for (int index = 0; index < 2; index++) {
+            page.itemView.layout(0, 0, 1200, 1200);
+            page.itemView.setTranslationX(-300);
+            float x = 300f + recycler.getWidth() * (index == 0 ? 0.05f : 0.95f);
+            long time = 1000L + index * 1000L;
+            MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, 100, 0);
+            MotionEvent up = MotionEvent.obtain(time, time + 20, MotionEvent.ACTION_UP, x, 100, 0);
+            page.itemView.dispatchTouchEvent(down);
+            page.itemView.dispatchTouchEvent(up);
+            down.recycle();
+            up.recycle();
+            Shadows.shadowOf(Looper.getMainLooper()).idleFor(ViewConfiguration.getDoubleTapTimeout() + 50,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+            assertEquals(index == 0 ? 0.05f : 0.95f, horizontal.get(), 0.001f);
+        }
+        recycler.setAdapter(null);
+    }
+
+    @Test
     public void accessibilityActionCanBeAddedAndRemovedFromBoundPages() throws Exception {
         File folder = temporaryFolder.newFolder();
         assertTrue(new File(folder, "1.png").createNewFile());

@@ -412,7 +412,15 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
                 @Override
                 public boolean onSingleTapUp(@NonNull MotionEvent event) {
-                    if (view.getWidth() > 0) tapPosition = Math.max(0f, Math.min(1f, event.getX() / view.getWidth()));
+                    if (view.getParent() instanceof RecyclerView) {
+                        RecyclerView viewport = (RecyclerView) view.getParent();
+                        if (viewport.getWidth() > 0) {
+                            float viewportX = view.getX() + event.getX() - viewport.getScrollX();
+                            tapPosition = Math.max(0f, Math.min(1f, viewportX / viewport.getWidth()));
+                        }
+                    } else if (view.getWidth() > 0) {
+                        tapPosition = Math.max(0f, Math.min(1f, event.getX() / view.getWidth()));
+                    }
                     return false;
                 }
 
