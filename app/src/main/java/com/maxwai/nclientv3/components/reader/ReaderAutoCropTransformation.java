@@ -21,7 +21,7 @@ public final class ReaderAutoCropTransformation extends BitmapTransformation {
     private static final int WHITE_THRESHOLD = 248;
     private static final int OPAQUE_THRESHOLD = 250;
     private static final int MIN_MARGIN_PX = 2;
-    private static final byte[] ID = "nreader-auto-crop-v1".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] ID = "nreader-auto-crop-v2".getBytes(StandardCharsets.UTF_8);
 
     @Nullable
     public static Rect findContentBounds(@NonNull Bitmap bitmap) {
@@ -34,17 +34,22 @@ public final class ReaderAutoCropTransformation extends BitmapTransformation {
         int top = height;
         int right = -1;
         int bottom = -1;
-        int[] pixel = new int[1];
+        int[] pixels = new int[Math.min(width, 4096)];
         for (int y = 0; y < height; y += stride) {
-            for (int x = 0; x < width; x += stride) {
-                bitmap.getPixels(pixel, 0, 1, x, y, 1, 1);
-                int color = pixel[0];
-                if (Color.alpha(color) < OPAQUE_THRESHOLD) return null;
-                if (!isWhite(color)) {
-                    left = Math.min(left, x);
-                    top = Math.min(top, y);
-                    right = Math.max(right, x);
-                    bottom = Math.max(bottom, y);
+            for (int start = 0; start < width; start += pixels.length) {
+                int count = Math.min(pixels.length, width - start);
+                bitmap.getPixels(pixels, 0, count, start, y, count, 1);
+                int first = (stride - start % stride) % stride;
+                for (int index = first; index < count; index += stride) {
+                    int color = pixels[index];
+                    if (Color.alpha(color) < OPAQUE_THRESHOLD) return null;
+                    if (!isWhite(color)) {
+                        int x = start + index;
+                        left = Math.min(left, x);
+                        top = Math.min(top, y);
+                        right = Math.max(right, x);
+                        bottom = Math.max(bottom, y);
+                    }
                 }
             }
         }
@@ -57,7 +62,39 @@ public final class ReaderAutoCropTransformation extends BitmapTransformation {
         if (left < MIN_MARGIN_PX && top < MIN_MARGIN_PX
             && width - right - 1 < MIN_MARGIN_PX && height - bottom - 1 < MIN_MARGIN_PX) return null;
         if (right - left + 1 < width / 2 || bottom - top + 1 < height / 2) return null;
-        return new Rect(left, top, right + 1, bottom + 1);
+        Rect bounds = new Rect(left, top, right + 1, bottom + 1);
+        if (stride > 1 && !areDiscardedMarginsWhite(bitmap, bounds)) return null;
+        return bounds;
+    }
+
+    private static boolean areDiscardedMarginsWhite(@NonNull Bitmap bitmap, @NonNull Rect bounds) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        long discarded = (long) width * height - (long) bounds.width() * bounds.height();
+        if (discarded > MAX_SCAN_PIXELS) return false;
+        int[] pixels = new int[Math.min(width, 4096)];
+        for (int y = 0; y < height; y++) {
+            if (y < bounds.top || y >= bounds.bottom) {
+                if (!isWhiteRange(bitmap, pixels, y, 0, width)) return false;
+            } else if (!isWhiteRange(bitmap, pixels, y, 0, bounds.left)
+                || !isWhiteRange(bitmap, pixels, y, bounds.right, width)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isWhiteRange(@NonNull Bitmap bitmap, @NonNull int[] pixels,
+                                        int y, int start, int end) {
+        for (int x = start; x < end; x += pixels.length) {
+            int count = Math.min(pixels.length, end - x);
+            bitmap.getPixels(pixels, 0, count, x, y, count, 1);
+            for (int index = 0; index < count; index++) {
+                int color = pixels[index];
+                if (Color.alpha(color) < OPAQUE_THRESHOLD || !isWhite(color)) return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isWhite(int color) {
