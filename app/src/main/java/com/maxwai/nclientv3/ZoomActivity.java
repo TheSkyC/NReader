@@ -194,10 +194,23 @@ public class ZoomActivity extends GeneralActivity {
     private int readerSaturation;
     private float readerZoomScale;
     private int readerTapAction = READER_TAP_CONTROLS;
+    private enum AutoScrollPageState { READY, WAITING, ERROR }
+
     private final Runnable autoScrollTask = new Runnable() {
         @Override
         public void run() {
             if (!autoScrolling || !continuousMode || continuousReader.getVisibility() != View.VISIBLE) return;
+            AutoScrollPageState state = autoScrollPageState();
+            if (state == AutoScrollPageState.ERROR) {
+                stopAutoScroll();
+                return;
+            }
+            if (state == AutoScrollPageState.WAITING) {
+                autoScrollLastFrame = 0;
+                autoScrollRemainder = 0f;
+                readerHandler.postDelayed(this, 100);
+                return;
+            }
             long now = SystemClock.uptimeMillis();
             long elapsed = autoScrollLastFrame == 0 ? 16 : Math.min(100, Math.max(1, now - autoScrollLastFrame));
             autoScrollLastFrame = now;
@@ -1473,8 +1486,31 @@ public class ZoomActivity extends GeneralActivity {
         else startAutoScroll();
     }
 
+    private AutoScrollPageState autoScrollPageState() {
+        RecyclerView.LayoutManager manager = continuousReader.getLayoutManager();
+        if (!(manager instanceof LinearLayoutManager)) return AutoScrollPageState.ERROR;
+        LinearLayoutManager layout = (LinearLayoutManager) manager;
+        int first = layout.findFirstVisibleItemPosition();
+        View page = first == RecyclerView.NO_POSITION ? null : layout.findViewByPosition(first);
+        if (page == null) return AutoScrollPageState.WAITING;
+        View status = page.findViewById(R.id.continuous_page_status);
+        android.widget.ImageView image = page.findViewById(R.id.continuous_page_image);
+        if (status == null || image == null) return AutoScrollPageState.ERROR;
+        if (status.getVisibility() == View.GONE && image.getDrawable() != null) {
+            return readerNavigation instanceof ContinuousReaderNavigation
+                && !((ContinuousReaderNavigation) readerNavigation).isPositionRestored()
+                ? AutoScrollPageState.WAITING : AutoScrollPageState.READY;
+        }
+        View error = page.findViewById(R.id.continuous_page_error);
+        return status.getVisibility() == View.VISIBLE && error != null && error.getVisibility() == View.VISIBLE
+            ? AutoScrollPageState.ERROR : AutoScrollPageState.WAITING;
+    }
+
     private void startAutoScroll() {
-        if (!continuousMode || autoScrolling || !continuousReader.canScrollVertically(1)) return;
+        if (!continuousMode || autoScrolling) return;
+        AutoScrollPageState state = autoScrollPageState();
+        if (state == AutoScrollPageState.ERROR
+            || state == AutoScrollPageState.READY && !continuousReader.canScrollVertically(1)) return;
         autoScrolling = true;
         autoScrollLastFrame = 0;
         autoScrollRemainder = 0f;

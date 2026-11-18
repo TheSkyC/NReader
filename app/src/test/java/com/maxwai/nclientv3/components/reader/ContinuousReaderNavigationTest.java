@@ -27,8 +27,10 @@ import org.robolectric.annotation.Config;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
@@ -69,6 +71,7 @@ public class ContinuousReaderNavigationTest {
         layoutRecycler(recycler);
         View target = layout.findViewByPosition(1);
         assertNotNull(target);
+        assertFalse(navigation.isPositionRestored());
         assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
         recycler.getViewTreeObserver().dispatchOnGlobalLayout();
         layoutRecycler(recycler);
@@ -124,6 +127,7 @@ public class ContinuousReaderNavigationTest {
         layoutRecycler(recycler);
         assertEquals(-480, layout.findViewByPosition(1).getTop());
         assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
+        assertTrue(navigation.isPositionRestored());
 
         target = layout.findViewByPosition(1);
         target.getLayoutParams().height = 1600;
@@ -186,6 +190,16 @@ public class ContinuousReaderNavigationTest {
         layoutRecycler(recycler);
         assertEquals(0, layout.findFirstVisibleItemPosition());
         assertEquals(0, navigation.currentPage());
+        navigation.goToPosition(new ReadingPosition(3, 0.99f));
+        layoutRecycler(recycler);
+        View last = layout.findViewByPosition(2);
+        assertNotNull(last);
+        last.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+        layoutRecycler(recycler);
+        assertTrue(navigation.isPositionRestored());
         navigation.dispose();
     }
 

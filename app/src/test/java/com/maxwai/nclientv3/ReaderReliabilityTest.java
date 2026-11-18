@@ -1373,6 +1373,105 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void autoScrollWaitsForLoadingAndStopsOnPageError() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_continuous_vertical", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                RecyclerView recycler = activity.findViewById(R.id.continuous_reader);
+                recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                    @androidx.annotation.NonNull
+                    @Override public RecyclerView.ViewHolder onCreateViewHolder(
+                        @androidx.annotation.NonNull android.view.ViewGroup parent, int type) {
+                        android.widget.FrameLayout page = new android.widget.FrameLayout(activity);
+                        page.setLayoutParams(new RecyclerView.LayoutParams(-1, 1200));
+                        android.widget.ImageView image = new android.widget.ImageView(activity);
+                        image.setId(R.id.continuous_page_image);
+                        image.setImageDrawable(new ColorDrawable(Color.BLACK));
+                        page.addView(image);
+                        android.widget.FrameLayout status = new android.widget.FrameLayout(activity);
+                        status.setId(R.id.continuous_page_status);
+                        View error = new View(activity);
+                        error.setId(R.id.continuous_page_error);
+                        error.setVisibility(View.GONE);
+                        status.addView(error);
+                        page.addView(status);
+                        return new RecyclerView.ViewHolder(page) {};
+                    }
+                    @Override public void onBindViewHolder(@androidx.annotation.NonNull RecyclerView.ViewHolder holder, int position) {}
+                    @Override public int getItemCount() { return 3; }
+                });
+                layoutActivity(activity);
+                View page = recycler.getChildAt(0);
+                assertNotNull(page);
+                Runnable tick = ReflectionHelpers.getField(activity, "autoScrollTask");
+                ReflectionHelpers.setField(activity, "autoScrolling", true);
+                ReflectionHelpers.setField(activity, "autoScrollLastFrame", android.os.SystemClock.uptimeMillis() - 100);
+                int originalTop = page.getTop();
+                tick.run();
+                assertEquals(originalTop, page.getTop());
+                assertTrue((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+
+                page.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                layoutActivity(activity);
+                recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+                layoutActivity(activity);
+                ReflectionHelpers.setField(activity, "autoScrollLastFrame", android.os.SystemClock.uptimeMillis() - 100);
+                tick.run();
+                assertTrue(page.getTop() < originalTop);
+                originalTop = page.getTop();
+                page.findViewById(R.id.continuous_page_status).setVisibility(View.VISIBLE);
+                page.findViewById(R.id.continuous_page_error).setVisibility(View.VISIBLE);
+                tick.run();
+                assertEquals(originalTop, page.getTop());
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+
+                page.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                layoutActivity(activity);
+                activity.findViewById(R.id.reader_auto_scroll).performClick();
+                assertTrue((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
+                ReflectionHelpers.setField(activity, "autoScrollLastFrame", android.os.SystemClock.uptimeMillis() - 100);
+                tick.run();
+                assertTrue(page.getTop() < originalTop);
+                ReflectionHelpers.callInstanceMethod(activity, "stopAutoScroll");
+
+                ContinuousReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPosition(new ReadingPosition(2, 0.4f));
+                layoutActivity(activity);
+                androidx.recyclerview.widget.LinearLayoutManager layout =
+                    (androidx.recyclerview.widget.LinearLayoutManager) recycler.getLayoutManager();
+                View target = layout.findViewByPosition(1);
+                assertNotNull(target);
+                target.findViewById(R.id.continuous_page_status).setVisibility(View.GONE);
+                int targetTop = target.getTop();
+                ReflectionHelpers.setField(activity, "autoScrolling", true);
+                ReflectionHelpers.setField(activity, "autoScrollLastFrame", android.os.SystemClock.uptimeMillis() - 100);
+                tick.run();
+                assertEquals(targetTop, target.getTop());
+                assertEquals(0.4f, navigation.currentPosition().offset, 0.001f);
+                layoutActivity(activity);
+                recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+                layoutActivity(activity);
+                recycler.getViewTreeObserver().dispatchOnGlobalLayout();
+                layoutActivity(activity);
+                target = layout.findViewByPosition(1);
+                assertNotNull(target);
+                assertEquals(-480, target.getTop());
+                ReflectionHelpers.setField(activity, "autoScrollLastFrame", android.os.SystemClock.uptimeMillis() - 100);
+                tick.run();
+                assertTrue(target.getTop() < -480);
+                ReflectionHelpers.callInstanceMethod(activity, "stopAutoScroll");
+            }
+        }
+    }
+
+    @Test
     public void manualNavigationAndPreviewStopAutoScroll() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

@@ -106,6 +106,15 @@ public final class ContinuousReaderNavigation implements ReaderNavigation {
         return new ReadingPosition(page + 1, offset);
     }
 
+    public boolean isPositionRestored() {
+        if (pendingPosition == null) return true;
+        View item = layout.findViewByPosition(page);
+        if (!isLoaded(item) || recycler.isLayoutRequested()) return false;
+        int desiredTop = recycler.getPaddingTop() - Math.round(item.getHeight() * pendingPosition.offset);
+        return item.getTop() == desiredTop
+            || lastAppliedHeight == item.getHeight() && lastObservedTop == item.getTop();
+    }
+
     public void dispose() {
         cancelPendingPosition();
         finishInterruptLayout();
