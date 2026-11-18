@@ -8,6 +8,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,9 +49,18 @@ import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.LogUtility;
 import com.maxwai.nclientv3.utility.DebugImageMask;
 
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class ZoomFragment extends Fragment {
 
     private static final float MAX_SCALE = 8f;
+    private static final Executor RETRY_EXECUTOR = Executors.newSingleThreadExecutor();
+    private Executor retryExecutor = RETRY_EXECUTOR;
+    private int retryGeneration;
+    private boolean retryPending;
     private PhotoView photoView = null;
     private View loadingView;
     private View errorView;
@@ -104,6 +115,7 @@ public class ZoomFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
+        args.putString("DIRECTORY_PATH", directory == null ? null : directory.getFolder().getAbsolutePath());
         args.putInt("PAGE", page);
         args.putInt("SCALE_MODE", ReaderScaleMode.sanitize(scaleMode));
         args.putInt("FILTER_MODE", ReaderImageFilter.sanitize(filterMode));
@@ -169,7 +181,7 @@ public class ZoomFragment extends Fragment {
                 ((ZoomActivity) getActivity()).onReaderScaleChanged(photoView.getScale());
             }
         });
-        rootView.findViewById(R.id.reader_retry).setOnClickListener(v -> loadImage());
+        rootView.findViewById(R.id.reader_retry).setOnClickListener(v -> retryPage());
         createTarget();
         loadImage();
         return rootView;
@@ -284,10 +296,49 @@ public class ZoomFragment extends Fragment {
         loadImage(priority, false);
     }
 
+    private void retryPage() {
+        String path = requireArguments().getString("DIRECTORY_PATH");
+        if (path == null) {
+            loadImage();
+            return;
+        }
+        int generation = ++retryGeneration;
+        retryPending = true;
+        ImageViewTarget<Drawable> expectedTarget = target;
+        clearRequest();
+        completedDownload = false;
+        loadingView.setVisibility(View.VISIBLE);
+        errorView.setVisibility(View.GONE);
+        int requestedPage = pageIndex + 1;
+        Handler handler = new Handler(Looper.getMainLooper());
+        WeakReference<ZoomFragment> reference = new WeakReference<>(this);
+        retryExecutor.execute(() -> {
+            PageFile refreshed;
+            try {
+                refreshed = new GalleryFolder(new File(path)).getPage(requestedPage);
+            } catch (IllegalArgumentException | SecurityException exception) {
+                refreshed = null;
+            }
+            PageFile result = refreshed;
+            handler.post(() -> {
+                ZoomFragment fragment = reference.get();
+                if (fragment == null || fragment.retryGeneration != generation
+                    || fragment.target != expectedTarget || fragment.getView() == null) return;
+                fragment.retryPending = false;
+                fragment.pageFile = result;
+                fragment.requireArguments().putParcelable("FOLDER", result);
+                fragment.loadImage();
+            });
+        });
+    }
+
     private void loadImage(Priority priority, boolean force) {
         if (completedDownload || photoView == null || target == null) return;
+        if (!force && retryPending) return;
         com.bumptech.glide.request.Request current = target.getRequest();
         if (!force && current != null && current.isRunning()) return;
+        retryGeneration++;
+        retryPending = false;
         if (force) clearRequest();
         if (pageFile == null && url == null) {
             target.onLoadFailed(null);
@@ -342,6 +393,8 @@ public class ZoomFragment extends Fragment {
     }
 
     public void cancelRequest() {
+        retryGeneration++;
+        retryPending = false;
         if (completedDownload) return;
         clearRequest();
     }
@@ -355,6 +408,8 @@ public class ZoomFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        retryGeneration++;
+        retryPending = false;
         if (photoView != null && target != null) {
             RequestManager manager = GlideX.with(photoView);
             if (manager != null) manager.clear(target);

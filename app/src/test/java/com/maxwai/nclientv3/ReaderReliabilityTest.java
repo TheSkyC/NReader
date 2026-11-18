@@ -1840,6 +1840,44 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void pagedRetryFindsAFileAddedAfterOpeningAndIgnoresDestroyedView() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, "2.png").delete());
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 1, gallery.getGalleryFolder());
+                activity.getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "local-retry-test").commitNow();
+                AtomicReference<Runnable> task = new AtomicReference<>();
+                ReflectionHelpers.setField(fragment, "retryExecutor", (java.util.concurrent.Executor) task::set);
+                assertEquals(View.VISIBLE, fragment.requireView().findViewById(R.id.reader_load_error).getVisibility());
+                Files.copy(new File(folder, "1.png").toPath(), new File(folder, "2.png").toPath());
+                fragment.requireView().findViewById(R.id.reader_retry).performClick();
+                assertNotNull(task.get());
+                fragment.loadImage(com.bumptech.glide.Priority.IMMEDIATE);
+                assertEquals(View.VISIBLE, fragment.requireView().findViewById(R.id.reader_loading).getVisibility());
+                task.getAndSet(null).run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                PageFile found = ReflectionHelpers.getField(fragment, "pageFile");
+                assertEquals(new File(folder, "2.png").getAbsolutePath(), found.getAbsolutePath());
+                assertNotNull(((ImageViewTarget<?>) ReflectionHelpers.getField(fragment, "target")).getRequest());
+                fragment.requireView().findViewById(R.id.reader_retry).performClick();
+                assertNotNull(task.get());
+                activity.getSupportFragmentManager().beginTransaction().remove(fragment).commitNow();
+                task.getAndSet(null).run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertNull(ReflectionHelpers.getField(fragment, "target"));
+            }
+        }
+    }
+
+    @Test
     public void missingPageShowsRetryAndSuccessfulRetryClearsError() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
