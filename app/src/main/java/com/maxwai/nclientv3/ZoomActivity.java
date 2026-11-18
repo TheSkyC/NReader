@@ -50,6 +50,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Priority;
 import com.maxwai.nclientv3.adapters.ReaderPagePreviewAdapter;
+import com.maxwai.nclientv3.adapters.ReaderBookmarkAdapter;
 import com.maxwai.nclientv3.api.components.GenericGallery;
 import com.maxwai.nclientv3.async.database.Queries;
 import com.maxwai.nclientv3.async.database.ReadingProgress;
@@ -1514,49 +1515,27 @@ public class ZoomActivity extends GeneralActivity {
             return;
         }
         BottomSheetDialog dialog = new BottomSheetDialog(this);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
-        root.setPadding(padding, padding, padding, padding);
-        TextView title = new TextView(this);
-        title.setText(R.string.reader_bookmarks);
-        root.addView(title);
-        Button add = new Button(this);
-        add.setText(R.string.reader_bookmark_add);
-        root.addView(add);
+        dialog.setContentView(R.layout.reader_bookmarks_sheet);
+        Button add = Objects.requireNonNull(dialog.findViewById(R.id.reader_bookmark_add));
+        View empty = Objects.requireNonNull(dialog.findViewById(R.id.reader_bookmarks_empty));
+        RecyclerView list = Objects.requireNonNull(dialog.findViewById(R.id.reader_bookmark_list));
         List<ReaderBookmark> bookmarks = Queries.ReaderBookmarkTable.getForGallery(gallery.getId());
-        if (bookmarks.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText(R.string.reader_bookmarks_empty);
-            root.addView(empty);
-        } else {
-            for (ReaderBookmark bookmark : bookmarks) {
-                LinearLayout row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                String label = bookmark.title + "  ·  " + getString(R.string.bookmark_page_format, bookmark.page)
-                    + (bookmark.note.isEmpty() ? "" : "\n" + bookmark.note);
-                Button open = new Button(this);
-                open.setText(label);
-                open.setAllCaps(false);
-                open.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-                open.setOnClickListener(view -> {
-                    changePage(bookmark.page - 1);
-                    dialog.dismiss();
-                });
-                Button remove = new Button(this);
-                remove.setText(R.string.reader_bookmark_delete);
-                remove.setOnClickListener(view -> {
-                    Queries.ReaderBookmarkTable.delete(bookmark.id);
-                    dialog.dismiss();
-                    showReaderBookmarks();
-                });
-                row.addView(open);
-                row.addView(remove);
-                root.addView(row);
+        empty.setVisibility(bookmarks.isEmpty() ? View.VISIBLE : View.GONE);
+        list.setLayoutManager(new LinearLayoutManager(this));
+        ReaderBookmarkAdapter adapter = new ReaderBookmarkAdapter(bookmarks, bookmark -> {
+            changePage(bookmark.page - 1);
+            dialog.dismiss();
+        }, bookmark -> {
+            Queries.ReaderBookmarkTable.delete(bookmark.id);
+            int index = bookmarks.indexOf(bookmark);
+            if (index >= 0) {
+                bookmarks.remove(index);
+                list.getAdapter().notifyItemRemoved(index);
             }
-        }
+            empty.setVisibility(bookmarks.isEmpty() ? View.VISIBLE : View.GONE);
+        });
+        list.setAdapter(adapter);
         add.setOnClickListener(view -> showAddReaderBookmarkDialog(dialog));
-        dialog.setContentView(root);
         dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
         dialog.show();
     }

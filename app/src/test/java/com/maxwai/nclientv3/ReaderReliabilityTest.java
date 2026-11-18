@@ -634,6 +634,55 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void bookmarkSheetScrollsAndOpensOrDeletesTheSelectedPage() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".84002").createNewFile());
+        for (int page = 4; page <= 20; page++) assertTrue(new File(folder, page + ".png").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Queries.ReaderBookmarkTable.deleteForGallery(84002);
+            for (int page = 1; page <= 20; page++) {
+                assertTrue(Queries.ReaderBookmarkTable.upsert(84002, page, "Marker " + page, "Note") > 0);
+            }
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReflectionHelpers.callInstanceMethod(activity, "showReaderBookmarks");
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                RecyclerView list = dialog.findViewById(R.id.reader_bookmark_list);
+                assertNotNull(list);
+                assertEquals(20, list.getAdapter().getItemCount());
+                list.measure(View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY));
+                list.layout(0, 0, 500, 400);
+                list.scrollToPosition(19);
+                list.measure(View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY));
+                list.layout(0, 0, 500, 400);
+                RecyclerView.ViewHolder last = list.findViewHolderForAdapterPosition(19);
+                assertNotNull(last);
+                ((android.view.ViewGroup) last.itemView).getChildAt(1).performClick();
+                assertEquals(19, list.getAdapter().getItemCount());
+                assertEquals(19, Queries.ReaderBookmarkTable.getForGallery(84002).size());
+                list.scrollToPosition(18);
+                list.measure(View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY));
+                list.layout(0, 0, 500, 400);
+                RecyclerView.ViewHolder selected = list.findViewHolderForAdapterPosition(18);
+                assertNotNull(selected);
+                ((android.view.ViewGroup) selected.itemView).getChildAt(0).performClick();
+                assertEquals(18, ((ReaderNavigation) ReflectionHelpers.getField(activity, "readerNavigation")).currentPage());
+                assertFalse(dialog.isShowing());
+            } finally {
+                Queries.ReaderBookmarkTable.deleteForGallery(84002);
+            }
+        }
+    }
+
+    @Test
     public void invalidInstantTurnPreferenceFallsBackAndCanBeReplaced() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
