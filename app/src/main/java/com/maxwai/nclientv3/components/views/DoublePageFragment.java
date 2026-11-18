@@ -152,6 +152,15 @@ public final class DoublePageFragment extends Fragment {
         return secondPage;
     }
 
+    public void setScaleMode(int mode) {
+        ZoomFragment first = pageFragment(firstPage);
+        if (first != null) first.setScaleMode(mode);
+        if (secondPage >= 0) {
+            ZoomFragment second = pageFragment(secondPage);
+            if (second != null) second.setScaleMode(mode);
+        }
+    }
+
     public void setAutoCrop(boolean enabled) {
         ZoomFragment first = pageFragment(firstPage);
         if (first != null) first.setAutoCrop(enabled);

@@ -569,8 +569,10 @@ public class ZoomActivity extends GeneralActivity {
     private boolean isCurrentPagedFragment(@NonNull ZoomFragment source) {
         if (continuousMode) return false;
         if (!doublePageMode) return source == getActualFragment();
-        int current = readerNavigation.currentPage();
-        return source.getPageIndex() == current || source.getPageIndex() == current + 1;
+        int spread = SpreadReaderNavigation.spreadForPage(readerNavigation.currentPage(), gallery.getPageCount());
+        int page = source.getPageIndex();
+        return page == SpreadReaderNavigation.firstPageForSpread(spread, gallery.getPageCount())
+            || page == SpreadReaderNavigation.secondPageForSpread(spread, gallery.getPageCount());
     }
 
     private void handleReaderPageTap(float horizontalPosition) {
@@ -1356,6 +1358,7 @@ public class ZoomActivity extends GeneralActivity {
     private void applyReaderScaleMode() {
         for (Fragment fragment : getSupportFragmentManager().getFragments()) {
             if (fragment instanceof ZoomFragment) ((ZoomFragment) fragment).setScaleMode(readerScaleMode);
+            else if (fragment instanceof DoublePageFragment) ((DoublePageFragment) fragment).setScaleMode(readerScaleMode);
         }
     }
 
@@ -1740,7 +1743,8 @@ public class ZoomActivity extends GeneralActivity {
 
     private ZoomFragment getActualFragment(int position) {
         if (doublePageMode && !continuousMode) {
-            Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + (position / 2));
+            int spread = SpreadReaderNavigation.spreadForPage(position, gallery.getPageCount());
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + spread);
             return fragment instanceof DoublePageFragment
                 ? ((DoublePageFragment) fragment).pageFragment(position) : null;
         }

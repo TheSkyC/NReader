@@ -264,6 +264,41 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void doublePageActionsResolveTheCoverAndBothPagesOfTheBodySpread() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putBoolean("reader_double_page", true).putBoolean("instant_page_turn", true).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup().visible()) {
+                ZoomActivity activity = controller.get();
+                layoutActivity(activity);
+                DoublePageFragment cover = (DoublePageFragment) activity.getSupportFragmentManager().findFragmentByTag("f0");
+                assertNotNull(cover);
+                assertSame(cover.pageFragment(0), ReflectionHelpers.callInstanceMethod(activity, "getActualFragment"));
+
+                ReaderNavigation navigation = ReflectionHelpers.getField(activity, "readerNavigation");
+                navigation.goToPage(1, false);
+                layoutActivity(activity);
+                DoublePageFragment body = (DoublePageFragment) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                assertNotNull(body);
+                assertSame(body.pageFragment(1), ReflectionHelpers.callInstanceMethod(activity, "getActualFragment"));
+                navigation.goToPage(2, false);
+                assertSame(body.pageFragment(2), ReflectionHelpers.callInstanceMethod(activity, "getActualFragment"));
+
+                ReflectionHelpers.callInstanceMethod(activity, "setReaderScaleMode",
+                    ReflectionHelpers.ClassParameter.from(int.class, ReaderScaleMode.FIT_WIDTH));
+                assertEquals(ReaderScaleMode.FIT_WIDTH, (int) ReflectionHelpers.getField(body.pageFragment(1), "scaleMode"));
+                assertEquals(ReaderScaleMode.FIT_WIDTH, (int) ReflectionHelpers.getField(body.pageFragment(2), "scaleMode"));
+                assertEquals(ReaderScaleMode.FIT_WIDTH, (int) ReflectionHelpers.getField(cover.pageFragment(0), "scaleMode"));
+            }
+        }
+    }
+
+    @Test
     public void doublePageFragmentFollowsRtlReadingDirection() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
