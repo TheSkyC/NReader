@@ -12,13 +12,13 @@ public final class ReaderLoadErrorMessage {
     private ReaderLoadErrorMessage() {
     }
 
-    public static int getMessageResId() {
-        return NetworkUtil.getType() == NetworkUtil.ConnectionType.UNKNOWN
+    public static int getMessageResId(boolean networkPage) {
+        return networkPage && NetworkUtil.getType() == NetworkUtil.ConnectionType.UNKNOWN
             ? R.string.reader_page_load_offline
             : R.string.reader_page_load_failed;
     }
 
-    public static void apply(@NonNull TextView message) {
-        message.setText(getMessageResId());
+    public static void apply(@NonNull TextView message, boolean networkPage) {
+        message.setText(getMessageResId(networkPage));
     }
 }

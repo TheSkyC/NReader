@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">جارٍ تحميل الصفحة…</string>
     <string name="reader_page_load_failed">تعذّر تحميل هذه الصفحة.</string>
-    <string name="reader_page_load_offline">لا يوجد اتصال بالشبكة. تحقّق من اتصالك وأعد المحاولة.</string>
+    <string name="reader_page_load_offline">تعذّر تحميل الصفحة. تحقّق من اتصال الشبكة وأعد المحاولة.</string>
     <string name="reader_page_unavailable">صورة هذه الصفحة غير متاحة لهذا الإجراء.</string>
     <string name="reader_export_original_rotation">ستُستخدم الصورة الأصلية دون تدوير عند الحفظ أو المشاركة. هل تريد المتابعة؟</string>
     <string name="jump_first_page">الانتقال إلى الصفحة الأولى</string>

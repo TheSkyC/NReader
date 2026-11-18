@@ -23,6 +23,7 @@ import com.maxwai.nclientv3.api.local.LocalGallery;
 import com.maxwai.nclientv3.components.classes.ReadingPosition;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.network.NetworkUtil;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,6 +59,7 @@ public class ContinuousPageAdapterTest {
         assertTrue(new File(folder, "3.png").createNewFile());
         LocalGallery gallery = new LocalGallery(folder, true);
         Global.initFromShared(RuntimeEnvironment.getApplication());
+        NetworkUtil.setType(NetworkUtil.ConnectionType.UNKNOWN);
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         RecyclerView recycler = new RecyclerView(activity);
         recycler.setLayoutManager(new LinearLayoutManager(activity));
@@ -76,6 +78,8 @@ public class ContinuousPageAdapterTest {
         assertNotNull(first);
         assertNotNull(missing);
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_error).getVisibility());
+        assertEquals(activity.getString(R.string.reader_page_load_failed),
+            ((android.widget.TextView) missing.itemView.findViewById(R.id.continuous_page_error)).getText().toString());
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_retry).getVisibility());
         missing.itemView.findViewById(R.id.continuous_page_retry).performClick();
         assertEquals(View.VISIBLE, missing.itemView.findViewById(R.id.continuous_page_loading).getVisibility());

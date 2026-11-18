@@ -18,14 +18,15 @@ public class ReaderLoadErrorMessageTest {
     public void usesOfflineMessageWithoutValidatedNetwork() {
         NetworkUtil.setType(NetworkUtil.ConnectionType.UNKNOWN);
 
-        assertEquals(R.string.reader_page_load_offline, ReaderLoadErrorMessage.getMessageResId());
+        assertEquals(R.string.reader_page_load_offline, ReaderLoadErrorMessage.getMessageResId(true));
+        assertEquals(R.string.reader_page_load_failed, ReaderLoadErrorMessage.getMessageResId(false));
     }
 
     @Test
     public void usesGenericMessageWhenNetworkIsValidated() {
         NetworkUtil.setType(NetworkUtil.ConnectionType.WIFI);
 
-        assertEquals(R.string.reader_page_load_failed, ReaderLoadErrorMessage.getMessageResId());
+        assertEquals(R.string.reader_page_load_failed, ReaderLoadErrorMessage.getMessageResId(true));
         NetworkUtil.setType(NetworkUtil.ConnectionType.UNKNOWN);
     }
 }

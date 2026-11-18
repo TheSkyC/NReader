@@ -270,7 +270,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         Object source = pageSource(gallery, directory, position);
         holder.source = source;
         if (source == null || manager == null) {
-            holder.showError();
+            holder.showError(source == null && gallery instanceof Gallery);
             return;
         }
         holder.showLoading();
@@ -290,7 +290,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                 public boolean onLoadFailed(@Nullable GlideException exception, Object model,
                                             @NonNull Target<Drawable> target, boolean firstResource) {
                     if (generation != holder.generation) return true;
-                    holder.showError();
+                    holder.showError(source instanceof android.net.Uri);
                     return false;
                 }
 
@@ -432,10 +432,10 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
             retry.setVisibility(View.GONE);
         }
 
-        void showError() {
+        void showError(boolean networkPage) {
             status.setVisibility(View.VISIBLE);
             loading.setVisibility(View.GONE);
-            ReaderLoadErrorMessage.apply(error);
+            ReaderLoadErrorMessage.apply(error, networkPage);
             error.setVisibility(View.VISIBLE);
             retry.setVisibility(View.VISIBLE);
         }

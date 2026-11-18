@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">正在加载页面…</string>
     <string name="reader_page_load_failed">无法加载此页面。</string>
-    <string name="reader_page_load_offline">没有网络连接，请检查网络后重试。</string>
+    <string name="reader_page_load_offline">无法加载此页面，请检查网络连接后重试。</string>
     <string name="reader_page_unavailable">当前页面图片无法用于此操作。</string>
     <string name="reader_export_original_rotation">保存或分享将使用未经旋转的原图。是否继续？</string>
     <string name="jump_first_page">跳到第一页</string>

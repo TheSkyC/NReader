@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">Seite wird geladen…</string>
     <string name="reader_page_load_failed">Diese Seite konnte nicht geladen werden.</string>
-    <string name="reader_page_load_offline">Keine Netzwerkverbindung. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="reader_page_load_offline">Die Seite konnte nicht geladen werden. Prüfe deine Netzwerkverbindung und versuche es erneut.</string>
     <string name="reader_page_unavailable">Das Seitenbild ist für diese Aktion nicht verfügbar.</string>
     <string name="reader_export_original_rotation">Beim Speichern oder Teilen wird das Originalbild ohne Drehung verwendet. Fortfahren?</string>
     <string name="jump_first_page">Zur ersten Seite</string>

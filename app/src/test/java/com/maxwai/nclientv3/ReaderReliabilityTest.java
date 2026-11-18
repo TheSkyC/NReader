@@ -44,6 +44,7 @@ import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.OnViewTapListener;
 import com.maxwai.nclientv3.github.chrisbanes.photoview.PhotoView;
 import com.maxwai.nclientv3.settings.Global;
+import com.maxwai.nclientv3.utility.network.NetworkUtil;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -1304,6 +1305,7 @@ public class ReaderReliabilityTest {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
         Global.initFromShared(application);
+        NetworkUtil.setType(NetworkUtil.ConnectionType.UNKNOWN);
         try (DatabaseHelper database = new DatabaseHelper(application)) {
             database.getWritableDatabase();
             try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
@@ -1314,6 +1316,8 @@ public class ReaderReliabilityTest {
                 View error = root.findViewById(R.id.reader_load_error);
                 View loading = root.findViewById(R.id.reader_loading);
                 assertEquals(View.VISIBLE, error.getVisibility());
+                assertEquals(activity.getString(R.string.reader_page_load_failed),
+                    ((android.widget.TextView) root.findViewById(R.id.reader_load_error_message)).getText().toString());
                 assertEquals(View.GONE, loading.getVisibility());
                 root.findViewById(R.id.reader_retry).performClick();
                 assertEquals(View.VISIBLE, error.getVisibility());

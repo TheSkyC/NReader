@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">Загрузка страницы…</string>
     <string name="reader_page_load_failed">Не удалось загрузить эту страницу.</string>
-    <string name="reader_page_load_offline">Нет подключения к сети. Проверьте подключение и повторите попытку.</string>
+    <string name="reader_page_load_offline">Не удалось загрузить страницу. Проверьте подключение к сети и повторите попытку.</string>
     <string name="reader_page_unavailable">Изображение страницы недоступно для этого действия.</string>
     <string name="reader_export_original_rotation">При сохранении или отправке будет использовано исходное изображение без поворота. Продолжить?</string>
     <string name="jump_first_page">Перейти к первой странице</string>

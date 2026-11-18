@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">Caricamento della pagina…</string>
     <string name="reader_page_load_failed">Impossibile caricare questa pagina.</string>
-    <string name="reader_page_load_offline">Nessuna connessione di rete. Controlla la connessione e riprova.</string>
+    <string name="reader_page_load_offline">Impossibile caricare la pagina. Controlla la connessione di rete e riprova.</string>
     <string name="reader_page_unavailable">L’immagine di questa pagina non è disponibile per questa azione.</string>
     <string name="reader_export_original_rotation">Il salvataggio o la condivisione userà l’immagine originale senza rotazione. Continuare?</string>
     <string name="jump_first_page">Vai alla prima pagina</string>

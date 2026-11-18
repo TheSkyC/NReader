@@ -186,7 +186,7 @@ public class ZoomFragment extends Fragment {
             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                 super.onLoadFailed(errorDrawable);
                 loadingView.setVisibility(View.GONE);
-                ReaderLoadErrorMessage.apply(errorMessage);
+                ReaderLoadErrorMessage.apply(errorMessage, pageFile == null && url != null);
                 errorView.setVisibility(View.VISIBLE);
             }
 

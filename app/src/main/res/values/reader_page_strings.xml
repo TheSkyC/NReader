@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_page_loading">Loading page…</string>
     <string name="reader_page_load_failed">Could not load this page.</string>
-    <string name="reader_page_load_offline">No network connection. Check your connection and retry.</string>
+    <string name="reader_page_load_offline">Could not load this page. Check your network connection and retry.</string>
     <string name="reader_page_unavailable">This page image is unavailable for this action.</string>
     <string name="reader_export_original_rotation">Saving or sharing uses the original image without your rotation. Continue?</string>
     <string name="jump_first_page">Jump to first page</string>
