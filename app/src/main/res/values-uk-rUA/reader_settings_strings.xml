@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">Гортати біля країв екрана</string>
     <string name="reader_tap_action_controls">Показувати або приховувати елементи</string>
     <string name="reader_tap_action_none">Без дії</string>
+    <string name="reader_bookmark_delete_page">Видалити закладку сторінки %1$d</string>
 </resources>

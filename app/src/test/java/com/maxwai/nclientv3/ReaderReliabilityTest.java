@@ -664,7 +664,10 @@ public class ReaderReliabilityTest {
                 list.layout(0, 0, 500, 400);
                 RecyclerView.ViewHolder last = list.findViewHolderForAdapterPosition(19);
                 assertNotNull(last);
-                ((android.view.ViewGroup) last.itemView).getChildAt(1).performClick();
+                assertEquals(list.getWidth() - list.getPaddingLeft() - list.getPaddingRight(), last.itemView.getWidth());
+                View delete = ((android.view.ViewGroup) last.itemView).getChildAt(1);
+                assertEquals(activity.getString(R.string.reader_bookmark_delete_page, 20), delete.getContentDescription());
+                delete.performClick();
                 assertEquals(19, list.getAdapter().getItemCount());
                 assertEquals(19, Queries.ReaderBookmarkTable.getForGallery(84002).size());
                 list.scrollToPosition(18);

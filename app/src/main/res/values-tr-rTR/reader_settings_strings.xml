@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">Ekran kenarlarında sayfa çevir</string>
     <string name="reader_tap_action_controls">Denetimleri göster veya gizle</string>
     <string name="reader_tap_action_none">Eylem yok</string>
+    <string name="reader_bookmark_delete_page">%1$d. sayfanın yer işaretini sil</string>
 </resources>

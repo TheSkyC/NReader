@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">Листать у краёв экрана</string>
     <string name="reader_tap_action_controls">Показать или скрыть элементы</string>
     <string name="reader_tap_action_none">Нет действия</string>
+    <string name="reader_bookmark_delete_page">Удалить закладку страницы %1$d</string>
 </resources>

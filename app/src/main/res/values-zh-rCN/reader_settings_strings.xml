@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">点击屏幕边缘翻页</string>
     <string name="reader_tap_action_controls">显示或隐藏控件</string>
     <string name="reader_tap_action_none">无操作</string>
+    <string name="reader_bookmark_delete_page">删除第 %1$d 页的书签</string>
 </resources>

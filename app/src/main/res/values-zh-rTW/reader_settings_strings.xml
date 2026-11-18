@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">點擊螢幕邊緣翻頁</string>
     <string name="reader_tap_action_controls">顯示或隱藏控制項</string>
     <string name="reader_tap_action_none">無操作</string>
+    <string name="reader_bookmark_delete_page">刪除第 %1$d 頁的書籤</string>
 </resources>

@@ -33,6 +33,8 @@ public final class ReaderBookmarkAdapter extends RecyclerView.Adapter<ReaderBook
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LinearLayout row = new LinearLayout(parent.getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setLayoutParams(new RecyclerView.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         Button open = new Button(parent.getContext());
         open.setAllCaps(false);
         row.addView(open, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -49,6 +51,8 @@ public final class ReaderBookmarkAdapter extends RecyclerView.Adapter<ReaderBook
             + holder.itemView.getContext().getString(R.string.bookmark_page_format, bookmark.page)
             + (bookmark.note.isEmpty() ? "" : "\n" + bookmark.note);
         holder.open.setText(label);
+        holder.remove.setContentDescription(holder.itemView.getContext().getString(
+            R.string.reader_bookmark_delete_page, bookmark.page));
         holder.open.setOnClickListener(view -> onOpen.accept(bookmark));
         holder.remove.setOnClickListener(view -> onDelete.accept(bookmark));
     }

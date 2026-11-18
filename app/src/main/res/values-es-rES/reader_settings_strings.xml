@@ -60,4 +60,5 @@
     <string name="reader_tap_action_edge">Pasar página en los bordes</string>
     <string name="reader_tap_action_controls">Mostrar u ocultar controles</string>
     <string name="reader_tap_action_none">Sin acción</string>
+    <string name="reader_bookmark_delete_page">Eliminar marcador de la página %1$d</string>
 </resources>
