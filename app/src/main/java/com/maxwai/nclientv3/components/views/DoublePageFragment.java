@@ -153,6 +153,7 @@ public final class DoublePageFragment extends Fragment {
     }
 
     public void setScaleMode(int mode) {
+        requireArguments().putInt(SCALE_MODE_KEY, ReaderScaleMode.sanitize(mode));
         ZoomFragment first = pageFragment(firstPage);
         if (first != null) first.setScaleMode(mode);
         if (secondPage >= 0) {
@@ -162,6 +163,7 @@ public final class DoublePageFragment extends Fragment {
     }
 
     public void setAutoCrop(boolean enabled) {
+        requireArguments().putBoolean(AUTO_CROP_KEY, enabled);
         ZoomFragment first = pageFragment(firstPage);
         if (first != null) first.setAutoCrop(enabled);
         if (secondPage >= 0) {
@@ -171,11 +173,24 @@ public final class DoublePageFragment extends Fragment {
     }
 
     public void setAdjustments(int brightness, int contrast, int saturation) {
+        requireArguments().putInt("BRIGHTNESS", ReaderImageFilter.sanitizeAdjustment(brightness));
+        requireArguments().putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
+        requireArguments().putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
         ZoomFragment first = pageFragment(firstPage);
         if (first != null) first.setAdjustments(brightness, contrast, saturation);
         if (secondPage >= 0) {
             ZoomFragment second = pageFragment(secondPage);
             if (second != null) second.setAdjustments(brightness, contrast, saturation);
+        }
+    }
+
+    public void setFilterMode(int mode) {
+        requireArguments().putInt(FILTER_MODE_KEY, ReaderImageFilter.sanitize(mode));
+        ZoomFragment first = pageFragment(firstPage);
+        if (first != null) first.setFilterMode(mode);
+        if (secondPage >= 0) {
+            ZoomFragment second = pageFragment(secondPage);
+            if (second != null) second.setFilterMode(mode);
         }
     }
 }

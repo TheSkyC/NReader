@@ -1105,7 +1105,8 @@ public class ZoomActivity extends GeneralActivity {
     private int getReaderFilterMode(@NonNull SharedPreferences preferences) {
         String key = readerFilterPreferenceKey();
         try {
-            int value = preferences.getInt(key, preferences.getInt(READER_FILTER_KEY, ReaderImageFilter.NONE));
+            int value = preferences.contains(key) ? preferences.getInt(key, ReaderImageFilter.NONE)
+                : preferences.getInt(READER_FILTER_KEY, ReaderImageFilter.NONE);
             return ReaderImageFilter.sanitize(value);
         } catch (ClassCastException exception) {
             return ReaderImageFilter.NONE;
@@ -1407,13 +1408,7 @@ public class ZoomActivity extends GeneralActivity {
             if (fragment instanceof ZoomFragment) {
                 ((ZoomFragment) fragment).setFilterMode(readerFilterMode);
             } else if (fragment instanceof DoublePageFragment) {
-                DoublePageFragment spread = (DoublePageFragment) fragment;
-                ZoomFragment first = spread.pageFragment(spread.firstPage());
-                if (first != null) first.setFilterMode(readerFilterMode);
-                if (spread.secondPage() >= 0) {
-                    ZoomFragment second = spread.pageFragment(spread.secondPage());
-                    if (second != null) second.setFilterMode(readerFilterMode);
-                }
+                ((DoublePageFragment) fragment).setFilterMode(readerFilterMode);
             }
         }
     }

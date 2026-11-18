@@ -618,6 +618,96 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void pagedAppearanceSurvivesViewRecreation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                LocalGallery gallery = new LocalGallery(folder, true);
+                ZoomFragment fragment = ZoomFragment.newInstance(gallery, 0, gallery.getGalleryFolder());
+                activity.getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment, "appearance-page").commitNow();
+                fragment.setScaleMode(ReaderScaleMode.FIT_WIDTH);
+                fragment.setFilterMode(2);
+                fragment.setAutoCrop(true);
+                fragment.setAdjustments(10, 20, -30);
+                activity.getSupportFragmentManager().beginTransaction().detach(fragment).commitNow();
+                activity.getSupportFragmentManager().beginTransaction().attach(fragment).commitNow();
+                assertEquals(ReaderScaleMode.FIT_WIDTH, (int) ReflectionHelpers.getField(fragment, "scaleMode"));
+                assertEquals(2, (int) ReflectionHelpers.getField(fragment, "filterMode"));
+                assertTrue(ReflectionHelpers.getField(fragment, "autoCrop"));
+                assertEquals(10, (int) ReflectionHelpers.getField(fragment, "brightness"));
+                assertEquals(20, (int) ReflectionHelpers.getField(fragment, "contrast"));
+                assertEquals(-30, (int) ReflectionHelpers.getField(fragment, "saturation"));
+            }
+        }
+    }
+
+    @Test
+    public void doublePageAppearanceSurvivesViewAndActivityRecreation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                LocalGallery gallery = new LocalGallery(folder, true);
+                DoublePageFragment spread = DoublePageFragment.newInstance(gallery, 1, 2,
+                    gallery.getGalleryFolder(), ReaderScaleMode.SMART);
+                activity.getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, spread, "appearance-spread").commitNow();
+                spread.setScaleMode(ReaderScaleMode.FIT_WIDTH);
+                spread.setFilterMode(2);
+                spread.setAutoCrop(true);
+                spread.setAdjustments(10, 20, -30);
+                activity.getSupportFragmentManager().beginTransaction().detach(spread).commitNow();
+                activity.getSupportFragmentManager().beginTransaction().attach(spread).commitNow();
+                assertAppearance(spread.pageFragment(1));
+                assertAppearance(spread.pageFragment(2));
+                controller.recreate();
+                spread = (DoublePageFragment) controller.get().getSupportFragmentManager()
+                    .findFragmentByTag("appearance-spread");
+                assertNotNull(spread);
+                assertAppearance(spread.pageFragment(1));
+                assertAppearance(spread.pageFragment(2));
+            }
+        }
+    }
+
+    private void assertAppearance(ZoomFragment fragment) {
+        assertNotNull(fragment);
+        assertEquals(ReaderScaleMode.FIT_WIDTH, (int) ReflectionHelpers.getField(fragment, "scaleMode"));
+        assertEquals(2, (int) ReflectionHelpers.getField(fragment, "filterMode"));
+        assertTrue(ReflectionHelpers.getField(fragment, "autoCrop"));
+        assertEquals(10, (int) ReflectionHelpers.getField(fragment, "brightness"));
+        assertEquals(20, (int) ReflectionHelpers.getField(fragment, "contrast"));
+        assertEquals(-30, (int) ReflectionHelpers.getField(fragment, "saturation"));
+    }
+
+    @Test
+    public void validGalleryFilterDoesNotReadInvalidGlobalFallback() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        assertTrue(new File(folder, ".82128").createNewFile());
+        application.getSharedPreferences("Settings", 0).edit().clear()
+            .putString("reader_filter", "invalid").putInt("reader_filter_82128", 2).commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                assertEquals(2, (int) ReflectionHelpers.getField(controller.get(), "readerFilterMode"));
+            }
+        }
+    }
+
+    @Test
     public void readerPresetUpdatesControlsAndAllowsFurtherChanges() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();

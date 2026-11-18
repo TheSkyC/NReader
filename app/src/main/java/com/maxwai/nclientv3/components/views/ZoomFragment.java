@@ -232,11 +232,13 @@ public class ZoomFragment extends Fragment {
 
     public void setScaleMode(int mode) {
         scaleMode = ReaderScaleMode.sanitize(mode);
+        requireArguments().putInt("SCALE_MODE", scaleMode);
         if (photoView != null && photoView.getDrawable() != null) scalePhoto(photoView.getDrawable());
     }
 
     public void setFilterMode(int mode) {
         filterMode = ReaderImageFilter.sanitize(mode);
+        requireArguments().putInt("FILTER_MODE", filterMode);
         applyAppearance();
     }
 
@@ -244,6 +246,9 @@ public class ZoomFragment extends Fragment {
         this.brightness = ReaderImageFilter.sanitizeAdjustment(brightness);
         this.contrast = ReaderImageFilter.sanitizeAdjustment(contrast);
         this.saturation = ReaderImageFilter.sanitizeAdjustment(saturation);
+        requireArguments().putInt("BRIGHTNESS", this.brightness);
+        requireArguments().putInt("CONTRAST", this.contrast);
+        requireArguments().putInt("SATURATION", this.saturation);
         applyAppearance();
     }
 
@@ -252,6 +257,7 @@ public class ZoomFragment extends Fragment {
     }
 
     public void setAutoCrop(boolean enabled) {
+        requireArguments().putBoolean("AUTO_CROP", enabled);
         if (autoCrop == enabled) return;
         autoCrop = enabled;
         completedDownload = false;
