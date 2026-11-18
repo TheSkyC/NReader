@@ -574,14 +574,22 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void handleReaderPageTap(float horizontalPosition) {
-        if (readerTapAction == READER_TAP_EDGE && (horizontalPosition < PAGE_TAP_EDGE
+        int action = effectiveReaderTapAction();
+        if (action == READER_TAP_EDGE && (horizontalPosition < PAGE_TAP_EDGE
             || horizontalPosition > 1f - PAGE_TAP_EDGE)) {
             changeClosePage(horizontalPosition > 1f - PAGE_TAP_EDGE);
-        } else if (readerTapAction == READER_TAP_CONTROLS) {
+        } else if (action != READER_TAP_NONE) {
             isHidden = !isHidden;
             applyVisibilityFlag();
             animateLayout();
         }
+    }
+
+    private int effectiveReaderTapAction() {
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        if (!preferences.contains(readerTapActionPreferenceKey()))
+            return Global.isButtonChangePage() ? READER_TAP_EDGE : READER_TAP_CONTROLS;
+        return readerTapAction;
     }
 
     public boolean isVerticalPageTurn() {
