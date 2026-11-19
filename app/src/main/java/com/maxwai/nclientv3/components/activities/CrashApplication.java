@@ -1,3 +1,4 @@
+// NReader modifications by TheSkyC (2026); see NOTICE.
 package com.maxwai.nclientv3.components.activities;
 
 import android.app.Activity;
@@ -19,6 +20,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.maxwai.nclientv3.BuildConfig;
 import com.maxwai.nclientv3.R;
+import com.maxwai.nclientv3.ZoomActivity;
+import com.maxwai.nclientv3.components.reader.ReaderWindowInsets;
 import com.maxwai.nclientv3.async.database.DatabaseHelper;
 import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.async.UpdateCheckWorker;
@@ -85,6 +88,10 @@ public class CrashApplication extends Application {
         public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
             View rootView = activity.getWindow().getDecorView().getRootView();
             ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+                if (activity instanceof ZoomActivity) {
+                    ReaderWindowInsets.apply(v, insets);
+                    return WindowInsetsCompat.CONSUMED;
+                }
                 Insets barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                 int bottom = barsInsets.bottom;
                 if (activity instanceof com.maxwai.nclientv3.GalleryActivity) {

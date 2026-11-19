@@ -23,7 +23,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.RadioGroup;
@@ -39,8 +38,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -169,6 +168,7 @@ public class ZoomActivity extends GeneralActivity {
     private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
     private TextView pageManagerLabel, cornerPageViewer;
     private View pageSwitcher;
+    private int controlsAnimationGeneration;
     private SeekBar seekBar;
     private Toolbar toolbar;
     private View view;
@@ -335,7 +335,7 @@ public class ZoomActivity extends GeneralActivity {
         applyReaderBackground();
 
         //initial setup for views
-        changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+        ViewCompat.requestApplyInsets(getWindow().getDecorView());
         mViewPager.setKeepScreenOn(Global.isLockScreen());
         continuousReader.setKeepScreenOn(Global.isLockScreen());
         findViewById(R.id.prev).setOnClickListener(v -> changeClosePage(false));
@@ -807,7 +807,7 @@ public class ZoomActivity extends GeneralActivity {
         stopAutoScroll();
         ReadingPosition position = continuousMode ? currentPosition() : null;
         super.onConfigurationChanged(newConfig);
-        changeLayout(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
+        ViewCompat.requestApplyInsets(getWindow().getDecorView());
         if (!continuousMode && spreadMode == SPREAD_MODE_AUTO) {
             boolean desiredDoublePage = isDoublePageEffective();
             if (desiredDoublePage != doublePageMode) applyDoublePageMode(desiredDoublePage);
@@ -815,23 +815,6 @@ public class ZoomActivity extends GeneralActivity {
         if (continuousMode) continuousZoomViewport.resetZoom();
         else applyReaderScaleMode();
         if (position != null) ((ContinuousReaderNavigation) readerNavigation).goToPosition(position);
-    }
-
-    private boolean hardwareKeys() {
-        return ViewConfiguration.get(this).hasPermanentMenuKey();
-    }
-
-    private void applyMargin(boolean landscape, View view) {
-        ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) view.getLayoutParams();
-        lp.setMargins(0, 0, landscape && !hardwareKeys() ? Global.getNavigationBarHeight(this) : 0, 0);
-        view.setLayoutParams(lp);
-    }
-
-    private void changeLayout(boolean landscape) {
-        int statusBarHeight = Global.getStatusBarHeight(this);
-        applyMargin(landscape, findViewById(R.id.master_layout));
-        applyMargin(landscape, toolbar);
-        pageSwitcher.setPadding(0, 0, 0, landscape ? 0 : statusBarHeight);
     }
 
     private void changePage(int newPage) {
@@ -1913,12 +1896,16 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void animateLayout() {
-
+        int generation = ++controlsAnimationGeneration;
+        pageSwitcher.animate().setListener(null).cancel();
+        toolbar.animate().setListener(null).cancel();
+        view.animate().setListener(null).cancel();
         AnimatorListenerAdapter adapter = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (isHidden) {
+                if (generation == controlsAnimationGeneration && isHidden) {
                     pageSwitcher.setVisibility(View.GONE);
+                    findViewById(R.id.master_layout).setVisibility(View.GONE);
                     toolbar.setVisibility(View.GONE);
                     view.setVisibility(View.GONE);
                     cornerPageViewer.setVisibility(View.VISIBLE);
@@ -1927,12 +1914,13 @@ public class ZoomActivity extends GeneralActivity {
         };
 
         pageSwitcher.setVisibility(View.VISIBLE);
+        findViewById(R.id.master_layout).setVisibility(View.VISIBLE);
         toolbar.setVisibility(View.VISIBLE);
         view.setVisibility(View.VISIBLE);
         cornerPageViewer.setVisibility(View.GONE);
 
-        pageSwitcher.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).setListener(adapter).start();
-        view.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).setListener(adapter).start();
+        pageSwitcher.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).start();
+        view.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).start();
         toolbar.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).setListener(adapter).start();
     }
 
