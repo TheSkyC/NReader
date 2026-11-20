@@ -149,6 +149,9 @@ public class GalleryOpeningTest {
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals("Test", activity.getTitle().toString());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_read_loading).getVisibility());
+                assertEquals(activity.getString(R.string.gallery_loading_details),
+                    activity.findViewById(R.id.gallery_read).getContentDescription());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
                 assertEquals("ID 117", ((android.widget.TextView) activity.findViewById(R.id.id_num)).getText().toString());
                 activity.findViewById(R.id.id_num).performClick();
@@ -760,6 +763,7 @@ public class GalleryOpeningTest {
                 }
                 assertEquals(View.VISIBLE, error.getVisibility());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
+                assertEquals(View.GONE, activity.findViewById(R.id.gallery_read_loading).getVisibility());
                 ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_pages_retry).getVisibility());
                 activity.findViewById(R.id.gallery_pages_retry).performClick();

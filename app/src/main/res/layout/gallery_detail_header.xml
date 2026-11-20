@@ -64,54 +64,6 @@
                     android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/gallery_loading"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ProgressBar
-                        style="?android:attr/progressBarStyleSmall"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:importantForAccessibility="no" />
-
-                    <TextView
-                        style="@style/TextAppearance.MaterialComponents.Caption"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:accessibilityLiveRegion="polite"
-                        android:text="@string/gallery_loading_details" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginEnd="16dp"
-                    android:alpha="0.12"
-                    android:background="@drawable/gallery_loading_placeholder"
-                    android:importantForAccessibility="no" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="40dp"
-                    android:alpha="0.12"
-                    android:background="@drawable/gallery_loading_placeholder"
-                    android:importantForAccessibility="no" />
-            </LinearLayout>
-
         </LinearLayout>
     </LinearLayout>
 
@@ -144,13 +96,46 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/gallery_read"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:minHeight="48dp"
-        android:text="@string/gallery_start_reading" />
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/gallery_read"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:accessibilityLiveRegion="polite"
+            android:minHeight="48dp"
+            android:text="@string/gallery_start_reading" />
+
+        <LinearLayout
+            android:id="@+id/gallery_read_loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:importantForAccessibility="noHideDescendants"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:visibility="gone">
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="20dp"
+                android:layout_height="20dp" />
+
+            <TextView
+                style="@style/TextAppearance.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/gallery_loading_details"
+                android:textColor="?android:attr/textColorSecondary" />
+        </LinearLayout>
+    </FrameLayout>
 
     <Button
         android:id="@+id/gallery_read_from_start"

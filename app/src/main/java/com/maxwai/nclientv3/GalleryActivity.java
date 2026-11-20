@@ -734,12 +734,16 @@ public class GalleryActivity extends BaseActivity {
         });
     }
 
-    public void bindReadingActions(View header) {
+    public void bindReadingActions(View header, boolean loading) {
         Button read = header.findViewById(R.id.gallery_read);
         Button start = header.findViewById(R.id.gallery_read_from_start);
+        boolean showLoading = (!detailReady && loading) || (detailReady && !positionReady);
         read.setEnabled(detailReady && positionReady && gallery.getPageCount() > 0);
-        read.setText(automaticPosition == null ? getString(R.string.gallery_start_reading)
-            : getString(R.string.gallery_continue_page, automaticPosition.page));
+        String readLabel = automaticPosition == null ? getString(R.string.gallery_start_reading)
+            : getString(R.string.gallery_continue_page, automaticPosition.page);
+        read.setText(showLoading ? "" : readLabel);
+        read.setContentDescription(showLoading ? getString(R.string.gallery_loading_details) : null);
+        header.findViewById(R.id.gallery_read_loading).setVisibility(showLoading ? View.VISIBLE : View.GONE);
         read.setOnClickListener(v -> openPagedReader(automaticPosition == null
             ? new ReadingPosition(1, 0f) : automaticPosition));
         start.setVisibility(automaticPosition == null ? View.GONE : View.VISIBLE);
