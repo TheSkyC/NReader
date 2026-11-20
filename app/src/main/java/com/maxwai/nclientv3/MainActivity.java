@@ -63,6 +63,7 @@ import com.maxwai.nclientv3.async.downloader.DownloadGalleryV2;
 import com.maxwai.nclientv3.components.activities.BaseActivity;
 import com.maxwai.nclientv3.components.activities.AccountReauthCoordinator;
 import com.maxwai.nclientv3.components.GlideX;
+import com.maxwai.nclientv3.components.views.DrawerSwipeListener;
 import com.maxwai.nclientv3.components.views.PageSwitcher;
 import com.maxwai.nclientv3.components.widgets.CustomGridLayoutManager;
 import com.maxwai.nclientv3.components.widgets.GalleryListGrid;
@@ -354,6 +355,7 @@ public class MainActivity extends BaseActivity
         if (modeType != ModeType.NORMAL) {
             drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         } else {
+            recycler.addOnItemTouchListener(new DrawerSwipeListener(drawerLayout));
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawerLayout.addDrawerListener(toggle);
             toggle.syncState();
