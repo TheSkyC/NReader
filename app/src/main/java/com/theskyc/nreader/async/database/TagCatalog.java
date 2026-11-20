@@ -26,6 +26,7 @@ public final class TagCatalog {
     public static final int MIN_DIRECTORY_ROWS = 50_000;
     private static final String UPSTREAM = "legacy-upstream";
     private static final String BUNDLED = "bundled";
+    private static final String PUBLISHED = TagCatalogManifest.SOURCE;
     private static final int MAX_ROWS = 250_000;
     private static final int MAX_NAME_LENGTH = 256;
     private static final String STAGE = "temp.TagCatalogStage";
@@ -35,6 +36,10 @@ public final class TagCatalog {
 
     public static int installedRevision(SQLiteDatabase database) {
         return installedRevision(database, UPSTREAM);
+    }
+
+    public static int installedPublishedRevision(SQLiteDatabase database) {
+        return installedRevision(database, PUBLISHED);
     }
 
     static int installedSeedRevision(SQLiteDatabase database) {
@@ -88,7 +93,8 @@ public final class TagCatalog {
     }
 
     public static boolean needsBundled(SQLiteDatabase database, int revision) {
-        return installedRevision(database) == 0 && revision > installedSeedRevision(database);
+        return installedPublishedRevision(database) == 0 && installedRevision(database) == 0
+            && revision > installedSeedRevision(database);
     }
 
     public static boolean applyBundled(SQLiteDatabase database, InputStream source, int revision,
@@ -101,6 +107,11 @@ public final class TagCatalog {
         return apply(database, source, revision, minimumRows, cancelled, UPSTREAM);
     }
 
+    static boolean applyPublished(SQLiteDatabase database, InputStream source, int revision,
+                                  int minimumRows, BooleanSupplier cancelled) throws IOException {
+        return apply(database, source, revision, minimumRows, cancelled, PUBLISHED);
+    }
+
     private static boolean apply(SQLiteDatabase database, InputStream source, int revision,
                                  int minimumRows, BooleanSupplier cancelled, String dataset) throws IOException {
         if (revision < 1 || minimumRows < 1 || minimumRows > MAX_ROWS) {
@@ -109,7 +120,8 @@ public final class TagCatalog {
         database.beginTransactionNonExclusive();
         try {
             if (BUNDLED.equals(dataset) ? !needsBundled(database, revision)
-                : revision <= installedRevision(database, dataset)) return false;
+                : revision <= installedRevision(database, dataset)
+                    || (UPSTREAM.equals(dataset) && installedPublishedRevision(database) > 0)) return false;
             database.execSQL("CREATE TEMP TABLE TagCatalogStage (idTag INTEGER PRIMARY KEY,"
                 + " name TEXT NOT NULL, count INTEGER NOT NULL, type INTEGER NOT NULL)");
             loadStage(database, source, minimumRows, cancelled);
@@ -198,7 +210,7 @@ public final class TagCatalog {
                 || Character.getType(point) == Character.SURROGATE);
     }
 
-    private static void checkCancelled(BooleanSupplier cancelled) throws InterruptedIOException {
+    static void checkCancelled(BooleanSupplier cancelled) throws InterruptedIOException {
         if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted()) {
             throw new InterruptedIOException("Tag catalog update stopped");
         }

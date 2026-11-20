@@ -1,6 +1,10 @@
 # Modified for NReader by TheSkyC (2026); see NOTICE.
 name: Update Data
 
+concurrency:
+  group: tag-catalog-update
+  cancel-in-progress: false
+
 on:
   schedule:
     - cron: "42 1 * * 0"
@@ -9,6 +13,7 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 100
     permissions:
       contents: write
       pull-requests: write

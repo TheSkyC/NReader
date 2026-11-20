@@ -64,6 +64,11 @@ private temporary file before starting the database transaction. It checks the
 revision again after downloading because the upstream paths are mutable. The
 legacy protocol has no digest that binds the revision to the payload.
 
+A build can set the Gradle property `nreaderTagCatalogManifestUrl` to the
+HTTPS URL of a NReader catalog manifest. A configured build checks that
+feed instead of the legacy one. See [catalog distribution](tag-distribution.md)
+for its independent revisions, integrity checks, and publishing procedure.
+
 The legacy feed is limited to 16 MiB and 250,000 rows. It must contain at least
 50,000 rows covering all seven known types. A canonical name must fit in the
 site's quoted query syntax. Invalid fields, duplicate IDs, type conflicts,

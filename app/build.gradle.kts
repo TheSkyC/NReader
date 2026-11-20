@@ -29,6 +29,10 @@ val updateEndpoint = providers.gradleProperty("nreaderUpdateEndpoint").orNull ?:
 val updateEndpointConfig = updateEndpoint
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
+val tagCatalogManifestUrl = providers.gradleProperty("nreaderTagCatalogManifestUrl").orNull ?: ""
+val tagCatalogManifestUrlConfig = tagCatalogManifestUrl
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
 val nreaderVersion = providers.gradleProperty("nreaderVersion").orNull
     ?: error("nreaderVersion must be set in gradle.properties")
 val versionPattern = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-(pre\d+|(?:alpha|beta|rc)\.\d+))?$""")
@@ -75,6 +79,7 @@ android {
         buildConfigField("String", "UPDATE_REPOSITORY", "\"TheSkyC/NReader\"")
         buildConfigField("String", "UPDATE_ENDPOINT", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
+        buildConfigField("String", "TAG_CATALOG_MANIFEST_URL", "\"$tagCatalogManifestUrlConfig\"")
         // Format: MmPPbb
         // M: Major, m: minor, P: Patch, b: build
         versionCode = computedVersionCode

@@ -15,7 +15,9 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.async.database.TagCatalogManifest;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.utility.LogUtility;
 
@@ -28,10 +30,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.CacheControl;
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -40,7 +44,6 @@ import okhttp3.ResponseBody;
 public class ScrapeTags extends Worker {
     private static final long CHECK_INTERVAL_MS = TimeUnit.DAYS.toMillis(7);
     private static final int MAX_ATTEMPTS = 3;
-    private static final int MAX_CATALOG_BYTES = 16 * 1024 * 1024;
     private static final String DATA_FOLDER = "https://raw.githubusercontent.com/maxwai/NClientV3/main/data/";
     private static final String TAGS = DATA_FOLDER + "tags.json";
     private static final String VERSION = DATA_FOLDER + "tagsVersion";
@@ -50,6 +53,7 @@ public class ScrapeTags extends Worker {
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
         .callTimeout(60, TimeUnit.SECONDS)
         .followRedirects(false)
+        .followSslRedirects(false)
         .build();
     private static boolean cleanedStagingDirectory;
 
@@ -71,19 +75,23 @@ public class ScrapeTags extends Worker {
     public Result doWork() {
         SQLiteDatabase database = Database.getDatabase();
         if (database == null) return failureOrRetry();
-        SharedPreferences checks = getApplicationContext().getSharedPreferences("TagCatalogChecks", Context.MODE_PRIVATE);
+        boolean published = !BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty();
         try {
-            int installed = TagCatalog.installedRevision(database);
+            int publishedRevision = TagCatalog.installedPublishedRevision(database);
+            if (!published && publishedRevision > 0) return Result.success();
+            int installed = published ? publishedRevision : TagCatalog.installedRevision(database);
+            SharedPreferences checks = getApplicationContext().getSharedPreferences(
+                published ? "PublishedTagCatalogChecks" : "TagCatalogChecks", Context.MODE_PRIVATE);
             long elapsed = System.currentTimeMillis() - checks.getLong(CHECKED_AT, 0);
             if (installed > 0 && installed == checks.getInt(CHECKED_REVISION, 0)
                 && elapsed >= 0 && elapsed < CHECK_INTERVAL_MS) {
                 return Result.success();
             }
 
-            int revision = fetchRevision();
-            if (revision > installed) downloadAndApply(database, revision);
+            int revision = published ? checkPublished(database, installed) : fetchRevision();
+            if (!published && revision > installed) downloadAndApply(database, revision);
             checkStopped();
-            // Record only the revision this check could have verified. Restore can run concurrently.
+            // Record only the revision this check verified; another installer may run concurrently.
             checks.edit().putInt(CHECKED_REVISION, Math.max(installed, revision))
                 .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
             return Result.success();
@@ -94,11 +102,31 @@ public class ScrapeTags extends Worker {
         }
     }
 
+    private int checkPublished(SQLiteDatabase database, int installed) throws IOException {
+        HttpUrl url = TagCatalogManifest.manifestUrl(BuildConfig.TAG_CATALOG_MANIFEST_URL);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        download(url.toString(), output, TagCatalogManifest.MAX_BYTES, true);
+        TagCatalogManifest manifest = TagCatalogManifest.parse(output.toByteArray());
+        if (manifest.revision < installed) throw new IOException("Published tag catalog revision is stale");
+        if (manifest.revision == installed) return installed;
+
+        File file = createStagingFile(getApplicationContext());
+        try {
+            try (OutputStream staged = new FileOutputStream(file)) {
+                download(manifest.payloadUrl(url).toString(), staged, manifest.sizeBytes, true);
+            }
+            manifest.apply(database, file, this::isStopped);
+        } finally {
+            if (!file.delete()) LogUtility.w("Could not remove staged tag catalog");
+        }
+        return manifest.revision;
+    }
+
     private void downloadAndApply(SQLiteDatabase database, int revision) throws IOException {
         File file = createStagingFile(getApplicationContext());
         try {
             try (OutputStream output = new FileOutputStream(file)) {
-                download(TAGS, output, MAX_CATALOG_BYTES);
+                download(TAGS, output, TagCatalogManifest.MAX_PAYLOAD_BYTES, false);
             }
             if (fetchRevision() != revision) throw new IOException("Tag catalog revision changed during download");
             try (InputStream input = new FileInputStream(file)) {
@@ -128,19 +156,26 @@ public class ScrapeTags extends Worker {
 
     private int fetchRevision() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream(32);
-        download(VERSION, output, 32);
+        download(VERSION, output, 32, false);
         return TagCatalog.readRevision(new ByteArrayInputStream(output.toByteArray()));
     }
 
-    private void download(String url, OutputStream output, int limit) throws IOException {
-        Call call = CLIENT.newCall(new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK).build());
+    private void download(String url, OutputStream output, int limit, boolean requireIdentity) throws IOException {
+        Request.Builder request = new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK);
+        if (requireIdentity) request.header("Accept-Encoding", "identity");
+        Call call = CLIENT.newCall(request.build());
         activeCall = call;
         try {
             checkStopped();
             try (Response response = call.execute()) {
                 ResponseBody body = response.body();
-                if (!response.isSuccessful() || body == null) {
+                if (response.code() != 200 || body == null) {
                     throw new IOException("Tag catalog request failed with HTTP " + response.code());
+                }
+                List<String> encodings = response.headers("Content-Encoding");
+                if (requireIdentity && !encodings.isEmpty()
+                    && (encodings.size() != 1 || !"identity".equalsIgnoreCase(encodings.get(0)))) {
+                    throw new IOException("Unexpected tag catalog content encoding");
                 }
                 if (body.contentLength() > limit) throw new IOException("Tag catalog response exceeds limit");
                 byte[] buffer = new byte[8192];

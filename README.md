@@ -96,8 +96,10 @@ The relevant fields in [app/build.gradle.kts](app/build.gradle.kts) are:
 Leave `ISSUE_TRACKER_URL` empty to keep issue reporting disabled. Publish APKs
 built with NReader's application ID and your own signing key. NReader bundles a
 tag directory for offline search and checks the upstream NClientV3 data feed
-independently of APK updates. See
-[tag directory and rules](docs/tags.md) for the refresh and storage contracts.
+by default, independently of APK updates. A build can select a NReader feed
+with the Gradle property `nreaderTagCatalogManifestUrl`; see the
+[catalog distribution contract](docs/tag-distribution.md). See
+[tag directory and rules](docs/tags.md) for the refresh and storage contract.
 Translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.
