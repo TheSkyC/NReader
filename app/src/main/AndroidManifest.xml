@@ -42,6 +42,7 @@
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
             tools:node="merge">
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
@@ -50,6 +51,18 @@
 
         <activity android:name=".StatusManagerActivity" />
         <activity android:name=".UpdateCenterActivity" android:exported="false" />
+        <activity-alias
+            android:name="com.maxwai.nclientv3.UpdateCenterActivity"
+            android:exported="false"
+            android:targetActivity=".UpdateCenterActivity" />
+        <activity
+            android:name=".components.activities.LegacyDownloadNotificationActivity"
+            android:exported="false"
+            android:noHistory="true" />
+        <activity-alias
+            android:name="com.maxwai.nclientv3.GalleryActivity"
+            android:exported="false"
+            android:targetActivity=".components.activities.LegacyDownloadNotificationActivity" />
         <activity android:name=".AccountsActivity" android:exported="false" />
         <activity
             android:name=".PINActivity"

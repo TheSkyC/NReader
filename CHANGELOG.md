@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-- Migrate the Java namespace to `com.theskyc.nreader`, retaining compatibility
-  with previously scheduled work and existing launcher alias settings.
+- Migrate the Java namespace to `com.theskyc.nreader`, preserving existing
+  launcher settings and scheduled work. Older download notifications open the
+  downloads list; older update notifications open the update screen.
 
 ## 1.0.0-beta.3 — 2026-11-20
 
