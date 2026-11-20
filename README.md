@@ -48,8 +48,8 @@ Gradle reads those files inside the build process; their contents are not writte
 the repository or command output. The default key alias is `nreader`; override it with
 `-PnreaderSigningKeyAlias=...` when necessary.
 
-The current test release uses version `1.0.0-beta.2`. Pushing a matching Git tag runs
-the prerelease workflow and publishes both SDK flavor APKs and the minApi28 AAB. The
+The current test release uses version `1.0.0-beta.3`. Pushing a matching Git tag runs
+the prerelease workflow and publishes both SDK flavor APKs and the minApi28 AAB.
 The earlier `1.0.0-pre1` release was unsigned; CI signing is configured for subsequent releases.
 
 Release assets include a `SHA256SUMS.txt` file covering every APK and AAB.

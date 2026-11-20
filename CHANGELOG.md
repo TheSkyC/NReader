@@ -2,10 +2,26 @@
 
 ## Unreleased
 
+## 1.0.0-beta.3 — 2026-11-20
+
+- Add continuous vertical reading with position restoration, pinch and double-tap
+  zoom, auto-scroll, page spacing, rotation, and page saving and sharing.
+- Expand paged reading with double-page and automatic spread modes, scale modes,
+  page previews, configurable tap actions, external page keys, and orientation lock.
+- Add named page bookmarks, display presets, image adjustments, margin cropping,
+  background modes, and a completion prompt.
+- Improve reader accessibility, page loading and retry, local page handling,
+  gesture navigation, and reading-position stability.
 - Keep paged reader images stable when system bars and reader controls toggle,
   and prevent canceled control animations from hiding a newer transition.
 - Load the visible regions of eligible downloaded PNG long pages in the
   continuous reader so fine details remain readable when zooming.
+- Add an update center with signed-release selection, checksum verification,
+  background checks, durable downloads, installation guidance, and reminders.
+- Offer opt-in foreground account session recovery and retain guest browsing
+  when a session expires.
+- Improve download preparation feedback, gallery detail loading, navigation
+  drawer gestures, and reader and update translations.
 
 ## 1.0.0-beta.2 — 2026-11-16
 
