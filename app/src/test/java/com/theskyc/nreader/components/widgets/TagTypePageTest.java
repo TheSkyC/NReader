@@ -13,6 +13,7 @@ import android.os.Looper;
 import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagDatabaseFixture;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
@@ -44,9 +45,7 @@ public class TagTypePageTest {
         Login.updateUser(null);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
                      Robolectric.buildActivity(TagFilterActivity.class).setup()) {
                 ControlledPage page = new ControlledPage();
@@ -84,9 +83,7 @@ public class TagTypePageTest {
         AuthStore.saveApiKey(app, "restore-fixture", true);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             String identity = AuthStore.activeIdentity(app);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity), java.util.Collections.emptyList()));
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
@@ -130,9 +127,7 @@ public class TagTypePageTest {
         AuthStore.saveApiKey(app, "restore-open-fixture", true);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
                      Robolectric.buildActivity(TagFilterActivity.class).setup()) {
                 Login.beginOnlineTagsRestore();
@@ -169,9 +164,7 @@ public class TagTypePageTest {
         AuthStore.saveApiKey(app, "mutation-open-fixture", true);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             String identity = AuthStore.activeIdentity(app);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity), java.util.Collections.emptyList()));
             long operation = Login.beginOnlineTagMutation(app, identity);
@@ -210,9 +203,7 @@ public class TagTypePageTest {
         AuthStore.saveApiKey(app, "interrupted-load-fixture", true);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             String identity = AuthStore.activeIdentity(app);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity), java.util.Collections.emptyList()));
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
@@ -250,9 +241,7 @@ public class TagTypePageTest {
         AuthStore.saveApiKey(app, "late-callback-fixture", true);
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             String identity = AuthStore.activeIdentity(app);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity), java.util.Collections.emptyList()));
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
@@ -292,9 +281,7 @@ public class TagTypePageTest {
                 .code(200).message("fixture").body(okhttp3.ResponseBody.create("{\"count\":0,\"tags\":[]}", null)).build()).build();
         try (SQLiteDatabase db = SQLiteDatabase.create(null)) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             try (org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
                      Robolectric.buildActivity(TagFilterActivity.class).setup()) {
                 TagFilterActivity activity = controller.get();

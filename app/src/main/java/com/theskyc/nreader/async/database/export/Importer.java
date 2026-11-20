@@ -11,9 +11,8 @@ import android.util.JsonToken;
 
 import androidx.annotation.NonNull;
 
-import com.theskyc.nreader.async.TagCatalogSeedWorker;
-import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
+import com.theskyc.nreader.utility.JsonStringGuard;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
 import com.theskyc.nreader.async.database.DownloadTaskStore;
@@ -105,7 +104,7 @@ public class Importer {
         com.theskyc.nreader.settings.Login.beginOnlineTagsRestore();
         try {
             DownloadTaskStore.restore(null, () -> ReadingProgress.restore(() -> {
-                importDBLocked(stream);
+                importDBLocked(stream, 0);
                 Queries.StatusTable.initStatuses();
                 com.theskyc.nreader.async.database.GalleryStateRepository.invalidate();
             }));
@@ -114,13 +113,12 @@ public class Importer {
         }
     }
 
-    private static void importDBLocked(InputStream stream) throws IOException {
+    private static void importDBLocked(InputStream stream, int formatVersion) throws IOException {
         SQLiteDatabase db = Database.getDatabase();
         if (db == null)
             throw new IOException("Can't import Database, don't have database connection yet");
         db.beginTransaction();
-        try {
-            JsonReader reader = new JsonReader(new InputStreamReader(stream));
+        try (JsonReader reader = JsonStringGuard.open(stream, BackupArchive.MAX_DATABASE_BYTES)) {
             reader.beginObject();
             db.delete(Queries.ReadingProgressTable.TABLE_NAME, null, null);
             db.delete(DownloadTaskStore.TABLE_NAME, null, null);
@@ -128,15 +126,17 @@ public class Importer {
             Set<String> seenTables = new HashSet<>();
             while (reader.hasNext()) {
                 String tableName = reader.nextName();
-                if (!Arrays.asList(Exporter.SCHEMAS).contains(tableName)) {
+                boolean tagSection = BackupTags.isTagSection(tableName);
+                if (!tagSection && !Arrays.asList(Exporter.SCHEMAS).contains(tableName)) {
                     BackupJson.skipValue(reader);
                     continue;
                 }
                 if (!seenTables.add(tableName)) throw new IOException("Duplicate backup table");
-                db.delete(tableName, null, null);
-                if (Queries.TagTable.TABLE_NAME.equals(tableName)) {
-                    TagCatalog.invalidateRevision(db);
+                if (tagSection) {
+                    BackupTags.readRows(db, tableName, reader);
+                    continue;
                 }
+                db.delete(tableName, null, null);
                 reader.beginArray();
                 while (reader.hasNext()) {
                     reader.beginObject();
@@ -175,6 +175,16 @@ public class Importer {
             }
             reader.endObject();
             if (reader.peek() != JsonToken.END_DOCUMENT) throw new IOException("Trailing database backup data");
+            boolean legacyTags = seenTables.contains(BackupTags.LEGACY);
+            boolean tagRules = seenTables.contains(BackupTags.RULES);
+            boolean tagReferences = seenTables.contains(BackupTags.REFERENCES);
+            if ((legacyTags && (tagRules || tagReferences || formatVersion == Exporter.BACKUP_FORMAT_VERSION))
+                || (formatVersion == 3 && (tagRules || tagReferences))
+                || tagRules != tagReferences
+                || (formatVersion == Exporter.BACKUP_FORMAT_VERSION && !tagRules)) {
+                throw new IOException("Incompatible tag backup sections");
+            }
+            if (legacyTags || tagReferences) BackupTags.mergeReferences(db);
             if (!seenTables.contains(DownloadTaskStore.TABLE_NAME)) DownloadTaskStore.migrateLegacy(db);
             db.setTransactionSuccessful();
         } catch (RuntimeException exception) {
@@ -284,7 +294,6 @@ public class Importer {
         } finally {
             com.theskyc.nreader.settings.Login.endOnlineTagsRestore();
         }
-        TagCatalogSeedWorker.scheduleAfterRestore(context);
     }
 
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
@@ -298,7 +307,7 @@ public class Importer {
                     name.substring(0, name.length() - 5), source)));
             BackupPreview.validateDatabaseBytes(archive.database);
             writeSnapshotCandidate(context);
-            importDBLocked(new ByteArrayInputStream(archive.database));
+            importDBLocked(new ByteArrayInputStream(archive.database), archive.formatVersion);
             promoteSnapshot(context);
             database.setTransactionSuccessful();
         } catch (RuntimeException exception) {
@@ -414,7 +423,7 @@ public class Importer {
         com.theskyc.nreader.settings.Login.beginOnlineTagsRestore();
         try {
             DownloadTaskStore.restore(context, () -> ReadingProgress.restore(() -> {
-                importDBLocked(new ByteArrayInputStream(snapshot.database));
+                importDBLocked(new ByteArrayInputStream(snapshot.database), 0);
                 settings.apply();
                 tags.apply();
                 Queries.StatusTable.initStatuses();
@@ -423,7 +432,6 @@ public class Importer {
         } finally {
             com.theskyc.nreader.settings.Login.endOnlineTagsRestore();
         }
-        TagCatalogSeedWorker.scheduleAfterRestore(context);
     }
 
     private static boolean isSnapshotSetValid(Context context) {
@@ -512,15 +520,17 @@ public class Importer {
         return output.toByteArray();
     }
 
-    static void validateManifest(byte[] manifestBytes, byte[] databaseBytes) throws IOException {
-        try (JsonReader reader = new JsonReader(new InputStreamReader(
-            new ByteArrayInputStream(manifestBytes), StandardCharsets.UTF_8))) {
+    static int validateManifest(byte[] manifestBytes, byte[] databaseBytes) throws IOException {
+        try (JsonReader reader = JsonStringGuard.open(new ByteArrayInputStream(manifestBytes), BackupArchive.MAX_MANIFEST_BYTES)) {
             int version = -1;
             long length = -1;
             String hash = "";
+            Set<String> fields = new HashSet<>();
             reader.beginObject();
             while (reader.hasNext()) {
-                switch (reader.nextName()) {
+                String field = reader.nextName();
+                if (!fields.add(field)) throw new IOException("Duplicate backup manifest field");
+                switch (field) {
                     case "format_version": version = reader.nextInt(); break;
                     case "database_length": length = reader.nextLong(); break;
                     case "database_sha256": hash = reader.nextString(); break;
@@ -528,9 +538,10 @@ public class Importer {
                 }
             }
             reader.endObject();
-            if (reader.peek() != JsonToken.END_DOCUMENT || version != Exporter.BACKUP_FORMAT_VERSION
+            if (reader.peek() != JsonToken.END_DOCUMENT || (version != 3 && version != Exporter.BACKUP_FORMAT_VERSION)
                 || length != databaseBytes.length || !Exporter.sha256(databaseBytes).equalsIgnoreCase(hash))
                 throw new IOException("Backup integrity or format check failed");
+            return version;
         } catch (IllegalStateException | NumberFormatException exception) {
             throw new IOException("Invalid backup manifest", exception);
         }

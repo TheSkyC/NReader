@@ -8,6 +8,7 @@ import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagCatalog;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,8 @@ public class TagV2 {
     public static String getQueryString(String query, @NonNull Set<Tag> all) {
         StringBuilder builder = new StringBuilder();
         for (Tag t : all)
-            if (!query.contains(t.getName())) builder.append('+').append(t.toQueryTag());
+            if (TagCatalog.isCanonicalName(t.getName()) && !query.contains(t.getName()))
+                builder.append('+').append(t.toQueryTag());
         return builder.toString();
     }
 
@@ -52,8 +54,8 @@ public class TagV2 {
                 break;
         }
         if (Queries.TagTable.updateTag(t) == 1) return t.getStatus();
-        throw new RuntimeException("Unable to update: " + t);
-
+        t.setStatus(old);
+        return old;
     }
 
     public static void resetAllStatus() {

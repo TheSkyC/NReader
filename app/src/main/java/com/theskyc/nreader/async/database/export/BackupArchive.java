@@ -13,13 +13,14 @@ import java.util.zip.ZipInputStream;
 final class BackupArchive {
     private static final int MAX_ENTRIES = 128;
     private static final int MAX_NAME_LENGTH = 1024;
-    private static final int MAX_DATABASE_BYTES = 64 * 1024 * 1024;
+    static final int MAX_DATABASE_BYTES = 64 * 1024 * 1024;
     private static final int MAX_PREFERENCES_BYTES = 16 * 1024 * 1024;
-    private static final int MAX_MANIFEST_BYTES = 64 * 1024;
+    static final int MAX_MANIFEST_BYTES = 64 * 1024;
     private static final int MAX_UNKNOWN_BYTES = 16 * 1024 * 1024;
 
     byte[] database;
     byte[] manifest;
+    int formatVersion = 3;
     interface PreferencesConsumer {
         void accept(String name, InputStream source) throws IOException;
     }
@@ -51,7 +52,9 @@ final class BackupArchive {
             }
         }
         if (archive.database == null) throw new IOException("Backup has no database");
-        if (archive.manifest != null) Importer.validateManifest(archive.manifest, archive.database);
+        if (archive.manifest != null) {
+            archive.formatVersion = Importer.validateManifest(archive.manifest, archive.database);
+        }
         return archive;
     }
 

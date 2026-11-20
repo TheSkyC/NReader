@@ -13,6 +13,7 @@ import com.theskyc.nreader.SettingsActivity;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.DownloadTaskStore;
 import com.theskyc.nreader.async.database.SearchPlanStore;
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.utility.LogUtility;
 
@@ -32,14 +33,15 @@ import java.util.zip.ZipOutputStream;
 public class Exporter {
     static final String DB_ZIP_FILE = "Database.json";
     static final String MANIFEST_ZIP_FILE = "Manifest.json";
-    static final int BACKUP_FORMAT_VERSION = 3;
+    static final int BACKUP_FORMAT_VERSION = 4;
     private static final String[] SHARED_FILES = new String[]{
         "Settings",
         "ScrapedTags",
     };
     static final String[] SCHEMAS = new String[]{
         Queries.GalleryTable.TABLE_NAME,
-        Queries.TagTable.TABLE_NAME,
+        BackupTags.RULES,
+        BackupTags.REFERENCES,
         Queries.GalleryBridgeTable.TABLE_NAME,
         Queries.BookmarkTable.TABLE_NAME,
         SearchPlanStore.TABLE_NAME,
@@ -58,17 +60,28 @@ public class Exporter {
         SQLiteDatabase db = Database.getDatabase();
         if (db == null)
             throw new IOException("Can't export Database, don't have database connection yet");
-        // Do not close the writer here, as that would close the shared ZipOutputStream.
-        JsonWriter writer = new JsonWriter(new OutputStreamWriter(stream));
+        boolean ownTransaction = !db.inTransaction();
+        if (ownTransaction) db.beginTransactionNonExclusive();
+        try {
+            dumpTables(db, stream);
+            if (ownTransaction) db.setTransactionSuccessful();
+        } finally {
+            if (ownTransaction) db.endTransaction();
+        }
+    }
+
+    private static void dumpTables(SQLiteDatabase db, OutputStream stream) throws IOException {
+        JsonWriter writer = new JsonWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8));
         writer.beginObject();
         for (String s : SCHEMAS) {
-            try (Cursor cur = db.query(s, null, null, null, null, null, null)) {
+            try (Cursor cur = BackupTags.exportRows(db, s)) {
                 writer.name(s).beginArray();
                 if (cur.moveToFirst()) {
                     do {
                         writer.beginObject();
                         for (int i = 0; i < cur.getColumnCount(); i++) {
-                            writer.name(cur.getColumnName(i));
+                            String column = cur.getColumnName(i);
+                            writer.name(column);
                             if (cur.isNull(i)) {
                                 writer.nullValue();
                             } else {
@@ -80,7 +93,9 @@ public class Exporter {
                                         writer.value(cur.getDouble(i));
                                         break;
                                     case Cursor.FIELD_TYPE_STRING:
-                                        writer.value(cur.getString(i));
+                                        String value = cur.getString(i);
+                                        writer.value(BackupTags.isTagSection(s) && "name".equals(column)
+                                            && !TagCatalog.isPortableLabel(value) ? "" : value);
                                         break;
                                     case Cursor.FIELD_TYPE_BLOB:
                                     case Cursor.FIELD_TYPE_NULL:
@@ -105,7 +120,7 @@ public class Exporter {
         return String.format("Backup_%s_%s.zip", date, time);
     }
 
-    public static void exportData(SettingsActivity context, Uri selectedFile) throws IOException {
+    public static void exportData(Context context, Uri selectedFile) throws IOException {
 
         OutputStream outputStream = context.getContentResolver().openOutputStream(selectedFile);
         try (ZipOutputStream zip = new ZipOutputStream(outputStream)) {

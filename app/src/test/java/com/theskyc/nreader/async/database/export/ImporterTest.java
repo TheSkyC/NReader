@@ -49,15 +49,16 @@ public class ImporterTest {
     private SQLiteDatabase database;
 
     @Test
-    public void tagRestoreInvalidatesCatalogRevisionOnlyWhenItCommits() throws IOException {
+    public void legacyTagRestorePreservesCatalogRevisionAndRestoresMissingRules() throws IOException {
         database.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES ('legacy-upstream', 43)");
         assertThrows(IOException.class, () -> restore("{\"Tags\":[],\"Resume\":{}}"));
         assertEquals(43, TagCatalog.installedRevision(database));
         assertNotNull(Queries.TagTable.getTagById(12227));
 
         restore("{\"Tags\":[{\"idTag\":4242,\"name\":\"restored\",\"type\":3,\"count\":1,\"status\":1}]}");
-        assertEquals(0, TagCatalog.installedRevision(database));
-        assertEquals("restored", Queries.TagTable.getTagById(4242).getName());
+        assertEquals(43, TagCatalog.installedRevision(database));
+        assertNull(Queries.TagTable.getTagById(4242));
+        assertEquals("restored", Queries.TagTable.getAllFiltered().get(0).getName());
     }
 
     @Test
@@ -77,9 +78,12 @@ public class ImporterTest {
                 com.theskyc.nreader.settings.Login.beginOnlineTagsLoad(app, identity),
                 java.util.Collections.singletonList(tag)));
             long oldLoad = com.theskyc.nreader.settings.Login.beginOnlineTagsLoad(app, identity);
+            long oldMutation = com.theskyc.nreader.settings.Login.beginOnlineTagMutation(app, identity);
+            assertTrue(oldMutation > 0);
             restore("{\"Tags\":[{\"idTag\":4242,\"name\":\"fixture\",\"type\":3,\"count\":1,\"status\":0,\"online\":1}]}");
             assertFalse(com.theskyc.nreader.settings.Login.hasCurrentOnlineTags());
             assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertFalse(com.theskyc.nreader.settings.Login.isOnlineTagMutationCurrent(app, identity, oldMutation));
             assertFalse(com.theskyc.nreader.settings.Login.replaceOnlineTags(app, identity, oldLoad,
                 java.util.Collections.singletonList(tag)));
         } finally {

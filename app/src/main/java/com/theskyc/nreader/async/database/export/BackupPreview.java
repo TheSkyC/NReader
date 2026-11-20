@@ -5,10 +5,10 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.JsonReader;
 
+import com.theskyc.nreader.utility.JsonStringGuard;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -22,7 +22,7 @@ public final class BackupPreview {
 
     private static Map<String, Integer> countRows(byte[] database) throws IOException {
         Map<String, Integer> counts = new LinkedHashMap<>();
-        try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(database), StandardCharsets.UTF_8))) {
+        try (JsonReader reader = JsonStringGuard.open(new ByteArrayInputStream(database), BackupArchive.MAX_DATABASE_BYTES)) {
             reader.beginObject();
             while (reader.hasNext()) {
                 String table = reader.nextName();

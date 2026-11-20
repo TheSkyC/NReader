@@ -13,14 +13,48 @@ checkout. A background job can install that catalog without Internet access.
 A bundled revision can replace an older bundled revision; it cannot replace an
 installed remote catalog. Upstream and the repository's bundled dataset have
 independent version histories. An open tag-management screen refreshes when
-the installation commits. After a successful backup restore, the bundled job
-runs again and reinstalls the seed if restore cleared the catalog revisions.
+the installation commits.
 
-Local rules retain the default, avoided and accepted states. The active
-account's blacklist remains subject to its existing authentication and revision
-checks. A directory import updates only canonical names and counts, and adds
-previously unseen IDs with default rule and blacklist values. Editing a rule
-does not copy a potentially stale count from the editor back into the directory.
+## Data ownership
+
+Public metadata, local rules, and the active account's blacklist use separate
+tables. The public directory updates names and counts. A rule uses the site's
+positive ID and retains the type and last known canonical name for display and
+queries when metadata is missing. A matching directory entry takes precedence
+for display and query text. If a restored rule disagrees with the known type
+for its ID, it stays visible in Applied filters for correction or removal, but
+is not used in gallery filters or site queries. The browse count threshold
+does not hide saved rules. Legacy names that cannot be quoted safely are
+preserved for display and editing but are excluded from automatic queries
+until matching canonical metadata resolves them.
+
+Local rule evaluation retains its existing context-specific behavior. The
+editor cycles Default → Accepted → Avoided → Default; Default removes the
+rule. Account blacklist entries do not modify the local status. Applying an
+account blacklist still requires the existing opt-in and identity checks.
+Only the active account's validated cache is exposed; an in-flight result
+from a previous account or before restore cannot publish.
+
+## Backups
+
+Version 4 exports `TagRules` rows with `idTag`, `name`, `type`, and
+`status` (1 for Avoided, 2 for Accepted). `TagReferences` contains
+`idTag`, `name`, `type`, and `count` only for tags referenced by saved
+galleries and bookmarks. The backup excludes the full directory, its applied
+revisions, and account blacklist data. Restore replaces the saved rules,
+merges missing reference metadata, and keeps the installed directory and its
+revisions. An authoritative catalog can subsequently correct a provisional
+reference. Undo restores the previous rules and library references; any
+additional public metadata acquired during restore stays cached. The account
+cache must be revalidated after a restore operation. Neither restore nor undo
+imports account state.
+
+Version 3 and manifestless legacy backups use the old combined `Tags` rows.
+Restore reads their valid local rules and needed reference metadata, ignoring
+the legacy online flags and unrelated directory rows. Invalid tag data or
+duplicate identities abort the database restore. An invalid backup cannot
+partially replace the rules. The database upgrade preserves public metadata,
+local rules, and library references, and discards legacy account flags.
 
 ## Directory refresh
 
@@ -35,8 +69,7 @@ The legacy feed is limited to 16 MiB and 250,000 rows. It must contain at least
 site's quoted query syntax. Invalid fields, duplicate IDs, type conflicts,
 cancellation and database errors reject the import. Rows and the
 applied revision are committed together. Equal or older revisions do not
-replace the directory. A restore that replaces the tag rows invalidates the
-applied revision in the same transaction.
+replace the directory.
 
 Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory

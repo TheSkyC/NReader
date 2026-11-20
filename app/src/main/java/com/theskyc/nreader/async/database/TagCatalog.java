@@ -10,14 +10,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.theskyc.nreader.api.enums.TagType;
+import com.theskyc.nreader.utility.JsonStringGuard;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
-import java.io.Reader;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.function.BooleanSupplier;
 
@@ -69,10 +67,6 @@ public final class TagCatalog {
         database.execSQL("DROP TABLE OldTagCatalogState");
     }
 
-    public static void invalidateRevision(SQLiteDatabase database) {
-        database.delete("TagCatalogState", null, null);
-    }
-
     public static LiveData<Void> changes() {
         return CHANGES;
     }
@@ -121,15 +115,17 @@ public final class TagCatalog {
             loadStage(database, source, minimumRows, cancelled);
             try (Cursor conflict = database.rawQuery("SELECT 1 FROM " + STAGE
                 + " AS incoming JOIN Tags ON Tags.idTag = incoming.idTag"
-                + " WHERE Tags.type != incoming.type LIMIT 1", null)) {
+                + " WHERE Tags.type != incoming.type AND Tags.type != 0 AND Tags.provisional = 0 LIMIT 1", null)) {
                 if (conflict.moveToFirst()) throw new IOException("Tag catalog type conflict");
             }
             checkCancelled(cancelled);
             database.execSQL("UPDATE Tags SET name = (SELECT name FROM " + STAGE
                 + " WHERE idTag = Tags.idTag), count = (SELECT count FROM " + STAGE
-                + " WHERE idTag = Tags.idTag) WHERE idTag IN (SELECT idTag FROM " + STAGE + ")");
-            database.execSQL("INSERT INTO Tags (idTag, name, count, type, status)"
-                + " SELECT idTag, name, count, type, 0 FROM " + STAGE
+                + " WHERE idTag = Tags.idTag), type = (SELECT type FROM " + STAGE
+                + " WHERE idTag = Tags.idTag), provisional = 0"
+                + " WHERE idTag IN (SELECT idTag FROM " + STAGE + ")");
+            database.execSQL("INSERT INTO Tags (idTag, name, count, type)"
+                + " SELECT idTag, name, count, type FROM " + STAGE
                 + " AS incoming WHERE NOT EXISTS (SELECT 1 FROM Tags WHERE Tags.idTag = incoming.idTag)");
             database.execSQL("INSERT OR REPLACE INTO TagCatalogState (source, revision) VALUES (?, ?)",
                 new Object[]{dataset, revision});
@@ -147,8 +143,7 @@ public final class TagCatalog {
                                   BooleanSupplier cancelled) throws IOException {
         int rows = 0;
         int typeMask = 0;
-        try (JsonReader reader = new JsonReader(new JsonStringGuard(new InputStreamReader(source,
-                 StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT))));
+        try (JsonReader reader = JsonStringGuard.open(source, MAX_NAME_LENGTH * 6 + 1);
              SQLiteStatement insert = database.compileStatement("INSERT OR IGNORE INTO " + STAGE
                  + " (idTag, name, count, type) VALUES (?, ?, ?, ?)")) {
             reader.beginArray();
@@ -188,13 +183,19 @@ public final class TagCatalog {
     private static String readName(JsonReader reader) throws IOException {
         if (reader.peek() != JsonToken.STRING) throw new IOException("Expected tag name");
         String name = reader.nextString();
-        if (name.length() > MAX_NAME_LENGTH || name.trim().isEmpty()
-            || name.indexOf('"') >= 0 || name.indexOf('\\') >= 0
-            || name.codePoints().anyMatch(point -> Character.isISOControl(point)
-                || Character.getType(point) == Character.SURROGATE)) {
-            throw new IOException("Invalid tag name");
-        }
+        if (!isCanonicalName(name)) throw new IOException("Invalid tag name");
         return name;
+    }
+
+    public static boolean isCanonicalName(String name) {
+        return isPortableLabel(name) && !name.trim().isEmpty()
+            && name.indexOf('"') < 0 && name.indexOf('\\') < 0;
+    }
+
+    public static boolean isPortableLabel(String name) {
+        return name != null && name.length() <= MAX_NAME_LENGTH
+            && name.codePoints().noneMatch(point -> Character.isISOControl(point)
+                || Character.getType(point) == Character.SURROGATE);
     }
 
     private static void checkCancelled(BooleanSupplier cancelled) throws InterruptedIOException {
@@ -203,50 +204,4 @@ public final class TagCatalog {
         }
     }
 
-    // Android's JsonReader accepts unknown string escapes even with strict mode enabled.
-    private static class JsonStringGuard extends Reader {
-        private final Reader source;
-        private boolean inString;
-        private boolean escaped;
-        private int hexDigitsRemaining;
-        private int stringLength;
-
-        JsonStringGuard(Reader source) {
-            this.source = source;
-        }
-
-        @Override
-        public int read(char[] buffer, int start, int length) throws IOException {
-            int count = source.read(buffer, start, length);
-            for (int index = start; index < start + count; index++) {
-                char character = buffer[index];
-                if (!inString) {
-                    inString = character == '"';
-                    stringLength = 0;
-                } else if (hexDigitsRemaining > 0) {
-                    if ("0123456789abcdefABCDEF".indexOf(character) < 0) throw new IOException("Invalid JSON escape");
-                    hexDigitsRemaining--;
-                } else if (escaped) {
-                    if ("\"\\/bfnrtu".indexOf(character) < 0) throw new IOException("Invalid JSON escape");
-                    if (character == 'u') hexDigitsRemaining = 4;
-                    escaped = false;
-                } else if (character == '"') {
-                    inString = false;
-                } else if (character == '\\') {
-                    escaped = true;
-                } else if (character < 0x20) {
-                    throw new IOException("Unescaped JSON control character");
-                }
-                if (inString && ++stringLength > MAX_NAME_LENGTH * 6 + 1) {
-                    throw new IOException("Tag catalog string exceeds limit");
-                }
-            }
-            return count;
-        }
-
-        @Override
-        public void close() throws IOException {
-            source.close();
-        }
-    }
 }

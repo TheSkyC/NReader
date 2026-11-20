@@ -49,6 +49,8 @@ data and backups; an older application cannot be assumed to understand new data.
 After successful restore, the in-memory custom status catalog is reloaded from
 the committed database. A failed archive leaves both the database and catalog
 unchanged. Orphaned status references fall back to the default status.
+For local tag rules, gallery and bookmark tag references, and the account cache,
+see [the tag backup contract](tags.md#backups).
 
 Backup preview and import reject duplicate ZIP entry names and archives with more
 than 128 entries or names longer than 1024 characters. Database data is limited
@@ -61,7 +63,7 @@ deeper values are rejected in both preview and restore. The same limit applies
 to unrecognized fields in a backup manifest and to nested fields in restored
 download-task metadata.
 
-Before a successful archive import, a cache snapshot captures the database,
+Before a successful archive import, a cache snapshot captures portable database data,
 Settings and ScrapedTags in a single file published by an atomic rename. Existing
 multi-file snapshots remain readable. Restoring it verifies and reads the complete
 set before changing state, then replaces those preference sets, including removing

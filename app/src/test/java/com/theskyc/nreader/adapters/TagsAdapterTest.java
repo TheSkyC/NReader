@@ -10,6 +10,7 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.AsyncCursorQuery;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagDatabaseFixture;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
@@ -46,9 +47,7 @@ public class TagsAdapterTest {
         try (SQLiteDatabase db = SQLiteDatabase.create(null);
              ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
             Queries.setDb(db);
-            java.lang.reflect.Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-            schema.setAccessible(true);
-            db.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(db);
             String identity = AuthStore.activeIdentity(app);
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),

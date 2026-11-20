@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 20;
+    private static final int DATABASE_VERSION = 21;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -46,7 +46,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private void createAllTables(SQLiteDatabase db) {
         db.execSQL(Queries.GalleryTable.CREATE_TABLE);
-        db.execSQL(Queries.TagTable.CREATE_TABLE);
+        Queries.TagTable.createTables(db);
         db.execSQL(TagCatalog.CREATE_STATE);
         db.execSQL(Queries.GalleryBridgeTable.CREATE_TABLE);
         db.execSQL(Queries.BookmarkTable.CREATE_TABLE);
@@ -88,6 +88,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Queries.setDb(db);
+        if (oldVersion <= 20) upgradeTagStorage(db);
         if (oldVersion == 2) insertLanguageTags();
         if (oldVersion <= 3) insertCategoryTags();
         if (oldVersion <= 4) db.execSQL(Queries.BookmarkTable.CREATE_TABLE);
@@ -109,6 +110,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 17) db.execSQL(Queries.ReaderBookmarkTable.CREATE_TABLE);
         if (oldVersion <= 19) TagCatalog.upgradeState(db);
 
+    }
+
+    private void upgradeTagStorage(SQLiteDatabase db) {
+        Queries.TagTable.createTables(db);
+        if (!hasColumn(db, Queries.TagTable.TABLE_NAME, "status")) return;
+
+        db.execSQL("INSERT INTO TagRules (idTag, name, type, status)"
+            + " SELECT idTag, name, type, status FROM Tags"
+            + " WHERE idTag > 0 AND type BETWEEN 1 AND 7 AND status IN (1, 2)");
+        db.execSQL("CREATE TEMP TABLE OldTagMetadata AS SELECT idTag, name, type, count FROM Tags");
+        // The old Android SQLite versions cannot drop columns from the referenced table.
+        // Preserve both the table name and every gallery tag reference.
+        db.execSQL(Queries.TagTable.DROP_TABLE);
+        db.execSQL(Queries.TagTable.CREATE_TABLE);
+        db.execSQL("INSERT INTO Tags (idTag, name, type, count)"
+            + " SELECT idTag, name, type, count FROM temp.OldTagMetadata");
+        db.execSQL("DROP TABLE temp.OldTagMetadata");
     }
 
     private void addStatusTables(SQLiteDatabase db) {

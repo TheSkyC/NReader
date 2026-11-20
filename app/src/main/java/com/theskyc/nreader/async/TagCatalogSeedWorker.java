@@ -29,16 +29,8 @@ public final class TagCatalogSeedWorker extends Worker {
     }
 
     public static void schedule(Context context) {
-        schedule(context, ExistingWorkPolicy.KEEP);
-    }
-
-    public static void scheduleAfterRestore(Context context) {
-        schedule(context, ExistingWorkPolicy.REPLACE);
-    }
-
-    private static void schedule(Context context, ExistingWorkPolicy policy) {
         try {
-            WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, policy,
+            WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP,
                 new OneTimeWorkRequest.Builder(TagCatalogSeedWorker.class).build());
         } catch (IllegalStateException ignored) {
             // WorkManager may be disabled in local test processes.

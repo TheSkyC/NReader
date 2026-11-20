@@ -12,6 +12,7 @@ import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagDatabaseFixture;
 
 import org.junit.After;
 import org.junit.Before;
@@ -190,15 +191,13 @@ public class AccountAuthenticationIntegrationTest {
         String secondKey = "tags-second-fixture";
         String firstId = ApiAuthInterceptor.fingerprint(firstKey);
         String secondId = ApiAuthInterceptor.fingerprint(secondKey);
-        Field schema = Queries.TagTable.class.getDeclaredField("CREATE_TABLE");
-        schema.setAccessible(true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL((String) schema.get(null));
+            TagDatabaseFixture.createTables(database);
             Tag local = new Tag("local", 1, 1001, TagType.TAG, TagStatus.AVOIDED);
             Tag first = new Tag("first", 1, 1002, TagType.TAG, TagStatus.DEFAULT);
             Tag second = new Tag("second", 1, 1003, TagType.TAG, TagStatus.DEFAULT);
-            Queries.TagTable.insert(local);
+            Queries.TagTable.updateTag(local);
             assertTrue(repository.putAndSelect(new AccountVault.Account(firstId, AccountVault.Type.API_KEY,
                 "First", null, firstKey, null, null, 0, 0, false, 1), repository.identityGeneration()));
             long firstLoad = Login.beginOnlineTagsLoad(application, firstId);
@@ -217,10 +216,10 @@ public class AccountAuthenticationIntegrationTest {
             repository.select(firstId);
             assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
             assertFalse(Login.replaceOnlineTags(application, firstId, staleLoad, Collections.singletonList(first)));
-            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(local.getId()).getStatus());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getStatus(local));
             repository.select(null);
             assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
-            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(local.getId()).getStatus());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getStatus(local));
         } finally {
             Queries.setDb(null);
             Login.updateUser(null);

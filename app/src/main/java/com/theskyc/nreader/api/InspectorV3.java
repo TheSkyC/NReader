@@ -21,6 +21,7 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
@@ -354,6 +355,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         } else if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
             builder.append("search?query=").append(query);
             for (Tag tt : tags) {
+                if (tt == null || tt.getType() == null || tt.getType().getId() <= 0
+                    || !TagCatalog.isCanonicalName(tt.getName())) continue;
                 if (builder.toString().contains(tt.toQueryTag(TagStatus.ACCEPTED))) continue;
                 builder.append('+');
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

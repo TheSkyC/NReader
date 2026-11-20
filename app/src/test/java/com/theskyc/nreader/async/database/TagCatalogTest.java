@@ -36,7 +36,7 @@ public class TagCatalogTest {
 
     @Before public void openDatabase() {
         database = SQLiteDatabase.create(null);
-        database.execSQL(Queries.TagTable.CREATE_TABLE);
+        Queries.TagTable.createTables(database);
         database.execSQL(TagCatalog.CREATE_STATE);
         Queries.setDb(database);
     }
@@ -51,6 +51,8 @@ public class TagCatalogTest {
         Tag omitted = new Tag("omitted", 10, 42, TagType.TAG, TagStatus.ACCEPTED);
         Queries.TagTable.insert(parody);
         Queries.TagTable.insert(omitted);
+        Queries.TagTable.updateTag(parody);
+        Queries.TagTable.updateTag(omitted);
         Queries.TagTable.updateBlacklistedTag(parody, true);
 
         assertTrue(apply(snapshot("renamed"), 10));
@@ -58,6 +60,7 @@ public class TagCatalogTest {
         assertEquals("renamed", updated.getName());
         assertEquals(11, updated.getCount());
         assertEquals(TagStatus.AVOIDED, updated.getStatus());
+        assertEquals(TagStatus.AVOIDED, Queries.TagTable.getStatus(parody));
         assertTrue(Queries.TagTable.isBlackListed(updated));
         assertEquals(TagStatus.DEFAULT, Queries.TagTable.getTagById(3).getStatus());
         assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getTagById(42).getStatus());
@@ -69,6 +72,32 @@ public class TagCatalogTest {
         assertTrue(apply(snapshot("next"), 11));
         assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getTagById(1).getStatus());
         assertTrue(Queries.TagTable.isBlackListed(updated));
+    }
+
+    @Test public void canonicalCatalogCanReplaceProvisionalBackupMetadata() throws IOException {
+        database.execSQL("INSERT INTO Tags (idTag, name, type, count, provisional) VALUES (1, 'backup', 3, 5, 1)");
+        Tag priorRule = new Tag("backup", 5, 1, TagType.TAG, TagStatus.AVOIDED);
+        Queries.TagTable.updateTag(priorRule);
+        assertTrue(apply(snapshot("canonical"), 10));
+        assertEquals("canonical", Queries.TagTable.getTagById(1).getName());
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.getTagById(1).getStatus());
+        assertTrue(Queries.TagTable.getAllFiltered().isEmpty());
+        try (android.database.Cursor rules = Queries.TagTable.getFilterCursor("backup", null, false, true)) {
+            assertTrue(rules.moveToFirst());
+            Tag editable = Queries.TagTable.cursorToTag(rules);
+            assertEquals(TagStatus.AVOIDED, editable.getStatus());
+            editable.setStatus(TagStatus.DEFAULT);
+            assertEquals(1, Queries.TagTable.updateTag(editable));
+        }
+        try (android.database.Cursor rules = Queries.TagTable.getFilterCursor("", null, false, true)) {
+            assertEquals(0, rules.getCount());
+        }
+    }
+
+    @Test public void snapshotCanResolvePreviouslyUnknownType() throws IOException {
+        Queries.TagTable.insert(new Tag("unknown type", 5, 1, TagType.UNKNOWN, TagStatus.DEFAULT));
+        assertTrue(apply(snapshot("known type"), 10));
+        assertEquals(TagType.PARODY, Queries.TagTable.getTagById(1).getType());
     }
 
     @Test public void rejectsMalformedDuplicateIncompleteAndConflictingSnapshotsAtomically() throws IOException {

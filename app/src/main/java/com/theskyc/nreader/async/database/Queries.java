@@ -321,15 +321,36 @@ public class Queries {
             " `name` TEXT NOT NULL , " +
             "`type` TINYINT(1) NOT NULL , " +
             "`count` INT NOT NULL," +
-            "`status` TINYINT(1) NOT NULL," +
-            "`online` TINYINT(1) NOT NULL DEFAULT 0);";
+            "`provisional` INTEGER NOT NULL DEFAULT 0);";
+        public static final String RULES_TABLE = "TagRules";
+        static final String CREATE_RULES = "CREATE TABLE IF NOT EXISTS TagRules ("
+            + "idTag INTEGER PRIMARY KEY CHECK (idTag > 0), name TEXT NOT NULL,"
+            + " type INTEGER NOT NULL CHECK (type BETWEEN 1 AND 7),"
+            + " status INTEGER NOT NULL CHECK (status IN (1, 2)))";
+        static final String CREATE_ACCOUNT_BLACKLIST = "CREATE TABLE IF NOT EXISTS AccountTagBlacklist ("
+            + "idTag INTEGER PRIMARY KEY CHECK (idTag > 0))";
 
         static final String IDTAG = "idTag";
         static final String NAME = "name";
         static final String TYPE = "type";
         static final String COUNT = "count";
         static final String STATUS = "status";
-        static final String ONLINE = "online";
+        private static final String METADATA_SELECT =
+            "SELECT t.idTag, t.name, t.type, t.count, COALESCE(r.status, 0) AS status FROM Tags t"
+                + " LEFT JOIN TagRules r ON t.idTag = r.idTag AND t.type = r.type";
+        private static final String RULE_SELECT =
+            "SELECT r.idTag, CASE WHEN t.type = r.type THEN t.name ELSE r.name END AS name, r.type,"
+                + " CASE WHEN t.type = r.type THEN t.count ELSE 0 END AS count, r.status FROM TagRules r"
+                + " LEFT JOIN Tags t ON t.idTag = r.idTag";
+        private static final String COMPATIBLE_RULE = " (t.idTag IS NULL OR t.type = 0 OR t.type = r.type)";
+        private static final String ONLINE_SELECT =
+            "SELECT t.*, 1 AS status FROM AccountTagBlacklist b JOIN Tags t ON t.idTag = b.idTag";
+
+        static void createTables(SQLiteDatabase database) {
+            database.execSQL(CREATE_TABLE);
+            database.execSQL(CREATE_RULES);
+            database.execSQL(CREATE_ACCOUNT_BLACKLIST);
+        }
 
         /**
          * Convert a {@link Cursor} row to a {@link Tag}
@@ -370,32 +391,24 @@ public class Queries {
          * @param sortByName sort by name or by count
          */
         public static Cursor getFilterCursor(@NonNull String query, TagType type, boolean online, boolean sortByName) {
-            //create query
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(TABLE_NAME);
-            sql.append(" WHERE ");
-            if (online) sql.append("1=1 ");
-            else sql.append(COUNT).append(">=? ");
-            if (!query.isEmpty())
-                sql.append("AND ").append(NAME).append(" LIKE ?");  //query if is used
-            if (type != null)
-                sql.append("AND ").append(TYPE).append("=? ");            //type if is used
-            if (online)
-                sql.append("AND ").append(ONLINE).append("=1 ");              //retrieve only online tags
-            if (online && !Login.hasCurrentOnlineTags()) sql.append("AND 0 ");
-            if (!online && type == null)
-                sql.append("AND ").append(STATUS).append("!=0 ");//retrieve only used tags
-
-            sql.append("ORDER BY ");                                                 //sort first by name if provided, the for count
-            if (!sortByName) sql.append(COUNT).append(" DESC,");
-            sql.append(NAME).append(" ASC");
-
-            //create parameter list
-            ArrayList<String> list = new ArrayList<>();
-            if (!online) list.add("" + TagV2.getMinCount());
-            if (!query.isEmpty()) list.add('%' + query + '%');    //query
-            if (type != null) list.add("" + type.getId());      //type of the tag
-            LogUtility.d("FILTER URL: " + sql + ", ARGS: " + list);
-            return db.rawQuery(sql.toString(), list.toArray(new String[0]));
+            String projection = online ? ONLINE_SELECT : type == null ? RULE_SELECT : METADATA_SELECT;
+            StringBuilder sql = new StringBuilder("SELECT * FROM (").append(projection).append(") WHERE 1");
+            List<String> args = new ArrayList<>();
+            if (online && !Login.hasCurrentOnlineTags()) sql.append(" AND 0");
+            if (!online && type != null) {
+                sql.append(" AND count >= ?");
+                args.add(Integer.toString(TagV2.getMinCount()));
+            }
+            if (!query.isEmpty()) {
+                sql.append(" AND name LIKE ? ESCAPE '\\'");
+                args.add("%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
+            }
+            if (type != null) {
+                sql.append(" AND type = ?");
+                args.add(Byte.toString(type.getId()));
+            }
+            sql.append(sortByName ? " ORDER BY name, idTag" : " ORDER BY count DESC, name, idTag");
+            return db.rawQuery(sql.toString(), args.toArray(new String[0]));
         }
 
         /**
@@ -404,7 +417,7 @@ public class Queries {
          * @param type The type to fetch
          */
         public static List<Tag> getAllTagOfType(TagType type) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = ? AND " + COUNT + " >= ?";
+            String query = METADATA_SELECT + " WHERE t.type = ? AND t.count >= ?";
             return getTagsFromCursor(db.rawQuery(query, new String[]{"" + type.getId(), "" + TagV2.getMinCount()}));
         }
 
@@ -414,7 +427,7 @@ public class Queries {
          * @param type The type to fetch
          */
         public static List<Tag> getTrueAllType(TagType type) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = ?";
+            String query = METADATA_SELECT + " WHERE t.type = ?";
             return getTagsFromCursor(db.rawQuery(query, new String[]{"" + type.getId()}));
         }
 
@@ -424,24 +437,32 @@ public class Queries {
          * @param status The status to fetch
          */
         public static List<Tag> getAllStatus(TagStatus status) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + STATUS + " = ?";
-            return getTagsFromCursor(db.rawQuery(query, new String[]{"" + status.ordinal()}));
+            if (status == TagStatus.DEFAULT) {
+                return getTagsFromCursor(db.rawQuery(METADATA_SELECT + " WHERE r.idTag IS NULL", null));
+            }
+            return getEffectiveRules(db.rawQuery(RULE_SELECT + " WHERE r.status = ? AND" + COMPATIBLE_RULE,
+                new String[]{Integer.toString(status.ordinal())}));
         }
 
         /**
          * Returns a List of all tags which are AVOIDED or ACCEPTED
          */
         public static List<Tag> getAllFiltered() {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + STATUS + " != ?";
-            return getTagsFromCursor(db.rawQuery(query, new String[]{"" + TagStatus.DEFAULT.ordinal()}));
+            return getEffectiveRules(db.rawQuery(RULE_SELECT + " WHERE" + COMPATIBLE_RULE, null));
         }
 
         /**
          * Returns a List of all tags which are AVOIDED or ACCEPTED of a specific type
          */
         public static List<Tag> getAllFilteredByType(TagType type) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + STATUS + " != ?";
-            return getTagsFromCursor(db.rawQuery(query, new String[]{"" + TagStatus.DEFAULT.ordinal()}));
+            return getEffectiveRules(db.rawQuery(RULE_SELECT + " WHERE r.type = ? AND" + COMPATIBLE_RULE,
+                new String[]{Byte.toString(type.getId())}));
+        }
+
+        private static List<Tag> getEffectiveRules(Cursor cursor) {
+            List<Tag> rules = getTagsFromCursor(cursor);
+            rules.removeIf(rule -> !TagCatalog.isCanonicalName(rule.getName()));
+            return rules;
         }
 
         /**
@@ -451,11 +472,10 @@ public class Queries {
             String identity = Login.currentOnlineTagsIdentity();
             long revision = Login.currentOnlineTagsRevision();
             if (identity == null || revision < 0) return new ArrayList<>();
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + ONLINE + " = 1";
-            List<Tag> t = getTagsFromCursor(db.rawQuery(query, null));
+            List<Tag> t = getTagsFromCursor(db.rawQuery(ONLINE_SELECT, null));
+            t.removeIf(tag -> !TagCatalog.isCanonicalName(tag.getName()));
             if (!identity.equals(Login.currentOnlineTagsIdentity())
                 || revision != Login.currentOnlineTagsRevision()) return new ArrayList<>();
-            for (Tag t1 : t) t1.setStatus(TagStatus.AVOIDED);
             return t;
         }
 
@@ -463,8 +483,9 @@ public class Queries {
          * Returns true if the tag has been blacklisted form the main site
          */
         public static boolean isBlackListed(Tag tag) {
-            String query = "SELECT " + IDTAG + " FROM " + TABLE_NAME + " WHERE " + IDTAG + "=? AND " + ONLINE + "=1";
-            try (Cursor c = db.rawQuery(query, new String[]{"" + tag.getId()})) {
+            String query = "SELECT 1 FROM AccountTagBlacklist b JOIN Tags t ON t.idTag = b.idTag"
+                + " WHERE b.idTag = ? AND t.type = ?";
+            try (Cursor c = db.rawQuery(query, new String[]{Integer.toString(tag.getId()), Byte.toString(tag.getType().getId())})) {
                 return c.moveToFirst();
             }
         }
@@ -474,7 +495,7 @@ public class Queries {
          */
         @Nullable
         public static Tag getTagById(int id) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + IDTAG + " = ?";
+            String query = METADATA_SELECT + " WHERE t.idTag = ?";
             try (Cursor c = db.rawQuery(query, new String[]{"" + id})) {
                 Tag t = null;
                 if (c.moveToFirst()) t = cursorToTag(c);
@@ -483,64 +504,86 @@ public class Queries {
         }
 
         public static void updateStatus(int id, TagStatus status) {
-            ContentValues values = new ContentValues(1);
-            values.put(STATUS, status.ordinal());
-            db.updateWithOnConflict(TABLE_NAME, values, IDTAG + "=?", new String[]{"" + id}, SQLiteDatabase.CONFLICT_IGNORE);
+            Tag tag = getTagById(id);
+            if (tag != null) {
+                tag.setStatus(status);
+                updateTag(tag);
+            }
         }
 
         /**
          * Persist a rule without replacing newer catalog metadata with values from the UI.
          */
         public static int updateTag(Tag tag) {
+            if (tag.getId() <= 0 || tag.getType() == null || tag.getType().getId() <= 0) return 0;
+            String[] key = {Integer.toString(tag.getId()), Byte.toString(tag.getType().getId())};
             db.beginTransactionNonExclusive();
             try {
-                insert(tag);
-                ContentValues values = new ContentValues(1);
-                values.put(STATUS, tag.getStatus().ordinal());
-                int updated = db.update(TABLE_NAME, values, IDTAG + "=?", new String[]{"" + tag.getId()});
+                if (tag.getStatus() == TagStatus.DEFAULT) {
+                    db.delete(RULES_TABLE, "idTag = ? AND type = ?", key);
+                } else {
+                    String name;
+                    try (Cursor row = db.rawQuery("SELECT name FROM ("
+                        + " SELECT name, 0 AS priority FROM Tags WHERE idTag = ? AND type = ?"
+                        + " UNION ALL SELECT name, 1 AS priority FROM TagRules WHERE idTag = ? AND type = ?"
+                        + ") ORDER BY priority LIMIT 1", new String[]{key[0], key[1], key[0], key[1]})) {
+                        if (row.moveToFirst()) name = row.getString(0);
+                        else if (TagCatalog.isCanonicalName(tag.getName())) name = tag.getName();
+                        else return 0;
+                    }
+                    ContentValues rule = new ContentValues(4);
+                    rule.put(IDTAG, tag.getId());
+                    rule.put(NAME, name);
+                    rule.put(TYPE, tag.getType().getId());
+                    rule.put(STATUS, tag.getStatus().ordinal());
+                    db.insertWithOnConflict(RULES_TABLE, null, rule, SQLiteDatabase.CONFLICT_REPLACE);
+                }
                 db.setTransactionSuccessful();
-                return updated;
+                return 1;
             } finally {
                 db.endTransaction();
             }
         }
 
-        public static void insert(Tag tag, boolean replace) {
-
-            ContentValues values = new ContentValues(5);
+        public static void insert(Tag tag) {
+            if (tag.getId() <= 0 || tag.getType() == null || !TagCatalog.isCanonicalName(tag.getName())) return;
+            ContentValues values = new ContentValues(4);
             values.put(IDTAG, tag.getId());
             values.put(NAME, tag.getName());
             values.put(TYPE, tag.getType().getId());
-            values.put(COUNT, tag.getCount());
-            values.put(STATUS, tag.getStatus().ordinal());
-
-            db.insertWithOnConflict(TABLE_NAME, null, values, replace ? SQLiteDatabase.CONFLICT_REPLACE : SQLiteDatabase.CONFLICT_IGNORE);
-        }
-
-        public static void insert(Tag tag) {
-            insert(tag, false);
+            values.put(COUNT, Math.max(0, tag.getCount()));
+            if (db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE) == -1
+                && tag.getType().getId() > 0) {
+                values.put("provisional", 0);
+                db.update(TABLE_NAME, values, "idTag = ? AND (provisional = 1 OR type = 0)",
+                    new String[]{Integer.toString(tag.getId())});
+            }
         }
 
         public static void updateBlacklistedTag(Tag tag, boolean online) {
-            ContentValues values = new ContentValues(1);
-            values.put(ONLINE, online ? 1 : 0);
-            db.updateWithOnConflict(TABLE_NAME, values, IDTAG + "=?", new String[]{"" + tag.getId()}, SQLiteDatabase.CONFLICT_IGNORE);
+            db.beginTransactionNonExclusive();
+            try {
+                if (online) insertBlacklistedTag(tag);
+                else db.delete("AccountTagBlacklist", "idTag = ?", new String[]{Integer.toString(tag.getId())});
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         }
 
-        public static void removeAllBlacklisted() {
-            ContentValues values = new ContentValues(1);
-            values.put(ONLINE, 0);
-            db.updateWithOnConflict(TABLE_NAME, values, null, null, SQLiteDatabase.CONFLICT_IGNORE);
+        private static void insertBlacklistedTag(Tag tag) {
+            if (tag.getType() == null || tag.getType().getId() <= 0 || !TagCatalog.isCanonicalName(tag.getName())) return;
+            insert(tag);
+            db.execSQL("INSERT OR IGNORE INTO AccountTagBlacklist (idTag)"
+                + " SELECT idTag FROM Tags WHERE idTag = ? AND type = ? AND idTag > 0",
+                new Object[]{tag.getId(), tag.getType().getId()});
         }
 
         public static void replaceOnlineTags(@NonNull List<Tag> tags) {
             db.beginTransaction();
             try {
-                removeAllBlacklisted();
-                for (Tag tag : tags) {
-                    insert(tag);
-                    updateBlacklistedTag(tag, true);
-                }
+                db.delete("AccountTagBlacklist", null, null);
+                for (Tag tag : tags) insertBlacklistedTag(tag);
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
@@ -548,16 +591,14 @@ public class Queries {
         }
 
         public static void resetAllStatus() {
-            ContentValues values = new ContentValues(1);
-            values.put(STATUS, TagStatus.DEFAULT.ordinal());
-            db.updateWithOnConflict(TABLE_NAME, values, null, null, SQLiteDatabase.CONFLICT_IGNORE);
+            db.delete(RULES_TABLE, null, null);
         }
 
         /**
          * Get the first <code>count</code> tags of <code>type</code>, ordered by tag count
          */
         public static List<Tag> getTopTags(TagType type, int count) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + "=? ORDER BY " + COUNT + " DESC LIMIT ?;";
+            String query = METADATA_SELECT + " WHERE t.type = ? ORDER BY t.count DESC LIMIT ?";
             Cursor cursor = db.rawQuery(query, new String[]{"" + type.getId(), "" + count});
             return TagTable.getTagsFromCursor(cursor);
         }
@@ -569,12 +610,12 @@ public class Queries {
          */
         @Nullable
         public static TagStatus getStatus(Tag tag) {
-            String query = "SELECT " + STATUS + " FROM " + TABLE_NAME +
-                " WHERE " + IDTAG + " =?";
-            try (Cursor c = db.rawQuery(query, new String[]{"" + tag.getId()})) {
+            String query = "SELECT status FROM (" + RULE_SELECT + " WHERE" + COMPATIBLE_RULE
+                + " UNION ALL " + METADATA_SELECT + " WHERE r.idTag IS NULL) WHERE idTag = ? AND type = ?";
+            try (Cursor c = db.rawQuery(query, new String[]{Integer.toString(tag.getId()), Byte.toString(tag.getType().getId())})) {
                 TagStatus status = null;
                 if (c.moveToFirst()) {
-                    status = TagTable.cursorToTag(c).getStatus();
+                    status = TagStatus.values()[c.getInt(0)];
                     tag.setStatus(status);
                 }
                 return status;
@@ -583,7 +624,7 @@ public class Queries {
 
         public static Tag getTagFromTagName(String name) {
             Tag tag = null;
-            try (Cursor cursor = db.query(TABLE_NAME, null, NAME + "=?", new String[]{name}, null, null, null)) {
+            try (Cursor cursor = db.rawQuery(METADATA_SELECT + " WHERE t.name = ?", new String[]{name})) {
                 if (cursor.moveToFirst()) tag = cursorToTag(cursor);
                 return tag;
             }
@@ -595,7 +636,7 @@ public class Queries {
          */
         public static TagList getTagsFromListOfInt(String tagString) {
             TagList tags = new TagList();
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + IDTAG + " IN (" + tagString + ")";
+            String query = METADATA_SELECT + " WHERE t.idTag IN (" + tagString + ")";
             try (Cursor cursor = db.rawQuery(query, null)) {
                 if (cursor.moveToFirst()) {
                     do {
@@ -610,7 +651,7 @@ public class Queries {
          * Return a list of tags which contain name and are of a certain type
          */
         public static List<Tag> search(String name, TagType type) {
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " LIKE ? AND " + TYPE + "=?";
+            String query = METADATA_SELECT + " WHERE t.name LIKE ? AND t.type = ?";
             LogUtility.d(query);
             Cursor c = db.rawQuery(query, new String[]{'%' + name + '%', "" + type.getId()});
             return getTagsFromCursor(c);
@@ -623,7 +664,7 @@ public class Queries {
          */
         public static Tag searchTag(String name, TagType type) {
             Tag tag = null;
-            String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = ? AND " + TYPE + "=?";
+            String query = METADATA_SELECT + " WHERE t.name = ? AND t.type = ?";
             LogUtility.d(query);
             try (Cursor c = db.rawQuery(query, new String[]{name, "" + type.getId()})) {
                 if (c.moveToFirst()) tag = cursorToTag(c);
@@ -836,15 +877,9 @@ public class Queries {
         }
 
         static Cursor getTagCursorForGallery(int id) {
-            String query = String.format(Locale.US, "SELECT * FROM %s WHERE %s IN (SELECT %s FROM %s WHERE %s=%d)",
-                TagTable.TABLE_NAME,
-                TagTable.IDTAG,
-                GalleryBridgeTable.ID_TAG,
-                GalleryBridgeTable.TABLE_NAME,
-                GalleryBridgeTable.ID_GALLERY,
-                id
-            );
-            return db.rawQuery(query, null);
+            return db.rawQuery(TagTable.METADATA_SELECT
+                + " WHERE t.idTag IN (SELECT id_tag FROM GalleryTags WHERE id_gallery = ?)",
+                new String[]{Integer.toString(id)});
         }
 
         public static TagList getTagsForGallery(int id) {

@@ -150,7 +150,8 @@ public class Login {
     public static synchronized long beginOnlineTagMutation(@NonNull Context context, @NonNull String identity) {
         synchronizeOnlineTagsGeneration();
         releaseStaleMutation(context);
-        if (onlineTagsAuthGeneration < 0 || pendingOnlineTagIdentity != null || !identity.equals(AuthStore.activeIdentity(context))
+        if (onlineTagsAuthGeneration < 0 || onlineTagsRestores != 0 || pendingOnlineTagIdentity != null
+            || !identity.equals(AuthStore.activeIdentity(context))
             || !identity.equals(onlineTagsIdentity)) return -1;
         pendingOnlineTagIdentity = identity;
         pendingOnlineTagOperation = ++onlineTagOperationSequence;
@@ -178,7 +179,8 @@ public class Login {
     public static synchronized boolean isOnlineTagMutationCurrent(@NonNull Context context,
                                                                   @NonNull String identity, long operation) {
         synchronizeOnlineTagsGeneration();
-        return operation == pendingOnlineTagOperation && identity.equals(pendingOnlineTagIdentity)
+        return onlineTagsRestores == 0 && operation == pendingOnlineTagOperation && identity.equals(pendingOnlineTagIdentity)
+            && identity.equals(onlineTagsIdentity)
             && identity.equals(AuthStore.activeIdentity(context));
     }
 
@@ -186,13 +188,17 @@ public class Login {
                                                                 long operation, @NonNull Tag tag, boolean add) {
         synchronizeOnlineTagsGeneration();
         if (operation != pendingOnlineTagOperation || !identity.equals(pendingOnlineTagIdentity)) return false;
-        if (!identity.equals(AuthStore.activeIdentity(context)) || !identity.equals(onlineTagsIdentity)) {
+        if (onlineTagsRestores != 0 || !identity.equals(AuthStore.activeIdentity(context)) || !identity.equals(onlineTagsIdentity)) {
             pendingOnlineTagIdentity = null;
             notifyOnlineTagsChanged();
             return false;
         }
-        if (add) Queries.TagTable.insert(tag);
         Queries.TagTable.updateBlacklistedTag(tag, add);
+        if (onlineTagsAuthGeneration != AuthStore.identityGeneration()
+            || !identity.equals(AuthStore.activeIdentity(context))) {
+            synchronizeOnlineTagsGeneration();
+            return false;
+        }
         pendingOnlineTagIdentity = null;
         onlineTagsRevision++;
         notifyOnlineTagsChanged();
@@ -258,9 +264,9 @@ public class Login {
 
 
     public static boolean isOnlineTags(Tag tag) {
-        String identity = currentOnlineTagsIdentity();
-        return identity != null && Queries.TagTable.isBlackListed(tag)
-            && identity.equals(currentOnlineTagsIdentity());
+        long revision = currentOnlineTagsRevision();
+        return revision >= 0 && Queries.TagTable.isBlackListed(tag)
+            && revision == currentOnlineTagsRevision();
     }
 
 }

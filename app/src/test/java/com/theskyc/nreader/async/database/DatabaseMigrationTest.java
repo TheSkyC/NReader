@@ -6,6 +6,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.theskyc.nreader.api.enums.TagStatus;
+import com.theskyc.nreader.api.enums.TagType;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -17,6 +20,39 @@ import static org.junit.Assert.assertEquals;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class DatabaseMigrationTest {
+    @Test
+    public void version20UpgradeSeparatesRulesAndDiscardsAccountFlags() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("DROP TABLE TagRules");
+            database.execSQL("DROP TABLE AccountTagBlacklist");
+            database.execSQL("ALTER TABLE Tags ADD COLUMN status INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE Tags ADD COLUMN online INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count, status, online)"
+                + " VALUES (132, 'saved', 3, 50, 2, 1), (133, 'blocked', 3, 40, 0, 1)");
+            database.execSQL("INSERT INTO Gallery VALUES (100, 'fixture', '', '', 0, 1, '', 0, 0, 0, 0, 0)");
+            Queries.FavoriteTable.insert(100);
+            database.execSQL("INSERT INTO GalleryTags (id_gallery, id_tag) VALUES (100, 132)");
+            database.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES ('bundled', 43)");
+            database.setVersion(20);
+        }
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertEquals(21, database.getVersion());
+            assertEquals(43, TagCatalog.installedSeedRevision(database));
+            assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getTagById(132).getStatus());
+            assertEquals(TagStatus.DEFAULT, Queries.TagTable.getTagById(133).getStatus());
+            assertEquals(1, Queries.GalleryBridgeTable.getTagsForGallery(100).getCount(TagType.TAG));
+            try (Cursor rows = database.query("AccountTagBlacklist", null, null, null, null, null, null);
+                 Cursor columns = database.query("Tags", null, "idTag = 132", null, null, null, null)) {
+                assertEquals(0, rows.getCount());
+                assertEquals(-1, columns.getColumnIndex("online"));
+                assertEquals(-1, columns.getColumnIndex("status"));
+            }
+        }
+    }
     @Test
     public void version19UpgradeKeepsUpstreamRevisionSeparateFromTheBundledRevision() {
         Context context = RuntimeEnvironment.getApplication();
@@ -30,7 +66,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(20, database.getVersion());
+            assertEquals(21, database.getVersion());
             assertEquals(42, TagCatalog.installedRevision(database));
             assertEquals(0, TagCatalog.installedSeedRevision(database));
         }
@@ -47,7 +83,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(20, database.getVersion());
+            assertEquals(21, database.getVersion());
             assertEquals(42, TagCatalog.installedRevision(database));
             assertEquals(43, TagCatalog.installedSeedRevision(database));
         }
@@ -65,7 +101,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(20, database.getVersion());
+            assertEquals(21, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM Bookmark WHERE page=2"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM SearchPlans"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReaderBookmarks"));
@@ -99,7 +135,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(20, database.getVersion());
+            assertEquals(21, database.getVersion());
             assertEquals(7, scalar(database, "SELECT page FROM Resume WHERE id_gallery=123"));
             assertEquals(99, scalar(database, "SELECT time FROM Favorite WHERE id_gallery=123"));
             assertEquals(12345, scalar(database, "SELECT color FROM Status WHERE name='Custom'"));
@@ -129,7 +165,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(20, database.getVersion());
+            assertEquals(21, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM ReadingProgress " +
                 "WHERE id_gallery=123 AND page=7 AND offset=0.5 AND updated_at=456"));
             database.execSQL("INSERT INTO ReaderBookmarks (id_gallery,page,title,created_at,updated_at) " +
@@ -174,7 +210,7 @@ public class DatabaseMigrationTest {
             }
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                assertEquals(20, database.getVersion());
+                assertEquals(21, database.getVersion());
                 assertEquals(0, scalar(database, "SELECT COUNT(time) FROM Favorite"));
                 assertEquals(0, scalar(database, "SELECT COUNT(range_start) FROM Downloads"));
                 assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));

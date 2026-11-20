@@ -39,7 +39,7 @@ public class OnlineTagsIdentityTest {
         AuthStore.saveApiKey(context, "restore-mutation-fixture", true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String identity = AuthStore.activeIdentity(context);
             Tag tag = new Tag("fixture", 1, 4242, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(context, identity, Login.beginOnlineTagsLoad(context, identity),
@@ -47,6 +47,7 @@ public class OnlineTagsIdentityTest {
             long oldLoad = Login.beginOnlineTagsLoad(context, identity);
             long mutation = Login.beginOnlineTagMutation(context, identity);
             assertTrue(mutation > 0);
+            assertTrue(Login.isOnlineTagMutationCurrent(context, identity, mutation));
             Login.beginOnlineTagsRestore();
             try {
                 assertTrue(Login.isOnlineTagMutationPending());
@@ -56,6 +57,8 @@ public class OnlineTagsIdentityTest {
                 Login.endOnlineTagsRestore();
             }
             assertTrue(Login.isOnlineTagMutationPending());
+            assertFalse(Login.isOnlineTagMutationCurrent(context, identity, mutation));
+            assertEquals(-1, Login.beginOnlineTagsLoad(context, identity));
             assertFalse(Login.finishOnlineTagMutation(context, identity, mutation, tag, false));
             assertFalse(Login.isOnlineTagMutationPending());
             assertFalse(Login.hasCurrentOnlineTags());
@@ -79,7 +82,7 @@ public class OnlineTagsIdentityTest {
         Runnable observer = notifications::incrementAndGet;
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             Login.observeOnlineTags(observer);
             String identity = AuthStore.activeIdentity(context);
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
@@ -120,8 +123,9 @@ public class OnlineTagsIdentityTest {
         AuthStore.saveApiKey(context, "test-key", true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
-            database.execSQL("INSERT INTO Tags VALUES (42, 'example', 3, 1, 0, 1)");
+            Queries.TagTable.createTables(database);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (42, 'example', 3, 1)");
+            database.execSQL("INSERT INTO AccountTagBlacklist VALUES (42)");
             assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
             String identity = AuthStore.activeIdentity(context);
             long revision = Login.beginOnlineTagsLoad(context, identity);
@@ -156,7 +160,7 @@ public class OnlineTagsIdentityTest {
         AuthStore.saveApiKey(context, "first-key", true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String first = AuthStore.activeIdentity(context);
             long older = Login.beginOnlineTagsLoad(context, first);
             long newer = Login.beginOnlineTagsLoad(context, first);
@@ -197,7 +201,7 @@ public class OnlineTagsIdentityTest {
         Login.updateUser(null);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String first = AuthStore.activeIdentity(context);
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(context, first, Login.beginOnlineTagsLoad(context, first),
@@ -228,7 +232,7 @@ public class OnlineTagsIdentityTest {
         AuthStore.saveApiKey(context, "first-background-key", true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String identity = AuthStore.activeIdentity(context);
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(context, identity, Login.beginOnlineTagsLoad(context, identity),
@@ -261,7 +265,7 @@ public class OnlineTagsIdentityTest {
         AuthStore.saveApiKey(context, "search-key", true);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String identity = AuthStore.activeIdentity(context);
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(context, identity, Login.beginOnlineTagsLoad(context, identity),
@@ -298,7 +302,7 @@ public class OnlineTagsIdentityTest {
         Login.updateUser(null);
         try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
             Queries.setDb(database);
-            database.execSQL(Queries.TagTable.CREATE_TABLE);
+            Queries.TagTable.createTables(database);
             String identity = AuthStore.activeIdentity(context);
             Tag language = new Tag("fixture-language", 1, 90001, TagType.LANGUAGE, TagStatus.DEFAULT);
             Tag category = new Tag("fixture-category", 1, 90002, TagType.CATEGORY, TagStatus.DEFAULT);
