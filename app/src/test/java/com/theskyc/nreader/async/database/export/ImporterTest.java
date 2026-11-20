@@ -50,7 +50,7 @@ public class ImporterTest {
 
     @Test
     public void tagRestoreInvalidatesCatalogRevisionOnlyWhenItCommits() throws IOException {
-        database.execSQL("INSERT INTO TagCatalogState (id, revision) VALUES (1, 43)");
+        database.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES ('legacy-upstream', 43)");
         assertThrows(IOException.class, () -> restore("{\"Tags\":[],\"Resume\":{}}"));
         assertEquals(43, TagCatalog.installedRevision(database));
         assertNotNull(Queries.TagTable.getTagById(12227));

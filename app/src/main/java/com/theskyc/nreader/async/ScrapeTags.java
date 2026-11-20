@@ -19,6 +19,7 @@ import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.utility.LogUtility;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.CacheControl;
@@ -41,7 +41,6 @@ public class ScrapeTags extends Worker {
     private static final long CHECK_INTERVAL_MS = TimeUnit.DAYS.toMillis(7);
     private static final int MAX_ATTEMPTS = 3;
     private static final int MAX_CATALOG_BYTES = 16 * 1024 * 1024;
-    private static final int MIN_LEGACY_ROWS = 50_000;
     private static final String DATA_FOLDER = "https://raw.githubusercontent.com/maxwai/NClientV3/main/data/";
     private static final String TAGS = DATA_FOLDER + "tags.json";
     private static final String VERSION = DATA_FOLDER + "tagsVersion";
@@ -103,7 +102,7 @@ public class ScrapeTags extends Worker {
             }
             if (fetchRevision() != revision) throw new IOException("Tag catalog revision changed during download");
             try (InputStream input = new FileInputStream(file)) {
-                TagCatalog.apply(database, input, revision, MIN_LEGACY_ROWS, this::isStopped);
+                TagCatalog.apply(database, input, revision, TagCatalog.MIN_DIRECTORY_ROWS, this::isStopped);
             }
         } finally {
             if (!file.delete()) LogUtility.w("Could not remove staged tag catalog");
@@ -130,13 +129,7 @@ public class ScrapeTags extends Worker {
     private int fetchRevision() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream(32);
         download(VERSION, output, 32);
-        String text = new String(output.toByteArray(), StandardCharsets.US_ASCII).trim();
-        try {
-            if (!text.matches("[1-9][0-9]*")) throw new NumberFormatException();
-            return Integer.parseInt(text);
-        } catch (NumberFormatException error) {
-            throw new IOException("Invalid tag catalog revision");
-        }
+        return TagCatalog.readRevision(new ByteArrayInputStream(output.toByteArray()));
     }
 
     private void download(String url, OutputStream output, int limit) throws IOException {

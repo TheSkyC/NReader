@@ -11,6 +11,7 @@ import android.util.JsonToken;
 
 import androidx.annotation.NonNull;
 
+import com.theskyc.nreader.async.TagCatalogSeedWorker;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.async.database.Queries;
@@ -283,6 +284,7 @@ public class Importer {
         } finally {
             com.theskyc.nreader.settings.Login.endOnlineTagsRestore();
         }
+        TagCatalogSeedWorker.scheduleAfterRestore(context);
     }
 
     private static void importDataLocked(Context context, Uri selectedFile) throws IOException {
@@ -421,6 +423,7 @@ public class Importer {
         } finally {
             com.theskyc.nreader.settings.Login.endOnlineTagsRestore();
         }
+        TagCatalogSeedWorker.scheduleAfterRestore(context);
     }
 
     private static boolean isSnapshotSetValid(Context context) {

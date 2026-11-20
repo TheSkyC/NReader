@@ -122,6 +122,25 @@ public class TagCatalogTest {
         assertEquals(10, TagCatalog.installedRevision(database));
     }
 
+    @Test public void bundledRevisionsAdvanceUntilAValidatedRemoteCatalogIsInstalled() throws IOException {
+        assertTrue(applyBundled("seed", 40));
+        assertFalse(applyBundled("older seed", 39));
+        assertTrue(applyBundled("updated seed", 41));
+        assertEquals(41, TagCatalog.installedSeedRevision(database));
+        assertEquals(0, TagCatalog.installedRevision(database));
+        assertEquals("updated seed", Queries.TagTable.getTagById(1).getName());
+
+        assertTrue(apply(snapshot("remote"), 10));
+        assertFalse(applyBundled("newer seed", 42));
+        assertEquals("remote", Queries.TagTable.getTagById(1).getName());
+        assertEquals(10, TagCatalog.installedRevision(database));
+    }
+
+    private boolean applyBundled(String name, int revision) throws IOException {
+        return TagCatalog.applyBundled(database, new ByteArrayInputStream(snapshot(name).getBytes(StandardCharsets.UTF_8)),
+            revision, 7, () -> false);
+    }
+
     private static String snapshot(String firstName) {
         return "[[1,\"" + firstName + "\",11,1]" + OTHER_TYPES + "]";
     }

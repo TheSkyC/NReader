@@ -164,6 +164,11 @@ androidComponents {
             noticeFile.set(rootProject.layout.projectDirectory.file("NOTICE"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(copyLegalNotices, CopyLegalNotices::outputDirectory)
+        val copyTagCatalog = tasks.register<CopyTagCatalog>("copy${variant.name.capitalized()}TagCatalog") {
+            catalogFile.set(rootProject.layout.projectDirectory.file("data/tags.json"))
+            revisionFile.set(rootProject.layout.projectDirectory.file("data/tagsVersion"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(copyTagCatalog, CopyTagCatalog::outputDirectory)
         var suffix = if (variant.flavorName == "minApi26") "-minApi26" else "-minApi28"
         if (variant.buildType == "debug") {
             suffix += "-debug"
@@ -265,6 +270,32 @@ abstract class CopyLegalNotices : DefaultTask() {
         output.mkdirs()
         licenseFile.get().asFile.copyTo(output.resolve("LICENSE"), overwrite = true)
         noticeFile.get().asFile.copyTo(output.resolve("NOTICE"), overwrite = true)
+    }
+}
+
+abstract class CopyTagCatalog : DefaultTask() {
+    @get:InputFile
+    abstract val catalogFile: RegularFileProperty
+
+    @get:InputFile
+    abstract val revisionFile: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val output = outputDirectory.dir("tag-catalog").get().asFile
+        val catalog = catalogFile.get().asFile
+        val revision = revisionFile.get().asFile
+        require(catalog.length() in 1..16L * 1024 * 1024) { "Bundled tag catalog is out of bounds" }
+        require(revision.length() in 1..32L) { "Bundled tag catalog revision is out of bounds" }
+        val revisionText = revision.readText(Charsets.US_ASCII).trim { it <= ' ' }
+        require(revisionText.matches(Regex("[1-9][0-9]*")) && revisionText.toIntOrNull() != null) {
+            "Invalid bundled tag catalog revision"
+        }
+        catalog.copyTo(output.resolve("tags.json"), overwrite = true)
+        revision.copyTo(output.resolve("tagsVersion"), overwrite = true)
     }
 }
 

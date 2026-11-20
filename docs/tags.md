@@ -8,6 +8,14 @@ agree with the known type of an existing ID. An omitted ID stays available, so
 gallery links and rules continue to resolve. Search-only tags with no site ID
 do not acquire a directory identity.
 
+Every APK and app bundle includes the catalog and revision from its source
+checkout. A background job can install that catalog without Internet access.
+A bundled revision can replace an older bundled revision; it cannot replace an
+installed remote catalog. Upstream and the repository's bundled dataset have
+independent version histories. An open tag-management screen refreshes when
+the installation commits. After a successful backup restore, the bundled job
+runs again and reinstalls the seed if restore cleared the catalog revisions.
+
 Local rules retain the default, avoided and accepted states. The active
 account's blacklist remains subject to its existing authentication and revision
 checks. A directory import updates only canonical names and counts, and adds
@@ -30,6 +38,6 @@ applied revision are committed together. Equal or older revisions do not
 replace the directory. A restore that replaces the tag rows invalidates the
 applied revision in the same transaction.
 
-Background requests share one WorkManager job. A successful check is cached
+Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory
 rows and rules are usable without network access.

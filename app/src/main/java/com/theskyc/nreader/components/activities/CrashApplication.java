@@ -27,6 +27,7 @@ import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.downloader.DownloadGalleryV2;
 import com.theskyc.nreader.async.UpdateCheckWorker;
 import com.theskyc.nreader.async.LegacyWorkerFactory;
+import com.theskyc.nreader.async.TagCatalogSeedWorker;
 import com.theskyc.nreader.async.UpdateStateRecovery;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.AccountRuntime;
@@ -72,6 +73,7 @@ public class CrashApplication extends Application implements Configuration.Provi
         NetworkUtil.initConnectivity(this);
         TagV2.initMinCount(this);
         TagV2.initSortByName(this);
+        TagCatalogSeedWorker.schedule(this);
         DownloadGalleryV2.loadDownloads(this);
         UpdateCheckWorker.schedule(this);
         registerActivityLifecycleCallbacks(new CustomActivityLifecycleCallback());

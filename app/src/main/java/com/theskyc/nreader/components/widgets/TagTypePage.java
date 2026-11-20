@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +19,7 @@ import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.adapters.TagsAdapter;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.ScrapeTags;
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.AuthStore;
@@ -128,6 +130,12 @@ public class TagTypePage extends Fragment {
             refreshOnlineTags(rootView);
         }
         return rootView;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        TagCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
     }
 
     private void refreshOnlineTags(View root) {

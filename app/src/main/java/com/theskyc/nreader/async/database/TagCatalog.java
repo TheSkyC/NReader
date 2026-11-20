@@ -6,8 +6,12 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.theskyc.nreader.api.enums.TagType;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,31 +24,98 @@ import java.util.function.BooleanSupplier;
 /** Applies validated public directory rows without touching local or account rules. */
 public final class TagCatalog {
     static final String CREATE_STATE = "CREATE TABLE IF NOT EXISTS TagCatalogState ("
-        + "id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL CHECK (revision > 0))";
+        + "source TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK (revision > 0))";
+    public static final int MIN_DIRECTORY_ROWS = 50_000;
+    private static final String UPSTREAM = "legacy-upstream";
+    private static final String BUNDLED = "bundled";
     private static final int MAX_ROWS = 250_000;
     private static final int MAX_NAME_LENGTH = 256;
     private static final String STAGE = "temp.TagCatalogStage";
+    private static final MutableLiveData<Void> CHANGES = new MutableLiveData<>();
 
     private TagCatalog() {}
 
     public static int installedRevision(SQLiteDatabase database) {
-        try (Cursor row = database.rawQuery("SELECT revision FROM TagCatalogState WHERE id = 1", null)) {
+        return installedRevision(database, UPSTREAM);
+    }
+
+    static int installedSeedRevision(SQLiteDatabase database) {
+        return installedRevision(database, BUNDLED);
+    }
+
+    private static int installedRevision(SQLiteDatabase database, String source) {
+        try (Cursor row = database.rawQuery("SELECT revision FROM TagCatalogState WHERE source = ?",
+            new String[]{source})) {
             return row.moveToFirst() ? row.getInt(0) : 0;
         }
+    }
+
+    static void upgradeState(SQLiteDatabase database) {
+        boolean legacyKey = false;
+        try (Cursor columns = database.rawQuery("PRAGMA table_info(TagCatalogState)", null)) {
+            int name = columns.getColumnIndexOrThrow("name");
+            while (columns.moveToNext()) {
+                if ("id".equals(columns.getString(name))) {
+                    legacyKey = true;
+                    break;
+                }
+            }
+        }
+        if (legacyKey) database.execSQL("ALTER TABLE TagCatalogState RENAME TO OldTagCatalogState");
+        database.execSQL(CREATE_STATE);
+        if (!legacyKey) return;
+        database.execSQL("INSERT INTO TagCatalogState (source, revision)"
+            + " SELECT ?, revision FROM OldTagCatalogState WHERE id = 1", new Object[]{UPSTREAM});
+        database.execSQL("DROP TABLE OldTagCatalogState");
     }
 
     public static void invalidateRevision(SQLiteDatabase database) {
         database.delete("TagCatalogState", null, null);
     }
 
+    public static LiveData<Void> changes() {
+        return CHANGES;
+    }
+
+    public static int readRevision(InputStream input) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(32);
+        int next;
+        while ((next = input.read()) != -1) {
+            if (bytes.size() >= 32) throw new IOException("Tag catalog revision exceeds limit");
+            bytes.write(next);
+        }
+        String value = new String(bytes.toByteArray(), StandardCharsets.US_ASCII).trim();
+        try {
+            if (value.matches("[1-9][0-9]*")) return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            // Report a bounded error without logging the value supplied by the feed.
+        }
+        throw new IOException("Invalid tag catalog revision");
+    }
+
+    public static boolean needsBundled(SQLiteDatabase database, int revision) {
+        return installedRevision(database) == 0 && revision > installedSeedRevision(database);
+    }
+
+    public static boolean applyBundled(SQLiteDatabase database, InputStream source, int revision,
+                                       int minimumRows, BooleanSupplier cancelled) throws IOException {
+        return apply(database, source, revision, minimumRows, cancelled, BUNDLED);
+    }
+
     public static boolean apply(SQLiteDatabase database, InputStream source, int revision,
                                 int minimumRows, BooleanSupplier cancelled) throws IOException {
+        return apply(database, source, revision, minimumRows, cancelled, UPSTREAM);
+    }
+
+    private static boolean apply(SQLiteDatabase database, InputStream source, int revision,
+                                 int minimumRows, BooleanSupplier cancelled, String dataset) throws IOException {
         if (revision < 1 || minimumRows < 1 || minimumRows > MAX_ROWS) {
             throw new IllegalArgumentException("Invalid tag catalog revision or row limit");
         }
         database.beginTransactionNonExclusive();
         try {
-            if (revision <= installedRevision(database)) return false;
+            if (BUNDLED.equals(dataset) ? !needsBundled(database, revision)
+                : revision <= installedRevision(database, dataset)) return false;
             database.execSQL("CREATE TEMP TABLE TagCatalogStage (idTag INTEGER PRIMARY KEY,"
                 + " name TEXT NOT NULL, count INTEGER NOT NULL, type INTEGER NOT NULL)");
             loadStage(database, source, minimumRows, cancelled);
@@ -60,15 +131,16 @@ public final class TagCatalog {
             database.execSQL("INSERT INTO Tags (idTag, name, count, type, status)"
                 + " SELECT idTag, name, count, type, 0 FROM " + STAGE
                 + " AS incoming WHERE NOT EXISTS (SELECT 1 FROM Tags WHERE Tags.idTag = incoming.idTag)");
-            database.execSQL("INSERT OR REPLACE INTO TagCatalogState (id, revision) VALUES (1, ?)",
-                new Object[]{revision});
+            database.execSQL("INSERT OR REPLACE INTO TagCatalogState (source, revision) VALUES (?, ?)",
+                new Object[]{dataset, revision});
             database.execSQL("DROP TABLE " + STAGE);
             checkCancelled(cancelled);
             database.setTransactionSuccessful();
-            return true;
         } finally {
             database.endTransaction();
         }
+        CHANGES.postValue(null);
+        return true;
     }
 
     private static void loadStage(SQLiteDatabase database, InputStream source, int minimumRows,
