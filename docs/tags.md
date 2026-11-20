@@ -28,6 +28,27 @@ does not hide saved rules. Legacy names that cannot be quoted safely are
 preserved for display and editing but are excluded from automatic queries
 until matching canonical metadata resolves them.
 
+## Translation packs
+
+Translations are stored independently from canonical directory names, local
+rules, account data, and backups. A locale pack is a complete snapshot for one
+canonical BCP 47 locale. Its JSON envelope contains `schemaVersion: 1`, the
+locale, a positive monotonically increasing revision, and an `entries` array.
+Each entry contains a positive site tag ID, one plain-text display name, and an
+optional list of plain-text search aliases. Site IDs remain the only identity;
+translation text never enters a site query or changes a saved rule.
+
+An installer validates the whole bounded payload before committing it. It
+rejects duplicate IDs, duplicate normalized aliases for one tag, unknown tag
+IDs, invalid locale identifiers, control characters, oversized text, and
+unsupported fields. Applying a newer pack replaces only that locale's names,
+aliases, and revision in one SQLite transaction. An invalid, cancelled, equal,
+or older pack leaves the installed locale unchanged. Removing a locale deletes
+only that locale's translation rows and revision. Translations are public
+replaceable data and are excluded from user backups. This local pack format
+does not specify a publishing authority, signature policy, contribution
+license, moderation workflow, or default display mode.
+
 Local rule evaluation retains its existing context-specific behavior. The
 editor cycles Default → Accepted → Avoided → Default; Default removes the
 rule. Account blacklist entries do not modify the local status. Applying an
