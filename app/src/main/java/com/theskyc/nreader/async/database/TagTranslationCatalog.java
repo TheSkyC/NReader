@@ -62,17 +62,17 @@ public final class TagTranslationCatalog {
     public static String resolveInstalledLocale(SQLiteDatabase database, Locale appLocale) {
         if (appLocale == null || appLocale.getLanguage().isEmpty()) return null;
         List<String> candidates = new ArrayList<>();
-        String language = appLocale.getLanguage().toLowerCase(Locale.ROOT);
+        String exact = appLocale.toLanguageTag();
+        String language = exact.split("-", 2)[0];
+        if (isSupportedLocale(exact)) candidates.add(exact);
         if ("zh".equals(language)) {
             String script = appLocale.getScript();
-            if ("Hant".equals(script) || "TW".equalsIgnoreCase(appLocale.getCountry())
-                || "HK".equalsIgnoreCase(appLocale.getCountry()) || "MO".equalsIgnoreCase(appLocale.getCountry())) {
-                candidates.add("zh-Hant");
-            } else candidates.add("zh-Hans");
-        }
-        String exact = appLocale.toLanguageTag();
-        if (!candidates.contains(exact) && exact.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
-            candidates.add(exact);
+            if (script.isEmpty()) {
+                String region = appLocale.getCountry();
+                script = "TW".equals(region) || "HK".equals(region) || "MO".equals(region) ? "Hant" : "Hans";
+            }
+            String scriptLocale = "zh-" + script;
+            if (!candidates.contains(scriptLocale)) candidates.add(scriptLocale);
         }
         if (!candidates.contains(language)) candidates.add(language);
         for (String candidate : candidates) {
@@ -94,7 +94,8 @@ public final class TagTranslationCatalog {
                 + " PRIMARY KEY (idTag, aliasKey))");
 
             PackMetadata metadata;
-            try (JsonReader reader = JsonStringGuard.open(new BoundedInputStream(input, cancelled), MAX_TEXT_CODE_POINTS * 6 + 1);
+            // A supplementary code point can be written as two escaped UTF-16 code units.
+            try (JsonReader reader = JsonStringGuard.open(new BoundedInputStream(input, cancelled), MAX_TEXT_CODE_POINTS * 12 + 1);
                  SQLiteStatement insertEntry = database.compileStatement("INSERT INTO " + ENTRY_STAGE
                      + " (idTag, displayName, displayKey) VALUES (?, ?, ?)");
                  SQLiteStatement insertAlias = database.compileStatement("INSERT INTO " + ALIAS_STAGE
@@ -146,6 +147,7 @@ public final class TagTranslationCatalog {
         Set<String> fields = new HashSet<>();
         int schemaVersion = 0;
         int revision = 0;
+        int entryCount = 0;
         String locale = null;
         reader.beginObject();
         while (reader.hasNext()) {
@@ -159,14 +161,14 @@ public final class TagTranslationCatalog {
                     locale = validateLocale(reader.nextString());
                     break;
                 case "entries":
-                    readEntries(reader, insertEntry, insertAlias, cancelled);
+                    entryCount = readEntries(reader, insertEntry, insertAlias, cancelled);
                     break;
                 default: throw new IOException("Unsupported translation pack field");
             }
         }
         reader.endObject();
         if (reader.peek() != JsonToken.END_DOCUMENT || schemaVersion != 1 || revision == 0 || locale == null
-            || !fields.contains("entries")) throw new IOException("Invalid translation pack header");
+            || entryCount == 0 || !fields.contains("entries")) throw new IOException("Invalid translation pack header");
         return new PackMetadata(locale, revision);
     }
 
@@ -242,26 +244,30 @@ public final class TagTranslationCatalog {
     }
 
     private static String validateLocale(String localeTag) {
-        if (localeTag == null || !localeTag.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
-            throw new IllegalArgumentException("Invalid translation locale");
-        }
-        Locale locale = Locale.forLanguageTag(localeTag);
-        if (locale.getLanguage().isEmpty() || "und".equals(locale.getLanguage())
-            || !locale.toLanguageTag().equals(localeTag)) {
-            throw new IllegalArgumentException("Invalid translation locale");
-        }
+        if (!isSupportedLocale(localeTag)) throw new IllegalArgumentException("Invalid translation locale");
         return localeTag;
     }
 
+    private static boolean isSupportedLocale(String localeTag) {
+        if (localeTag == null || !localeTag.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
+            return false;
+        }
+        String language = localeTag.split("-", 2)[0];
+        return !"in".equals(language) && !"iw".equals(language) && !"ji".equals(language) && !"und".equals(language);
+    }
+
     private static String validateText(String value) throws IOException {
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFC).trim();
-        int codePoints = normalized.codePointCount(0, normalized.length());
-        if (codePoints == 0 || codePoints > MAX_TEXT_CODE_POINTS) throw new IOException("Invalid translation text length");
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFC);
         for (int offset = 0; offset < normalized.length();) {
             int codePoint = normalized.codePointAt(offset);
-            if (Character.isISOControl(codePoint)) throw new IOException("Translation text contains control characters");
+            if (Character.isISOControl(codePoint) || Character.getType(codePoint) == Character.SURROGATE) {
+                throw new IOException("Translation text contains invalid characters");
+            }
             offset += Character.charCount(codePoint);
         }
+        normalized = normalized.trim();
+        int codePoints = normalized.codePointCount(0, normalized.length());
+        if (codePoints == 0 || codePoints > MAX_TEXT_CODE_POINTS) throw new IOException("Invalid translation text length");
         return normalized;
     }
 

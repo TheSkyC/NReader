@@ -32,8 +32,11 @@ until matching canonical metadata resolves them.
 
 Translations are stored independently from canonical directory names, local
 rules, account data, and backups. A locale pack is a complete snapshot for one
-canonical BCP 47 locale. Its JSON envelope contains `schemaVersion: 1`, the
-locale, a positive monotonically increasing revision, and an `entries` array.
+canonical BCP 47 locale using a two- or three-letter language and optional
+script and region, such as `ja`, `pt-BR`, or `zh-Hant`. Use `id`, `he`, and `yi`
+in place of the legacy codes `in`, `iw`, and `ji`. The JSON envelope contains
+`schemaVersion: 1`, the locale, a positive monotonically increasing revision,
+and an `entries` array.
 Each entry contains a positive site tag ID, one plain-text display name, and an
 optional list of plain-text search aliases. Site IDs remain the only identity;
 translation text never enters a site query or changes a saved rule.
@@ -48,6 +51,19 @@ only that locale's translation rows and revision. Translations are public
 replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
+
+Prepare a pack from a local JSON array of entries, using the checked-in catalog
+snapshot to reject unknown IDs:
+
+```powershell
+python scripts/build_tag_translation_pack.py .gradle/zh-Hans-source.json `
+  --locale zh-Hans --revision 1 --output .gradle/tag-packs/zh-Hans.json
+```
+
+Each source entry has `id`, `name`, and an optional `aliases` string array.
+The builder normalizes text, sorts entries by ID, checks limits and duplicate
+identities, and writes the deterministic v1 envelope. Empty packs are rejected;
+removal uses the locale-scoped database operation.
 
 Tag suggestions use the app's active locale. An exact installed locale wins;
 Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then

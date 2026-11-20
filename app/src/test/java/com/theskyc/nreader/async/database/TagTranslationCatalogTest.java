@@ -87,9 +87,33 @@ public class TagTranslationCatalogTest {
 
     @Test public void rejectsNonCanonicalLocalesAndInvalidText() {
         assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.installedRevision(database, "zh-cn"));
+        assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"zh-Hans\","
+            + "\"revision\":1,\"entries\":[]}"));
         assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"bad\\nname\"}]")));
+        assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\\tname\"}]")));
+        assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\\ud800\"}]")));
+        assertThrows(IOException.class, () -> apply(pack("iw-IL", 1, "[{\"id\":1,\"name\":\"name\"}]")));
         assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"und\","
             + "\"revision\":1,\"entries\":[]}"));
+    }
+
+    @Test public void acceptsMaximumLengthEscapedSupplementaryText() throws IOException {
+        StringBuilder escaped = new StringBuilder();
+        for (int i = 0; i < 256; i++) escaped.append("\\ud83d\\ude00");
+        assertTrue(apply(pack("en", 1, "[{\"id\":1,\"name\":\"" + escaped + "\"}]")));
+    }
+
+    @Test public void exactChineseLocaleWinsThenExplicitScriptThenRegion() throws IOException {
+        String entries = "[{\"id\":1,\"name\":\"Name\"}]";
+        assertTrue(apply(pack("zh", 1, entries)));
+        assertTrue(apply(pack("zh-Hans", 1, entries)));
+        assertTrue(apply(pack("zh-Hant", 1, entries)));
+        assertTrue(apply(pack("zh-TW", 1, entries)));
+
+        assertEquals("zh", TagTranslationCatalog.resolveInstalledLocale(database, Locale.CHINESE));
+        assertEquals("zh-TW", TagTranslationCatalog.resolveInstalledLocale(database, Locale.TAIWAN));
+        assertEquals("zh-Hans", TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("zh-Hans-TW")));
+        assertEquals("zh-Hant", TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("zh-HK")));
     }
 
     @Test public void translatedAndAliasSuggestionsRetainCanonicalTagIdentity() throws IOException {
