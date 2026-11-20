@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Мови тегів</string>
+    <string name="tag_translation_packs_summary">Встановлюйте, оновлюйте або видаляйте офлайн-переклади тегів.</string>
+    <string name="tag_translation_packs_empty">Мови тегів не встановлено.</string>
+    <string name="tag_translation_pack_item">%1$s (редакція %2$d)</string>
+    <string name="tag_translation_install">Встановити або оновити</string>
+    <string name="tag_translation_remove_title">Видалити мову тегів?</string>
+    <string name="tag_translation_remove_message">Видалити встановлені переклади для %1$s?</string>
+    <string name="tag_translation_remove">Видалити</string>
+    <string name="tag_translation_removed">Мову %1$s видалено.</string>
+    <string name="tag_translation_installed">Мову тегів встановлено або оновлено.</string>
+    <string name="tag_translation_not_newer">Цей пакунок уже встановлено з такою самою або новішою редакцією.</string>
+    <string name="tag_translation_install_failed">Не вдалося встановити мовний пакунок тегів.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

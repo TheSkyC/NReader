@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Idiomas de etiquetas</string>
+    <string name="tag_translation_packs_summary">Instala, actualiza o elimina traducciones de etiquetas sin conexión.</string>
+    <string name="tag_translation_packs_empty">No hay idiomas de etiquetas instalados.</string>
+    <string name="tag_translation_pack_item">%1$s (revisión %2$d)</string>
+    <string name="tag_translation_install">Instalar o actualizar</string>
+    <string name="tag_translation_remove_title">¿Eliminar el idioma de etiquetas?</string>
+    <string name="tag_translation_remove_message">¿Eliminar las traducciones instaladas de %1$s?</string>
+    <string name="tag_translation_remove">Eliminar</string>
+    <string name="tag_translation_removed">Se eliminó %1$s.</string>
+    <string name="tag_translation_installed">Idioma de etiquetas instalado o actualizado.</string>
+    <string name="tag_translation_not_newer">Este paquete ya está instalado con la misma revisión o una más reciente.</string>
+    <string name="tag_translation_install_failed">No se pudo instalar el paquete de idioma de etiquetas.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

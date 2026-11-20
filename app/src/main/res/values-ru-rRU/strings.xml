@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Языки тегов</string>
+    <string name="tag_translation_packs_summary">Устанавливайте, обновляйте или удаляйте офлайн-переводы тегов.</string>
+    <string name="tag_translation_packs_empty">Нет установленных языков тегов.</string>
+    <string name="tag_translation_pack_item">%1$s (ревизия %2$d)</string>
+    <string name="tag_translation_install">Установить или обновить</string>
+    <string name="tag_translation_remove_title">Удалить язык тегов?</string>
+    <string name="tag_translation_remove_message">Удалить установленные переводы для %1$s?</string>
+    <string name="tag_translation_remove">Удалить</string>
+    <string name="tag_translation_removed">Язык %1$s удалён.</string>
+    <string name="tag_translation_installed">Язык тегов установлен или обновлён.</string>
+    <string name="tag_translation_not_newer">Этот пакет уже установлен с такой же или более новой ревизией.</string>
+    <string name="tag_translation_install_failed">Не удалось установить пакет языка тегов.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

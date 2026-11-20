@@ -65,6 +65,12 @@ The builder normalizes text, sorts entries by ID, checks limits and duplicate
 identities, and writes the deterministic v1 envelope. Empty packs are rejected;
 removal uses the locale-scoped database operation.
 
+On Android, Settings → Tag languages opens the system document picker for a
+local pack. Selecting a newer revision validates and installs it in the
+background. The installed-locale list is independently removable; cancelling
+the picker or an invalid pack leaves current translations intact. No remote
+feed or publisher is configured by this workflow.
+
 Tag suggestions use the app's active locale. An exact installed locale wins;
 Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then
 to a generic installed language pack. Suggestions search canonical names,

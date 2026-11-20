@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 
 /** Installs one locale's public tag names and aliases atomically. */
@@ -57,6 +59,15 @@ public final class TagTranslationCatalog {
             new String[]{canonicalLocale})) {
             return cursor.moveToFirst() ? cursor.getInt(0) : 0;
         }
+    }
+
+    public static Map<String, Integer> installedPacks(SQLiteDatabase database) {
+        Map<String, Integer> packs = new TreeMap<>();
+        try (Cursor cursor = database.rawQuery(
+            "SELECT locale, revision FROM TagTranslationState ORDER BY locale COLLATE NOCASE", null)) {
+            while (cursor.moveToNext()) packs.put(cursor.getString(0), cursor.getInt(1));
+        }
+        return packs;
     }
 
     public static String resolveInstalledLocale(SQLiteDatabase database, Locale appLocale) {

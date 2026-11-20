@@ -663,4 +663,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Tag languages</string>
+    <string name="tag_translation_packs_summary">Install, update, or remove offline tag translations.</string>
+    <string name="tag_translation_packs_empty">No tag languages are installed.</string>
+    <string name="tag_translation_pack_item">%1$s (revision %2$d)</string>
+    <string name="tag_translation_install">Install or update</string>
+    <string name="tag_translation_remove_title">Remove tag language?</string>
+    <string name="tag_translation_remove_message">Remove the installed translations for %1$s?</string>
+    <string name="tag_translation_remove">Remove</string>
+    <string name="tag_translation_removed">Removed %1$s.</string>
+    <string name="tag_translation_installed">Tag language installed or updated.</string>
+    <string name="tag_translation_not_newer">This pack is already installed at the same or a newer revision.</string>
+    <string name="tag_translation_install_failed">Could not install this tag language pack.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

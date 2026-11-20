@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">タグの言語</string>
+    <string name="tag_translation_packs_summary">オフラインのタグ翻訳をインストール、更新、削除します。</string>
+    <string name="tag_translation_packs_empty">インストール済みのタグ言語はありません。</string>
+    <string name="tag_translation_pack_item">%1$s（リビジョン %2$d）</string>
+    <string name="tag_translation_install">インストールまたは更新</string>
+    <string name="tag_translation_remove_title">タグ言語を削除しますか？</string>
+    <string name="tag_translation_remove_message">%1$s のインストール済み翻訳を削除しますか？</string>
+    <string name="tag_translation_remove">削除</string>
+    <string name="tag_translation_removed">%1$s を削除しました。</string>
+    <string name="tag_translation_installed">タグ言語をインストールまたは更新しました。</string>
+    <string name="tag_translation_not_newer">このパックと同じか新しいリビジョンがすでにインストールされています。</string>
+    <string name="tag_translation_install_failed">タグ言語パックをインストールできませんでした。</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

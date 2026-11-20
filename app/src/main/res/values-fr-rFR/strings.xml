@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Langues des tags</string>
+    <string name="tag_translation_packs_summary">Installez, mettez à jour ou supprimez les traductions hors ligne des tags.</string>
+    <string name="tag_translation_packs_empty">Aucune langue de tags n’est installée.</string>
+    <string name="tag_translation_pack_item">%1$s (révision %2$d)</string>
+    <string name="tag_translation_install">Installer ou mettre à jour</string>
+    <string name="tag_translation_remove_title">Supprimer cette langue de tags ?</string>
+    <string name="tag_translation_remove_message">Supprimer les traductions installées pour %1$s ?</string>
+    <string name="tag_translation_remove">Supprimer</string>
+    <string name="tag_translation_removed">%1$s a été supprimé.</string>
+    <string name="tag_translation_installed">Langue de tags installée ou mise à jour.</string>
+    <string name="tag_translation_not_newer">Ce paquet est déjà installé à la même révision ou à une révision supérieure.</string>
+    <string name="tag_translation_install_failed">Impossible d’installer ce paquet de langue des tags.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

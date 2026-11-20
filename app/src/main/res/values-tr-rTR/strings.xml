@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Etiket dilleri</string>
+    <string name="tag_translation_packs_summary">Çevrimdışı etiket çevirilerini yükleyin, güncelleyin veya kaldırın.</string>
+    <string name="tag_translation_packs_empty">Yüklü etiket dili yok.</string>
+    <string name="tag_translation_pack_item">%1$s (sürüm %2$d)</string>
+    <string name="tag_translation_install">Yükle veya güncelle</string>
+    <string name="tag_translation_remove_title">Etiket dili kaldırılsın mı?</string>
+    <string name="tag_translation_remove_message">%1$s için yüklü çeviriler kaldırılsın mı?</string>
+    <string name="tag_translation_remove">Kaldır</string>
+    <string name="tag_translation_removed">%1$s kaldırıldı.</string>
+    <string name="tag_translation_installed">Etiket dili yüklendi veya güncellendi.</string>
+    <string name="tag_translation_not_newer">Bu paket aynı veya daha yeni bir sürümle zaten yüklü.</string>
+    <string name="tag_translation_install_failed">Etiket dili paketi yüklenemedi.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

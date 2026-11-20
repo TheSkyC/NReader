@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">Tag-Sprachen</string>
+    <string name="tag_translation_packs_summary">Offline-Tagübersetzungen installieren, aktualisieren oder entfernen.</string>
+    <string name="tag_translation_packs_empty">Keine Tag-Sprachen installiert.</string>
+    <string name="tag_translation_pack_item">%1$s (Version %2$d)</string>
+    <string name="tag_translation_install">Installieren oder aktualisieren</string>
+    <string name="tag_translation_remove_title">Tag-Sprache entfernen?</string>
+    <string name="tag_translation_remove_message">Installierte Übersetzungen für %1$s entfernen?</string>
+    <string name="tag_translation_remove">Entfernen</string>
+    <string name="tag_translation_removed">%1$s entfernt.</string>
+    <string name="tag_translation_installed">Tag-Sprache installiert oder aktualisiert.</string>
+    <string name="tag_translation_not_newer">Dieses Paket ist bereits in gleicher oder neuerer Version installiert.</string>
+    <string name="tag_translation_install_failed">Tag-Sprachpaket konnte nicht installiert werden.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

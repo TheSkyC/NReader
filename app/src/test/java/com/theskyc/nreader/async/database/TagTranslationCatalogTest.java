@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -83,6 +84,20 @@ public class TagTranslationCatalogTest {
         assertEquals(0, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
         assertEquals(1, scalar("SELECT COUNT(*) FROM TagTranslations WHERE locale='ja'"));
         assertEquals(0, scalar("SELECT COUNT(*) FROM TagTranslationAliases WHERE locale='zh-Hans'"));
+    }
+
+    @Test public void installedPacksExposeOnlyCommittedLocalesAndRevisions() throws IOException {
+        assertTrue(apply(pack("ja", 2, "[{\"id\":1,\"name\":\"name\"}]")));
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"name\"}]")));
+
+        Map<String, Integer> packs = TagTranslationCatalog.installedPacks(database);
+        assertEquals(2, packs.size());
+        assertEquals(Integer.valueOf(2), packs.get("ja"));
+        assertEquals(Integer.valueOf(1), packs.get("zh-Hans"));
+
+        TagTranslationCatalog.remove(database, "ja");
+        assertEquals(1, TagTranslationCatalog.installedPacks(database).size());
+        assertTrue(TagTranslationCatalog.installedPacks(database).containsKey("zh-Hans"));
     }
 
     @Test public void rejectsNonCanonicalLocalesAndInvalidText() {

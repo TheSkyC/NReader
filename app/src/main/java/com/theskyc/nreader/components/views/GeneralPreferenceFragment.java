@@ -213,6 +213,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             act.startActivity(new Intent(act, AccountsActivity.class));
             return true;
         });
+        Preference translationPacks = Objects.requireNonNull(findPreference(getString(R.string.preference_key_tag_translation_packs)));
+        translationPacks.setOnPreferenceClickListener(preference -> {
+            act.manageTranslationPacks();
+            return true;
+        });
 
         {
             Preference statusScreen = Objects.requireNonNull(findPreference(getString(R.string.preference_key_status_screen)));

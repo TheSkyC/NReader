@@ -495,4 +495,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">لغات الوسوم</string>
+    <string name="tag_translation_packs_summary">ثبّت ترجمات الوسوم بلا اتصال أو حدّثها أو أزلها.</string>
+    <string name="tag_translation_packs_empty">لا توجد لغات وسوم مثبّتة.</string>
+    <string name="tag_translation_pack_item">%1$s (الإصدار %2$d)</string>
+    <string name="tag_translation_install">تثبيت أو تحديث</string>
+    <string name="tag_translation_remove_title">إزالة لغة الوسوم؟</string>
+    <string name="tag_translation_remove_message">هل تريد إزالة الترجمات المثبّتة للغة %1$s؟</string>
+    <string name="tag_translation_remove">إزالة</string>
+    <string name="tag_translation_removed">تمت إزالة %1$s.</string>
+    <string name="tag_translation_installed">تم تثبيت لغة الوسوم أو تحديثها.</string>
+    <string name="tag_translation_not_newer">هذا الإصدار مثبت بالفعل أو يوجد إصدار أحدث.</string>
+    <string name="tag_translation_install_failed">تعذر تثبيت حزمة لغة الوسوم.</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>

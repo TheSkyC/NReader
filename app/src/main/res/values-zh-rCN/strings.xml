@@ -523,4 +523,17 @@
         <item>@string/reader_auto_scroll_medium</item>
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
+    <string name="tag_translation_packs_title">标签语言</string>
+    <string name="tag_translation_packs_summary">安装、更新或移除离线标签翻译。</string>
+    <string name="tag_translation_packs_empty">尚未安装标签语言包。</string>
+    <string name="tag_translation_pack_item">%1$s（版本 %2$d）</string>
+    <string name="tag_translation_install">安装或更新</string>
+    <string name="tag_translation_remove_title">移除标签语言？</string>
+    <string name="tag_translation_remove_message">要移除已安装的 %1$s 翻译吗？</string>
+    <string name="tag_translation_remove">移除</string>
+    <string name="tag_translation_removed">已移除 %1$s。</string>
+    <string name="tag_translation_installed">已安装或更新标签语言包。</string>
+    <string name="tag_translation_not_newer">此语言包的相同或更新版本已安装。</string>
+    <string name="tag_translation_install_failed">无法安装此标签语言包。</string>
+    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
 </resources>
