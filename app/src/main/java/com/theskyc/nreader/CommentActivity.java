@@ -1,0 +1,140 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
+package com.theskyc.nreader;
+
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.util.JsonReader;
+import android.util.JsonToken;
+import android.util.JsonWriter;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.DividerItemDecoration;
+
+import com.theskyc.nreader.adapters.CommentAdapter;
+import com.theskyc.nreader.api.comments.Comment;
+import com.theskyc.nreader.api.comments.CommentsFetcher;
+import com.theskyc.nreader.components.activities.BaseActivity;
+import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.utility.Utility;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Locale;
+import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+
+public class CommentActivity extends BaseActivity {
+    private static final int MINIUM_MESSAGE_LENGHT = 10;
+    private CommentAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //Global.initActivity(this);
+        setContentView(R.layout.activity_comment);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setTitle(R.string.comments);
+        findViewById(R.id.page_switcher).setVisibility(View.GONE);
+        int id = getIntent().getIntExtra(getPackageName() + ".GALLERYID", -1);
+        if (id == -1) {
+            finish();
+            return;
+        }
+        recycler = findViewById(R.id.recycler);
+        refresher = findViewById(R.id.refresher);
+        refresher.setOnRefreshListener(() -> new CommentsFetcher(CommentActivity.this, id).start());
+        EditText commentText = findViewById(R.id.commentText);
+        findViewById(R.id.card).setVisibility(Login.isLogged() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.sendButton).setOnClickListener(v -> {
+            if (commentText.getText().toString().length() < MINIUM_MESSAGE_LENGHT) {
+                Toast.makeText(this, getResources().getQuantityString(R.plurals.minimum_comment_length,
+                    MINIUM_MESSAGE_LENGHT, MINIUM_MESSAGE_LENGHT), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String submitUrl = String.format(Locale.US, Utility.getApiBaseUrl() + "galleries/%d/comments", id);
+            String requestString = createRequestString(commentText.getText().toString());
+            commentText.setText("");
+            RequestBody body = RequestBody.create(requestString, MediaType.get("application/json"));
+            Global.getClient(this)
+                .newCall(new Request.Builder().url(submitUrl).post(body).build())
+                .enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    try (JsonReader reader = new JsonReader(response.body().charStream())) {
+                        Comment comment = new Comment(reader);
+                        if (adapter != null)
+                            adapter.addComment(comment);
+                    }
+                }
+            });
+        });
+        // TODO: deactivated feature until fixed
+        findViewById(R.id.sendButton).setClickable(false);
+        findViewById(R.id.sendButton).setEnabled(false);
+        commentText.setEnabled(false);
+        commentText.setHint(R.string.comment_feature_unavailable);
+        // TODO: end
+        changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+        recycler.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        refresher.setRefreshing(true);
+        new CommentsFetcher(CommentActivity.this, id).start();
+    }
+
+    public void setAdapter(CommentAdapter adapter) {
+        this.adapter = adapter;
+    }
+
+    private String createRequestString(String text) {
+        try (StringWriter writer = new StringWriter();
+             JsonWriter json = new JsonWriter(writer)) {
+            json.beginObject();
+            json.name("body").value(text);
+            // TODO: this now needs pow and captcha
+            json.endObject();
+            return writer.toString();
+        } catch (IOException ignore) {
+        }
+        return "";
+    }
+
+    @Override
+    protected int getPortraitColumnCount() {
+        return 1;
+    }
+
+    @Override
+    protected int getLandscapeColumnCount() {
+        return 2;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            getOnBackPressedDispatcher().onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}

@@ -21,7 +21,7 @@
         app:tabTextColor="?attr/colorOnPrimary"
         app:tabMode="fixed" />
 
-    <com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout
+    <com.theskyc.nreader.components.widgets.GalleryTabSwipeLayout
         android:id="@+id/gallery_tab_content"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -168,5 +168,5 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
-    </com.maxwai.nclientv3.components.widgets.GalleryTabSwipeLayout>
+    </com.theskyc.nreader.components.widgets.GalleryTabSwipeLayout>
 </LinearLayout>

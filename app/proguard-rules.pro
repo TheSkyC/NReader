@@ -32,7 +32,7 @@
   public *;
 }
 
--assumenosideeffects class com.maxwai.nclientv3.utility.LogUtility {
+-assumenosideeffects class com.theskyc.nreader.utility.LogUtility {
     public static void d(...);
     public static void i(...);
     public static void e(...);

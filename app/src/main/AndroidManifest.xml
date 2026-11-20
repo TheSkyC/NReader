@@ -39,6 +39,15 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove" />
+        </provider>
+
         <activity android:name=".StatusManagerActivity" />
         <activity android:name=".UpdateCenterActivity" android:exported="false" />
         <activity android:name=".AccountsActivity" android:exported="false" />
@@ -57,7 +66,7 @@
         </activity>
 
         <activity-alias
-            android:name=".components.launcher.LauncherReal"
+            android:name="com.maxwai.nclientv3.components.launcher.LauncherReal"
             android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
@@ -70,7 +79,7 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".components.launcher.LauncherCalculator"
+            android:name="com.maxwai.nclientv3.components.launcher.LauncherCalculator"
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_calculator"
@@ -135,7 +144,7 @@
 
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.maxwai.nclientv3.MainActivity" />
+                android:value="com.theskyc.nreader.MainActivity" />
         </activity>
         <activity
             android:name=".ZoomActivity"
@@ -170,7 +179,7 @@
 
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.maxwai.nclientv3.MainActivity" />
+                android:value="com.theskyc.nreader.MainActivity" />
         </activity>
         <activity android:name=".SettingsActivity" />
         <activity android:name=".AccountLoginActivity" android:exported="false" />

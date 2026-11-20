@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Migrate the Java namespace to `com.theskyc.nreader`, retaining compatibility
+  with previously scheduled work and existing launcher alias settings.
+
 ## 1.0.0-beta.3 — 2026-11-20
 
 - Add continuous vertical reading with position restoration, pinch and double-tap

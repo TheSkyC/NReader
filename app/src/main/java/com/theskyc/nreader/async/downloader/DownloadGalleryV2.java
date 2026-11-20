@@ -1,0 +1,168 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
+package com.theskyc.nreader.async.downloader;
+
+import android.content.Context;
+import android.net.Uri;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
+import com.theskyc.nreader.api.SimpleGallery;
+import com.theskyc.nreader.api.components.Gallery;
+import com.theskyc.nreader.api.components.GenericGallery;
+import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.DownloadTaskStore;
+import com.theskyc.nreader.utility.LogUtility;
+import com.theskyc.nreader.utility.Utility;
+
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.List;
+import java.io.File;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class DownloadGalleryV2 extends Worker {
+    private static final ReentrantLock lock = new ReentrantLock();
+    private volatile GalleryDownloaderV2 currentDownload;
+
+    @Override
+    public void onStopped() {
+        GalleryDownloaderV2 downloader = currentDownload;
+        if (downloader != null) downloader.setStatus(GalleryDownloaderV2.Status.PAUSED);
+    }
+
+    public DownloadGalleryV2(@NonNull Context context, @NonNull WorkerParameters params) {
+        super(context, params);
+    }
+
+    public static void downloadGallery(Context context, GenericGallery gallery) {
+        if (gallery.isValid() && gallery instanceof Gallery && !gallery.getGalleryData().isIncomplete())
+        {
+            downloadGallery(context, (Gallery) gallery);
+            return;
+        }
+        if (gallery.getId() > 0) {
+            if (gallery instanceof SimpleGallery) {
+                SimpleGallery simple = (SimpleGallery) gallery;
+                downloadGallery(context, gallery.getTitle(), simple.getThumbnail(), simple.getId());
+            } else downloadGallery(context, null, null, gallery.getId());
+        }
+    }
+
+    private static void downloadGallery(Context context, String title, Uri thumbnail, int id) {
+        if (id < 1) return;
+        enqueue(context, new GalleryDownloaderManager(context, title, thumbnail, id));
+    }
+
+    private static void downloadGallery(Context context, Gallery gallery) {
+        downloadGallery(context, gallery, 0, gallery.getPageCount() - 1);
+    }
+
+    private static void downloadGallery(Context context, Gallery gallery, int start, int end) {
+        enqueue(context, new GalleryDownloaderManager(context, gallery, start, end));
+    }
+
+    private static void enqueue(Context context, GalleryDownloaderManager manager) {
+        Context application = context.getApplicationContext();
+        DownloadTaskStore.execute(() -> {
+            int error = 0;
+            try {
+                if (DownloadQueue.add(manager)) startWork(application);
+                else error = com.theskyc.nreader.R.string.download_conflicting_task;
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to enqueue download", exception);
+                error = com.theskyc.nreader.R.string.download_error_storage;
+            }
+            if (error != 0) {
+                int message = error;
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                    android.widget.Toast.makeText(application, message, android.widget.Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    public static void loadDownloads(Context context) {
+        Context application = context.getApplicationContext();
+        DownloadTaskStore.execute(() -> {
+            try {
+                DownloadTaskStore.loadIntoQueue(application);
+                startWork(application);
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to restore download queue", exception);
+            }
+        });
+    }
+
+    public static void downloadRange(Context context, Gallery gallery, int start, int end) {
+        downloadGallery(context, gallery, start, end);
+    }
+
+    public static void repair(Context context, Gallery gallery, File folder, List<Integer> pages) {
+        GalleryDownloaderManager manager = new GalleryDownloaderManager(context, gallery, 0, gallery.getPageCount() - 1);
+        manager.downloader().configureRepair(folder, pages);
+        enqueue(context, manager);
+    }
+
+    public static void restart(Context context, GalleryDownloaderV2 downloader) {
+        Gallery gallery = downloader.getGallery();
+        if (downloader.isRepairTask()) {
+            GalleryDownloaderManager manager = gallery == null
+                ? new GalleryDownloaderManager(context, downloader.getPathTitle(), downloader.getThumbnail(), downloader.getId())
+                : new GalleryDownloaderManager(context, gallery, downloader.getStart(), downloader.getEnd());
+            manager.downloader().configureRepair(downloader.getRepairFolder(), downloader.getRepairPages());
+            enqueue(context, manager);
+            return;
+        }
+        if (gallery != null) {
+            downloadRange(context, gallery, downloader.getStart(), downloader.getEnd());
+        } else if (downloader.getId() > 0) {
+            downloadGallery(context, downloader.getPathTitle(), downloader.getThumbnail(), downloader.getId());
+        }
+    }
+
+    public static void restartAfterCancel(Context context, GalleryDownloaderV2 downloader) {
+        downloader.cancel(false, () -> restart(context, downloader));
+    }
+
+    public static void startWork(@Nullable Context context) {
+        if (context != null) {
+            WorkRequest DownloadGalleryWorkRequest = new OneTimeWorkRequest.Builder(DownloadGalleryV2.class).build();
+            WorkManager.getInstance(context).enqueue(DownloadGalleryWorkRequest);
+        }
+    }
+
+    @NonNull
+    @Override
+    public Result doWork() {
+        try {
+            lock.lockInterruptibly();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return Result.success();
+        }
+        try {
+            GalleryDownloaderManager entry = DownloadQueue.fetch();
+            while (entry != null && !isStopped()) {
+                LogUtility.d("Downloading: " + entry.downloader().getId());
+                currentDownload = entry.downloader();
+                if (isStopped()) break;
+                currentDownload.runDownload();
+                currentDownload = null;
+                entry = DownloadQueue.fetch();
+            }
+        } finally {
+            currentDownload = null;
+            lock.unlock();
+        }
+        return Result.success();
+    }
+
+
+
+}

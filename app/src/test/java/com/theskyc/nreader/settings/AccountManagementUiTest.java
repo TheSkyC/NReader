@@ -1,0 +1,787 @@
+package com.theskyc.nreader.settings;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Application;
+import android.content.Intent;
+import android.os.Looper;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.theskyc.nreader.AccountLoginActivity;
+import com.theskyc.nreader.AccountsActivity;
+import com.theskyc.nreader.ApiKeyActivity;
+import com.theskyc.nreader.MainActivity;
+import com.theskyc.nreader.R;
+import com.theskyc.nreader.async.database.DatabaseHelper;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
+import org.robolectric.android.controller.ActivityController;
+import org.robolectric.annotation.Config;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 28, application = Application.class)
+public class AccountManagementUiTest {
+    @Rule public final TemporaryFolder folder = new TemporaryFolder();
+    private Application application;
+    private AccountRepository repository;
+    private Field runtimeRepository;
+
+    @Before public void setUp() throws Exception {
+        application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        KeyGenerator generator = KeyGenerator.getInstance("AES");
+        generator.init(256);
+        SecretKey key = generator.generateKey();
+        repository = new AccountRepository(new AccountVault(new File(folder.getRoot(), "vault"), () -> key));
+        repository.open();
+        runtimeRepository = AccountRuntime.class.getDeclaredField("repository");
+        runtimeRepository.setAccessible(true);
+        runtimeRepository.set(null, repository);
+    }
+
+    @After public void tearDown() throws Exception {
+        application.getSharedPreferences("Settings", 0).edit()
+            .remove(application.getString(R.string.preference_key_auto_reauthenticate)).commit();
+        runtimeRepository.set(null, null);
+    }
+
+    private AccountVault.Account passwordAccount(String id, boolean rejected) {
+        long expiry = System.currentTimeMillis() + 600000;
+        return new AccountVault.Account(id, AccountVault.Type.PASSWORD, "Display name", "fixture-password", null,
+            "access", "refresh", expiry, expiry, rejected, 7, "login-name", null);
+    }
+
+    @Test public void automaticRecoveryRequiresOptInAndRejectsStaleAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        try (ActivityController<AccountsActivity> controller = Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity activity = controller.get();
+            assertFalse(com.theskyc.nreader.components.activities.AccountReauthCoordinator.maybeLaunch(activity));
+            application.getSharedPreferences("Settings", 0).edit()
+                .putBoolean(application.getString(R.string.preference_key_auto_reauthenticate), true).commit();
+            assertTrue(com.theskyc.nreader.components.activities.AccountReauthCoordinator.maybeLaunch(activity));
+            Intent recovery = Shadows.shadowOf(activity).getNextStartedActivity();
+            assertEquals("first", recovery.getStringExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID));
+            repository.select(null);
+            try (ActivityController<AccountLoginActivity> login =
+                     Robolectric.buildActivity(AccountLoginActivity.class, recovery).setup()) {
+                assertTrue(login.get().isFinishing());
+                assertNull(repository.snapshot().activeId);
+            }
+        }
+    }
+
+    @Test public void selectedExpiredAccountShowsBothCurrentAndRecoveryStates() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        try (ActivityController<AccountsActivity> controller = Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity activity = controller.get();
+            LinearLayout list = activity.findViewById(R.id.accounts_list);
+            assertEquals(1, list.getChildCount());
+            View row = list.getChildAt(0);
+            assertEquals("Display name", ((TextView) row.findViewById(R.id.account_name)).getText().toString());
+            String detail = ((TextView) row.findViewById(R.id.account_detail)).getText().toString();
+            assertTrue(detail.contains(activity.getString(R.string.accounts_needs_sign_in)));
+            assertEquals(View.VISIBLE, row.findViewById(R.id.account_current).getVisibility());
+            assertTrue(row.findViewById(R.id.account_select).getContentDescription().toString()
+                .contains(activity.getString(R.string.accounts_current)));
+        }
+    }
+
+    @Test public void commentDraftsFollowAccountAndRemovalDoesNotSelectAnotherAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        repository.putAccount(passwordAccount("second", false), repository.identityGeneration(), false);
+        application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        application.deleteDatabase("Entries.db");
+        okhttp3.OkHttpClient previous = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> new okhttp3.Response.Builder()
+            .request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(404).message("Not found")
+            .body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            com.theskyc.nreader.api.components.Gallery gallery = new com.theskyc.nreader.api.components.Gallery(application,
+                "{\"id\":117,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+                    + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+                    + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+            Intent intent = new Intent(application, com.theskyc.nreader.GalleryActivity.class)
+                .putExtra(application.getPackageName() + ".GALLERY", gallery);
+            try (ActivityController<com.theskyc.nreader.GalleryActivity> controller =
+                     Robolectric.buildActivity(com.theskyc.nreader.GalleryActivity.class, intent).setup()) {
+                com.theskyc.nreader.GalleryActivity activity = controller.get();
+                EditText input = activity.findViewById(R.id.comment_input);
+                input.setText("First account draft");
+                activity.findViewById(R.id.comment_identity).performClick();
+                androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
+                    org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(1), 1, 1);
+                assertEquals("", input.getText().toString());
+                input.setText("Second account draft");
+                assertEquals("first", repository.snapshot().activeId);
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(0), 0, 0);
+                assertEquals("First account draft", input.getText().toString());
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                dialog.getListView().performItemClick(dialog.getListView().getChildAt(1), 1, 1);
+                assertEquals("Second account draft", input.getText().toString());
+                Object composer = org.robolectric.util.ReflectionHelpers.getField(activity, "commentComposer");
+                org.robolectric.util.ReflectionHelpers.setField(composer, "busy", true);
+                org.robolectric.util.ReflectionHelpers.setField(composer, "dispatched", true);
+                org.robolectric.util.ReflectionHelpers.setField(composer, "operationAccount", "second");
+                controller.recreate();
+                activity = controller.get();
+                assertEquals(activity.getString(R.string.comment_unknown),
+                    ((TextView) activity.findViewById(R.id.comment_status)).getText().toString());
+                controller.recreate();
+                activity = controller.get();
+                input = activity.findViewById(R.id.comment_input);
+                assertEquals(activity.getString(R.string.comment_unknown),
+                    ((TextView) activity.findViewById(R.id.comment_status)).getText().toString());
+                assertEquals("Second account draft", input.getText().toString());
+                repository.remove("second");
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(View.GONE, input.getVisibility());
+                assertNull(application.getSharedPreferences("CommentIdentity", 0).getString("account", null));
+                assertEquals("first", repository.snapshot().activeId);
+            }
+        } finally {
+            Global.client = previous;
+            application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        }
+    }
+
+    @Test public void commentSignInExplainsRequirementAndOpensPasswordLogin() throws Exception {
+        application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        application.deleteDatabase("Entries.db");
+        okhttp3.OkHttpClient previous = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> new okhttp3.Response.Builder()
+            .request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(404).message("Not found")
+            .body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            com.theskyc.nreader.api.components.Gallery gallery = new com.theskyc.nreader.api.components.Gallery(application,
+                "{\"id\":117,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+                    + "\"cover\":{\"path\":\"galleries/1/cover.png\"},\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+                    + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+            Intent intent = new Intent(application, com.theskyc.nreader.GalleryActivity.class)
+                .putExtra(application.getPackageName() + ".GALLERY", gallery);
+            try (ActivityController<com.theskyc.nreader.GalleryActivity> controller =
+                     Robolectric.buildActivity(com.theskyc.nreader.GalleryActivity.class, intent).setup()) {
+                com.theskyc.nreader.GalleryActivity activity = controller.get();
+                assertEquals(View.GONE, activity.findViewById(R.id.comment_input).getVisibility());
+                activity.findViewById(R.id.comment_identity).performClick();
+                androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog)
+                    org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                assertEquals(activity.getString(R.string.comment_login_guest_message),
+                    ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                dialog.dismiss();
+                String key = "comment-api-fixture";
+                repository.putAndSelect(new AccountVault.Account(ApiAuthInterceptor.fingerprint(key),
+                    AccountVault.Type.API_KEY, "API account", null, key, null, null, 0, 0, false, 10),
+                    repository.identityGeneration());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                activity.findViewById(R.id.comment_identity).performClick();
+                dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+                assertEquals(activity.getString(R.string.comment_login_message),
+                    ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Intent login = Shadows.shadowOf(activity).getNextStartedActivityForResult().intent;
+                assertEquals(AccountLoginActivity.class.getName(), login.getComponent().getClassName());
+                assertTrue(login.getBooleanExtra(AccountLoginActivity.EXTRA_COMMENT_ACCOUNT, false));
+            }
+        } finally {
+            Global.client = previous;
+            application.getSharedPreferences("CommentIdentity", 0).edit().clear().apply();
+        }
+    }
+
+    @Test public void reauthenticationPrefillsOnlyTheSelectedAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            AccountLoginActivity activity = controller.get();
+            assertEquals("login-name", ((EditText) activity.findViewById(R.id.account_username)).getText().toString());
+            assertEquals("fixture-password", ((EditText) activity.findViewById(R.id.account_password)).getText().toString());
+            assertTrue(((CheckBox) activity.findViewById(R.id.account_remember_password)).isChecked());
+            assertEquals(View.GONE, activity.findViewById(R.id.account_sign_out).getVisibility());
+        }
+    }
+
+    @Test public void lateVaultLoadDoesNotOverwriteEditedCredentials() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            AccountLoginActivity activity = controller.get();
+            ((EditText) activity.findViewById(R.id.account_username)).setText("edited-login");
+            ((EditText) activity.findViewById(R.id.account_password)).setText("edited-password");
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("edited-login", ((EditText) activity.findViewById(R.id.account_username)).getText().toString());
+            assertEquals("edited-password", ((EditText) activity.findViewById(R.id.account_password)).getText().toString());
+            assertFalse(((CheckBox) activity.findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void lateVaultLoadPrefillsUntouchedForm() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("login-name", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("fixture-password", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+            assertTrue(((CheckBox) controller.get().findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void vaultLoadingAcrossRecreationStillPrefillsUntouchedForm() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("login-name", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("fixture-password", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+            assertTrue(((CheckBox) controller.get().findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void editedFormIsNotPrefilledAfterRecreationDuringVaultLoad() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.account_username)).setText("edited-login");
+            ((EditText) controller.get().findViewById(R.id.account_password)).setText("unsaved-password");
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("edited-login", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+            assertFalse(((CheckBox) controller.get().findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void recreatedReauthenticationDoesNotReplaceEditedPasswordWithSavedPassword() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            AccountLoginActivity activity = controller.get();
+            ((EditText) activity.findViewById(R.id.account_username)).setText("different-login");
+            ((EditText) activity.findViewById(R.id.account_password)).setText("unsaved-password");
+            ((CheckBox) activity.findViewById(R.id.account_remember_password)).setChecked(false);
+            controller.recreate();
+            activity = controller.get();
+            assertEquals("different-login", ((EditText) activity.findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) activity.findViewById(R.id.account_password)).getText().toString());
+            assertFalse(((CheckBox) activity.findViewById(R.id.account_remember_password)).isChecked());
+        }
+    }
+
+    @Test public void recreatedReauthenticationRetainsAnUnchangedRememberedPassword() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            controller.recreate();
+            assertEquals("fixture-password", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+        }
+    }
+
+    @Test public void recreatedReauthenticationDoesNotPairSavedPasswordWithEditedUsername() throws Exception {
+        repository.putAndSelect(passwordAccount("first", false), repository.identityGeneration());
+        Intent intent = new Intent(application, AccountLoginActivity.class)
+            .putExtra(AccountLoginActivity.EXTRA_ACCOUNT_ID, "first");
+        try (ActivityController<AccountLoginActivity> controller = Robolectric.buildActivity(AccountLoginActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.account_username)).setText("different-login");
+            controller.recreate();
+            assertEquals("different-login", ((EditText) controller.get().findViewById(R.id.account_username)).getText().toString());
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.account_password)).getText().toString());
+        }
+    }
+
+    @Test public void selectingAccountsAndGuestUpdatesTheList() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        repository.putAndSelect(passwordAccount("second", true), repository.identityGeneration());
+        try (ActivityController<AccountsActivity> controller = Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity activity = controller.get();
+            LinearLayout list = activity.findViewById(R.id.accounts_list);
+            list.getChildAt(0).findViewById(R.id.account_select).performClick();
+            awaitAccountOperations();
+            assertEquals("first", repository.snapshot().activeId);
+            assertEquals(View.VISIBLE, list.getChildAt(0).findViewById(R.id.account_current).getVisibility());
+            assertEquals(View.INVISIBLE, list.getChildAt(1).findViewById(R.id.account_current).getVisibility());
+
+            activity.findViewById(R.id.accounts_guest).performClick();
+            awaitAccountOperations();
+            assertNull(repository.snapshot().activeId);
+            assertEquals(2, list.getChildCount());
+            assertFalse(activity.findViewById(R.id.accounts_guest).isEnabled());
+            assertTrue(((TextView) activity.findViewById(R.id.accounts_guest)).getText().toString()
+                .contains(activity.getString(R.string.accounts_current)));
+
+            list.getChildAt(1).findViewById(R.id.account_select).performClick();
+            awaitAccountOperations();
+            assertEquals("second", repository.snapshot().activeId);
+            assertEquals(View.INVISIBLE, list.getChildAt(0).findViewById(R.id.account_current).getVisibility());
+            assertEquals(View.VISIBLE, list.getChildAt(1).findViewById(R.id.account_current).getVisibility());
+        }
+    }
+
+    private void awaitAccountOperations() throws InterruptedException {
+        CountDownLatch completed = new CountDownLatch(1);
+        AccountRuntime.execute(store -> completed.countDown(), error -> { });
+        assertTrue(completed.await(5, TimeUnit.SECONDS));
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    @Test public void profileLoadRetriesWhenReturningAfterFailure() throws Exception {
+        String key = "profile-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "", null, key,
+            null, null, 0, 0, false, 0), repository.identityGeneration());
+        Login.updateUser(null);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        java.util.concurrent.atomic.AtomicInteger profileCalls = new java.util.concurrent.atomic.AtomicInteger();
+        CountDownLatch failed = new CountDownLatch(1);
+        CountDownLatch retried = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            boolean profile = chain.request().url().encodedPath().endsWith("/user");
+            int call = profile ? profileCalls.incrementAndGet() : 0;
+            if (call == 1) failed.countDown();
+            if (call == 2) retried.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(call == 1 ? 503 : 200).message("fixture")
+                .body(okhttp3.ResponseBody.create(profile ? "{\"id\":42,\"username\":\"Profile\"}"
+                    : "{\"num_pages\":1,\"result\":[]}", null)).build();
+        }).build();
+        Global.client = client;
+        Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean originalFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+                assertTrue(failed.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                controller.pause().stop().restart().start().resume().visible();
+                assertTrue(retried.await(5, TimeUnit.SECONDS));
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!"Profile".equals(repository.snapshot().activeAccount().username) && System.nanoTime() < deadline)
+                    Thread.yield();
+                assertEquals("Profile", repository.snapshot().activeAccount().username);
+                controller.pause().stop().restart().start().resume().visible();
+                assertEquals(2, profileCalls.get());
+            }
+        } finally {
+            firstTime.setBoolean(null, originalFirstTime);
+            Global.client = originalClient;
+            Login.updateUser(null);
+        }
+    }
+
+    @Test public void drawerReflectsAccountSwitchAndGuestMode() throws Exception {
+        repository.putAndSelect(passwordAccount("first", true), repository.identityGeneration());
+        long expiry = System.currentTimeMillis() + 600000;
+        repository.putAndSelect(new AccountVault.Account("second", AccountVault.Type.PASSWORD, "Second user",
+            null, null, "access-two", "refresh-two", expiry, expiry, true, 8), repository.identityGeneration());
+        Field firstTime = MainActivity.class.getDeclaredField("firstTime");
+        firstTime.setAccessible(true);
+        boolean originalFirstTime = firstTime.getBoolean(null);
+        firstTime.setBoolean(null, false);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        Global.client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain ->
+            new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(503).message("fixture").body(okhttp3.ResponseBody.create("{}", null)).build()).build();
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+                MainActivity activity = controller.get();
+                TextView name = activity.findViewById(R.id.nav_account_name);
+                TextView action = activity.findViewById(R.id.nav_account_action);
+                assertEquals("Second user", name.getText().toString());
+                assertEquals(activity.getString(R.string.accounts_needs_sign_in), action.getText().toString());
+                repository.select("first");
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("Display name", name.getText().toString());
+                repository.select(null);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(activity.getString(R.string.accounts_guest), name.getText().toString());
+                assertEquals(activity.getString(R.string.accounts_add), action.getText().toString());
+                com.google.android.material.navigation.NavigationView navigation = activity.findViewById(R.id.nav_view);
+                navigation.getHeaderView(0).performClick();
+                assertEquals(AccountsActivity.class.getName(), Shadows.shadowOf(activity).getNextStartedActivity()
+                    .getComponent().getClassName());
+            }
+        } finally {
+            Global.client = originalClient;
+            firstTime.setBoolean(null, originalFirstTime);
+            Login.updateUser(null);
+        }
+    }
+
+    @Test public void addingApiKeyDoesNotPrefillOrOfferToRemoveExistingKey() throws Exception {
+        String key = "existing-key-fixture";
+        repository.putAndSelect(new AccountVault.Account(ApiAuthInterceptor.fingerprint(key), AccountVault.Type.API_KEY,
+            "Existing", null, key, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ApiKeyActivity activity = controller.get();
+            assertEquals("", ((EditText) activity.findViewById(R.id.api_key_input)).getText().toString());
+            assertEquals(View.GONE, activity.findViewById(R.id.clear_api_key).getVisibility());
+        }
+    }
+
+    @Test public void unsavedApiKeyIsNotRestoredAfterRecreation() {
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("unsaved-key-fixture");
+            controller.recreate();
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
+    @Test public void lateVaultLoadPrefillsUntouchedApiKeyForm() throws Exception {
+        String key = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, key, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            assertEquals(controller.get().getString(R.string.accounts_loading),
+                ((TextView) controller.get().findViewById(R.id.api_key_status_text)).getText().toString());
+            controller.recreate();
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(key, ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+            assertEquals(controller.get().getString(R.string.login_status_api_key_saved),
+                ((TextView) controller.get().findViewById(R.id.api_key_status_text)).getText().toString());
+        }
+    }
+
+    @Test public void lateVaultLoadDoesNotOverwriteEditedApiKey() throws Exception {
+        String key = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, key, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Field vaultField = AccountRepository.class.getDeclaredField("vault");
+        vaultField.setAccessible(true);
+        AccountRepository loading = new AccountRepository((AccountVault) vaultField.get(repository));
+        runtimeRepository.set(null, loading);
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("edited-key-fixture");
+            loading.open();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("edited-key-fixture", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
+    @Test public void returningToKeyRevalidationPreservesEditedKeyAndDoesNotRestoreItAfterRecreation() throws Exception {
+        String savedKey = "saved-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(savedKey);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Existing",
+            null, savedKey, null, null, 0, 0, false, 10), repository.identityGeneration());
+        Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            EditText input = controller.get().findViewById(R.id.api_key_input);
+            assertEquals(savedKey, input.getText().toString());
+            input.setText("replacement-key-fixture");
+            controller.pause().stop().restart().start().resume();
+            assertEquals("replacement-key-fixture", input.getText().toString());
+            controller.recreate();
+            assertEquals("", ((EditText) controller.get().findViewById(R.id.api_key_input)).getText().toString());
+        }
+    }
+
+    @Test public void validatedApiKeyIsAddedAndSelectedWithoutRemovingExistingAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        String newKey = "validated-key-fixture";
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch validated = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            boolean validation = chain.request().url().encodedPath().endsWith("/user");
+            if (validation) {
+                assertEquals("Key " + newKey, chain.request().header("Authorization"));
+                validated.countDown();
+            }
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(validation ? 200 : 503).message("fixture")
+                .body(okhttp3.ResponseBody.create(validation ? "{\"id\":42,\"username\":\"Verified\"}" : "{}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ((EditText) controller.get().findViewById(R.id.api_key_input)).setText(newKey);
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(validated.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                String newId = ApiAuthInterceptor.fingerprint(newKey);
+                while (!newId.equals(repository.snapshot().activeId) && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(newId, repository.snapshot().activeId);
+                assertEquals(2, repository.snapshot().accounts.size());
+                assertEquals(newKey, repository.snapshot().activeAccount().apiKey);
+                assertEquals(42, repository.snapshot().activeAccount().userId);
+                assertEquals("Verified", repository.snapshot().activeAccount().username);
+                assertEquals("existing", repository.snapshot().accounts.get(0).id);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(controller.get().isFinishing());
+            }
+        } finally {
+            Global.client = originalClient;
+            Login.updateUser(null);
+        }
+    }
+
+    @Test public void apiKeyRevalidationWaitsForMatchingProfileBeforeEnablingAccount() throws Exception {
+        String key = "rejected-key-fixture";
+        String id = ApiAuthInterceptor.fingerprint(key);
+        repository.putAndSelect(new AccountVault.Account(id, AccountVault.Type.API_KEY, "Original",
+            null, key, null, null, 0, 0, true, 42), repository.identityGeneration());
+        CountDownLatch requested = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            requested.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            }
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture")
+                .body(okhttp3.ResponseBody.create("{\"id\":43,\"username\":\"Other\"}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ACCOUNT_ID, id);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(requested.await(5, TimeUnit.SECONDS));
+                assertTrue(repository.snapshot().activeAccount().rejected);
+                release.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(repository.snapshot().activeAccount().rejected);
+                assertEquals(42, repository.snapshot().activeAccount().userId);
+                assertTrue(controller.get().findViewById(R.id.validate_api_key).isEnabled());
+                assertFalse(controller.get().isFinishing());
+            }
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
+        }
+    }
+
+    @Test public void rejectedApiKeyDoesNotChangeExistingAccountAndCanBeRetried() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch validated = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            validated.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(401).message("fixture").body(okhttp3.ResponseBody.create("{}", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ApiKeyActivity activity = controller.get();
+                ((EditText) activity.findViewById(R.id.api_key_input)).setText("invalid-key-fixture");
+                activity.findViewById(R.id.validate_api_key).performClick();
+                assertTrue(validated.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("existing", repository.snapshot().activeId);
+                assertEquals(1, repository.snapshot().accounts.size());
+                assertEquals("fixture-password", repository.snapshot().activeAccount().password);
+                assertTrue(activity.findViewById(R.id.validate_api_key).isEnabled());
+                assertFalse(activity.isFinishing());
+            }
+        } finally {
+            Global.client = originalClient;
+        }
+    }
+
+    @Test public void invalidSuccessfulApiResponseDoesNotAddAccount() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        okhttp3.OkHttpClient originalClient = Global.client;
+        CountDownLatch received = new CountDownLatch(1);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            received.countDown();
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(okhttp3.ResponseBody.create("<html>Login</html>", null)).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+                ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("invalid-response-key");
+                controller.get().findViewById(R.id.validate_api_key).performClick();
+                assertTrue(received.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+                assertEquals(0, client.dispatcher().runningCallsCount());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("existing", repository.snapshot().activeId);
+                assertEquals(1, repository.snapshot().accounts.size());
+                assertTrue(controller.get().findViewById(R.id.validate_api_key).isEnabled());
+            }
+        } finally {
+            Global.client = originalClient;
+        }
+    }
+
+    @Test public void leavingApiKeyPageCancelsPendingValidation() throws Exception {
+        String originalKey = "original-key-fixture";
+        String originalId = ApiAuthInterceptor.fingerprint(originalKey);
+        repository.putAndSelect(new AccountVault.Account(originalId, AccountVault.Type.API_KEY, "Original",
+            null, originalKey, null, null, 0, 0, false, 1), repository.identityGeneration());
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch returned = new CountDownLatch(1);
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            entered.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+                return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(okhttp3.ResponseBody.create("", null)).build();
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException(exception);
+            } finally {
+                returned.countDown();
+            }
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup();
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("new-key-fixture");
+            controller.get().findViewById(R.id.validate_api_key).performClick();
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            controller.pause().stop().destroy();
+            release.countDown();
+            assertTrue(returned.await(5, TimeUnit.SECONDS));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+            assertEquals(0, client.dispatcher().runningCallsCount());
+            assertEquals(originalId, repository.snapshot().activeId);
+            assertEquals(1, repository.snapshot().accounts.size());
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
+        }
+    }
+
+    @Test public void leavingApiKeyPageCancelsValidationWhileReadingResponse() throws Exception {
+        repository.putAndSelect(passwordAccount("existing", true), repository.identityGeneration());
+        CountDownLatch reading = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicReference<okhttp3.Call> pending = new java.util.concurrent.atomic.AtomicReference<>();
+        okhttp3.OkHttpClient originalClient = Global.client;
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder().addInterceptor(chain -> {
+            pending.set(chain.call());
+            okio.BufferedSource source = okio.Okio.buffer(new okio.ForwardingSource(
+                new okio.Buffer().writeUtf8("{\"id\":42,\"username\":\"Verified\"}")) {
+                @Override public long read(okio.Buffer sink, long count) throws java.io.IOException {
+                    reading.countDown();
+                    try {
+                        if (!release.await(5, TimeUnit.SECONDS)) throw new java.io.IOException("Timed out");
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new java.io.IOException(exception);
+                    }
+                    return super.read(sink, count);
+                }
+            });
+            okhttp3.ResponseBody body = new okhttp3.ResponseBody() {
+                @Override public okhttp3.MediaType contentType() { return null; }
+                @Override public long contentLength() { return -1; }
+                @Override public okio.BufferedSource source() { return source; }
+            };
+            return new okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200).message("fixture").body(body).build();
+        }).build();
+        Global.client = client;
+        try {
+            Intent intent = new Intent(application, ApiKeyActivity.class).putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+            ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup();
+            ((EditText) controller.get().findViewById(R.id.api_key_input)).setText("new-key-fixture");
+            controller.get().findViewById(R.id.validate_api_key).performClick();
+            assertTrue(reading.await(5, TimeUnit.SECONDS));
+            controller.pause().stop().destroy();
+            assertTrue(pending.get().isCanceled());
+            release.countDown();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (client.dispatcher().runningCallsCount() != 0 && System.nanoTime() < deadline) Thread.yield();
+            assertEquals(0, client.dispatcher().runningCallsCount());
+            assertEquals("existing", repository.snapshot().activeId);
+            assertEquals(1, repository.snapshot().accounts.size());
+        } finally {
+            release.countDown();
+            Global.client = originalClient;
+        }
+    }
+}

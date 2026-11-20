@@ -1,0 +1,18 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
+package com.theskyc.nreader.components.status;
+
+import android.graphics.Color;
+
+public class Status {
+    public final int color;
+    public final String name;
+
+    public Status(int color, String name) {
+        this.color = Color.argb(0x7f, Color.red(color), Color.green(color), Color.blue(color));
+        this.name = name;
+    }
+
+    public int opaqueColor() {
+        return color | 0xff000000;
+    }
+}

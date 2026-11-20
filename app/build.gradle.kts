@@ -138,7 +138,7 @@ android {
             enableSplit = false
         }
     }
-    namespace = "com.maxwai.nclientv3"
+    namespace = "com.theskyc.nreader"
     buildFeatures {
         buildConfig = true
         resValues = true
