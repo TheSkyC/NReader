@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Filter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -468,12 +469,43 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void loadDropdown(TagType type) {
-        List<Tag> allTags = Queries.TagTable.getAllTagOfType(type);
-        String[] tagNames = new String[allTags.size()];
-        int i = 0;
-        for (Tag t : allTags) tagNames[i++] = t.getName();
-        autoComplete.setAdapter(new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_dropdown_item_1line, tagNames));
+        autoComplete.setAdapter(new TagSuggestionAdapter(type));
         loadedTag = type;
+    }
+
+    private final class TagSuggestionAdapter extends ArrayAdapter<String> {
+        private final TagType type;
+        private final Filter filter = new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                FilterResults results = new FilterResults();
+                List<String> suggestions = constraint == null || constraint.length() == 0
+                    ? new ArrayList<>()
+                    : Queries.TagTable.getTagNameSuggestions(type, constraint.toString());
+                results.values = suggestions;
+                results.count = suggestions.size();
+                return results;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                clear();
+                if (results.values != null) addAll((List<String>) results.values);
+                if (results.count > 0) notifyDataSetChanged();
+                else notifyDataSetInvalidated();
+            }
+        };
+
+        TagSuggestionAdapter(TagType type) {
+            super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
+            this.type = type;
+        }
+
+        @Override
+        public Filter getFilter() {
+            return filter;
+        }
     }
 
     private void loadTag(TagType type) {

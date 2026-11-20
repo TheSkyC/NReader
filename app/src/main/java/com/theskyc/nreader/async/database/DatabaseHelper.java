@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 21;
+    private static final int DATABASE_VERSION = 22;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -89,6 +89,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Queries.setDb(db);
         if (oldVersion <= 20) upgradeTagStorage(db);
+        if (oldVersion <= 21) db.execSQL(Queries.TagTable.CREATE_SUGGESTION_INDEX);
         if (oldVersion == 2) insertLanguageTags();
         if (oldVersion <= 3) insertCategoryTags();
         if (oldVersion <= 4) db.execSQL(Queries.BookmarkTable.CREATE_TABLE);

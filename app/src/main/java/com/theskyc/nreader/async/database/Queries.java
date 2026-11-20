@@ -322,6 +322,9 @@ public class Queries {
             "`type` TINYINT(1) NOT NULL , " +
             "`count` INT NOT NULL," +
             "`provisional` INTEGER NOT NULL DEFAULT 0);";
+        static final String CREATE_SUGGESTION_INDEX = "CREATE INDEX IF NOT EXISTS Tags_type_name_suggestion_idx"
+            + " ON Tags (`type`, `name` COLLATE NOCASE, `idTag`)";
+        static final int SUGGESTION_LIMIT = 50;
         public static final String RULES_TABLE = "TagRules";
         static final String CREATE_RULES = "CREATE TABLE IF NOT EXISTS TagRules ("
             + "idTag INTEGER PRIMARY KEY CHECK (idTag > 0), name TEXT NOT NULL,"
@@ -348,6 +351,7 @@ public class Queries {
 
         static void createTables(SQLiteDatabase database) {
             database.execSQL(CREATE_TABLE);
+            database.execSQL(CREATE_SUGGESTION_INDEX);
             database.execSQL(CREATE_RULES);
             database.execSQL(CREATE_ACCOUNT_BLACKLIST);
         }
@@ -419,6 +423,24 @@ public class Queries {
         public static List<Tag> getAllTagOfType(TagType type) {
             String query = METADATA_SELECT + " WHERE t.type = ? AND t.count >= ?";
             return getTagsFromCursor(db.rawQuery(query, new String[]{"" + type.getId(), "" + TagV2.getMinCount()}));
+        }
+
+        public static List<String> getTagNameSuggestions(TagType type, String prefix) {
+            String escapedPrefix = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            String query = "SELECT name FROM Tags WHERE type = ? AND count >= ?"
+                + " AND name COLLATE NOCASE LIKE ? ESCAPE '\\'"
+                + " ORDER BY name COLLATE NOCASE, idTag LIMIT " + SUGGESTION_LIMIT;
+            try (Cursor cursor = db.rawQuery(query, new String[]{
+                Integer.toString(type.getId()), Integer.toString(TagV2.getMinCount()), escapedPrefix + "%"
+            })) {
+                List<String> names = new ArrayList<>(cursor.getCount());
+                if (cursor.moveToFirst()) {
+                    do {
+                        names.add(cursor.getString(0));
+                    } while (cursor.moveToNext());
+                }
+                return names;
+            }
         }
 
         /**
