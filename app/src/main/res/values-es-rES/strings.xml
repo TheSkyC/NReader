@@ -161,7 +161,7 @@
     <string name="update_download">Descargar actualización</string>
     <string name="update_install">Instalar actualización</string>
     <string name="update_cancel_download">Cancelar descarga</string>
-    <string name="update_remind_later">Recordármelo mañana</string>
+    <string name="update_remind_later">Recordármelo más tarde</string>
     <string name="update_skip_version">Omitir esta versión</string>
     <string name="update_no_release_notes">Esta versión no incluye notas de la versión.</string>
     <string name="update_notification_available">Actualización de NReader disponible</string>

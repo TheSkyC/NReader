@@ -2,7 +2,7 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="auto_reauthenticate_title">自動恢復登入</string>
-    <string name="auto_reauthenticate_summary">已儲存密碼的帳號過期時，在前景自動開始驗證。你可能需要手動完成驗證。</string>
+    <string name="auto_reauthenticate_summary">已儲存密碼的登入工作階段過期時，在前景自動開始驗證。你可能需要手動完成驗證。</string>
     <string name="comment_choose_account">登入後發表留言</string>
     <string name="comment_as">留言帳號：%1$s</string>
     <string name="comment_input_hint">寫下留言</string>
@@ -240,7 +240,7 @@
     <string name="github">GitHub</string>
     <string name="install">安裝</string>
     <string name="channel4_name">應用程式更新</string>
-    <string name="channel4_description">顯示應用程式更新的可用性、進度與結果。</string>
+    <string name="channel4_description">通知可用更新及更新進度與結果。</string>
     <string name="download_update_failed">無法下載新版本</string>
     <string name="application_update">應用程式更新</string>
     <string name="update_version_format_short" formatted="true">%1$s → %2$s</string>
@@ -255,7 +255,7 @@
     <string name="update_download">下載更新</string>
     <string name="update_install">安裝更新</string>
     <string name="update_cancel_download">取消下載</string>
-    <string name="update_remind_later">明天提醒我</string>
+    <string name="update_remind_later">稍後提醒我</string>
     <string name="update_skip_version">略過此版本</string>
     <string name="update_no_release_notes">此版本沒有更新說明。</string>
     <string name="update_notification_available">NReader 有可用更新</string>
@@ -511,10 +511,10 @@
     <string name="online_blacklist_search_without">不使用線上標籤搜尋</string>
     <string name="online_blacklist_sign_in_required">請重新登入或檢查 API 金鑰，然後重新整理線上封鎖清單。</string>
     <string name="update_queued">等待下載…</string>
-    <string name="reader_auto_scroll">自動滾動</string>
-    <string name="reader_auto_scroll_start">開始自動滾動</string>
-    <string name="reader_auto_scroll_stop">停止自動滾動</string>
-    <string name="reader_auto_scroll_speed">自動滾動速度</string>
+    <string name="reader_auto_scroll">自動捲動</string>
+    <string name="reader_auto_scroll_start">開始自動捲動</string>
+    <string name="reader_auto_scroll_stop">停止自動捲動</string>
+    <string name="reader_auto_scroll_speed">自動捲動速度</string>
     <string name="reader_auto_scroll_slow">慢</string>
     <string name="reader_auto_scroll_medium">中</string>
     <string name="reader_auto_scroll_fast">快</string>

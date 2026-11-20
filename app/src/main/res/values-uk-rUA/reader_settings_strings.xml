@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Налаштування читання</string>
     <string name="reader_continuous_vertical">Безперервне вертикальне прокручування</string>
-    <string name="reader_continuous_summary">Безперервне читання запам’ятовує позицію. Масштабування доступне в посторінковому режимі.</string>
+    <string name="reader_continuous_summary">Безперервне читання зберігає позицію. Для масштабування використовуйте два пальці або подвійний дотик.</string>
     <string name="reader_background_title">Фон</string>
     <string name="reader_background_auto">Автоматично</string>
     <string name="reader_background_black">Чорний</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">Дві сторінки</string>
     <string name="reader_spread_auto">Автоматично</string>
     <string name="reader_spread_summary">Автоматично використовує дві сторінки в альбомній орієнтації та одну в книжковій.</string>
-    <string name="reader_end_title">Галерею завершено</string>
+    <string name="reader_end_title">Кінець галереї</string>
     <string name="reader_end_message">Ви досягли останньої сторінки.</string>
     <string name="reader_end_restart">Читати знову</string>
     <string name="reader_end_close">Назад</string>
@@ -41,10 +41,10 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Закладки сторінок</string>
     <string name="reader_bookmarks_empty">Закладок ще немає.</string>
-    <string name="reader_bookmarks_unavailable">Для закладок потрібна збережена галерея.</string>
+    <string name="reader_bookmarks_unavailable">Закладки сторінок недоступні для цієї галереї.</string>
     <string name="reader_bookmark_add">Додати закладку</string>
     <string name="reader_bookmark_title_hint">Назва закладки</string>
-    <string name="reader_bookmark_note_hint">Нотатка (необов язково)</string>
+    <string name="reader_bookmark_note_hint">Нотатка (необов’язково)</string>
     <string name="reader_bookmark_default_title">Сторінка %1$d</string>
     <string name="reader_bookmark_delete">Видалити</string>
     <string name="reader_preset_title">Пресети читання</string>

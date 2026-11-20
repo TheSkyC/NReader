@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">إعدادات القراءة</string>
     <string name="reader_continuous_vertical">تمرير عمودي متواصل</string>
-    <string name="reader_continuous_summary">تحفظ القراءة المتواصلة موضعك. يتوفر التكبير في وضع الصفحات.</string>
+    <string name="reader_continuous_summary">تحفظ القراءة المتواصلة موضعك. قرّب أو باعد بإصبعين أو اضغط مرتين للتكبير.</string>
     <string name="reader_background_title">الخلفية</string>
     <string name="reader_background_auto">تلقائي</string>
     <string name="reader_background_black">أسود</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">صفحتان</string>
     <string name="reader_spread_auto">تلقائي</string>
     <string name="reader_spread_summary">يستخدم التلقائي صفحتين في الوضع الأفقي وصفحة واحدة في الوضع الرأسي.</string>
-    <string name="reader_end_title">اكتمل المعرض</string>
+    <string name="reader_end_title">نهاية المعرض</string>
     <string name="reader_end_message">لقد وصلت إلى الصفحة الأخيرة.</string>
     <string name="reader_end_restart">اقرأ مجددًا</string>
     <string name="reader_end_close">عودة</string>
@@ -37,11 +37,11 @@
     <string name="reader_brightness">السطوع</string>
     <string name="reader_contrast">التباين</string>
     <string name="reader_saturation">التشبع</string>
-    <string name="reader_adjustments_summary">تؤثر الضبطات على العرض فقط، ولا تغيّر النسخ الأصلية المحفوظة أو المشتركة.</string>
+    <string name="reader_adjustments_summary">تؤثر التعديلات على العرض فقط، ولا تغيّر النسخ الأصلية المحفوظة أو المشتركة.</string>
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">إشارات الصفحات</string>
     <string name="reader_bookmarks_empty">لا توجد إشارات صفحات بعد.</string>
-    <string name="reader_bookmarks_unavailable">تتطلب الإشارات معرضًا محفوظًا.</string>
+    <string name="reader_bookmarks_unavailable">إشارات الصفحات غير متاحة لهذا المعرض.</string>
     <string name="reader_bookmark_add">إضافة إشارة</string>
     <string name="reader_bookmark_title_hint">عنوان الإشارة</string>
     <string name="reader_bookmark_note_hint">ملاحظة (اختياري)</string>

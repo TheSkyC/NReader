@@ -161,7 +161,7 @@
     <string name="update_download">アップデートをダウンロード</string>
     <string name="update_install">アップデートをインストール</string>
     <string name="update_cancel_download">ダウンロードをキャンセル</string>
-    <string name="update_remind_later">明日通知する</string>
+    <string name="update_remind_later">後で通知する</string>
     <string name="update_skip_version">このバージョンをスキップ</string>
     <string name="update_no_release_notes">このリリースにはリリースノートがありません。</string>
     <string name="update_notification_available">NReaderのアップデートがあります</string>

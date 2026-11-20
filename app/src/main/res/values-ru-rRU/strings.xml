@@ -161,7 +161,7 @@
     <string name="update_download">Загрузить обновление</string>
     <string name="update_install">Установить обновление</string>
     <string name="update_cancel_download">Отменить загрузку</string>
-    <string name="update_remind_later">Напомнить завтра</string>
+    <string name="update_remind_later">Напомнить позже</string>
     <string name="update_skip_version">Пропустить эту версию</string>
     <string name="update_no_release_notes">В этой версии нет примечаний к выпуску.</string>
     <string name="update_notification_available">Доступно обновление NReader</string>

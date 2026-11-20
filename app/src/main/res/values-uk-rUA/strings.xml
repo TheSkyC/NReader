@@ -161,7 +161,7 @@
     <string name="update_download">Завантажити оновлення</string>
     <string name="update_install">Встановити оновлення</string>
     <string name="update_cancel_download">Скасувати завантаження</string>
-    <string name="update_remind_later">Нагадати завтра</string>
+    <string name="update_remind_later">Нагадати пізніше</string>
     <string name="update_skip_version">Пропустити цю версію</string>
     <string name="update_no_release_notes">Цей випуск не містить приміток.</string>
     <string name="update_notification_available">Доступне оновлення NReader</string>

@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Настройки чтения</string>
     <string name="reader_continuous_vertical">Непрерывная вертикальная прокрутка</string>
-    <string name="reader_continuous_summary">Непрерывное чтение запоминает позицию. Масштабирование доступно в постраничном режиме.</string>
+    <string name="reader_continuous_summary">Непрерывное чтение сохраняет позицию. Для масштабирования используйте два пальца или двойное нажатие.</string>
     <string name="reader_background_title">Фон</string>
     <string name="reader_background_auto">Авто</string>
     <string name="reader_background_black">Чёрный</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">Две страницы</string>
     <string name="reader_spread_auto">Авто</string>
     <string name="reader_spread_summary">Авто использует две страницы в альбомной ориентации и одну в книжной.</string>
-    <string name="reader_end_title">Галерея завершена</string>
+    <string name="reader_end_title">Конец галереи</string>
     <string name="reader_end_message">Вы достигли последней страницы.</string>
     <string name="reader_end_restart">Читать снова</string>
     <string name="reader_end_close">Назад</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Закладки страниц</string>
     <string name="reader_bookmarks_empty">Закладок пока нет.</string>
-    <string name="reader_bookmarks_unavailable">Для закладок нужна сохранённая галерея.</string>
+    <string name="reader_bookmarks_unavailable">Закладки страниц недоступны для этой галереи.</string>
     <string name="reader_bookmark_add">Добавить закладку</string>
     <string name="reader_bookmark_title_hint">Название закладки</string>
     <string name="reader_bookmark_note_hint">Заметка (необязательно)</string>
@@ -54,7 +54,7 @@
     <string name="reader_jump_saved_position">Перейти к сохранённому прогрессу</string>
     <string name="reader_orientation_title">Ориентация экрана</string>
     <string name="reader_orientation_system">Как в системе</string>
-    <string name="reader_orientation_portrait">Зафиксировать портретную</string>
+    <string name="reader_orientation_portrait">Зафиксировать книжную</string>
     <string name="reader_orientation_landscape">Зафиксировать альбомную</string>
     <string name="reader_tap_action_title">Действие при нажатии</string>
     <string name="reader_tap_action_edge">Листать у краёв экрана</string>

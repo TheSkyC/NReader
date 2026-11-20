@@ -2,7 +2,7 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="auto_reauthenticate_title">Ripristina automaticamente l’accesso</string>
-    <string name="auto_reauthenticate_summary">Quando scade una sessione con password salvata, avvia la verifica in primo piano. Potresti doverla completare.</string>
+    <string name="auto_reauthenticate_summary">Quando scade una sessione con password salvata, la verifica viene avviata in primo piano. Potresti doverla completare.</string>
     <string name="gallery_loading_details">Caricamento dei dettagli della galleria</string>
     <string name="setting_on_ignore_tags">Non verranno aggiunti ulteriori tag quando un tag è scelto da una galleria (tranne la lingua)</string>
     <string name="setting_off_ignore_tags">Verranno aggiunti ulteriori tag quando un tag è scelto da una galleria (tranne la lingua)</string>
@@ -155,13 +155,13 @@
     <string name="update_available">Aggiornamento disponibile</string>
     <string name="update_downloading">Download dell’aggiornamento…</string>
     <string name="update_ready_to_install">Aggiornamento pronto per l’installazione</string>
-    <string name="update_installing">Apertura dell’installazione di sistema…</string>
+    <string name="update_installing">Apertura del programma di installazione di sistema…</string>
     <string name="update_error">Impossibile completare l’aggiornamento</string>
     <string name="update_retry">Riprova</string>
     <string name="update_download">Scarica aggiornamento</string>
     <string name="update_install">Installa aggiornamento</string>
     <string name="update_cancel_download">Annulla download</string>
-    <string name="update_remind_later">Ricordamelo domani</string>
+    <string name="update_remind_later">Ricordamelo più tardi</string>
     <string name="update_skip_version">Ignora questa versione</string>
     <string name="update_no_release_notes">Questa versione non include note di rilascio.</string>
     <string name="update_notification_available">Aggiornamento NReader disponibile</string>
@@ -178,7 +178,7 @@
     <string name="update_last_checked_format" formatted="true">Ultimo controllo: %s</string>
     <string name="update_last_checked_never">Ultimo controllo: Mai</string>
     <string name="update_error_metadata">Non è stato possibile verificare le informazioni sulla versione. Controlla la connessione e riprova.</string>
-    <string name="update_error_download">Il download dell’aggiornamento è stato interrotto o incompleto. Riprova.</string>
+    <string name="update_error_download">Il download dell’aggiornamento è stato interrotto o è incompleto. Riprova.</string>
     <string name="update_error_missing_file">L’aggiornamento scaricato non è più disponibile. Scaricalo di nuovo.</string>
     <string name="update_error_install_validation">Il pacchetto di aggiornamento non ha superato la convalida. Scaricalo di nuovo dalla fonte configurata.</string>
     <string name="update_error_retry_hint">Non è stato possibile completare l’aggiornamento. Controlla la connessione e riprova.</string>

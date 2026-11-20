@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Okuma ayarları</string>
     <string name="reader_continuous_vertical">Sürekli dikey kaydırma</string>
-    <string name="reader_continuous_summary">Sürekli okuma konumunuzu hatırlar. Yakınlaştırma sayfalı modda kullanılabilir.</string>
+    <string name="reader_continuous_summary">Sürekli okuma konumunuzu hatırlar. Yakınlaştırmak için iki parmağınızı kullanın veya çift dokunun.</string>
     <string name="reader_background_title">Arka plan</string>
     <string name="reader_background_auto">Otomatik</string>
     <string name="reader_background_black">Siyah</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">İki sayfa</string>
     <string name="reader_spread_auto">Otomatik</string>
     <string name="reader_spread_summary">Otomatik, yatayda iki sayfa ve dikeyde tek sayfa kullanır.</string>
-    <string name="reader_end_title">Galeri tamamlandı</string>
+    <string name="reader_end_title">Galerinin sonu</string>
     <string name="reader_end_message">Son sayfaya ulaştınız.</string>
     <string name="reader_end_restart">Yeniden oku</string>
     <string name="reader_end_close">Geri dön</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Sayfa yer imleri</string>
     <string name="reader_bookmarks_empty">Henüz sayfa yer imi yok.</string>
-    <string name="reader_bookmarks_unavailable">Yer imleri kayıtlı bir galeri gerektirir.</string>
+    <string name="reader_bookmarks_unavailable">Bu galeri için sayfa yer imleri kullanılamıyor.</string>
     <string name="reader_bookmark_add">Yer imi ekle</string>
     <string name="reader_bookmark_title_hint">Yer imi başlığı</string>
     <string name="reader_bookmark_note_hint">Not (isteğe bağlı)</string>
@@ -60,5 +60,5 @@
     <string name="reader_tap_action_edge">Ekran kenarlarında sayfa çevir</string>
     <string name="reader_tap_action_controls">Denetimleri göster veya gizle</string>
     <string name="reader_tap_action_none">Eylem yok</string>
-    <string name="reader_bookmark_delete_page">%1$d. sayfanın yer işaretini sil</string>
+    <string name="reader_bookmark_delete_page">%1$d. sayfanın yer imini sil</string>
 </resources>

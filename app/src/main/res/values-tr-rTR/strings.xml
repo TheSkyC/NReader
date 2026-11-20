@@ -2,7 +2,7 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="auto_reauthenticate_title">Oturumu otomatik olarak geri yükle</string>
-    <string name="auto_reauthenticate_summary">Kayıtlı parolası olan oturumun süresi dolduğunda doğrulamayı ön planda başlat. Doğrulamayı tamamlaman gerekebilir.</string>
+    <string name="auto_reauthenticate_summary">Kayıtlı parolası olan oturumun süresi dolduğunda doğrulama ön planda başlar. Tamamlamanız gerekebilir.</string>
     <string name="gallery_loading_details">Galeri ayrıntıları yükleniyor</string>
     <string name="setting_on_ignore_tags">Diğer etiketler galeri menüsünden bir etiket seçildiğinde listelenmeyecek (dil hariç)</string>
     <string name="setting_off_ignore_tags">Diğer etiketler galeri menüsünden bir etiket seçildiğinde listelenecek</string>
@@ -161,7 +161,7 @@
     <string name="update_download">Güncellemeyi indir</string>
     <string name="update_install">Güncellemeyi yükle</string>
     <string name="update_cancel_download">İndirmeyi iptal et</string>
-    <string name="update_remind_later">Yarın hatırlat</string>
+    <string name="update_remind_later">Daha sonra hatırlat</string>
     <string name="update_skip_version">Bu sürümü atla</string>
     <string name="update_no_release_notes">Bu sürüm sürüm notu içermiyor.</string>
     <string name="update_notification_available">NReader güncellemesi mevcut</string>

@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">阅读设置</string>
     <string name="reader_continuous_vertical">纵向连续滚动</string>
-    <string name="reader_continuous_summary">连续阅读会记录页内位置。缩放可在分页模式下使用。</string>
+    <string name="reader_continuous_summary">连续阅读会记录页内位置。双指缩放或双击即可调整大小。</string>
     <string name="reader_background_title">背景</string>
     <string name="reader_background_auto">自动</string>
     <string name="reader_background_black">黑色</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">双页</string>
     <string name="reader_spread_auto">自动</string>
     <string name="reader_spread_summary">自动模式在横屏使用双页，竖屏使用单页。</string>
-    <string name="reader_end_title">画廊已读完</string>
+    <string name="reader_end_title">画廊末尾</string>
     <string name="reader_end_message">你已到达最后一页。</string>
     <string name="reader_end_restart">从头再读</string>
     <string name="reader_end_close">返回</string>
@@ -32,7 +32,7 @@
     <string name="reader_filter_invert">反色</string>
     <string name="reader_filter_sepia">棕褐色</string>
     <string name="reader_auto_crop_title">自动裁剪白边</string>
-    <string name="reader_auto_crop_summary">仅裁剪显示中的纯白边缘，原文件和导出内容不变。</string>
+    <string name="reader_auto_crop_summary">仅在显示时裁剪白色边缘，原文件和导出内容不变。</string>
     <string name="reader_adjustments_title">图像调节</string>
     <string name="reader_brightness">亮度</string>
     <string name="reader_contrast">对比度</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">页面书签</string>
     <string name="reader_bookmarks_empty">还没有页面书签。</string>
-    <string name="reader_bookmarks_unavailable">保存后的作品才支持书签。</string>
+    <string name="reader_bookmarks_unavailable">此画廊无法使用页面书签。</string>
     <string name="reader_bookmark_add">添加书签</string>
     <string name="reader_bookmark_title_hint">书签标题</string>
     <string name="reader_bookmark_note_hint">备注（可选）</string>
@@ -50,14 +50,14 @@
     <string name="reader_preset_title">阅读预设</string>
     <string name="reader_preset_default">默认</string>
     <string name="reader_preset_night">夜间</string>
-    <string name="reader_preset_scan">扫描修复</string>
+    <string name="reader_preset_scan">扫描件优化</string>
     <string name="reader_jump_saved_position">跳转到已保存进度</string>
     <string name="reader_orientation_title">屏幕方向</string>
     <string name="reader_orientation_system">跟随系统</string>
     <string name="reader_orientation_portrait">锁定竖屏</string>
     <string name="reader_orientation_landscape">锁定横屏</string>
-    <string name="reader_tap_action_title">点击行为</string>
-    <string name="reader_tap_action_edge">点击屏幕边缘翻页</string>
+    <string name="reader_tap_action_title">点按操作</string>
+    <string name="reader_tap_action_edge">点按屏幕边缘翻页</string>
     <string name="reader_tap_action_controls">显示或隐藏控件</string>
     <string name="reader_tap_action_none">无操作</string>
     <string name="reader_bookmark_delete_page">删除第 %1$d 页的书签</string>

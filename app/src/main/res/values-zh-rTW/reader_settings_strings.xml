@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">閱讀設定</string>
     <string name="reader_continuous_vertical">縱向連續捲動</string>
-    <string name="reader_continuous_summary">連續閱讀會記錄頁內位置。縮放可在分頁模式下使用。</string>
+    <string name="reader_continuous_summary">連續閱讀會記錄頁內位置。以雙指縮放或點兩下即可調整大小。</string>
     <string name="reader_background_title">背景</string>
     <string name="reader_background_auto">自動</string>
     <string name="reader_background_black">黑色</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">雙頁</string>
     <string name="reader_spread_auto">自動</string>
     <string name="reader_spread_summary">自動模式在橫向使用雙頁，直向使用單頁。</string>
-    <string name="reader_end_title">畫廊已讀完</string>
+    <string name="reader_end_title">圖庫末尾</string>
     <string name="reader_end_message">你已到達最後一頁。</string>
     <string name="reader_end_restart">從頭再讀</string>
     <string name="reader_end_close">返回</string>
@@ -32,7 +32,7 @@
     <string name="reader_filter_invert">反色</string>
     <string name="reader_filter_sepia">棕褐色</string>
     <string name="reader_auto_crop_title">自動裁剪白邊</string>
-    <string name="reader_auto_crop_summary">只裁剪顯示中的純白邊緣，原始檔案和匯出內容不變。</string>
+    <string name="reader_auto_crop_summary">僅在顯示時裁剪白色邊緣，原始檔案和匯出內容不變。</string>
     <string name="reader_adjustments_title">影像調整</string>
     <string name="reader_brightness">亮度</string>
     <string name="reader_contrast">對比度</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">頁面書籤</string>
     <string name="reader_bookmarks_empty">尚無頁面書籤。</string>
-    <string name="reader_bookmarks_unavailable">儲存後的作品才支援書籤。</string>
+    <string name="reader_bookmarks_unavailable">此圖庫無法使用頁面書籤。</string>
     <string name="reader_bookmark_add">新增書籤</string>
     <string name="reader_bookmark_title_hint">書籤標題</string>
     <string name="reader_bookmark_note_hint">備註（選填）</string>
@@ -50,7 +50,7 @@
     <string name="reader_preset_title">閱讀預設</string>
     <string name="reader_preset_default">預設</string>
     <string name="reader_preset_night">夜間</string>
-    <string name="reader_preset_scan">掃描修復</string>
+    <string name="reader_preset_scan">掃描影像優化</string>
     <string name="reader_jump_saved_position">跳轉到已儲存進度</string>
     <string name="reader_orientation_title">螢幕方向</string>
     <string name="reader_orientation_system">跟隨系統</string>

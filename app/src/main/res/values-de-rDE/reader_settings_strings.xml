@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Leseeinstellungen</string>
     <string name="reader_continuous_vertical">Vertikal fortlaufend</string>
-    <string name="reader_continuous_summary">Fortlaufendes Lesen merkt sich die Position. Zoom ist im Seitenmodus verfügbar.</string>
+    <string name="reader_continuous_summary">Fortlaufendes Lesen merkt sich die Position. Zum Zoomen zwei Finger verwenden oder doppelt tippen.</string>
     <string name="reader_background_title">Hintergrund</string>
     <string name="reader_background_auto">Automatisch</string>
     <string name="reader_background_black">Schwarz</string>
@@ -21,8 +21,8 @@
     <string name="reader_spread_single">Einzelne Seite</string>
     <string name="reader_spread_double">Doppelseite</string>
     <string name="reader_spread_auto">Automatisch</string>
-    <string name="reader_spread_summary">Automatisch nutzt im Querformat Doppelseiten und im Hochformat Einzelne.</string>
-    <string name="reader_end_title">Galerie abgeschlossen</string>
+    <string name="reader_spread_summary">Im Querformat werden automatisch Doppelseiten und im Hochformat Einzelseiten angezeigt.</string>
+    <string name="reader_end_title">Ende der Galerie</string>
     <string name="reader_end_message">Du hast die letzte Seite erreicht.</string>
     <string name="reader_end_restart">Erneut lesen</string>
     <string name="reader_end_close">Zurück</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Seitenlesezeichen</string>
     <string name="reader_bookmarks_empty">Noch keine Seitenlesezeichen.</string>
-    <string name="reader_bookmarks_unavailable">Lesezeichen benötigen eine gespeicherte Galerie.</string>
+    <string name="reader_bookmarks_unavailable">Seitenlesezeichen sind für diese Galerie nicht verfügbar.</string>
     <string name="reader_bookmark_add">Lesezeichen hinzufügen</string>
     <string name="reader_bookmark_title_hint">Titel des Lesezeichens</string>
     <string name="reader_bookmark_note_hint">Notiz (optional)</string>
@@ -54,8 +54,8 @@
     <string name="reader_jump_saved_position">Zu gespeichertem Fortschritt springen</string>
     <string name="reader_orientation_title">Bildschirmausrichtung</string>
     <string name="reader_orientation_system">Systemeinstellung</string>
-    <string name="reader_orientation_portrait">Hochformat sperren</string>
-    <string name="reader_orientation_landscape">Querformat sperren</string>
+    <string name="reader_orientation_portrait">Auf Hochformat fixieren</string>
+    <string name="reader_orientation_landscape">Auf Querformat fixieren</string>
     <string name="reader_tap_action_title">Tippverhalten</string>
     <string name="reader_tap_action_edge">An den Bildschirmrändern blättern</string>
     <string name="reader_tap_action_controls">Steuerelemente ein- oder ausblenden</string>

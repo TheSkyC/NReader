@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Configurações de leitura</string>
     <string name="reader_continuous_vertical">Rolagem vertical contínua</string>
-    <string name="reader_continuous_summary">A leitura contínua lembra sua posição. O zoom está disponível no modo de páginas.</string>
+    <string name="reader_continuous_summary">A leitura contínua lembra sua posição. Use dois dedos ou toque duas vezes para ampliar.</string>
     <string name="reader_background_title">Fundo</string>
     <string name="reader_background_auto">Automático</string>
     <string name="reader_background_black">Preto</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">Duas páginas</string>
     <string name="reader_spread_auto">Automático</string>
     <string name="reader_spread_summary">O modo automático usa duas páginas no modo paisagem e uma no retrato.</string>
-    <string name="reader_end_title">Galeria concluída</string>
+    <string name="reader_end_title">Fim da galeria</string>
     <string name="reader_end_message">Você chegou à última página.</string>
     <string name="reader_end_restart">Ler novamente</string>
     <string name="reader_end_close">Voltar</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Marcadores de página</string>
     <string name="reader_bookmarks_empty">Nenhum marcador ainda.</string>
-    <string name="reader_bookmarks_unavailable">Os marcadores exigem uma galeria salva.</string>
+    <string name="reader_bookmarks_unavailable">Os marcadores de página não estão disponíveis para esta galeria.</string>
     <string name="reader_bookmark_add">Adicionar marcador</string>
     <string name="reader_bookmark_title_hint">Título do marcador</string>
     <string name="reader_bookmark_note_hint">Nota (opcional)</string>
@@ -50,14 +50,14 @@
     <string name="reader_preset_title">Predefinições de leitura</string>
     <string name="reader_preset_default">Padrão</string>
     <string name="reader_preset_night">Noturno</string>
-    <string name="reader_preset_scan">Melhorar digitalização</string>
+    <string name="reader_preset_scan">Melhorar imagem digitalizada</string>
     <string name="reader_jump_saved_position">Ir para o progresso salvo</string>
     <string name="reader_orientation_title">Orientação da tela</string>
     <string name="reader_orientation_system">Seguir sistema</string>
-    <string name="reader_orientation_portrait">Bloquear retrato</string>
-    <string name="reader_orientation_landscape">Bloquear paisagem</string>
+    <string name="reader_orientation_portrait">Fixar em retrato</string>
+    <string name="reader_orientation_landscape">Fixar em paisagem</string>
     <string name="reader_tap_action_title">Comportamento do toque</string>
-    <string name="reader_tap_action_edge">Virar nas bordas da tela</string>
+    <string name="reader_tap_action_edge">Virar páginas nas bordas da tela</string>
     <string name="reader_tap_action_controls">Mostrar ou ocultar controles</string>
     <string name="reader_tap_action_none">Nenhuma ação</string>
     <string name="reader_bookmark_delete_page">Excluir marcador da página %1$d</string>

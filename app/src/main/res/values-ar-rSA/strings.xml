@@ -2,7 +2,7 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
     <string name="auto_reauthenticate_title">استعادة تسجيل الدخول تلقائيًا</string>
-    <string name="auto_reauthenticate_summary">عند انتهاء جلسة حساب ذي كلمة مرور محفوظة، يبدأ التحقق عند فتح التطبيق. قد تحتاج إلى إكماله.</string>
+    <string name="auto_reauthenticate_summary">عند انتهاء جلسة حساب ذي كلمة مرور محفوظة، يبدأ التحقق أثناء استخدام التطبيق. قد تحتاج إلى إكماله.</string>
     <string name="gallery_loading_details">جارٍ تحميل تفاصيل المعرض</string>
     <string name="setting_on_ignore_tags">لن يُستعلم عن الوسوم الأخرى إذا اختير وسام من قائمة الأعمال (باستثناء اللغة)</string>
     <string name="setting_off_ignore_tags">سيُستعلم عن الوسوم الأخرى إذا اختير وسام من قائمة الأعمال</string>
@@ -161,7 +161,7 @@
     <string name="update_download">تنزيل التحديث</string>
     <string name="update_install">تثبيت التحديث</string>
     <string name="update_cancel_download">إلغاء التنزيل</string>
-    <string name="update_remind_later">ذكّرني غدًا</string>
+    <string name="update_remind_later">ذكّرني لاحقًا</string>
     <string name="update_skip_version">تخطَّ هذا الإصدار</string>
     <string name="update_no_release_notes">لا تتضمن هذه النسخة ملاحظات إصدار.</string>
     <string name="update_notification_available">يتوفر تحديث لـ NReader</string>
@@ -435,7 +435,7 @@
     <string name="account_enter_username">أدخل اسم المستخدم أو البريد الإلكتروني الخاص بك.</string>
     <string name="account_enter_password">أدخل كلمة المرور الخاصة بك.</string>
     <string name="account_preparing_verification">جارٍ تحضير التحقق…</string>
-    <string name="account_signing_in">تسجيل الدخول...</string>
+    <string name="account_signing_in">تسجيل الدخول…</string>
     <string name="account_verification_error">لم يكتمل التحقق. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="account_login_error">لا يمكن إكمال تسجيل الدخول. تحقق من التفاصيل الخاصة بك وحاول مرة أخرى.</string>
     <string name="account_identity_unconfirmed">لا يمكن التأكد من أن هذا هو الحساب المحدد. التحقق من تفاصيل الحساب، أو إزالته وإضافته مرة أخرى.</string>

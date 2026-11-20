@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">Impostazioni di lettura</string>
     <string name="reader_continuous_vertical">Scorrimento verticale continuo</string>
-    <string name="reader_continuous_summary">La lettura continua ricorda la posizione. Lo zoom è disponibile nella modalità a pagine.</string>
+    <string name="reader_continuous_summary">La lettura continua ricorda la posizione. Pizzica o tocca due volte per ingrandire.</string>
     <string name="reader_background_title">Sfondo</string>
     <string name="reader_background_auto">Automatico</string>
     <string name="reader_background_black">Nero</string>
@@ -12,7 +12,7 @@
     <string name="reader_scale_smart">Intelligente</string>
     <string name="reader_scale_screen">Adatta allo schermo</string>
     <string name="reader_scale_width">Adatta alla larghezza</string>
-    <string name="reader_scale_height">Adatta all altezza</string>
+    <string name="reader_scale_height">Adatta all’altezza</string>
     <string name="reader_scale_fill">Riempi schermo</string>
     <string name="reader_scale_original">Dimensione originale</string>
     <string name="reader_double_page">Doppia pagina</string>
@@ -22,8 +22,8 @@
     <string name="reader_spread_double">Doppia pagina</string>
     <string name="reader_spread_auto">Automatico</string>
     <string name="reader_spread_summary">La modalità automatica usa due pagine in orizzontale e una in verticale.</string>
-    <string name="reader_end_title">Galleria completata</string>
-    <string name="reader_end_message">Hai raggiunto l ultima pagina.</string>
+    <string name="reader_end_title">Fine della galleria</string>
+    <string name="reader_end_message">Hai raggiunto l’ultima pagina.</string>
     <string name="reader_end_restart">Leggi di nuovo</string>
     <string name="reader_end_close">Indietro</string>
     <string name="reader_filter_title">Filtro di visualizzazione</string>
@@ -41,7 +41,7 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">Segnalibri di pagina</string>
     <string name="reader_bookmarks_empty">Nessun segnalibro ancora.</string>
-    <string name="reader_bookmarks_unavailable">I segnalibri richiedono una galleria salvata.</string>
+    <string name="reader_bookmarks_unavailable">I segnalibri di pagina non sono disponibili per questa galleria.</string>
     <string name="reader_bookmark_add">Aggiungi segnalibro</string>
     <string name="reader_bookmark_title_hint">Titolo segnalibro</string>
     <string name="reader_bookmark_note_hint">Nota (facoltativa)</string>

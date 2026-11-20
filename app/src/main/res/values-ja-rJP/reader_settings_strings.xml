@@ -2,7 +2,7 @@
 <resources>
     <string name="reader_settings_title">閲覧設定</string>
     <string name="reader_continuous_vertical">縦スクロール</string>
-    <string name="reader_continuous_summary">縦スクロールはページ内の位置を記憶します。拡大はページ表示で利用できます。</string>
+    <string name="reader_continuous_summary">縦スクロールではページ内の位置を記憶します。ピンチまたはダブルタップで拡大・縮小できます。</string>
     <string name="reader_background_title">背景</string>
     <string name="reader_background_auto">自動</string>
     <string name="reader_background_black">黒</string>
@@ -22,7 +22,7 @@
     <string name="reader_spread_double">見開き</string>
     <string name="reader_spread_auto">自動</string>
     <string name="reader_spread_summary">自動では横向きで見開き、縦向きで1ページ表示になります。</string>
-    <string name="reader_end_title">読了</string>
+    <string name="reader_end_title">ギャラリーの終わり</string>
     <string name="reader_end_message">最後のページに到達しました。</string>
     <string name="reader_end_restart">もう一度読む</string>
     <string name="reader_end_close">戻る</string>
@@ -41,11 +41,11 @@
     <string name="reader_adjustment_value">%1$d</string>
     <string name="reader_bookmarks">ページブックマーク</string>
     <string name="reader_bookmarks_empty">ページブックマークはありません。</string>
-    <string name="reader_bookmarks_unavailable">保存されたギャラリーでのみブックマークを使えます。</string>
+    <string name="reader_bookmarks_unavailable">このギャラリーではページブックマークを利用できません。</string>
     <string name="reader_bookmark_add">ブックマークを追加</string>
     <string name="reader_bookmark_title_hint">ブックマークのタイトル</string>
     <string name="reader_bookmark_note_hint">メモ（任意）</string>
-    <string name="reader_bookmark_default_title">ページ %1$d</string>
+    <string name="reader_bookmark_default_title">%1$dページ</string>
     <string name="reader_bookmark_delete">削除</string>
     <string name="reader_preset_title">読書プリセット</string>
     <string name="reader_preset_default">標準</string>
@@ -60,5 +60,5 @@
     <string name="reader_tap_action_edge">画面端でページをめくる</string>
     <string name="reader_tap_action_controls">コントロールを表示/非表示</string>
     <string name="reader_tap_action_none">操作なし</string>
-    <string name="reader_bookmark_delete_page">%1$dページのしおりを削除</string>
+    <string name="reader_bookmark_delete_page">%1$dページのブックマークを削除</string>
 </resources>
