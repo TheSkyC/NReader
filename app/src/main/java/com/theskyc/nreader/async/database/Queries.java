@@ -489,14 +489,20 @@ public class Queries {
         }
 
         /**
-         * Update status and count of a specific tag
+         * Persist a rule without replacing newer catalog metadata with values from the UI.
          */
         public static int updateTag(Tag tag) {
-            insert(tag);
-            ContentValues values = new ContentValues(2);
-            values.put(STATUS, tag.getStatus().ordinal());
-            values.put(COUNT, tag.getCount());
-            return db.updateWithOnConflict(TABLE_NAME, values, IDTAG + "=?", new String[]{"" + tag.getId()}, SQLiteDatabase.CONFLICT_IGNORE);
+            db.beginTransactionNonExclusive();
+            try {
+                insert(tag);
+                ContentValues values = new ContentValues(1);
+                values.put(STATUS, tag.getStatus().ordinal());
+                int updated = db.update(TABLE_NAME, values, IDTAG + "=?", new String[]{"" + tag.getId()});
+                db.setTransactionSuccessful();
+                return updated;
+            } finally {
+                db.endTransaction();
+            }
         }
 
         public static void insert(Tag tag, boolean replace) {
@@ -638,21 +644,6 @@ public class Queries {
                     tag = tags.getTag(t, i);
                     TagTable.insert(tag);//Insert tag
                     GalleryBridgeTable.insert(gallery.getId(), tag.getId());//Insert link
-                }
-            }
-        }
-
-        /*To avoid conflict between the import process and the ScrapeTags*/
-        public static void insertScrape(List<Tag> tags, boolean b) {
-            if (db.isOpen()){
-                db.beginTransaction();
-                try {
-                    for (Tag tag : tags) {
-                        insert(tag, b);
-                    }
-                    db.setTransactionSuccessful();
-                } finally {
-                    db.endTransaction();
                 }
             }
         }

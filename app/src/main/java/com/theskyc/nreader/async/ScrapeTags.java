@@ -1,138 +1,185 @@
+// Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.async;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
 import androidx.annotation.NonNull;
+import androidx.work.Constraints;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.theskyc.nreader.api.components.Tag;
-import com.theskyc.nreader.api.enums.TagStatus;
-import com.theskyc.nreader.api.enums.TagType;
-import com.theskyc.nreader.async.database.Queries;
-import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.utility.LogUtility;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.CacheControl;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class ScrapeTags extends Worker {
-    private static final int DAYS_UNTIL_SCRAPE = 7;
+    private static final long CHECK_INTERVAL_MS = TimeUnit.DAYS.toMillis(7);
+    private static final int MAX_ATTEMPTS = 3;
+    private static final int MAX_CATALOG_BYTES = 16 * 1024 * 1024;
+    private static final int MIN_LEGACY_ROWS = 50_000;
     private static final String DATA_FOLDER = "https://raw.githubusercontent.com/maxwai/NClientV3/main/data/";
     private static final String TAGS = DATA_FOLDER + "tags.json";
     private static final String VERSION = DATA_FOLDER + "tagsVersion";
+    private static final String WORK_NAME = "tag-catalog-refresh";
+    private static final String CHECKED_REVISION = "checked_revision";
+    private static final String CHECKED_AT = "checked_at";
+    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
+        .callTimeout(60, TimeUnit.SECONDS)
+        .followRedirects(false)
+        .build();
+    private static boolean cleanedStagingDirectory;
+
+    private volatile Call activeCall;
 
     public ScrapeTags(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
     public static void startWork(Context context) {
-        WorkRequest scrapeTagsWorkRequest = new OneTimeWorkRequest.Builder(ScrapeTags.class).build();
-        WorkManager.getInstance(context).enqueue(scrapeTagsWorkRequest);
-    }
-
-    private int getNewVersionCode() throws IOException {
-        try (Response x = Global.getClient(getApplicationContext()).newCall(new Request.Builder().url(VERSION).build()).execute()) {
-            ResponseBody body = x.body();
-            try {
-                int k = Integer.parseInt(body.string().trim());
-                LogUtility.d("Found version: " + k);
-                return k;
-            } catch (NumberFormatException e) {
-                LogUtility.e("Unable to convert", e);
-            }
-        }
-        return -1;
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ScrapeTags.class)
+            .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build();
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        SharedPreferences preferences = getApplicationContext().getSharedPreferences("Settings", 0);
-        Date nowTime = new Date();
-        Date lastTime = new Date(preferences.getLong("lastSync", nowTime.getTime()));
-        int lastVersion = preferences.getInt("lastTagsVersion", -1), newVersion;
-        if (!enoughDayPassed(nowTime, lastTime)) return Result.retry();
-
-        LogUtility.d("Scraping tags");
+        SQLiteDatabase database = Database.getDatabase();
+        if (database == null) return failureOrRetry();
+        SharedPreferences checks = getApplicationContext().getSharedPreferences("TagCatalogChecks", Context.MODE_PRIVATE);
         try {
-            newVersion = getNewVersionCode();
-            if (lastVersion > -1 && lastVersion >= newVersion) return Result.success();
-            List<Tag> tags = Queries.TagTable.getAllFiltered();
-            fetchTags();
-            for (Tag t : tags) Queries.TagTable.updateStatus(t.getId(), t.getStatus());
-        } catch (IOException | JSONException e) {
-            LogUtility.w("Error updating Tags", e);
-            return Result.failure();
-        }
-        LogUtility.d("End scraping");
-        preferences.edit()
-            .putLong("lastSync", nowTime.getTime())
-            .putInt("lastTagsVersion", newVersion)
-            .apply();
-        return Result.success();
-    }
-
-    private void fetchTags() throws IOException, JSONException {
-        try (Response x = Global.getClient(getApplicationContext())
-            .newCall(new Request.Builder().url(TAGS).build())
-            .execute()) {
-            ResponseBody body = x.body();
-            JSONArray rootArray = new JSONArray(body.string());
-            int size = rootArray.length();
-            int batchSize = 5000;
-            try {
-                List<Tag> tags = new ArrayList<>(batchSize);
-                for (int i = 0; i <= size / batchSize; i++) {
-                    tags.clear();
-                    for (int j = i * batchSize; j < i * batchSize + batchSize && j < size; j++) {
-                        JSONArray entry = rootArray.getJSONArray(j);
-                        tags.add(readTag(entry));
-                    }
-                    Queries.TagTable.insertScrape(tags, true);
-                }
-            } catch (JSONException ignored) {
-                throw new JSONException("Something went wrong parsing json");
+            int installed = TagCatalog.installedRevision(database);
+            long elapsed = System.currentTimeMillis() - checks.getLong(CHECKED_AT, 0);
+            if (installed > 0 && installed == checks.getInt(CHECKED_REVISION, 0)
+                && elapsed >= 0 && elapsed < CHECK_INTERVAL_MS) {
+                return Result.success();
             }
+
+            int revision = fetchRevision();
+            if (revision > installed) downloadAndApply(database, revision);
+            checkStopped();
+            // Record only the revision this check could have verified. Restore can run concurrently.
+            checks.edit().putInt(CHECKED_REVISION, Math.max(installed, revision))
+                .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
+            return Result.success();
+        } catch (IOException | SQLiteException error) {
+            if (isStopped()) return Result.failure();
+            LogUtility.w("Tag catalog refresh failed", error);
+            return failureOrRetry();
         }
     }
 
-    private Tag readTag(JSONArray reader) throws JSONException {
-        int id = reader.getInt(0);
-        String name = reader.getString(1);
-        int count = reader.getInt(2);
-        TagType type = TagType.values[reader.getInt(3)];
-        return new Tag(name, count, id, type, TagStatus.DEFAULT);
+    private void downloadAndApply(SQLiteDatabase database, int revision) throws IOException {
+        File file = createStagingFile(getApplicationContext());
+        try {
+            try (OutputStream output = new FileOutputStream(file)) {
+                download(TAGS, output, MAX_CATALOG_BYTES);
+            }
+            if (fetchRevision() != revision) throw new IOException("Tag catalog revision changed during download");
+            try (InputStream input = new FileInputStream(file)) {
+                TagCatalog.apply(database, input, revision, MIN_LEGACY_ROWS, this::isStopped);
+            }
+        } finally {
+            if (!file.delete()) LogUtility.w("Could not remove staged tag catalog");
+        }
     }
 
-    private boolean enoughDayPassed(Date nowTime, Date lastTime) {
-        //first start or never completed
-        if (nowTime.getTime() == lastTime.getTime()) return true;
-        int daysBetween = 0;
-        Calendar now = Calendar.getInstance(), last = Calendar.getInstance();
-        now.setTime(nowTime);
-        last.setTime(lastTime);
-        while (last.before(now)) {
-            last.add(Calendar.DAY_OF_MONTH, 1);
-            daysBetween++;
-            if (daysBetween > DAYS_UNTIL_SCRAPE)
-                return true;
+    private static synchronized File createStagingFile(Context context) throws IOException {
+        File directory = new File(context.getCacheDir(), "tag-catalog");
+        if (!directory.isDirectory() && !directory.mkdir()) {
+            throw new IOException("Could not create tag catalog staging directory");
         }
-        LogUtility.d("Passed " + daysBetween + " days since last scrape");
-        return false;
+        if (!cleanedStagingDirectory) {
+            // No import from this process can own a staging file yet.
+            File[] abandoned = directory.listFiles((parent, name) -> name.endsWith(".part"));
+            if (abandoned == null) throw new IOException("Could not read tag catalog staging directory");
+            for (File file : abandoned) {
+                if (!file.delete()) LogUtility.w("Could not remove abandoned tag catalog");
+            }
+            cleanedStagingDirectory = true;
+        }
+        return File.createTempFile("catalog-", ".part", directory);
+    }
+
+    private int fetchRevision() throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(32);
+        download(VERSION, output, 32);
+        String text = new String(output.toByteArray(), StandardCharsets.US_ASCII).trim();
+        try {
+            if (!text.matches("[1-9][0-9]*")) throw new NumberFormatException();
+            return Integer.parseInt(text);
+        } catch (NumberFormatException error) {
+            throw new IOException("Invalid tag catalog revision");
+        }
+    }
+
+    private void download(String url, OutputStream output, int limit) throws IOException {
+        Call call = CLIENT.newCall(new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK).build());
+        activeCall = call;
+        try {
+            checkStopped();
+            try (Response response = call.execute()) {
+                ResponseBody body = response.body();
+                if (!response.isSuccessful() || body == null) {
+                    throw new IOException("Tag catalog request failed with HTTP " + response.code());
+                }
+                if (body.contentLength() > limit) throw new IOException("Tag catalog response exceeds limit");
+                byte[] buffer = new byte[8192];
+                int total = 0;
+                try (InputStream input = body.byteStream()) {
+                    int count;
+                    while ((count = input.read(buffer)) != -1) {
+                        checkStopped();
+                        total += count;
+                        if (total > limit) throw new IOException("Tag catalog response exceeds limit");
+                        output.write(buffer, 0, count);
+                    }
+                }
+            }
+        } finally {
+            activeCall = null;
+        }
+    }
+
+    private Result failureOrRetry() {
+        return getRunAttemptCount() + 1 < MAX_ATTEMPTS ? Result.retry() : Result.failure();
+    }
+
+    private void checkStopped() throws InterruptedIOException {
+        if (isStopped() || Thread.currentThread().isInterrupted()) {
+            throw new InterruptedIOException("Tag catalog update stopped");
+        }
+    }
+
+    @Override
+    public void onStopped() {
+        Call call = activeCall;
+        if (call != null) call.cancel();
     }
 }

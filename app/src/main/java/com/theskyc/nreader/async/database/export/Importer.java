@@ -11,6 +11,7 @@ import android.util.JsonToken;
 
 import androidx.annotation.NonNull;
 
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
@@ -132,6 +133,9 @@ public class Importer {
                 }
                 if (!seenTables.add(tableName)) throw new IOException("Duplicate backup table");
                 db.delete(tableName, null, null);
+                if (Queries.TagTable.TABLE_NAME.equals(tableName)) {
+                    TagCatalog.invalidateRevision(db);
+                }
                 reader.beginArray();
                 while (reader.hasNext()) {
                     reader.beginObject();

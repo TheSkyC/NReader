@@ -11,6 +11,7 @@ import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
 import com.theskyc.nreader.async.database.SearchPlanStore;
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.status.StatusManager;
 
@@ -46,6 +47,18 @@ import static org.junit.Assert.*;
 public class ImporterTest {
     private DatabaseHelper helper;
     private SQLiteDatabase database;
+
+    @Test
+    public void tagRestoreInvalidatesCatalogRevisionOnlyWhenItCommits() throws IOException {
+        database.execSQL("INSERT INTO TagCatalogState (id, revision) VALUES (1, 43)");
+        assertThrows(IOException.class, () -> restore("{\"Tags\":[],\"Resume\":{}}"));
+        assertEquals(43, TagCatalog.installedRevision(database));
+        assertNotNull(Queries.TagTable.getTagById(12227));
+
+        restore("{\"Tags\":[{\"idTag\":4242,\"name\":\"restored\",\"type\":3,\"count\":1,\"status\":1}]}");
+        assertEquals(0, TagCatalog.installedRevision(database));
+        assertEquals("restored", Queries.TagTable.getTagById(4242).getName());
+    }
 
     @Test
     public void restoringTagsInvalidatesInstalledOnlineBlacklist() throws Exception {
