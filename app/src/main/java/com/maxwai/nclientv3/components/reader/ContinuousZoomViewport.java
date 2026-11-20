@@ -261,6 +261,10 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
             params.width = targetWidth;
             child.setLayoutParams(params);
         }
-        child.setTranslationX(contentOffset);
+        if (child.getTranslationX() != contentOffset) {
+            child.setTranslationX(contentOffset);
+            ImageView image = child.findViewById(R.id.continuous_page_image);
+            if (image != null && image.getDrawable() instanceof ContinuousTileDrawable) image.invalidate();
+        }
     }
 }

@@ -442,10 +442,13 @@ public class ZoomActivity extends GeneralActivity {
             ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, directory,
                 (ignored, horizontalPosition) -> handleReaderPageTap(horizontalPosition), continuousRotations,
                 readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation);
+            adapter.setTilesActive(getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED));
             adapter.setOnPageDoubleTapListener((ignored, x, y) -> continuousZoomViewport.toggleDoubleTapZoom(x, y));
             adapter.setOnAccessibilityToggleControls(this::toggleReaderControls);
             continuousReader.setAdapter(adapter);
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
+            adapter.setImageTransition(((ContinuousReaderNavigation) readerNavigation)::changeImageKeepingPosition,
+                ((ContinuousReaderNavigation) readerNavigation)::cancelImageTransition);
             mViewPager.setVisibility(View.GONE);
             continuousZoomViewport.setVisibility(View.VISIBLE);
             continuousReader.setVisibility(View.VISIBLE);
@@ -656,6 +659,35 @@ public class ZoomActivity extends GeneralActivity {
         if (continuousMode) return ((ContinuousReaderNavigation) readerNavigation).currentPosition();
         int page = readerNavigation.currentPage() + 1;
         return initialPosition.page == page ? initialPosition : new ReadingPosition(page, 0f);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setContinuousTilesActive(true);
+    }
+
+    @Override
+    protected void onStop() {
+        setContinuousTilesActive(false);
+        super.onStop();
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) setContinuousTilesActive(false);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        setContinuousTilesActive(false);
+    }
+
+    private void setContinuousTilesActive(boolean active) {
+        RecyclerView.Adapter<?> adapter = continuousReader == null ? null : continuousReader.getAdapter();
+        if (adapter instanceof ContinuousPageAdapter) ((ContinuousPageAdapter) adapter).setTilesActive(active);
     }
 
     @Override

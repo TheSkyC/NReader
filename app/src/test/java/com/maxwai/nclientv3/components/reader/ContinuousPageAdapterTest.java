@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.graphics.Color;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Looper;
@@ -12,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewConfiguration;
+import android.widget.ImageView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,6 +54,252 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class ContinuousPageAdapterTest {
     @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void changingPageAspectRatioKeepsContentAtMidPage() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        Bitmap bitmap = Bitmap.createBitmap(205, 4096, Bitmap.Config.ARGB_8888);
+        BitmapDrawable fallback = new BitmapDrawable(activity.getResources(), bitmap);
+        fallback.setTargetDensity(android.util.DisplayMetrics.DENSITY_DEFAULT);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @Override public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                return new RecyclerView.ViewHolder(image) {};
+            }
+            @Override public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView).setImageDrawable(fallback);
+            }
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(recycler);
+        int width = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY);
+        int height = View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        recycler.scrollBy(0, 10000);
+        ImageView image = (ImageView) layout.findViewByPosition(0);
+        assertNotNull(image);
+        float before = -image.getTop() / (float) image.getHeight();
+        ContinuousTileLoader.Source source = new ContinuousTileLoader.Source() {
+            @Override public Bitmap decode(Rect region, int sample) { throw new AssertionError(); }
+            @Override public void close() {}
+        };
+        ContinuousTileDrawable tiles = new ContinuousTileDrawable(fallback, 300, 6000, 1, source,
+            new ContinuousTileCache(2 * 1024 * 1024, 1, ContinuousTileDecoder.MAX_TILE_BYTES),
+            Runnable::run, Runnable::run, error -> { throw new AssertionError(error); });
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(tiles));
+        AtomicInteger otherChange = new AtomicInteger();
+        View detached = new View(activity);
+        detached.setLayoutParams(new RecyclerView.LayoutParams(1, 1));
+        navigation.changeImageKeepingPosition(detached, otherChange::incrementAndGet);
+        assertEquals(1, otherChange.get());
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertTrue(recycler.getViewTreeObserver().dispatchOnPreDraw());
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        float after = -image.getTop() / (float) image.getHeight();
+        assertEquals(before, after, 0.0001f);
+
+        image.setImageDrawable(fallback);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(tiles));
+        recycler.scrollBy(0, 100);
+        int topAfterUserScroll = image.getTop();
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertFalse(recycler.getViewTreeObserver().dispatchOnPreDraw());
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertEquals(topAfterUserScroll, image.getTop());
+
+        image.setImageDrawable(fallback);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(tiles));
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertTrue(recycler.getViewTreeObserver().dispatchOnPreDraw());
+        MotionEvent down = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 500, 500, 0);
+        recycler.onInterceptTouchEvent(down);
+        down.recycle();
+        recycler.scrollBy(0, 100);
+        int topAfterTouchScroll = image.getTop();
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertEquals(topAfterTouchScroll, image.getTop());
+
+        MotionEvent cancel = MotionEvent.obtain(0, 1, MotionEvent.ACTION_CANCEL, 500, 500, 0);
+        recycler.onInterceptTouchEvent(cancel);
+        cancel.recycle();
+        image.setImageDrawable(fallback);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        MotionEvent heldDown = MotionEvent.obtain(2, 2, MotionEvent.ACTION_DOWN, 500, 500, 0);
+        recycler.onInterceptTouchEvent(heldDown);
+        heldDown.recycle();
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(tiles));
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        int topWhileHeld = image.getTop();
+        assertFalse(recycler.getViewTreeObserver().dispatchOnPreDraw());
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertEquals(topWhileHeld, image.getTop());
+        cancel = MotionEvent.obtain(2, 3, MotionEvent.ACTION_CANCEL, 500, 500, 0);
+        recycler.onInterceptTouchEvent(cancel);
+        cancel.recycle();
+        navigation.dispose();
+        tiles.close();
+        recycler.setAdapter(null);
+        bitmap.recycle();
+    }
+
+    @Test
+    public void sourceAspectRatioChangesMeasuredPageHeightFromRoundedFallback() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ImageView image = new ImageView(activity);
+        image.setAdjustViewBounds(true);
+        Bitmap bitmap = Bitmap.createBitmap(205, 4096, Bitmap.Config.ARGB_8888);
+        BitmapDrawable fallback = new BitmapDrawable(activity.getResources(), bitmap);
+        fallback.setTargetDensity(android.util.DisplayMetrics.DENSITY_DEFAULT);
+        image.setImageDrawable(fallback);
+        int width = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY);
+        int height = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        image.measure(width, height);
+        int fallbackHeight = image.getMeasuredHeight();
+        ContinuousTileLoader.Source source = new ContinuousTileLoader.Source() {
+            @Override public Bitmap decode(Rect region, int sample) { throw new AssertionError(); }
+            @Override public void close() {}
+        };
+        ContinuousTileDrawable tiles = new ContinuousTileDrawable(fallback, 300, 6000, 1, source,
+            new ContinuousTileCache(2 * 1024 * 1024, 1, ContinuousTileDecoder.MAX_TILE_BYTES),
+            Runnable::run, Runnable::run, error -> { throw new AssertionError(error); });
+        image.setImageDrawable(tiles);
+        image.measure(width, height);
+        assertEquals(21578, fallbackHeight);
+        assertEquals(21600, image.getMeasuredHeight());
+        tiles.close();
+        bitmap.recycle();
+    }
+
+    @Test
+    public void stoppingTilesKeepsVisiblePositionWhenFallbackAspectRatioDiffers() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), (page, x) -> {});
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        int width = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY);
+        int height = View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        ContinuousPageAdapter.Holder holder = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        Bitmap bitmap = Bitmap.createBitmap(205, 4096, Bitmap.Config.ARGB_8888);
+        BitmapDrawable fallback = new BitmapDrawable(activity.getResources(), bitmap);
+        fallback.setTargetDensity(android.util.DisplayMetrics.DENSITY_DEFAULT);
+        ContinuousTileLoader.Source source = new ContinuousTileLoader.Source() {
+            @Override public Bitmap decode(Rect region, int sample) { throw new AssertionError(); }
+            @Override public void close() {}
+        };
+        ContinuousTileDrawable tiles = new ContinuousTileDrawable(fallback, 300, 6000, 1, source,
+            new ContinuousTileCache(2 * 1024 * 1024, 1, ContinuousTileDecoder.MAX_TILE_BYTES),
+            Runnable::run, Runnable::run, error -> { throw new AssertionError(error); });
+        holder.showImage();
+        holder.tileDrawable = tiles;
+        holder.tileFallback = fallback;
+        holder.image.setImageDrawable(tiles);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        recycler.scrollBy(0, 10000);
+        float before = -(holder.itemView.getTop() + holder.image.getTop()) / (float) holder.image.getHeight();
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        adapter.setImageTransition(navigation::changeImageKeepingPosition, navigation::cancelImageTransition);
+        adapter.setTilesActive(true);
+        adapter.setTilesActive(false);
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        float after = -(holder.itemView.getTop() + holder.image.getTop()) / (float) holder.image.getHeight();
+        assertEquals(before, after, 0.0001f);
+        assertSame(fallback, holder.image.getDrawable());
+
+        ContinuousTileDrawable rebound = new ContinuousTileDrawable(fallback, 300, 6000, 1, source,
+            new ContinuousTileCache(2 * 1024 * 1024, 1, ContinuousTileDecoder.MAX_TILE_BYTES),
+            Runnable::run, Runnable::run, error -> { throw new AssertionError(error); });
+        navigation.changeImageKeepingPosition(holder.itemView, () -> holder.image.setImageDrawable(rebound));
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        adapter.onBindViewHolder(holder, 0);
+        holder.image.setImageDrawable(rebound);
+        holder.showImage();
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        int topAfterRebind = holder.itemView.getTop();
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        recycler.measure(width, height);
+        recycler.layout(0, 0, 1080, 1000);
+        assertEquals(topAfterRebind, holder.itemView.getTop());
+        navigation.dispose();
+        recycler.setAdapter(null);
+        rebound.close();
+        bitmap.recycle();
+    }
+
+    @Test
+    public void stoppingTilesRestoresGlideDrawableAndReleasesSession() throws Exception {
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery gallery = new LocalGallery(folder, true);
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, gallery.getGalleryFolder(), (page, x) -> {});
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, 600, 1200);
+        ContinuousPageAdapter.Holder holder = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        AtomicInteger closes = new AtomicInteger();
+        ContinuousTileLoader.Source source = new ContinuousTileLoader.Source() {
+            @Override public Bitmap decode(Rect region, int sample) { return Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888); }
+            @Override public void close() { closes.incrementAndGet(); }
+        };
+        ColorDrawable fallback = new ColorDrawable(Color.RED);
+        ContinuousTileDrawable drawable = new ContinuousTileDrawable(fallback, 600, 12000, 4, source,
+            new ContinuousTileCache(8 * 1024 * 1024, 4, ContinuousTileDecoder.MAX_TILE_BYTES),
+            Runnable::run, Runnable::run, error -> { throw new AssertionError(error); });
+        holder.tileDrawable = drawable;
+        holder.image.setImageDrawable(drawable);
+        adapter.setTilesActive(true);
+        adapter.setTilesActive(false);
+        assertNull(holder.tileDrawable);
+        assertSame(fallback, holder.image.getDrawable());
+        assertSame(holder.image, fallback.getCallback());
+        assertEquals(1, closes.get());
+        recycler.setAdapter(null);
+    }
 
     @Test
     public void missingPageShowsRetryAndDoesNotBlockOtherPageSelection() throws Exception {

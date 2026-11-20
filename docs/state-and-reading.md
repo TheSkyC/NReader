@@ -181,6 +181,16 @@ cancellation and activity cleanup. A failed or canceled first image must never
 block later pages. Rebinding an image clears its previous request, including when
 the image loading policy is disabled.
 
+In the continuous reader, eligible downloaded PNG pages taller than 4096 pixels
+and at least four times as tall as they are wide can display visible regions at
+higher detail. The regular image remains visible while the reader prepares a
+private cache copy. The preview and regions use the same copy so they cannot
+mix pixels from different revisions of a download. Network images, unsupported
+formats, animated or EXIF-bearing PNGs, cropped or rotated pages, and masked
+debug images use the regular renderer. Preparation or decoding failures retain
+the regular image. The reader releases region resources when a page is recycled
+or detached, the reader stops, or Android reports low memory.
+
 Transient network/server/rate-limit failures have a finite retry budget and
 backoff. Authentication, missing resources and storage failures stop the task
 with an actionable reason. A failed task requires an explicit retry. Metadata

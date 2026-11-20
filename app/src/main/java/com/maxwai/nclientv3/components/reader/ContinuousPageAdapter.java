@@ -4,6 +4,9 @@ package com.maxwai.nclientv3.components.reader;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.GestureDetector;
@@ -21,14 +24,18 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.FitCenter;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.maxwai.nclientv3.R;
 import com.maxwai.nclientv3.api.components.Gallery;
 import com.maxwai.nclientv3.api.components.GenericGallery;
@@ -37,19 +44,32 @@ import com.maxwai.nclientv3.files.GalleryFolder;
 import com.maxwai.nclientv3.files.PageFile;
 import com.maxwai.nclientv3.settings.Global;
 import com.maxwai.nclientv3.utility.DebugImageMask;
+import com.maxwai.nclientv3.utility.LogUtility;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public final class ContinuousPageAdapter extends RecyclerView.Adapter<ContinuousPageAdapter.Holder> {
     private static final int MAX_DECODE_WIDTH = 2048;
     private static final int MAX_DECODE_HEIGHT = 4096;
     private static final int PAGE_GAP_DP = 8;
+    // Limited to static local PNG pages; unsupported sources retain the Glide path.
+    private static final boolean ENABLE_TILED_PAGES = true;
     private static final Executor RETRY_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final Executor TILE_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final long MAX_SNAPSHOT_BYTES = 64L * 1024 * 1024;
+    private static final long MAX_SNAPSHOT_TOTAL_BYTES = 256L * 1024 * 1024;
+    private static final long TILE_RETRY_DELAY_MS = 2000;
+    @Nullable private static ContinuousTileSnapshotStore snapshotStore;
+    private static boolean snapshotLoaderRegistered;
 
     private final GenericGallery gallery;
     @Nullable private GalleryFolder directory;
@@ -57,6 +77,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private final BiConsumer<Integer, Float> onPageTap;
     @Nullable private OnPageDoubleTapListener onPageDoubleTap;
     @Nullable private Runnable onAccessibilityToggleControls;
+    @Nullable private BiConsumer<View, Runnable> imageTransition;
+    @Nullable private Consumer<View> imageTransitionCancellation;
     private final Executor retryExecutor;
     private final ReaderPageRotations rotations;
     private int filterMode = ReaderImageFilter.NONE;
@@ -65,6 +87,11 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     private int contrast;
     private int saturation;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ContinuousTileCache tileCache = new ContinuousTileCache(16 * 1024 * 1024, 8,
+        ContinuousTileDecoder.MAX_TILE_BYTES);
+    private final ContinuousTileOpener<ContinuousTileSnapshotSession> tileOpener =
+        new ContinuousTileOpener<>(TILE_EXECUTOR, mainHandler::post);
+    private boolean tilesActive;
     @Nullable private RecyclerView recycler;
     private final RecyclerView.OnScrollListener tapCancellationListener = new RecyclerView.OnScrollListener() {
         @Override public void onScrollStateChanged(@NonNull RecyclerView view, int state) {
@@ -73,6 +100,11 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
         @Override public void onScrolled(@NonNull RecyclerView view, int dx, int dy) {
             if (dx != 0 || dy != 0) cancelVisiblePageTaps(view);
+            for (int index = 0; index < view.getChildCount(); index++) {
+                RecyclerView.ViewHolder holder = view.getChildViewHolder(view.getChildAt(index));
+                if (holder instanceof Holder && ((Holder) holder).tileDrawable != null)
+                    ((Holder) holder).tileDrawable.invalidateSelf();
+            }
         }
     };
 
@@ -193,6 +225,16 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         onPageDoubleTap = listener;
     }
 
+    public void setImageTransition(@Nullable BiConsumer<View, Runnable> transition,
+                                   @Nullable Consumer<View> cancellation) {
+        imageTransition = transition;
+        imageTransitionCancellation = cancellation;
+    }
+
+    private void cancelImageTransition(@NonNull Holder holder) {
+        if (imageTransitionCancellation != null) imageTransitionCancellation.accept(holder.itemView);
+    }
+
     public void setOnAccessibilityToggleControls(@Nullable Runnable listener) {
         onAccessibilityToggleControls = listener;
         if (recycler == null) return;
@@ -250,6 +292,13 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
         cancelVisiblePageTaps(recyclerView);
+        for (int index = 0; index < recyclerView.getChildCount(); index++) {
+            RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(recyclerView.getChildAt(index));
+            if (holder instanceof Holder) {
+                cancelImageTransition((Holder) holder);
+                clearTiles((Holder) holder);
+            }
+        }
         recyclerView.removeOnScrollListener(tapCancellationListener);
         if (recycler == recyclerView) recycler = null;
         super.onDetachedFromRecyclerView(recyclerView);
@@ -269,7 +318,196 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     @Override
     public void onViewDetachedFromWindow(@NonNull Holder holder) {
         holder.cancelSingleTap();
+        cancelImageTransition(holder);
+        clearTiles(holder);
         super.onViewDetachedFromWindow(holder);
+    }
+
+    @Override
+    public void onViewAttachedToWindow(@NonNull Holder holder) {
+        super.onViewAttachedToWindow(holder);
+        maybeStartTiles(holder);
+    }
+
+    public void setTilesActive(boolean active) {
+        if (tilesActive == active) return;
+        tilesActive = active;
+        if (recycler == null) return;
+        for (int index = 0; index < recycler.getChildCount(); index++) {
+            RecyclerView.ViewHolder viewHolder = recycler.getChildViewHolder(recycler.getChildAt(index));
+            if (!(viewHolder instanceof Holder)) continue;
+            Holder holder = (Holder) viewHolder;
+            if (active) maybeStartTiles(holder);
+            else clearTiles(holder, true);
+        }
+        if (!active) tileCache.clear();
+    }
+
+    private void clearTiles(@NonNull Holder holder) {
+        clearTiles(holder, false);
+    }
+
+    private void clearTiles(@NonNull Holder holder, boolean keepPosition) {
+        holder.tileGeneration++;
+        if (holder.tileRetry != null) mainHandler.removeCallbacks(holder.tileRetry);
+        holder.tileRetry = null;
+        if (holder.tileRequest != null) tileOpener.cancel(holder.tileRequest);
+        holder.tileRequest = null;
+        ContinuousTileDrawable drawable = holder.tileDrawable;
+        holder.tileDrawable = null;
+        Drawable previous = holder.tileFallback;
+        holder.tileFallback = null;
+        if (drawable != null) {
+            boolean restore = holder.image.getDrawable() == drawable;
+            drawable.close();
+            if (restore) {
+                Drawable fallback = previous != null ? previous : drawable.fallback();
+                Runnable change = () -> holder.image.setImageDrawable(fallback);
+                if (keepPosition && recycler != null && holder.itemView.isAttachedToWindow()
+                    && holder.getBindingAdapter() == this && imageTransition != null)
+                    imageTransition.accept(holder.itemView, change);
+                else change.run();
+            }
+        }
+        if (holder.tileTarget != null && holder.tileManager != null) holder.tileManager.clear(holder.tileTarget);
+        holder.tileTarget = null;
+        holder.tileManager = null;
+        ContinuousTileSnapshotSession session = holder.tileSession;
+        holder.tileSession = null;
+        if (session != null) releaseSession(session);
+    }
+
+    private static void releaseSession(@NonNull ContinuousTileSnapshotSession session) {
+        TILE_EXECUTOR.execute(() -> {
+            try {
+                session.close();
+            } catch (IOException exception) {
+                LogUtility.w("Could not release image snapshot", exception);
+            }
+        });
+    }
+
+    private static synchronized ContinuousTileSnapshotStore snapshotStore(@NonNull File cacheDirectory) throws IOException {
+        if (snapshotStore == null) snapshotStore = ContinuousTileSnapshotStore.open(
+            new File(cacheDirectory, "reader-tile-snapshots"), MAX_SNAPSHOT_BYTES, MAX_SNAPSHOT_TOTAL_BYTES);
+        return snapshotStore;
+    }
+
+    private static synchronized void registerSnapshotLoader(@NonNull Context context) {
+        if (snapshotLoaderRegistered) return;
+        Glide.get(context.getApplicationContext()).getRegistry().prepend(
+            ContinuousTileSnapshotSession.class, InputStream.class, new ContinuousTileSnapshotLoader.Factory());
+        snapshotLoaderRegistered = true;
+    }
+
+    private void maybeStartTiles(@NonNull Holder holder) {
+        int page = holder.getBindingAdapterPosition();
+        Drawable fallback = holder.image.getDrawable();
+        if (!ENABLE_TILED_PAGES || !tilesActive || recycler == null || !holder.itemView.isAttachedToWindow()
+            || holder.getBindingAdapter() != this || page == RecyclerView.NO_POSITION
+            || holder.status.getVisibility() != View.GONE || holder.tileRequest != null
+            || holder.tileDrawable != null || holder.tileSession != null || !(holder.source instanceof PageFile) || fallback == null
+            || autoCrop || rotations.angle(page) != 0 || DebugImageMask.isEnabled(holder.image.getContext())) return;
+        File file = (File) holder.source;
+        int generation = ++holder.tileGeneration;
+        File cacheDirectory = holder.image.getContext().getApplicationContext().getCacheDir();
+        holder.tileRequest = tileOpener.requestCancellable(canceled -> ContinuousTileSnapshotSession.open(
+            snapshotStore(cacheDirectory), file, canceled, MAX_DECODE_HEIGHT,
+            error -> LogUtility.w("Could not release image snapshot", error)), session -> {
+            if (generation == holder.tileGeneration) holder.tileRequest = null;
+            if (session == null) return;
+            if (generation != holder.tileGeneration || !tilesActive || holder.getBindingAdapter() != this
+                || holder.getBindingAdapterPosition() != page || !holder.itemView.isAttachedToWindow()
+                || holder.image.getDrawable() != fallback || autoCrop || rotations.angle(page) != 0
+                || DebugImageMask.isEnabled(holder.image.getContext())) {
+                releaseSession(session);
+                return;
+            }
+            RequestManager manager = GlideX.with(holder.image);
+            if (manager == null) {
+                releaseSession(session);
+                return;
+            }
+            holder.tileSession = session;
+            holder.tileFallback = fallback;
+            holder.tileManager = manager;
+            CustomTarget<Drawable> target = new CustomTarget<Drawable>() {
+                @Override public void onResourceReady(@NonNull Drawable resource,
+                                                       @Nullable Transition<? super Drawable> transition) {
+                    if (generation != holder.tileGeneration || holder.tileSession != session
+                        || holder.image.getDrawable() != fallback) {
+                        mainHandler.post(() -> { if (holder.tileSession == session) clearTiles(holder); });
+                        return;
+                    }
+                    ContinuousTileLoader.Source source = session.takeSource();
+                    try {
+                        ContinuousTileDrawable drawable = new ContinuousTileDrawable(resource, session.width(), session.height(),
+                            8, source, tileCache, TILE_EXECUTOR, mainHandler::post, error -> {
+                                LogUtility.w("Could not decode image tiles", error.getClass().getSimpleName());
+                                clearTiles(holder, true);
+                            },
+                            () -> visibleDrawableBounds(holder.image));
+                        holder.tileDrawable = drawable;
+                        if (imageTransition == null) holder.image.setImageDrawable(drawable);
+                        else imageTransition.accept(holder.itemView, () -> holder.image.setImageDrawable(drawable));
+                    } catch (RuntimeException | OutOfMemoryError error) {
+                        LogUtility.w("Could not display image tiles", error);
+                        TILE_EXECUTOR.execute(source::close);
+                        mainHandler.post(() -> { if (holder.tileSession == session) clearTiles(holder); });
+                    }
+                }
+
+                @Override public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                    mainHandler.post(() -> { if (holder.tileSession == session) clearTiles(holder); });
+                }
+
+                @Override public void onLoadCleared(@Nullable Drawable placeholder) {}
+            };
+            holder.tileTarget = target;
+            int width = Math.max(1, Math.min(MAX_DECODE_WIDTH,
+                holder.image.getContext().getResources().getDisplayMetrics().widthPixels));
+            try {
+                registerSnapshotLoader(holder.image.getContext());
+                manager.load(session).override(width, MAX_DECODE_HEIGHT).fitCenter()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true).into(target);
+            } catch (RuntimeException | OutOfMemoryError error) {
+                LogUtility.w("Could not load image snapshot", error);
+                clearTiles(holder);
+            }
+        }, error -> {
+            if (generation != holder.tileGeneration) return;
+            holder.tileRequest = null;
+            if (error instanceof RejectedExecutionException
+                || error instanceof ContinuousTileSnapshotStore.BudgetExceededException) {
+                scheduleTileRetry(holder, generation);
+            } else {
+                LogUtility.w("Could not prepare image tiles", error.getClass().getSimpleName());
+            }
+        });
+    }
+
+    @NonNull
+    private static Rect visibleDrawableBounds(@NonNull ImageView image) {
+        Rect visible = new Rect();
+        if (!image.getLocalVisibleRect(visible)) return new Rect();
+        RectF drawableBounds = new RectF(visible);
+        drawableBounds.offset(-image.getPaddingLeft(), -image.getPaddingTop());
+        Matrix inverse = new Matrix();
+        if (!image.getImageMatrix().invert(inverse)) return new Rect();
+        inverse.mapRect(drawableBounds);
+        Rect result = new Rect();
+        drawableBounds.roundOut(result);
+        return result;
+    }
+
+    private void scheduleTileRetry(@NonNull Holder holder, int generation) {
+        if (holder.tileRetry != null) return;
+        Runnable retry = () -> {
+            holder.tileRetry = null;
+            if (generation == holder.tileGeneration) maybeStartTiles(holder);
+        };
+        holder.tileRetry = retry;
+        mainHandler.postDelayed(retry, TILE_RETRY_DELAY_MS);
     }
 
     private int viewportHeight() {
@@ -287,6 +525,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     }
 
     private void retry(@NonNull Holder holder, int page) {
+        cancelImageTransition(holder);
+        clearTiles(holder);
         if (directoryPath == null) {
             load(holder, page);
             return;
@@ -323,6 +563,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
     }
 
     private void load(Holder holder, int position) {
+        cancelImageTransition(holder);
+        clearTiles(holder);
         RequestManager manager = GlideX.with(holder.image);
         holder.generation++;
         holder.retryPending = false;
@@ -362,6 +604,9 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                                                boolean firstResource) {
                     if (generation != holder.generation) return true;
                     holder.showImage();
+                    holder.image.post(() -> {
+                        if (generation == holder.generation) maybeStartTiles(holder);
+                    });
                     return false;
                 }
             }).into(DebugImageMask.target(holder.image));
@@ -399,6 +644,8 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     @Override
     public void onViewRecycled(@NonNull Holder holder) {
+        cancelImageTransition(holder);
+        clearTiles(holder);
         holder.cancelSingleTap();
         holder.gestureHandler.removeCallbacks(holder.clearClickSuppression);
         holder.suppressNextClick = false;
@@ -423,6 +670,14 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         final TextView error;
         final View retry;
         int generation;
+        int tileGeneration;
+        @Nullable ContinuousTileOpener.Request<ContinuousTileSnapshotSession> tileRequest;
+        @Nullable ContinuousTileDrawable tileDrawable;
+        @Nullable ContinuousTileSnapshotSession tileSession;
+        @Nullable CustomTarget<Drawable> tileTarget;
+        @Nullable RequestManager tileManager;
+        @Nullable Drawable tileFallback;
+        @Nullable Runnable tileRetry;
         boolean retryPending;
         @Nullable Object source;
         float tapPosition = 0.5f;

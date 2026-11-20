@@ -36,6 +36,226 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class ContinuousReaderNavigationTest {
     @Test
+    public void imageChangeAfterHorizontalPanRetainsVisibleFraction() {
+        imageChangeAfterHorizontalPan(MotionEvent.ACTION_UP);
+    }
+
+    @Test
+    public void imageChangeAfterCanceledHorizontalPanRetainsVisibleFraction() {
+        imageChangeAfterHorizontalPan(MotionEvent.ACTION_CANCEL);
+    }
+
+    private void imageChangeAfterHorizontalPan(int terminalAction) {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ContinuousZoomViewport recycler = new ContinuousZoomViewport(activity, null);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                FrameLayout item = new FrameLayout(parent.getContext());
+                item.setClickable(true);
+                item.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                item.addView(image, new FrameLayout.LayoutParams(-1, -2));
+                View status = new View(parent.getContext());
+                status.setId(R.id.continuous_page_status);
+                status.setVisibility(View.GONE);
+                item.addView(status);
+                return new RecyclerView.ViewHolder(item) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView.findViewById(R.id.continuous_page_image))
+                    .setImageDrawable(new SizedDrawable(600, 12000));
+            }
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(recycler);
+        layoutRecycler(recycler);
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        recycler.toggleDoubleTapZoom(300, 250);
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 4000);
+        float offset = recycler.currentContentOffset();
+        int[] actions = {MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE, terminalAction};
+        for (int index = 0; index < actions.length; index++) {
+            MotionEvent event = MotionEvent.obtain(0, index * 100L, actions[index], index == 0 ? 500 : 50, 250, 0);
+            recycler.dispatchTouchEvent(event);
+            event.recycle();
+        }
+        assertTrue(recycler.currentContentOffset() < offset);
+        View item = layout.findViewByPosition(0);
+        assertNotNull(item);
+        ImageView image = item.findViewById(R.id.continuous_page_image);
+        float fraction = -item.getTop() / (float) image.getHeight();
+        navigation.changeImageKeepingPosition(item, () -> image.setImageDrawable(new SizedDrawable(600, 14000)));
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        layoutRecycler(recycler);
+        assertEquals(fraction, -item.getTop() / (float) image.getHeight(), 0.0001f);
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void cancelAfterPreDrawKeepsCurrentPositionBeforeQueuedLayout() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+                return new RecyclerView.ViewHolder(image) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView).setImageDrawable(new SizedDrawable(600, 1200));
+            }
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(recycler);
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 300);
+        ImageView image = (ImageView) layout.findViewByPosition(0);
+        assertNotNull(image);
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(new SizedDrawable(600, 2400)));
+        layoutRecycler(recycler);
+        int topBeforeCancellation = image.getTop();
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        navigation.cancelImageTransition(image);
+        layoutRecycler(recycler);
+        assertEquals(topBeforeCancellation, image.getTop());
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void replacementOutsideTransitionDiscardsStaleAnchor() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+                return new RecyclerView.ViewHolder(image) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView).setImageDrawable(new SizedDrawable(600, 1200));
+            }
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(recycler);
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 300);
+        ImageView image = (ImageView) layout.findViewByPosition(0);
+        assertNotNull(image);
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(new SizedDrawable(600, 2400)));
+        layoutRecycler(recycler);
+        image.setImageDrawable(new SizedDrawable(600, 1800));
+        layoutRecycler(recycler);
+        int topAfterReplacement = image.getTop();
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        layoutRecycler(recycler);
+        assertEquals(topAfterReplacement, image.getTop());
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void repeatedImageChangesBeforeDrawingKeepOriginalPosition() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+                return new RecyclerView.ViewHolder(image) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView).setImageDrawable(new SizedDrawable(600, 1200));
+            }
+            @Override public int getItemCount() { return 1; }
+        });
+        activity.setContentView(recycler);
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 300);
+        ImageView image = (ImageView) layout.findViewByPosition(0);
+        assertNotNull(image);
+        float originalFraction = -image.getTop() / (float) image.getHeight();
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(new SizedDrawable(600, 2400)));
+        layoutRecycler(recycler);
+        navigation.changeImageKeepingPosition(image, () -> image.setImageDrawable(new SizedDrawable(600, 1800)));
+        layoutRecycler(recycler);
+        recycler.getViewTreeObserver().dispatchOnPreDraw();
+        layoutRecycler(recycler);
+        assertEquals(originalFraction, -image.getTop() / (float) image.getHeight(), 0.002f);
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    @Test
+    public void adjacentAttachedPageUpdateDoesNotCancelCurrentPageCorrection() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        LinearLayoutManager layout = new LinearLayoutManager(activity);
+        recycler.setLayoutManager(layout);
+        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+                ImageView image = new ImageView(parent.getContext());
+                image.setId(R.id.continuous_page_image);
+                image.setAdjustViewBounds(true);
+                image.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+                return new RecyclerView.ViewHolder(image) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((ImageView) holder.itemView).setImageDrawable(new SizedDrawable(600, 400));
+            }
+            @Override public int getItemCount() { return 3; }
+        });
+        activity.setContentView(recycler);
+        layoutRecycler(recycler);
+        recycler.scrollBy(0, 150);
+        ImageView first = (ImageView) layout.findViewByPosition(0);
+        ImageView second = (ImageView) layout.findViewByPosition(1);
+        assertNotNull(first);
+        assertNotNull(second);
+        float originalFraction = -first.getTop() / (float) first.getHeight();
+        ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
+        navigation.changeImageKeepingPosition(first, () -> first.setImageDrawable(new SizedDrawable(600, 800)));
+        navigation.changeImageKeepingPosition(second, () -> second.setImageDrawable(new SizedDrawable(600, 500)));
+        layoutRecycler(recycler);
+        assertTrue(recycler.getViewTreeObserver().dispatchOnPreDraw());
+        layoutRecycler(recycler);
+        assertEquals(originalFraction, -first.getTop() / (float) first.getHeight(), 0.002f);
+        assertEquals(500, second.getDrawable().getIntrinsicHeight());
+        navigation.dispose();
+        recycler.setAdapter(null);
+    }
+
+    private static final class SizedDrawable extends ColorDrawable {
+        private final int width;
+        private final int height;
+        SizedDrawable(int width, int height) { super(Color.BLUE); this.width = width; this.height = height; }
+        @Override public int getIntrinsicWidth() { return width; }
+        @Override public int getIntrinsicHeight() { return height; }
+    }
+
+    @Test
     public void restoresAfterImageLayoutAndStopsFollowingAfterTouch() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         RecyclerView recycler = new RecyclerView(activity);

@@ -4,6 +4,8 @@
 
 - Keep paged reader images stable when system bars and reader controls toggle,
   and prevent canceled control animations from hiding a newer transition.
+- Load the visible regions of eligible downloaded PNG long pages in the
+  continuous reader so fine details remain readable when zooming.
 
 ## 1.0.0-beta.2 — 2026-11-16
 
