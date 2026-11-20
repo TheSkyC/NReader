@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.theskyc.nreader.adapters.HistoryAdapter;
 import com.theskyc.nreader.api.components.Ranges;
 import com.theskyc.nreader.api.components.Tag;
+import com.theskyc.nreader.api.components.TagSuggestion;
 import com.theskyc.nreader.api.enums.Language;
 import com.theskyc.nreader.api.enums.SpecialTagIds;
 import com.theskyc.nreader.api.enums.TagStatus;
@@ -473,15 +474,16 @@ public class SearchActivity extends GeneralActivity {
         loadedTag = type;
     }
 
-    private final class TagSuggestionAdapter extends ArrayAdapter<String> {
+    private final class TagSuggestionAdapter extends ArrayAdapter<TagSuggestion> {
         private final TagType type;
+        private final Locale locale;
         private final Filter filter = new Filter() {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
-                List<String> suggestions = constraint == null || constraint.length() == 0
+                List<TagSuggestion> suggestions = constraint == null || constraint.length() == 0
                     ? new ArrayList<>()
-                    : Queries.TagTable.getTagNameSuggestions(type, constraint.toString());
+                    : Queries.TagTable.getTagSuggestions(type, constraint.toString(), locale);
                 results.values = suggestions;
                 results.count = suggestions.size();
                 return results;
@@ -491,15 +493,21 @@ public class SearchActivity extends GeneralActivity {
             @SuppressWarnings("unchecked")
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 clear();
-                if (results.values != null) addAll((List<String>) results.values);
+                if (results.values != null) addAll((List<TagSuggestion>) results.values);
                 if (results.count > 0) notifyDataSetChanged();
                 else notifyDataSetInvalidated();
+            }
+
+            @Override
+            public CharSequence convertResultToString(Object resultValue) {
+                return ((TagSuggestion) resultValue).getTag().getName();
             }
         };
 
         TagSuggestionAdapter(TagType type) {
             super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
             this.type = type;
+            this.locale = getResources().getConfiguration().getLocales().get(0);
         }
 
         @Override

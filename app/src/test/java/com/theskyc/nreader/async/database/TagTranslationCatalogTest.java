@@ -4,6 +4,9 @@ import android.app.Application;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.theskyc.nreader.api.components.TagSuggestion;
+import com.theskyc.nreader.api.enums.TagType;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +17,8 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -31,9 +36,11 @@ public class TagTranslationCatalogTest {
         TagTranslationCatalog.createTables(database);
         database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (1, 'canonical-one', 3, 100),"
             + " (2, 'canonical-two', 3, 200)");
+        Queries.setDb(database);
     }
 
     @After public void closeDatabase() {
+        Queries.setDb(null);
         database.close();
     }
 
@@ -83,6 +90,25 @@ public class TagTranslationCatalogTest {
         assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"bad\\nname\"}]")));
         assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"und\","
             + "\"revision\":1,\"entries\":[]}"));
+    }
+
+    @Test public void translatedAndAliasSuggestionsRetainCanonicalTagIdentity() throws IOException {
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\u4e3b\u9898\","
+            + "\"aliases\":[\"\u9898\u6750\"]}]")));
+        assertTrue(apply(pack("ja", 1, "[{\"id\":2,\"name\":\"\u7d75\u753b\"}]")));
+        assertEquals("zh-Hans", TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("zh-CN")));
+        assertEquals("ja", TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("ja-JP")));
+        assertEquals(null, TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("fr-FR")));
+
+        List<TagSuggestion> translated = Queries.TagTable.getTagSuggestions(TagType.TAG, "\u4e3b", "zh-Hans");
+        assertEquals(1, translated.size());
+        assertEquals("canonical-one", translated.get(0).getTag().getName());
+        assertEquals("\u4e3b\u9898", translated.get(0).getDisplayName());
+        assertEquals("\u4e3b\u9898 (canonical-one)", translated.get(0).toString());
+
+        List<TagSuggestion> alias = Queries.TagTable.getTagSuggestions(TagType.TAG, "\u9898", "zh-Hans");
+        assertEquals(1, alias.size());
+        assertEquals("canonical-one", alias.get(0).getTag().getName());
     }
 
     private boolean apply(String json) throws IOException {

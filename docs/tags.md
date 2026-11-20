@@ -49,6 +49,14 @@ replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
 
+Tag suggestions use the app's active locale. An exact installed locale wins;
+Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then
+to a generic installed language pack. Suggestions search canonical names,
+translated names, and aliases with a bounded prefix query. A translated
+suggestion displays its canonical name alongside it; selecting any suggestion
+places the canonical site name in the query editor. Uninstalled locales use
+canonical names only.
+
 Local rule evaluation retains its existing context-specific behavior. The
 editor cycles Default → Accepted → Avoided → Default; Default removes the
 rule. Account blacklist entries do not modify the local status. Applying an

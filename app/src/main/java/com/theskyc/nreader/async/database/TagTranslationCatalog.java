@@ -59,6 +59,31 @@ public final class TagTranslationCatalog {
         }
     }
 
+    public static String resolveInstalledLocale(SQLiteDatabase database, Locale appLocale) {
+        if (appLocale == null || appLocale.getLanguage().isEmpty()) return null;
+        List<String> candidates = new ArrayList<>();
+        String language = appLocale.getLanguage().toLowerCase(Locale.ROOT);
+        if ("zh".equals(language)) {
+            String script = appLocale.getScript();
+            if ("Hant".equals(script) || "TW".equalsIgnoreCase(appLocale.getCountry())
+                || "HK".equalsIgnoreCase(appLocale.getCountry()) || "MO".equalsIgnoreCase(appLocale.getCountry())) {
+                candidates.add("zh-Hant");
+            } else candidates.add("zh-Hans");
+        }
+        String exact = appLocale.toLanguageTag();
+        if (!candidates.contains(exact) && exact.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
+            candidates.add(exact);
+        }
+        if (!candidates.contains(language)) candidates.add(language);
+        for (String candidate : candidates) {
+            try (Cursor cursor = database.rawQuery("SELECT 1 FROM TagTranslationState WHERE locale = ?",
+                new String[]{candidate})) {
+                if (cursor.moveToFirst()) return candidate;
+            }
+        }
+        return null;
+    }
+
     public static boolean apply(SQLiteDatabase database, InputStream input, BooleanSupplier cancelled) throws IOException {
         database.beginTransactionNonExclusive();
         try {

@@ -18,6 +18,7 @@ import com.theskyc.nreader.api.components.GalleryData;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.components.TagList;
+import com.theskyc.nreader.api.components.TagSuggestion;
 import com.theskyc.nreader.api.enums.ApiRequestType;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
@@ -425,22 +426,60 @@ public class Queries {
             return getTagsFromCursor(db.rawQuery(query, new String[]{"" + type.getId(), "" + TagV2.getMinCount()}));
         }
 
-        public static List<String> getTagNameSuggestions(TagType type, String prefix) {
-            String escapedPrefix = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-            String query = "SELECT name FROM Tags WHERE type = ? AND count >= ?"
-                + " AND name COLLATE NOCASE LIKE ? ESCAPE '\\'"
-                + " ORDER BY name COLLATE NOCASE, idTag LIMIT " + SUGGESTION_LIMIT;
-            try (Cursor cursor = db.rawQuery(query, new String[]{
-                Integer.toString(type.getId()), Integer.toString(TagV2.getMinCount()), escapedPrefix + "%"
-            })) {
-                List<String> names = new ArrayList<>(cursor.getCount());
+        public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable String locale) {
+            String canonicalPattern = escapeLikePrefix(prefix) + "%";
+            String normalizedPrefix = java.text.Normalizer.normalize(prefix, java.text.Normalizer.Form.NFC)
+                .toLowerCase(Locale.ROOT);
+            String translationPattern = escapeLikePrefix(normalizedPrefix) + "%";
+            List<String> args = new ArrayList<>();
+            args.add(Integer.toString(type.getId()));
+            args.add(Integer.toString(TagV2.getMinCount()));
+            args.add(canonicalPattern);
+            if (locale != null) {
+                args.add(locale);
+                args.add(translationPattern);
+                args.add(locale);
+                args.add(translationPattern);
+            }
+            args.add(locale == null ? "" : locale);
+            args.add(Integer.toString(type.getId()));
+            args.add(Integer.toString(TagV2.getMinCount()));
+            try (Cursor cursor = db.rawQuery(buildTagSuggestionQuery(locale), args.toArray(new String[0]))) {
+                List<TagSuggestion> suggestions = new ArrayList<>(cursor.getCount());
                 if (cursor.moveToFirst()) {
                     do {
-                        names.add(cursor.getString(0));
+                        Tag tag = cursorToTag(cursor);
+                        suggestions.add(new TagSuggestion(tag, cursor.getString(cursor.getColumnIndexOrThrow("displayName"))));
                     } while (cursor.moveToNext());
                 }
-                return names;
+                return suggestions;
             }
+        }
+
+        static String buildTagSuggestionQuery(@Nullable String locale) {
+            StringBuilder matches = new StringBuilder("SELECT idTag, 0 AS matchRank FROM Tags"
+                + " WHERE type = ? AND count >= ? AND name COLLATE NOCASE LIKE ? ESCAPE '\\'");
+            if (locale != null) {
+                matches.append(" UNION ALL SELECT idTag, 1 FROM TagTranslations"
+                    + " WHERE locale = ? AND displayKey LIKE ? ESCAPE '\\'")
+                    .append(" UNION ALL SELECT idTag, 2 FROM TagTranslationAliases"
+                        + " WHERE locale = ? AND aliasKey LIKE ? ESCAPE '\\'");
+            }
+            return "SELECT t.idTag, t.name, t.type, t.count, COALESCE(r.status, 0) AS status,"
+                + " COALESCE(tr.displayName, t.name) AS displayName, MIN(m.matchRank) AS matchRank"
+                + " FROM (" + matches + ") m JOIN Tags t ON t.idTag = m.idTag"
+                + " LEFT JOIN TagRules r ON r.idTag = t.idTag AND r.type = t.type"
+                + " LEFT JOIN TagTranslations tr ON tr.idTag = t.idTag AND tr.locale = ?"
+                + " WHERE t.type = ? AND t.count >= ? GROUP BY t.idTag"
+                + " ORDER BY matchRank, displayName COLLATE NOCASE, t.idTag LIMIT " + SUGGESTION_LIMIT;
+        }
+
+        public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable Locale appLocale) {
+            return getTagSuggestions(type, prefix, TagTranslationCatalog.resolveInstalledLocale(db, appLocale));
+        }
+
+        private static String escapeLikePrefix(String prefix) {
+            return prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
         }
 
         /**
