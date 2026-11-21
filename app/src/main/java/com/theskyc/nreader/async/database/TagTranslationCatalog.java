@@ -311,6 +311,23 @@ public final class TagTranslationCatalog {
             .replace('\u03c2', '\u03c3');
     }
 
+    static String prefixUpperBound(String prefix) {
+        // The UTF-8 database's BINARY indexes order valid text by Unicode code point.
+        int end = prefix.length();
+        while (end > 0) {
+            int codePoint = prefix.codePointBefore(end);
+            int start = end - Character.charCount(codePoint);
+            if (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE) return null;
+            if (codePoint < Character.MAX_CODE_POINT) {
+                int nextCodePoint = codePoint + 1;
+                if (nextCodePoint == Character.MIN_SURROGATE) nextCodePoint = Character.MAX_SURROGATE + 1;
+                return prefix.substring(0, start) + new String(Character.toChars(nextCodePoint));
+            }
+            end = start;
+        }
+        return null;
+    }
+
     private static void checkCancelled(BooleanSupplier cancelled) throws InterruptedIOException {
         if (Thread.currentThread().isInterrupted() || (cancelled != null && cancelled.getAsBoolean())) {
             throw new InterruptedIOException("Translation pack installation cancelled");

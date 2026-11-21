@@ -429,21 +429,26 @@ public class Queries {
         public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable String locale) {
             String canonicalPattern = escapeLikePrefix(prefix) + "%";
             String normalizedPrefix = TagTranslationCatalog.searchKey(prefix);
-            String translationPattern = escapeLikePrefix(normalizedPrefix) + "%";
+            String normalizedUpperBound = TagTranslationCatalog.prefixUpperBound(normalizedPrefix);
+            boolean useTranslationRange = normalizedUpperBound != null;
             List<String> args = new ArrayList<>();
             args.add(Integer.toString(type.getId()));
             args.add(Integer.toString(TagV2.getMinCount()));
             args.add(canonicalPattern);
             if (locale != null) {
+                String translationPrefix = useTranslationRange ? normalizedPrefix : escapeLikePrefix(normalizedPrefix) + "%";
                 args.add(locale);
-                args.add(translationPattern);
+                args.add(translationPrefix);
+                if (useTranslationRange) args.add(normalizedUpperBound);
                 args.add(locale);
-                args.add(translationPattern);
+                args.add(translationPrefix);
+                if (useTranslationRange) args.add(normalizedUpperBound);
             }
             args.add(locale == null ? "" : locale);
             args.add(Integer.toString(type.getId()));
             args.add(Integer.toString(TagV2.getMinCount()));
-            try (Cursor cursor = db.rawQuery(buildTagSuggestionQuery(locale), args.toArray(new String[0]))) {
+            try (Cursor cursor = db.rawQuery(
+                buildTagSuggestionQuery(locale, useTranslationRange), args.toArray(new String[0]))) {
                 List<TagSuggestion> suggestions = new ArrayList<>(cursor.getCount());
                 if (cursor.moveToFirst()) {
                     do {
@@ -455,14 +460,14 @@ public class Queries {
             }
         }
 
-        static String buildTagSuggestionQuery(@Nullable String locale) {
+        static String buildTagSuggestionQuery(@Nullable String locale, boolean useTranslationRange) {
             StringBuilder matches = new StringBuilder("SELECT idTag, 0 AS matchRank FROM Tags"
                 + " WHERE type = ? AND count >= ? AND name COLLATE NOCASE LIKE ? ESCAPE '\\'");
             if (locale != null) {
-                matches.append(" UNION ALL SELECT idTag, 1 FROM TagTranslations"
-                    + " WHERE locale = ? AND displayKey LIKE ? ESCAPE '\\'")
-                    .append(" UNION ALL SELECT idTag, 2 FROM TagTranslationAliases"
-                        + " WHERE locale = ? AND aliasKey LIKE ? ESCAPE '\\'");
+                matches.append(" UNION ALL SELECT idTag, 1 FROM TagTranslations WHERE locale = ? AND ");
+                appendTranslationPrefix(matches, "displayKey", useTranslationRange);
+                matches.append(" UNION ALL SELECT idTag, 2 FROM TagTranslationAliases WHERE locale = ? AND ");
+                appendTranslationPrefix(matches, "aliasKey", useTranslationRange);
             }
             return "SELECT t.idTag, t.name, t.type, t.count, COALESCE(r.status, 0) AS status,"
                 + " COALESCE(tr.displayName, t.name) AS displayName, MIN(m.matchRank) AS matchRank"
@@ -471,6 +476,11 @@ public class Queries {
                 + " LEFT JOIN TagTranslations tr ON tr.idTag = t.idTag AND tr.locale = ?"
                 + " WHERE t.type = ? AND t.count >= ? GROUP BY t.idTag"
                 + " ORDER BY matchRank, displayName COLLATE NOCASE, t.idTag LIMIT " + SUGGESTION_LIMIT;
+        }
+
+        private static void appendTranslationPrefix(StringBuilder query, String column, boolean useRange) {
+            if (useRange) query.append(column).append(" >= ? AND ").append(column).append(" < ?");
+            else query.append(column).append(" LIKE ? ESCAPE '\\'");
         }
 
         public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable Locale appLocale) {

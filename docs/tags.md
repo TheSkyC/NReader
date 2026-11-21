@@ -81,7 +81,9 @@ feed or publisher is configured by this workflow.
 Tag suggestions use the app's active locale. An exact installed locale wins;
 Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then
 to a generic installed language pack. Suggestions search canonical names,
-translated names, and aliases with a bounded prefix query. A translated
+translated names, and aliases with a prefix query that returns at most 50
+results. The translation and alias indexes restrict lookups to the matching
+key range within the installed locale. A translated
 suggestion displays its canonical name alongside it; selecting any suggestion
 places the canonical site name in the query editor. Uninstalled locales use
 canonical names only.
