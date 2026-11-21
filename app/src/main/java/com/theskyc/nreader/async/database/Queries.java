@@ -427,17 +427,10 @@ public class Queries {
                 args.add("%" + escapeLikePrefix(query) + "%");
                 if (locale != null) {
                     String pattern = "%" + escapeLikePrefix(TagTranslationCatalog.searchKey(query)) + "%";
-                    sql.append(" OR tr.displayKey LIKE ? ESCAPE '\\'");
+                    sql.append(" OR tr.displayKey LIKE ? ESCAPE '\\'"
+                        + " OR EXISTS (SELECT 1 FROM TagTranslationAliases"
+                        + " WHERE idTag = tr.idTag AND locale = tr.locale AND aliasKey LIKE ? ESCAPE '\\')");
                     args.add(pattern);
-                    if (online || type == null) {
-                        // Probe aliases for the visible rule or account row instead of scanning the locale.
-                        sql.append(" OR EXISTS (SELECT 1 FROM TagTranslationAliases"
-                            + " WHERE idTag = tr.idTag AND locale = tr.locale AND aliasKey LIKE ? ESCAPE '\\')");
-                    } else {
-                        sql.append(" OR tr.idTag IN (SELECT idTag FROM TagTranslationAliases"
-                            + " WHERE locale = ? AND aliasKey LIKE ? ESCAPE '\\')");
-                        args.add(locale);
-                    }
                     args.add(pattern);
                 }
                 sql.append(")");

@@ -97,7 +97,8 @@ places the canonical site name in the query editor. Uninstalled locales use
 canonical names only.
 
 The tag manager keeps substring search for canonical names and also matches
-translated names and aliases in the active locale. It shows both names when
+translated names and aliases in the active locale. It checks aliases by tag ID
+within the eligible type or rule list. It shows both names when
 a translation is available. The order, count threshold, applied-rule
 visibility, and account blocklist eligibility still use the canonical data.
 A rule with an incompatible catalog type keeps its own saved label and
