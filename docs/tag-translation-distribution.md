@@ -40,6 +40,12 @@ installed data intact. A descriptor can replace a locale only if its revision
 is newer than the currently installed pack, including one installed from a
 local file. The app does not automatically switch sources.
 
+The downloader does not send account cookies or credentials. It uses the
+configured manifest URL and derives the payload URL from the selected
+descriptor. It requests identity encoding and bounds each response even
+when the server does not declare a length. It stages only the selected
+locale and discards the staging file on success, failure, or cancellation.
+
 ## Preparing a release locally
 
 Start with a validated candidate from the

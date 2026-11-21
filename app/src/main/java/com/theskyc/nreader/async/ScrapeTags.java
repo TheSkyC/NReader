@@ -28,18 +28,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.CacheControl;
-import okhttp3.Call;
 import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public class ScrapeTags extends Worker {
     private static final long CHECK_INTERVAL_MS = TimeUnit.DAYS.toMillis(7);
@@ -50,14 +42,9 @@ public class ScrapeTags extends Worker {
     private static final String WORK_NAME = "tag-catalog-refresh";
     private static final String CHECKED_REVISION = "checked_revision";
     private static final String CHECKED_AT = "checked_at";
-    private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
-        .callTimeout(60, TimeUnit.SECONDS)
-        .followRedirects(false)
-        .followSslRedirects(false)
-        .build();
     private static boolean cleanedStagingDirectory;
 
-    private volatile Call activeCall;
+    private final TagFeedDownload download = new TagFeedDownload(this::isStopped);
 
     public ScrapeTags(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -90,7 +77,7 @@ public class ScrapeTags extends Worker {
 
             int revision = published ? checkPublished(database, installed) : fetchRevision();
             if (!published && revision > installed) downloadAndApply(database, revision);
-            checkStopped();
+            download.checkCancelled();
             // Record only the revision this check verified; another installer may run concurrently.
             checks.edit().putInt(CHECKED_REVISION, Math.max(installed, revision))
                 .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
@@ -105,7 +92,7 @@ public class ScrapeTags extends Worker {
     private int checkPublished(SQLiteDatabase database, int installed) throws IOException {
         HttpUrl url = TagCatalogManifest.manifestUrl(BuildConfig.TAG_CATALOG_MANIFEST_URL);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        download(url.toString(), output, TagCatalogManifest.MAX_BYTES, true);
+        download.copy(url, output, TagCatalogManifest.MAX_BYTES, true);
         TagCatalogManifest manifest = TagCatalogManifest.parse(output.toByteArray());
         if (manifest.revision < installed) throw new IOException("Published tag catalog revision is stale");
         if (manifest.revision == installed) return installed;
@@ -113,7 +100,7 @@ public class ScrapeTags extends Worker {
         File file = createStagingFile(getApplicationContext());
         try {
             try (OutputStream staged = new FileOutputStream(file)) {
-                download(manifest.payloadUrl(url).toString(), staged, manifest.sizeBytes, true);
+                download.copy(manifest.payloadUrl(url), staged, manifest.sizeBytes, true);
             }
             manifest.apply(database, file, this::isStopped);
         } finally {
@@ -126,7 +113,7 @@ public class ScrapeTags extends Worker {
         File file = createStagingFile(getApplicationContext());
         try {
             try (OutputStream output = new FileOutputStream(file)) {
-                download(TAGS, output, TagCatalogManifest.MAX_PAYLOAD_BYTES, false);
+                download.copy(HttpUrl.get(TAGS), output, TagCatalogManifest.MAX_PAYLOAD_BYTES, false);
             }
             if (fetchRevision() != revision) throw new IOException("Tag catalog revision changed during download");
             try (InputStream input = new FileInputStream(file)) {
@@ -156,58 +143,16 @@ public class ScrapeTags extends Worker {
 
     private int fetchRevision() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream(32);
-        download(VERSION, output, 32, false);
+        download.copy(HttpUrl.get(VERSION), output, 32, false);
         return TagCatalog.readRevision(new ByteArrayInputStream(output.toByteArray()));
-    }
-
-    private void download(String url, OutputStream output, int limit, boolean requireIdentity) throws IOException {
-        Request.Builder request = new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK);
-        if (requireIdentity) request.header("Accept-Encoding", "identity");
-        Call call = CLIENT.newCall(request.build());
-        activeCall = call;
-        try {
-            checkStopped();
-            try (Response response = call.execute()) {
-                ResponseBody body = response.body();
-                if (response.code() != 200 || body == null) {
-                    throw new IOException("Tag catalog request failed with HTTP " + response.code());
-                }
-                List<String> encodings = response.headers("Content-Encoding");
-                if (requireIdentity && !encodings.isEmpty()
-                    && (encodings.size() != 1 || !"identity".equalsIgnoreCase(encodings.get(0)))) {
-                    throw new IOException("Unexpected tag catalog content encoding");
-                }
-                if (body.contentLength() > limit) throw new IOException("Tag catalog response exceeds limit");
-                byte[] buffer = new byte[8192];
-                int total = 0;
-                try (InputStream input = body.byteStream()) {
-                    int count;
-                    while ((count = input.read(buffer)) != -1) {
-                        checkStopped();
-                        total += count;
-                        if (total > limit) throw new IOException("Tag catalog response exceeds limit");
-                        output.write(buffer, 0, count);
-                    }
-                }
-            }
-        } finally {
-            activeCall = null;
-        }
     }
 
     private Result failureOrRetry() {
         return getRunAttemptCount() + 1 < MAX_ATTEMPTS ? Result.retry() : Result.failure();
     }
 
-    private void checkStopped() throws InterruptedIOException {
-        if (isStopped() || Thread.currentThread().isInterrupted()) {
-            throw new InterruptedIOException("Tag catalog update stopped");
-        }
-    }
-
     @Override
     public void onStopped() {
-        Call call = activeCall;
-        if (call != null) call.cancel();
+        download.cancelActiveCall();
     }
 }
