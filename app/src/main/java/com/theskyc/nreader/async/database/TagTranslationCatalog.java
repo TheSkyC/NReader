@@ -6,6 +6,9 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.theskyc.nreader.utility.JsonStringGuard;
 
 import java.io.FilterInputStream;
@@ -24,6 +27,7 @@ import java.util.function.BooleanSupplier;
 
 /** Installs one locale's public tag names and aliases atomically. */
 public final class TagTranslationCatalog {
+    private static final MutableLiveData<Void> CHANGES = new MutableLiveData<>();
     static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS TagTranslations ("
         + "idTag INTEGER NOT NULL, locale TEXT NOT NULL, displayName TEXT NOT NULL, displayKey TEXT NOT NULL,"
         + " PRIMARY KEY (idTag, locale))";
@@ -46,6 +50,10 @@ public final class TagTranslationCatalog {
     private static final String SIGMA = "\u03c3";
 
     private TagTranslationCatalog() {}
+
+    public static LiveData<Void> changes() {
+        return CHANGES;
+    }
 
     static void createTables(SQLiteDatabase database) {
         database.execSQL(CREATE_TABLE);
@@ -160,10 +168,11 @@ public final class TagTranslationCatalog {
             database.execSQL("DROP TABLE " + ALIAS_STAGE);
             checkCancelled(cancelled);
             database.setTransactionSuccessful();
-            return true;
         } finally {
             database.endTransaction();
         }
+        CHANGES.postValue(null);
+        return true;
     }
 
     public static void remove(SQLiteDatabase database, String locale) {
@@ -177,6 +186,7 @@ public final class TagTranslationCatalog {
         } finally {
             database.endTransaction();
         }
+        CHANGES.postValue(null);
     }
 
     private static PackMetadata readPack(JsonReader reader, SQLiteStatement insertEntry,

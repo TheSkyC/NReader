@@ -96,6 +96,15 @@ suggestion displays its canonical name alongside it; selecting any suggestion
 places the canonical site name in the query editor. Uninstalled locales use
 canonical names only.
 
+The tag manager keeps substring search for canonical names and also matches
+translated names and aliases in the active locale. It shows both names when
+a translation is available. The order, count threshold, applied-rule
+visibility, and account blocklist eligibility still use the canonical data.
+A rule with an incompatible catalog type keeps its own saved label and
+cannot match a translation for the catalog tag.
+When showing both names together, the app ignores explicit text direction
+controls in the labels so neither can reorder the other.
+
 Local rule evaluation retains its existing context-specific behavior. The
 editor cycles Default → Accepted → Avoided → Default; Default removes the
 rule. Account blacklist entries do not modify the local status. Applying an

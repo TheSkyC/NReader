@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +17,7 @@ import android.widget.Filter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.SearchView;
@@ -40,6 +42,7 @@ import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.chip.Chip;
@@ -508,6 +511,18 @@ public class SearchActivity extends GeneralActivity {
             super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
             this.type = type;
             this.locale = getResources().getConfiguration().getLocales().get(0);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            TextView row = convertView == null
+                ? (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_dropdown_item_1line, parent, false)
+                : (TextView) convertView;
+            TagSuggestion suggestion = getItem(position);
+            row.setText(suggestion == null ? null
+                : TagLabel.format(parent, suggestion.getTag().getName(), suggestion.getDisplayName()));
+            return row;
         }
 
         @Override

@@ -541,4 +541,5 @@
     <string name="tag_translation_online_failed">无法在线检查标签语言。</string>
     <string name="tag_translation_online_empty">没有新的标签语言或更新。</string>
     <string name="tag_translation_online_confirm">要下载并安装此语言包（%1$s）吗？</string>
+    <string name="tag_translation_display_pair">%1$s（%2$s）</string>
 </resources>

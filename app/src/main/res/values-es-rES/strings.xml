@@ -513,4 +513,5 @@
     <string name="tag_translation_online_failed">No se pudieron consultar los idiomas de las etiquetas.</string>
     <string name="tag_translation_online_empty">No hay idiomas nuevos ni actualizaciones para las etiquetas.</string>
     <string name="tag_translation_online_confirm">¿Descargar e instalar este paquete de idioma (%1$s)?</string>
+    <string name="tag_translation_display_pair">%1$s (%2$s)</string>
 </resources>

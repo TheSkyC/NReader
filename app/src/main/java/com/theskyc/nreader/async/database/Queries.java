@@ -396,23 +396,56 @@ public class Queries {
          * @param sortByName sort by name or by count
          */
         public static Cursor getFilterCursor(@NonNull String query, TagType type, boolean online, boolean sortByName) {
+            return getFilterCursor(query, type, online, sortByName, null);
+        }
+
+        public static Cursor getFilterCursor(@NonNull String query, TagType type, boolean online, boolean sortByName,
+                                             @Nullable Locale appLocale) {
             String projection = online ? ONLINE_SELECT : type == null ? RULE_SELECT : METADATA_SELECT;
-            StringBuilder sql = new StringBuilder("SELECT * FROM (").append(projection).append(") WHERE 1");
+            String locale = TagTranslationCatalog.resolveInstalledLocale(db, appLocale);
+            StringBuilder sql = new StringBuilder("SELECT tags.*, ");
             List<String> args = new ArrayList<>();
+            sql.append(locale == null ? "NULL" : "tr.displayName").append(" AS displayName FROM (")
+                .append(projection).append(") tags");
+            if (locale != null) {
+                sql.append(" LEFT JOIN TagTranslations tr ON tr.idTag = tags.idTag AND tr.locale = ?");
+                if (!online && type == null) {
+                    // A conflicting saved rule must not inherit the translation for a different tag type.
+                    sql.append(" AND EXISTS (SELECT 1 FROM Tags t WHERE t.idTag = tags.idTag AND t.type = tags.type)");
+                }
+                args.add(locale);
+            }
+            sql.append(" WHERE 1");
             if (online && !Login.hasCurrentOnlineTags()) sql.append(" AND 0");
             if (!online && type != null) {
                 sql.append(" AND count >= ?");
                 args.add(Integer.toString(TagV2.getMinCount()));
             }
             if (!query.isEmpty()) {
-                sql.append(" AND name LIKE ? ESCAPE '\\'");
-                args.add("%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
+                sql.append(" AND (tags.name LIKE ? ESCAPE '\\'");
+                args.add("%" + escapeLikePrefix(query) + "%");
+                if (locale != null) {
+                    String pattern = "%" + escapeLikePrefix(TagTranslationCatalog.searchKey(query)) + "%";
+                    sql.append(" OR tr.displayKey LIKE ? ESCAPE '\\'");
+                    args.add(pattern);
+                    if (online || type == null) {
+                        // Probe aliases for the visible rule or account row instead of scanning the locale.
+                        sql.append(" OR EXISTS (SELECT 1 FROM TagTranslationAliases"
+                            + " WHERE idTag = tr.idTag AND locale = tr.locale AND aliasKey LIKE ? ESCAPE '\\')");
+                    } else {
+                        sql.append(" OR tr.idTag IN (SELECT idTag FROM TagTranslationAliases"
+                            + " WHERE locale = ? AND aliasKey LIKE ? ESCAPE '\\')");
+                        args.add(locale);
+                    }
+                    args.add(pattern);
+                }
+                sql.append(")");
             }
             if (type != null) {
                 sql.append(" AND type = ?");
                 args.add(Byte.toString(type.getId()));
             }
-            sql.append(sortByName ? " ORDER BY name, idTag" : " ORDER BY count DESC, name, idTag");
+            sql.append(sortByName ? " ORDER BY tags.name, tags.idTag" : " ORDER BY tags.count DESC, tags.name, tags.idTag");
             return db.rawQuery(sql.toString(), args.toArray(new String[0]));
         }
 

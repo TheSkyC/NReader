@@ -541,4 +541,5 @@
     <string name="tag_translation_online_failed">無法線上檢查標籤語言。</string>
     <string name="tag_translation_online_empty">沒有新的標籤語言或更新。</string>
     <string name="tag_translation_online_confirm">要下載並安裝此語言套件（%1$s）嗎？</string>
+    <string name="tag_translation_display_pair">%1$s（%2$s）</string>
 </resources>

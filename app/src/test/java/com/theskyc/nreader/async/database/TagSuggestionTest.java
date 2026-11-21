@@ -4,21 +4,26 @@ import android.app.Application;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
+import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -94,6 +99,69 @@ public class TagSuggestionTest {
         assertEquals(List.of("first"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, lastCodePoint, "ja")));
         assertEquals(List.of("first"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "x" + lastCodePoint, "ja")));
         assertEquals(List.of("first", "second"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "", "ja")));
+    }
+
+    @Test public void managerMatchesTranslatedSubstringsWithoutChangingTagIdentityOrOrder() throws IOException {
+        insert(11, "canonical-first", TagType.TAG);
+        insert(12, "canonical-second", TagType.TAG);
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":11,\"name\":\"Z Caf\u00e9\",\"aliases\":[\"a%_match\",\"b%_match\"]},"
+                + "{\"id\":12,\"name\":\"A Caf\u00e9\",\"aliases\":[\"normal match\"]}]}")
+            .getBytes(StandardCharsets.UTF_8)), () -> false));
+
+        int previousThreshold = TagV2.getMinCount();
+        TagV2.updateMinCount(RuntimeEnvironment.getApplication(), 0);
+        try {
+            try (Cursor rows = Queries.TagTable.getFilterCursor("AFE\u0301", TagType.TAG, false, true, Locale.JAPAN)) {
+                assertEquals(2, rows.getCount());
+                assertTrue(rows.moveToFirst());
+                assertEquals("canonical-first", Queries.TagTable.cursorToTag(rows).getName());
+                assertEquals("Z Caf\u00e9", rows.getString(rows.getColumnIndexOrThrow("displayName")));
+            }
+            try (Cursor rows = Queries.TagTable.getFilterCursor("%_match", TagType.TAG, false, false, Locale.JAPAN)) {
+                assertEquals(1, rows.getCount());
+                assertTrue(rows.moveToFirst());
+                assertEquals(11, Queries.TagTable.cursorToTag(rows).getId());
+            }
+            try (Cursor rows = Queries.TagTable.getFilterCursor("nical-fi", TagType.TAG, false, false, Locale.FRANCE)) {
+                assertEquals(1, rows.getCount());
+                assertTrue(rows.moveToFirst());
+                assertNull(rows.getString(rows.getColumnIndexOrThrow("displayName")));
+            }
+        } finally {
+            TagV2.updateMinCount(RuntimeEnvironment.getApplication(), previousThreshold);
+        }
+    }
+
+    @Test public void managerKeepsConflictingRulesEditableAndHidesInactiveAccountRows() throws IOException {
+        insert(11, "canonical-first", TagType.TAG);
+        insert(12, "canonical-second", TagType.TAG);
+        database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES"
+            + " (11, 'kept rule', 2, 1), (12, 'compatible rule', 3, 2)");
+        database.execSQL("INSERT INTO AccountTagBlacklist (idTag) VALUES (11),(12)");
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":11,\"name\":\"hidden translation\",\"aliases\":[\"hidden alias\"]},"
+                + "{\"id\":12,\"name\":\"shown translation\",\"aliases\":[\"shown alias\"]}]}")
+            .getBytes(StandardCharsets.UTF_8)), () -> false));
+
+        try (Cursor rows = Queries.TagTable.getFilterCursor("kept rule", null, false, false, Locale.JAPAN)) {
+            assertTrue(rows.moveToFirst());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.cursorToTag(rows).getStatus());
+            assertEquals("kept rule", Queries.TagTable.cursorToTag(rows).getName());
+            assertNull(rows.getString(rows.getColumnIndexOrThrow("displayName")));
+        }
+        try (Cursor rows = Queries.TagTable.getFilterCursor("hidden alias", null, false, false, Locale.JAPAN)) {
+            assertEquals(0, rows.getCount());
+        }
+        try (Cursor rows = Queries.TagTable.getFilterCursor("shown alias", null, false, false, Locale.JAPAN)) {
+            assertTrue(rows.moveToFirst());
+            assertEquals(TagStatus.ACCEPTED, Queries.TagTable.cursorToTag(rows).getStatus());
+        }
+        try (Cursor rows = Queries.TagTable.getFilterCursor("translation", null, true, false, Locale.JAPAN)) {
+            assertEquals(0, rows.getCount());
+        }
     }
 
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {

@@ -513,4 +513,5 @@
     <string name="tag_translation_online_failed">Não foi possível consultar os idiomas das tags on-line.</string>
     <string name="tag_translation_online_empty">Não há novos idiomas nem atualizações para as tags.</string>
     <string name="tag_translation_online_confirm">Baixar e instalar este pacote de idioma (%1$s)?</string>
+    <string name="tag_translation_display_pair">%1$s (%2$s)</string>
 </resources>

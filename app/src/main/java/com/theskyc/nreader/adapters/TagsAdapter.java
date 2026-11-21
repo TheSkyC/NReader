@@ -29,6 +29,7 @@ import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.TagV2;
+import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.ImageDownloadUtility;
 import com.theskyc.nreader.utility.Utility;
 
@@ -90,8 +91,9 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         lastQuery = query == null ? "" : query;
         String requestedQuery = lastQuery;
         boolean sortedByName = TagV2.isSortedByName();
+        Locale uiLocale = context.getResources().getConfiguration().getLocales().get(0);
         long requestedRevision = tagMode == TagMode.ONLINE ? Login.currentOnlineTagsRevision() : -1;
-        queryLoader.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName), result -> {
+        queryLoader.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName, uiLocale), result -> {
             if (tagMode == TagMode.ONLINE && (!Objects.equals(identity, AuthStore.activeIdentity(context))
                 || requestedRevision < 0 || requestedRevision != Login.currentOnlineTagsRevision())) {
                 cursor = null;
@@ -134,7 +136,9 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull final TagsAdapter.ViewHolder holder, int position) {
         cursor.moveToPosition(position);
         final Tag ent = Queries.TagTable.cursorToTag(cursor);
-        holder.title.setText(ent.getName().isEmpty() ? Integer.toString(ent.getId()) : ent.getName());
+        String canonical = ent.getName().isEmpty() ? Integer.toString(ent.getId()) : ent.getName();
+        String translated = cursor.getString(cursor.getColumnIndexOrThrow("displayName"));
+        holder.title.setText(TagLabel.format(holder.title, canonical, translated));
         holder.count.setText(String.format(Locale.US, "%d", ent.getCount()));
         holder.master.setOnClickListener(v -> {
             switch (tagMode) {

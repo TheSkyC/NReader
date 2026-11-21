@@ -20,6 +20,7 @@ import com.theskyc.nreader.adapters.TagsAdapter;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.AuthStore;
@@ -136,6 +137,7 @@ public class TagTypePage extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         TagCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
+        TagTranslationCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
     }
 
     private void refreshOnlineTags(View root) {
