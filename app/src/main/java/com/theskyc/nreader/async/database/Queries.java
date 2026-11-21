@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @SuppressLint("Range")
 public class Queries {
@@ -518,6 +519,10 @@ public class Queries {
 
         public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable Locale appLocale) {
             return getTagSuggestions(type, prefix, TagTranslationCatalog.resolveInstalledLocale(db, appLocale));
+        }
+
+        public static Map<Integer, String> getDisplayNames(List<Integer> siteIds, Locale appLocale) {
+            return TagTranslationCatalog.getDisplayNames(db, siteIds, appLocale);
         }
 
         private static String escapeLikePrefix(String prefix) {

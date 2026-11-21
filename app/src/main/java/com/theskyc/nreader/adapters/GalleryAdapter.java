@@ -37,17 +37,20 @@ import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.files.GalleryFolder;
 import com.theskyc.nreader.github.chrisbanes.photoview.PhotoView;
 import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.ImageDownloadUtility;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.LanguageFlag;
 import com.theskyc.nreader.utility.Utility;
-import com.google.android.material.chip.Chip;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
     private static final int[] TAG_NAMES = {
@@ -71,6 +74,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private boolean loadFailed;
     @Nullable private Drawable initialCover;
     private final boolean[] expandedTags = new boolean[TagType.values.length];
+    private Map<Integer, String> tagDisplayNames = Collections.emptyMap();
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
         this(cont, gallery, colCount, false);
@@ -101,6 +105,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     public void setInitialCover(@Nullable Drawable initialCover) {
         this.initialCover = initialCover;
+    }
+
+    public void setTagDisplayNames(Map<Integer, String> names) {
+        if (!details || tagDisplayNames.equals(names)) return;
+        tagDisplayNames = names;
+        notifyItemChanged(1);
     }
 
     public Type positionToType(int pos) {
@@ -278,23 +288,26 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             ((TextView) lay.findViewById(R.id.title)).setText(idStringTagName);
             for (int a = cg.getChildCount(); a < tagCount; a++) {
                 final Tag tag = tagList.getTag(type, a);
-                Chip c = (Chip) inflater.inflate(R.layout.gallery_tag_chip, cg, false);
-                c.setText(tag.getName());
-                c.setOnClickListener(v -> {
+                MaterialButton action = (MaterialButton) inflater.inflate(R.layout.gallery_tag_action, cg, false);
+                action.setOnClickListener(v -> {
                     Intent intent = new Intent(context, MainActivity.class);
                     intent.putExtra(context.getPackageName() + ".TAG", tag);
                     intent.putExtra(context.getPackageName() + ".ISBYTAG", true);
                     context.startActivity(intent);
                 });
-                c.setOnLongClickListener(v -> {
+                action.setOnLongClickListener(v -> {
                     CopyToClipboardActivity.copyTextToClipboard(context, tag.getName());
                     Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
                     return true;
                 });
-                cg.addView(c);
+                cg.addView(action);
             }
             for (int index = 0; index < cg.getChildCount(); index++) {
-                cg.getChildAt(index).setVisibility(expandedTags[type.getId()] || index < 8 ? View.VISIBLE : View.GONE);
+                MaterialButton action = (MaterialButton) cg.getChildAt(index);
+                Tag tag = tagList.getTag(type, index);
+                action.setText(TagLabel.format(cg, tag.getName(), tagDisplayNames.get(tag.getId())));
+                boolean hasName = tag.getName() != null && !tag.getName().isEmpty();
+                action.setVisibility(hasName && (expandedTags[type.getId()] || index < 8) ? View.VISIBLE : View.GONE);
             }
             TextView expand = lay.findViewById(R.id.gallery_expand_category);
             expand.setVisibility(tagCount > 8 ? View.VISIBLE : View.GONE);

@@ -102,6 +102,11 @@ a translation is available. The order, count threshold, applied-rule
 visibility, and account blocklist eligibility still use the canonical data.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
+Gallery details show canonical labels immediately, then look up installed
+translations for that gallery's positive site IDs in the background. A
+translated tag button shows both names and can wrap onto multiple lines.
+Tapping it still searches by the original site tag, and long-press still
+copies the canonical name.
 When showing both names together, the app ignores explicit text direction
 controls in the labels so neither can reorder the other.
 

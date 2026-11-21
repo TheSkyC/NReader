@@ -55,9 +55,11 @@ import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.api.GalleryDetailRequests;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
+import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.GalleryOpenGate;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.activities.BaseActivity;
@@ -76,9 +78,15 @@ import com.theskyc.nreader.utility.Utility;
 import java.io.IOException;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -99,6 +107,9 @@ public class GalleryActivity extends BaseActivity {
     private Toolbar toolbar;
     private RecyclerView detailsList;
     private GalleryAdapter detailsAdapter;
+    private final ExecutorService tagLabelLoader = Executors.newSingleThreadExecutor();
+    @Nullable private Future<?> tagLabelRequest;
+    private long tagLabelGeneration;
     private TabLayout tabs;
     private RecyclerView commentsList;
     private SwipeRefreshLayout commentsRefresher;
@@ -208,6 +219,7 @@ public class GalleryActivity extends BaseActivity {
         if (gallery instanceof SimpleGallery) loadShell((SimpleGallery) gallery);
         else loadGallery(gallery, zoom);//if already has gallery
         setupTabs(savedInstanceState);
+        TagTranslationCatalog.changes().observe(this, ignored -> loadTagLabels());
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -319,6 +331,7 @@ public class GalleryActivity extends BaseActivity {
         if (previousDetails != null) detailsAdapter.copyExpandedTagsFrom(previousDetails);
         detailsList.setLayoutManager(new LinearLayoutManager(this));
         detailsList.setAdapter(detailsAdapter);
+        loadTagLabels();
         lookup();
         if (shellStartedAt >= 0) {
             LogUtility.d("Gallery shell ready in " + (SystemClock.elapsedRealtime() - shellStartedAt) + " ms");
@@ -331,6 +344,41 @@ public class GalleryActivity extends BaseActivity {
             intent.putExtra(getPackageName() + ".PAGE", zoom);
             startActivity(intent);
         }
+    }
+
+    private void loadTagLabels() {
+        long generation = ++tagLabelGeneration;
+        if (tagLabelRequest != null) {
+            tagLabelRequest.cancel(true);
+            tagLabelRequest = null;
+        }
+        if (!gallery.hasGalleryData() || detailsAdapter == null) return;
+
+        GalleryAdapter requestedAdapter = detailsAdapter;
+        List<Integer> siteIds = new ArrayList<>();
+        for (Tag tag : gallery.getGalleryData().getTags().getAllTagsList()) {
+            if (tag.getId() > 0) siteIds.add(tag.getId());
+        }
+        if (siteIds.isEmpty()) return;
+        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        tagLabelRequest = tagLabelLoader.submit(() -> {
+            Map<Integer, String> names;
+            try {
+                names = Queries.TagTable.getDisplayNames(siteIds, locale);
+            } catch (RuntimeException exception) {
+                if (Thread.currentThread().isInterrupted()) return;
+                LogUtility.e("Unable to load gallery tag translations", exception);
+                names = Collections.emptyMap();
+            }
+            if (Thread.currentThread().isInterrupted()) return;
+            Map<Integer, String> result = names;
+            runOnUiThread(() -> {
+                if (generation == tagLabelGeneration && requestedAdapter == detailsAdapter
+                    && !isFinishing() && !isDestroyed()) {
+                    requestedAdapter.setTagDisplayNames(result);
+                }
+            });
+        });
     }
 
     @Nullable
@@ -658,6 +706,9 @@ public class GalleryActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         detailRequestGeneration++;
+        tagLabelGeneration++;
+        if (tagLabelRequest != null) tagLabelRequest.cancel(true);
+        tagLabelLoader.shutdownNow();
         cancelLocalFallback();
         if (detailRequest != null) detailRequest.cancelRequest();
         if (commentsRequest != null) commentsRequest.cancel();

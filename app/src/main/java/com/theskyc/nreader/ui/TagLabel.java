@@ -16,7 +16,8 @@ public final class TagLabel {
 
     private TagLabel() {}
 
-    public static String format(View view, String canonical, @Nullable String translation) {
+    public static String format(View view, @Nullable String canonical, @Nullable String translation) {
+        if (canonical == null || canonical.isEmpty()) return "";
         if (translation == null || translation.equals(canonical)) return canonical;
         String displayName = BIDI_CONTROLS.matcher(translation).replaceAll("").trim();
         String canonicalName = BIDI_CONTROLS.matcher(canonical).replaceAll("");

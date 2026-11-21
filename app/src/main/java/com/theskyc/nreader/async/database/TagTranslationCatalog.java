@@ -17,6 +17,9 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +31,7 @@ import java.util.function.BooleanSupplier;
 /** Installs one locale's public tag names and aliases atomically. */
 public final class TagTranslationCatalog {
     private static final MutableLiveData<Void> CHANGES = new MutableLiveData<>();
+    private static final int DISPLAY_LOOKUP_BATCH_SIZE = 256;
     static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS TagTranslations ("
         + "idTag INTEGER NOT NULL, locale TEXT NOT NULL, displayName TEXT NOT NULL, displayKey TEXT NOT NULL,"
         + " PRIMARY KEY (idTag, locale))";
@@ -53,6 +57,29 @@ public final class TagTranslationCatalog {
 
     public static LiveData<Void> changes() {
         return CHANGES;
+    }
+
+    static Map<Integer, String> getDisplayNames(SQLiteDatabase database, Collection<Integer> ids, Locale appLocale) {
+        if (ids.isEmpty()) return Collections.emptyMap();
+        String locale = resolveInstalledLocale(database, appLocale);
+        if (locale == null) return Collections.emptyMap();
+
+        List<Integer> siteIds = new ArrayList<>(new HashSet<>(ids));
+        siteIds.removeIf(id -> id == null || id <= 0);
+        Map<Integer, String> names = new HashMap<>();
+        for (int start = 0; start < siteIds.size(); start += DISPLAY_LOOKUP_BATCH_SIZE) {
+            if (Thread.currentThread().isInterrupted()) return Collections.emptyMap();
+            int count = Math.min(DISPLAY_LOOKUP_BATCH_SIZE, siteIds.size() - start);
+            String[] args = new String[count + 1];
+            args[0] = locale;
+            for (int i = 0; i < count; i++) args[i + 1] = Integer.toString(siteIds.get(start + i));
+            String placeholders = String.join(",", Collections.nCopies(count, "?"));
+            try (Cursor cursor = database.rawQuery("SELECT idTag, displayName FROM TagTranslations"
+                + " WHERE locale = ? AND idTag IN (" + placeholders + ")", args)) {
+                while (cursor.moveToNext()) names.put(cursor.getInt(0), cursor.getString(1));
+            }
+        }
+        return names;
     }
 
     static void createTables(SQLiteDatabase database) {

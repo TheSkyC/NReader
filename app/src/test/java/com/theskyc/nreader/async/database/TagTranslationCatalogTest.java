@@ -17,9 +17,12 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -159,6 +162,34 @@ public class TagTranslationCatalogTest {
         assertEquals("\u03bf\u03c3", scalarString(
             "SELECT aliasKey FROM TagTranslationAliases WHERE idTag=1 AND locale='el'"));
         assertEquals(1, Queries.TagTable.getTagSuggestions(TagType.TAG, "\u039f\u03a3", "el").size());
+    }
+
+    @Test public void displayLookupOnlyReturnsRequestedPositiveIdsInTheResolvedLocale() throws IOException {
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"simplified one\"},"
+            + "{\"id\":2,\"name\":\"simplified two\"}]")));
+        StringJoiner entries = new StringJoiner(",", "[", "]");
+        entries.add("{\"id\":2,\"name\":\"unrequested\"}");
+        List<Integer> ids = new ArrayList<>(List.of(-1, 0, 1, 1));
+        Map<Integer, String> expected = new HashMap<>();
+        for (int id = 1; id <= 300; id++) {
+            if (id == 2) continue;
+            String translated = "traditional " + id;
+            if (id != 1) {
+                database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (?, ?, 3, 100)",
+                    new Object[]{id, "canonical " + id});
+                ids.add(id);
+            }
+            expected.put(id, translated);
+            entries.add("{\"id\":" + id + ",\"name\":\"" + translated + "\"}");
+        }
+        ids.add(12345);
+        assertTrue(apply(pack("zh-Hant", 1, entries.toString())));
+
+        assertEquals(expected, Queries.TagTable.getDisplayNames(ids, Locale.TAIWAN));
+        assertEquals(Map.of(2, "simplified two"), Queries.TagTable.getDisplayNames(List.of(2), Locale.CHINA));
+        assertTrue(Queries.TagTable.getDisplayNames(ids, Locale.JAPAN).isEmpty());
+        TagTranslationCatalog.remove(database, "zh-Hant");
+        assertTrue(Queries.TagTable.getDisplayNames(ids, Locale.TAIWAN).isEmpty());
     }
 
     private boolean apply(String json) throws IOException {

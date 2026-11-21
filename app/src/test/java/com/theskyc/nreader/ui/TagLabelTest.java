@@ -31,6 +31,10 @@ public class TagLabelTest {
         org.junit.Assert.assertTrue(expected.contains(name));
     }
 
+    @Test public void translationCannotStandInForAMissingCanonicalName() {
+        assertEquals("", TagLabel.format(view(Locale.US, View.LAYOUT_DIRECTION_LTR), null, "translation"));
+    }
+
     private View view(Locale locale, int direction) {
         Configuration configuration = new Configuration();
         configuration.setLocale(locale);
