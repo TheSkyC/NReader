@@ -7,5 +7,6 @@ public final class TagDatabaseFixture {
 
     public static void createTables(SQLiteDatabase database) {
         Queries.TagTable.createTables(database);
+        TagTranslationCatalog.createTables(database);
     }
 }

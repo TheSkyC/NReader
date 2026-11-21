@@ -1,6 +1,7 @@
 package com.theskyc.nreader.adapters;
 
 import android.app.Application;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
 
@@ -11,6 +12,8 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.AsyncCursorQuery;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagDatabaseFixture;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
+import com.theskyc.nreader.settings.AccountRuntime;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
@@ -26,6 +29,9 @@ import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.LooperMode;
 
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Collections;
 
@@ -33,11 +39,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28, application = Application.class)
+@Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagsAdapterTest {
     @Test public void delayedQueryCannotPublishAfterBlacklistRevisionChanges() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
+        Field runtimeRepository = AccountRuntime.class.getDeclaredField("repository");
+        runtimeRepository.setAccessible(true);
+        Object previousRepository = runtimeRepository.get(null);
+        runtimeRepository.set(null, null);
         AuthSessionStore.clear(app);
         AuthStore.clear(app);
         Global.initFromShared(app);
@@ -52,21 +62,29 @@ public class TagsAdapterTest {
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
                 Collections.singletonList(tag)));
+            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+                + "\"entries\":[{\"id\":42,\"name\":\"translated name\"}]}";
+            assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
+                () -> false));
+            try (Cursor translated = Queries.TagTable.getFilterCursor("translated", null, true, false,
+                controller.get().getResources().getConfiguration().getLocales().get(0))) {
+                assertEquals(1, translated.getCount());
+            }
             ArrayDeque<Runnable> work = new ArrayDeque<>();
-            TagsAdapter adapter = new TagsAdapter(controller.get(), "", true, new AsyncCursorQuery(work::add));
+            TagsAdapter adapter = new TagsAdapter(controller.get(), "translated", true, new AsyncCursorQuery(work::add));
             try {
                 work.remove().run();
                 assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
                     Collections.emptyList()));
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(0, adapter.getItemCount());
-                adapter.filter("");
+                adapter.filter("translated");
                 work.remove().run();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(0, adapter.getItemCount());
                 assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
                     Collections.singletonList(tag)));
-                adapter.filter("");
+                adapter.filter("translated");
                 work.remove().run();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(1, adapter.getItemCount());
@@ -77,6 +95,7 @@ public class TagsAdapterTest {
             Queries.setDb(null);
             AuthStore.clear(app);
             Login.updateUser(null);
+            runtimeRepository.set(null, previousRepository);
         }
     }
 }
