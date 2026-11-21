@@ -8,8 +8,8 @@ canonical names, search query text, local rules, or account state.
 
 ## Translation manifest v1
 
-The UTF-8 JSON object is limited to 32 KiB. Unknown, missing, and duplicate
-fields are invalid at every level.
+The UTF-8 JSON object is limited to 32 KiB and must not have a byte order
+mark. Unknown, missing, and duplicate fields are invalid at every level.
 
 | Field | Value |
 | --- | --- |
@@ -32,6 +32,13 @@ no URLs in the manifest. The payload's locale and revision must match the
 descriptor. The byte count and digest cover the uncompressed JSON file as
 written. For network use, the manifest and payload must come from the same
 configured HTTPS origin without redirects or account credentials.
+
+Android verifies the staged file's length and digest before starting a pack
+import. The importer compares the payload's locale and revision inside the
+transaction before replacing anything. A rejected or cancelled pack leaves
+installed data intact. A descriptor can replace a locale only if its revision
+is newer than the currently installed pack, including one installed from a
+local file. The app does not automatically switch sources.
 
 ## Preparing a release locally
 

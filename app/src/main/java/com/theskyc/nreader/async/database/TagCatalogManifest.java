@@ -10,8 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -35,13 +33,7 @@ public final class TagCatalogManifest {
     }
 
     public static HttpUrl manifestUrl(String configured) throws IOException {
-        HttpUrl url = HttpUrl.parse(configured);
-        if (url == null || !url.isHttps() || !url.username().isEmpty() || !url.password().isEmpty()
-            || url.query() != null || url.fragment() != null
-            || !url.encodedPath().endsWith("/manifest.json")) {
-            throw new IOException("Invalid configured tag catalog manifest URL");
-        }
-        return url;
+        return TagFeedFiles.manifestUrl(configured);
     }
 
     public HttpUrl payloadUrl(HttpUrl manifestUrl) throws IOException {
@@ -63,19 +55,19 @@ public final class TagCatalogManifest {
                 String name = reader.nextName();
                 if (!fields.add(name)) throw new IOException("Duplicate manifest field");
                 switch (name) {
-                    case "schemaVersion": schemaVersion = positiveInteger(reader); break;
-                    case "revision": revision = positiveInteger(reader); break;
-                    case "sizeBytes": sizeBytes = positiveInteger(reader); break;
-                    case "source": source = string(reader); break;
-                    case "kind": kind = string(reader); break;
-                    case "sha256": sha256 = string(reader); break;
+                    case "schemaVersion": schemaVersion = TagFeedFiles.positiveInteger(reader); break;
+                    case "revision": revision = TagFeedFiles.positiveInteger(reader); break;
+                    case "sizeBytes": sizeBytes = TagFeedFiles.positiveInteger(reader); break;
+                    case "source": source = TagFeedFiles.string(reader); break;
+                    case "kind": kind = TagFeedFiles.string(reader); break;
+                    case "sha256": sha256 = TagFeedFiles.string(reader); break;
                     default: throw new IOException("Unknown manifest field");
                 }
             }
             reader.endObject();
             if (schemaVersion != 1 || revision == 0 || sizeBytes == 0 || sizeBytes > MAX_PAYLOAD_BYTES
-                || !SOURCE.equals(source) || !"catalog".equals(kind) || sha256 == null
-                || !sha256.matches("[0-9a-f]{64}") || reader.peek() != JsonToken.END_DOCUMENT) {
+                || !SOURCE.equals(source) || !"catalog".equals(kind)
+                || !TagFeedFiles.isSha256(sha256) || reader.peek() != JsonToken.END_DOCUMENT) {
                 throw new IOException("Unsupported tag catalog manifest");
             }
             return new TagCatalogManifest(revision, sizeBytes, sha256);
@@ -91,46 +83,8 @@ public final class TagCatalogManifest {
     boolean apply(SQLiteDatabase database, File staged, int minimumRows, BooleanSupplier cancelled) throws IOException {
         if (revision <= TagCatalog.installedPublishedRevision(database)) return false;
         try (FileInputStream input = new FileInputStream(staged)) {
-            MessageDigest digest;
-            try {
-                digest = MessageDigest.getInstance("SHA-256");
-            } catch (NoSuchAlgorithmException error) {
-                throw new IllegalStateException("SHA-256 is unavailable", error);
-            }
-            byte[] buffer = new byte[8192];
-            int total = 0;
-            int count;
-            while ((count = input.read(buffer)) != -1) {
-                TagCatalog.checkCancelled(cancelled);
-                total += count;
-                if (total > sizeBytes) throw new IOException("Catalog payload exceeds declared size");
-                digest.update(buffer, 0, count);
-            }
-            if (total != sizeBytes || !MessageDigest.isEqual(digest.digest(), decodeDigest(sha256))) {
-                throw new IOException("Catalog payload does not match manifest");
-            }
-            input.getChannel().position(0);
+            TagFeedFiles.verifyAndRewind(input, sizeBytes, sha256, cancelled);
             return TagCatalog.applyPublished(database, input, revision, minimumRows, cancelled);
         }
-    }
-
-    private static String string(JsonReader reader) throws IOException {
-        if (reader.peek() != JsonToken.STRING) throw new IOException("Expected manifest string");
-        return reader.nextString();
-    }
-
-    private static int positiveInteger(JsonReader reader) throws IOException {
-        if (reader.peek() != JsonToken.NUMBER) throw new IOException("Expected manifest integer");
-        int value = Integer.parseInt(reader.nextString());
-        if (value <= 0) throw new IOException("Manifest integer out of range");
-        return value;
-    }
-
-    private static byte[] decodeDigest(String value) {
-        byte[] bytes = new byte[32];
-        for (int index = 0; index < bytes.length; index++) {
-            bytes[index] = (byte) Integer.parseInt(value.substring(index * 2, index * 2 + 2), 16);
-        }
-        return bytes;
     }
 }

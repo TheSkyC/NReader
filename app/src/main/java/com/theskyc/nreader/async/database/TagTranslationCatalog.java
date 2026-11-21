@@ -38,7 +38,7 @@ public final class TagTranslationCatalog {
         + " ON TagTranslationAliases (locale, aliasKey, idTag)";
     private static final String ENTRY_STAGE = "temp.TagTranslationEntryStage";
     private static final String ALIAS_STAGE = "temp.TagTranslationAliasStage";
-    private static final int MAX_PACK_BYTES = 16 * 1024 * 1024;
+    static final int MAX_PACK_BYTES = 16 * 1024 * 1024;
     private static final int MAX_ENTRIES = 250_000;
     private static final int MAX_TEXT_CODE_POINTS = 256;
     private static final int MAX_ALIASES_PER_ENTRY = 20;
@@ -114,6 +114,11 @@ public final class TagTranslationCatalog {
     }
 
     public static boolean apply(SQLiteDatabase database, InputStream input, BooleanSupplier cancelled) throws IOException {
+        return apply(database, input, null, 0, cancelled);
+    }
+
+    static boolean apply(SQLiteDatabase database, InputStream input, String expectedLocale, int expectedRevision,
+                         BooleanSupplier cancelled) throws IOException {
         database.beginTransactionNonExclusive();
         try {
             database.execSQL("CREATE TEMP TABLE TagTranslationEntryStage ("
@@ -132,6 +137,9 @@ public final class TagTranslationCatalog {
                 metadata = readPack(reader, insertEntry, insertAlias, cancelled);
             } catch (IllegalArgumentException | IllegalStateException | android.database.SQLException error) {
                 throw new IOException("Invalid translation pack", error);
+            }
+            if (expectedLocale != null && (!expectedLocale.equals(metadata.locale) || expectedRevision != metadata.revision)) {
+                throw new IOException("Translation pack locale or revision does not match manifest");
             }
 
             try (Cursor unknown = database.rawQuery("SELECT 1 FROM " + ENTRY_STAGE
@@ -277,7 +285,7 @@ public final class TagTranslationCatalog {
         return localeTag;
     }
 
-    private static boolean isSupportedLocale(String localeTag) {
+    static boolean isSupportedLocale(String localeTag) {
         if (localeTag == null || !localeTag.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
             return false;
         }
