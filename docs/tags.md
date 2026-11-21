@@ -76,6 +76,8 @@ removal uses the locale-scoped database operation.
 For contributions, use the [local proposal and review workflow](tag-translation-contributions.md)
 to compare a change with its canonical tag and the current translation before
 producing a candidate pack.
+The [translation distribution contract](tag-translation-distribution.md)
+defines how to stage these packs and a separate manifest for a release.
 
 On Android, Settings → Tag languages opens the system document picker for a
 local pack. Selecting a newer revision validates and installs it in the

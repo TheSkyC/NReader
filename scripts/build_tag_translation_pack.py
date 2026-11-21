@@ -104,7 +104,11 @@ def encode_pack(rows, locale, revision, catalog_ids):
     validate_locale(locale)
     validate_revision(revision)
     entries = normalize_entries(rows, catalog_ids)
-    pack = {"schemaVersion": PACK_SCHEMA_VERSION, "locale": locale, "revision": revision, "entries": entries}
+    return encode_normalized_pack(
+        {"schemaVersion": PACK_SCHEMA_VERSION, "locale": locale, "revision": revision, "entries": entries})
+
+
+def encode_normalized_pack(pack):
     encoded = (json.dumps(pack, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
     if len(encoded) > MAX_BYTES:
         raise ValueError("Translation pack exceeds size limit")
