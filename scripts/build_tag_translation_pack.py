@@ -14,6 +14,7 @@ else:
 MAX_ENTRIES = 250_000
 MAX_TEXT_LENGTH = 256
 MAX_ALIASES = 20
+PACK_SCHEMA_VERSION = 1
 LOCALE_PATTERN = re.compile(r"[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?\Z")
 
 
@@ -41,18 +42,38 @@ def search_key(value):
     return unicodedata.normalize("NFC", value).lower().replace("\u03c2", "\u03c3")
 
 
-def build_pack(source, locale, revision, catalog_ids):
-    locale = validate_locale(locale)
+def validate_revision(revision):
     if type(revision) is not int or not 1 <= revision <= MAX_INTEGER:
         raise ValueError("Invalid translation revision")
-    rows = decode_json(source)
+
+
+def normalize_translation(value):
+    if not isinstance(value, dict) or value.keys() - {"name", "aliases"} or "name" not in value:
+        raise ValueError("Invalid translation fields")
+    name = validate_text(value["name"])
+    aliases = value.get("aliases", [])
+    if not isinstance(aliases, list) or len(aliases) > MAX_ALIASES:
+        raise ValueError("Translation alias count outside limits")
+    normalized_aliases = []
+    seen_aliases = set()
+    for alias in aliases:
+        alias = validate_text(alias)
+        alias_key = search_key(alias)
+        if alias_key in seen_aliases:
+            raise ValueError("Duplicate normalized translation alias")
+        seen_aliases.add(alias_key)
+        normalized_aliases.append(alias)
+    return {"name": name, "aliases": normalized_aliases}
+
+
+def normalize_entries(rows, catalog_ids):
     if not isinstance(rows, list) or not 1 <= len(rows) <= MAX_ENTRIES:
         raise ValueError("Translation entry count outside limits")
 
     entries = []
     seen_ids = set()
     for row in rows:
-        if not isinstance(row, dict) or set(row) - {"id", "name", "aliases"} or "id" not in row or "name" not in row:
+        if not isinstance(row, dict) or "id" not in row:
             raise ValueError("Invalid translation entry fields")
         tag_id = row["id"]
         if type(tag_id) is not int or not 1 <= tag_id <= MAX_INTEGER or tag_id not in catalog_ids:
@@ -61,27 +82,37 @@ def build_pack(source, locale, revision, catalog_ids):
             raise ValueError("Duplicate translation tag ID")
         seen_ids.add(tag_id)
 
-        name = validate_text(row["name"])
-        aliases = row.get("aliases", [])
-        if not isinstance(aliases, list) or len(aliases) > MAX_ALIASES:
-            raise ValueError("Translation alias count outside limits")
-        normalized_aliases = []
-        seen_aliases = set()
-        for alias in aliases:
-            alias = validate_text(alias)
-            alias_key = search_key(alias)
-            if alias_key in seen_aliases:
-                raise ValueError("Duplicate normalized translation alias")
-            seen_aliases.add(alias_key)
-            normalized_aliases.append(alias)
-        entries.append({"id": tag_id, "name": name, "aliases": normalized_aliases})
+        translation = normalize_translation({key: value for key, value in row.items() if key != "id"})
+        entries.append({"id": tag_id, **translation})
 
     entries.sort(key=lambda entry: entry["id"])
-    pack = {"schemaVersion": 1, "locale": locale, "revision": revision, "entries": entries}
+    return entries
+
+
+def parse_pack(data, catalog_ids):
+    pack = decode_json(data)
+    if (not isinstance(pack, dict) or pack.keys() != {"schemaVersion", "locale", "revision", "entries"}
+            or type(pack["schemaVersion"]) is not int or pack["schemaVersion"] != PACK_SCHEMA_VERSION):
+        raise ValueError("Invalid translation pack envelope")
+    validate_locale(pack["locale"])
+    validate_revision(pack["revision"])
+    pack["entries"] = normalize_entries(pack["entries"], catalog_ids)
+    return pack
+
+
+def encode_pack(rows, locale, revision, catalog_ids):
+    validate_locale(locale)
+    validate_revision(revision)
+    entries = normalize_entries(rows, catalog_ids)
+    pack = {"schemaVersion": PACK_SCHEMA_VERSION, "locale": locale, "revision": revision, "entries": entries}
     encoded = (json.dumps(pack, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
     if len(encoded) > MAX_BYTES:
         raise ValueError("Translation pack exceeds size limit")
     return encoded
+
+
+def build_pack(source, locale, revision, catalog_ids):
+    return encode_pack(decode_json(source), locale, revision, catalog_ids)
 
 
 def main(argv=None):

@@ -73,6 +73,10 @@ The builder normalizes text, sorts entries by ID, checks limits and duplicate
 identities, and writes the deterministic v1 envelope. Empty packs are rejected;
 removal uses the locale-scoped database operation.
 
+For contributions, use the [local proposal and review workflow](tag-translation-contributions.md)
+to compare a change with its canonical tag and the current translation before
+producing a candidate pack.
+
 On Android, Settings → Tag languages opens the system document picker for a
 local pack. Selecting a newer revision validates and installs it in the
 background. The installed-locale list is independently removable; cancelling
