@@ -33,6 +33,9 @@ val tagCatalogManifestUrl = providers.gradleProperty("nreaderTagCatalogManifestU
 val tagCatalogManifestUrlConfig = tagCatalogManifestUrl
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
+val tagTranslationManifestUrlConfig = (providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull ?: "")
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
 val nreaderVersion = providers.gradleProperty("nreaderVersion").orNull
     ?: error("nreaderVersion must be set in gradle.properties")
 val versionPattern = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-(pre\d+|(?:alpha|beta|rc)\.\d+))?$""")
@@ -80,6 +83,7 @@ android {
         buildConfigField("String", "UPDATE_ENDPOINT", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
         buildConfigField("String", "TAG_CATALOG_MANIFEST_URL", "\"$tagCatalogManifestUrlConfig\"")
+        buildConfigField("String", "TAG_TRANSLATION_MANIFEST_URL", "\"$tagTranslationManifestUrlConfig\"")
         // Format: MmPPbb
         // M: Major, m: minor, P: Patch, b: build
         versionCode = computedVersionCode

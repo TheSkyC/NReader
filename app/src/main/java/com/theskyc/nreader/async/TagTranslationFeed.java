@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import okhttp3.Call;
 import okhttp3.HttpUrl;
@@ -22,17 +23,21 @@ import okhttp3.HttpUrl;
 public final class TagTranslationFeed {
     private static final Set<File> CLEANED_DIRECTORIES = new HashSet<>();
 
-    private final File stagingDirectory;
+    private final Supplier<File> cacheDirectory;
     private final HttpUrl manifestUrl;
     private final TagFeedDownload download;
     private volatile boolean cancelled;
 
     public TagTranslationFeed(Context context, String manifestUrl) throws IOException {
-        this(context.getCacheDir(), manifestUrl, null);
+        this(context::getCacheDir, manifestUrl, null);
     }
 
     TagTranslationFeed(File cacheDirectory, String manifestUrl, Call.Factory client) throws IOException {
-        this.stagingDirectory = new File(cacheDirectory, "tag-translation-feed");
+        this(() -> cacheDirectory, manifestUrl, client);
+    }
+
+    private TagTranslationFeed(Supplier<File> cacheDirectory, String manifestUrl, Call.Factory client) throws IOException {
+        this.cacheDirectory = cacheDirectory;
         this.manifestUrl = TagTranslationManifest.manifestUrl(manifestUrl);
         this.download = client == null ? new TagFeedDownload(() -> cancelled) : new TagFeedDownload(client, () -> cancelled);
     }
@@ -46,7 +51,7 @@ public final class TagTranslationFeed {
     public synchronized boolean install(SQLiteDatabase database, TagTranslationManifest.Pack pack) throws IOException {
         download.checkCancelled();
         if (pack.revision <= TagTranslationCatalog.installedRevision(database, pack.locale)) return false;
-        File file = createStagingFile(stagingDirectory);
+        File file = createStagingFile(new File(cacheDirectory.get(), "tag-translation-feed"));
         try {
             try (OutputStream output = new FileOutputStream(file)) {
                 download.copy(pack.payloadUrl(manifestUrl), output, pack.sizeBytes, true);

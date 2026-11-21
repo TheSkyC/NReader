@@ -508,4 +508,9 @@
     <string name="tag_translation_not_newer">Этот пакет уже установлен с такой же или более новой ревизией.</string>
     <string name="tag_translation_install_failed">Не удалось установить пакет языка тегов.</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">Обзор в сети</string>
+    <string name="tag_translation_online_loading">Проверяем доступные языки тегов…</string>
+    <string name="tag_translation_online_failed">Не удалось проверить языки тегов в сети.</string>
+    <string name="tag_translation_online_empty">Новых языков тегов и обновлений нет.</string>
+    <string name="tag_translation_online_confirm">Скачать и установить этот языковой пакет (%1$s)?</string>
 </resources>

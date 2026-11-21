@@ -46,6 +46,16 @@ descriptor. It requests identity encoding and bounds each response even
 when the server does not declare a length. It stages only the selected
 locale and discards the staging file on success, failure, or cancellation.
 
+## Enabling the Settings action
+
+Set the Gradle property `nreaderTagTranslationManifestUrl` to the HTTPS URL of
+the hosted `manifest.json`. The default is empty. When configured, users can
+choose **Settings → Tag languages → Browse online** to fetch the locale list.
+Only new languages and revisions newer than the installed pack appear. The
+app shows the download size before installing the selected pack. Requests
+are started only from this action and can be cancelled. Import from a file
+and removal of installed packs continue to work offline.
+
 ## Preparing a release locally
 
 Start with a validated candidate from the

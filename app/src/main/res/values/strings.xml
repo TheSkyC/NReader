@@ -676,4 +676,9 @@
     <string name="tag_translation_not_newer">This pack is already installed at the same or a newer revision.</string>
     <string name="tag_translation_install_failed">Could not install this tag language pack.</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">Browse online</string>
+    <string name="tag_translation_online_loading">Checking available tag languages…</string>
+    <string name="tag_translation_online_failed">Could not check online tag languages.</string>
+    <string name="tag_translation_online_empty">No new tag languages or updates are available.</string>
+    <string name="tag_translation_online_confirm">Download and install this language pack (%1$s)?</string>
 </resources>

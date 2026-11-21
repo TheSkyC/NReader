@@ -508,4 +508,9 @@
     <string name="tag_translation_not_newer">Bu paket aynı veya daha yeni bir sürümle zaten yüklü.</string>
     <string name="tag_translation_install_failed">Etiket dili paketi yüklenemedi.</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">Çevrimiçi göz at</string>
+    <string name="tag_translation_online_loading">Kullanılabilir etiket dilleri denetleniyor…</string>
+    <string name="tag_translation_online_failed">Çevrimiçi etiket dilleri denetlenemedi.</string>
+    <string name="tag_translation_online_empty">Yeni etiket dili veya güncelleme yok.</string>
+    <string name="tag_translation_online_confirm">Bu dil paketi indirilsin ve yüklensin mi (%1$s)?</string>
 </resources>

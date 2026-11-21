@@ -508,4 +508,9 @@
     <string name="tag_translation_not_newer">Este pacote já está instalado na mesma revisão ou em uma mais recente.</string>
     <string name="tag_translation_install_failed">Não foi possível instalar o pacote de idioma de tags.</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">Explorar on-line</string>
+    <string name="tag_translation_online_loading">Verificando os idiomas disponíveis para as tags…</string>
+    <string name="tag_translation_online_failed">Não foi possível consultar os idiomas das tags on-line.</string>
+    <string name="tag_translation_online_empty">Não há novos idiomas nem atualizações para as tags.</string>
+    <string name="tag_translation_online_confirm">Baixar e instalar este pacote de idioma (%1$s)?</string>
 </resources>

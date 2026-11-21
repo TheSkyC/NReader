@@ -536,4 +536,9 @@
     <string name="tag_translation_not_newer">此語言包的相同或更新版本已安裝。</string>
     <string name="tag_translation_install_failed">無法安裝此標籤語言包。</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">線上瀏覽</string>
+    <string name="tag_translation_online_loading">正在檢查可用的標籤語言…</string>
+    <string name="tag_translation_online_failed">無法線上檢查標籤語言。</string>
+    <string name="tag_translation_online_empty">沒有新的標籤語言或更新。</string>
+    <string name="tag_translation_online_confirm">要下載並安裝此語言套件（%1$s）嗎？</string>
 </resources>

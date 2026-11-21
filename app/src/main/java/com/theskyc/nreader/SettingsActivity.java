@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.format.Formatter;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -18,11 +19,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.theskyc.nreader.async.TagTranslationFeed;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
+import com.theskyc.nreader.async.database.TagTranslationManifest;
 import com.theskyc.nreader.async.database.export.BackupPreview;
 import com.theskyc.nreader.async.database.export.Exporter;
 import com.theskyc.nreader.async.database.export.Importer;
@@ -46,11 +50,13 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity {
@@ -61,6 +67,8 @@ public class SettingsActivity extends GeneralActivity {
     private ActivityResultLauncher<String> COPY_LOGS;
     private ActivityResultLauncher<String> notificationPermission;
     private ActivityResultLauncher<String[]> IMPORT_TRANSLATION_PACK;
+    private TagTranslationFeed activeTranslationFeed;
+    private AlertDialog translationFeedProgress;
     private int selectedItem;
 
     @Override
@@ -181,6 +189,9 @@ public class SettingsActivity extends GeneralActivity {
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.tag_translation_install, (dialog, which) ->
                 IMPORT_TRANSLATION_PACK.launch(new String[]{"application/json", "text/*"}));
+        if (!BuildConfig.TAG_TRANSLATION_MANIFEST_URL.isEmpty()) {
+            builder.setNeutralButton(R.string.tag_translation_browse_online, (dialog, which) -> browseTranslationFeed());
+        }
         if (packs.isEmpty()) {
             builder.setMessage(R.string.tag_translation_packs_empty);
         } else {
@@ -191,6 +202,109 @@ public class SettingsActivity extends GeneralActivity {
             builder.setItems(labels, (dialog, which) -> confirmRemoveTranslationPack(locales.get(which)));
         }
         builder.show();
+    }
+
+    private void browseTranslationFeed() {
+        try {
+            TagTranslationFeed feed = new TagTranslationFeed(getApplicationContext(), BuildConfig.TAG_TRANSLATION_MANIFEST_URL);
+            runTranslationFeedTask(feed, getText(R.string.tag_translation_online_loading), R.string.tag_translation_online_failed,
+                () -> {
+                    TagTranslationManifest manifest = feed.readManifest();
+                    Map<String, Integer> installed = TagTranslationCatalog.installedPacks(Database.getDatabase());
+                    return manifest.getPacks().values().stream()
+                        .filter(pack -> pack.revision > installed.getOrDefault(pack.locale, 0))
+                        .sorted(Comparator.comparing(pack -> pack.locale))
+                        .collect(Collectors.toList());
+                }, packs -> showOnlineTranslationPacks(feed, packs));
+        } catch (IOException error) {
+            LogUtility.e("Unable to open tag translation feed", error);
+            Toast.makeText(this, R.string.tag_translation_online_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showOnlineTranslationPacks(TagTranslationFeed feed, List<TagTranslationManifest.Pack> packs) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_translation_browse_online)
+            .setNegativeButton(R.string.cancel, null);
+        if (packs.isEmpty()) {
+            builder.setMessage(R.string.tag_translation_online_empty);
+        } else {
+            String[] labels = packs.stream().map(this::translationPackLabel).toArray(String[]::new);
+            builder.setItems(labels, (dialog, which) -> confirmDownloadTranslationPack(feed, packs.get(which)));
+        }
+        builder.show();
+    }
+
+    private String translationPackLabel(TagTranslationManifest.Pack pack) {
+        Locale uiLocale = getResources().getConfiguration().getLocales().get(0);
+        String name = Locale.forLanguageTag(pack.locale).getDisplayName(uiLocale);
+        return getString(R.string.tag_translation_pack_item, name, pack.revision);
+    }
+
+    private void confirmDownloadTranslationPack(TagTranslationFeed feed, TagTranslationManifest.Pack pack) {
+        String label = translationPackLabel(pack);
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(label)
+            .setMessage(getString(R.string.tag_translation_online_confirm, Formatter.formatShortFileSize(this, pack.sizeBytes)))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.install, (dialog, which) -> runTranslationFeedTask(feed,
+                getString(R.string.downloading_format, label), R.string.tag_translation_install_failed,
+                () -> feed.install(Database.getDatabase(), pack), applied -> Toast.makeText(this,
+                    applied ? R.string.tag_translation_installed : R.string.tag_translation_not_newer, Toast.LENGTH_LONG).show()))
+            .show();
+    }
+
+    private <T> void runTranslationFeedTask(TagTranslationFeed feed, CharSequence message, int failureMessage,
+                                            TranslationFeedTask<T> task, Consumer<T> success) {
+        if (activeTranslationFeed != null) return;
+        activeTranslationFeed = feed;
+        translationFeedProgress = new MaterialAlertDialogBuilder(this)
+            .setMessage(message)
+            .setView(R.layout.dialog_tag_translation_progress)
+            .setNegativeButton(R.string.cancel, (dialog, which) -> cancelTranslationFeedTask())
+            .setOnCancelListener(dialog -> cancelTranslationFeedTask())
+            .show();
+        new Thread(() -> {
+            try {
+                T result = task.run();
+                runOnUiThread(() -> {
+                    if (finishTranslationFeedTask(feed)) success.accept(result);
+                });
+            } catch (IOException | RuntimeException error) {
+                runOnUiThread(() -> {
+                    if (finishTranslationFeedTask(feed)) {
+                        LogUtility.e("Tag translation feed request failed", error);
+                        Toast.makeText(this, failureMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }, "Tag translation feed").start();
+    }
+
+    private boolean finishTranslationFeedTask(TagTranslationFeed feed) {
+        if (activeTranslationFeed != feed) return false;
+        activeTranslationFeed = null;
+        translationFeedProgress.dismiss();
+        translationFeedProgress = null;
+        return !isFinishing() && !isDestroyed();
+    }
+
+    private void cancelTranslationFeedTask() {
+        TagTranslationFeed feed = activeTranslationFeed;
+        if (feed == null) return;
+        feed.cancel();
+        finishTranslationFeedTask(feed);
+    }
+
+    @Override
+    protected void onStop() {
+        cancelTranslationFeedTask();
+        super.onStop();
+    }
+
+    @FunctionalInterface
+    private interface TranslationFeedTask<T> {
+        T run() throws IOException;
     }
 
     private void confirmRemoveTranslationPack(String locale) {

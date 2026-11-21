@@ -95,7 +95,7 @@ public class TagTranslationFeedTest {
     }
 
     @Test public void publicClientCannotFollowRedirectsOrUseAccountState() {
-        OkHttpClient client = TagFeedDownload.PUBLIC_CLIENT;
+        OkHttpClient client = TagFeedDownload.publicClient();
         assertFalse(client.followRedirects());
         assertFalse(client.followSslRedirects());
         assertSame(CookieJar.NO_COOKIES, client.cookieJar());

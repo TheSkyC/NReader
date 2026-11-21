@@ -18,18 +18,24 @@ import okhttp3.ResponseBody;
 
 /** An account-free downloader for tag data. Each instance runs one request at a time. */
 final class TagFeedDownload {
-    static final OkHttpClient PUBLIC_CLIENT = new OkHttpClient.Builder()
-        .callTimeout(60, TimeUnit.SECONDS)
-        .followRedirects(false)
-        .followSslRedirects(false)
-        .build();
+    private static final class PublicClient {
+        static final OkHttpClient INSTANCE = new OkHttpClient.Builder()
+            .callTimeout(60, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build();
+    }
+
+    static OkHttpClient publicClient() {
+        return PublicClient.INSTANCE;
+    }
 
     private final Call.Factory client;
     private final BooleanSupplier stopped;
     private volatile Call activeCall;
 
     TagFeedDownload(BooleanSupplier stopped) {
-        this(PUBLIC_CLIENT, stopped);
+        this(request -> publicClient().newCall(request), stopped);
     }
 
     TagFeedDownload(Call.Factory client, BooleanSupplier stopped) {
@@ -38,6 +44,7 @@ final class TagFeedDownload {
     }
 
     void copy(HttpUrl url, OutputStream output, int limit, boolean requireIdentity) throws IOException {
+        checkCancelled();
         Request.Builder request = new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK);
         if (requireIdentity) request.header("Accept-Encoding", "identity");
         Call call = client.newCall(request.build());

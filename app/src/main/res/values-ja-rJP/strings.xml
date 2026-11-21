@@ -508,4 +508,9 @@
     <string name="tag_translation_not_newer">このパックと同じか新しいリビジョンがすでにインストールされています。</string>
     <string name="tag_translation_install_failed">タグ言語パックをインストールできませんでした。</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">オンラインで探す</string>
+    <string name="tag_translation_online_loading">利用可能なタグの言語を確認しています…</string>
+    <string name="tag_translation_online_failed">オンラインのタグ言語を確認できませんでした。</string>
+    <string name="tag_translation_online_empty">タグ言語の追加や更新はありません。</string>
+    <string name="tag_translation_online_confirm">この言語パック（%1$s）をダウンロードしてインストールしますか？</string>
 </resources>

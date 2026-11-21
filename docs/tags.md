@@ -82,8 +82,9 @@ defines how to stage these packs and a separate manifest for a release.
 On Android, Settings → Tag languages opens the system document picker for a
 local pack. Selecting a newer revision validates and installs it in the
 background. The installed-locale list is independently removable; cancelling
-the picker or an invalid pack leaves current translations intact. No remote
-feed or publisher is configured by this workflow.
+the picker or an invalid pack leaves current translations intact. A build
+with a [configured translation feed](tag-translation-distribution.md#enabling-the-settings-action)
+also allows users to browse and install newer packs online on demand.
 
 Tag suggestions use the app's active locale. An exact installed locale wins;
 Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then

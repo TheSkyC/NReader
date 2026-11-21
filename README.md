@@ -100,7 +100,10 @@ by default, independently of APK updates. A build can select a NReader feed
 with the Gradle property `nreaderTagCatalogManifestUrl`; see the
 [catalog distribution contract](docs/tag-distribution.md). See
 [tag directory and rules](docs/tags.md) for the refresh and storage contract.
-Translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
+The separate `nreaderTagTranslationManifestUrl` property enables optional
+[online tag language packs](docs/tag-translation-distribution.md) in Settings.
+The default is empty; users can still install packs from local files.
+App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.
 

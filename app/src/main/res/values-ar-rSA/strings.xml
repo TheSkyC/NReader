@@ -508,4 +508,9 @@
     <string name="tag_translation_not_newer">هذا الإصدار مثبت بالفعل أو يوجد إصدار أحدث.</string>
     <string name="tag_translation_install_failed">تعذر تثبيت حزمة لغة الوسوم.</string>
     <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
+    <string name="tag_translation_browse_online">تصفح عبر الإنترنت</string>
+    <string name="tag_translation_online_loading">جارٍ البحث عن لغات الوسوم المتاحة…</string>
+    <string name="tag_translation_online_failed">تعذر التحقق من لغات الوسوم عبر الإنترنت.</string>
+    <string name="tag_translation_online_empty">لا تتوفر لغات وسوم جديدة أو تحديثات.</string>
+    <string name="tag_translation_online_confirm">هل تريد تنزيل حزمة اللغة هذه وتثبيتها (%1$s)؟</string>
 </resources>
