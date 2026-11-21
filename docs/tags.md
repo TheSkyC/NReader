@@ -52,6 +52,13 @@ replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
 
+Search keys use NFC normalization and locale-independent lowercase. Greek final
+sigma is normalized to ordinary sigma so a prefix produces the same key whether
+it ends a query or continues inside a tag name. Pack authoring and Android
+installation use the same rule for alias duplicate detection and indexed keys.
+Database version 24 rebuilds installed translation keys without changing pack
+text or revisions.
+
 Prepare a pack from a local JSON array of entries, using the checked-in catalog
 snapshot to reject unknown IDs:
 

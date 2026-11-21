@@ -150,6 +150,17 @@ public class TagTranslationCatalogTest {
         assertEquals("canonical-one", alias.get(0).getTag().getName());
     }
 
+    @Test public void greekSigmaPrefixKeysAreStableAcrossWordBoundaries() throws IOException {
+        assertTrue(apply(pack("el", 1, "[{\"id\":1,\"name\":\"\u039f\u03a3\u0391\","
+            + "\"aliases\":[\"\u039f\u03a3\"]}]")));
+
+        assertEquals("\u03bf\u03c3\u03b1", scalarString(
+            "SELECT displayKey FROM TagTranslations WHERE idTag=1 AND locale='el'"));
+        assertEquals("\u03bf\u03c3", scalarString(
+            "SELECT aliasKey FROM TagTranslationAliases WHERE idTag=1 AND locale='el'"));
+        assertEquals(1, Queries.TagTable.getTagSuggestions(TagType.TAG, "\u039f\u03a3", "el").size());
+    }
+
     private boolean apply(String json) throws IOException {
         return TagTranslationCatalog.apply(database, bytes(json), () -> false);
     }

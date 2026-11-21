@@ -53,6 +53,30 @@ public final class TagTranslationCatalog {
         database.execSQL(CREATE_ALIAS_INDEX);
     }
 
+    static void upgradeSearchKeys(SQLiteDatabase database) {
+        rebuildSearchKeys(database, "TagTranslations", "displayName", "displayKey", "TagTranslationDisplayKeyStage");
+        rebuildSearchKeys(database, "TagTranslationAliases", "alias", "aliasKey", "TagTranslationAliasKeyStage");
+    }
+
+    private static void rebuildSearchKeys(SQLiteDatabase database, String table, String textColumn,
+                                          String keyColumn, String stageTable) {
+        // Stage keys first so the source cursor stays stable while indexed rows are updated.
+        database.execSQL("CREATE TEMP TABLE " + stageTable + " (rowId INTEGER PRIMARY KEY, searchKey TEXT NOT NULL)");
+        try (Cursor cursor = database.rawQuery("SELECT rowid, " + textColumn + " FROM " + table, null);
+             SQLiteStatement insert = database.compileStatement(
+                 "INSERT INTO temp." + stageTable + " (rowId, searchKey) VALUES (?, ?)")) {
+            while (cursor.moveToNext()) {
+                insert.clearBindings();
+                insert.bindLong(1, cursor.getLong(0));
+                insert.bindString(2, searchKey(cursor.getString(1)));
+                insert.executeInsert();
+            }
+        }
+        database.execSQL("UPDATE " + table + " SET " + keyColumn + " = (SELECT searchKey FROM temp." + stageTable
+            + " WHERE rowId = " + table + ".rowid)");
+        database.execSQL("DROP TABLE temp." + stageTable);
+    }
+
     public static int installedRevision(SQLiteDatabase database, String locale) {
         String canonicalLocale = validateLocale(locale);
         try (Cursor cursor = database.rawQuery("SELECT revision FROM TagTranslationState WHERE locale = ?",
@@ -282,8 +306,9 @@ public final class TagTranslationCatalog {
         return normalized;
     }
 
-    private static String searchKey(String value) {
-        return Normalizer.normalize(value, Normalizer.Form.NFC).toLowerCase(Locale.ROOT);
+    static String searchKey(String value) {
+        return Normalizer.normalize(value, Normalizer.Form.NFC).toLowerCase(Locale.ROOT)
+            .replace('\u03c2', '\u03c3');
     }
 
     private static void checkCancelled(BooleanSupplier cancelled) throws InterruptedIOException {

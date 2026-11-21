@@ -63,6 +63,14 @@ class TagTranslationPackTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             builder.build_pack(b'[{"id":1,"name":"first","name":"second"}]', "zh-Hans", 1, {1})
 
+    def test_search_keys_keep_greek_sigma_prefixes_stable(self):
+        self.assertEqual("\u03bf\u03c3", builder.search_key("\u039f\u03a3"))
+        self.assertEqual("\u03bf\u03c3\u03b1", builder.search_key("\u039f\u03a3\u0391"))
+        with self.assertRaises(ValueError):
+            builder.build_pack(
+                '[{"id":1,"name":"name","aliases":["\u039f\u03a3","\u03bf\u03c2"]}]'.encode(),
+                "el", 1, {1})
+
 
 if __name__ == "__main__":
     unittest.main()

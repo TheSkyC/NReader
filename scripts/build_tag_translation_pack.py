@@ -35,6 +35,12 @@ def validate_text(value):
     return value
 
 
+def search_key(value):
+    # Lowercase the full string, then remove contextual final-sigma behavior so
+    # a prefix key is stable when the same text continues with more characters.
+    return unicodedata.normalize("NFC", value).lower().replace("\u03c2", "\u03c3")
+
+
 def build_pack(source, locale, revision, catalog_ids):
     locale = validate_locale(locale)
     if type(revision) is not int or not 1 <= revision <= MAX_INTEGER:
@@ -63,7 +69,7 @@ def build_pack(source, locale, revision, catalog_ids):
         seen_aliases = set()
         for alias in aliases:
             alias = validate_text(alias)
-            alias_key = unicodedata.normalize("NFC", alias).lower()
+            alias_key = search_key(alias)
             if alias_key in seen_aliases:
                 raise ValueError("Duplicate normalized translation alias")
             seen_aliases.add(alias_key)

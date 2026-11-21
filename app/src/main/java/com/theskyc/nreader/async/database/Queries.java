@@ -428,8 +428,7 @@ public class Queries {
 
         public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable String locale) {
             String canonicalPattern = escapeLikePrefix(prefix) + "%";
-            String normalizedPrefix = java.text.Normalizer.normalize(prefix, java.text.Normalizer.Form.NFC)
-                .toLowerCase(Locale.ROOT);
+            String normalizedPrefix = TagTranslationCatalog.searchKey(prefix);
             String translationPattern = escapeLikePrefix(normalizedPrefix) + "%";
             List<String> args = new ArrayList<>();
             args.add(Integer.toString(type.getId()));
