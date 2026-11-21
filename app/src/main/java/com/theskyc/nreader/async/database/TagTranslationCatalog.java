@@ -42,6 +42,8 @@ public final class TagTranslationCatalog {
     private static final int MAX_ENTRIES = 250_000;
     private static final int MAX_TEXT_CODE_POINTS = 256;
     private static final int MAX_ALIASES_PER_ENTRY = 20;
+    private static final String FINAL_SIGMA = "\u03c2";
+    private static final String SIGMA = "\u03c3";
 
     private TagTranslationCatalog() {}
 
@@ -54,27 +56,19 @@ public final class TagTranslationCatalog {
     }
 
     static void upgradeSearchKeys(SQLiteDatabase database) {
-        rebuildSearchKeys(database, "TagTranslations", "displayName", "displayKey", "TagTranslationDisplayKeyStage");
-        rebuildSearchKeys(database, "TagTranslationAliases", "alias", "aliasKey", "TagTranslationAliasKeyStage");
-    }
-
-    private static void rebuildSearchKeys(SQLiteDatabase database, String table, String textColumn,
-                                          String keyColumn, String stageTable) {
-        // Stage keys first so the source cursor stays stable while indexed rows are updated.
-        database.execSQL("CREATE TEMP TABLE " + stageTable + " (rowId INTEGER PRIMARY KEY, searchKey TEXT NOT NULL)");
-        try (Cursor cursor = database.rawQuery("SELECT rowid, " + textColumn + " FROM " + table, null);
-             SQLiteStatement insert = database.compileStatement(
-                 "INSERT INTO temp." + stageTable + " (rowId, searchKey) VALUES (?, ?)")) {
-            while (cursor.moveToNext()) {
-                insert.clearBindings();
-                insert.bindLong(1, cursor.getLong(0));
-                insert.bindString(2, searchKey(cursor.getString(1)));
-                insert.executeInsert();
-            }
+        Object[] sigmaReplacement = {FINAL_SIGMA, SIGMA, FINAL_SIGMA};
+        database.execSQL("UPDATE TagTranslations SET displayKey = replace(displayKey, ?, ?)"
+            + " WHERE instr(displayKey, ?) > 0", sigmaReplacement);
+        try (Cursor aliases = database.rawQuery(
+            "SELECT 1 FROM TagTranslationAliases WHERE instr(aliasKey, ?) > 0 LIMIT 1", new String[]{FINAL_SIGMA})) {
+            if (!aliases.moveToFirst()) return;
         }
-        database.execSQL("UPDATE " + table + " SET " + keyColumn + " = (SELECT searchKey FROM temp." + stageTable
-            + " WHERE rowId = " + table + ".rowid)");
-        database.execSQL("DROP TABLE temp." + stageTable);
+        // Collapse equivalent legacy aliases before changing their primary keys.
+        database.execSQL("DELETE FROM TagTranslationAliases WHERE rowid NOT IN ("
+            + "SELECT MIN(rowid) FROM TagTranslationAliases GROUP BY idTag, locale, replace(aliasKey, ?, ?))",
+            new Object[]{FINAL_SIGMA, SIGMA});
+        database.execSQL("UPDATE TagTranslationAliases SET aliasKey = replace(aliasKey, ?, ?)"
+            + " WHERE instr(aliasKey, ?) > 0", sigmaReplacement);
     }
 
     public static int installedRevision(SQLiteDatabase database, String locale) {
@@ -308,7 +302,7 @@ public final class TagTranslationCatalog {
 
     static String searchKey(String value) {
         return Normalizer.normalize(value, Normalizer.Form.NFC).toLowerCase(Locale.ROOT)
-            .replace('\u03c2', '\u03c3');
+            .replace(FINAL_SIGMA, SIGMA);
     }
 
     static String prefixUpperBound(String prefix) {

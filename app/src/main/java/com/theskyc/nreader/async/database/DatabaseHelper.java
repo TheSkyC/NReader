@@ -92,7 +92,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 20) upgradeTagStorage(db);
         if (oldVersion <= 21) db.execSQL(Queries.TagTable.CREATE_SUGGESTION_INDEX);
         if (oldVersion <= 22) TagTranslationCatalog.createTables(db);
-        if (oldVersion <= 23) TagTranslationCatalog.upgradeSearchKeys(db);
+        if (oldVersion == 23) TagTranslationCatalog.upgradeSearchKeys(db);
         if (oldVersion == 2) insertLanguageTags();
         if (oldVersion <= 3) insertCategoryTags();
         if (oldVersion <= 4) db.execSQL(Queries.BookmarkTable.CREATE_TABLE);

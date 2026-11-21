@@ -56,8 +56,9 @@ Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether
 it ends a query or continues inside a tag name. Pack authoring and Android
 installation use the same rule for alias duplicate detection and indexed keys.
-Database version 24 rebuilds installed translation keys without changing pack
-text or revisions.
+Database version 24 updates installed search keys without changing display names
+or pack revisions. If a tag has legacy aliases that become equivalent, the
+upgrade keeps the first stored alias for that key.
 
 Prepare a pack from a local JSON array of entries, using the checked-in catalog
 snapshot to reject unknown IDs:

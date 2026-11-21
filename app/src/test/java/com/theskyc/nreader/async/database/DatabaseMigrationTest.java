@@ -46,26 +46,32 @@ public class DatabaseMigrationTest {
     }
 
     @Test
-    public void version23UpgradeRebuildsTranslationSearchKeysWithoutChangingPackState() {
+    public void version23UpgradeCollapsesEquivalentAliasesWithoutChangingOtherPackData() {
         Context context = RuntimeEnvironment.getApplication();
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
             database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('el', 7)");
+            database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('ja', 5)");
             database.execSQL("INSERT INTO TagTranslations (idTag, locale, displayName, displayKey)"
                 + " VALUES (1, 'el', '\u039f\u03a3', '\u03bf\u03c2')");
             database.execSQL("INSERT INTO TagTranslationAliases (idTag, locale, alias, aliasKey)"
-                + " VALUES (1, 'el', '\u039f\u03a3', '\u03bf\u03c2')");
+                + " VALUES (1, 'el', '\u039f\u03a3', '\u03bf\u03c2'), (1, 'el', '\u03bf\u03c3', '\u03bf\u03c3'),"
+                + " (2, 'el', '\u03bf\u03c3', '\u03bf\u03c3'), (1, 'ja', '\u03bf\u03c3', '\u03bf\u03c3')");
             database.setVersion(23);
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
             assertEquals(24, database.getVersion());
             assertEquals(7, TagTranslationCatalog.installedRevision(database, "el"));
+            assertEquals(5, TagTranslationCatalog.installedRevision(database, "ja"));
             assertEquals("\u03bf\u03c3", scalarString(database,
                 "SELECT displayKey FROM TagTranslations WHERE idTag = 1 AND locale = 'el'"));
-            assertEquals("\u03bf\u03c3", scalarString(database,
-                "SELECT aliasKey FROM TagTranslationAliases WHERE idTag = 1 AND locale = 'el'"));
+            assertEquals(1, scalar(database, "SELECT COUNT(*) FROM TagTranslations"
+                + " WHERE idTag = 1 AND locale = 'el' AND displayName = '\u039f\u03a3'"));
+            assertEquals(3, scalar(database, "SELECT COUNT(*) FROM TagTranslationAliases WHERE aliasKey = '\u03bf\u03c3'"));
+            assertEquals("\u039f\u03a3", scalarString(database,
+                "SELECT alias FROM TagTranslationAliases WHERE idTag = 1 AND locale = 'el'"));
         }
     }
 
