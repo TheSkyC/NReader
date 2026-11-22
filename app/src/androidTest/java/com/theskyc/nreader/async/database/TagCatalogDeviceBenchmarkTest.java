@@ -59,16 +59,19 @@ public class TagCatalogDeviceBenchmarkTest {
             long catalogImportMs = SystemClock.elapsedRealtime() - catalogStart;
             long catalogRows = DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM Tags", null);
             assertTrue(catalogRows >= TagCatalog.MIN_DIRECTORY_ROWS);
+            Log.i(TAG, "rows=" + catalogRows + " catalogImportMs=" + catalogImportMs);
 
             int benchmarkTagId = eligibleTagId(database, TagV2.getMinCount());
             long packRows = writeSyntheticPack(database, pack);
             long translationStart = SystemClock.elapsedRealtime();
             try (java.io.InputStream input = new java.io.FileInputStream(pack)) {
-                assertTrue(TagTranslationCatalog.apply(database, input, () -> false));
+                assertTrue(TagTranslationCatalog.apply(database, input, context.getCacheDir(), () -> false));
             }
             long translationImportMs = SystemClock.elapsedRealtime() - translationStart;
+            Log.i(TAG, "packEntries=" + packRows + " packBytes=" + pack.length()
+                + " translationImportMs=" + translationImportMs);
 
-            String aliasPrefix = "alias-a-" + benchmarkTagId;
+            String aliasPrefix = "alias-a-" + benchmarkTagId + "-";
             long[] timings = new long[SEARCH_RUNS];
             List<TagSuggestion> results = Collections.emptyList();
             for (int run = 0; run < SEARCH_RUNS; run++) {
@@ -122,8 +125,8 @@ public class TagCatalogDeviceBenchmarkTest {
                 writer.name("id").value(id);
                 writer.name("name").value("translated-" + id);
                 writer.name("aliases").beginArray();
-                writer.value("alias-a-" + id);
-                writer.value("alias-b-" + id);
+                writer.value("alias-a-" + id + "-end");
+                writer.value("alias-b-" + id + "-end");
                 writer.endArray();
                 writer.endObject();
                 rows++;

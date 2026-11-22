@@ -108,7 +108,7 @@ public class TagsAdapterTest {
             String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":42,\"name\":\"translated name\"}]}";
             assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
-                () -> false));
+                app.getCacheDir(), () -> false));
             try (Cursor translated = Queries.TagTable.getFilterCursor("translated", null, true, false,
                 controller.get().getResources().getConfiguration().getLocales().get(0))) {
                 assertEquals(1, translated.getCount());

@@ -43,13 +43,15 @@ translation text never enters a site query or changes a saved rule.
 Write schema version, revision, and site IDs as JSON integers without decimal
 points or exponents, as in the pack builder and manifest formats.
 
-An installer validates the whole bounded payload before committing it. It
-rejects duplicate IDs, duplicate normalized aliases for one tag, unknown tag
-IDs, invalid locale identifiers, control characters, oversized text, and
-unsupported fields. Applying a newer pack replaces only that locale's names,
-aliases, and revision in one SQLite transaction. An invalid, cancelled, equal,
-or older pack leaves the installed locale unchanged. Removing a locale deletes
-only that locale's translation rows and revision. Translations are public
+The installer reads, validates, and normalizes the bounded payload outside the
+database write transaction. It keeps prepared rows in an app-private scratch
+file that closes with the import. It rejects duplicate IDs, duplicate
+normalized aliases for one tag, invalid locale identifiers, control characters,
+oversized text, and unsupported fields. The transaction rechecks the installed
+revision and canonical IDs against the current database. Applying a newer pack
+replaces only that locale's names, aliases, and revision. An invalid, cancelled,
+equal, or older pack leaves the installed locale unchanged. Removing a locale
+deletes only that locale's translation rows and revision. Translations are public
 replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
@@ -199,11 +201,20 @@ the release archive:
 
 ```powershell
 .\gradlew.bat :app:assembleMinApi26TagBenchmark :app:assembleMinApi26TagBenchmarkAndroidTest
-adb install -r app/build/outputs/apk/minApi26/tagBenchmark/app-minApi26-tagBenchmark.apk
-adb install -r -t app/build/outputs/apk/androidTest/minApi26/tagBenchmark/app-minApi26-tagBenchmark-androidTest.apk
-adb shell am instrument -w -r -e class com.theskyc.nreader.async.database.TagCatalogDeviceBenchmarkTest com.theskyc.nreader.tagbenchmark.test/com.theskyc.nreader.TagBenchmarkRunner
+# Use the numeric ID reported by pm create-user below.
+adb -s $serial shell pm create-user NReaderTagBenchmark
+adb -s $serial shell am start-user $benchmarkUser
+adb -s $serial install --no-incremental --user $benchmarkUser app/build/outputs/apk/minApi26/tagBenchmark/app-minApi26-tagBenchmark.apk
+adb -s $serial install --no-incremental --user $benchmarkUser -t app/build/outputs/apk/androidTest/minApi26/tagBenchmark/app-minApi26-tagBenchmark-androidTest.apk
+adb -s $serial shell am instrument --user $benchmarkUser -w -r -e class com.theskyc.nreader.async.database.TagCatalogDeviceBenchmarkTest com.theskyc.nreader.tagbenchmark.test/com.theskyc.nreader.TagBenchmarkRunner
+adb -s $serial logcat -d -s TagCatalogBenchmark:I
+adb -s $serial shell pm uninstall --user $benchmarkUser com.theskyc.nreader.tagbenchmark.test
+adb -s $serial shell pm uninstall --user $benchmarkUser com.theskyc.nreader.tagbenchmark
+adb -s $serial shell pm remove-user $benchmarkUser
 ```
 
+Set `$serial` from `adb devices`, and wait for the temporary user to start
+before installing the packages. Keep the test app off the owner profile.
 Use the equivalent `minApi28` paths for API 28+ builds. Benchmark output is
 logged under `TagCatalogBenchmark`; results are device- and workload-specific.
 The test reports import duration, warm alias-query median, and SQLite page
@@ -216,7 +227,9 @@ To check database contention, run
 `com.theskyc.nreader.async.database.TagImportContentionTest` with the same
 runner and a fresh benchmark app installation in a temporary Android user.
 The test opens a file-backed database through the application's database
-helper and holds a small catalog transaction immediately before commit.
+helper. Separate cases pause the catalog or translation input and verify that
+a tag read and local rule write finish before the installer resumes. A third
+case holds a small catalog transaction immediately before commit.
 It reports under `TagImportContention` whether an independent tag read and
 local rule edit can finish while the transaction is held. It then verifies
 that the new canonical row and the saved rule both survive. This isolates
@@ -247,7 +260,8 @@ attached, pass `-Serial` with the exact ADB device serial:
   and checks that the partial file is removed.
 - `-Scenario TranslationTransaction` stops the process after the translated
   name, alias, and revision are written but before SQLite commits. Restart
-  checks the previous translation and rule, then retries the import.
+  checks the previous translation and rule and the absence of a stranded
+  prepared pack, then retries the import.
 
 Each run installs the benchmark packages for its own temporary Android user.
 It uninstalls them for that user before removing the user. The driver checks

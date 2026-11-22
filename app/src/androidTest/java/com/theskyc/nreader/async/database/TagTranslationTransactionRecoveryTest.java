@@ -1,5 +1,6 @@
 package com.theskyc.nreader.async.database;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -23,8 +24,8 @@ public class TagTranslationTransactionRecoveryTest {
         String token = TagRecoveryProcess.tokenForPhase("translation-transaction");
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         try (SQLiteDatabase database = TranslationRecoveryFixture.createBaseline(
-                TranslationRecoveryFixture.databaseFile(context, token))) {
-            TagTranslationCatalog.apply(database, candidate(), () -> {
+                TranslationRecoveryFixture.databaseFile(context, token), context.getCacheDir())) {
+            TagTranslationCatalog.apply(database, candidate(), context.getCacheDir(), () -> {
                 if (database.inTransaction() && TagTranslationCatalog.installedRevision(database, "ja") == 2) {
                     TranslationRecoveryFixture.assertInstalled(database, 2, "after");
                     TagRecoveryProcess.awaitExternalStop(token);
@@ -39,10 +40,12 @@ public class TagTranslationTransactionRecoveryTest {
     public void previousTranslationSurvivesProcessDeathAndCanBeUpdated() throws Exception {
         String token = TagRecoveryProcess.tokenForPhase("verify");
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals("Process death stranded a prepared translation",
+            0, context.getCacheDir().list((dir, name) -> name.startsWith("tag-translation-") && name.endsWith(".tmp")).length);
         try (SQLiteDatabase database = TranslationRecoveryFixture.reopen(
                 TranslationRecoveryFixture.databaseFile(context, token))) {
             TranslationRecoveryFixture.assertInstalled(database, 1, "before");
-            assertTrue(TagTranslationCatalog.apply(database, candidate(), () -> false));
+            assertTrue(TagTranslationCatalog.apply(database, candidate(), context.getCacheDir(), () -> false));
             TranslationRecoveryFixture.assertInstalled(database, 2, "after");
         }
     }

@@ -60,7 +60,7 @@ public class TagFilterWorkflowTest {
             String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":500001,\"name\":\"Localized fixture\",\"aliases\":[\"lookup phrase\"]}]}";
             assertTrue(TagTranslationCatalog.apply(db,
-                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), () -> false));
+                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
             try (ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
                 TagFilterActivity activity = controller.get();

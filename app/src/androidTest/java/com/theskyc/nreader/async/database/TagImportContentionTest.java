@@ -87,6 +87,53 @@ public class TagImportContentionTest {
     }
 
     @Test
+    public void readsAndRuleWritesFinishWhileTranslationInputIsPaused() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("canonical", 50, 1, TagType.TAG, TagStatus.DEFAULT));
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(TranslationRecoveryFixture.payload(1, "before")),
+                context.getCacheDir(), () -> false));
+            CountDownLatch reading = new CountDownLatch(1);
+            CountDownLatch resumeInput = new CountDownLatch(1);
+            ExecutorService threads = Executors.newFixedThreadPool(2);
+            try (InputStream paused = new FilterInputStream(new ByteArrayInputStream(TranslationRecoveryFixture.payload(2, "after"))) {
+                @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+                    reading.countDown();
+                    await(resumeInput);
+                    return super.read(buffer, offset, length);
+                }
+            }) {
+                Future<Boolean> update = threads.submit(() ->
+                    TagTranslationCatalog.apply(database, paused, context.getCacheDir(), () -> false));
+                try {
+                    await(reading);
+                    Future<?> access = threads.submit(() -> {
+                        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+                        Tag tag = Queries.TagTable.getTagById(1);
+                        tag.setStatus(TagStatus.AVOIDED);
+                        assertEquals(1, Queries.TagTable.updateTag(tag));
+                        TranslationRecoveryFixture.assertInstalled(database, 1, "before");
+                    });
+                    access.get(5, TimeUnit.SECONDS);
+                } finally {
+                    resumeInput.countDown();
+                }
+                assertTrue(update.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+                TranslationRecoveryFixture.assertInstalled(database, 2, "after");
+            } finally {
+                resumeInput.countDown();
+                threads.shutdownNow();
+                assertTrue(threads.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            }
+        } finally {
+            Queries.setDb(null);
+            context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        }
+    }
+
+    @Test
     public void reportsReadAndRuleWriteWhileCatalogCommitIsPending() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());

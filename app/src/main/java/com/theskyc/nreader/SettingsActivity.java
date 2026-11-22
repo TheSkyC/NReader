@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,8 +41,6 @@ import com.theskyc.nreader.utility.LogUtility;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -327,36 +326,19 @@ public class SettingsActivity extends GeneralActivity {
 
     private void importTranslationPack(Uri uri) {
         new Thread(() -> {
-            File staged = null;
             try {
-                staged = File.createTempFile("tag-translation-", ".json", getCacheDir());
-                try (InputStream input = getContentResolver().openInputStream(uri);
-                     OutputStream output = new FileOutputStream(staged)) {
-                    if (input == null) throw new IOException("Unable to open selected translation pack");
-                    byte[] buffer = new byte[8192];
-                    int total = 0;
-                    int count;
-                    while ((count = input.read(buffer)) != -1) {
-                        total += count;
-                        if (total > 16 * 1024 * 1024) throw new IOException("Translation pack exceeds size limit");
-                        output.write(buffer, 0, count);
-                    }
-                }
-                boolean applied;
-                try (InputStream input = new FileInputStream(staged)) {
-                    applied = TagTranslationCatalog.apply(Database.getDatabase(), input, () -> Thread.currentThread().isInterrupted());
-                }
-                boolean changed = applied;
+                SQLiteDatabase database = Database.getDatabase();
+                File scratchDirectory = getCacheDir();
+                InputStream input = getContentResolver().openInputStream(uri);
+                if (input == null) throw new IOException("Unable to open selected translation pack");
+                boolean changed = TagTranslationCatalog.apply(database, input, scratchDirectory,
+                    () -> Thread.currentThread().isInterrupted());
                 runOnUiThread(() -> Toast.makeText(this,
                     changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
                     Toast.LENGTH_LONG).show());
             } catch (IOException | RuntimeException error) {
                 LogUtility.e("Unable to install tag translation pack", error);
                 runOnUiThread(() -> Toast.makeText(this, R.string.tag_translation_install_failed, Toast.LENGTH_LONG).show());
-            } finally {
-                if (staged != null && staged.exists() && !staged.delete()) {
-                    LogUtility.w("Unable to delete temporary tag translation file");
-                }
             }
         }).start();
     }

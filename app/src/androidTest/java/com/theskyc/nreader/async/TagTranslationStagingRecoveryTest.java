@@ -45,7 +45,7 @@ public class TagTranslationStagingRecoveryTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         File directory = new File(context.getCacheDir(), "tag-translation-feed");
         File databaseFile = TranslationRecoveryFixture.databaseFile(context, token);
-        try (SQLiteDatabase database = TranslationRecoveryFixture.createBaseline(databaseFile)) {
+        try (SQLiteDatabase database = TranslationRecoveryFixture.createBaseline(databaseFile, context.getCacheDir())) {
             TagTranslationFeed feed = feed(context, () -> {
                 File partial = onlyPartialFile(directory);
                 assertEquals(halfPayloadSize(), partial.length());

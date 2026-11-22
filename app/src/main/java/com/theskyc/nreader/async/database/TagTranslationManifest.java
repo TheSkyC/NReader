@@ -128,7 +128,8 @@ public final class TagTranslationManifest {
             if (revision <= TagTranslationCatalog.installedRevision(database, locale)) return false;
             try (FileInputStream input = new FileInputStream(staged)) {
                 TagFeedFiles.verifyAndRewind(input, sizeBytes, sha256, cancelled);
-                return TagTranslationCatalog.apply(database, input, locale, revision, cancelled);
+                return TagTranslationCatalog.apply(database, input, staged.getAbsoluteFile().getParentFile(),
+                    locale, revision, cancelled);
             }
         }
     }

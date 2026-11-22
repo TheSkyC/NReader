@@ -9,12 +9,15 @@ import com.theskyc.nreader.api.enums.TagType;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -32,6 +35,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TagTranslationCatalogTest {
+    @Rule public TemporaryFolder scratch = new TemporaryFolder();
     private SQLiteDatabase database;
 
     @Before public void openDatabase() {
@@ -46,6 +50,7 @@ public class TagTranslationCatalogTest {
     @After public void closeDatabase() {
         Queries.setDb(null);
         database.close();
+        assertEquals(0, scratch.getRoot().list().length);
     }
 
     @Test public void newerLocaleSnapshotReplacesOnlyItsOwnRowsAndAliases() throws IOException {
@@ -97,13 +102,66 @@ public class TagTranslationCatalogTest {
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\u4e00\"}]")));
         assertTrue(apply(pack("ja", 1, "[{\"id\":2,\"name\":\"\u4e8c\"}]")));
         assertThrows(IOException.class, () -> TagTranslationCatalog.apply(database,
-            bytes(pack("zh-Hans", 2, "[{\"id\":2,\"name\":\"\u66f4\u65b0\"}]")), () -> true));
+            bytes(pack("zh-Hans", 2, "[{\"id\":2,\"name\":\"\u66f4\u65b0\"}]")), scratch.getRoot(),
+            () -> database.inTransaction() && TagTranslationCatalog.installedRevision(database, "zh-Hans") == 2));
 
         assertEquals(1, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
+        assertEquals("\u4e00", scalarString("SELECT displayName FROM TagTranslations WHERE locale='zh-Hans'"));
+        assertEquals(0, scalar("SELECT COUNT(*) FROM TagTranslations WHERE idTag=2 AND locale='zh-Hans'"));
         TagTranslationCatalog.remove(database, "zh-Hans");
         assertEquals(0, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
         assertEquals(1, scalar("SELECT COUNT(*) FROM TagTranslations WHERE locale='ja'"));
         assertEquals(0, scalar("SELECT COUNT(*) FROM TagTranslationAliases WHERE locale='zh-Hans'"));
+    }
+
+    @Test public void olderPreparationCannotReplaceARevisionInstalledWhileReading() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"first\"}]")));
+        try (FilterInputStream slower = new FilterInputStream(bytes(pack("ja", 2, "[{\"id\":1,\"name\":\"older\"}]"))) {
+            private boolean committedNewer;
+
+            @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+                assertFalse(database.inTransaction());
+                if (!committedNewer) {
+                    assertTrue(apply(pack("ja", 3, "[{\"id\":1,\"name\":\"newer\"}]")));
+                    committedNewer = true;
+                }
+                return super.read(buffer, offset, length);
+            }
+        }) {
+            assertFalse(TagTranslationCatalog.apply(database, slower, scratch.getRoot(), () -> false));
+        }
+        assertEquals(3, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("newer", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
+    }
+
+    @Test public void batchBoundariesKeepDistinctNamesAndAliasKeys() throws IOException {
+        StringJoiner entries = new StringJoiner(",", "[", "]");
+        for (int id = 1; id <= 131; id++) {
+            if (id > 2) database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (?, 'tag', 3, 100)",
+                new Object[]{id});
+            entries.add("{\"id\":" + id + ",\"name\":\"Caf\u00e9\uD83D\uDE00" + id
+                + "\",\"aliases\":[\"Alias" + id + "\",\"second" + id + "\"]}");
+        }
+        assertTrue(apply(pack("ja", 1, entries.toString())));
+        assertEquals(131, scalar("SELECT COUNT(*) FROM TagTranslations WHERE locale = 'ja'"));
+        assertEquals(262, scalar("SELECT COUNT(*) FROM TagTranslationAliases WHERE locale = 'ja'"));
+        assertEquals("Caf\u00e9\uD83D\uDE00131",
+            scalarString("SELECT displayName FROM TagTranslations WHERE idTag = 131 AND locale = 'ja'"));
+        assertEquals("Alias131", scalarString(
+            "SELECT alias FROM TagTranslationAliases WHERE idTag = 131 AND locale = 'ja' AND aliasKey = 'alias131'"));
+    }
+
+    @Test public void providerCloseFailureCannotCommitPreparedRows() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\"}]")));
+        FilterInputStream update = new FilterInputStream(bytes(pack("ja", 2, "[{\"id\":1,\"name\":\"after\"}]"))) {
+            @Override public void close() throws IOException {
+                super.close();
+                throw new IOException("Synthetic provider close failure");
+            }
+        };
+        assertThrows(IOException.class, () -> TagTranslationCatalog.apply(database, update, scratch.getRoot(), () -> false));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("before", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
     }
 
     @Test public void installedPacksExposeOnlyCommittedLocalesAndRevisions() throws IOException {
@@ -210,7 +268,7 @@ public class TagTranslationCatalogTest {
     }
 
     private boolean apply(String json) throws IOException {
-        return TagTranslationCatalog.apply(database, bytes(json), () -> false);
+        return TagTranslationCatalog.apply(database, bytes(json), scratch.getRoot(), () -> false);
     }
 
     private ByteArrayInputStream bytes(String json) {

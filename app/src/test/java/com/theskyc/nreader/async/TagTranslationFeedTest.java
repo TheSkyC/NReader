@@ -150,7 +150,7 @@ public class TagTranslationFeedTest {
         String digest = sha256(update);
         TagTranslationManifest.Pack pack = TagTranslationManifest.parse(bytes(manifest(digest, 2, update)))
             .getPacks().get("ja");
-        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(bytes(PACK)), () -> false));
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(bytes(PACK)), files.getRoot(), () -> false));
         for (String invalid : List.of(update.substring(1), update + " ")) {
             TagTranslationFeed feed = feed(chain -> response(chain, 200, body(invalid)));
             assertThrows(IOException.class, () -> feed.install(database, pack));

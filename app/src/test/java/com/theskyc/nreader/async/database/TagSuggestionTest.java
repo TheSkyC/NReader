@@ -91,7 +91,7 @@ public class TagSuggestionTest {
                 + "\"entries\":[{\"id\":1,\"name\":\"prefix%literal\",\"aliases\":[\"prefix_%alias\","
                 + "\"Caf\u00e9\uD83D\uDE00\",\"" + lastCodePoint + "alias\",\"x" + lastCodePoint + "alias\"]},"
                 + "{\"id\":2,\"name\":\"prefixXliteral\",\"aliases\":[\"prefixXalias\",\"cafeteria\",\"y\"]}]}")
-                .getBytes(StandardCharsets.UTF_8)), () -> false));
+                .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
 
         assertEquals(List.of("first"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "prefix%", "ja")));
         assertEquals(List.of("first"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "prefix_%", "ja")));
@@ -108,7 +108,7 @@ public class TagSuggestionTest {
             "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
                 + "{\"id\":11,\"name\":\"Z Caf\u00e9\",\"aliases\":[\"a%_match\",\"b%_match\"]},"
                 + "{\"id\":12,\"name\":\"A Caf\u00e9\",\"aliases\":[\"normal match\"]}]}")
-            .getBytes(StandardCharsets.UTF_8)), () -> false));
+            .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
 
         int previousThreshold = TagV2.getMinCount();
         TagV2.updateMinCount(RuntimeEnvironment.getApplication(), 0);
@@ -144,7 +144,7 @@ public class TagSuggestionTest {
             "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
                 + "{\"id\":11,\"name\":\"hidden translation\",\"aliases\":[\"hidden alias\"]},"
                 + "{\"id\":12,\"name\":\"shown translation\",\"aliases\":[\"shown alias\"]}]}")
-            .getBytes(StandardCharsets.UTF_8)), () -> false));
+            .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
 
         try (Cursor rows = Queries.TagTable.getFilterCursor("kept rule", null, false, false, Locale.JAPAN)) {
             assertTrue(rows.moveToFirst());

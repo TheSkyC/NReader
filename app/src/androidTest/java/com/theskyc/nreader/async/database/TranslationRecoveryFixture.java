@@ -20,14 +20,15 @@ public final class TranslationRecoveryFixture {
         return new File(context.getFilesDir(), "translation-recovery-" + token + ".sqlite");
     }
 
-    public static SQLiteDatabase createBaseline(File file) throws IOException {
+    public static SQLiteDatabase createBaseline(File file, File scratchDirectory) throws IOException {
         SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(file, null);
         try {
             Queries.TagTable.createTables(database);
             TagTranslationCatalog.createTables(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (1, 'canonical', 3, 10)");
             database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'canonical', 3, 1)");
-            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(payload(1, "before")), () -> false));
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(payload(1, "before")),
+                scratchDirectory, () -> false));
             return database;
         } catch (IOException | RuntimeException | AssertionError error) {
             database.close();
