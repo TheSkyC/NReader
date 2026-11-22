@@ -117,6 +117,7 @@ public class MainActivity extends BaseActivity
         @Override
         public void onSuccess(List<GenericGallery> galleries) {
             adapter.addGalleries(galleries);
+            updatePageSwitcher(galleries.isEmpty());
         }
     };
     //views
@@ -153,7 +154,7 @@ public class MainActivity extends BaseActivity
         public void onSuccess(List<GenericGallery> galleries) {
             super.onSuccess(galleries);
             adapter.restartDataset(galleries);
-            showPageSwitcher(inspector.getPage(), inspector.getPageCount());
+            updatePageSwitcher(galleries.isEmpty());
             runOnUiThread(() -> recycler.smoothScrollToPosition(0));
         }
     };
@@ -410,8 +411,12 @@ public class MainActivity extends BaseActivity
         pageSwitcher.setChanger(new PageSwitcher.DefaultPageChanger() {
             @Override
             public void pageChanged() {
-                inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
-                inspector.setPage(pageSwitcher.getActualPage());
+                int page = pageSwitcher.getActualPage();
+                boolean resumeAppend = Global.isInfiniteScrollMain()
+                    && inspector.getResponse() == addDataset && inspector.getGalleries() != null
+                    && inspector.getGalleries().isEmpty() && page == inspector.getPage() + 1;
+                inspector = inspector.cloneInspector(MainActivity.this, resumeAppend ? addDataset : resetDataset);
+                inspector.setPage(page);
                 startInspector();
             }
         });
@@ -427,10 +432,11 @@ public class MainActivity extends BaseActivity
                 if (inspecting) return;
                 if (!Global.isInfiniteScrollMain()) return;
                 if (refresher.isRefreshing()) return;
+                if (inspector == null || inspector.getGalleries() == null || inspector.getGalleries().isEmpty()) return;
 
                 CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
                 assert manager != null;
-                if (!pageSwitcher.lastPageReached() && lastGalleryReached(manager)) {
+                if (inspector.getPage() < inspector.getPageCount() && lastGalleryReached(manager)) {
                     inspecting = true;
                     inspector = inspector.cloneInspector(MainActivity.this, addDataset);
                     inspector.setPage(inspector.getPage() + 1);
@@ -796,18 +802,11 @@ public class MainActivity extends BaseActivity
         modeType = ModeType.TAG;
     }
 
-    public void hidePageSwitcher() {
-        runOnUiThread(() -> pageSwitcher.setVisibility(View.GONE));
-    }
-
-    public void showPageSwitcher(final int actualPage, final int totalPage) {
-        pageSwitcher.setPages(totalPage, actualPage);
-
-
-        if (Global.isInfiniteScrollMain()) {
-            hidePageSwitcher();
-        }
-
+    private void updatePageSwitcher(boolean emptyPage) {
+        int pageCount = inspector.getPageCount();
+        pageSwitcher.displayPages(pageCount, inspector.getPage());
+        boolean showPages = pageCount > 1 && (!Global.isInfiniteScrollMain() || emptyPage);
+        pageSwitcher.setVisibility(showPages ? View.VISIBLE : View.GONE);
     }
     @SuppressLint("NotifyDataSetChanged")
     @Override
@@ -832,7 +831,6 @@ public class MainActivity extends BaseActivity
             startInspector();//restart inspector
             adapter.notifyDataSetChanged();//restart adapter
             adapter.resetStatuses();
-            showPageSwitcher(inspector.getPage(), inspector.getPageCount());//restart page switcher
             changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
             setting = false;
         }

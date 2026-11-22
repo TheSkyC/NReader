@@ -110,6 +110,9 @@ included structured tags and must omit the site IDs of excluded structured
 tags. This check uses the IDs returned with the gallery, so a missing directory
 entry does not affect it. Custom terms without a site ID and free-text terms
 are still sent to the site for matching.
+If a page has no results and the site reports multiple pages, the numbered
+controls remain available even in infinite scroll mode. The app waits for the
+user to choose a page instead of automatically requesting more empty pages.
 
 Custom terms have no site ID. A bookmark for a custom term saves the query,
 page, and sort. A single positive site-tag bookmark uses its site ID to

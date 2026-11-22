@@ -49,12 +49,21 @@ public class PageSwitcher extends CardView {
     }
 
     public void setPages(int totalPage, int actualPage) {
+        setPages(totalPage, actualPage, true);
+    }
+
+    public void displayPages(int totalPage, int actualPage) {
+        setPages(totalPage, actualPage, false);
+    }
+
+    private void setPages(int totalPage, int actualPage, boolean notifyChanger) {
+        totalPage = Math.max(0, totalPage);
         actualPage = Math.min(totalPage, Math.max(actualPage, 1));
         boolean pageChanged = this.actualPage != actualPage;
         if (this.totalPage == totalPage && !pageChanged) return;
         this.totalPage = totalPage;
         this.actualPage = actualPage;
-        if (pageChanged && changer != null) changer.pageChanged();
+        if (pageChanged && notifyChanger && changer != null) changer.pageChanged();
         updateViews();
     }
 
