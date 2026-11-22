@@ -182,6 +182,52 @@ public class TagInteractionDeviceBenchmarkTest {
         });
     }
 
+    @Test
+    public void fallsBackToCanonicalTagAfterTranslationRemoval() throws Exception {
+        TagCatalogDeviceBenchmarkTest.withFixture("translation-ui-removal", (context, database, directory) -> {
+            TagCatalogDeviceBenchmarkTest.importCatalog(context, database, "setup");
+            Global.initFromShared(context);
+            String locale = context.getResources().getConfiguration().getLocales().get(0).toLanguageTag();
+            assertTrue("Unsupported benchmark locale: " + locale, TagTranslationCatalog.isSupportedLocale(locale));
+            int id = TagCatalogDeviceBenchmarkTest.eligibleTagId(database, TagV2.getMinCount());
+            String canonicalName = Queries.TagTable.getTagById(id).getName();
+            TagFilterActivity activity = launch(context, TagFilterActivity.class,
+                Uri.parse("https://nhentai.net/tags/"));
+            try {
+                AtomicReference<RecyclerView> list = new AtomicReference<>();
+                waitFor("tag list before translation removal", () -> onMain(() -> {
+                    TagTypePage page = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                    RecyclerView recycler = page == null ? null : page.getRecyclerView();
+                    if (recycler == null || !recycler.isShown() || !hasTitleAt(recycler, 0)) return false;
+                    list.set(recycler);
+                    return true;
+                }));
+                File pack = writeSingleTranslation(directory, locale, id);
+                try (InputStream input = new FileInputStream(pack)) {
+                    assertTrue(TagTranslationCatalog.apply(database, input, directory, () -> false));
+                } finally {
+                    if (pack.exists() && !pack.delete()) Log.w(LOG, "Could not remove UI translation pack");
+                }
+                waitFor("translated tag before removal", () -> onMain(() -> {
+                    TextView title = titleAt(list.get(), 0);
+                    return title != null && title.getText().toString().contains("translated-" + id);
+                }));
+
+                long start = SystemClock.elapsedRealtimeNanos();
+                TagTranslationCatalog.remove(database, locale);
+                waitFor("canonical tag after translation removal", () -> onMain(() -> {
+                    TextView title = titleAt(list.get(), 0);
+                    if (title == null) return false;
+                    String value = title.getText().toString();
+                    return value.contains(canonicalName) && !value.contains("translated-" + id);
+                }));
+                Log.i(LOG, "translationRemovalUiToFallbackMs=" + elapsedMillis(start));
+            } finally {
+                close(activity);
+            }
+        });
+    }
+
     private void measureJump(RecyclerView list, int position) {
         LinearLayoutManager layout = (LinearLayoutManager) list.getLayoutManager();
         AtomicLong start = new AtomicLong();

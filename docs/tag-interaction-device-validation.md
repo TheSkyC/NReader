@@ -13,10 +13,10 @@ adb -s $serial shell am instrument --user $benchmarkUser -w -r -e class com.thes
 adb -s $serial logcat -d -s TagInteractionBenchmark:I TagCatalogBenchmark:I '*:S'
 ```
 
-The three cases use the installed bundled catalog and a private file-backed SQLite
-database with no account or network fixtures. The search test also installs a
-synthetic translation and two aliases per tag for the activity's locale. Use a
-locale supported by the pack format, such as `en-US` or `zh-CN`.
+The four cases use the installed bundled catalog and a private file-backed SQLite
+database with no account or network fixtures. The search and translation UI tests
+also install synthetic translations for the activity's locale. Use a locale
+supported by the pack format, such as `en-US` or `zh-CN`.
 
 - **Search suggestions:** Open the search options and the add-tag dialog, inject
   key events for an alias, and wait for its translated label in the suggestion
@@ -37,7 +37,15 @@ locale supported by the pack format, such as `en-US` or `zh-CN`.
   to show the translated label. This checks the committed catalog event,
   fragment observer, and adapter refilter path. It does not test a feed
   download or a translation pack with every catalog row.
+- **Translation removal:** Install one visible translation, remove its locale,
+  and wait for the same row to return to its canonical label. This checks the
+  removal event and the same live adapter refresh path. It does not test
+  removal through the Settings document picker.
 
 Record the APK flavor, Android API, host or hardware, catalog size, and repeated
 samples. The tests assert UI behavior and log durations; they do not impose
 performance thresholds or measure interaction during a concurrent import.
+Keep the device awake and unlocked for the whole run. On Android 9 emulators,
+`adb shell cmd window dismiss-keyguard` may be needed after switching to a
+temporary user; a locked or dreaming display can pause the launched activity and
+make the harness time out before any UI assertion runs.
