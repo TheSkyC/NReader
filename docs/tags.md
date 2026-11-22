@@ -301,6 +301,33 @@ process-death recovery, or reviewed production translations. Do not compare
 numbers across devices as a release threshold without controlling hardware,
 thermal state, and data revision.
 
+## Offline first-launch check
+
+The ordinary debug application also needs a runtime check because the
+benchmark application deliberately skips production startup. Use a disposable
+API 26+ emulator or a temporary Android user, install the matching debug APK,
+disable Wi-Fi and mobile data, and launch the application. After the first
+startup, force-stop and relaunch it before checking the tag manager. The
+database must contain the bundled catalog revision and the tag page must show
+catalog names while the device has no default network.
+
+For a disposable API 28 AVD, the check can be recorded with:
+
+\`\`\`powershell
+adb -s $serial shell svc wifi disable
+adb -s $serial shell svc data disable
+adb -s $serial install --no-incremental -R --user 0 app/build/outputs/apk/minApi28/debug/app-minApi28-debug.apk
+adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.maxwai.nclientv3.components.launcher.LauncherReal
+adb -s $serial shell am force-stop com.theskyc.nreader.debug
+adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.theskyc.nreader.TagFilterActivity -d https://nhentai.net/tags/
+\`\`\`
+
+The check is complete only when the installed database reports schema 24,
+bundled revision 43, and 86,030 catalog rows, and the live tag page displays
+an expected catalog name such as \`glasses\`. Record the Android API, flavor,
+network state, and whether the database was empty before launch. This is a
+runtime smoke check rather than a release performance threshold.
+
 To check database contention, run
 `com.theskyc.nreader.async.database.TagImportContentionTest` with the same
 runner and a fresh benchmark app installation in a temporary Android user.
