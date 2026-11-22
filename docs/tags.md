@@ -189,6 +189,16 @@ process-death recovery, or reviewed production translations. Do not compare
 numbers across devices as a release threshold without controlling hardware,
 thermal state, and data revision.
 
+To check database contention, run
+`com.theskyc.nreader.async.database.TagImportContentionTest` with the same
+runner and a fresh benchmark app installation in a temporary Android user.
+The test opens a file-backed database through the application's database
+helper and holds a small catalog transaction immediately before commit.
+It reports under `TagImportContention` whether an independent tag read and
+local rule edit can finish while the transaction is held. It then verifies
+that the new canonical row and the saved rule both survive. This isolates
+database waiting from file size and does not measure UI latency.
+
 For process-death checks, build the matching target and instrumentation APKs.
 Run `scripts/test_tag_process_recovery.ps1` with `-Flavor MinApi26` or
 `-Flavor MinApi28` and one of these scenarios:
