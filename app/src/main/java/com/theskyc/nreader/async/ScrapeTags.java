@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -43,7 +45,7 @@ public class ScrapeTags extends Worker {
     private static final String WORK_NAME = "tag-catalog-refresh";
     private static final String CHECKED_REVISION = "checked_revision";
     private static final String CHECKED_AT = "checked_at";
-    private static boolean cleanedStagingDirectory;
+    private static final Set<File> CLEANED_STAGING_DIRECTORIES = new HashSet<>();
 
     private final TagFeedDownload download;
     private final String manifestUrl;
@@ -147,14 +149,14 @@ public class ScrapeTags extends Worker {
         if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Could not create tag catalog staging directory");
         }
-        if (!cleanedStagingDirectory) {
+        if (!CLEANED_STAGING_DIRECTORIES.contains(directory)) {
             // No import from this process can own a staging file yet.
             File[] abandoned = directory.listFiles((parent, name) -> name.endsWith(".part"));
             if (abandoned == null) throw new IOException("Could not read tag catalog staging directory");
             for (File file : abandoned) {
                 if (!file.delete()) LogUtility.w("Could not remove abandoned tag catalog");
             }
-            cleanedStagingDirectory = true;
+            CLEANED_STAGING_DIRECTORIES.add(directory);
         }
         return File.createTempFile("catalog-", ".part", directory);
     }

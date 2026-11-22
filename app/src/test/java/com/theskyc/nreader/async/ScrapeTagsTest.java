@@ -150,6 +150,29 @@ public class ScrapeTagsTest {
         deleteTree(cacheRoot);
     }
 
+    @Test public void cleansAbandonedCatalogFilesForEachCacheDirectory() throws Exception {
+        installState("legacy-upstream");
+        File firstCacheRoot = new File(context.getCacheDir(), "catalog-cleanup-first/" + UUID.randomUUID());
+        File secondCacheRoot = new File(context.getCacheDir(), "catalog-cleanup-second/" + UUID.randomUUID());
+        File firstStaging = new File(firstCacheRoot, "tag-catalog");
+        File secondStaging = new File(secondCacheRoot, "tag-catalog");
+        assertTrue(firstStaging.mkdirs());
+        assertTrue(secondStaging.mkdirs());
+        assertTrue(new File(firstStaging, "first-abandoned.part").createNewFile());
+        assertTrue(new File(secondStaging, "second-abandoned.part").createNewFile());
+
+        String snapshot = updatedSnapshot();
+        assertEquals(Result.success(), worker(cacheContext(firstCacheRoot), "", 0,
+            path -> "tagsVersion".equals(path) ? "11" : snapshot).refresh(database));
+        checks(false).edit().putLong("checked_at", 0L).apply();
+        assertEquals(Result.success(), worker(cacheContext(secondCacheRoot), "", 0,
+            path -> "tagsVersion".equals(path) ? "12" : snapshot).refresh(database));
+        assertEquals(0, firstStaging.list().length);
+        assertEquals(0, secondStaging.list().length);
+        deleteTree(firstCacheRoot);
+        deleteTree(secondCacheRoot);
+    }
+
     private static String updatedSnapshot() {
         StringBuilder rows = new StringBuilder("[[10001,\"updated name\",101,3]");
         for (int index = 1; index < TagCatalog.MIN_DIRECTORY_ROWS; index++) {
@@ -216,6 +239,18 @@ public class ScrapeTagsTest {
                 .message("Fixture").body(ResponseBody.create(server.apply(name), null)).build();
         }).build();
         return new ScrapeTags(workerContext, params, manifestUrl, client);
+    }
+
+    private Context cacheContext(File cacheRoot) {
+        return new ContextWrapper(context) {
+            @Override public File getCacheDir() {
+                return cacheRoot;
+            }
+
+            @Override public Context getApplicationContext() {
+                return this;
+            }
+        };
     }
 
     private static void deleteTree(File file) {
