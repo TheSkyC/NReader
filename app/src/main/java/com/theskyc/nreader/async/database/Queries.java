@@ -950,6 +950,7 @@ public class Queries {
         }
 
         public static void addBookmark(InspectorV3 inspector) {
+            inspector = inspector.withoutAccountTags();
             Tag tag = inspector.getRequestType() == ApiRequestType.BYTAG ? inspector.getTag() : null;
             ContentValues values = new ContentValues(4);
             values.put(URL, inspector.getUrl());

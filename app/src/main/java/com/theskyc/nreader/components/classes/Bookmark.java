@@ -46,7 +46,7 @@ public class Bookmark {
         if (requestType == ApiRequestType.BYSEARCH)
             return InspectorV3.savedSearchInspector(context, query, page, popular, response);
         if (requestType == ApiRequestType.BYALL)
-            return InspectorV3.searchInspector(context, "", null, page, SortType.RECENT_ALL_TIME, null, response);
+            return InspectorV3.savedHomeInspector(context, page, response);
         if (requestType == ApiRequestType.BYTAG) {
             if (tagVal == null) {
                 return query == null || query.trim().isEmpty() ? null

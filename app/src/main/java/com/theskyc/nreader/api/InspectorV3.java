@@ -68,6 +68,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     private String query, url;
     private ApiRequestType requestType;
     private Set<Tag> tags;
+    @Nullable private Login.OnlineTagScope accountTagScope;
+    @Nullable private Set<Tag> tagsWithoutAccount;
     private ArrayList<GenericGallery> galleries = null;
     private Ranges ranges = null;
     private InspectorResponse response;
@@ -187,49 +189,98 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public static InspectorV3 tagInspector(Context context, Tag tag, int page, SortType sortType, InspectorResponse response) {
-        Collection<Tag> tags;
-        if (!Global.isOnlyTag()) {
-            tags = getDefaultTags();
-            tags.add(tag);
-        } else {
-            tags = Collections.singleton(tag);
-        }
-        return searchInspector(context, null, tags, page, sortType, null, response);
+        if (Global.isOnlyTag())
+            return searchInspector(context, null, Collections.singleton(tag), page, sortType, null, response);
+        return buildSearch(context, null, null, tag, page, sortType, null, response);
     }
 
     public static InspectorV3 searchInspector(Context context, String query, Collection<Tag> tags, int page, SortType sortType, @Nullable Ranges ranges, InspectorResponse response) {
+        return buildSearch(context, query, tags, null, page, sortType, ranges, response);
+    }
+
+    private static InspectorV3 buildSearch(Context context, @Nullable String query,
+                                           @Nullable Collection<Tag> tags, @Nullable Tag browsedTag, int page,
+                                           SortType sortType, @Nullable Ranges ranges, InspectorResponse response) {
         InspectorV3 inspector = new InspectorV3(context, response);
         inspector.custom = tags != null;
         inspector.tags = inspector.custom ? new HashSet<>(tags) : getDefaultTags();
         inspector.tags.addAll(getLanguageTags(Global.getOnlyLanguage()));
+        if (!inspector.custom) {
+            Login.OnlineTagScope scope = Login.currentOnlineTagScope();
+            if (scope != null) inspector.applyAccountTags(scope, Queries.TagTable.getAllOnlineBlacklisted());
+        }
+        if (browsedTag != null) {
+            inspector.tags.add(browsedTag);
+            if (inspector.tagsWithoutAccount != null) inspector.tagsWithoutAccount.add(browsedTag);
+        }
         inspector.page = page;
         inspector.pageCount = 0;
         inspector.ranges = ranges;
         inspector.query = query == null ? "" : query;
         inspector.sortType = sortType;
-        if (inspector.query.isEmpty() && (ranges == null || ranges.isDefault())) {
-            switch (inspector.tags.size()) {
-                case 0:
-                    inspector.requestType = ApiRequestType.BYALL;
-                    inspector.tryByAllPopular();
-                    break;
-                case 1:
-                    Tag tag = inspector.tags.iterator().next();
-                    if (tag != null && tag.getId() > 0 && tag.getStatus() != TagStatus.AVOIDED) {
-                        inspector.requestType = ApiRequestType.BYTAG;
-                        break;
-                    }
-                default:
-                    inspector.requestType = ApiRequestType.BYSEARCH;
-                    break;
-            }
-        } else inspector.requestType = ApiRequestType.BYSEARCH;
+        inspector.selectSearchRequestType();
         inspector.createUrl();
         return inspector;
     }
 
+    private void applyAccountTags(Login.OnlineTagScope scope, Collection<Tag> onlineTags) {
+        accountTagScope = scope;
+        Set<Tag> combined = new HashSet<>(tags);
+        if (scope.isCurrent() && combined.addAll(onlineTags)) {
+            tagsWithoutAccount = tags;
+            tags = combined;
+        }
+    }
+
+    public boolean isAccountTagScopeCurrent() {
+        return accountTagScope == null || accountTagScope.isCurrent();
+    }
+
+    public boolean usesCurrentDefaultAccountTags() {
+        return accountTagScope == null ? !Login.useAccountTag() : accountTagScope.isCurrent();
+    }
+
+    public InspectorV3 withoutAccountTags() {
+        if (accountTagScope == null) return this;
+        InspectorV3 portable = cloneInspector(context.get(), response);
+        if (tagsWithoutAccount != null) portable.tags = tagsWithoutAccount;
+        portable.tagsWithoutAccount = null;
+        portable.accountTagScope = null;
+        portable.pageCount = 0;
+        portable.selectSearchRequestType();
+        portable.createUrl();
+        return portable;
+    }
+
+    private void selectSearchRequestType() {
+        if (query.isEmpty() && (ranges == null || ranges.isDefault())) {
+            switch (tags.size()) {
+                case 0:
+                    requestType = ApiRequestType.BYALL;
+                    tryByAllPopular();
+                    break;
+                case 1:
+                    Tag tag = tags.iterator().next();
+                    if (tag != null && tag.getId() > 0 && tag.getStatus() != TagStatus.AVOIDED) {
+                        requestType = ApiRequestType.BYTAG;
+                        break;
+                    }
+                default:
+                    requestType = ApiRequestType.BYSEARCH;
+                    break;
+            }
+        } else requestType = ApiRequestType.BYSEARCH;
+    }
+
     public static InspectorV3 savedSearchInspector(Context context, String query, int page, SortType sortType, InspectorResponse response) {
         return savedInspector(context, query, null, page, sortType, response);
+    }
+
+    public static InspectorV3 savedHomeInspector(Context context, int page, InspectorResponse response) {
+        InspectorV3 inspector = savedSearchInspector(context, "", page, SortType.RECENT_ALL_TIME, response);
+        inspector.requestType = ApiRequestType.BYALL;
+        inspector.createUrl();
+        return inspector;
     }
 
     public static InspectorV3 savedTagInspector(Context context, Tag tag, int page, SortType sortType, InspectorResponse response) {
@@ -258,7 +309,6 @@ public class InspectorV3 extends Thread implements Parcelable {
         tags.addAll(getLanguageTags(Global.getOnlyLanguage()));
         if (Global.removeAvoidedGalleries())
             tags.addAll(Queries.TagTable.getAllStatus(TagStatus.AVOIDED));
-        if (Login.useAccountTag()) tags.addAll(Queries.TagTable.getAllOnlineBlacklisted());
         return tags;
     }
 
@@ -286,6 +336,10 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        if (accountTagScope != null) {
+            withoutAccountTags().writeToParcel(dest, flags);
+            return;
+        }
         dest.writeByte((byte) (Objects.requireNonNullElse(sortType, SortType.RECENT_ALL_TIME).ordinal()));
         dest.writeByte((byte) (custom ? 1 : 0));
         dest.writeInt(page);
@@ -305,7 +359,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     public String getSearchTitle() {
         //triggered only when in searchMode
         if (!query.isEmpty()) return query;
-        return url.replace(Utility.getBaseUrl() + "api/v2/search?query=", "").replace('+', ' ');
+        return withoutAccountTags().url.replace(Utility.getBaseUrl() + "api/v2/search?query=", "").replace('+', ' ');
     }
 
     public void initialize(Context context, InspectorResponse response) {
@@ -327,6 +381,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         inspectorV3.query = query;
         inspectorV3.url = url;
         inspectorV3.tags = tags;
+        inspectorV3.tagsWithoutAccount = tagsWithoutAccount;
+        inspectorV3.accountTagScope = accountTagScope;
         inspectorV3.requestType = requestType;
         inspectorV3.sortType = sortType;
         inspectorV3.pageCount = pageCount;
@@ -400,12 +456,13 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public boolean createDocument() throws IOException {
+        if (!isAccountTagScopeCurrent()) throw new IOException("Online tag selection expired");
         if (jsonResponse != null) return true;
         Context requestContext = context.get();
         if (requestContext == null) throw new IOException("Request context unavailable");
         boolean accountFavorites = requestType == ApiRequestType.FAVORITE || requestType == ApiRequestType.RANDOM_FAVORITE;
         String requestUrl = url;
-        if (accountFavorites) {
+        if (accountFavorites || accountTagScope != null) {
             okhttp3.HttpUrl parsed = okhttp3.HttpUrl.get(url);
             okhttp3.HttpUrl base = okhttp3.HttpUrl.get(Utility.getAuthenticatedApiBaseUrl(requestContext));
             requestUrl = parsed.newBuilder().host(base.host()).port(base.port()).build().toString();
@@ -418,6 +475,8 @@ public class InspectorV3 extends Thread implements Parcelable {
                 throw new IOException("Online identity is unavailable");
             builder.tag(ApiAuthInterceptor.ExpectedIdentity.class,
                 new ApiAuthInterceptor.ExpectedIdentity(favoriteListSnapshot.identity, this::isFavoriteIdentityCurrent));
+        } else if (accountTagScope != null) {
+            builder.tag(ApiAuthInterceptor.ExpectedIdentity.class, accountTagScope.expectedIdentity());
         }
         okhttp3.Call call = Global.getClient(requestContext).newCall(builder.build());
         activeCall = call;
@@ -457,7 +516,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         try {
             if (!createDocument()) throw new IOException("API request failed: HTTP " + responseCode);
             parseDocument();
-            if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()) {
+            if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()
+                && isAccountTagScopeCurrent()) {
                 deliveryResponse.onSuccess(galleries);
             }
             if (pendingRelated != null && deferredRelatedResponse != null && !canceled) {
@@ -471,7 +531,7 @@ public class InspectorV3 extends Thread implements Parcelable {
                 }
             }
         } catch (Exception e) {
-            if (deliveryResponse != null && resultCurrent.getAsBoolean()
+            if (deliveryResponse != null && resultCurrent.getAsBoolean() && isAccountTagScopeCurrent()
                 && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
         }
         if (deliveryResponse != null) deliveryResponse.onEnd();

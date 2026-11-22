@@ -26,6 +26,10 @@ public class Login {
     private static volatile User user;
     private static volatile String userIdentity;
     private static boolean accountTag;
+    private static String accountTagKey;
+    private static volatile SharedPreferences accountTagPreferences;
+    private static final SharedPreferences.OnSharedPreferenceChangeListener accountTagListener =
+        Login::onAccountTagPreferenceChanged;
     private static Context appContext;
     private static String onlineTagsIdentity;
     private static long onlineTagsRevision;
@@ -56,24 +60,74 @@ public class Login {
         });
     }
 
-    public static void initLogin(@NonNull Context context) {
+    public static synchronized void initLogin(@NonNull Context context) {
         appContext = context.getApplicationContext();
         SharedPreferences preferences = context.getSharedPreferences("Settings", 0);
-        accountTag = preferences.getBoolean(context.getString(R.string.preference_key_use_account_tag), false);
+        if (preferences != accountTagPreferences) {
+            if (accountTagPreferences != null)
+                accountTagPreferences.unregisterOnSharedPreferenceChangeListener(accountTagListener);
+            accountTagKey = context.getString(R.string.preference_key_use_account_tag);
+            accountTagPreferences = preferences;
+            preferences.registerOnSharedPreferenceChangeListener(accountTagListener);
+        }
+        updateAccountTagRevision();
         BASE_HTTP_URL = HttpUrl.get(Utility.getBaseUrl());
     }
 
+    private static synchronized void onAccountTagPreferenceChanged(SharedPreferences preferences, @Nullable String key) {
+        if (preferences == accountTagPreferences && (key == null || key.equals(accountTagKey))) {
+            updateAccountTagRevision();
+        }
+    }
+
+    private static void updateAccountTagRevision() {
+        boolean enabled = isAccountTagEnabled();
+        if (accountTag != enabled) {
+            accountTag = enabled;
+            onlineTagsRevision++;
+            notifyOnlineTagsChanged();
+        }
+    }
+
     public static boolean useAccountTag() {
-        return accountTag && hasCurrentOnlineTags();
+        return isAccountTagEnabled() && hasCurrentOnlineTags();
     }
 
     public static boolean wantsAccountTag() {
-        return accountTag && appContext != null
+        return isAccountTagEnabled() && appContext != null
             && AuthStore.hasOnlineIdentity(appContext);
     }
 
     public static boolean isAccountTagEnabled() {
-        return accountTag;
+        SharedPreferences preferences = accountTagPreferences;
+        return preferences != null && preferences.getBoolean(accountTagKey, false);
+    }
+
+    @Nullable
+    public static synchronized OnlineTagScope currentOnlineTagScope() {
+        return isAccountTagEnabled() && hasCurrentOnlineTags()
+            ? new OnlineTagScope(onlineTagsIdentity, onlineTagsRevision) : null;
+    }
+
+    public static final class OnlineTagScope {
+        private final String identity;
+        private final long revision;
+
+        private OnlineTagScope(String identity, long revision) {
+            this.identity = identity;
+            this.revision = revision;
+        }
+
+        public ApiAuthInterceptor.ExpectedIdentity expectedIdentity() {
+            return new ApiAuthInterceptor.ExpectedIdentity(identity, this::isCurrent);
+        }
+
+        public boolean isCurrent() {
+            synchronized (Login.class) {
+                return isAccountTagEnabled() && hasCurrentOnlineTags()
+                    && revision == onlineTagsRevision && identity.equals(onlineTagsIdentity);
+            }
+        }
     }
 
     public static synchronized boolean hasCurrentOnlineTags() {

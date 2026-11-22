@@ -163,6 +163,14 @@ When submitting a search after opting out, automatic blacklist entries are
 removed from the selection, while manual tag choices are preserved.
 Only the active account's validated cache is exposed; an in-flight result
 from a previous account or before restore cannot publish.
+Home, shared text searches, and tag browsing bind automatic exclusions to
+the validated cache revision that supplied them, including an empty blacklist.
+Turning off account tags invalidates requests bound to that revision as soon
+as the preference is saved. When the revision is no longer current, the home
+feed rebuilds; other affected result lists discard the old results and offer
+to repeat the search without online tags. Newly created bookmarks and search
+plans from these queries omit automatic exclusions and retain explicit
+search terms and local rules.
 
 The tag list reads its cursor and copies rows in bounded batches on a worker.
 Cached rows remain usable while a directory update is holding the database;

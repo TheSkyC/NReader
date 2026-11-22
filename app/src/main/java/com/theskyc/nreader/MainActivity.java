@@ -129,14 +129,13 @@ public class MainActivity extends BaseActivity
     private boolean inspecting = false;
     private SortType temporaryType;
     private Snackbar snackbar = null;
-    private long normalInspectorRevision = -1;
     private long normalInspectorRuleRevision = -1;
     private boolean readingTagRules;
     private Tag browsedTag;
     private Tag displayedRuleTag;
     private TagStatus displayedRuleStatus;
-    private String normalInspectorIdentity;
     private InspectorV3 blacklistLoadingInspector;
+    private InspectorV3 staleAccountSearch;
     private final Runnable accountFilterObserver = this::refreshAccountFilter;
     private final Runnable favoriteIdentityObserver = this::refreshFavoriteIdentity;
     private final Runnable accountHeaderObserver = this::refreshAccountHeader;
@@ -237,25 +236,23 @@ public class MainActivity extends BaseActivity
                 refreshTagRules();
                 return;
             }
-            String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
-            long revision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
-            if (modeType == ModeType.NORMAL && (!Objects.equals(identity, normalInspectorIdentity)
-                || revision != normalInspectorRevision)) {
+            if (modeType == ModeType.NORMAL && !inspector.usesCurrentDefaultAccountTags()) {
                 int page = inspector.getPage();
                 SortType sort = inspector.getSortType();
+                inspector.cancelRequest();
                 inspector = InspectorV3.searchInspector(this, null, null, page, sort, null, inspector.getResponse());
-                normalInspectorIdentity = identity;
-                normalInspectorRevision = revision;
             }
             InspectorV3 request = inspector;
             long ruleRevision = normalInspectorRuleRevision;
             if (modeType == ModeType.FAVORITE) favoriteInspectorGeneration = AuthStore.identityGeneration();
             boolean normal = modeType == ModeType.NORMAL;
+            if (!request.isAccountTagScopeCurrent()) {
+                if (!normal) stopStaleAccountSearch(request);
+                return;
+            }
             java.util.function.BooleanSupplier current = () -> !isFinishing() && !isDestroyed() && inspector == request
-                && request.isFavoriteIdentityCurrent() && (!normal
-                || (ruleRevision == TagRuleEdits.revision()
-                && Objects.equals(identity, Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null)
-                && revision == (Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1)));
+                && request.isFavoriteIdentityCurrent() && request.isAccountTagScopeCurrent() && (!normal
+                || (ruleRevision == TagRuleEdits.revision() && request.usesCurrentDefaultAccountTags()));
             request.setResultCurrent(current);
             InspectorV3.InspectorResponse delegate = request.getResponse();
             request.setDeliveryResponse(new InspectorV3.InspectorResponse() {
@@ -268,7 +265,9 @@ public class MainActivity extends BaseActivity
                 @Override public void onFailure(Exception error) { deliver(() -> delegate.onFailure(error)); }
                 @Override public void onEnd() {
                     runOnUiThread(() -> {
-                        if (!isFinishing() && !isDestroyed() && inspector == request) delegate.onEnd();
+                        if (isFinishing() || isDestroyed() || inspector != request) return;
+                        delegate.onEnd();
+                        if (!normal && !request.isAccountTagScopeCurrent()) stopStaleAccountSearch(request);
                     });
                 }
             });
@@ -291,15 +290,40 @@ public class MainActivity extends BaseActivity
     }
 
     private void refreshAccountFilter() {
-        if (isFinishing() || isDestroyed() || modeType != ModeType.NORMAL || inspector == null
-            || blacklistLoadingInspector != null) return;
-        String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
-        long revision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
-        if (Objects.equals(identity, normalInspectorIdentity) && revision == normalInspectorRevision
+        if (isFinishing() || isDestroyed() || inspector == null) return;
+        if (modeType != ModeType.NORMAL) {
+            if (!inspector.isAccountTagScopeCurrent()) stopStaleAccountSearch(inspector);
+            return;
+        }
+        if (blacklistLoadingInspector != null) return;
+        if (inspector.usesCurrentDefaultAccountTags()
             && (!Login.wantsAccountTag() || Login.hasCurrentOnlineTags())) return;
+        inspector.cancelRequest();
         inspector = inspector.cloneInspector(this, resetDataset);
         adapter.restartDataset(java.util.Collections.emptyList());
         startInspector();
+    }
+
+    private void stopStaleAccountSearch(InspectorV3 request) {
+        if (staleAccountSearch == request) return;
+        staleAccountSearch = request;
+        request.cancelRequest();
+        inspecting = false;
+        refresher.setRefreshing(false);
+        adapter.restartDataset(java.util.Collections.emptyList());
+        pageSwitcher.setVisibility(View.GONE);
+        hideError();
+        snackbar = Snackbar.make(masterLayout, R.string.online_blacklist_search_unavailable, Snackbar.LENGTH_INDEFINITE);
+        snackbar.setAction(R.string.online_blacklist_search_without, view -> {
+            if (inspector != request || isFinishing() || isDestroyed()) return;
+            staleAccountSearch = null;
+            inspector = request.withoutAccountTags().cloneInspector(this, resetDataset);
+            inspector.setPage(1);
+            setActivityTitle();
+            invalidateOptionsMenu();
+            startInspector();
+        });
+        snackbar.show();
     }
 
     @Override
@@ -432,7 +456,8 @@ public class MainActivity extends BaseActivity
                 if (inspecting) return;
                 if (!Global.isInfiniteScrollMain()) return;
                 if (refresher.isRefreshing()) return;
-                if (inspector == null || inspector.getGalleries() == null || inspector.getGalleries().isEmpty()) return;
+                if (inspector == null || !inspector.isAccountTagScopeCurrent()
+                    || inspector.getGalleries() == null || inspector.getGalleries().isEmpty()) return;
 
                 CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
                 assert manager != null;
@@ -587,8 +612,6 @@ public class MainActivity extends BaseActivity
         normalInspectorRuleRevision = TagRuleEdits.revision();
         inspector = InspectorV3.basicInspector(this, 1, resetDataset);
         modeType = ModeType.NORMAL;
-        normalInspectorIdentity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
-        normalInspectorRevision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
     }
 
     private void useSharedTextMode(Intent intent) {
@@ -641,6 +664,8 @@ public class MainActivity extends BaseActivity
             modeType = ModeType.TAG;
         } else if (type == ApiRequestType.BYALL) {
             normalInspectorRuleRevision = TagRuleEdits.revision();
+            inspector = InspectorV3.searchInspector(this, null, null, inspector.getPage(),
+                inspector.getSortType(), null, resetDataset);
             modeType = ModeType.NORMAL;
         } else if (type == ApiRequestType.BYSEARCH) modeType = ModeType.SEARCH;
         else if (type == ApiRequestType.FAVORITE) modeType = ModeType.FAVORITE;
@@ -973,7 +998,7 @@ public class MainActivity extends BaseActivity
             }
         } else if (item.getItemId() == R.id.open_browser) {
             if (inspector != null) {
-                i = new Intent(Intent.ACTION_VIEW, Uri.parse(inspector.getUrl()));
+                i = new Intent(Intent.ACTION_VIEW, Uri.parse(inspector.withoutAccountTags().getUrl()));
                 startActivity(i);
             }
         } else if (item.getItemId() == R.id.filter_loaded_results) {
@@ -982,7 +1007,7 @@ public class MainActivity extends BaseActivity
             inspector = InspectorV3.randomInspector(this, startGallery, true);
             startInspector();
         } else if (item.getItemId() == R.id.download_page) {
-            if (inspector.getGalleries() != null)
+            if (inspector.isAccountTagScopeCurrent() && inspector.getGalleries() != null)
                 showDialogDownloadAll();
         } else if (item.getItemId() == R.id.add_bookmark) {
             Queries.BookmarkTable.addBookmark(inspector);
@@ -1007,14 +1032,15 @@ public class MainActivity extends BaseActivity
 
     private void saveSearchPlan() {
         if (!canSaveSearchPlan()) return;
-        Uri url = Uri.parse(inspector.getUrl());
+        InspectorV3 portable = inspector.withoutAccountTags();
+        Uri url = Uri.parse(portable.getUrl());
         String query = url.getQueryParameter("query");
         if (query == null) query = url.getQueryParameter("q");
         String sort = url.getQueryParameter("sort");
         ContentValues values = new ContentValues();
         values.put("query", query == null ? "" : query);
         values.put("sort", sort == null ? "" : sort);
-        values.put("page", inspector.getPage());
+        values.put("page", portable.getPage());
         values.put("pinned", 0);
         EditText name = new EditText(this);
         name.setSingleLine(true);
@@ -1051,7 +1077,7 @@ public class MainActivity extends BaseActivity
 
     private boolean canSaveSearchPlan() {
         if (inspector == null) return false;
-        ApiRequestType type = inspector.getRequestType();
+        ApiRequestType type = inspector.withoutAccountTags().getRequestType();
         return type == ApiRequestType.BYSEARCH || type == ApiRequestType.BYTAG;
     }
 
@@ -1133,13 +1159,15 @@ public class MainActivity extends BaseActivity
     }
 
     private void showDialogDownloadAll() {
+        InspectorV3 request = inspector;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder
             .setTitle(R.string.download_all_galleries_in_this_page)
             .setIcon(R.drawable.ic_file)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.ok, (dialog, which) -> {
-                for (GenericGallery g : inspector.getGalleries())
+                if (inspector != request || !request.isAccountTagScopeCurrent()) return;
+                for (GenericGallery g : request.getGalleries())
                     DownloadGalleryV2.downloadGallery(MainActivity.this, g);
             });
         builder.show();
@@ -1163,9 +1191,6 @@ public class MainActivity extends BaseActivity
         InspectorV3 previous = inspector;
         SortType sort = previous.getSortType();
         long restore = Login.onlineTagsRestoreGeneration();
-        boolean useAccountTags = Login.useAccountTag();
-        String identity = useAccountTags ? Login.currentOnlineTagsIdentity() : null;
-        long accountRevision = useAccountTags ? Login.currentOnlineTagsRevision() : -1;
         TAG_RULE_READER.execute(() -> {
             InspectorV3 updated = null;
             TagStatus status = null;
@@ -1189,8 +1214,6 @@ public class MainActivity extends BaseActivity
                 if (home && result != null) {
                     inspector = result;
                     normalInspectorRuleRevision = revision;
-                    normalInspectorIdentity = identity;
-                    normalInspectorRevision = accountRevision;
                     adapter.restartDataset(java.util.Collections.emptyList());
                     startInspector();
                 } else if (saved != null) {
