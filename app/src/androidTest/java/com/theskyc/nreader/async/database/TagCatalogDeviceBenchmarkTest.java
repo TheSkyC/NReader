@@ -81,7 +81,7 @@ public class TagCatalogDeviceBenchmarkTest {
         });
     }
 
-    private static void withFixture(String name, Benchmark benchmark) throws Exception {
+    static void withFixture(String name, Benchmark benchmark) throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         File directory = Files.createTempDirectory(context.getCacheDir().toPath(), "tag-benchmark-").toFile();
         File databaseFile = new File(directory, "benchmark.db");
@@ -107,7 +107,7 @@ public class TagCatalogDeviceBenchmarkTest {
         }
     }
 
-    private static long importCatalog(Context context, SQLiteDatabase database, String phase) throws IOException {
+    static long importCatalog(Context context, SQLiteDatabase database, String phase) throws IOException {
         int revision;
         try (InputStream input = context.getAssets().open("tag-catalog/tagsVersion")) {
             revision = TagCatalog.readRevision(input);
@@ -128,10 +128,15 @@ public class TagCatalogDeviceBenchmarkTest {
 
     private static void importTranslation(SQLiteDatabase database, File directory, long catalogRows,
                                           String phase) throws IOException {
+        importTranslation(database, directory, catalogRows, phase, LOCALE);
+    }
+
+    static void importTranslation(SQLiteDatabase database, File directory, long catalogRows,
+                                  String phase, String locale) throws IOException {
         File pack = new File(directory, "translations.json");
         try {
             long start = SystemClock.elapsedRealtime();
-            long packRows = writeSyntheticPack(database, pack);
+            long packRows = writeSyntheticPack(database, pack, locale);
             long generationMs = SystemClock.elapsedRealtime() - start;
             long packBytes = pack.length();
             assertEquals(catalogRows, packRows);
@@ -142,7 +147,7 @@ public class TagCatalogDeviceBenchmarkTest {
                 assertTrue(TagTranslationCatalog.apply(database, input, directory, () -> false));
                 importMs = SystemClock.elapsedRealtime() - start;
             }
-            assertEquals(1, TagTranslationCatalog.installedRevision(database, LOCALE));
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, locale));
             assertEquals(packRows, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagTranslations", null));
             assertEquals(packRows * 2, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagTranslationAliases", null));
             Log.i(TAG, phase + "=translation packEntries=" + packRows + " packBytes=" + packBytes
@@ -158,11 +163,11 @@ public class TagCatalogDeviceBenchmarkTest {
         assertEquals("translated-" + tagId, results.get(0).getDisplayName());
     }
 
-    private interface Benchmark {
+    interface Benchmark {
         void run(Context context, SQLiteDatabase database, File directory) throws Exception;
     }
 
-    private static int eligibleTagId(SQLiteDatabase database, int minimumCount) {
+    static int eligibleTagId(SQLiteDatabase database, int minimumCount) {
         try (Cursor cursor = database.rawQuery("SELECT idTag FROM Tags"
             + " WHERE type = ? AND count >= ? ORDER BY count DESC, idTag LIMIT 1",
             new String[]{Integer.toString(TagType.TAG.getId()), Integer.toString(minimumCount)})) {
@@ -171,13 +176,13 @@ public class TagCatalogDeviceBenchmarkTest {
         }
     }
 
-    private static long writeSyntheticPack(SQLiteDatabase database, File file) throws IOException {
+    private static long writeSyntheticPack(SQLiteDatabase database, File file, String locale) throws IOException {
         long rows = 0;
         try (Cursor tags = database.rawQuery("SELECT idTag FROM Tags ORDER BY idTag", null);
              JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
             writer.beginObject();
             writer.name("schemaVersion").value(1);
-            writer.name("locale").value(LOCALE);
+            writer.name("locale").value(locale);
             writer.name("revision").value(1);
             writer.name("entries").beginArray();
             while (tags.moveToNext()) {
