@@ -98,6 +98,31 @@ public class TagCatalogStagingTest {
         assertEquals(0, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM Tags", null));
     }
 
+    @Test public void updatesOnlyChangedOrProvisionalRowsAndStillAdvancesIdenticalRevision() throws Exception {
+        String baseline = new String(snapshot("first", 260).readAllBytes(), StandardCharsets.UTF_8);
+        assertTrue(TagCatalog.apply(database, bytes(baseline), 1, 7, () -> false));
+        database.execSQL("UPDATE Tags SET provisional = 1 WHERE idTag = 259");
+        database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'first', 1, 1)");
+        database.execSQL("CREATE TABLE ChangedTagRows (idTag INTEGER PRIMARY KEY)");
+        database.execSQL("CREATE TRIGGER audit_catalog_updates AFTER UPDATE ON Tags"
+            + " BEGIN INSERT INTO ChangedTagRows VALUES (new.idTag); END");
+
+        String refreshed = baseline.replace("[1,\"first\",1,1]", "[1,\"First\",1,1]")
+            .replace("[258,\"name-\uD83D\uDE80-258\",258,7]", "[258,\"name-\uD83D\uDE80-258\",999,7]");
+        assertTrue(TagCatalog.apply(database, bytes(refreshed), 2, 7, () -> false));
+        assertEquals(3, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM ChangedTagRows", null));
+        assertEquals(3, DatabaseUtils.longForQuery(database,
+            "SELECT COUNT(*) FROM ChangedTagRows WHERE idTag IN (1, 258, 259)", null));
+        assertEquals("First", Queries.TagTable.getTagById(1).getName());
+        assertEquals(999, Queries.TagTable.getTagById(258).getCount());
+        assertEquals(0, DatabaseUtils.longForQuery(database, "SELECT provisional FROM Tags WHERE idTag = 259", null));
+        assertEquals(1, DatabaseUtils.longForQuery(database, "SELECT status FROM TagRules WHERE idTag = 1", null));
+
+        assertTrue(TagCatalog.apply(database, bytes(refreshed), 3, 7, () -> false));
+        assertEquals(3, TagCatalog.installedRevision(database));
+        assertEquals(3, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM ChangedTagRows", null));
+    }
+
     private static ByteArrayInputStream snapshot(String name, int count) {
         StringBuilder json = new StringBuilder("[[1,\"").append(name).append("\",1,1]");
         for (int id = 2; id <= count; id++) {

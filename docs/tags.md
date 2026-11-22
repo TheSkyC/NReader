@@ -184,7 +184,8 @@ applied revision are committed together. Equal or older revisions do not
 replace the directory. The importer reads and validates the input before
 taking the app database writer lock. It rechecks the source revision and
 checks for conflicts with installed metadata inside the transaction, then
-merges the validated rows in batches.
+merges the validated rows in batches. Unchanged authoritative rows are left
+alone. A newer revision is still recorded when its rows are identical.
 
 Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory

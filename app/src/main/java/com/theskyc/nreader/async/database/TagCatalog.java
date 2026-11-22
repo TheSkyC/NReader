@@ -145,7 +145,10 @@ public final class TagCatalog {
                 + " WHERE idTag = Tags.idTag), count = (SELECT count FROM " + STAGE
                 + " WHERE idTag = Tags.idTag), type = (SELECT type FROM " + STAGE
                 + " WHERE idTag = Tags.idTag), provisional = 0"
-                + " WHERE idTag IN (SELECT idTag FROM " + STAGE + ")");
+                + " WHERE idTag IN (SELECT incoming.idTag FROM " + STAGE + " incoming"
+                + " JOIN Tags existing ON existing.idTag = incoming.idTag"
+                + " WHERE existing.provisional != 0 OR existing.name != incoming.name"
+                + " OR existing.count != incoming.count OR existing.type != incoming.type)");
             checkCancelled(cancelled);
             database.execSQL("INSERT INTO Tags (idTag, name, count, type)"
                 + " SELECT idTag, name, count, type FROM " + STAGE
