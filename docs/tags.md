@@ -232,7 +232,8 @@ real translated names, and does not change the production journal mode.
 
 For process-death checks, build the matching target and instrumentation APKs.
 Run `scripts/test_tag_process_recovery.ps1` with `-Flavor MinApi26` or
-`-Flavor MinApi28` and one of these scenarios:
+`-Flavor MinApi28` and one of these scenarios. When several devices are
+attached, pass `-Serial` with the exact ADB device serial:
 
 - `-Scenario CatalogTransaction` stops the process after catalog rows and
   revision are written but before SQLite commits. Restart checks the previous

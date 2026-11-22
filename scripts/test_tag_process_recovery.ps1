@@ -2,7 +2,8 @@ param(
     [ValidateSet("MinApi26", "MinApi28")]
     [string]$Flavor = "MinApi28",
     [ValidateSet("CatalogTransaction", "TranslationStaging", "TranslationTransaction")]
-    [string]$Scenario = "CatalogTransaction"
+    [string]$Scenario = "CatalogTransaction",
+    [string]$Serial
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,11 +49,17 @@ if (-not (Test-Path $targetApk) -or -not (Test-Path $testApk)) {
     throw "Build the $Flavor tagBenchmark and AndroidTest APKs before running this script"
 }
 
-$devices = @(& $adb devices | Select-String "^\S+\s+device(\s|$)")
-if ($devices.Count -ne 1) {
-    throw "Connect exactly one Android device or emulator"
+$devices = @(& $adb devices | Select-String "^\S+\s+device(\s|$)" |
+    ForEach-Object { ($_.Line -split '\s+')[0] })
+if ($Serial) {
+    if ($devices -cnotcontains $Serial) {
+        throw "The requested Android device is not connected and ready: $Serial"
+    }
+} elseif ($devices.Count -eq 1) {
+    $Serial = $devices[0]
+} else {
+    throw "Connect exactly one Android device or emulator, or select one with -Serial"
 }
-$serial = ($devices[0].Line -split '\s+')[0]
 $sdkVersion = 0
 $sdk = Invoke-Adb @("shell", "getprop", "ro.build.version.sdk")
 if (-not [int]::TryParse($sdk.Trim(), [ref]$sdkVersion) -or $sdkVersion -lt 26) {
