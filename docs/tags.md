@@ -213,6 +213,17 @@ local rule edit can finish while the transaction is held. It then verifies
 that the new canonical row and the saved rule both survive. This isolates
 database waiting from file size and does not measure UI latency.
 
+`com.theskyc.nreader.async.database.TagListReadContentionTest` uses the
+same runner and isolation with a 36,000-row synthetic tag category. It
+compares the default database configuration with test-only WAL, using the
+same search query as the tag list. It measures both a new list read and a
+move beyond an already loaded cursor window while the catalog transaction
+is paused. It records the journal mode, synchronous setting, first window
+size, and whether each read completed during the observation window. After
+commit it verifies the catalog name and the last list row. It does not
+measure interactive scrolling, power-loss durability, or the performance of
+real translated names, and does not change the production journal mode.
+
 For process-death checks, build the matching target and instrumentation APKs.
 Run `scripts/test_tag_process_recovery.ps1` with `-Flavor MinApi26` or
 `-Flavor MinApi28` and one of these scenarios:
