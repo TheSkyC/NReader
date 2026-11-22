@@ -83,7 +83,11 @@ public class TagCatalogDeviceBenchmarkTest {
 
     static void withFixture(String name, Benchmark benchmark) throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        File directory = Files.createTempDirectory(context.getCacheDir().toPath(), "tag-benchmark-").toFile();
+        File cacheDirectory = context.getCacheDir();
+        if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
+            throw new IOException("Could not create benchmark cache directory");
+        }
+        File directory = Files.createTempDirectory(cacheDirectory.toPath(), "tag-benchmark-").toFile();
         File databaseFile = new File(directory, "benchmark.db");
         try (SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(databaseFile, null)) {
             try {
