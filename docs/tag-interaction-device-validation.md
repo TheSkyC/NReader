@@ -13,7 +13,7 @@ adb -s $serial shell am instrument --user $benchmarkUser -w -r -e class com.thes
 adb -s $serial logcat -d -s TagInteractionBenchmark:I TagCatalogBenchmark:I '*:S'
 ```
 
-Both tests use the installed bundled catalog and a private file-backed SQLite
+The three cases use the installed bundled catalog and a private file-backed SQLite
 database with no account or network fixtures. The search test also installs a
 synthetic translation and two aliases per tag for the activity's locale. Use a
 locale supported by the pack format, such as `en-US` or `zh-CN`.
@@ -32,6 +32,11 @@ locale supported by the pack format, such as `en-US` or `zh-CN`.
   reports whether filling the title took another frame. The swipe may show
   prefetched rows; it does not measure a guaranteed page miss. Pre-draw
   timestamps do not measure frame presentation or dropped frames.
+- **Translation invalidation:** Load the real tag page, install a higher
+  revision containing one visible tag translation, and wait for that same row
+  to show the translated label. This checks the committed catalog event,
+  fragment observer, and adapter refilter path. It does not test a feed
+  download or a translation pack with every catalog row.
 
 Record the APK flavor, Android API, host or hardware, catalog size, and repeated
 samples. The tests assert UI behavior and log durations; they do not impose

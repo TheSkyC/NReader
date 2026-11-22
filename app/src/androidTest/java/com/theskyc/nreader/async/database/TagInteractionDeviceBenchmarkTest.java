@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.util.JsonWriter;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -39,6 +40,13 @@ import com.theskyc.nreader.settings.TagV2;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -125,6 +133,49 @@ public class TagInteractionDeviceBenchmarkTest {
                     measureJump(recycler, position);
                 }
                 measureSwipe(recycler);
+            } finally {
+                close(activity);
+            }
+        });
+    }
+
+    @Test
+    public void refreshesVisibleTagAfterTranslationInstall() throws Exception {
+        TagCatalogDeviceBenchmarkTest.withFixture("translation-ui", (context, database, directory) -> {
+            TagCatalogDeviceBenchmarkTest.importCatalog(context, database, "setup");
+            Global.initFromShared(context);
+            String locale = context.getResources().getConfiguration().getLocales().get(0).toLanguageTag();
+            assertTrue("Unsupported benchmark locale: " + locale, TagTranslationCatalog.isSupportedLocale(locale));
+            int id = TagCatalogDeviceBenchmarkTest.eligibleTagId(database, TagV2.getMinCount());
+            String canonicalName = Queries.TagTable.getTagById(id).getName();
+            TagFilterActivity activity = launch(context, TagFilterActivity.class,
+                Uri.parse("https://nhentai.net/tags/"));
+            try {
+                AtomicReference<RecyclerView> list = new AtomicReference<>();
+                waitFor("tag list before translation", () -> onMain(() -> {
+                    TagTypePage page = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                    RecyclerView recycler = page == null ? null : page.getRecyclerView();
+                    if (recycler == null || !recycler.isShown() || !hasTitleAt(recycler, 0)) return false;
+                    list.set(recycler);
+                    return true;
+                }));
+                assertTrue("Expected the selected benchmark row to be visible",
+                    onMain(() -> {
+                        TextView title = titleAt(list.get(), 0);
+                        return title != null && title.getText().toString().contains(canonicalName);
+                    }));
+                long start = SystemClock.elapsedRealtimeNanos();
+                File pack = writeSingleTranslation(directory, locale, id);
+                try (InputStream input = new FileInputStream(pack)) {
+                    assertTrue(TagTranslationCatalog.apply(database, input, directory, () -> false));
+                } finally {
+                    if (pack.exists() && !pack.delete()) Log.w(LOG, "Could not remove UI translation pack");
+                }
+                waitFor("translated visible tag", () -> onMain(() -> {
+                    TextView title = titleAt(list.get(), 0);
+                    return title != null && title.getText().toString().contains("translated-" + id);
+                }));
+                Log.i(LOG, "translationUiToVisibleMs=" + elapsedMillis(start));
             } finally {
                 close(activity);
             }
@@ -228,10 +279,13 @@ public class TagInteractionDeviceBenchmarkTest {
     }
 
     private static boolean hasTitleAt(RecyclerView list, int position) {
-        RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(position);
-        if (holder == null) return false;
-        TextView title = holder.itemView.findViewById(R.id.title);
+        TextView title = titleAt(list, position);
         return title != null && title.getText().length() > 0 && title.getGlobalVisibleRect(new Rect());
+    }
+
+    private static TextView titleAt(RecyclerView list, int position) {
+        RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(position);
+        return holder == null ? null : holder.itemView.findViewById(R.id.title);
     }
 
     private static boolean hasVisibleText(UiAutomation automation, String expected) {
@@ -287,5 +341,27 @@ public class TagInteractionDeviceBenchmarkTest {
 
     private static double millis(long start, long end) {
         return (end - start) / 1_000_000.0;
+    }
+
+    private static double elapsedMillis(long start) {
+        return (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0;
+    }
+
+    private static File writeSingleTranslation(File directory, String locale, int id) throws IOException {
+        File pack = new File(directory, "ui-translation.json");
+        try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(pack), StandardCharsets.UTF_8))) {
+            writer.beginObject();
+            writer.name("schemaVersion").value(1);
+            writer.name("locale").value(locale);
+            writer.name("revision").value(1);
+            writer.name("entries").beginArray();
+            writer.beginObject();
+            writer.name("id").value(id);
+            writer.name("name").value("translated-" + id);
+            writer.endObject();
+            writer.endArray();
+            writer.endObject();
+        }
+        return pack;
     }
 }
