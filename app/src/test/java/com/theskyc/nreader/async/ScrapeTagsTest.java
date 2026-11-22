@@ -2,6 +2,7 @@ package com.theskyc.nreader.async;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
@@ -126,6 +127,29 @@ public class ScrapeTagsTest {
         assertNoStagedCatalog();
     }
 
+    @Test public void createsCatalogStagingDirectoryWhenCacheRootDoesNotExist() {
+        installState("legacy-upstream");
+        File cacheRoot = new File(context.getCacheDir(), "missing-cache-parent/" + UUID.randomUUID());
+        assertTrue(!cacheRoot.exists());
+        Context wrapped = new ContextWrapper(context) {
+            @Override public File getCacheDir() {
+                return cacheRoot;
+            }
+
+            @Override public Context getApplicationContext() {
+                return this;
+            }
+        };
+        String snapshot = updatedSnapshot();
+        ScrapeTags worker = worker(wrapped, "", 0, path -> "tagsVersion".equals(path) ? "11" : snapshot);
+
+        assertEquals(Result.success(), worker.refresh(database));
+        File staging = new File(cacheRoot, "tag-catalog");
+        assertTrue(staging.isDirectory());
+        assertEquals(0, staging.list().length);
+        deleteTree(cacheRoot);
+    }
+
     private static String updatedSnapshot() {
         StringBuilder rows = new StringBuilder("[[10001,\"updated name\",101,3]");
         for (int index = 1; index < TagCatalog.MIN_DIRECTORY_ROWS; index++) {
@@ -175,6 +199,11 @@ public class ScrapeTagsTest {
     }
 
     private ScrapeTags worker(String manifestUrl, int attempt, Function<String, String> server) {
+        return worker(context, manifestUrl, attempt, server);
+    }
+
+    private ScrapeTags worker(Context workerContext, String manifestUrl, int attempt,
+                              Function<String, String> server) {
         Executor direct = Runnable::run;
         WorkerParameters params = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
             new WorkerParameters.RuntimeExtras(), attempt, 0, direct, EmptyCoroutineContext.INSTANCE,
@@ -186,6 +215,14 @@ public class ScrapeTagsTest {
             return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200)
                 .message("Fixture").body(ResponseBody.create(server.apply(name), null)).build();
         }).build();
-        return new ScrapeTags(context, params, manifestUrl, client);
+        return new ScrapeTags(workerContext, params, manifestUrl, client);
+    }
+
+    private static void deleteTree(File file) {
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) deleteTree(child);
+        }
+        assertTrue(file.delete());
     }
 }
