@@ -274,3 +274,10 @@ runner skips normal application startup and its scheduled background work.
 
 The staging scenario uses a synthetic response. These checks do not
 simulate a network interruption over TLS or a device power loss.
+
+Run `com.theskyc.nreader.async.database.TagImportStorageLimitTest` with the
+same runner and a fresh benchmark installation to exercise SQLite's
+out-of-space rollback. It lowers the maximum page count on a private test
+database, verifies that directory and locale installs fail without replacing
+previous data or local rules, then raises the limit and retries. The fixture
+does not fill device storage or test failure to write the scratch file.
