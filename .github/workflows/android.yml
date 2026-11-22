@@ -82,6 +82,11 @@ jobs:
                         echo 'Unsigned tag catalog feed configuration unexpectedly succeeded' >&2
                         exit 1
                     fi
+                    if ./gradlew --no-daemon --console plain \
+                        -PnreaderTagTranslationManifestUrl=https://feed.example/tags/manifest.json help; then
+                        echo 'Unsigned tag translation feed configuration unexpectedly succeeded' >&2
+                        exit 1
+                    fi
                     ./gradlew --no-daemon --console plain \
                         -PnreaderTagCatalogManifestUrl=https://feed.example/tags/manifest.json \
                         -PnreaderEnableUnsignedTagFeeds=true help
