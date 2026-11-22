@@ -131,6 +131,7 @@ public class MainActivity extends BaseActivity
     private long normalInspectorRevision = -1;
     private long normalInspectorRuleRevision = -1;
     private boolean readingTagRules;
+    private Tag browsedTag;
     private Tag displayedRuleTag;
     private TagStatus displayedRuleStatus;
     private String normalInspectorIdentity;
@@ -386,7 +387,7 @@ public class MainActivity extends BaseActivity
                 actionBar.setTitle(inspector.getSearchTitle());
                 break;
             case TAG:
-                actionBar.setTitle(inspector.getTag().getName());
+                if (browsedTag != null) actionBar.setTitle(browsedTag.getName());
                 break;
             case NORMAL:
                 actionBar.setTitle(R.string.app_name);
@@ -629,9 +630,13 @@ public class MainActivity extends BaseActivity
         inspector.initialize(this, resetDataset);
         modeType = ModeType.BOOKMARK;
         ApiRequestType type = inspector.getRequestType();
-        if (type == ApiRequestType.BYTAG) modeType = ModeType.TAG;
-        else if (type == ApiRequestType.BYALL) modeType = ModeType.NORMAL;
-        else if (type == ApiRequestType.BYSEARCH) modeType = ModeType.SEARCH;
+        if (type == ApiRequestType.BYTAG) {
+            browsedTag = inspector.getTag();
+            modeType = ModeType.TAG;
+        } else if (type == ApiRequestType.BYALL) {
+            normalInspectorRuleRevision = TagRuleEdits.revision();
+            modeType = ModeType.NORMAL;
+        } else if (type == ApiRequestType.BYSEARCH) modeType = ModeType.SEARCH;
         else if (type == ApiRequestType.FAVORITE) modeType = ModeType.FAVORITE;
 
     }
@@ -701,7 +706,8 @@ public class MainActivity extends BaseActivity
             useNormalMode();
             return;
         }
-        inspector = InspectorV3.tagInspector(this, t, 1, Global.getSortType(), resetDataset);
+        browsedTag = t;
+        inspector = InspectorV3.tagInspector(this, browsedTag, 1, Global.getSortType(), resetDataset);
         modeType = ModeType.TAG;
     }
 
@@ -778,14 +784,15 @@ public class MainActivity extends BaseActivity
             return;
         }
         String query = datas.get(1);
-        Tag tag = Queries.TagTable.getTagFromTagName(query);
+        Tag tag = Queries.TagTable.getTagByNameAndType(query, type);
         if (tag == null)
             tag = new Tag(query, -1, SpecialTagIds.INVALID_ID, type, TagStatus.DEFAULT);
         SortType sortType = SortType.RECENT_ALL_TIME;
         if (datas.size() == 3) {
             sortType = SortType.findFromAddition(datas.get(2));
         }
-        inspector = InspectorV3.tagInspector(this, tag, 1, sortType, resetDataset);
+        browsedTag = tag;
+        inspector = InspectorV3.tagInspector(this, browsedTag, 1, sortType, resetDataset);
         modeType = ModeType.TAG;
     }
 
@@ -879,7 +886,7 @@ public class MainActivity extends BaseActivity
 
         if (modeType == ModeType.TAG) {
             MenuItem item = menu.findItem(R.id.tag_manager);
-            Tag tag = inspector.getTag();
+            Tag tag = browsedTag;
             item.setVisible(tag != null && tag.getId() > 0 && tag == displayedRuleTag);
             if (item.isVisible()) updateTagStatus(item, displayedRuleStatus);
         }
@@ -985,7 +992,7 @@ public class MainActivity extends BaseActivity
             saveSearchPlan();
             return true;
         } else if (item.getItemId() == R.id.tag_manager) {
-            Tag tag = inspector == null ? null : inspector.getTag();
+            Tag tag = browsedTag;
             if (tag == null || !showsTagRule(tag)) return true;
             TagRuleEdits.cycle(tag, false, result -> {
                 if (!showsTagRule(tag)) return;
@@ -1142,7 +1149,7 @@ public class MainActivity extends BaseActivity
 
     private boolean showsTagRule(Tag tag) {
         return !isFinishing() && !isDestroyed() && modeType == ModeType.TAG
-            && inspector != null && inspector.getTag() == tag;
+            && browsedTag == tag;
     }
 
     private void refreshTagRules() {
@@ -1151,7 +1158,7 @@ public class MainActivity extends BaseActivity
             || !getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) return;
         long revision = TagRuleEdits.revision();
         boolean home = modeType == ModeType.NORMAL;
-        Tag tag = modeType == ModeType.TAG ? inspector.getTag() : null;
+        Tag tag = modeType == ModeType.TAG ? browsedTag : null;
         if (home ? normalInspectorRuleRevision == revision || blacklistLoadingInspector != null
             : tag == null || tag.getId() <= 0 || tag.getType() == null) return;
         readingTagRules = true;

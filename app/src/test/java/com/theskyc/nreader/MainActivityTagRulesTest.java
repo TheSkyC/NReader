@@ -8,8 +8,11 @@ import static org.junit.Assert.assertTrue;
 import android.app.Application;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Looper;
 import android.view.MenuItem;
+
+import androidx.appcompat.widget.PopupMenu;
 
 import com.google.android.material.navigation.NavigationView;
 import com.theskyc.nreader.api.InspectorV3;
@@ -131,6 +134,45 @@ public class MainActivityTagRulesTest {
             String query = HttpUrl.get(inspector.getUrl()).queryParameter("query");
             assertTrue(query.contains(tag.toQueryTag(TagStatus.ACCEPTED)));
             assertFalse(query.contains(tag.toQueryTag(TagStatus.AVOIDED)));
+        }
+    }
+
+    @Test public void typedLinkMenuEditsTheOpenedTagAndPreservesOtherRules() throws Exception {
+        Tag unrelated = new Tag("other-rule", 50, 500_000, TagType.TAG, TagStatus.ACCEPTED);
+        Tag artist = new Tag(tag.getName(), 50, 500_003, TagType.ARTIST, TagStatus.DEFAULT);
+        Queries.TagTable.insert(unrelated);
+        Queries.TagTable.insert(artist);
+        assertEquals(1, Queries.TagTable.updateTag(unrelated));
+        application.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(application.getString(R.string.key_ignore_tags), false).commit();
+        Global.initFromShared(application);
+        Intent launch = new Intent(application, MainActivity.class)
+            .setData(Uri.parse("https://nhentai.net/artist/rule-fixture/"));
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, launch).setup()) {
+            MainActivity activity = controller.get();
+            Field status = MainActivity.class.getDeclaredField("displayedRuleStatus");
+            status.setAccessible(true);
+            await(() -> value(status, activity) != null);
+            PopupMenu menu = new PopupMenu(activity, activity.findViewById(R.id.toolbar));
+            activity.onCreateOptionsMenu(menu.getMenu());
+            MenuItem edit = menu.getMenu().findItem(R.id.tag_manager);
+            assertTrue(edit.isVisible());
+            assertTrue(activity.onOptionsItemSelected(edit));
+            await(() -> value(status, activity) != TagStatus.DEFAULT);
+            assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getStatus(artist));
+            assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getStatus(unrelated));
+            assertEquals(TagStatus.DEFAULT, Queries.TagTable.getStatus(tag));
+        }
+    }
+
+    @Test public void unfilteredBookmarkKeepsItsSavedPageUntilRulesChange() {
+        String appId = application.getPackageName();
+        InspectorV3 saved = InspectorV3.basicInspector(application, 3, null);
+        Intent launch = new Intent(application, MainActivity.class)
+            .putExtra(appId + ".BYBOOKMARK", true).putExtra(appId + ".INSPECTOR", saved);
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, launch).setup()) {
+            await(() -> !requests.isEmpty());
+            assertEquals("3", requests.element().queryParameter("page"));
         }
     }
 

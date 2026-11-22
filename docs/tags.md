@@ -120,9 +120,10 @@ Each edit reads the saved status inside its write transaction, so a delayed
 edit does not cycle from a stale row or icon. Open tag lists refresh after
 commit, and the home feed rebuilds its request with the committed rules,
 even if the editor has already closed. The gallery tag menu shows the saved
-rule separately from the query used to browse that tag. A queued edit cannot
-create a rule of an obsolete type; an existing incompatible rule can still
-be edited or removed from Applied filters.
+rule for the tag that opened the page, even when the gallery query includes
+other active filters. Tag links resolve the canonical name within the link's
+tag type. A queued edit cannot create a rule of an obsolete type; an existing
+incompatible rule can still be edited or removed from Applied filters.
 A backup restore skips edits that have not passed the restore check inside
 their write transaction and rejects edits submitted while it is active. An
 edit already admitted to SQLite may commit before the restore acquires its

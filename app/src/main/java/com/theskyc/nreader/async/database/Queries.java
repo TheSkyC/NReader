@@ -745,11 +745,10 @@ public class Queries {
             }
         }
 
-        public static Tag getTagFromTagName(String name) {
-            Tag tag = null;
-            try (Cursor cursor = db.rawQuery(METADATA_SELECT + " WHERE t.name = ?", new String[]{name})) {
-                if (cursor.moveToFirst()) tag = cursorToTag(cursor);
-                return tag;
+        public static Tag getTagByNameAndType(String name, TagType type) {
+            try (Cursor cursor = db.rawQuery(METADATA_SELECT + " WHERE t.name = ? AND t.type = ?",
+                new String[]{name, Byte.toString(type.getId())})) {
+                return cursor.moveToFirst() ? cursorToTag(cursor) : null;
             }
         }
 
