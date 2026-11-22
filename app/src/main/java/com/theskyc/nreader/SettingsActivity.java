@@ -180,7 +180,7 @@ public class SettingsActivity extends GeneralActivity {
                 });
             } catch (RuntimeException error) {
                 LogUtility.e("Unable to list tag translation packs", error);
-                runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
             }
         }).start();
     }
@@ -317,14 +317,24 @@ public class SettingsActivity extends GeneralActivity {
             .setPositiveButton(R.string.tag_translation_remove, (dialog, which) -> new Thread(() -> {
                 try {
                     TagTranslationCatalog.remove(Database.getDatabase(), locale);
-                    runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.tag_translation_removed, locale), Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> showTranslationToast(
+                        getString(R.string.tag_translation_removed, locale), Toast.LENGTH_SHORT));
                 } catch (RuntimeException error) {
                     LogUtility.e("Unable to remove tag translation pack", error);
-                    runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
                 }
             }).start())
             .show();
+    }
+
+    private void showTranslationToast(int messageId, int duration) {
+        if (isFinishing() || isDestroyed()) return;
+        Toast.makeText(this, messageId, duration).show();
+    }
+
+    private void showTranslationToast(CharSequence message, int duration) {
+        if (isFinishing() || isDestroyed()) return;
+        Toast.makeText(this, message, duration).show();
     }
 
     private void importTranslationPack(Uri uri) {
