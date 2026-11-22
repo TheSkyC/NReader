@@ -209,12 +209,15 @@ rows and rules are usable without network access.
 
 ## Device-scale benchmark
 
-`TagCatalogDeviceBenchmarkTest` imports the bundled catalog and a generated
-full-catalog translation pack into an in-memory SQLite database, then measures
-an indexed alias suggestion query. It does not modify the installed app database
-or require a live translation source. Run it on an attached API 26+ emulator or
-device with the isolated `tagBenchmark` variant, whose APKs are kept out of
-the release archive:
+`TagCatalogDeviceBenchmarkTest` uses a separate file-backed SQLite database
+in the isolated benchmark app's private cache for each case. Choose one method
+with the `Class#method` syntax: `importsBundledCatalog`,
+`importsFullCatalogTranslationPack`, or `queriesInstalledAliases`.
+Each case logs setup and measured phases separately. Translation data is
+generated from the bundled catalog and checked against the normal pack size
+limit. No phase uses the installed app database or a live translation source.
+Run it on an attached API 26+ emulator or device with the isolated
+`tagBenchmark` variant, whose APKs are kept out of the release archive:
 
 ```powershell
 .\gradlew.bat :app:assembleMinApi26TagBenchmark :app:assembleMinApi26TagBenchmarkAndroidTest
@@ -223,7 +226,7 @@ adb -s $serial shell pm create-user NReaderTagBenchmark
 adb -s $serial shell am start-user $benchmarkUser
 adb -s $serial install --no-incremental --user $benchmarkUser app/build/outputs/apk/minApi26/tagBenchmark/app-minApi26-tagBenchmark.apk
 adb -s $serial install --no-incremental --user $benchmarkUser -t app/build/outputs/apk/androidTest/minApi26/tagBenchmark/app-minApi26-tagBenchmark-androidTest.apk
-adb -s $serial shell am instrument --user $benchmarkUser -w -r -e class com.theskyc.nreader.async.database.TagCatalogDeviceBenchmarkTest com.theskyc.nreader.tagbenchmark.test/com.theskyc.nreader.TagBenchmarkRunner
+adb -s $serial shell am instrument --user $benchmarkUser -w -r -e class 'com.theskyc.nreader.async.database.TagCatalogDeviceBenchmarkTest#importsBundledCatalog' com.theskyc.nreader.tagbenchmark.test/com.theskyc.nreader.TagBenchmarkRunner
 adb -s $serial logcat -d -s TagCatalogBenchmark:I
 adb -s $serial shell pm uninstall --user $benchmarkUser com.theskyc.nreader.tagbenchmark.test
 adb -s $serial shell pm uninstall --user $benchmarkUser com.theskyc.nreader.tagbenchmark
@@ -234,8 +237,10 @@ Set `$serial` from `adb devices`, and wait for the temporary user to start
 before installing the packages. Keep the test app off the owner profile.
 Use the equivalent `minApi28` paths for API 28+ builds. Benchmark output is
 logged under `TagCatalogBenchmark`; results are device- and workload-specific.
-The test reports import duration, warm alias-query median, and SQLite page
-count, but does not measure peak memory, battery use, UI input-to-render latency,
+The test reports import duration, first and warm alias-query timings, and
+SQLite journal mode, synchronous setting, and page count. The first query
+runs after import in the same process and is not a cold-start measurement.
+The test does not measure peak memory, battery use, UI input-to-render latency,
 process-death recovery, or reviewed production translations. Do not compare
 numbers across devices as a release threshold without controlling hardware,
 thermal state, and data revision.
