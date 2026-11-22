@@ -21,6 +21,7 @@ import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagV2;
 import com.google.android.material.chip.Chip;
 
 import org.junit.Test;
@@ -109,7 +110,7 @@ public class SearchTagEntryTest {
         try (DatabaseHelper helper = new DatabaseHelper(app)) {
             SQLiteDatabase database = helper.getWritableDatabase();
             Queries.TagTable.insert(new Tag("Same name", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
-            Queries.TagTable.insert(new Tag("Same name", 10, 501002, TagType.TAG, TagStatus.DEFAULT));
+            Queries.TagTable.insert(new Tag("Same name", 50, 501002, TagType.TAG, TagStatus.DEFAULT));
             String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":501002,\"name\":\"Second translation\",\"aliases\":[\"second alias\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database,
@@ -278,6 +279,7 @@ public class SearchTagEntryTest {
             .commit();
         Global.initFromShared(app);
         Login.initLogin(app);
+        TagV2.initMinCount(app);
     }
 
     private static AlertDialog openTagDialog(SearchActivity activity) throws InterruptedException {
