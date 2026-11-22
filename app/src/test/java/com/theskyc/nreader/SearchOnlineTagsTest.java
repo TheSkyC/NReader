@@ -1,7 +1,10 @@
 package com.theskyc.nreader;
 
 import android.app.Application;
+import android.content.Intent;
 import android.os.Looper;
+
+import androidx.appcompat.widget.SearchView;
 
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
@@ -23,6 +26,7 @@ import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -167,6 +171,61 @@ public class SearchOnlineTagsTest {
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(blockedChip.getParent() == group);
                 assertEquals(TagStatus.DEFAULT, popularChip.getTag().getStatus());
+            }
+        } finally {
+            AuthStore.clear(app);
+            Login.updateUser(null);
+            app.getSharedPreferences("Settings", 0).edit().remove(accountTagsKey).remove(limitKey).commit();
+        }
+    }
+
+    @Test public void disablingAccountTagsBeforeSubmitKeepsOnlyManualSelection() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        app.deleteDatabase("Entries.db");
+        String accountTagsKey = app.getString(R.string.preference_key_use_account_tag);
+        String limitKey = app.getString(R.string.preference_key_favorite_limit);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            app.getSharedPreferences("Settings", 0).edit()
+                .putBoolean(accountTagsKey, true).putInt(limitKey, 1).commit();
+            Global.initFromShared(app);
+            AuthStore.saveApiKey(app, "search-fixture-key", true);
+            Tag manual = new Tag("manual", 100000, 4123, TagType.TAG, TagStatus.DEFAULT);
+            Tag blocked = new Tag("blocked", 1, 4124, TagType.TAG, TagStatus.DEFAULT);
+            Queries.TagTable.insert(manual);
+            Queries.TagTable.insert(blocked);
+            String identity = AuthStore.activeIdentity(app);
+            assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
+                Collections.singletonList(blocked)));
+
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                android.view.ViewGroup group = activity.findViewById(R.id.tag_group);
+                ChipTag blockedChip = null;
+                for (int attempt = 0; attempt < 100 && blockedChip == null; attempt++) {
+                    Thread.sleep(20);
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    blockedChip = findChipById(group, blocked.getId());
+                }
+                assertNotNull(blockedChip);
+                ChipTag manualChip = findChipById(group, manual.getId());
+                assertNotNull(manualChip);
+                assertTrue(manualChip.performClick());
+                app.getSharedPreferences("Settings", 0).edit().putBoolean(accountTagsKey, false).commit();
+                Global.initFromShared(app);
+                assertFalse(Login.useAccountTag());
+                assertTrue(Login.hasCurrentOnlineTags());
+
+                ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                Intent search = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertNotNull(search);
+                ArrayList<Tag> selection = search.getParcelableArrayListExtra(activity.getPackageName() + ".TAGS");
+                assertNotNull(selection);
+                assertEquals(1, selection.size());
+                assertEquals(manual.getId(), selection.get(0).getId());
+                assertEquals(TagStatus.ACCEPTED, selection.get(0).getStatus());
             }
         } finally {
             AuthStore.clear(app);

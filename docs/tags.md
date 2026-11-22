@@ -159,6 +159,8 @@ own write lock; a completed restore still takes precedence. Views refresh
 after restore and ignore callbacks from the previous state.
 Account blacklist entries do not modify the local status. Applying an
 account blacklist still requires the existing opt-in and identity checks.
+When submitting a search after opting out, automatic blacklist entries are
+removed from the selection, while manual tag choices are preserved.
 Only the active account's validated cache is exposed; an in-flight result
 from a previous account or before restore cannot publish.
 

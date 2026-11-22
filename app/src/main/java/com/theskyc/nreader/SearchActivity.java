@@ -451,7 +451,8 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void removeStaleOnlineTags() {
-        if (onlineChipsIdentity == null || (Objects.equals(onlineChipsIdentity, Login.currentOnlineTagsIdentity())
+        if (onlineChipsIdentity == null || (Login.isAccountTagEnabled()
+            && Objects.equals(onlineChipsIdentity, Login.currentOnlineTagsIdentity())
             && onlineChipsRevision == Login.currentOnlineTagsRevision())) return;
         for (ChipTag chip : onlineChips) {
             getGroup(chip.getTag().getType()).removeView(chip);
