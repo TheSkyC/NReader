@@ -71,6 +71,10 @@ against that exact catalog. The command exits nonzero on failure and never
 modifies the copy. It does not exercise installation in Android, test how a
 host serves the files, or establish publisher authorization or revision freshness.
 
+Android CI runs the release tooling tests and stages and verifies the checked-in
+catalog in a temporary directory on pushes to `main` and pull requests. This
+check does not use feed credentials or publish files.
+
 Retain the current manifest and its payload in the publisher's input
 directory between releases. The tool checks the prior payload against that
 manifest and rejects releases that omit an existing ID or change its type.
