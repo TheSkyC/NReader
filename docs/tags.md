@@ -164,3 +164,54 @@ replace the directory.
 Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory
 rows and rules are usable without network access.
+
+## Device-scale benchmark
+
+`TagCatalogDeviceBenchmarkTest` imports the bundled catalog and a generated
+full-catalog translation pack into an in-memory SQLite database, then measures
+an indexed alias suggestion query. It does not modify the installed app database
+or require a live translation source. Run it on an attached API 26+ emulator or
+device with the isolated `tagBenchmark` variant, whose APKs are kept out of
+the release archive:
+
+```powershell
+.\gradlew.bat :app:assembleMinApi26TagBenchmark :app:assembleMinApi26TagBenchmarkAndroidTest
+adb install -r app/build/outputs/apk/minApi26/tagBenchmark/app-minApi26-tagBenchmark.apk
+adb install -r -t app/build/outputs/apk/androidTest/minApi26/tagBenchmark/app-minApi26-tagBenchmark-androidTest.apk
+adb shell am instrument -w -r -e class com.theskyc.nreader.async.database.TagCatalogDeviceBenchmarkTest com.theskyc.nreader.tagbenchmark.test/com.theskyc.nreader.TagBenchmarkRunner
+```
+
+Use the equivalent `minApi28` paths for API 28+ builds. Benchmark output is
+logged under `TagCatalogBenchmark`; results are device- and workload-specific.
+The test reports import duration, warm alias-query median, and SQLite page
+count, but does not measure peak memory, battery use, UI input-to-render latency,
+process-death recovery, or reviewed production translations. Do not compare
+numbers across devices as a release threshold without controlling hardware,
+thermal state, and data revision.
+
+For process-death checks, build the matching target and instrumentation APKs.
+Run `scripts/test_tag_process_recovery.ps1` with `-Flavor MinApi26` or
+`-Flavor MinApi28` and one of these scenarios:
+
+- `-Scenario CatalogTransaction` stops the process after catalog rows and
+  revision are written but before SQLite commits. Restart checks the previous
+  revision, rows, and local rule, then retries the import.
+- `-Scenario TranslationStaging` stops the process while the downloader is
+  waiting for the rest of a synthetic HTTP response. Restart checks the
+  previous translation and rule, then retries the digest-verified download
+  and checks that the partial file is removed.
+- `-Scenario TranslationTransaction` stops the process after the translated
+  name, alias, and revision are written but before SQLite commits. Restart
+  checks the previous translation and rule, then retries the import.
+
+Each run installs the benchmark packages for its own temporary Android user.
+It uninstalls them for that user before removing the user. The driver checks
+that the process that reached the stop point is alive before force-stop and
+gone afterward.
+Connect exactly one device that supports secondary users and does not
+already have either benchmark package installed. Run one scenario at a
+time. The driver does not replace existing packages. The instrumentation
+runner skips normal application startup and its scheduled background work.
+
+The staging scenario uses a synthetic response. These checks do not
+simulate a network interruption over TLS or a device power loss.

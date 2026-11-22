@@ -79,6 +79,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = nreaderApplicationId
+        testInstrumentationRunner = "com.theskyc.nreader.TagBenchmarkRunner"
         buildConfigField("String", "UPDATE_REPOSITORY", "\"TheSkyC/NReader\"")
         buildConfigField("String", "UPDATE_ENDPOINT", "\"\"")
         buildConfigField("String", "ISSUE_TRACKER_URL", "\"\"")
@@ -118,6 +119,12 @@ android {
             versionNameSuffix = "-debug"
             resValue("string", "app_name", "NReader Debug")
             buildConfigField("String", "UPDATE_ENDPOINT", "\"$updateEndpointConfig\"")
+        }
+        create("tagBenchmark") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".tagbenchmark"
+            versionNameSuffix = "-tagbenchmark"
+            matchingFallbacks += listOf("debug")
         }
         create("RelWithDebInfo") {
             initWith(buildTypes["release"])
@@ -178,6 +185,8 @@ androidComponents {
             revisionFile.set(rootProject.layout.projectDirectory.file("data/tagsVersion"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(copyTagCatalog, CopyTagCatalog::outputDirectory)
+        if (variant.buildType == "tagBenchmark") return@onVariants
+
         var suffix = if (variant.flavorName == "minApi26") "-minApi26" else "-minApi28"
         if (variant.buildType == "debug") {
             suffix += "-debug"
@@ -207,7 +216,7 @@ androidComponents {
         }
     }
     beforeVariants {
-        it.enableAndroidTest = false
+        it.enableAndroidTest = it.buildType == "tagBenchmark"
     }
 }
 
@@ -228,6 +237,8 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
     testImplementation("androidx.work:work-testing:2.12.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 // Android
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.cardview:cardview:1.0.0")
