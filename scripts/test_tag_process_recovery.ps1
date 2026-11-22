@@ -1,7 +1,7 @@
 param(
     [ValidateSet("MinApi26", "MinApi28")]
     [string]$Flavor = "MinApi28",
-    [ValidateSet("CatalogTransaction", "TranslationStaging", "TranslationTransaction")]
+    [ValidateSet("CatalogTransaction", "CatalogStaging", "TranslationStaging", "TranslationTransaction")]
     [string]$Scenario = "CatalogTransaction",
     [string]$Serial
 )
@@ -20,6 +20,11 @@ if ($Scenario -eq "CatalogTransaction") {
     $crashMethod = "$testClass#holdsCatalogTransactionForExternalProcessStop"
     $verifyMethod = "$testClass#previousCatalogAndLocalRuleSurviveProcessDeath"
     $crashPhase = "crash"
+} elseif ($Scenario -eq "CatalogStaging") {
+    $testClass = "com.theskyc.nreader.async.TagCatalogStagingRecoveryTest"
+    $crashMethod = "$testClass#leavesPartialCatalogStageForExternalProcessStop"
+    $verifyMethod = "$testClass#removesInterruptedCatalogStageAndInstallsVerifiedSnapshot"
+    $crashPhase = "catalog-stage"
 } elseif ($Scenario -eq "TranslationStaging") {
     $testClass = "com.theskyc.nreader.async.TagTranslationStagingRecoveryTest"
     $crashMethod = "$testClass#leavesPartialTranslationStageForExternalProcessStop"

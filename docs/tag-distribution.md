@@ -59,6 +59,13 @@ immutable payload on the host before replacing the hosted pointer. Keep
 payloads available for clients that already read an older manifest. Do not
 publish a feed as part of the bundled data PR.
 
+The Android legacy-feed worker writes downloads to an app-private `.part` file
+and removes abandoned catalog stages before the next import. A process stop
+during the download therefore leaves the installed catalog and local rules
+unchanged; the next refresh can discard the partial file and retry. The
+disposable-device recovery check can be run for both benchmark flavors with
+`scripts/test_tag_process_recovery.ps1 -Scenario CatalogStaging`.
+
 To check a local copy of the staged feed before switching the hosted pointer:
 
 ```powershell
