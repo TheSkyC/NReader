@@ -172,6 +172,7 @@ public final class TagTranslationCatalog {
     }
 
     static SeekableByteChannel openScratch(File directory) throws IOException {
+        Files.createDirectories(directory.toPath());
         return Files.newByteChannel(directory.toPath().resolve("tag-translation-" + UUID.randomUUID() + ".tmp"),
             StandardOpenOption.CREATE_NEW, StandardOpenOption.READ, StandardOpenOption.WRITE,
             StandardOpenOption.DELETE_ON_CLOSE);

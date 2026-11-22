@@ -17,6 +17,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -232,6 +234,19 @@ public class TagTranslationCatalogTest {
         assertEquals("replacement", scalarString("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja'"));
     }
 
+    @Test public void createsMissingScratchDirectoryBeforePreparingPack() throws IOException {
+        File directory = new File(scratch.getRoot(), "missing-parent/" + UUID.randomUUID());
+        assertFalse(directory.exists());
+
+        assertTrue(TagTranslationCatalog.apply(database,
+            bytes(pack("ja", 1, "[{\"id\":1,\"name\":\"prepared\"}]")), directory, () -> false));
+        assertTrue(directory.isDirectory());
+        assertEquals(0, directory.list().length);
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertTrue(directory.delete());
+        assertTrue(directory.getParentFile().delete());
+    }
+
     @Test public void rejectsNonCanonicalLocalesAndInvalidText() {
         assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.installedRevision(database, "zh-cn"));
         assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"zh-Hans\","
@@ -319,6 +334,35 @@ public class TagTranslationCatalogTest {
         assertTrue(Queries.TagTable.getDisplayNames(ids, Locale.JAPAN).isEmpty());
         TagTranslationCatalog.remove(database, "zh-Hant");
         assertTrue(Queries.TagTable.getDisplayNames(ids, Locale.TAIWAN).isEmpty());
+    }
+
+    @Test public void managerSearchMatchesCjkSubstringsAndSharedAliasesLiterally() throws IOException {
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\\u732b\\u72ac\","
+            + "\"aliases\":[\"\\u91ce\\u732b%\"]},{\"id\":2,\"name\":\"\\u72ac\\u732b\","
+            + "\"aliases\":[\"\\u91ce\\u732b%\"]}]")));
+
+        assertEquals(List.of(1, 2), matchingIds("\u732b"));
+        assertEquals(List.of(1, 2), matchingIds("\u91ce\u732b%"));
+        assertTrue(matchingIds("\u91ce\u732b_").isEmpty());
+    }
+
+    @Test public void managerSearchUsesCanonicalUnicodeNormalizationAndCaseFolding() throws IOException {
+        assertTrue(apply(pack("en", 1, "[{\"id\":1,\"name\":\"Caf\\u00e9\"}]")));
+
+        assertEquals(List.of(1), matchingIds("cafe\u0301", Locale.US));
+        assertEquals(List.of(1), matchingIds("CAF\u00c9", Locale.US));
+    }
+
+    private List<Integer> matchingIds(String query) {
+        return matchingIds(query, Locale.CHINA);
+    }
+
+    private List<Integer> matchingIds(String query, Locale appLocale) {
+        List<Integer> ids = new ArrayList<>();
+        try (Cursor cursor = Queries.TagTable.getFilterCursor(query, TagType.TAG, false, true, appLocale)) {
+            while (cursor.moveToNext()) ids.add(cursor.getInt(cursor.getColumnIndexOrThrow("idTag")));
+        }
+        return ids;
     }
 
     private boolean apply(String json) throws IOException {
