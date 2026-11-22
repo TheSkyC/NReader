@@ -134,6 +134,12 @@ account blacklist still requires the existing opt-in and identity checks.
 Only the active account's validated cache is exposed; an in-flight result
 from a previous account or before restore cannot publish.
 
+The tag list reads its cursor and copies rows in bounded batches on a worker.
+Cached rows remain usable while a directory update is holding the database;
+an uncached position waits asynchronously and cannot be edited before its
+row loads. Changing the search or leaving the list discards pending results.
+Account blacklist rows are cleared when their account or revision changes.
+
 ## Backups
 
 Version 4 exports `TagRules` rows with `idTag`, `name`, `type`, and

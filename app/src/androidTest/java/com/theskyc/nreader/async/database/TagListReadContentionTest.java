@@ -2,12 +2,15 @@ package com.theskyc.nreader.async.database;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -46,6 +49,51 @@ public class TagListReadContentionTest {
         assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());
         run(context, false);
         run(context, true);
+    }
+
+    @Test
+    public void cachedRowAndUncachedPageRequestReturnOnMainDuringCatalogWrite() throws Exception {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context context = instrumentation.getTargetContext();
+        assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase db = helper.getWritableDatabase();
+            TagV2.initMinCount(context);
+            seed(db);
+            TagRowPages list = new TagRowPages();
+            ExecutorService caller = Executors.newSingleThreadExecutor();
+            CountDownLatch loaded = new CountDownLatch(1);
+            CountDownLatch scrolled = new CountDownLatch(1);
+            try {
+                instrumentation.runOnMainSync(() -> list.load(TagListReadContentionTest::openCursor,
+                    () -> true, (oldCount, newCount) -> loaded.countDown(), (start, length) -> {
+                        assertEquals(Looper.getMainLooper(), Looper.myLooper());
+                        assertEquals(FIRST_ID + ROWS - 1, list.get(ROWS - 1).tag.getId());
+                        scrolled.countDown();
+                    }));
+                await(loaded);
+                db.beginTransactionNonExclusive();
+                try {
+                    db.execSQL("UPDATE Tags SET name = ? WHERE idTag = ?", new Object[]{NEW_NAME, FIRST_ID});
+                    Future<?> bind = caller.submit(() -> instrumentation.runOnMainSync(() -> {
+                        assertEquals(OLD_NAME, list.get(0).tag.getName());
+                        assertNull(list.get(ROWS - 1));
+                    }));
+                    bind.get(5, TimeUnit.SECONDS);
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                await(scrolled);
+                assertEquals(NEW_NAME, firstName());
+            } finally {
+                instrumentation.runOnMainSync(list::close);
+                caller.shutdownNow();
+                assertTrue(caller.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            }
+        } finally {
+            assertTrue(context.deleteDatabase(DatabaseHelper.DATABASE_NAME));
+        }
     }
 
     private static void run(Context context, boolean wal) throws Exception {

@@ -1,7 +1,6 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.adapters;
 
-import android.database.Cursor;
 import android.content.SharedPreferences;
 import android.util.JsonWriter;
 import android.view.LayoutInflater;
@@ -22,7 +21,7 @@ import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
-import com.theskyc.nreader.async.database.AsyncCursorQuery;
+import com.theskyc.nreader.async.database.TagRowPages;
 import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
@@ -59,16 +58,16 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     private final TagType type;
     private final TagMode tagMode;
     private String lastQuery = null;
-    private Cursor cursor = null;
-    private final AsyncCursorQuery queryLoader;
+    private final TagRowPages rows;
+    private long displayedOnlineRevision = -1;
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online) {
-        this(cont, query, online, new AsyncCursorQuery());
+        this(cont, query, online, new TagRowPages());
     }
 
-    TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online, AsyncCursorQuery queryLoader) {
+    TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online, TagRowPages rows) {
         this.context = cont;
-        this.queryLoader = queryLoader;
+        this.rows = rows;
         this.identity = AuthStore.activeIdentity(cont);
         this.authObserver = createAuthObserver();
         this.type = null;
@@ -79,7 +78,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, TagType type) {
         this.context = cont;
-        this.queryLoader = new AsyncCursorQuery();
+        this.rows = new TagRowPages();
         this.identity = AuthStore.activeIdentity(cont);
         this.authObserver = createAuthObserver();
         this.type = type;
@@ -94,26 +93,23 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         boolean sortedByName = TagV2.isSortedByName();
         Locale uiLocale = context.getResources().getConfiguration().getLocales().get(0);
         long requestedRevision = tagMode == TagMode.ONLINE ? Login.currentOnlineTagsRevision() : -1;
-        queryLoader.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName, uiLocale), result -> {
-            if (tagMode == TagMode.ONLINE && (!Objects.equals(identity, AuthStore.activeIdentity(context))
-                || requestedRevision < 0 || requestedRevision != Login.currentOnlineTagsRevision())) {
-                cursor = null;
-                notifyDataSetChanged();
-                return;
-            }
-            int oldCount = getItemCount(), newCount = result.getCount();
-            cursor = result;
+        if (tagMode == TagMode.ONLINE && displayedOnlineRevision != requestedRevision && rows.size() > 0) {
+            clearVisibleRows();
+        }
+        rows.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName, uiLocale),
+            () -> tagMode != TagMode.ONLINE || (Objects.equals(identity, AuthStore.activeIdentity(context))
+                && requestedRevision >= 0 && requestedRevision == Login.currentOnlineTagsRevision()), (oldCount, newCount) -> {
+            displayedOnlineRevision = newCount == 0 ? -1 : requestedRevision;
             if (newCount > oldCount) notifyItemRangeInserted(oldCount, newCount - oldCount);
             else if (oldCount > newCount) notifyItemRangeRemoved(newCount, oldCount - newCount);
             notifyItemRangeChanged(0, Math.min(newCount, oldCount));
-        }, () -> {});
+        }, this::notifyItemRangeChanged);
     }
 
     public void close() {
         closed = true;
         AuthStore.removeIdentityObserver(authObserver);
-        cursor = null;
-        queryLoader.close();
+        rows.close();
     }
 
 
@@ -121,10 +117,16 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         return () -> {
             if (tagMode == TagMode.ONLINE && !Objects.equals(identity, AuthStore.activeIdentity(context))) context.runOnUiThread(() -> {
                 if (closed) return;
-                cursor = null;
-                notifyDataSetChanged();
+                clearVisibleRows();
             });
         };
+    }
+
+    private void clearVisibleRows() {
+        int previous = rows.size();
+        displayedOnlineRevision = -1;
+        rows.clear();
+        if (previous > 0) notifyItemRangeRemoved(0, previous);
     }
 
     @NonNull
@@ -135,11 +137,24 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull final TagsAdapter.ViewHolder holder, int position) {
-        cursor.moveToPosition(position);
-        final Tag ent = Queries.TagTable.cursorToTag(cursor);
+        TagRowPages.Row row = rows.get(position);
+        if (row == null) {
+            holder.title.setText(null);
+            holder.count.setText(null);
+            holder.imgView.setImageDrawable(null);
+            holder.master.setOnClickListener(null);
+            holder.master.setOnLongClickListener(null);
+            holder.master.setClickable(false);
+            holder.master.setLongClickable(false);
+            holder.master.setFocusable(false);
+            holder.master.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+            return;
+        }
+        holder.master.setFocusable(true);
+        holder.master.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+        final Tag ent = row.tag;
         String canonical = ent.getName().isEmpty() ? Integer.toString(ent.getId()) : ent.getName();
-        String translated = cursor.getString(cursor.getColumnIndexOrThrow("displayName"));
-        holder.title.setText(TagLabel.format(holder.title, canonical, translated));
+        holder.title.setText(TagLabel.format(holder.title, canonical, row.displayName));
         holder.count.setText(String.format(Locale.US, "%d", ent.getCount()));
         holder.master.setOnClickListener(v -> {
             switch (tagMode) {
@@ -174,7 +189,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return cursor == null ? 0 : cursor.getCount();
+        return rows.size();
     }
 
     private void showBlacklistDialog(final Tag tag) {

@@ -4,12 +4,14 @@ import android.app.Application;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
+import android.view.View;
+import android.widget.FrameLayout;
 
 import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
-import com.theskyc.nreader.async.database.AsyncCursorQuery;
+import com.theskyc.nreader.async.database.TagRowPages;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagDatabaseFixture;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
@@ -42,6 +44,47 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagsAdapterTest {
+    @Test public void recycledHolderCannotActOnTheOldRowWhileItsPageLoads() throws Exception {
+        try (SQLiteDatabase db = SQLiteDatabase.create(null);
+             ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
+            Queries.setDb(db);
+            TagDatabaseFixture.createTables(db);
+            for (int index = 0; index < 80; index++) {
+                Tag tag = new Tag("tag-" + index, 100 - index, index + 1, TagType.TAG, TagStatus.ACCEPTED);
+                Queries.TagTable.insert(tag);
+                assertEquals(1, Queries.TagTable.updateTag(tag));
+            }
+            ArrayDeque<Runnable> work = new ArrayDeque<>();
+            TagsAdapter adapter = new TagsAdapter(controller.get(), "", false, new TagRowPages(work::add));
+            try {
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                TagsAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(controller.get()), 0);
+                adapter.onBindViewHolder(holder, 0);
+                String former = holder.title.getText().toString();
+                org.junit.Assert.assertTrue(holder.master.isClickable());
+
+                adapter.onBindViewHolder(holder, 70);
+                assertEquals("", holder.title.getText().toString());
+                org.junit.Assert.assertFalse(holder.master.isClickable());
+                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
+                    holder.master.getImportantForAccessibility());
+
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                adapter.onBindViewHolder(holder, 70);
+                org.junit.Assert.assertTrue(holder.master.isClickable());
+                org.junit.Assert.assertNotEquals(former, holder.title.getText().toString());
+                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO, holder.master.getImportantForAccessibility());
+            } finally {
+                adapter.close();
+                while (!work.isEmpty()) work.remove().run();
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void delayedQueryCannotPublishAfterBlacklistRevisionChanges() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         Field runtimeRepository = AccountRuntime.class.getDeclaredField("repository");
@@ -71,7 +114,7 @@ public class TagsAdapterTest {
                 assertEquals(1, translated.getCount());
             }
             ArrayDeque<Runnable> work = new ArrayDeque<>();
-            TagsAdapter adapter = new TagsAdapter(controller.get(), "translated", true, new AsyncCursorQuery(work::add));
+            TagsAdapter adapter = new TagsAdapter(controller.get(), "translated", true, new TagRowPages(work::add));
             try {
                 work.remove().run();
                 assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
