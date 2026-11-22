@@ -154,6 +154,105 @@ public class AdvancedSearchAccountTagsTest {
         }
     }
 
+    @Test public void acceptedFallbackSurvivesActivityRecreation() throws Exception {
+        Intent intent = submit();
+        replaceBlacklist(Collections.emptyList());
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+            MainActivity activity = controller.get();
+            chooseFallback(activity);
+            awaitSearch(activity);
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(1, queries.size());
+            assertManualOnly(queries.get(0));
+
+            controller.recreate();
+            awaitSearch(controller.get());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(2, queries.size());
+            assertManualOnly(queries.get(1));
+            assertEquals(1, controller.get().adapter.getItemCount());
+        }
+    }
+
+    @Test public void activityRecreationWithoutConfirmationStillRequiresFallback() throws Exception {
+        Intent intent = submit();
+        replaceBlacklist(Collections.emptyList());
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+            awaitSearch(controller.get());
+            assertTrue(queries.isEmpty());
+
+            controller.recreate();
+            MainActivity recreated = controller.get();
+            awaitSearch(recreated);
+            assertTrue(queries.isEmpty());
+
+            chooseFallback(recreated);
+            awaitSearch(recreated);
+            assertEquals(1, queries.size());
+            assertManualOnly(queries.get(0));
+        }
+    }
+
+    @Test public void acceptedFallbackRestoresFromParceledStateWithoutTheHandoff() throws Exception {
+        Intent intent = submit();
+        replaceBlacklist(Collections.emptyList());
+        Bundle state = new Bundle();
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+            chooseFallback(controller.get());
+            awaitSearch(controller.get());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(1, controller.get().adapter.getItemCount());
+            controller.saveInstanceState(state);
+        }
+
+        intent.removeExtra(app.getPackageName() + SearchActivity.ACCOUNT_TAGS_EXTRA);
+        Parcel parcel = Parcel.obtain();
+        try {
+            parcel.writeBundle(state);
+            parcel.setDataPosition(0);
+            Bundle restored = parcel.readBundle(MainActivity.class.getClassLoader());
+            try (ActivityController<MainActivity> controller =
+                     Robolectric.buildActivity(MainActivity.class, intent).setup(restored)) {
+                awaitSearch(controller.get());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(2, queries.size());
+                assertManualOnly(queries.get(1));
+                assertEquals(1, controller.get().adapter.getItemCount());
+            }
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    @Test public void acceptedBrowseFallbackKeepsTheOriginalTagAfterRecreation() throws Exception {
+        settings.edit().putBoolean(app.getString(R.string.key_ignore_tags), false).commit();
+        Global.initFromShared(app);
+        Tag browsed = new Tag("manual selection", 100000, MANUAL_ID, TagType.TAG, TagStatus.DEFAULT);
+        Tag automatic = new Tag("automatic selection", 1, AUTOMATIC_ID, TagType.TAG, TagStatus.DEFAULT);
+        replaceBlacklist(Collections.singletonList(automatic));
+        Intent intent = new Intent(app, MainActivity.class)
+            .putExtra(app.getPackageName() + ".ISBYTAG", true)
+            .putExtra(app.getPackageName() + ".TAG", browsed);
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+            awaitSearch(controller.get());
+            assertTrue(queries.get(0).contains("-tag:\"automatic selection\""));
+
+            replaceBlacklist(Collections.emptyList());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            chooseFallback(controller.get());
+            awaitSearch(controller.get());
+            replaceBlacklist(Collections.singletonList(automatic));
+
+            controller.recreate();
+            MainActivity recreated = controller.get();
+            awaitSearch(recreated);
+            assertEquals(3, queries.size());
+            assertTrue(queries.get(2).contains("tag:\"manual selection\""));
+            assertFalse(queries.get(2).contains("automatic selection"));
+            assertEquals("manual selection", recreated.getSupportActionBar().getTitle().toString());
+        }
+    }
+
     @Test public void advancedSearchDropsQueuedResultsAndSavesOnlyManualTags() throws Exception {
         Intent intent = submit();
         try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {

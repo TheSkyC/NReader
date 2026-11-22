@@ -177,10 +177,13 @@ a gallery lookup and does not use the tag filters.
 Turning off account tags invalidates requests bound to that revision as soon
 as the preference is saved. When the revision is no longer current, the home
 feed rebuilds; other affected result lists discard the old results and offer
-to repeat the search without online tags. Newly created bookmarks and search
-plans from these queries omit automatic exclusions and retain explicit
-search terms and local rules. An empty saved search still replays as a search;
-it does not reload the home feed's filters.
+to repeat the search without online tags. If the user accepts, the result
+screen can restore that search after recreation using only its portable
+conditions, without saving account terms or loaded results. A search still
+waiting for confirmation does not get that retry state. Newly created
+bookmarks and search plans from these queries omit automatic exclusions and
+retain explicit search terms and local rules. An empty saved search still
+replays as a search; it does not reload the home feed's filters.
 
 The tag list reads its cursor and copies rows in bounded batches on a worker.
 Cached rows remain usable while a directory update is holding the database;

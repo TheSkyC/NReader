@@ -34,6 +34,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.os.BundleCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -97,6 +98,8 @@ public class MainActivity extends BaseActivity
     implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int CHANGE_LANGUAGE_DELAY = 1000;
+    private static final String ACCOUNT_TAG_FALLBACK_STATE = "accountTagFallback";
+    private static final String FALLBACK_BROWSED_TAG_STATE = "fallbackBrowsedTag";
     private static final Executor TAG_RULE_READER = Executors.newSingleThreadExecutor();
     private static boolean firstTime = true;//true only when app starting
     private final InspectorV3.InspectorResponse startGallery = new MainInspectorResponse() {
@@ -138,6 +141,7 @@ public class MainActivity extends BaseActivity
     private TagStatus displayedRuleStatus;
     private InspectorV3 blacklistLoadingInspector;
     private InspectorV3 staleAccountSearch;
+    private boolean acceptedAccountTagFallback;
     private final Runnable accountFilterObserver = this::refreshAccountFilter;
     private final Runnable favoriteIdentityObserver = this::refreshFavoriteIdentity;
     private final Runnable accountHeaderObserver = this::refreshAccountHeader;
@@ -177,7 +181,7 @@ public class MainActivity extends BaseActivity
         TagRuleEdits.changes().observe(this, ignored -> refreshTagRules());
         setContentView(R.layout.activity_main);
         //load inspector
-        selectStartMode(getIntent(), getPackageName());
+        if (!restoreAccountTagFallback(savedInstanceState)) selectStartMode(getIntent(), getPackageName());
         LogUtility.d("Main started with mode " + modeType);
         //init views and actions
         findUsefulViews();
@@ -227,6 +231,27 @@ public class MainActivity extends BaseActivity
                 }
             }
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (acceptedAccountTagFallback && (modeType == ModeType.SEARCH || modeType == ModeType.TAG)) {
+            // Cloning keeps the request conditions but drops its loaded results.
+            outState.putParcelable(ACCOUNT_TAG_FALLBACK_STATE, inspector.cloneInspector(this, null));
+            if (modeType == ModeType.TAG) outState.putParcelable(FALLBACK_BROWSED_TAG_STATE, browsedTag);
+        }
+    }
+
+    private boolean restoreAccountTagFallback(@Nullable Bundle state) {
+        if (state == null) return false;
+        InspectorV3 saved = BundleCompat.getParcelable(state, ACCOUNT_TAG_FALLBACK_STATE, InspectorV3.class);
+        if (saved == null) return false;
+        browsedTag = BundleCompat.getParcelable(state, FALLBACK_BROWSED_TAG_STATE, Tag.class);
+        modeType = browsedTag == null ? ModeType.SEARCH : ModeType.TAG;
+        inspector = saved.cloneInspector(this, resetDataset);
+        acceptedAccountTagFallback = true;
+        return true;
     }
 
     private void startInspector() {
@@ -321,6 +346,7 @@ public class MainActivity extends BaseActivity
             staleAccountSearch = null;
             inspector = request.withoutAccountTags().cloneInspector(this, resetDataset);
             inspector.setPage(1);
+            acceptedAccountTagFallback = true;
             setActivityTitle();
             invalidateOptionsMenu();
             startInspector();
@@ -611,6 +637,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void useNormalMode() {
+        acceptedAccountTagFallback = false;
         normalInspectorRuleRevision = TagRuleEdits.revision();
         inspector = InspectorV3.basicInspector(this, 1, resetDataset);
         modeType = ModeType.NORMAL;
