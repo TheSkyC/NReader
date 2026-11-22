@@ -2,8 +2,10 @@ package com.theskyc.nreader;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +36,7 @@ import com.theskyc.nreader.api.enums.SpecialTagIds;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.components.widgets.CustomLinearLayoutManager;
@@ -55,6 +58,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class SearchActivity extends GeneralActivity {
     public static final int CUSTOM_ID_START = 100000000;
@@ -70,13 +74,11 @@ public class SearchActivity extends GeneralActivity {
     private final Chip[] addChip = new Chip[TagType.values.length];
     private ChipGroup[] groups;
     private SearchView searchView;
-    private AppCompatAutoCompleteTextView autoComplete;
-    private TagType loadedTag = null;
     private HistoryAdapter adapter;
     private boolean advanced = false;
     private Ranges.TimeUnit temporaryUnit;
     private InputMethodManager inputMethodManager;
-    private AlertDialog alertDialog;
+    private TagEntryDialog resolvingTagEntry;
     private final ExecutorService tagLoader = Executors.newSingleThreadExecutor();
 
     public void setQuery(String str, boolean submit) {
@@ -113,16 +115,6 @@ public class SearchActivity extends GeneralActivity {
         };
         initRanges();
         adapter = new HistoryAdapter(this);
-        autoComplete = (AppCompatAutoCompleteTextView) getLayoutInflater().inflate(R.layout.autocomplete_entry, findViewById(R.id.appbar), false);
-        autoComplete.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                alertDialog.dismiss();
-                createChip();
-                return true;
-            }
-            return false;
-        });
-
         //init recyclerview
         recyclerView.setLayoutManager(new CustomLinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
@@ -132,6 +124,7 @@ public class SearchActivity extends GeneralActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                if (isResolvingTagEntry()) return true;
                 removeStaleOnlineTags();
                 query = query.trim();
                 if (query.isEmpty() && !advanced) return true;
@@ -170,6 +163,7 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void submitSearch(String query, boolean withoutOnlineTags) {
+        if (isResolvingTagEntry()) return;
         removeStaleOnlineTags();
         boolean useAdvanced = withoutOnlineTags || advanced || (Login.wantsAccountTag()
             && (!onlineChips.isEmpty() || !onlineMergedChips.isEmpty()));
@@ -429,11 +423,14 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private ChipTag findTagChip(Tag tag) {
+        ChipTag nameMatch = null;
         for (ChipTag t : tags) {
-            if (t.getTag().getType().equals(tag.getType())
-                && (t.getTag().getId() == tag.getId() || t.getTag().getName().equals(tag.getName()))) return t;
+            Tag existing = t.getTag();
+            if (existing.getType() != tag.getType()) continue;
+            if (existing.getId() == tag.getId()) return t;
+            if (nameMatch == null && existing.getName().equals(tag.getName())) nameMatch = t;
         }
-        return null;
+        return nameMatch;
     }
 
     private ChipTag addChipTag(Tag t, boolean close, boolean canBeAvoided) {
@@ -470,11 +467,6 @@ public class SearchActivity extends GeneralActivity {
         onlineMergedChips.clear();
         onlineChipsIdentity = null;
         onlineChipsRevision = -1;
-    }
-
-    private void loadDropdown(TagType type) {
-        autoComplete.setAdapter(new TagSuggestionAdapter(type));
-        loadedTag = type;
     }
 
     private final class TagSuggestionAdapter extends ArrayAdapter<TagSuggestion> {
@@ -532,48 +524,133 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void loadTag(TagType type) {
-        if (type != loadedTag) loadDropdown(type);
-        addDialog();
-        autoComplete.requestFocus();
-        inputMethodManager.showSoftInput(autoComplete, InputMethodManager.SHOW_IMPLICIT);
+        if (!isResolvingTagEntry()) new TagEntryDialog(type);
     }
 
     private ChipGroup getGroup(TagType type) {
         return groups[type.getId()];
     }
 
-    private void addDialog() {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setView(autoComplete);
-        autoComplete.setText("");
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> createChip());
-        builder.setCancelable(true).setNegativeButton(R.string.cancel, null);
-        builder.setTitle(R.string.insert_tag_name);
-        try {
-            alertDialog = builder.show();
-        } catch (IllegalStateException e) {//the autoComplete is still attached to another View
-            ((ViewGroup) autoComplete.getParent()).removeView(autoComplete);
-            alertDialog = builder.show();
-        }
-
+    private boolean isResolvingTagEntry() {
+        return resolvingTagEntry != null;
     }
 
-    private void createChip() {
-        String name = autoComplete.getText().toString().toLowerCase(Locale.US);
-        Tag tag = Queries.TagTable.searchTag(name, loadedTag);
-        if (tag == null) tag = new Tag(name, 0, customId++, loadedTag, TagStatus.ACCEPTED);
-        LogUtility.d("CREATED WITH ID: " + tag.getId());
-        if (tagAlreadyExist(tag)) return;
-        //remove add, insert new tag, reinsert add
-        if (getGroup(loadedTag) != null) getGroup(loadedTag).removeView(addChip[loadedTag.getId()]);
+    private void addSearchTag(Tag tag) {
+        ChipTag existing = findTagChip(tag);
+        if (existing != null) {
+            if (existing.getTag().getId() == tag.getId()) existing.refreshTag(tag);
+            return;
+        }
+        ChipGroup group = getGroup(tag.getType());
+        Chip add = addChip[tag.getType().getId()];
+        group.removeView(add);
         addChipTag(tag, true, true);
-        getGroup(loadedTag).addView(addChip[loadedTag.getId()]);
-
-        inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        autoComplete.setText("");
+        group.addView(add);
         advanced = true;
-        if (autoComplete.getParent() != null)
-            ((ViewGroup) autoComplete.getParent()).removeView(autoComplete);
+    }
+
+    private final class TagEntryDialog {
+        private final TagType type;
+        private final AppCompatAutoCompleteTextView entry;
+        private final AlertDialog dialog;
+        private Tag selected;
+        private Future<?> lookup;
+
+        TagEntryDialog(TagType type) {
+            this.type = type;
+            entry = (AppCompatAutoCompleteTextView) getLayoutInflater().inflate(
+                R.layout.autocomplete_entry, findViewById(R.id.appbar), false);
+            TagSuggestionAdapter suggestions = new TagSuggestionAdapter(type);
+            entry.setAdapter(suggestions);
+            entry.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                    selected = null;
+                }
+                @Override public void afterTextChanged(Editable text) {}
+            });
+            entry.setOnItemClickListener((parent, view, position, id) -> {
+                Object item = parent.getItemAtPosition(position);
+                selected = item instanceof TagSuggestion ? ((TagSuggestion) item).getTag() : null;
+            });
+            entry.setOnEditorActionListener((view, actionId, event) -> {
+                if (actionId != EditorInfo.IME_ACTION_SEND) return false;
+                resolve();
+                return true;
+            });
+            dialog = new MaterialAlertDialogBuilder(SearchActivity.this)
+                .setView(entry)
+                .setTitle(R.string.insert_tag_name)
+                .setPositiveButton(R.string.ok, null)
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> resolve());
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> cancel());
+            dialog.setOnCancelListener(ignored -> clearLookup());
+            dialog.setOnDismissListener(ignored -> clearLookup());
+            entry.requestFocus();
+            inputMethodManager.showSoftInput(entry, InputMethodManager.SHOW_IMPLICIT);
+        }
+
+        private void resolve() {
+            if (resolvingTagEntry != null || isFinishing() || isDestroyed()) return;
+            String entered = entry.getText().toString();
+            int selectedId = selected != null && selected.getName().equals(entered) ? selected.getId() : 0;
+            String name = entered.trim();
+            if (!TagCatalog.isCanonicalName(name)) {
+                entry.setError(getString(R.string.search_tag_invalid_name));
+                return;
+            }
+            resolvingTagEntry = this;
+            entry.dismissDropDown();
+            entry.setEnabled(false);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+            lookup = tagLoader.submit(() -> {
+                Tag tag = null;
+                boolean failed = false;
+                try {
+                    tag = selectedId > 0 ? Queries.TagTable.getTagById(selectedId)
+                        : Queries.TagTable.searchTypedName(name, type);
+                    failed = selectedId > 0 && (tag == null || tag.getType() != type);
+                } catch (SQLiteException | IllegalStateException error) {
+                    failed = true;
+                    LogUtility.w("Could not resolve a search tag", error);
+                }
+                Tag resolved = tag;
+                boolean unavailable = failed;
+                runOnUiThread(() -> complete(resolved, name, unavailable));
+            });
+        }
+
+        private void complete(Tag tag, String name, boolean unavailable) {
+            if (resolvingTagEntry != this) return;
+            resolvingTagEntry = null;
+            lookup = null;
+            if (isFinishing() || isDestroyed() || !dialog.isShowing()) return;
+            if (unavailable) {
+                entry.setEnabled(true);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                entry.requestFocus();
+                entry.setError(getString(R.string.search_tag_resolve_failed));
+                return;
+            }
+            addSearchTag(tag != null ? tag
+                : new Tag(name.toLowerCase(Locale.US), 0, customId++, type, TagStatus.ACCEPTED));
+            inputMethodManager.hideSoftInputFromWindow(entry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            dialog.dismiss();
+        }
+
+        private void cancel() {
+            clearLookup();
+            dialog.dismiss();
+        }
+
+        private void clearLookup() {
+            if (resolvingTagEntry != this) return;
+            resolvingTagEntry = null;
+            if (lookup != null) lookup.cancel(false);
+            lookup = null;
+        }
     }
 
     @Override

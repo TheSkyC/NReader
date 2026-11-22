@@ -54,6 +54,11 @@ public class ChipTag extends Chip {
         loadStatusIcon();
     }
 
+    public void refreshTag(Tag updated) {
+        updated.setStatus(tag.getStatus());
+        setTag(updated);
+    }
+
     public void updateStatus() {
         switch (tag.getStatus()) {
             case DEFAULT:

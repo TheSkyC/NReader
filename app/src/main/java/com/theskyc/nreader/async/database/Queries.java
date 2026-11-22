@@ -794,6 +794,17 @@ public class Queries {
             }
         }
 
+        /** Resolve input in the search editor without changing exact tag-link lookup. */
+        public static Tag searchTypedName(String name, TagType type) {
+            String query = METADATA_SELECT + " WHERE t.type = ? AND t.name COLLATE NOCASE = ?"
+                + " ORDER BY (t.name = ?) DESC, t.idTag LIMIT 1";
+            try (Cursor c = db.rawQuery(query, new String[]{Integer.toString(type.getId()), name, name})) {
+                if (c.moveToFirst()) return cursorToTag(c);
+            }
+            String lower = name.toLowerCase(Locale.US);
+            return lower.equals(name) ? null : searchTag(lower, type);
+        }
+
         /**
          * Insert all tags owned by a gallery and link it using {@link GalleryBridgeTable}
          */

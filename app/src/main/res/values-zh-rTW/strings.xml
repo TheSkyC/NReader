@@ -231,6 +231,8 @@
     <string name="keep_history">保留搜尋記錄</string>
     <string name="add">新增</string>
     <string name="insert_tag_name">輸入標籤名稱：</string>
+    <string name="search_tag_invalid_name">請輸入有效的標籤名稱。</string>
+    <string name="search_tag_resolve_failed">無法查詢此標籤，請檢查名稱後再試一次。</string>
     <string name="favorite_count">收藏數</string>
     <string name="comments">留言</string>
     <string name="send">發送</string>

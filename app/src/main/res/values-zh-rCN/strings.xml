@@ -231,6 +231,8 @@
     <string name="keep_history">保留搜索历史</string>
     <string name="add">添加</string>
     <string name="insert_tag_name">输入标签名称：</string>
+    <string name="search_tag_invalid_name">请输入有效的标签名称。</string>
+    <string name="search_tag_resolve_failed">无法查询此标签，请检查名称后重试。</string>
     <string name="favorite_count">收藏数</string>
     <string name="comments">评论</string>
     <string name="send">发送</string>

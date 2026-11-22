@@ -97,8 +97,13 @@ translated names, and aliases with a prefix query that returns at most 50
 results. The translation and alias indexes restrict lookups to the matching
 key range within the installed locale. A translated
 suggestion displays its canonical name alongside it; selecting any suggestion
-places the canonical site name in the query editor. Uninstalled locales use
-canonical names only.
+places the canonical site name in the query editor and keeps its site ID.
+Confirming a selection refreshes the tag by ID. Editing the text clears the
+selection. Typed names are looked up within their type in the background,
+preferring the exact spelling, then an ASCII case-insensitive match, then
+the exact lowercased spelling. An unmatched valid name is still usable as a
+custom search term. Search does not submit while an entry is being resolved.
+Uninstalled locales use canonical names only.
 
 The tag manager keeps substring search for canonical names and also matches
 translated names and aliases in the active locale. It checks aliases by tag ID

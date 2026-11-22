@@ -307,6 +307,8 @@
     <string name="keep_history">Keep search history</string>
     <string name="add">Add</string>
     <string name="insert_tag_name">Enter tag name:</string>
+    <string name="search_tag_invalid_name">Enter a valid tag name.</string>
+    <string name="search_tag_resolve_failed">Could not check this tag. Check the name and try again.</string>
     <string name="favorite_count">Favorite count</string>
     <string name="comments">Comments</string>
     <string name="send">Send</string>
