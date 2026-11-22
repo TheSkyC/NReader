@@ -102,7 +102,11 @@ with the Gradle property `nreaderTagCatalogManifestUrl`; see the
 [tag directory and rules](docs/tags.md) for the refresh and storage contract.
 The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
-The default is empty; users can still install packs from local files.
+The default is empty; users can still install packs from local files. The
+current manifest v1 feeds are unsigned, so configuring either NReader manifest
+URL also requires the explicit development property
+`nreaderEnableUnsignedTagFeeds=true`; leave both URLs empty until a publishing
+trust policy is approved.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.

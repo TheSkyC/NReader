@@ -49,8 +49,11 @@ locale and discards the staging file on success, failure, or cancellation.
 ## Enabling the Settings action
 
 Set the Gradle property `nreaderTagTranslationManifestUrl` to the HTTPS URL of
-the hosted `manifest.json`. The default is empty. When configured, users can
-choose **Settings → Tag languages → Browse online** to fetch the locale list.
+the hosted `manifest.json`, and explicitly set
+`nreaderEnableUnsignedTagFeeds=true` for the current unsigned v1 contract. The
+default URL is empty. When configured, users can choose **Settings → Tag
+languages → Browse online** to fetch the locale list. Leave both properties
+empty until the feed trust and publishing policy is approved.
 Only new languages and revisions newer than the installed pack appear. The
 app shows the download size before installing the selected pack. Requests
 are started only from this action and can be cancelled. Import from a file
@@ -81,6 +84,11 @@ The producer and Android feed tests share a small synthetic release fixture.
 The producer regenerates its exact manifest and candidate bytes from a
 proposal; Android verifies the payload digest, installs it, and finds the
 canonical tag through its localized alias.
+
+Release preparation is a packaging and integrity check. It accepts any
+normalized pack, including one made directly by the pack builder; it does not
+verify a review report, reviewer identity, or approval. A publisher must apply
+the chosen review and authorization process before hosting the generated files.
 
 Before hosting a release, verify that every referenced payload is available
 and matches its descriptor, then replace the hosted manifest. Keep older

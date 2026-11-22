@@ -46,6 +46,10 @@ signing or expiry policy need to be established before configuring a feed.
 The app build accepts the manifest URL through Gradle property
 `nreaderTagCatalogManifestUrl`. The default is empty, which keeps the
 existing legacy feed active.
+Because manifest v1 has no publisher signature, a build that configures either
+NReader manifest URL must also set `nreaderEnableUnsignedTagFeeds=true`.
+Leave both properties empty until the feed trust and publishing policy is
+approved; this guard prevents an accidental unsigned-feed release.
 
 ## Preparing a release
 

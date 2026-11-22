@@ -225,9 +225,11 @@ revision again after downloading because the upstream paths are mutable. The
 legacy protocol has no digest that binds the revision to the payload.
 
 A build can set the Gradle property `nreaderTagCatalogManifestUrl` to the
-HTTPS URL of a NReader catalog manifest. A configured build checks that
-feed instead of the legacy one. See [catalog distribution](tag-distribution.md)
-for its independent revisions, integrity checks, and publishing procedure.
+HTTPS URL of a NReader catalog manifest. Because manifest v1 is unsigned, the
+same build must explicitly set `nreaderEnableUnsignedTagFeeds=true`; leaving
+the URL empty keeps the default path. A configured build checks that feed
+instead of the legacy one. See [catalog distribution](tag-distribution.md) for
+its independent revisions, integrity checks, and publishing procedure.
 
 Directory payloads are limited to 16 MiB and 250,000 rows. They must contain at least
 50,000 rows covering all seven known types. A canonical name must fit in the
