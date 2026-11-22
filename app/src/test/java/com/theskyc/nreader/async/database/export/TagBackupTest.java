@@ -11,6 +11,7 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.settings.TagV2;
 
 import org.json.JSONObject;
@@ -20,6 +21,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,6 +48,10 @@ public class TagBackupTest {
             Queries.TagTable.insert(gallery);
             Queries.TagTable.insert(bookmark);
             Queries.TagTable.insert(catalogOnly);
+            assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream((
+                "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                    + "{\"id\":301,\"name\":\"translated source\",\"aliases\":[\"source alias\"]}]}"
+            ).getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             Queries.TagTable.updateTag(gallery);
             Queries.TagTable.updateBlacklistedTag(accountOnly, true);
             db.execSQL("INSERT INTO Gallery VALUES (500, 'fixture', '', '', 0, 1, '', 0, 0, 0, 0, 0)");
@@ -62,6 +68,9 @@ public class TagBackupTest {
         assertFalse(contents.has("Tags"));
         assertFalse(contents.has("AccountTagBlacklist"));
         assertFalse(contents.has("TagCatalogState"));
+        assertFalse(contents.has("TagTranslations"));
+        assertFalse(contents.has("TagTranslationAliases"));
+        assertFalse(contents.has("TagTranslationState"));
         assertEquals(2, contents.getJSONArray("TagReferences").length());
         assertEquals("renamed reference", contents.getJSONArray("TagRules").getJSONObject(0).getString("name"));
 
@@ -72,8 +81,23 @@ public class TagBackupTest {
             Queries.TagTable.updateTag(previous);
             Queries.TagTable.insert(catalogOnly);
             db.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES ('legacy-upstream', 44)");
+            assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream((
+                "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":7,\"entries\":["
+                    + "{\"id\":302,\"name\":\"target translation\",\"aliases\":[\"target alias\"]}]}"
+            ).getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             Importer.importData(app, Uri.fromFile(backup));
             assertEquals(44, TagCatalog.installedRevision(db));
+            assertEquals(7, TagTranslationCatalog.installedRevision(db, "ja"));
+            try (Cursor translation = db.rawQuery(
+                "SELECT displayName FROM TagTranslations WHERE idTag = 302 AND locale = 'ja'", null)) {
+                assertTrue(translation.moveToFirst());
+                assertEquals("target translation", translation.getString(0));
+            }
+            try (Cursor alias = db.rawQuery(
+                "SELECT alias FROM TagTranslationAliases WHERE idTag = 302 AND locale = 'ja'", null)) {
+                assertTrue(alias.moveToFirst());
+                assertEquals("target alias", alias.getString(0));
+            }
             assertNull(Queries.TagTable.getTagById(accountOnly.getId()));
             assertNotNull(Queries.TagTable.getTagById(catalogOnly.getId()));
             assertEquals("renamed reference", Queries.TagTable.getTagById(gallery.getId()).getName());
@@ -84,6 +108,12 @@ public class TagBackupTest {
 
             Importer.restoreLastSnapshot(app);
             assertEquals(44, TagCatalog.installedRevision(db));
+            assertEquals(7, TagTranslationCatalog.installedRevision(db, "ja"));
+            try (Cursor translation = db.rawQuery(
+                "SELECT displayName FROM TagTranslations WHERE idTag = 302 AND locale = 'ja'", null)) {
+                assertTrue(translation.moveToFirst());
+                assertEquals("target translation", translation.getString(0));
+            }
             assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getStatus(previous));
             assertEquals(TagStatus.DEFAULT, Queries.TagTable.getStatus(gallery));
             assertEquals(0, Queries.GalleryBridgeTable.getTagsForGallery(500).getCount(TagType.TAG));

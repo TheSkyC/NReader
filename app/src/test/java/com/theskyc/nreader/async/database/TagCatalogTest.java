@@ -1,6 +1,7 @@
 package com.theskyc.nreader.async.database;
 
 import android.app.Application;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.theskyc.nreader.api.components.Tag;
@@ -71,6 +72,20 @@ public class TagCatalogTest {
         assertTrue(apply(snapshot("next"), 11));
         assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getTagById(1).getStatus());
         assertTrue(Queries.TagTable.isBlackListed(updated));
+    }
+
+    @Test public void schemaConstrainsRuleIdentityStatusAndAccountTagIds() {
+        database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'rule', 3, 1)");
+        assertThrows(SQLiteConstraintException.class,
+            () -> database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'other type', 4, 2)"));
+        assertThrows(SQLiteConstraintException.class,
+            () -> database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (2, 'bad status', 3, 0)"));
+        assertThrows(SQLiteConstraintException.class,
+            () -> database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (0, 'bad id', 3, 1)"));
+        assertThrows(SQLiteConstraintException.class,
+            () -> database.execSQL("INSERT INTO AccountTagBlacklist (idTag) VALUES (0)"));
+        assertEquals(1, scalar("SELECT COUNT(*) FROM TagRules"));
+        assertEquals(0, scalar("SELECT COUNT(*) FROM AccountTagBlacklist"));
     }
 
     @Test public void canonicalCatalogCanReplaceProvisionalBackupMetadata() throws IOException {
@@ -179,5 +194,12 @@ public class TagCatalogTest {
     private boolean apply(String json, int revision, BooleanSupplier cancelled) throws IOException {
         return TagCatalog.apply(database, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
             revision, 7, cancelled);
+    }
+
+    private int scalar(String sql) {
+        try (android.database.Cursor cursor = database.rawQuery(sql, null)) {
+            cursor.moveToFirst();
+            return cursor.getInt(0);
+        }
     }
 }

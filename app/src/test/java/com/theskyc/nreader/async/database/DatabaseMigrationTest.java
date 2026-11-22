@@ -5,6 +5,7 @@ import android.app.Application;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
@@ -16,6 +17,8 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
@@ -72,6 +75,52 @@ public class DatabaseMigrationTest {
             assertEquals(3, scalar(database, "SELECT COUNT(*) FROM TagTranslationAliases WHERE aliasKey = '\u03bf\u03c3'"));
             assertEquals("\u039f\u03a3", scalarString(database,
                 "SELECT alias FROM TagTranslationAliases WHERE idTag = 1 AND locale = 'el'"));
+        }
+    }
+
+    @Test
+    public void failedVersion23UpgradeRollsBackAndSucceedsAfterFailureIsRemoved() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('el', 7)");
+            database.execSQL("INSERT INTO TagTranslations (idTag, locale, displayName, displayKey)"
+                + " VALUES (1, 'el', '\u039f\u03a3', '\u03bf\u03c2')");
+            database.execSQL("INSERT INTO TagTranslationAliases (idTag, locale, alias, aliasKey)"
+                + " VALUES (1, 'el', '\u039f\u03a3', '\u03bf\u03c2'),"
+                + " (1, 'el', '\u03bf\u03c3', '\u03bf\u03c3')");
+            database.execSQL("CREATE TRIGGER fail_alias_key_upgrade BEFORE UPDATE OF aliasKey"
+                + " ON TagTranslationAliases BEGIN SELECT RAISE(ABORT, 'synthetic migration failure'); END");
+            database.setVersion(23);
+        }
+
+        assertThrows(SQLiteException.class, () -> {
+            try (DatabaseHelper helper = new DatabaseHelper(context)) {
+                helper.getWritableDatabase();
+            }
+        });
+
+        try (SQLiteDatabase database = context.openOrCreateDatabase(DatabaseHelper.DATABASE_NAME, 0, null)) {
+            assertEquals(23, database.getVersion());
+            assertEquals("\u03bf\u03c2", scalarString(database,
+                "SELECT displayKey FROM TagTranslations WHERE idTag = 1 AND locale = 'el'"));
+            assertEquals(2, scalar(database, "SELECT COUNT(*) FROM TagTranslationAliases"
+                + " WHERE idTag = 1 AND locale = 'el'"));
+            assertEquals(7, scalar(database, "SELECT revision FROM TagTranslationState WHERE locale = 'el'"));
+            database.execSQL("DROP TRIGGER fail_alias_key_upgrade");
+        }
+
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertEquals(24, database.getVersion());
+            assertEquals(7, TagTranslationCatalog.installedRevision(database, "el"));
+            assertEquals("\u039f\u03a3", scalarString(database,
+                "SELECT displayName FROM TagTranslations WHERE idTag = 1 AND locale = 'el'"));
+            assertEquals("\u03bf\u03c3", scalarString(database,
+                "SELECT displayKey FROM TagTranslations WHERE idTag = 1 AND locale = 'el'"));
+            assertEquals(1, scalar(database, "SELECT COUNT(*) FROM TagTranslationAliases"
+                + " WHERE idTag = 1 AND locale = 'el' AND aliasKey = '\u03bf\u03c3'"));
         }
     }
 
@@ -253,6 +302,31 @@ public class DatabaseMigrationTest {
             new DatabaseHelper(context).onUpgrade(database, 12, 16);
             assertEquals(6, scalar(database, "SELECT COUNT(*) FROM Status"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));
+        }
+    }
+
+    @Test
+    public void unsupportedDowngradeFailsWithoutChangingTagDataOrSchemaVersion() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        int newerVersion;
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (1, 'canonical', 3, 5)");
+            database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'canonical', 3, 1)");
+            newerVersion = database.getVersion() + 1;
+            database.setVersion(newerVersion);
+        }
+
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteException failure = assertThrows(SQLiteException.class, helper::getWritableDatabase);
+            assertTrue(failure.getMessage().contains("Database downgrade"));
+        }
+
+        try (SQLiteDatabase database = context.openOrCreateDatabase(DatabaseHelper.DATABASE_NAME, 0, null)) {
+            assertEquals(newerVersion, database.getVersion());
+            assertEquals("canonical", scalarString(database, "SELECT name FROM Tags WHERE idTag = 1"));
+            assertEquals(1, scalar(database, "SELECT COUNT(*) FROM TagRules WHERE idTag = 1 AND status = 1"));
         }
     }
 

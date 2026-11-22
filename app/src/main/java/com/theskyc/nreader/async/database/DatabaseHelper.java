@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 
@@ -16,7 +17,6 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.Database;
-import com.theskyc.nreader.utility.LogUtility;
 
 import org.json.JSONException;
 
@@ -219,8 +219,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        LogUtility.d("Downgrading database from " + oldVersion + " to " + newVersion);
-        onCreate(db);
+        throw new SQLiteException("Database downgrade from " + oldVersion + " to " + newVersion + " is not supported");
     }
 
     @Override

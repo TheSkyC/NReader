@@ -217,6 +217,28 @@ Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory
 rows and rules are usable without network access.
 
+## Format evolution
+
+The SQLite database version is a monotonically increasing schema version.
+Database upgrades must preserve the meanings of site IDs, local rule states,
+account ownership, catalog source revisions, and installed locale revisions.
+When a schema change alters storage, add an ordered upgrade and a migration
+regression that checks both retained data and the new constraints. A destructive
+database downgrade is not a supported migration path.
+
+Serialized formats carry their own versions: translation packs use
+`schemaVersion`, and portable backups use their manifest version. A change that
+cannot be read under the current contract requires a new format version and an
+explicit reader path; do not silently reinterpret an existing field. Keep the
+current full-snapshot pack behavior and backup ownership boundaries unless a
+new format deliberately specifies otherwise. Development data does not require
+a long-term compatibility path, but every in-repository format change still
+needs a deterministic fixture and a documented version.
+
+A failed database upgrade leaves the previous schema version and data intact.
+The migration regression reopens a version 23 database after an injected SQLite
+failure, then retries the upgrade after the failure is removed.
+
 ## Device-scale benchmark
 
 `TagCatalogDeviceBenchmarkTest` uses a separate file-backed SQLite database
