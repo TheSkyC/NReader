@@ -514,4 +514,5 @@
     <string name="tag_translation_online_empty">Yeni etiket dili veya güncelleme yok.</string>
     <string name="tag_translation_online_confirm">Bu dil paketi indirilsin ve yüklensin mi (%1$s)?</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
+    <string name="local_tag_rule_save_error">Yerel etiket kuralları kaydedilemedi. Tekrar deneyin.</string>
 </resources>

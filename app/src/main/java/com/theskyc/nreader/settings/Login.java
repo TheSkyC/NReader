@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.loginapi.User;
 import com.theskyc.nreader.utility.Utility;
@@ -35,8 +36,8 @@ public class Login {
     private static long pendingOnlineTagOperation;
     private static long onlineTagOperationSequence;
     private static long onlineTagsAuthGeneration = -1;
-    private static int onlineTagsRestores;
-    private static long onlineTagsRestoreGeneration;
+    private static volatile int onlineTagsRestores;
+    private static volatile long onlineTagsRestoreGeneration;
     private static final java.util.concurrent.CopyOnWriteArrayList<Runnable> onlineTagsObservers =
         new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final Handler main = new Handler(Looper.getMainLooper());
@@ -117,13 +118,18 @@ public class Login {
         notifyOnlineTagsChanged();
     }
 
-    public static synchronized long onlineTagsRestoreGeneration() {
+    public static long onlineTagsRestoreGeneration() {
         return onlineTagsRestoreGeneration;
+    }
+
+    public static boolean isRestoringTagData() {
+        return onlineTagsRestores != 0;
     }
 
     public static synchronized void endOnlineTagsRestore() {
         if (onlineTagsRestores <= 0) throw new IllegalStateException("Unbalanced online tag restore");
         onlineTagsRestores--;
+        if (onlineTagsRestores == 0) TagRuleEdits.onRestoreFinished();
         notifyOnlineTagsChanged();
     }
 

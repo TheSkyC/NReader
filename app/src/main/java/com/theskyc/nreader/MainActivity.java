@@ -58,6 +58,7 @@ import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.async.database.SearchPlanStore;
 import com.theskyc.nreader.async.downloader.DownloadGalleryV2;
 import com.theskyc.nreader.components.activities.BaseActivity;
@@ -74,7 +75,6 @@ import com.theskyc.nreader.settings.AccountVault;
 import com.theskyc.nreader.loginapi.NhentaiLoginApi;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
-import com.theskyc.nreader.settings.TagV2;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
 
@@ -84,6 +84,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
@@ -93,6 +95,7 @@ public class MainActivity extends BaseActivity
     implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int CHANGE_LANGUAGE_DELAY = 1000;
+    private static final Executor TAG_RULE_READER = Executors.newSingleThreadExecutor();
     private static boolean firstTime = true;//true only when app starting
     private final InspectorV3.InspectorResponse startGallery = new MainInspectorResponse() {
         @Override
@@ -122,10 +125,14 @@ public class MainActivity extends BaseActivity
     private NavigationView navigationView;
     private ModeType modeType = ModeType.UNKNOWN;
     private int idOpenedGallery = -1;//Position in the recycler of the opened gallery
-    private boolean inspecting = false, filteringTag = false;
+    private boolean inspecting = false;
     private SortType temporaryType;
     private Snackbar snackbar = null;
     private long normalInspectorRevision = -1;
+    private long normalInspectorRuleRevision = -1;
+    private boolean readingTagRules;
+    private Tag displayedRuleTag;
+    private TagStatus displayedRuleStatus;
     private String normalInspectorIdentity;
     private InspectorV3 blacklistLoadingInspector;
     private final Runnable accountFilterObserver = this::refreshAccountFilter;
@@ -164,6 +171,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TagRuleEdits.changes().observe(this, ignored -> refreshTagRules());
         setContentView(R.layout.activity_main);
         //load inspector
         selectStartMode(getIntent(), getPackageName());
@@ -223,6 +231,10 @@ public class MainActivity extends BaseActivity
             if (Login.isOnlineTagMutationPending()) refresher.setRefreshing(true);
             else loadInitialOnlineTags(inspector);
         } else {
+            if (modeType == ModeType.NORMAL && normalInspectorRuleRevision != TagRuleEdits.revision()) {
+                refreshTagRules();
+                return;
+            }
             String identity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
             long revision = Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1;
             if (modeType == ModeType.NORMAL && (!Objects.equals(identity, normalInspectorIdentity)
@@ -234,11 +246,13 @@ public class MainActivity extends BaseActivity
                 normalInspectorRevision = revision;
             }
             InspectorV3 request = inspector;
+            long ruleRevision = normalInspectorRuleRevision;
             if (modeType == ModeType.FAVORITE) favoriteInspectorGeneration = AuthStore.identityGeneration();
             boolean normal = modeType == ModeType.NORMAL;
             java.util.function.BooleanSupplier current = () -> !isFinishing() && !isDestroyed() && inspector == request
                 && request.isFavoriteIdentityCurrent() && (!normal
-                || (Objects.equals(identity, Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null)
+                || (ruleRevision == TagRuleEdits.revision()
+                && Objects.equals(identity, Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null)
                 && revision == (Login.useAccountTag() ? Login.currentOnlineTagsRevision() : -1)));
             request.setResultCurrent(current);
             InspectorV3.InspectorResponse delegate = request.getResponse();
@@ -563,6 +577,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void useNormalMode() {
+        normalInspectorRuleRevision = TagRuleEdits.revision();
         inspector = InspectorV3.basicInspector(this, 1, resetDataset);
         modeType = ModeType.NORMAL;
         normalInspectorIdentity = Login.useAccountTag() ? Login.currentOnlineTagsIdentity() : null;
@@ -813,12 +828,9 @@ public class MainActivity extends BaseActivity
             showPageSwitcher(inspector.getPage(), inspector.getPageCount());//restart page switcher
             changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
             setting = false;
-        } else if (filteringTag) {
-            inspector = InspectorV3.basicInspector(this, 1, resetDataset);
-            startInspector();
-            filteringTag = false;
         }
         invalidateOptionsMenu();
+        refreshTagRules();
         if (listGrid != null) listGrid.refresh();
     }
 
@@ -867,9 +879,9 @@ public class MainActivity extends BaseActivity
 
         if (modeType == ModeType.TAG) {
             MenuItem item = menu.findItem(R.id.tag_manager);
-            item.setVisible(inspector.getTag().getId() > 0);
-            TagStatus ts = inspector.getTag().getStatus();
-            updateTagStatus(item, ts);
+            Tag tag = inspector.getTag();
+            item.setVisible(tag != null && tag.getId() > 0 && tag == displayedRuleTag);
+            if (item.isVisible()) updateTagStatus(item, displayedRuleStatus);
         }
         Utility.tintMenu(this, menu);
         return true;
@@ -973,8 +985,15 @@ public class MainActivity extends BaseActivity
             saveSearchPlan();
             return true;
         } else if (item.getItemId() == R.id.tag_manager) {
-            TagStatus ts = TagV2.updateStatus(inspector.getTag());
-            updateTagStatus(item, ts);
+            Tag tag = inspector == null ? null : inspector.getTag();
+            if (tag == null || !showsTagRule(tag)) return true;
+            TagRuleEdits.cycle(tag, false, result -> {
+                if (!showsTagRule(tag)) return;
+                if (result.outcome != TagRuleEdits.Outcome.SAVED) {
+                    Toast.makeText(this, R.string.local_tag_rule_save_error, Toast.LENGTH_SHORT).show();
+                }
+            });
+            return true;
         } else if (item.getItemId() == android.R.id.home) {
             finish();
         }
@@ -1121,6 +1140,63 @@ public class MainActivity extends BaseActivity
         builder.show();
     }
 
+    private boolean showsTagRule(Tag tag) {
+        return !isFinishing() && !isDestroyed() && modeType == ModeType.TAG
+            && inspector != null && inspector.getTag() == tag;
+    }
+
+    private void refreshTagRules() {
+        if (readingTagRules || inspector == null || isFinishing() || isDestroyed()
+            || Login.isRestoringTagData()
+            || !getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) return;
+        long revision = TagRuleEdits.revision();
+        boolean home = modeType == ModeType.NORMAL;
+        Tag tag = modeType == ModeType.TAG ? inspector.getTag() : null;
+        if (home ? normalInspectorRuleRevision == revision || blacklistLoadingInspector != null
+            : tag == null || tag.getId() <= 0 || tag.getType() == null) return;
+        readingTagRules = true;
+        InspectorV3 previous = inspector;
+        SortType sort = previous.getSortType();
+        long restore = Login.onlineTagsRestoreGeneration();
+        boolean useAccountTags = Login.useAccountTag();
+        String identity = useAccountTags ? Login.currentOnlineTagsIdentity() : null;
+        long accountRevision = useAccountTags ? Login.currentOnlineTagsRevision() : -1;
+        TAG_RULE_READER.execute(() -> {
+            InspectorV3 updated = null;
+            TagStatus status = null;
+            try {
+                if (home) updated = InspectorV3.searchInspector(this, null, null, 1, sort, null, resetDataset);
+                else status = TagRuleEdits.readStoredStatus(tag);
+            } catch (RuntimeException error) {
+                LogUtility.w("Could not refresh local tag rules", error);
+            }
+            InspectorV3 result = updated;
+            TagStatus saved = status;
+            runOnUiThread(() -> {
+                readingTagRules = false;
+                if (isFinishing() || isDestroyed()
+                    || !getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) return;
+                if (Login.isRestoringTagData() || Login.onlineTagsRestoreGeneration() != restore
+                    || TagRuleEdits.revision() != revision || (home ? inspector != previous : !showsTagRule(tag))) {
+                    refreshTagRules();
+                    return;
+                }
+                if (home && result != null) {
+                    inspector = result;
+                    normalInspectorRuleRevision = revision;
+                    normalInspectorIdentity = identity;
+                    normalInspectorRevision = accountRevision;
+                    adapter.restartDataset(java.util.Collections.emptyList());
+                    startInspector();
+                } else if (saved != null) {
+                    displayedRuleTag = tag;
+                    displayedRuleStatus = saved;
+                    invalidateOptionsMenu();
+                }
+            });
+        });
+    }
+
     private void updateTagStatus(MenuItem item, TagStatus ts) {
         switch (ts) {
             case DEFAULT:
@@ -1165,7 +1241,6 @@ public class MainActivity extends BaseActivity
             startActivity(intent);
         } else if (item.getItemId() == R.id.tag_manager) {
             intent = new Intent(this, TagFilterActivity.class);
-            filteringTag = true;
             startActivity(intent);
         } else if (item.getItemId() == R.id.status_manager) {
             intent = new Intent(this, StatusViewerActivity.class);

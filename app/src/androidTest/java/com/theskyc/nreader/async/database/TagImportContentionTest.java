@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
 public class TagImportContentionTest {
@@ -83,6 +85,59 @@ public class TagImportContentionTest {
                 assertEquals(TagStatus.ACCEPTED, result.getStatus());
                 Log.i(TAG, "journalMode=" + journalMode + " heldMs=" + holdMs
                     + " readBeforeCommit=" + (concurrentTag != null) + " ruleWriteBeforeCommit=" + (concurrentWrite != null));
+            } finally {
+                commitAllowed.countDown();
+                threads.shutdownNow();
+                assertTrue(threads.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            }
+        } finally {
+            Queries.setDb(null);
+            context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        }
+    }
+
+    @Test
+    public void queuedRuleEditLeavesMainThreadFreeWhileCatalogCommitIsPending() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertTrue(TagCatalog.apply(database, snapshot("before"), 1, 7, () -> false));
+            CountDownLatch beforeCommit = new CountDownLatch(1);
+            CountDownLatch commitAllowed = new CountDownLatch(1);
+            CountDownLatch mainReturned = new CountDownLatch(1);
+            CountDownLatch editFinished = new CountDownLatch(1);
+            AtomicReference<TagRuleEdits.Result> result = new AtomicReference<>();
+            ExecutorService threads = Executors.newFixedThreadPool(2);
+            try {
+                Future<Boolean> update = threads.submit(() -> TagCatalog.apply(database, snapshot("after"), 2, 7, () -> {
+                    if (TagCatalog.installedRevision(database) == 2) {
+                        beforeCommit.countDown();
+                        await(commitAllowed);
+                    }
+                    return false;
+                }));
+                await(beforeCommit);
+                Future<?> submit = threads.submit(() -> InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+                    TagRuleEdits.cycle(new Tag("before", 50, TAG_ID, TagType.PARODY, TagStatus.DEFAULT), true, edit -> {
+                        if (Looper.myLooper() == Looper.getMainLooper()) result.set(edit);
+                        editFinished.countDown();
+                    });
+                    mainReturned.countDown();
+                }));
+                assertTrue("The UI thread waited for SQLite", mainReturned.await(5, TimeUnit.SECONDS));
+                assertFalse("An edit completed before the catalog released its writer",
+                    editFinished.await(250, TimeUnit.MILLISECONDS));
+
+                commitAllowed.countDown();
+                assertTrue(update.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+                submit.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                await(editFinished);
+                assertEquals(TagRuleEdits.Outcome.SAVED, result.get().outcome);
+                assertEquals(TagStatus.ACCEPTED, result.get().status);
+                Tag saved = Queries.TagTable.getTagById(TAG_ID);
+                assertEquals("after", saved.getName());
+                assertEquals(TagStatus.ACCEPTED, saved.getStatus());
             } finally {
                 commitAllowed.countDown();
                 threads.shutdownNow();

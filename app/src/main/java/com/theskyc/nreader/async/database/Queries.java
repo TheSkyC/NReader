@@ -617,32 +617,54 @@ public class Queries {
          */
         public static int updateTag(Tag tag) {
             if (tag.getId() <= 0 || tag.getType() == null || tag.getType().getId() <= 0) return 0;
-            String[] key = {Integer.toString(tag.getId()), Byte.toString(tag.getType().getId())};
             db.beginTransactionNonExclusive();
             try {
-                if (tag.getStatus() == TagStatus.DEFAULT) {
-                    db.delete(RULES_TABLE, "idTag = ? AND type = ?", key);
-                } else {
-                    String name;
-                    try (Cursor row = db.rawQuery("SELECT name FROM ("
-                        + " SELECT name, 0 AS priority FROM Tags WHERE idTag = ? AND type = ?"
-                        + " UNION ALL SELECT name, 1 AS priority FROM TagRules WHERE idTag = ? AND type = ?"
-                        + ") ORDER BY priority LIMIT 1", new String[]{key[0], key[1], key[0], key[1]})) {
-                        if (row.moveToFirst()) name = row.getString(0);
-                        else if (TagCatalog.isCanonicalName(tag.getName())) name = tag.getName();
-                        else return 0;
-                    }
-                    ContentValues rule = new ContentValues(4);
-                    rule.put(IDTAG, tag.getId());
-                    rule.put(NAME, name);
-                    rule.put(TYPE, tag.getType().getId());
-                    rule.put(STATUS, tag.getStatus().ordinal());
-                    db.insertWithOnConflict(RULES_TABLE, null, rule, SQLiteDatabase.CONFLICT_REPLACE);
-                }
+                if (!storeRule(tag, tag.getStatus())) return 0;
                 db.setTransactionSuccessful();
                 return 1;
             } finally {
                 db.endTransaction();
+            }
+        }
+
+        static TagStatus storedRuleStatus(Tag tag) {
+            try (Cursor row = db.rawQuery("SELECT status FROM TagRules WHERE idTag = ? AND type = ?", ruleKey(tag))) {
+                return row.moveToFirst() ? TagStatus.values()[row.getInt(0)] : TagStatus.DEFAULT;
+            }
+        }
+
+        private static String[] ruleKey(Tag tag) {
+            return new String[]{Integer.toString(tag.getId()), Byte.toString(tag.getType().getId())};
+        }
+
+        static boolean storeRule(Tag tag, TagStatus status) {
+            String[] key = ruleKey(tag);
+            if (status == TagStatus.DEFAULT) {
+                db.delete(RULES_TABLE, "idTag = ? AND type = ?", key);
+                return true;
+            }
+            String name;
+            try (Cursor row = db.rawQuery("SELECT name FROM ("
+                + " SELECT name, 0 AS priority FROM Tags WHERE idTag = ? AND type = ?"
+                + " UNION ALL SELECT name, 1 AS priority FROM TagRules WHERE idTag = ? AND type = ?"
+                + ") ORDER BY priority LIMIT 1", new String[]{key[0], key[1], key[0], key[1]})) {
+                if (row.moveToFirst()) name = row.getString(0);
+                else if (TagCatalog.isCanonicalName(tag.getName()) && !hasConflictingCatalogType(key)) {
+                    name = tag.getName();
+                }
+                else return false;
+            }
+            ContentValues rule = new ContentValues(4);
+            rule.put(IDTAG, tag.getId());
+            rule.put(NAME, name);
+            rule.put(TYPE, tag.getType().getId());
+            rule.put(STATUS, status.ordinal());
+            return db.insertWithOnConflict(RULES_TABLE, null, rule, SQLiteDatabase.CONFLICT_REPLACE) != -1;
+        }
+
+        private static boolean hasConflictingCatalogType(String[] key) {
+            try (Cursor row = db.rawQuery("SELECT 1 FROM Tags WHERE idTag = ? AND type > 0 AND type != ?", key)) {
+                return row.moveToFirst();
             }
         }
 

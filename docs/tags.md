@@ -115,7 +115,20 @@ controls in the labels so neither can reorder the other.
 
 Local rule evaluation retains its existing context-specific behavior. The
 editor cycles Default → Accepted → Avoided → Default; Default removes the
-rule. Account blacklist entries do not modify the local status. Applying an
+rule. Edits and clear operations run in the background in the order submitted.
+Each edit reads the saved status inside its write transaction, so a delayed
+edit does not cycle from a stale row or icon. Open tag lists refresh after
+commit, and the home feed rebuilds its request with the committed rules,
+even if the editor has already closed. The gallery tag menu shows the saved
+rule separately from the query used to browse that tag. A queued edit cannot
+create a rule of an obsolete type; an existing incompatible rule can still
+be edited or removed from Applied filters.
+A backup restore skips edits that have not passed the restore check inside
+their write transaction and rejects edits submitted while it is active. An
+edit already admitted to SQLite may commit before the restore acquires its
+own write lock; a completed restore still takes precedence. Views refresh
+after restore and ignore callbacks from the previous state.
+Account blacklist entries do not modify the local status. Applying an
 account blacklist still requires the existing opt-in and identity checks.
 Only the active account's validated cache is exposed; an in-flight result
 from a previous account or before restore cannot publish.

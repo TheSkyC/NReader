@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,11 +22,11 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
+import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Login;
-import com.theskyc.nreader.settings.TagV2;
 
 import java.util.Objects;
 
@@ -138,6 +139,9 @@ public class TagTypePage extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         TagCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
         TagTranslationCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
+        if (type != TagType.CATEGORY) {
+            TagRuleEdits.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
+        }
     }
 
     private void refreshOnlineTags(View root) {
@@ -219,14 +223,19 @@ public class TagTypePage extends Fragment {
     }
 
     public void reset() {
-        if (type.equals(TagType.UNKNOWN)) TagV2.resetAllStatus();
-        else if (!type.equals(TagType.CATEGORY)) {
+        if (type.equals(TagType.UNKNOWN)) {
+            View root = getView();
+            TagRuleEdits.clear(result -> {
+                Activity host = getActivity();
+                if (host == null || host.isFinishing() || getView() != root) return;
+                if (result.outcome != TagRuleEdits.Outcome.SAVED) {
+                    Toast.makeText(host, R.string.local_tag_rule_save_error, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else if (!type.equals(TagType.CATEGORY)) {
             ScrapeTags.startWork(activity);
+            if (adapter != null) adapter.notifyDataSetChanged();
         }
-        Activity activity = getActivity();
-        if (activity == null || adapter == null) return;
-        activity.runOnUiThread(adapter::notifyDataSetChanged);
-
     }
 
     public void changeSize() {

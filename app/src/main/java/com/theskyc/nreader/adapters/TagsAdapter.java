@@ -23,6 +23,7 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.AsyncCursorQuery;
+import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
@@ -144,13 +145,17 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
             switch (tagMode) {
                 case OFFLINE:
                 case TYPE:
-                    if (TagV2.maxTagReached() && ent.getStatus() == TagStatus.DEFAULT) {
-                        context.runOnUiThread(() -> Toast.makeText(context, context.getResources().getQuantityString(
-                            R.plurals.tags_max_reached, TagV2.MAXTAGS, TagV2.MAXTAGS), Toast.LENGTH_LONG).show());
-                    } else {
-                        TagV2.updateStatus(ent);
-                        updateLogo(holder.imgView, ent.getStatus());
-                    }
+                    if (closed) break;
+                    TagRuleEdits.cycle(ent, true, result -> {
+                        if (closed || context.isFinishing() || context.isDestroyed()) return;
+                        if (result.outcome == TagRuleEdits.Outcome.LIMIT_REACHED) {
+                            Toast.makeText(context, context.getResources().getQuantityString(
+                                R.plurals.tags_max_reached, TagV2.MAXTAGS, TagV2.MAXTAGS), Toast.LENGTH_LONG).show();
+                        } else if (result.outcome == TagRuleEdits.Outcome.FAILED
+                            || result.outcome == TagRuleEdits.Outcome.SUPERSEDED) {
+                            Toast.makeText(context, R.string.local_tag_rule_save_error, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                     break;
                 case ONLINE:
                     onlineTagUpdate(ent, false);

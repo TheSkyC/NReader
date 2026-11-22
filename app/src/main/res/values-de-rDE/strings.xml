@@ -514,4 +514,5 @@
     <string name="tag_translation_online_empty">Keine neuen Tag-Sprachen oder Updates verfügbar.</string>
     <string name="tag_translation_online_confirm">Dieses Sprachpaket herunterladen und installieren (%1$s)?</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
+    <string name="local_tag_rule_save_error">Die lokalen Tag-Regeln konnten nicht gespeichert werden. Versuche es erneut.</string>
 </resources>
