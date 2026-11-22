@@ -68,7 +68,7 @@ public final class TagTranslationFeed {
     }
 
     private static synchronized File createStagingFile(File directory) throws IOException {
-        if (!directory.isDirectory() && !directory.mkdir()) {
+        if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Could not create translation feed staging directory");
         }
         if (!CLEANED_DIRECTORIES.contains(directory)) {

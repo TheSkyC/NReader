@@ -120,6 +120,23 @@ public class TagTranslationFeedTest {
         assertEmptyStagingDirectory();
     }
 
+    @Test public void createsStagingDirectoryWhenCacheRootDoesNotExist() throws Exception {
+        File cacheRoot = new File(files.getRoot(), "missing-cache");
+        assertFalse(cacheRoot.exists());
+        String digest = sha256(PACK);
+        TagTranslationFeed feed = new TagTranslationFeed(cacheRoot, POINTER,
+            new OkHttpClient.Builder().addInterceptor(chain -> {
+                String name = chain.request().url().pathSegments().get(1);
+                String value = "manifest.json".equals(name) ? manifest(digest, 1, PACK) : PACK;
+                return response(chain, 200, body(value));
+            }).build());
+
+        assertTrue(feed.install(database, feed.readManifest().getPacks().get("ja")));
+        assertTrue(new File(cacheRoot, "tag-translation-feed").isDirectory());
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals(0, new File(cacheRoot, "tag-translation-feed").list().length);
+    }
+
     @Test public void publicClientCannotFollowRedirectsOrUseAccountState() {
         OkHttpClient client = TagFeedDownload.publicClient();
         assertFalse(client.followRedirects());

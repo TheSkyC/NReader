@@ -144,7 +144,7 @@ public class ScrapeTags extends Worker {
 
     private static synchronized File createStagingFile(Context context) throws IOException {
         File directory = new File(context.getCacheDir(), "tag-catalog");
-        if (!directory.isDirectory() && !directory.mkdir()) {
+        if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Could not create tag catalog staging directory");
         }
         if (!cleanedStagingDirectory) {
