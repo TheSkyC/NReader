@@ -287,3 +287,9 @@ out-of-space rollback. It lowers the maximum page count on a private test
 database, verifies that directory and locale installs fail without replacing
 previous data or local rules, then raises the limit and retries. The fixture
 does not fill device storage or test failure to write the scratch file.
+
+The host test `TagTranslationCatalogTest` separately injects an I/O failure
+after a partial write to the private prepared-pack file. It verifies closure
+of the input and scratch channel, preservation of both installed locales and
+the local rule, and successful retry at the same candidate revision. This
+does not simulate a full Android storage partition.

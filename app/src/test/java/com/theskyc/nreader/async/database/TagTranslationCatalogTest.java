@@ -19,6 +19,8 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ import java.util.StringJoiner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -176,6 +179,57 @@ public class TagTranslationCatalogTest {
         TagTranslationCatalog.remove(database, "ja");
         assertEquals(1, TagTranslationCatalog.installedPacks(database).size());
         assertTrue(TagTranslationCatalog.installedPacks(database).containsKey("zh-Hans"));
+    }
+
+    @Test public void scratchWriteFailureRetainsInstalledDataAndAllowsSameRevisionRetry() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\",\"aliases\":[\"prior\"]}]")));
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"other\"}]")));
+        database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'canonical-one', 3, 1)");
+        String update = pack("ja", 2, "[{\"id\":2,\"name\":\"after\",\"aliases\":[\"replacement\"]}]");
+        boolean[] closedInput = {false};
+        FilterInputStream input = new FilterInputStream(bytes(update)) {
+            @Override public void close() throws IOException {
+                super.close();
+                closedInput[0] = true;
+            }
+        };
+        IOException writeFailure = new IOException("Synthetic scratch write failure");
+        SeekableByteChannel channel = TagTranslationCatalog.openScratch(scratch.getRoot());
+        try (SeekableByteChannel failingScratch = new SeekableByteChannel() {
+            @Override public int write(ByteBuffer source) throws IOException {
+                assertFalse(database.inTransaction());
+                ByteBuffer partial = source.slice();
+                partial.limit(1);
+                assertEquals(1, channel.write(partial));
+                throw writeFailure;
+            }
+
+            @Override public int read(ByteBuffer target) { throw new AssertionError("Unexpected scratch read"); }
+            @Override public long position() { throw new AssertionError("Unexpected scratch position"); }
+            @Override public long size() { throw new AssertionError("Unexpected scratch size"); }
+            @Override public SeekableByteChannel position(long offset) { throw new AssertionError("Unexpected rewind"); }
+            @Override public SeekableByteChannel truncate(long size) { throw new AssertionError("Unexpected truncate"); }
+            @Override public boolean isOpen() { return channel.isOpen(); }
+            @Override public void close() throws IOException { channel.close(); }
+        }) {
+            IOException error = assertThrows(IOException.class, () -> TagTranslationCatalog.apply(
+                database, input, () -> failingScratch, "ja", 2, () -> false));
+            assertSame(writeFailure, error);
+            assertFalse(failingScratch.isOpen());
+        }
+
+        assertTrue(closedInput[0]);
+        assertEquals(0, scratch.getRoot().list().length);
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("before", scalarString("SELECT displayName FROM TagTranslations WHERE locale = 'ja'"));
+        assertEquals("prior", scalarString("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja'"));
+        assertEquals("other", scalarString("SELECT displayName FROM TagTranslations WHERE locale = 'zh-Hans'"));
+        assertEquals(1, scalar("SELECT status FROM TagRules WHERE idTag = 1"));
+
+        assertTrue(apply(update));
+        assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("after", scalarString("SELECT displayName FROM TagTranslations WHERE locale = 'ja'"));
+        assertEquals("replacement", scalarString("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja'"));
     }
 
     @Test public void rejectsNonCanonicalLocalesAndInvalidText() {

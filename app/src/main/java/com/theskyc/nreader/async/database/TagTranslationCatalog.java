@@ -168,6 +168,22 @@ public final class TagTranslationCatalog {
 
     static boolean apply(SQLiteDatabase database, InputStream input, File scratchDirectory, String expectedLocale,
                          int expectedRevision, BooleanSupplier cancelled) throws IOException {
+        return apply(database, input, () -> openScratch(scratchDirectory), expectedLocale, expectedRevision, cancelled);
+    }
+
+    static SeekableByteChannel openScratch(File directory) throws IOException {
+        return Files.newByteChannel(directory.toPath().resolve("tag-translation-" + UUID.randomUUID() + ".tmp"),
+            StandardOpenOption.CREATE_NEW, StandardOpenOption.READ, StandardOpenOption.WRITE,
+            StandardOpenOption.DELETE_ON_CLOSE);
+    }
+
+    @FunctionalInterface
+    interface ScratchOpener {
+        SeekableByteChannel open() throws IOException;
+    }
+
+    static boolean apply(SQLiteDatabase database, InputStream input, ScratchOpener opener, String expectedLocale,
+                         int expectedRevision, BooleanSupplier cancelled) throws IOException {
         SeekableByteChannel scratch = null;
         try {
             PreparedRows prepared;
@@ -175,10 +191,7 @@ public final class TagTranslationCatalog {
             // A supplementary code point can be written as two escaped UTF-16 code units.
             try (JsonReader reader = JsonStringGuard.open(new BoundedInputStream(input, cancelled), MAX_TEXT_CODE_POINTS * 12 + 1)) {
                 checkCancelled(cancelled);
-                scratch = Files.newByteChannel(
-                    scratchDirectory.toPath().resolve("tag-translation-" + UUID.randomUUID() + ".tmp"),
-                    StandardOpenOption.CREATE_NEW, StandardOpenOption.READ, StandardOpenOption.WRITE,
-                    StandardOpenOption.DELETE_ON_CLOSE);
+                scratch = opener.open();
                 // The channel owns the scratch file; flush its writer before rewinding for SQLite.
                 DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(scratch)));
                 prepared = new PreparedRows(output);
