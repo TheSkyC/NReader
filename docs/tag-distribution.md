@@ -56,6 +56,21 @@ immutable payload on the host before replacing the hosted pointer. Keep
 payloads available for clients that already read an older manifest. Do not
 publish a feed as part of the bundled data PR.
 
+To check a local copy of the staged feed before switching the hosted pointer:
+
+```powershell
+python -m scripts.verify_tag_feed --catalog-feed .gradle/staged-catalog
+```
+
+Give the command a directory containing the intended `manifest.json` and its
+immutable payload. It checks exact filename casing, manifest format and limits,
+payload size and digest, and the catalog rows. On success it prints the revision
+and row count. Use
+`--translation-feed PATH` to also check every referenced translation pack
+against that exact catalog. The command exits nonzero on failure and never
+modifies the copy. It does not exercise installation in Android, test how a
+host serves the files, or establish publisher authorization or revision freshness.
+
 Retain the current manifest and its payload in the publisher's input
 directory between releases. The tool checks the prior payload against that
 manifest and rejects releases that omit an existing ID or change its type.

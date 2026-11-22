@@ -155,6 +155,30 @@ class TranslationReleaseTest(unittest.TestCase):
         self.publish()
         self.assertEqual({"ja", "zh-Hant"}, set(release.parse_manifest(pointer.read_bytes())))
 
+    def test_retained_pack_keeps_its_original_encoding_when_another_locale_is_published(self):
+        self.candidate("ja", 1)
+        pointer = self.publish()
+        manifest = json.loads(pointer.read_bytes())
+        retained = json.loads(self.pack.read_bytes())
+        del retained["entries"][0]["aliases"]
+        data = json.dumps(retained, indent=2).encode("utf-8")
+        digest = hashlib.sha256(data).hexdigest()
+        path = self.output / f"translation-{digest}.json"
+        path.write_bytes(data)
+        manifest["packs"][0].update(sizeBytes=len(data), sha256=digest)
+        pointer.write_text(json.dumps(manifest), encoding="utf-8")
+
+        self.pack.write_bytes(data)
+        with self.assertRaisesRegex(ValueError, "exact pack produced"):
+            self.publish()
+
+        self.candidate("zh-Hant", 1)
+        self.publish()
+        packs = release.parse_manifest(pointer.read_bytes())
+        self.assertEqual({"ja", "zh-Hant"}, set(packs))
+        self.assertEqual(manifest["packs"][0], packs["ja"])
+        self.assertEqual(data, path.read_bytes())
+
     def test_retained_pack_must_match_manifest_and_current_catalog(self):
         self.candidate("ja", 1)
         pointer = self.publish()

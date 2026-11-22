@@ -6,7 +6,10 @@ import json
 import re
 from pathlib import Path
 
-from scripts.tag_catalog import MAX_BYTES, MAX_INTEGER, atomic_write, decode_json, parse_catalog, read_bounded
+from scripts.tag_catalog import (
+    MAX_BYTES, MAX_INTEGER, MAX_MANIFEST_STRING_UNITS, atomic_write, decode_json, parse_catalog,
+    read_bounded, read_verified_payload,
+)
 
 MAX_MANIFEST_BYTES = 4096
 IDENTITY = {"schemaVersion": 1, "source": "nreader-catalog", "kind": "catalog"}
@@ -14,7 +17,9 @@ MANIFEST_FIELDS = {*IDENTITY, "revision", "sizeBytes", "sha256"}
 
 
 def parse_manifest(data: bytes) -> dict:
-    manifest = decode_json(data)
+    if len(data) > MAX_MANIFEST_BYTES:
+        raise ValueError("Catalog manifest exceeds size limit")
+    manifest = decode_json(data, max_wire_string_units=MAX_MANIFEST_STRING_UNITS)
     if (not isinstance(manifest, dict) or manifest.keys() != MANIFEST_FIELDS
             or type(manifest["schemaVersion"]) is not int
             or any(manifest[key] != value for key, value in IDENTITY.items())
@@ -24,6 +29,16 @@ def parse_manifest(data: bytes) -> dict:
             or not re.fullmatch("[0-9a-f]{64}", manifest["sha256"])):
         raise ValueError("Invalid catalog manifest")
     return manifest
+
+
+def payload_name(digest: str) -> str:
+    return f"catalog-{digest}.json"
+
+
+def read_payload(directory: Path, manifest: dict) -> dict:
+    digest = manifest["sha256"]
+    data = read_verified_payload(directory / payload_name(digest), manifest["sizeBytes"], digest)
+    return parse_catalog(data)
 
 
 def prepare_release(catalog: Path, revision: int, output: Path) -> Path:
@@ -40,16 +55,12 @@ def prepare_release(catalog: Path, revision: int, output: Path) -> Path:
                                   or (revision == previous["revision"] and manifest != previous)):
         raise ValueError("A catalog revision cannot be lowered or reused for different bytes")
     if previous is not None and previous["sha256"] != digest:
-        prior_payload = read_bounded(output / f'catalog-{previous["sha256"]}.json', MAX_BYTES)
-        if (len(prior_payload) != previous["sizeBytes"]
-                or hashlib.sha256(prior_payload).hexdigest() != previous["sha256"]):
-            raise ValueError("Previous catalog does not match its manifest")
-        for tag_id, tag in parse_catalog(prior_payload).items():
+        for tag_id, tag in read_payload(output, previous).items():
             if tag_id not in tags or tag.category != tags[tag_id].category:
                 raise ValueError(f"Catalog identity must be retained for tag ID {tag_id}")
 
     output.mkdir(parents=True, exist_ok=True)
-    payload = output / f"catalog-{digest}.json"
+    payload = output / payload_name(digest)
     if payload.exists():
         if read_bounded(payload, MAX_BYTES) != data:
             raise ValueError("Existing immutable file does not match its digest")

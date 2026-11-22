@@ -7,7 +7,10 @@ import re
 from pathlib import Path
 
 from scripts.build_tag_translation_pack import encode_normalized_pack, parse_pack, validate_locale, validate_revision
-from scripts.tag_catalog import MAX_BYTES, atomic_write, decode_json, parse_catalog, read_bounded
+from scripts.tag_catalog import (
+    MAX_BYTES, MAX_MANIFEST_STRING_UNITS, atomic_write, decode_json, parse_catalog,
+    read_bounded, read_verified_payload,
+)
 
 MAX_MANIFEST_BYTES = 32 * 1024
 MAX_LOCALES = 128
@@ -18,7 +21,7 @@ PACK_FIELDS = {"locale", "revision", "sizeBytes", "sha256"}
 def parse_manifest(data: bytes) -> dict:
     if len(data) > MAX_MANIFEST_BYTES:
         raise ValueError("Translation manifest exceeds size limit")
-    manifest = decode_json(data)
+    manifest = decode_json(data, max_wire_string_units=MAX_MANIFEST_STRING_UNITS)
     if (not isinstance(manifest, dict) or manifest.keys() != {*IDENTITY, "packs"}
             or type(manifest["schemaVersion"]) is not int
             or any(manifest[key] != value for key, value in IDENTITY.items())):
@@ -41,16 +44,33 @@ def parse_manifest(data: bytes) -> dict:
     return packs
 
 
-def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
-    data = read_bounded(pack_path, MAX_BYTES)
+def parse_release_pack(data: bytes, catalog_ids) -> dict:
     pack = parse_pack(data, catalog_ids)
-    locale = pack["locale"]
-    revision = pack["revision"]
     # Publish the reviewed bytes exactly and keep the wire format within the
     # Android stream parser's bounds even if a hand-edited pack parses locally.
     normalized = {key: pack[key] for key in ("schemaVersion", "locale", "revision", "entries")}
     if data != encode_normalized_pack(normalized):
         raise ValueError("Release input must be the exact pack produced by the builder or review tool")
+    return normalized
+
+
+def payload_name(digest: str) -> str:
+    return f"translation-{digest}.json"
+
+
+def verify_payload(directory: Path, descriptor: dict, catalog_ids) -> None:
+    digest = descriptor["sha256"]
+    data = read_verified_payload(directory / payload_name(digest), descriptor["sizeBytes"], digest)
+    pack = parse_pack(data, catalog_ids)
+    if pack["locale"] != descriptor["locale"] or pack["revision"] != descriptor["revision"]:
+        raise ValueError("Payload locale or revision does not match manifest")
+
+
+def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
+    data = read_bounded(pack_path, MAX_BYTES)
+    pack = parse_release_pack(data, catalog_ids)
+    locale = pack["locale"]
+    revision = pack["revision"]
     digest = hashlib.sha256(data).hexdigest()
     descriptor = {"locale": locale, "revision": revision, "sizeBytes": len(data), "sha256": digest}
 
@@ -65,20 +85,13 @@ def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
     for other_locale, retained in packs.items():
         if other_locale == locale:
             continue
-        retained_path = output / f'translation-{retained["sha256"]}.json'
         try:
-            retained_data = read_bounded(retained_path, retained["sizeBytes"])
-            if (len(retained_data) != retained["sizeBytes"]
-                    or hashlib.sha256(retained_data).hexdigest() != retained["sha256"]):
-                raise ValueError("Payload size or digest does not match manifest")
-            retained_pack = parse_pack(retained_data, catalog_ids)
-            if retained_pack["locale"] != other_locale or retained_pack["revision"] != retained["revision"]:
-                raise ValueError("Payload locale or revision does not match manifest")
+            verify_payload(output, retained, catalog_ids)
         except (OSError, ValueError) as error:
             raise ValueError(f"Cannot verify retained translation payload for {other_locale}: {error}") from error
 
     output.mkdir(parents=True, exist_ok=True)
-    payload = output / f"translation-{digest}.json"
+    payload = output / payload_name(digest)
     if payload.exists():
         if read_bounded(payload, MAX_BYTES) != data:
             raise ValueError("Existing immutable file does not match its digest")

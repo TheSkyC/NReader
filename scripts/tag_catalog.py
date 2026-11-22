@@ -1,7 +1,9 @@
 """Validation and file helpers for the public tag catalog."""
 
+import hashlib
 import json
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +12,7 @@ MAX_INTEGER = 2_147_483_647
 MIN_ROWS = 50_000
 MAX_ROWS = 250_000
 MAX_BYTES = 16 * 1024 * 1024
+MAX_MANIFEST_STRING_UNITS = 384
 TAG_TYPES = (
     ("parody", 1),
     ("character", 2),
@@ -54,7 +57,14 @@ def read_bounded(path: Path, limit: int) -> bytes:
     return data
 
 
-def decode_json(data: bytes):
+def read_verified_payload(path: Path, size: int, digest: str) -> bytes:
+    data = read_bounded(path, size)
+    if len(data) != size or hashlib.sha256(data).hexdigest() != digest:
+        raise ValueError("Payload size or digest does not match manifest")
+    return data
+
+
+def decode_json(data: bytes, *, max_wire_string_units: int | None = None):
     def unique_fields(pairs):
         result = {}
         for key, value in pairs:
@@ -67,10 +77,17 @@ def decode_json(data: bytes):
         raise ValueError("Invalid JSON constant")
 
     try:
-        return json.loads(data.decode("utf-8"), object_pairs_hook=unique_fields,
-                          parse_constant=reject_constant)
+        source = data.decode("utf-8")
+        document = json.loads(source, object_pairs_hook=unique_fields, parse_constant=reject_constant)
     except RecursionError as error:
         raise ValueError("JSON nesting exceeds limit") from error
+    if max_wire_string_units is not None:
+        # Match Android's guard: count the opening quote and the wire spelling
+        # in UTF-16 units, but exclude the closing quote.
+        for token in re.finditer(r'"(?:[^"\\]|\\.)*"', source):
+            if len(token[0].encode("utf-16-le")) // 2 - 1 > max_wire_string_units:
+                raise ValueError("JSON string exceeds limit")
+    return document
 
 
 def parse_catalog(data: bytes, minimum_rows: int = MIN_ROWS) -> dict[int, TagInfo]:

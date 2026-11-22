@@ -93,3 +93,20 @@ and does not establish approval, publisher identity, or freshness on a first
 install. A production origin, publisher ownership, contribution license,
 review process, and any stronger signing or expiration policy must be settled
 before distribution is enabled.
+
+## Verifying a staged copy
+
+Before switching the hosted pointer, check a local copy containing the new
+`manifest.json` and all payloads it references against the target catalog:
+
+```powershell
+python -m scripts.verify_tag_feed --catalog data/tags.json --translation-feed .gradle/staged-translations
+```
+
+If the target catalog is itself staged as a feed, use
+`--catalog-feed .gradle/staged-catalog` in place of `--catalog data/tags.json`.
+The verifier checks exact filename casing, manifest format and limits, payload
+size and digest, locale, revision, pack format, and canonical ID coverage for
+every entry. It lists the validated locales and revisions on success, exits
+nonzero on failure, and writes no files. It does not exercise installation in
+Android or verify approval, freshness, or the hosted HTTP responses.
