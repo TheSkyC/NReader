@@ -3,9 +3,13 @@ package com.theskyc.nreader.async;
 import android.app.Application;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.theskyc.nreader.api.components.TagSuggestion;
+import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.DatabaseHelper;
+import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.async.database.TagTranslationManifest;
+import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.After;
 import org.junit.Before;
@@ -20,6 +24,7 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -94,6 +99,27 @@ public class TagTranslationFeedTest {
         assertEmptyStagingDirectory();
     }
 
+    @Test public void installsReviewedReleaseFixtureAndSearchesAliasUsingCanonicalIdentity() throws Exception {
+        String manifest = releaseFixture("manifest.json");
+        String data = releaseFixture("pack.json");
+        String expectedPayloadName = "translation-" + sha256(data) + ".json";
+        TagV2.initMinCount(RuntimeEnvironment.getApplication());
+        TagTranslationFeed feed = feed(chain -> {
+            String name = chain.request().url().pathSegments().get(1);
+            if ("manifest.json".equals(name)) return response(chain, 200, body(manifest));
+            assertEquals(expectedPayloadName, name);
+            return response(chain, 200, body(data));
+        });
+        assertTrue(feed.install(database, feed.readManifest().getPacks().get("ja")));
+        assertEquals(7, TagTranslationCatalog.installedRevision(database, "ja"));
+        List<TagSuggestion> results = Queries.TagTable.getTagSuggestions(TagType.TAG, "CAFE\u0301", Locale.JAPAN);
+        assertEquals(1, results.size());
+        assertEquals(8378, results.get(0).getTag().getId());
+        assertEquals("\u753b\u5bb6", results.get(0).getDisplayName());
+        assertEquals("tag:\"canonical\"", results.get(0).getTag().toQueryTag());
+        assertEmptyStagingDirectory();
+    }
+
     @Test public void publicClientCannotFollowRedirectsOrUseAccountState() {
         OkHttpClient client = TagFeedDownload.publicClient();
         assertFalse(client.followRedirects());
@@ -155,6 +181,13 @@ public class TagTranslationFeedTest {
 
     private TagTranslationFeed feed(Interceptor server) throws IOException {
         return new TagTranslationFeed(files.getRoot(), POINTER, new OkHttpClient.Builder().addInterceptor(server).build());
+    }
+
+    private static String releaseFixture(String name) throws IOException {
+        try (InputStream input = TagTranslationFeedTest.class.getResourceAsStream("/tag-translation-release/" + name)) {
+            if (input == null) throw new IOException("Missing translation release fixture: " + name);
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private File stagingDirectory() {

@@ -6,7 +6,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import build_tag_translation_release as release
+from scripts import review_tag_translations as review
 from scripts.build_tag_translation_pack import encode_pack
+from scripts.tag_catalog import TagInfo
 
 
 class TranslationReleaseTest(unittest.TestCase):
@@ -25,6 +27,19 @@ class TranslationReleaseTest(unittest.TestCase):
 
     def publish(self):
         return release.prepare_release(self.pack, self.catalog_ids, self.output)
+
+    def test_review_candidate_and_release_match_the_android_fixture(self):
+        fixtures = Path(__file__).resolve().parents[2] / "app/src/test/resources/tag-translation-release"
+        catalog = {8378: TagInfo(8378, "canonical", 100, 3)}
+        proposal = json.loads(review.draft_proposal(catalog, None, "ja", [8378]))
+        proposal["changes"][0]["after"] = {"name": "\u753b\u5bb6", "aliases": [" Cafe\u0301 ", "\u7d75\u5e2b"]}
+        report, candidate = review.review_proposal(catalog, None, review.encode_document(proposal), 7)
+        digest = json.loads(report)["candidateSha256"]
+        self.pack.write_bytes(candidate)
+        pointer = release.prepare_release(self.pack, catalog, self.output)
+        self.assertEqual((fixtures / "pack.json").read_bytes(), candidate)
+        self.assertEqual((fixtures / "manifest.json").read_bytes(), pointer.read_bytes())
+        self.assertEqual(candidate, (self.output / f"translation-{digest}.json").read_bytes())
 
     def test_revisions_are_independent_and_bind_the_unchanged_payload_bytes(self):
         old_data, old_payload = self.candidate("zh-Hant", 7)

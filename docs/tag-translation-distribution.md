@@ -76,6 +76,11 @@ retained locale, stages the new immutable file first, then atomically updates
 `manifest.json`. Restore missing or damaged retained files before retrying.
 Retrying after an interrupted manifest write can reuse the staged file.
 
+The producer and Android feed tests share a small synthetic release fixture.
+The producer regenerates its exact manifest and candidate bytes from a
+proposal; Android verifies the payload digest, installs it, and finds the
+canonical tag through its localized alias.
+
 Before hosting a release, verify that every referenced payload is available
 and matches its descriptor, then replace the hosted manifest. Keep older
 payload files available for clients that already read the old manifest. To
