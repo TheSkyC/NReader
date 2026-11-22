@@ -137,6 +137,8 @@
     <string name="keep_history">Mantieni cronologia ricerche</string>
     <string name="add">Aggiungi</string>
     <string name="insert_tag_name">Inserisci nome tag:</string>
+    <string name="search_tag_invalid_name">Inserisci un nome di tag valido.</string>
+    <string name="search_tag_resolve_failed">Impossibile verificare questo tag. Controlla il nome e riprova.</string>
     <string name="favorite_count">Conteggio preferiti</string>
     <string name="comments">Commenti</string>
     <string name="send">Invia</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Aggiungi segnalibro</string>
     <string name="manage_bookmarks">Gestisci segnalibro</string>
     <string name="bookmark_page_format">Pagina %d</string>
+    <string name="search_bookmark_unavailable">Per questo segnalibro non sono disponibili né un tag né una ricerca salvata.</string>
     <string name="bookmark_description">Descrizione segnalibro</string>
     <string name="enable_right_to_left">Abilita layout RTL </string>
     <string name="setting_on_use_rtl">Le immagini saranno mostrate da destra verso sinistra</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Lingua dei tag installata o aggiornata.</string>
     <string name="tag_translation_not_newer">Questo pacchetto è già installato con la stessa revisione o una più recente.</string>
     <string name="tag_translation_install_failed">Impossibile installare il pacchetto della lingua dei tag.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Sfoglia online</string>
     <string name="tag_translation_online_loading">Ricerca delle lingue disponibili per i tag…</string>
     <string name="tag_translation_online_failed">Impossibile verificare le lingue dei tag online.</string>

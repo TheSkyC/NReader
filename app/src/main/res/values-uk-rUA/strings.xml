@@ -137,6 +137,8 @@
     <string name="keep_history">Зберігати історію пошуку</string>
     <string name="add">Додати</string>
     <string name="insert_tag_name">Вставити ім\'я тегу:</string>
+    <string name="search_tag_invalid_name">Введіть дійсну назву тегу.</string>
+    <string name="search_tag_resolve_failed">Не вдалося перевірити цей тег. Перевірте назву й повторіть спробу.</string>
     <string name="favorite_count">Кількість уподобань</string>
     <string name="comments">Коментарі</string>
     <string name="send">Надіслати</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Додати до закладок</string>
     <string name="manage_bookmarks">Керування закладками</string>
     <string name="bookmark_page_format">Сторінка %d</string>
+    <string name="search_bookmark_unavailable">Для цієї закладки немає доступного тегу або збереженого пошуку.</string>
     <string name="bookmark_description">Опис закладок</string>
     <string name="enable_right_to_left">Увімкнути зправа на ліво</string>
     <string name="setting_on_use_rtl">Зображення будуть показуватися зправа на ліво</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Мову тегів встановлено або оновлено.</string>
     <string name="tag_translation_not_newer">Цей пакунок уже встановлено з такою самою або новішою редакцією.</string>
     <string name="tag_translation_install_failed">Не вдалося встановити мовний пакунок тегів.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Переглянути онлайн</string>
     <string name="tag_translation_online_loading">Перевіряємо доступні мови тегів…</string>
     <string name="tag_translation_online_failed">Не вдалося перевірити мови тегів онлайн.</string>

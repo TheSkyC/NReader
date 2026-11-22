@@ -539,7 +539,6 @@
     <string name="tag_translation_not_newer">此语言包的相同或更新版本已安装。</string>
     <string name="tag_translation_install_failed">无法安装此标签语言包。</string>
     <string name="local_tag_rule_save_error">无法保存本地标签规则，请重试。</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">在线浏览</string>
     <string name="tag_translation_online_loading">正在检查可用的标签语言…</string>
     <string name="tag_translation_online_failed">无法在线检查标签语言。</string>

@@ -137,6 +137,8 @@
     <string name="keep_history">Mantener el historial de búsqueda</string>
     <string name="add">Agregar</string>
     <string name="insert_tag_name">Inserte nombre de etiqueta:</string>
+    <string name="search_tag_invalid_name">Introduce un nombre de etiqueta válido.</string>
+    <string name="search_tag_resolve_failed">No se pudo comprobar esta etiqueta. Revisa el nombre e inténtalo de nuevo.</string>
     <string name="favorite_count">Número de Favoritos</string>
     <string name="comments">Comentarios</string>
     <string name="send">Enviar</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Agregar a marcadores</string>
     <string name="manage_bookmarks">Administrar los marcadores</string>
     <string name="bookmark_page_format">Página %d</string>
+    <string name="search_bookmark_unavailable">Este marcador no tiene ninguna etiqueta disponible ni una búsqueda guardada.</string>
     <string name="bookmark_description">Descripción del marcador</string>
     <string name="enable_right_to_left">Habilitar lectura de derecha a izquierda</string>
     <string name="setting_on_use_rtl">Las imágenes se mostrarán de derecha a izquierda</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Idioma de etiquetas instalado o actualizado.</string>
     <string name="tag_translation_not_newer">Este paquete ya está instalado con la misma revisión o una más reciente.</string>
     <string name="tag_translation_install_failed">No se pudo instalar el paquete de idioma de etiquetas.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Explorar en línea</string>
     <string name="tag_translation_online_loading">Buscando idiomas disponibles para las etiquetas…</string>
     <string name="tag_translation_online_failed">No se pudieron consultar los idiomas de las etiquetas.</string>

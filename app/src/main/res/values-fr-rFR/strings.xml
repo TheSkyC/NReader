@@ -137,6 +137,8 @@
     <string name="keep_history">Conserver l\'historique des recherches</string>
     <string name="add">Ajouter</string>
     <string name="insert_tag_name">Insérer le nom du tag :</string>
+    <string name="search_tag_invalid_name">Saisissez un nom de tag valide.</string>
+    <string name="search_tag_resolve_failed">Impossible de vérifier ce tag. Vérifiez son nom et réessayez.</string>
     <string name="favorite_count">Nombre de tags populaires</string>
     <string name="comments">Commentaires</string>
     <string name="send">Envoyer</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Ajouter un signet</string>
     <string name="manage_bookmarks">Gérer les signets</string>
     <string name="bookmark_page_format">Page %d</string>
+    <string name="search_bookmark_unavailable">Aucun tag ni aucune recherche enregistrée ne sont disponibles pour ce signet.</string>
     <string name="bookmark_description">Description du signet</string>
     <string name="enable_right_to_left">Activer l\'affichage de droite à gauche</string>
     <string name="setting_on_use_rtl">Les images seront affichées de droite à gauche</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Langue de tags installée ou mise à jour.</string>
     <string name="tag_translation_not_newer">Ce paquet est déjà installé à la même révision ou à une révision supérieure.</string>
     <string name="tag_translation_install_failed">Impossible d’installer ce paquet de langue des tags.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Parcourir en ligne</string>
     <string name="tag_translation_online_loading">Recherche des langues disponibles pour les tags…</string>
     <string name="tag_translation_online_failed">Impossible de consulter les langues des tags en ligne.</string>

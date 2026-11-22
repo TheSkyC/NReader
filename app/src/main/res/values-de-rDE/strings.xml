@@ -137,6 +137,8 @@
     <string name="keep_history">Verlauf behalten</string>
     <string name="add">Hinzufügen</string>
     <string name="insert_tag_name">Tag Name eingeben:</string>
+    <string name="search_tag_invalid_name">Gib einen gültigen Tag-Namen ein.</string>
+    <string name="search_tag_resolve_failed">Dieser Tag konnte nicht geprüft werden. Prüfe den Namen und versuche es erneut.</string>
     <string name="favorite_count">Favoriten Anzahl</string>
     <string name="comments">Kommentieren</string>
     <string name="send">Senden</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Lesezeichen hinzufügen</string>
     <string name="manage_bookmarks">Lesezeichen verwalten</string>
     <string name="bookmark_page_format">Seite %d</string>
+    <string name="search_bookmark_unavailable">Für dieses Lesezeichen ist kein Tag und keine gespeicherte Suche verfügbar.</string>
     <string name="bookmark_description">Lesezeichen Beschreibung</string>
     <string name="enable_right_to_left">Rechts nach links aktivieren</string>
     <string name="setting_on_use_rtl">Bilder werden von rechts nach links angezeigt</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Tag-Sprache installiert oder aktualisiert.</string>
     <string name="tag_translation_not_newer">Dieses Paket ist bereits in gleicher oder neuerer Version installiert.</string>
     <string name="tag_translation_install_failed">Tag-Sprachpaket konnte nicht installiert werden.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Online durchsuchen</string>
     <string name="tag_translation_online_loading">Verfügbare Tag-Sprachen werden gesucht…</string>
     <string name="tag_translation_online_failed">Tag-Sprachen konnten online nicht geprüft werden.</string>

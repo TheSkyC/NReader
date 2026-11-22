@@ -137,6 +137,8 @@
     <string name="keep_history">أَبق على تأريخ البحث</string>
     <string name="add">أَضف</string>
     <string name="insert_tag_name">أَدخِل اسم الوسم:</string>
+    <string name="search_tag_invalid_name">أدخِل اسم وسم صالحًا.</string>
+    <string name="search_tag_resolve_failed">تعذر التحقق من هذا الوسم. تحقق من الاسم وحاول مرة أخرى.</string>
     <string name="favorite_count">عدد المُفضَّلات</string>
     <string name="comments">تعليقات</string>
     <string name="send">أَرسل</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">أَضف إلى العلامات</string>
     <string name="manage_bookmarks">سيِّر العلامات</string>
     <string name="bookmark_page_format">الصفحة %d</string>
+    <string name="search_bookmark_unavailable">لا يوجد وسم متاح أو بحث محفوظ لهذه العلامة.</string>
     <string name="bookmark_description">وصف العلامة</string>
     <string name="enable_right_to_left">عيِّن الاتجاه من اليسار إلى اليمين</string>
     <string name="setting_on_use_rtl">ستُعرض الصور من اليسار إلى اليمين</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">تم تثبيت لغة الوسوم أو تحديثها.</string>
     <string name="tag_translation_not_newer">هذا الإصدار مثبت بالفعل أو يوجد إصدار أحدث.</string>
     <string name="tag_translation_install_failed">تعذر تثبيت حزمة لغة الوسوم.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">تصفح عبر الإنترنت</string>
     <string name="tag_translation_online_loading">جارٍ البحث عن لغات الوسوم المتاحة…</string>
     <string name="tag_translation_online_failed">تعذر التحقق من لغات الوسوم عبر الإنترنت.</string>

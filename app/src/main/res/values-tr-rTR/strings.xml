@@ -137,6 +137,8 @@
     <string name="keep_history">Arama kaydını tut</string>
     <string name="add">Ekle</string>
     <string name="insert_tag_name">Etiket adı ekle</string>
+    <string name="search_tag_invalid_name">Geçerli bir etiket adı girin.</string>
+    <string name="search_tag_resolve_failed">Bu etiket doğrulanamadı. Adı kontrol edip tekrar deneyin.</string>
     <string name="favorite_count">Favori sayısı</string>
     <string name="comments">Yorumlar</string>
     <string name="send">Gönder</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Yer imi ekle</string>
     <string name="manage_bookmarks">Yer imlerini yönet</string>
     <string name="bookmark_page_format">Sayfa %d</string>
+    <string name="search_bookmark_unavailable">Bu yer imi için kullanılabilir bir etiket veya kayıtlı arama yok.</string>
     <string name="bookmark_description">Yer imi açıklaması</string>
     <string name="enable_right_to_left">Sağdan sola okumayı etkinleştir</string>
     <string name="setting_on_use_rtl">Fotoğraflar sağdan sola gösterilecek</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Etiket dili yüklendi veya güncellendi.</string>
     <string name="tag_translation_not_newer">Bu paket aynı veya daha yeni bir sürümle zaten yüklü.</string>
     <string name="tag_translation_install_failed">Etiket dili paketi yüklenemedi.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Çevrimiçi göz at</string>
     <string name="tag_translation_online_loading">Kullanılabilir etiket dilleri denetleniyor…</string>
     <string name="tag_translation_online_failed">Çevrimiçi etiket dilleri denetlenemedi.</string>

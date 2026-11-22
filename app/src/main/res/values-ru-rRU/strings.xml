@@ -137,6 +137,8 @@
     <string name="keep_history">Сохранять историю поиска</string>
     <string name="add">Добавить</string>
     <string name="insert_tag_name">Ввести тэг:</string>
+    <string name="search_tag_invalid_name">Введите допустимое название тега.</string>
+    <string name="search_tag_resolve_failed">Не удалось проверить этот тег. Проверьте название и повторите попытку.</string>
     <string name="favorite_count">Номер избранной</string>
     <string name="comments">Комментарии</string>
     <string name="send">Отправить</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">Добавить закладку</string>
     <string name="manage_bookmarks">Управлять закладками</string>
     <string name="bookmark_page_format">Страница %d</string>
+    <string name="search_bookmark_unavailable">Для этой закладки нет доступного тега или сохранённого поиска.</string>
     <string name="bookmark_description">Описание закладки</string>
     <string name="enable_right_to_left">Включить справа налево</string>
     <string name="setting_on_use_rtl">Изображения будут показываться справа налево</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">Язык тегов установлен или обновлён.</string>
     <string name="tag_translation_not_newer">Этот пакет уже установлен с такой же или более новой ревизией.</string>
     <string name="tag_translation_install_failed">Не удалось установить пакет языка тегов.</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">Обзор в сети</string>
     <string name="tag_translation_online_loading">Проверяем доступные языки тегов…</string>
     <string name="tag_translation_online_failed">Не удалось проверить языки тегов в сети.</string>

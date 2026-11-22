@@ -137,6 +137,8 @@
     <string name="keep_history">検索履歴を保存</string>
     <string name="add">追加</string>
     <string name="insert_tag_name">タグ名を追加：</string>
+    <string name="search_tag_invalid_name">有効なタグ名を入力してください。</string>
+    <string name="search_tag_resolve_failed">このタグを確認できませんでした。名前を確認して、もう一度お試しください。</string>
     <string name="favorite_count">お気に入り数</string>
     <string name="comments">コメント</string>
     <string name="send">送信</string>
@@ -186,6 +188,7 @@
     <string name="add_bookmark">ブックマークに追加</string>
     <string name="manage_bookmarks">ブックマークを管理</string>
     <string name="bookmark_page_format">ページ %d</string>
+    <string name="search_bookmark_unavailable">このブックマークには、利用できるタグや保存済みの検索がありません。</string>
     <string name="bookmark_description">ブックマークの説明</string>
     <string name="enable_right_to_left">右から左の設定を有効</string>
     <string name="setting_on_use_rtl">画像は右から左に表示されます。</string>
@@ -507,7 +510,6 @@
     <string name="tag_translation_installed">タグ言語をインストールまたは更新しました。</string>
     <string name="tag_translation_not_newer">このパックと同じか新しいリビジョンがすでにインストールされています。</string>
     <string name="tag_translation_install_failed">タグ言語パックをインストールできませんでした。</string>
-    <string name="preference_key_tag_translation_packs">tag_translation_packs</string>
     <string name="tag_translation_browse_online">オンラインで探す</string>
     <string name="tag_translation_online_loading">利用可能なタグの言語を確認しています…</string>
     <string name="tag_translation_online_failed">オンラインのタグ言語を確認できませんでした。</string>
