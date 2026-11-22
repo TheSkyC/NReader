@@ -36,3 +36,7 @@ original nor the replacement account exclusions.
 
 For suggestion and list responsiveness, run the separate
 [tag interaction benchmarks](tag-interaction-device-validation.md).
+
+The tag entry dialog belongs to its search activity. Destroying the activity
+closes its suggestion popup and dialog and discards a pending exact lookup.
+Results from the old activity must not add chips or start a search.

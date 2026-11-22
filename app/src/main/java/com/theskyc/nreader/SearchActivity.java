@@ -83,7 +83,7 @@ public class SearchActivity extends GeneralActivity {
     private boolean advanced = false;
     private Ranges.TimeUnit temporaryUnit;
     private InputMethodManager inputMethodManager;
-    private TagEntryDialog resolvingTagEntry;
+    private TagEntryDialog tagEntry;
     private final ExecutorService tagLoader = Executors.newSingleThreadExecutor();
 
     public void setQuery(String str, boolean submit) {
@@ -419,6 +419,7 @@ public class SearchActivity extends GeneralActivity {
 
     @Override
     protected void onDestroy() {
+        if (tagEntry != null) tagEntry.dismiss();
         AuthStore.removeIdentityObserver(authObserver);
         Login.removeOnlineTagsObserver(authObserver);
         tagLoader.shutdownNow();
@@ -544,7 +545,7 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void loadTag(TagType type) {
-        if (!isResolvingTagEntry()) new TagEntryDialog(type);
+        if (tagEntry == null) tagEntry = new TagEntryDialog(type);
     }
 
     private ChipGroup getGroup(TagType type) {
@@ -552,7 +553,7 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private boolean isResolvingTagEntry() {
-        return resolvingTagEntry != null;
+        return tagEntry != null && tagEntry.lookup != null;
     }
 
     private void addSearchTag(Tag tag) {
@@ -605,15 +606,15 @@ public class SearchActivity extends GeneralActivity {
                 .setNegativeButton(R.string.cancel, null)
                 .show();
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> resolve());
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> cancel());
-            dialog.setOnCancelListener(ignored -> clearLookup());
-            dialog.setOnDismissListener(ignored -> clearLookup());
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dismiss());
+            dialog.setOnCancelListener(ignored -> retire());
+            dialog.setOnDismissListener(ignored -> retire());
             entry.requestFocus();
             inputMethodManager.showSoftInput(entry, InputMethodManager.SHOW_IMPLICIT);
         }
 
         private void resolve() {
-            if (resolvingTagEntry != null || isFinishing() || isDestroyed()) return;
+            if (tagEntry != this || lookup != null || isFinishing() || isDestroyed()) return;
             String entered = entry.getText().toString();
             int selectedId = selected != null && selected.getName().equals(entered) ? selected.getId() : 0;
             String name = entered.trim();
@@ -621,7 +622,6 @@ public class SearchActivity extends GeneralActivity {
                 entry.setError(getString(R.string.search_tag_invalid_name));
                 return;
             }
-            resolvingTagEntry = this;
             entry.dismissDropDown();
             entry.setEnabled(false);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
@@ -643,8 +643,7 @@ public class SearchActivity extends GeneralActivity {
         }
 
         private void complete(Tag tag, String name, boolean unavailable) {
-            if (resolvingTagEntry != this) return;
-            resolvingTagEntry = null;
+            if (tagEntry != this || lookup == null) return;
             lookup = null;
             if (isFinishing() || isDestroyed() || !dialog.isShowing()) return;
             if (unavailable) {
@@ -657,17 +656,17 @@ public class SearchActivity extends GeneralActivity {
             addSearchTag(tag != null ? tag
                 : new Tag(name.toLowerCase(Locale.US), 0, SpecialTagIds.INVALID_ID, type, TagStatus.ACCEPTED));
             inputMethodManager.hideSoftInputFromWindow(entry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            dismiss();
+        }
+
+        private void dismiss() {
+            retire();
+            entry.dismissDropDown();
             dialog.dismiss();
         }
 
-        private void cancel() {
-            clearLookup();
-            dialog.dismiss();
-        }
-
-        private void clearLookup() {
-            if (resolvingTagEntry != this) return;
-            resolvingTagEntry = null;
+        private void retire() {
+            if (tagEntry == this) tagEntry = null;
             if (lookup != null) lookup.cancel(false);
             lookup = null;
         }

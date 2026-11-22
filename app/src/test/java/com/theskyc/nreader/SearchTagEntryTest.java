@@ -241,6 +241,33 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void destroyingSearchClosesDialogAndDiscardsPostedLookup() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            AlertDialog dialog;
+            ViewGroup group;
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                group = activity.findViewById(R.id.tag_group);
+                dialog = openTagDialog(activity);
+                AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                entry.setText("custom label", false);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                ExecutorService loader = ReflectionHelpers.getField(activity, "tagLoader");
+                loader.submit(() -> {}).get(6, TimeUnit.SECONDS);
+                assertTrue(dialog.isShowing());
+                assertFalse(dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled());
+            }
+            assertFalse("Destroyed activity left its tag dialog open", dialog.isShowing());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(1, group.getChildCount());
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void lookupFailureKeepsTextAndCanBeRetried() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
