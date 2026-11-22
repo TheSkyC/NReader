@@ -40,6 +40,8 @@ and an `entries` array.
 Each entry contains a positive site tag ID, one plain-text display name, and an
 optional list of plain-text search aliases. Site IDs remain the only identity;
 translation text never enters a site query or changes a saved rule.
+Write schema version, revision, and site IDs as JSON integers without decimal
+points or exponents, as in the pack builder and manifest formats.
 
 An installer validates the whole bounded payload before committing it. It
 rejects duplicate IDs, duplicate normalized aliases for one tag, unknown tag

@@ -76,6 +76,23 @@ public class TagTranslationCatalogTest {
         assertEquals(0, scalar("SELECT COUNT(*) FROM TagTranslations WHERE idTag=2 AND locale='zh-Hans'"));
     }
 
+    @Test public void rejectsNonIntegerPackFieldsWithoutChangingInstalledPack() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\"}]")));
+        String update = pack("ja", 2, "[{\"id\":1,\"name\":\"after\"}]");
+        String[] invalidPacks = {
+            update.replace("\"schemaVersion\":1", "\"schemaVersion\":1.0"),
+            update.replace("\"revision\":2", "\"revision\":2e0"),
+            update.replace("\"id\":1", "\"id\":1.00000000000000001")
+        };
+        for (String invalid : invalidPacks) {
+            assertThrows(invalid, IOException.class, () -> apply(invalid));
+        }
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("before", scalarString("SELECT displayName FROM TagTranslations WHERE locale = 'ja'"));
+        assertTrue(apply(update));
+        assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
+    }
+
     @Test public void cancelledInstallationRollsBackAndLocaleRemovalIsScoped() throws IOException {
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\u4e00\"}]")));
         assertTrue(apply(pack("ja", 1, "[{\"id\":2,\"name\":\"\u4e8c\"}]")));

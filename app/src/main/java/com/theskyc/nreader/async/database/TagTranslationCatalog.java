@@ -309,9 +309,9 @@ public final class TagTranslationCatalog {
     private static int readInteger(JsonReader reader, int minimum, int maximum) throws IOException {
         if (reader.peek() != JsonToken.NUMBER) throw new IOException("Expected translation pack integer");
         try {
-            long value = reader.nextLong();
+            int value = Integer.parseInt(reader.nextString());
             if (value < minimum || value > maximum) throw new IOException("Translation pack integer is out of range");
-            return (int) value;
+            return value;
         } catch (NumberFormatException error) {
             throw new IOException("Invalid translation pack integer", error);
         }
