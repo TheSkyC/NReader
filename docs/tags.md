@@ -84,7 +84,10 @@ The [translation distribution contract](tag-translation-distribution.md)
 defines how to stage these packs and a separate manifest for a release.
 
 On Android, Settings → Tag languages opens the system document picker for a
-local pack. Selecting a newer revision validates and installs it in the
+local pack. The picker accepts JSON, text, and generic binary MIME labels
+because some document providers do not classify `.json` consistently;
+the importer still validates the complete pack before changing the database.
+Selecting a newer revision validates and installs it in the
 background. The installed-locale list is independently removable; cancelling
 the picker or an invalid pack leaves current translations intact. A build
 with a [configured translation feed](tag-translation-distribution.md#enabling-the-settings-action)

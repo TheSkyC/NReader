@@ -59,6 +59,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity {
+    private static final String[] TRANSLATION_PACK_MIME_TYPES = {
+        "application/json", "application/octet-stream", "text/*"
+    };
     GeneralPreferenceFragment fragment;
     private ActivityResultLauncher<String> IMPORT_ZIP;
     private ActivityResultLauncher<String> SAVE_SETTINGS;
@@ -187,7 +190,7 @@ public class SettingsActivity extends GeneralActivity {
             .setTitle(R.string.tag_translation_packs_title)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.tag_translation_install, (dialog, which) ->
-                IMPORT_TRANSLATION_PACK.launch(new String[]{"application/json", "text/*"}));
+                IMPORT_TRANSLATION_PACK.launch(TRANSLATION_PACK_MIME_TYPES));
         if (!BuildConfig.TAG_TRANSLATION_MANIFEST_URL.isEmpty()) {
             builder.setNeutralButton(R.string.tag_translation_browse_online, (dialog, which) -> browseTranslationFeed());
         }
