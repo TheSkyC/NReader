@@ -313,18 +313,18 @@ catalog names while the device has no default network.
 
 For a disposable API 28 AVD, the check can be recorded with:
 
-\`\`\`powershell
+```powershell
 adb -s $serial shell svc wifi disable
 adb -s $serial shell svc data disable
 adb -s $serial install --no-incremental -R --user 0 app/build/outputs/apk/minApi28/debug/app-minApi28-debug.apk
 adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.maxwai.nclientv3.components.launcher.LauncherReal
 adb -s $serial shell am force-stop com.theskyc.nreader.debug
 adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.theskyc.nreader.TagFilterActivity -d https://nhentai.net/tags/
-\`\`\`
+```
 
 The check is complete only when the installed database reports schema 24,
 bundled revision 43, and 86,030 catalog rows, and the live tag page displays
-an expected catalog name such as \`glasses\`. Record the Android API, flavor,
+an expected catalog name such as `glasses`. Record the Android API, flavor,
 network state, and whether the database was empty before launch. This is a
 runtime smoke check rather than a release performance threshold.
 
