@@ -329,13 +329,14 @@ public class SettingsActivity extends GeneralActivity {
             try {
                 SQLiteDatabase database = Database.getDatabase();
                 File scratchDirectory = getCacheDir();
-                InputStream input = getContentResolver().openInputStream(uri);
-                if (input == null) throw new IOException("Unable to open selected translation pack");
-                boolean changed = TagTranslationCatalog.apply(database, input, scratchDirectory,
-                    () -> Thread.currentThread().isInterrupted());
-                runOnUiThread(() -> Toast.makeText(this,
-                    changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
-                    Toast.LENGTH_LONG).show());
+                try (InputStream input = getContentResolver().openInputStream(uri)) {
+                    if (input == null) throw new IOException("Unable to open selected translation pack");
+                    boolean changed = TagTranslationCatalog.apply(database, input, scratchDirectory,
+                        () -> Thread.currentThread().isInterrupted());
+                    runOnUiThread(() -> Toast.makeText(this,
+                        changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
+                        Toast.LENGTH_LONG).show());
+                }
             } catch (IOException | RuntimeException error) {
                 LogUtility.e("Unable to install tag translation pack", error);
                 runOnUiThread(() -> Toast.makeText(this, R.string.tag_translation_install_failed, Toast.LENGTH_LONG).show());
