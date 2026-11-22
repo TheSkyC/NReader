@@ -105,6 +105,11 @@ the exact lowercased spelling. An unmatched valid name is still usable as a
 custom search term. Search does not submit while an entry is being resolved.
 Uninstalled locales use canonical names only.
 
+Custom terms have no site ID. A bookmark for a custom term saves the query,
+page, and sort. A single positive site-tag bookmark uses its site ID to
+follow canonical renames. If the ID is missing, it replays the saved query;
+if neither is available, it cannot be opened.
+
 The tag manager keeps substring search for canonical names and also matches
 translated names and aliases in the active locale. It checks aliases by tag ID
 within the eligible type or rule list. It shows both names when

@@ -16,6 +16,7 @@ import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class Tag implements Parcelable {
@@ -181,12 +182,13 @@ public class Tag implements Parcelable {
 
         Tag tag = (Tag) o;
 
-        return id == tag.id;
+        if (id > 0 || tag.id > 0) return id == tag.id;
+        return Objects.equals(type, tag.type) && Objects.equals(name, tag.name);
     }
 
     @Override
     public int hashCode() {
-        return id;
+        return id > 0 ? id : Objects.hash(type, name);
     }
 
     @Override

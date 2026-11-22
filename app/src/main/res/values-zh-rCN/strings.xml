@@ -282,6 +282,7 @@
     <string name="add_bookmark">添加书签</string>
     <string name="manage_bookmarks">管理书签</string>
     <string name="bookmark_page_format">第 %d 页</string>
+    <string name="search_bookmark_unavailable">此书签没有可用的标签或已保存的搜索。</string>
     <string name="bookmark_description">书签描述</string>
     <string name="enable_right_to_left">从右至左阅读</string>
     <string name="setting_on_use_rtl">图片从右向左排列</string>

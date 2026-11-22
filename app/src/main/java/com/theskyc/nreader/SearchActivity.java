@@ -61,8 +61,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class SearchActivity extends GeneralActivity {
-    public static final int CUSTOM_ID_START = 100000000;
-    private static int customId = CUSTOM_ID_START;
     private final Ranges ranges = new Ranges();
     private final ArrayList<ChipTag> tags = new ArrayList<>();
     private final ArrayList<ChipTag> onlineChips = new ArrayList<>();
@@ -426,8 +424,8 @@ public class SearchActivity extends GeneralActivity {
         ChipTag nameMatch = null;
         for (ChipTag t : tags) {
             Tag existing = t.getTag();
-            if (existing.getType() != tag.getType()) continue;
-            if (existing.getId() == tag.getId()) return t;
+            if (!existing.getType().equals(tag.getType())) continue;
+            if (tag.getId() > 0 && existing.getId() == tag.getId()) return t;
             if (nameMatch == null && existing.getName().equals(tag.getName())) nameMatch = t;
         }
         return nameMatch;
@@ -538,7 +536,7 @@ public class SearchActivity extends GeneralActivity {
     private void addSearchTag(Tag tag) {
         ChipTag existing = findTagChip(tag);
         if (existing != null) {
-            if (existing.getTag().getId() == tag.getId()) existing.refreshTag(tag);
+            if (tag.getId() > 0 && existing.getTag().getId() == tag.getId()) existing.refreshTag(tag);
             return;
         }
         ChipGroup group = getGroup(tag.getType());
@@ -635,7 +633,7 @@ public class SearchActivity extends GeneralActivity {
                 return;
             }
             addSearchTag(tag != null ? tag
-                : new Tag(name.toLowerCase(Locale.US), 0, customId++, type, TagStatus.ACCEPTED));
+                : new Tag(name.toLowerCase(Locale.US), 0, SpecialTagIds.INVALID_ID, type, TagStatus.ACCEPTED));
             inputMethodManager.hideSoftInputFromWindow(entry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
             dialog.dismiss();
         }

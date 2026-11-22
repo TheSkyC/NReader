@@ -176,7 +176,16 @@ public class SearchTagEntryTest {
                 await(() -> !next.isShowing());
                 ChipTag chip = (ChipTag) group.getChildAt(0);
                 assertEquals("custom label", chip.getTag().getName());
+                assertTrue(chip.getTag().getId() <= 0);
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+
+                AlertDialog third = openTagDialog(activity);
+                AppCompatAutoCompleteTextView thirdEntry = third.findViewById(R.id.edit);
+                thirdEntry.setText("another custom label", false);
+                third.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                await(() -> !third.isShowing());
+                assertEquals(3, group.getChildCount());
+                assertEquals("another custom label", ((ChipTag) group.getChildAt(1)).getTag().getName());
             }
         } finally {
             Queries.setDb(null);

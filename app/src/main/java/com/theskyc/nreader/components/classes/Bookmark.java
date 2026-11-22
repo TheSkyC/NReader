@@ -10,12 +10,8 @@ import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.ApiRequestType;
 import com.theskyc.nreader.api.enums.SortType;
-import com.theskyc.nreader.api.enums.SpecialTagIds;
-import com.theskyc.nreader.api.enums.TagStatus;
-import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
-
-import java.util.Collections;
+import com.theskyc.nreader.async.database.TagCatalog;
 
 public class Bookmark {
     public final String url;
@@ -25,15 +21,13 @@ public class Bookmark {
     private final Uri uri;
 
     public Bookmark(String url, int page, ApiRequestType requestType, int tag) {
-        Tag tagVal1;
         this.url = url;
         this.page = page;
         this.requestType = requestType;
         this.tag = tag;
-        tagVal1 = Queries.TagTable.getTagById(this.tag);
-        if (tagVal1 == null)
-            tagVal1 = new Tag("english", 0, SpecialTagIds.LANGUAGE_ENGLISH, TagType.LANGUAGE, TagStatus.DEFAULT);
-        this.tagVal = tagVal1;
+        Tag metadata = requestType == ApiRequestType.BYTAG && tag > 0 ? Queries.TagTable.getTagById(tag) : null;
+        this.tagVal = metadata != null && metadata.getType().getId() > 0
+            && TagCatalog.isCanonicalName(metadata.getName()) ? metadata : null;
         this.uri = Uri.parse(url);
     }
 
@@ -43,6 +37,7 @@ public class Bookmark {
         return query == null ? uri.getQueryParameter("q") : query;
     }
 
+    @Nullable
     public InspectorV3 createInspector(Context context, InspectorV3.InspectorResponse response) {
         String query = getSearchQuery();
         SortType popular = SortType.findFromAddition(uri.getQueryParameter("sort"));
@@ -52,8 +47,13 @@ public class Bookmark {
             return InspectorV3.savedSearchInspector(context, query, page, popular, response);
         if (requestType == ApiRequestType.BYALL)
             return InspectorV3.searchInspector(context, "", null, page, SortType.RECENT_ALL_TIME, null, response);
-        if (requestType == ApiRequestType.BYTAG) return InspectorV3.searchInspector(context, "",
-            Collections.singleton(tagVal), page, popular, null, response);
+        if (requestType == ApiRequestType.BYTAG) {
+            if (tagVal == null) {
+                return query == null || query.trim().isEmpty() ? null
+                    : InspectorV3.savedSearchInspector(context, query, page, popular, response);
+            }
+            return InspectorV3.savedTagInspector(context, tagVal, page, popular, response);
+        }
         return null;
     }
 
@@ -64,10 +64,10 @@ public class Bookmark {
     @NonNull
     @Override
     public String toString() {
-        if (requestType == ApiRequestType.BYTAG)
+        if (requestType == ApiRequestType.BYTAG && tagVal != null)
             return tagVal.getType().getSingle() + ": " + tagVal.getName();
         if (requestType == ApiRequestType.FAVORITE) return "Favorite";
-        if (requestType == ApiRequestType.BYSEARCH)
+        if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG)
             return getSearchQuery() == null ? "" : getSearchQuery();
         if (requestType == ApiRequestType.BYALL) return "Main page";
         return "WTF";

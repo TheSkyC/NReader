@@ -214,10 +214,11 @@ public class InspectorV3 extends Thread implements Parcelable {
                     inspector.tryByAllPopular();
                     break;
                 case 1:
-                    inspector.requestType = ApiRequestType.BYTAG;
-                    //else by search for the negative tag
-                    if (inspector.getTag().getStatus() != TagStatus.AVOIDED)
+                    Tag tag = inspector.tags.iterator().next();
+                    if (tag != null && tag.getId() > 0 && tag.getStatus() != TagStatus.AVOIDED) {
+                        inspector.requestType = ApiRequestType.BYTAG;
                         break;
+                    }
                 default:
                     inspector.requestType = ApiRequestType.BYSEARCH;
                     break;
@@ -228,6 +229,16 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public static InspectorV3 savedSearchInspector(Context context, String query, int page, SortType sortType, InspectorResponse response) {
+        return savedInspector(context, query, null, page, sortType, response);
+    }
+
+    public static InspectorV3 savedTagInspector(Context context, Tag tag, int page, SortType sortType, InspectorResponse response) {
+        Tag canonical = new Tag(tag.getName(), tag.getCount(), tag.getId(), tag.getType(), TagStatus.DEFAULT);
+        return savedInspector(context, "", canonical, page, sortType, response);
+    }
+
+    private static InspectorV3 savedInspector(Context context, String query, @Nullable Tag tag, int page,
+                                               SortType sortType, InspectorResponse response) {
         InspectorV3 inspector = new InspectorV3(context, response);
         inspector.custom = true;
         inspector.tags = new HashSet<>();
@@ -235,7 +246,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         inspector.pageCount = 0;
         inspector.query = query == null ? "" : query;
         inspector.sortType = sortType;
-        inspector.requestType = ApiRequestType.BYSEARCH;
+        inspector.requestType = tag == null ? ApiRequestType.BYSEARCH : ApiRequestType.BYTAG;
+        if (tag != null) inspector.tags.add(tag);
         inspector.createUrl();
         return inspector;
     }

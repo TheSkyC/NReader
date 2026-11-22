@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageButton;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.theskyc.nreader.BookmarkActivity;
 import com.theskyc.nreader.MainActivity;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.components.classes.Bookmark;
 import com.theskyc.nreader.utility.IntentUtility;
@@ -60,9 +62,14 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
      * @param bookmark bookmark to load
      */
     private void loadBookmark(Bookmark bookmark) {
+        InspectorV3 inspector = bookmark.createInspector(bookmarkActivity, null);
+        if (inspector == null) {
+            Toast.makeText(bookmarkActivity, R.string.search_bookmark_unavailable, Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent i = new Intent(bookmarkActivity, MainActivity.class);
         i.putExtra(bookmarkActivity.getPackageName() + ".BYBOOKMARK", true);
-        i.putExtra(bookmarkActivity.getPackageName() + ".INSPECTOR", bookmark.createInspector(bookmarkActivity, null));
+        i.putExtra(bookmarkActivity.getPackageName() + ".INSPECTOR", inspector);
         IntentUtility.startAnotherActivity(bookmarkActivity, i);
     }
 

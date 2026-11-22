@@ -373,6 +373,7 @@
     <string name="search_plan_invalid_page">Enter a valid page number.</string>
     <string name="delete_search_plan_confirm">Delete this search plan?</string>
     <string name="bookmark_page_format">Page %d</string>
+    <string name="search_bookmark_unavailable">This bookmark has no available tag or saved search.</string>
     <string name="bookmark_description">Bookmark description</string>
     <string name="enable_right_to_left">Read right to left</string>
     <string name="setting_on_use_rtl">Images are arranged from right to left.</string>
