@@ -74,6 +74,18 @@ jobs:
             -   name: Grant execute permission for gradlew
                 run: chmod +x gradlew
 
+            -   name: Check unsigned tag feed build guard
+                run: |
+                    set -euo pipefail
+                    if ./gradlew --no-daemon --console plain \
+                        -PnreaderTagCatalogManifestUrl=https://feed.example/tags/manifest.json help; then
+                        echo 'Unsigned tag catalog feed configuration unexpectedly succeeded' >&2
+                        exit 1
+                    fi
+                    ./gradlew --no-daemon --console plain \
+                        -PnreaderTagCatalogManifestUrl=https://feed.example/tags/manifest.json \
+                        -PnreaderEnableUnsignedTagFeeds=true help
+
             -   name: Assemble Debug with Gradle
                 run: ./gradlew assembleDebug
 
