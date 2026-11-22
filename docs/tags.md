@@ -30,6 +30,9 @@ until matching canonical metadata resolves them.
 
 ## Translation packs
 
+The separate [tag format versioning contract](tag-format-versioning.md)
+defines how database versions, wire schemas, and snapshot revisions evolve.
+
 Translations are stored independently from canonical directory names, local
 rules, account data, and backups. A locale pack is a complete snapshot for one
 canonical BCP 47 locale using a two- or three-letter language and optional
