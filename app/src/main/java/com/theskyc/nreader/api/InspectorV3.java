@@ -250,6 +250,10 @@ public class InspectorV3 extends Thread implements Parcelable {
         return !accountTagSelectionMissing && (accountTagScope == null || accountTagScope.isCurrent());
     }
 
+    public void requireAccountTagFallback() {
+        accountTagSelectionMissing = true;
+    }
+
     public boolean usesCurrentDefaultAccountTags() {
         return accountTagScope == null ? !Login.useAccountTag() : accountTagScope.isCurrent();
     }
@@ -257,13 +261,15 @@ public class InspectorV3 extends Thread implements Parcelable {
     public InspectorV3 withoutAccountTags() {
         if (accountTagScope == null && !accountTagSelectionMissing) return this;
         InspectorV3 portable = cloneInspector(context.get(), response);
-        if (tagsWithoutAccount != null) portable.tags = tagsWithoutAccount;
+        if (tagsWithoutAccount != null) {
+            portable.tags = tagsWithoutAccount;
+            portable.selectSearchRequestType();
+            portable.createUrl();
+        }
         portable.tagsWithoutAccount = null;
         portable.accountTagScope = null;
         portable.accountTagSelectionMissing = false;
         portable.pageCount = 0;
-        portable.selectSearchRequestType();
-        portable.createUrl();
         return portable;
     }
 

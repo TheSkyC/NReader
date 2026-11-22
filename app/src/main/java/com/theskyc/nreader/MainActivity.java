@@ -99,6 +99,7 @@ public class MainActivity extends BaseActivity
 
     private static final int CHANGE_LANGUAGE_DELAY = 1000;
     private static final String ACCOUNT_TAG_FALLBACK_STATE = "accountTagFallback";
+    private static final String ACCOUNT_TAG_FALLBACK_ACCEPTED_STATE = "accountTagFallbackAccepted";
     private static final String FALLBACK_BROWSED_TAG_STATE = "fallbackBrowsedTag";
     private static final Executor TAG_RULE_READER = Executors.newSingleThreadExecutor();
     private static boolean firstTime = true;//true only when app starting
@@ -236,9 +237,12 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (acceptedAccountTagFallback && (modeType == ModeType.SEARCH || modeType == ModeType.TAG)) {
+        if ((modeType == ModeType.SEARCH || modeType == ModeType.TAG)
+            && (acceptedAccountTagFallback || !inspector.isAccountTagScopeCurrent())) {
             // Cloning keeps the request conditions but drops its loaded results.
-            outState.putParcelable(ACCOUNT_TAG_FALLBACK_STATE, inspector.cloneInspector(this, null));
+            outState.putParcelable(ACCOUNT_TAG_FALLBACK_STATE,
+                inspector.withoutAccountTags().cloneInspector(this, null));
+            outState.putBoolean(ACCOUNT_TAG_FALLBACK_ACCEPTED_STATE, acceptedAccountTagFallback);
             if (modeType == ModeType.TAG) outState.putParcelable(FALLBACK_BROWSED_TAG_STATE, browsedTag);
         }
     }
@@ -250,7 +254,8 @@ public class MainActivity extends BaseActivity
         browsedTag = BundleCompat.getParcelable(state, FALLBACK_BROWSED_TAG_STATE, Tag.class);
         modeType = browsedTag == null ? ModeType.SEARCH : ModeType.TAG;
         inspector = saved.cloneInspector(this, resetDataset);
-        acceptedAccountTagFallback = true;
+        acceptedAccountTagFallback = state.getBoolean(ACCOUNT_TAG_FALLBACK_ACCEPTED_STATE);
+        if (!acceptedAccountTagFallback) inspector.requireAccountTagFallback();
         return true;
     }
 

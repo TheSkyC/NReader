@@ -206,25 +206,25 @@ public class AdvancedSearchAccountTagsTest {
         }
 
         intent.removeExtra(app.getPackageName() + SearchActivity.ACCOUNT_TAGS_EXTRA);
-        Parcel parcel = Parcel.obtain();
-        try {
-            parcel.writeBundle(state);
-            parcel.setDataPosition(0);
-            Bundle restored = parcel.readBundle(MainActivity.class.getClassLoader());
-            try (ActivityController<MainActivity> controller =
-                     Robolectric.buildActivity(MainActivity.class, intent).setup(restored)) {
-                awaitSearch(controller.get());
-                Shadows.shadowOf(Looper.getMainLooper()).idle();
-                assertEquals(2, queries.size());
-                assertManualOnly(queries.get(1));
-                assertEquals(1, controller.get().adapter.getItemCount());
-            }
-        } finally {
-            parcel.recycle();
+        try (ActivityController<MainActivity> controller =
+                 Robolectric.buildActivity(MainActivity.class, intent).setup(parcelState(state))) {
+            awaitSearch(controller.get());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(2, queries.size());
+            assertManualOnly(queries.get(1));
+            assertEquals(1, controller.get().adapter.getItemCount());
         }
     }
 
     @Test public void acceptedBrowseFallbackKeepsTheOriginalTagAfterRecreation() throws Exception {
+        verifyBrowseFallbackAfterRecreation(true);
+    }
+
+    @Test public void browseRecreationWhileAwaitingConfirmationDoesNotBindANewCache() throws Exception {
+        verifyBrowseFallbackAfterRecreation(false);
+    }
+
+    private void verifyBrowseFallbackAfterRecreation(boolean confirmBeforeRecreation) throws Exception {
         settings.edit().putBoolean(app.getString(R.string.key_ignore_tags), false).commit();
         Global.initFromShared(app);
         Tag browsed = new Tag("manual selection", 100000, MANUAL_ID, TagType.TAG, TagStatus.DEFAULT);
@@ -239,16 +239,24 @@ public class AdvancedSearchAccountTagsTest {
 
             replaceBlacklist(Collections.emptyList());
             Shadows.shadowOf(Looper.getMainLooper()).idle();
-            chooseFallback(controller.get());
-            awaitSearch(controller.get());
+            if (confirmBeforeRecreation) {
+                chooseFallback(controller.get());
+                awaitSearch(controller.get());
+            }
             replaceBlacklist(Collections.singletonList(automatic));
 
             controller.recreate();
             MainActivity recreated = controller.get();
             awaitSearch(recreated);
-            assertEquals(3, queries.size());
-            assertTrue(queries.get(2).contains("tag:\"manual selection\""));
-            assertFalse(queries.get(2).contains("automatic selection"));
+            if (!confirmBeforeRecreation) {
+                assertEquals(1, queries.size());
+                chooseFallback(recreated);
+                awaitSearch(recreated);
+            }
+            int expectedQueries = confirmBeforeRecreation ? 3 : 2;
+            assertEquals(expectedQueries, queries.size());
+            assertTrue(queries.get(expectedQueries - 1).contains("tag:\"manual selection\""));
+            assertFalse(queries.get(expectedQueries - 1).contains("automatic selection"));
             assertEquals("manual selection", recreated.getSupportActionBar().getTitle().toString());
         }
     }
@@ -294,18 +302,7 @@ public class AdvancedSearchAccountTagsTest {
     }
 
     @Test public void emptyPortableSearchDoesNotBecomeAHomeBookmark() throws Exception {
-        Intent intent;
-        try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
-            SearchActivity activity = controller.get();
-            awaitBlacklist(activity);
-            ViewGroup group = activity.findViewById(R.id.tag_group);
-            assertTrue(chip(group, MANUAL_ID).performClick());
-            ReflectionHelpers.callInstanceMethod(activity, "submitSearch",
-                ReflectionHelpers.ClassParameter.from(String.class, ""),
-                ReflectionHelpers.ClassParameter.from(boolean.class, false));
-            intent = Shadows.shadowOf(activity).getNextStartedActivity();
-            assertNotNull(intent);
-        }
+        Intent intent = submitEmptySearch();
         try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
             InspectorV3 inspector = awaitSearch(controller.get());
             assertEquals(1, queries.size());
@@ -314,6 +311,56 @@ public class AdvancedSearchAccountTagsTest {
             InspectorV3 reopened = Queries.BookmarkTable.getBookmarks().get(0).createInspector(app, inspector.getResponse());
             assertEquals(ApiRequestType.BYSEARCH, reopened.getRequestType());
             assertEquals("", HttpUrl.get(reopened.getUrl()).queryParameter("query"));
+        }
+    }
+
+    @Test public void pendingEmptySearchRemainsAFormSearchAfterSavedStateRoundTrip() throws Exception {
+        Intent intent = submitEmptySearch();
+        Bundle state = new Bundle();
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+            awaitSearch(controller.get());
+            assertEquals(1, queries.size());
+            replaceBlacklist(Collections.emptyList());
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            controller.saveInstanceState(state);
+        }
+
+        intent.removeExtra(app.getPackageName() + SearchActivity.ACCOUNT_TAGS_EXTRA);
+        try (ActivityController<MainActivity> controller =
+                 Robolectric.buildActivity(MainActivity.class, intent).setup(parcelState(state))) {
+            awaitSearch(controller.get());
+            assertEquals(1, queries.size());
+            chooseFallback(controller.get());
+            InspectorV3 inspector = awaitSearch(controller.get());
+            assertEquals(ApiRequestType.BYSEARCH, inspector.getRequestType());
+            assertEquals(2, queries.size());
+            assertEquals("", queries.get(1));
+        }
+    }
+
+    private Intent submitEmptySearch() throws InterruptedException {
+        try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+            SearchActivity activity = controller.get();
+            awaitBlacklist(activity);
+            ViewGroup group = activity.findViewById(R.id.tag_group);
+            assertTrue(chip(group, MANUAL_ID).performClick());
+            ReflectionHelpers.callInstanceMethod(activity, "submitSearch",
+                ReflectionHelpers.ClassParameter.from(String.class, ""),
+                ReflectionHelpers.ClassParameter.from(boolean.class, false));
+            Intent intent = Shadows.shadowOf(activity).getNextStartedActivity();
+            assertNotNull(intent);
+            return intent;
+        }
+    }
+
+    private static Bundle parcelState(Bundle state) {
+        Parcel parcel = Parcel.obtain();
+        try {
+            parcel.writeBundle(state);
+            parcel.setDataPosition(0);
+            return parcel.readBundle(MainActivity.class.getClassLoader());
+        } finally {
+            parcel.recycle();
         }
     }
 
