@@ -37,6 +37,27 @@ jobs:
                     python -m scripts.build_tag_catalog --catalog data/tags.json --revision 1 --output "${RUNNER_TEMP}/tag-catalog-feed"
                     python -m scripts.verify_tag_feed --catalog-feed "${RUNNER_TEMP}/tag-catalog-feed"
 
+            -   name: Verify a translation feed can be staged against the catalog
+                run: |
+                    python - <<'PY'
+                    import json
+                    import os
+                    from pathlib import Path
+
+                    catalog = json.loads(Path('data/tags.json').read_text(encoding='utf-8'))
+                    source = Path(os.environ['RUNNER_TEMP']) / 'tag-translation-source.json'
+                    source.write_text(json.dumps([
+                        {'id': catalog[0][0], 'name': 'CI fixture translation', 'aliases': ['fixture alias']}
+                    ], ensure_ascii=False), encoding='utf-8')
+                    PY
+                    python -m scripts.build_tag_translation_pack "${RUNNER_TEMP}/tag-translation-source.json" \
+                        --locale ja --revision 1 --output "${RUNNER_TEMP}/tag-translation-pack.json"
+                    python -m scripts.build_tag_translation_release "${RUNNER_TEMP}/tag-translation-pack.json" \
+                        --catalog data/tags.json --output "${RUNNER_TEMP}/tag-translation-feed"
+                    python -m scripts.verify_tag_feed \
+                        --catalog-feed "${RUNNER_TEMP}/tag-catalog-feed" \
+                        --translation-feed "${RUNNER_TEMP}/tag-translation-feed"
+
     build:
         runs-on: ubuntu-latest
         steps:
