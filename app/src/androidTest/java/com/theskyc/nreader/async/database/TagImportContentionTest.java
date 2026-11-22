@@ -22,6 +22,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +39,52 @@ public class TagImportContentionTest {
     private static final String TAG = "TagImportContention";
     private static final int TAG_ID = 500_001;
     private static final long TIMEOUT_SECONDS = 20;
+
+    @Test
+    public void readsAndRuleWritesFinishWhileCatalogInputIsPaused() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertFalse("Use a fresh benchmark installation", context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists());
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertTrue(TagCatalog.apply(database, snapshot("before"), 1, 7, () -> false));
+            CountDownLatch reading = new CountDownLatch(1);
+            CountDownLatch resumeInput = new CountDownLatch(1);
+            ExecutorService threads = Executors.newFixedThreadPool(2);
+            try (InputStream paused = new FilterInputStream(snapshot("after")) {
+                @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+                    reading.countDown();
+                    await(resumeInput);
+                    return super.read(buffer, offset, length);
+                }
+            }) {
+                Future<Boolean> update = threads.submit(() -> TagCatalog.apply(database, paused, 2, 7, () -> false));
+                try {
+                    await(reading);
+                    Future<?> access = threads.submit(() -> {
+                        Tag tag = Queries.TagTable.getTagById(TAG_ID);
+                        assertEquals("before", tag.getName());
+                        tag.setStatus(TagStatus.ACCEPTED);
+                        assertEquals(1, Queries.TagTable.updateTag(tag));
+                    });
+                    access.get(5, TimeUnit.SECONDS);
+                    assertEquals(1, TagCatalog.installedRevision(database));
+                } finally {
+                    resumeInput.countDown();
+                }
+                assertTrue(update.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+                Tag stored = Queries.TagTable.getTagById(TAG_ID);
+                assertEquals("after", stored.getName());
+                assertEquals(TagStatus.ACCEPTED, stored.getStatus());
+            } finally {
+                resumeInput.countDown();
+                threads.shutdownNow();
+                assertTrue(threads.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            }
+        } finally {
+            Queries.setDb(null);
+            context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        }
+    }
 
     @Test
     public void reportsReadAndRuleWriteWhileCatalogCommitIsPending() throws Exception {

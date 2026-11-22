@@ -174,12 +174,15 @@ HTTPS URL of a NReader catalog manifest. A configured build checks that
 feed instead of the legacy one. See [catalog distribution](tag-distribution.md)
 for its independent revisions, integrity checks, and publishing procedure.
 
-The legacy feed is limited to 16 MiB and 250,000 rows. It must contain at least
+Directory payloads are limited to 16 MiB and 250,000 rows. They must contain at least
 50,000 rows covering all seven known types. A canonical name must fit in the
 site's quoted query syntax. Invalid fields, duplicate IDs, type conflicts,
 cancellation and database errors reject the import. Rows and the
 applied revision are committed together. Equal or older revisions do not
-replace the directory.
+replace the directory. The importer reads and validates the input before
+taking the app database writer lock. It rechecks the source revision and
+checks for conflicts with installed metadata inside the transaction, then
+merges the validated rows in batches.
 
 Remote checks share one WorkManager job. A successful check is cached
 for seven days. Failures retry a bounded number of times. Existing directory

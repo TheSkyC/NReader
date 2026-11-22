@@ -12,11 +12,18 @@ import androidx.lifecycle.MutableLiveData;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.utility.JsonStringGuard;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 /** Applies validated public directory rows without touching local or account rules. */
@@ -29,6 +36,7 @@ public final class TagCatalog {
     private static final String PUBLISHED = TagCatalogManifest.SOURCE;
     private static final int MAX_ROWS = 250_000;
     private static final int MAX_NAME_LENGTH = 256;
+    private static final int STAGE_BATCH_SIZE = 128;
     private static final String STAGE = "temp.TagCatalogStage";
     private static final MutableLiveData<Void> CHANGES = new MutableLiveData<>();
 
@@ -117,14 +125,16 @@ public final class TagCatalog {
         if (revision < 1 || minimumRows < 1 || minimumRows > MAX_ROWS) {
             throw new IllegalArgumentException("Invalid tag catalog revision or row limit");
         }
+        if (!canApply(database, dataset, revision)) return false;
+        StagedRows rows = readStage(source, minimumRows, cancelled);
+        checkCancelled(cancelled);
         database.beginTransactionNonExclusive();
         try {
-            if (BUNDLED.equals(dataset) ? !needsBundled(database, revision)
-                : revision <= installedRevision(database, dataset)
-                    || (UPSTREAM.equals(dataset) && installedPublishedRevision(database) > 0)) return false;
+            if (!canApply(database, dataset, revision)) return false;
+            checkCancelled(cancelled);
             database.execSQL("CREATE TEMP TABLE TagCatalogStage (idTag INTEGER PRIMARY KEY,"
                 + " name TEXT NOT NULL, count INTEGER NOT NULL, type INTEGER NOT NULL)");
-            loadStage(database, source, minimumRows, cancelled);
+            rows.insert(database, cancelled);
             try (Cursor conflict = database.rawQuery("SELECT 1 FROM " + STAGE
                 + " AS incoming JOIN Tags ON Tags.idTag = incoming.idTag"
                 + " WHERE Tags.type != incoming.type AND Tags.type != 0 AND Tags.provisional = 0 LIMIT 1", null)) {
@@ -136,6 +146,7 @@ public final class TagCatalog {
                 + " WHERE idTag = Tags.idTag), type = (SELECT type FROM " + STAGE
                 + " WHERE idTag = Tags.idTag), provisional = 0"
                 + " WHERE idTag IN (SELECT idTag FROM " + STAGE + ")");
+            checkCancelled(cancelled);
             database.execSQL("INSERT INTO Tags (idTag, name, count, type)"
                 + " SELECT idTag, name, count, type FROM " + STAGE
                 + " AS incoming WHERE NOT EXISTS (SELECT 1 FROM Tags WHERE Tags.idTag = incoming.idTag)");
@@ -151,13 +162,19 @@ public final class TagCatalog {
         return true;
     }
 
-    private static void loadStage(SQLiteDatabase database, InputStream source, int minimumRows,
-                                  BooleanSupplier cancelled) throws IOException {
+    private static boolean canApply(SQLiteDatabase database, String dataset, int revision) {
+        return BUNDLED.equals(dataset) ? needsBundled(database, revision)
+            : revision > installedRevision(database, dataset)
+                && (!UPSTREAM.equals(dataset) || installedPublishedRevision(database) == 0);
+    }
+
+    private static StagedRows readStage(InputStream source, int minimumRows,
+                                        BooleanSupplier cancelled) throws IOException {
+        StagedRows stage = new StagedRows();
+        int[] ids = new int[Math.max(minimumRows, STAGE_BATCH_SIZE)];
         int rows = 0;
         int typeMask = 0;
-        try (JsonReader reader = JsonStringGuard.open(source, MAX_NAME_LENGTH * 6 + 1);
-             SQLiteStatement insert = database.compileStatement("INSERT OR IGNORE INTO " + STAGE
-                 + " (idTag, name, count, type) VALUES (?, ?, ?, ?)")) {
+        try (JsonReader reader = JsonStringGuard.open(new CatalogInput(source, cancelled), MAX_NAME_LENGTH * 6 + 1)) {
             reader.beginArray();
             while (reader.hasNext()) {
                 checkCancelled(cancelled);
@@ -169,11 +186,9 @@ public final class TagCatalog {
                 int type = readInteger(reader, 1, TagType.values.length - 1);
                 reader.endArray();
                 typeMask |= 1 << type;
-                insert.bindLong(1, id);
-                insert.bindString(2, name);
-                insert.bindLong(3, count);
-                insert.bindLong(4, type);
-                if (insert.executeInsert() == -1) throw new IOException("Duplicate tag ID");
+                if (rows > ids.length) ids = Arrays.copyOf(ids, Math.min(MAX_ROWS, ids.length * 2));
+                ids[rows - 1] = id;
+                stage.add(id, name, count, type);
             }
             reader.endArray();
             if (reader.peek() != JsonToken.END_DOCUMENT
@@ -182,6 +197,109 @@ public final class TagCatalog {
             }
         } catch (IllegalStateException | NumberFormatException error) {
             throw new IOException("Invalid tag catalog format", error);
+        }
+        Arrays.sort(ids, 0, rows);
+        for (int index = 1; index < rows; index++) {
+            if (ids[index - 1] == ids[index]) throw new IOException("Duplicate tag ID");
+        }
+        stage.finishBatch();
+        return stage;
+    }
+
+    /** Keeps validated names packed as UTF-8; no row objects are retained during parsing. */
+    private static final class StagedRows {
+        private final List<byte[]> batches = new ArrayList<>();
+        private final ByteArrayOutputStream batch = new ByteArrayOutputStream();
+        private final DataOutputStream encoded = new DataOutputStream(batch);
+        private int count;
+
+        void add(int id, String name, int count, int type) throws IOException {
+            byte[] utf8 = name.getBytes(StandardCharsets.UTF_8);
+            encoded.writeInt(id);
+            encoded.writeInt(count);
+            encoded.writeByte(type);
+            encoded.writeShort(utf8.length);
+            encoded.write(utf8);
+            if (++this.count % STAGE_BATCH_SIZE == 0) finishBatch();
+        }
+
+        void finishBatch() {
+            if (batch.size() == 0) return;
+            batches.add(batch.toByteArray());
+            batch.reset();
+        }
+
+        void insert(SQLiteDatabase database, BooleanSupplier cancelled) throws IOException {
+            // Keep the statement below SQLite's variable limit on older Android releases.
+            try (SQLiteStatement fullBatch = compileInsert(database, STAGE_BATCH_SIZE)) {
+                int remaining = count;
+                byte[] name = new byte[MAX_NAME_LENGTH * 3];
+                for (byte[] bytes : batches) {
+                    checkCancelled(cancelled);
+                    int rows = Math.min(remaining, STAGE_BATCH_SIZE);
+                    DataInputStream decoded = new DataInputStream(new ByteArrayInputStream(bytes));
+                    if (rows == STAGE_BATCH_SIZE) {
+                        insertBatch(fullBatch, decoded, name, rows);
+                    } else {
+                        try (SQLiteStatement lastBatch = compileInsert(database, rows)) {
+                            insertBatch(lastBatch, decoded, name, rows);
+                        }
+                    }
+                    remaining -= rows;
+                }
+            }
+        }
+
+        private static SQLiteStatement compileInsert(SQLiteDatabase database, int rows) {
+            StringBuilder sql = new StringBuilder("INSERT INTO ").append(STAGE)
+                .append(" (idTag, name, count, type) VALUES (?,?,?,?)");
+            for (int index = 1; index < rows; index++) sql.append(",(?,?,?,?)");
+            return database.compileStatement(sql.toString());
+        }
+
+        private static void insertBatch(SQLiteStatement statement, DataInputStream rows, byte[] name, int count)
+            throws IOException {
+            for (int index = 0; index < count; index++) {
+                int parameter = index * 4;
+                statement.bindLong(parameter + 1, rows.readInt());
+                int frequency = rows.readInt();
+                int type = rows.readUnsignedByte();
+                int length = rows.readUnsignedShort();
+                rows.readFully(name, 0, length);
+                statement.bindString(parameter + 2, new String(name, 0, length, StandardCharsets.UTF_8));
+                statement.bindLong(parameter + 3, frequency);
+                statement.bindLong(parameter + 4, type);
+            }
+            statement.execute();
+        }
+    }
+
+    private static final class CatalogInput extends FilterInputStream {
+        private final BooleanSupplier cancelled;
+        private int total;
+
+        CatalogInput(InputStream source, BooleanSupplier cancelled) {
+            super(source);
+            this.cancelled = cancelled;
+        }
+
+        @Override public int read() throws IOException {
+            checkCancelled(cancelled);
+            int value = super.read();
+            if (value >= 0) addBytes(1);
+            return value;
+        }
+
+        @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+            checkCancelled(cancelled);
+            int count = super.read(buffer, offset, Math.min(length, TagCatalogManifest.MAX_PAYLOAD_BYTES - total + 1));
+            if (count > 0) addBytes(count);
+            return count;
+        }
+
+        private void addBytes(int count) throws IOException {
+            total += count;
+            if (total > TagCatalogManifest.MAX_PAYLOAD_BYTES) throw new IOException("Tag catalog exceeds size limit");
         }
     }
 

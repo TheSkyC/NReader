@@ -18,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
 import static org.junit.Assert.assertEquals;
@@ -135,9 +134,8 @@ public class TagCatalogTest {
 
     @Test public void cancellationBeforeCommitRollsBackRowsAndRevision() throws IOException {
         assertTrue(apply(snapshot("installed"), 10));
-        AtomicInteger checks = new AtomicInteger();
         assertThrows(InterruptedIOException.class,
-            () -> apply(snapshot("cancelled"), 11, () -> checks.incrementAndGet() == 9));
+            () -> apply(snapshot("cancelled"), 11, () -> TagCatalog.installedRevision(database) == 11));
         assertEquals("installed", Queries.TagTable.getTagById(1).getName());
         assertEquals(10, TagCatalog.installedRevision(database));
         assertTrue(apply(snapshot("recovered"), 11));
