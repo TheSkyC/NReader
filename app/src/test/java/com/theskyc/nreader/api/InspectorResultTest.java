@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Response;
@@ -64,6 +65,31 @@ public class InspectorResultTest {
         assertEquals(Collections.singletonList(1), resultIds(exact));
         assertEquals(Arrays.asList(1, 2, 3), resultIds(regular));
         assertEquals(4, exact.getPageCount());
+    }
+
+    @Test public void identicalSiteTermsAreSentOnceAndCheckedByBothIds() throws Exception {
+        Tag first = new Tag("name+suffix", 0, 900001, TagType.TAG, TagStatus.ACCEPTED);
+        Tag second = new Tag("name+suffix", 0, 900002, TagType.TAG, TagStatus.ACCEPTED);
+        String queryTerm = "tag:\"name+suffix\"";
+        String rows = "{\"id\":1,\"media_id\":\"21\",\"tag_ids\":[900001,900002]},"
+            + "{\"id\":2,\"media_id\":\"22\",\"tag_ids\":[900001]}";
+        InspectorV3 inspector = searchFixture(Arrays.asList(first, second), null,
+            Collections.singletonList(queryTerm), rows, true);
+
+        assertEquals(queryTerm, HttpUrl.get(inspector.getUrl()).queryParameter("query").trim());
+        assertEquals(Collections.singletonList(1), resultIds(inspector));
+    }
+
+    @Test public void oppositeTermsWithTheSameNameRemainDistinct() throws Exception {
+        Tag included = new Tag("shared", 0, 900001, TagType.TAG, TagStatus.ACCEPTED);
+        Tag excluded = new Tag("shared", 0, 900002, TagType.TAG, TagStatus.AVOIDED);
+        String positive = included.toQueryTag();
+        String negative = excluded.toQueryTag();
+        InspectorV3 inspector = searchFixture(Arrays.asList(included, excluded), null,
+            Arrays.asList(positive, negative), "", false);
+
+        String query = HttpUrl.get(inspector.getUrl()).queryParameter("query").trim();
+        assertTrue(query.equals(positive + " " + negative) || query.equals(negative + " " + positive));
     }
 
     private static InspectorV3 searchFixture(List<Tag> tags, String freeText,

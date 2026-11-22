@@ -101,6 +101,54 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void translatedSuggestionKeepsDistinctSiteIdWithTheSameName() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("Same name", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            Queries.TagTable.insert(new Tag("Same name", 10, 501002, TagType.TAG, TagStatus.DEFAULT));
+            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+                + "\"entries\":[{\"id\":501002,\"name\":\"Second translation\",\"aliases\":[\"second alias\"]}]}";
+            assertTrue(TagTranslationCatalog.apply(database,
+                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                AlertDialog dialog = openTagDialog(activity);
+                ViewGroup group = activity.findViewById(R.id.tag_group);
+                ChipTag first = (ChipTag) group.getChildAt(0);
+                assertEquals(501001, first.getTag().getId());
+                assertTrue(first.performClick());
+                AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                entry.setText("second alias", true);
+                await(() -> entry.getAdapter().getCount() == 1);
+                entry.showDropDown();
+                entry.setListSelection(0);
+                entry.performCompletion();
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+
+                await(() -> !dialog.isShowing());
+                assertEquals(3, group.getChildCount());
+                ChipTag second = (ChipTag) group.getChildAt(1);
+                assertEquals(501002, second.getTag().getId());
+                assertEquals(TagStatus.DEFAULT, second.getTag().getStatus());
+                assertTrue(second.performClick());
+                ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertNotNull(sent);
+                ArrayList<Tag> tags = sent.getParcelableArrayListExtra(activity.getPackageName() + ".TAGS");
+                assertNotNull(tags);
+                assertEquals(2, tags.size());
+                assertEquals(501001, tags.get(0).getId());
+                assertEquals(501002, tags.get(1).getId());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void typedLookupKeepsUiResponsiveAndUsesExactSpelling() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

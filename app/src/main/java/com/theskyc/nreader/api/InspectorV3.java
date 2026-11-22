@@ -371,16 +371,18 @@ public class InspectorV3 extends Thread implements Parcelable {
                 builder.append("&q=").append(query);
         } else if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
             builder.append("search?query=").append(query);
+            Set<String> emittedTerms = new HashSet<>();
             for (Tag tt : tags) {
                 if (!isSiteQueryTag(tt)) continue;
-                if (builder.toString().contains(tt.toQueryTag(TagStatus.ACCEPTED))) continue;
+                String term = tt.toQueryTag();
+                if (!emittedTerms.add(term)) continue;
                 builder.append('+');
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    builder.append(URLEncoder.encode(tt.toQueryTag(), Charset.defaultCharset()));
+                    builder.append(URLEncoder.encode(term, Charset.defaultCharset()));
                 } else {
                     try {
                         //noinspection CharsetObjectCanBeUsed
-                        builder.append(URLEncoder.encode(tt.toQueryTag(), Charset.defaultCharset().name()));
+                        builder.append(URLEncoder.encode(term, Charset.defaultCharset().name()));
                     } catch (UnsupportedEncodingException e) {
                         LogUtility.wtf("This should not happen since we used the default charset", e);
                         return;

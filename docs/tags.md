@@ -105,6 +105,13 @@ the exact lowercased spelling. An unmatched valid name is still usable as a
 custom search term. Search does not submit while an entry is being resolved.
 Uninstalled locales use canonical names only.
 
+Tags of the same type can share a canonical name and still have different
+site IDs. Search keeps their selections separate. An account blacklist entry
+only changes an existing selection with the same ID and type. The request
+sends identical signed tag terms once; terms with opposite signs are kept.
+Because the site query uses names, opposing signs for one name can leave no
+site results even when the local IDs differ.
+
 With Match all search tags enabled, results must contain the site IDs of
 included structured tags and must omit the site IDs of excluded structured
 tags. This check uses the IDs returned with the gallery, so a missing directory

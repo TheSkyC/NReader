@@ -421,14 +421,11 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private ChipTag findTagChip(Tag tag) {
-        ChipTag nameMatch = null;
-        for (ChipTag t : tags) {
-            Tag existing = t.getTag();
-            if (!existing.getType().equals(tag.getType())) continue;
-            if (tag.getId() > 0 && existing.getId() == tag.getId()) return t;
-            if (nameMatch == null && existing.getName().equals(tag.getName())) nameMatch = t;
+        for (ChipTag chip : tags) {
+            Tag existing = chip.getTag();
+            if (existing.getType() == tag.getType() && existing.equals(tag)) return chip;
         }
-        return nameMatch;
+        return null;
     }
 
     private ChipTag addChipTag(Tag t, boolean close, boolean canBeAvoided) {
@@ -536,7 +533,7 @@ public class SearchActivity extends GeneralActivity {
     private void addSearchTag(Tag tag) {
         ChipTag existing = findTagChip(tag);
         if (existing != null) {
-            if (tag.getId() > 0 && existing.getTag().getId() == tag.getId()) existing.refreshTag(tag);
+            if (tag.getId() > 0) existing.refreshTag(tag);
             return;
         }
         ChipGroup group = getGroup(tag.getType());

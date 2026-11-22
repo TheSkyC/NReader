@@ -128,4 +128,58 @@ public class SearchOnlineTagsTest {
                 .remove(app.getString(R.string.preference_key_use_account_tag)).commit();
         }
     }
+
+    @Test public void blacklistDoesNotChangeATagWithTheSameNameAndDifferentId() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(app);
+        AuthStore.clear(app);
+        app.deleteDatabase("Entries.db");
+        String accountTagsKey = app.getString(R.string.preference_key_use_account_tag);
+        String limitKey = app.getString(R.string.preference_key_favorite_limit);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            app.getSharedPreferences("Settings", 0).edit()
+                .putBoolean(accountTagsKey, true).putInt(limitKey, 1).commit();
+            Global.initFromShared(app);
+            AuthStore.saveApiKey(app, "search-fixture-key", true);
+            Tag popular = new Tag("same name", 100000, 4123, TagType.TAG, TagStatus.DEFAULT);
+            Tag blocked = new Tag("same name", 1, 4124, TagType.TAG, TagStatus.DEFAULT);
+            Queries.TagTable.insert(popular);
+            Queries.TagTable.insert(blocked);
+            String identity = AuthStore.activeIdentity(app);
+            assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
+                Collections.singletonList(blocked)));
+
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                android.view.ViewGroup group = controller.get().findViewById(R.id.tag_group);
+                ChipTag blockedChip = null;
+                for (int attempt = 0; attempt < 100 && blockedChip == null; attempt++) {
+                    Thread.sleep(20);
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    blockedChip = findChipById(group, blocked.getId());
+                }
+                assertNotNull(blockedChip);
+                assertEquals(TagStatus.AVOIDED, blockedChip.getTag().getStatus());
+                ChipTag popularChip = findChipById(group, popular.getId());
+                assertNotNull(popularChip);
+                assertEquals(TagStatus.DEFAULT, popularChip.getTag().getStatus());
+                AuthStore.saveApiKey(app, "different-fixture-key", true);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(blockedChip.getParent() == group);
+                assertEquals(TagStatus.DEFAULT, popularChip.getTag().getStatus());
+            }
+        } finally {
+            AuthStore.clear(app);
+            Login.updateUser(null);
+            app.getSharedPreferences("Settings", 0).edit().remove(accountTagsKey).remove(limitKey).commit();
+        }
+    }
+
+    private static ChipTag findChipById(android.view.ViewGroup group, int id) {
+        for (int index = 0; index < group.getChildCount(); index++) {
+            android.view.View child = group.getChildAt(index);
+            if (child instanceof ChipTag && ((ChipTag) child).getTag().getId() == id) return (ChipTag) child;
+        }
+        return null;
+    }
 }
