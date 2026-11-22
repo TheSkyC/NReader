@@ -68,11 +68,14 @@ def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
         retained_path = output / f'translation-{retained["sha256"]}.json'
         try:
             retained_data = read_bounded(retained_path, retained["sizeBytes"])
+            if (len(retained_data) != retained["sizeBytes"]
+                    or hashlib.sha256(retained_data).hexdigest() != retained["sha256"]):
+                raise ValueError("Payload size or digest does not match manifest")
+            retained_pack = parse_pack(retained_data, catalog_ids)
+            if retained_pack["locale"] != other_locale or retained_pack["revision"] != retained["revision"]:
+                raise ValueError("Payload locale or revision does not match manifest")
         except (OSError, ValueError) as error:
-            raise ValueError(f"Cannot verify retained translation payload for {other_locale}") from error
-        if (len(retained_data) != retained["sizeBytes"]
-                or hashlib.sha256(retained_data).hexdigest() != retained["sha256"]):
-            raise ValueError(f"Cannot verify retained translation payload for {other_locale}")
+            raise ValueError(f"Cannot verify retained translation payload for {other_locale}: {error}") from error
 
     output.mkdir(parents=True, exist_ok=True)
     payload = output / f"translation-{digest}.json"

@@ -155,6 +155,30 @@ class TranslationReleaseTest(unittest.TestCase):
         self.publish()
         self.assertEqual({"ja", "zh-Hant"}, set(release.parse_manifest(pointer.read_bytes())))
 
+    def test_retained_pack_must_match_manifest_and_current_catalog(self):
+        self.candidate("ja", 1)
+        pointer = self.publish()
+        original = pointer.read_bytes()
+        _, new_payload = self.candidate("zh-Hant", 1)
+        for field, value in (("locale", "de"), ("revision", 2)):
+            with self.subTest(field=field):
+                manifest = json.loads(original)
+                manifest["packs"][0][field] = value
+                invalid = json.dumps(manifest).encode()
+                pointer.write_bytes(invalid)
+                with self.assertRaisesRegex(ValueError, "Payload locale or revision does not match manifest"):
+                    self.publish()
+                self.assertEqual(invalid, pointer.read_bytes())
+                self.assertFalse(new_payload.exists())
+
+        pointer.write_bytes(original)
+        catalog = {12}
+        self.pack.write_bytes(encode_pack([{"id": 12, "name": "New"}], "zh-Hant", 1, catalog))
+        with self.assertRaisesRegex(ValueError, "retained translation payload for ja: .*unknown tag ID"):
+            release.prepare_release(self.pack, catalog, self.output)
+        self.assertEqual(original, pointer.read_bytes())
+        self.assertEqual(1, len(list(self.output.glob("translation-*.json"))))
+
 
 if __name__ == "__main__":
     unittest.main()

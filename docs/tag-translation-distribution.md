@@ -71,9 +71,10 @@ Use one publisher at a time and retain `manifest.json` and its referenced
 payloads in the release directory. Use the exact bytes produced by the pack
 builder or review tool. The tool validates the input pack against the
 catalog, reuses an exact repeat, and rejects an older revision or a
-revision reused for different bytes. It verifies the size and digest of each
-retained locale, stages the new immutable file first, then atomically updates
-`manifest.json`. Restore missing or damaged retained files before retrying.
+revision reused for different bytes. It verifies the bytes, locale, revision,
+and catalog IDs of each retained pack. It stages the new immutable file
+first, then atomically updates `manifest.json`. Restore missing or damaged
+retained files before retrying.
 Retrying after an interrupted manifest write can reuse the staged file.
 
 The producer and Android feed tests share a small synthetic release fixture.
