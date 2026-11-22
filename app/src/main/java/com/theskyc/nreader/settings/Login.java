@@ -109,6 +109,13 @@ public class Login {
             ? new OnlineTagScope(onlineTagsIdentity, onlineTagsRevision) : null;
     }
 
+    @Nullable
+    public static synchronized OnlineTagScope currentOnlineTagScope(@Nullable String identity, long revision) {
+        if (identity == null || revision < 0) return null;
+        OnlineTagScope scope = currentOnlineTagScope();
+        return scope != null && scope.revision == revision && scope.identity.equals(identity) ? scope : null;
+    }
+
     public static final class OnlineTagScope {
         private final String identity;
         private final long revision;

@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.adapters.HistoryAdapter;
+import com.theskyc.nreader.api.AccountSearchTags;
 import com.theskyc.nreader.api.components.Ranges;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.components.TagSuggestion;
@@ -53,18 +54,24 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class SearchActivity extends GeneralActivity {
+    static final String SEARCH_SUBMITTED_EXTRA = ".SEARCH_SUBMITTED";
+    static final String ACCOUNT_TAGS_EXTRA = ".SEARCH_ACCOUNT_TAGS";
+    static final String ACCOUNT_TAGS_EXPECTED_EXTRA = ".SEARCH_ACCOUNT_TAGS_EXPECTED";
     private final Ranges ranges = new Ranges();
     private final ArrayList<ChipTag> tags = new ArrayList<>();
     private final ArrayList<ChipTag> onlineChips = new ArrayList<>();
     private final ArrayList<ChipTag> onlineMergedChips = new ArrayList<>();
+    private final Set<Integer> manualTagDecisions = new HashSet<>();
     private String onlineChipsIdentity;
     private long onlineChipsRevision = -1;
     private String onlineTagsLoadingIdentity;
@@ -123,20 +130,9 @@ public class SearchActivity extends GeneralActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (isResolvingTagEntry()) return true;
-                removeStaleOnlineTags();
                 query = query.trim();
                 if (query.isEmpty() && !advanced) return true;
-                String submittedQuery = query;
-                if (Login.wantsAccountTag() && !onlineTagsReady(onlineChipsIdentity, onlineChipsRevision,
-                    Login.currentOnlineTagsIdentity(), Login.currentOnlineTagsRevision())) {
-                    new MaterialAlertDialogBuilder(SearchActivity.this)
-                        .setMessage(R.string.online_blacklist_search_unavailable)
-                        .setPositiveButton(R.string.online_blacklist_refresh, (dialog, which) -> loadOnlineSearchTags())
-                        .setNegativeButton(R.string.online_blacklist_search_without, (dialog, which) -> submitSearch(submittedQuery, true))
-                        .setNeutralButton(R.string.cancel, null).show();
-                    return true;
-                }
-                submitSearch(submittedQuery, false);
+                submitSearch(query, false);
                 return true;
             }
 
@@ -163,20 +159,42 @@ public class SearchActivity extends GeneralActivity {
     private void submitSearch(String query, boolean withoutOnlineTags) {
         if (isResolvingTagEntry()) return;
         removeStaleOnlineTags();
-        boolean useAdvanced = withoutOnlineTags || advanced || (Login.wantsAccountTag()
+        Login.OnlineTagScope scope = withoutOnlineTags ? null
+            : Login.currentOnlineTagScope(onlineChipsIdentity, onlineChipsRevision);
+        if (!withoutOnlineTags && scope == null && Login.wantsAccountTag()) {
+            new MaterialAlertDialogBuilder(this)
+                .setMessage(R.string.online_blacklist_search_unavailable)
+                .setPositiveButton(R.string.online_blacklist_refresh, (dialog, which) -> loadOnlineSearchTags())
+                .setNegativeButton(R.string.online_blacklist_search_without, (dialog, which) -> submitSearch(query, true))
+                .setNeutralButton(R.string.cancel, null).show();
+            return;
+        }
+        boolean useAdvanced = withoutOnlineTags || advanced || (scope != null
             && (!onlineChips.isEmpty() || !onlineMergedChips.isEmpty()));
         if (!query.isEmpty()) adapter.addHistory(query);
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(getPackageName() + ".SEARCHMODE", true);
+        intent.putExtra(getPackageName() + SEARCH_SUBMITTED_EXTRA, true);
         intent.putExtra(getPackageName() + ".QUERY", query);
         intent.putExtra(getPackageName() + ".ADVANCED", useAdvanced);
+        ArrayList<Tag> automatic = new ArrayList<>();
         if (useAdvanced) {
             ArrayList<Tag> selected = new ArrayList<>(tags.size());
-            for (ChipTag chip : tags)
-                if ((!withoutOnlineTags || (!onlineChips.contains(chip) && !onlineMergedChips.contains(chip)))
-                    && chip.getTag().getStatus() != TagStatus.DEFAULT) selected.add(chip.getTag());
+            for (ChipTag chip : tags) {
+                Tag tag = chip.getTag();
+                if (tag.getStatus() == TagStatus.DEFAULT) continue;
+                if (onlineChips.contains(chip) || onlineMergedChips.contains(chip)) {
+                    if (scope != null) automatic.add(tag);
+                } else selected.add(tag);
+            }
             intent.putParcelableArrayListExtra(getPackageName() + ".TAGS", selected);
             intent.putExtra(getPackageName() + ".RANGES", ranges);
+        }
+        if (scope != null) {
+            intent.putExtra(getPackageName() + ACCOUNT_TAGS_EXPECTED_EXTRA, true);
+            Bundle account = new Bundle();
+            account.putBinder(getPackageName() + ACCOUNT_TAGS_EXTRA, new AccountSearchTags(scope, automatic));
+            intent.putExtras(account);
         }
         startActivity(intent);
         finish();
@@ -227,6 +245,7 @@ public class SearchActivity extends GeneralActivity {
         onlineChipsIdentity = identity;
         onlineChipsRevision = revision;
         for (Tag tag : online) {
+            if (manualTagDecisions.contains(tag.getId())) continue;
             ChipTag existing = findTagChip(tag);
             if (existing != null) {
                 if (existing.getTag().getStatus() == TagStatus.DEFAULT) {
@@ -435,19 +454,24 @@ public class SearchActivity extends GeneralActivity {
         c.setOnCloseIconClickListener(v -> {
             cg.removeView(c);
             tags.remove(c);
-            onlineChips.remove(c);
-            onlineMergedChips.remove(c);
+            markManualTag(c);
             advanced = true;
         });
         c.setOnClickListener(v -> {
-            onlineChips.remove(c);
-            onlineMergedChips.remove(c);
+            markManualTag(c);
             c.updateStatus();
             advanced = true;
         });
         cg.addView(c);
         tags.add(c);
         return c;
+    }
+
+    private void markManualTag(ChipTag chip) {
+        int tagId = chip.getTag().getId();
+        if (tagId > 0) manualTagDecisions.add(tagId);
+        onlineChips.remove(chip);
+        onlineMergedChips.remove(chip);
     }
 
     private void removeStaleOnlineTags() {

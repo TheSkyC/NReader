@@ -69,6 +69,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     private ApiRequestType requestType;
     private Set<Tag> tags;
     @Nullable private Login.OnlineTagScope accountTagScope;
+    private boolean accountTagSelectionMissing;
+    private boolean submittedSearch;
     @Nullable private Set<Tag> tagsWithoutAccount;
     private ArrayList<GenericGallery> galleries = null;
     private Ranges ranges = null;
@@ -191,21 +193,33 @@ public class InspectorV3 extends Thread implements Parcelable {
     public static InspectorV3 tagInspector(Context context, Tag tag, int page, SortType sortType, InspectorResponse response) {
         if (Global.isOnlyTag())
             return searchInspector(context, null, Collections.singleton(tag), page, sortType, null, response);
-        return buildSearch(context, null, null, tag, page, sortType, null, response);
+        return buildSearch(context, null, null, tag, page, sortType, null, response, false, null);
     }
 
     public static InspectorV3 searchInspector(Context context, String query, Collection<Tag> tags, int page, SortType sortType, @Nullable Ranges ranges, InspectorResponse response) {
-        return buildSearch(context, query, tags, null, page, sortType, ranges, response);
+        return buildSearch(context, query, tags, null, page, sortType, ranges, response, false, null);
+    }
+
+    public static InspectorV3 submittedSearchInspector(Context context, String query, @Nullable Collection<Tag> tags,
+        SortType sortType, @Nullable Ranges ranges, InspectorResponse response,
+        boolean expectsAccountTags, @Nullable AccountSearchTags accountTags) {
+        InspectorV3 inspector = buildSearch(context, query, tags, null, 1, sortType, ranges, response, true, accountTags);
+        inspector.accountTagSelectionMissing = expectsAccountTags && accountTags == null;
+        return inspector;
     }
 
     private static InspectorV3 buildSearch(Context context, @Nullable String query,
                                            @Nullable Collection<Tag> tags, @Nullable Tag browsedTag, int page,
-                                           SortType sortType, @Nullable Ranges ranges, InspectorResponse response) {
+                                           SortType sortType, @Nullable Ranges ranges, InspectorResponse response,
+                                           boolean submittedSearch, @Nullable AccountSearchTags accountSelection) {
         InspectorV3 inspector = new InspectorV3(context, response);
+        inspector.submittedSearch = submittedSearch;
         inspector.custom = tags != null;
         inspector.tags = inspector.custom ? new HashSet<>(tags) : getDefaultTags();
         inspector.tags.addAll(getLanguageTags(Global.getOnlyLanguage()));
-        if (!inspector.custom) {
+        if (accountSelection != null) {
+            inspector.applyAccountTags(accountSelection.scope, accountSelection.tags);
+        } else if (!submittedSearch && !inspector.custom) {
             Login.OnlineTagScope scope = Login.currentOnlineTagScope();
             if (scope != null) inspector.applyAccountTags(scope, Queries.TagTable.getAllOnlineBlacklisted());
         }
@@ -233,7 +247,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public boolean isAccountTagScopeCurrent() {
-        return accountTagScope == null || accountTagScope.isCurrent();
+        return !accountTagSelectionMissing && (accountTagScope == null || accountTagScope.isCurrent());
     }
 
     public boolean usesCurrentDefaultAccountTags() {
@@ -241,11 +255,12 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public InspectorV3 withoutAccountTags() {
-        if (accountTagScope == null) return this;
+        if (accountTagScope == null && !accountTagSelectionMissing) return this;
         InspectorV3 portable = cloneInspector(context.get(), response);
         if (tagsWithoutAccount != null) portable.tags = tagsWithoutAccount;
         portable.tagsWithoutAccount = null;
         portable.accountTagScope = null;
+        portable.accountTagSelectionMissing = false;
         portable.pageCount = 0;
         portable.selectSearchRequestType();
         portable.createUrl();
@@ -256,8 +271,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         if (query.isEmpty() && (ranges == null || ranges.isDefault())) {
             switch (tags.size()) {
                 case 0:
-                    requestType = ApiRequestType.BYALL;
-                    tryByAllPopular();
+                    requestType = submittedSearch ? ApiRequestType.BYSEARCH : ApiRequestType.BYALL;
+                    if (!submittedSearch) tryByAllPopular();
                     break;
                 case 1:
                     Tag tag = tags.iterator().next();
@@ -336,7 +351,7 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        if (accountTagScope != null) {
+        if (accountTagScope != null || accountTagSelectionMissing) {
             withoutAccountTags().writeToParcel(dest, flags);
             return;
         }
@@ -383,6 +398,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         inspectorV3.tags = tags;
         inspectorV3.tagsWithoutAccount = tagsWithoutAccount;
         inspectorV3.accountTagScope = accountTagScope;
+        inspectorV3.accountTagSelectionMissing = accountTagSelectionMissing;
+        inspectorV3.submittedSearch = submittedSearch;
         inspectorV3.requestType = requestType;
         inspectorV3.sortType = sortType;
         inspectorV3.pageCount = pageCount;
@@ -445,7 +462,7 @@ public class InspectorV3 extends Thread implements Parcelable {
                     }
                 }
             }
-            if (ranges != null)
+            if (ranges != null && !ranges.isDefault())
                 builder.append('+').append(ranges.toQuery());
             builder.append("&page=").append(page);
             if (sortType != null && sortType.getUrlAddition() != null) {

@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +44,7 @@ import com.bumptech.glide.RequestManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.theskyc.nreader.adapters.ListAdapter;
+import com.theskyc.nreader.api.AccountSearchTags;
 import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
@@ -710,7 +712,17 @@ public class MainActivity extends BaseActivity
             }
             tags = new HashSet<>(tagArrayList);
         }
-        inspector = InspectorV3.searchInspector(this, query, tags, 1, Global.getSortType(), ranges, resetDataset);
+        if (intent.getBooleanExtra(packageName + SearchActivity.SEARCH_SUBMITTED_EXTRA, false)) {
+            boolean expectsAccountTags = intent.getBooleanExtra(
+                packageName + SearchActivity.ACCOUNT_TAGS_EXPECTED_EXTRA, false);
+            IBinder handoff = expectsAccountTags
+                ? intent.getExtras().getBinder(packageName + SearchActivity.ACCOUNT_TAGS_EXTRA) : null;
+            AccountSearchTags accountTags = handoff instanceof AccountSearchTags ? (AccountSearchTags) handoff : null;
+            inspector = InspectorV3.submittedSearchInspector(this, query, tags, Global.getSortType(), ranges,
+                resetDataset, expectsAccountTags, accountTags);
+        } else {
+            inspector = InspectorV3.searchInspector(this, query, tags, 1, Global.getSortType(), ranges, resetDataset);
+        }
         modeType = ModeType.SEARCH;
     }
 

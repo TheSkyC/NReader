@@ -163,14 +163,24 @@ When submitting a search after opting out, automatic blacklist entries are
 removed from the selection, while manual tag choices are preserved.
 Only the active account's validated cache is exposed; an in-flight result
 from a previous account or before restore cannot publish.
-Home, shared text searches, and tag browsing bind automatic exclusions to
-the validated cache revision that supplied them, including an empty blacklist.
+Home, searches, and tag browsing bind automatic exclusions to the validated
+cache revision that supplied them, including an empty blacklist. The search
+form passes automatic selections in a process-local handoff. Its regular
+launch arguments contain only manual and local selections. If the launch
+arguments still indicate a handoff but it is missing or its revision changed,
+the result screen requires confirmation to search without automatic
+exclusions. A form submission made with account tags off stays that way.
+Editing or removing an automatic selection makes it
+a manual choice for the life of that form, even if the blacklist refreshes.
+A bare positive gallery ID opens that gallery directly as before; this is
+a gallery lookup and does not use the tag filters.
 Turning off account tags invalidates requests bound to that revision as soon
 as the preference is saved. When the revision is no longer current, the home
 feed rebuilds; other affected result lists discard the old results and offer
 to repeat the search without online tags. Newly created bookmarks and search
 plans from these queries omit automatic exclusions and retain explicit
-search terms and local rules.
+search terms and local rules. An empty saved search still replays as a search;
+it does not reload the home feed's filters.
 
 The tag list reads its cursor and copies rows in bounded batches on a worker.
 Cached rows remain usable while a directory update is holding the database;
