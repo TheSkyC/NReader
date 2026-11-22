@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.Call;
 import okhttp3.HttpUrl;
 
 public class ScrapeTags extends Worker {
@@ -44,10 +45,18 @@ public class ScrapeTags extends Worker {
     private static final String CHECKED_AT = "checked_at";
     private static boolean cleanedStagingDirectory;
 
-    private final TagFeedDownload download = new TagFeedDownload(this::isStopped);
+    private final TagFeedDownload download;
+    private final String manifestUrl;
 
     public ScrapeTags(@NonNull Context context, @NonNull WorkerParameters params) {
+        this(context, params, BuildConfig.TAG_CATALOG_MANIFEST_URL,
+            request -> TagFeedDownload.publicClient().newCall(request));
+    }
+
+    ScrapeTags(Context context, WorkerParameters params, String manifestUrl, Call.Factory client) {
         super(context, params);
+        this.manifestUrl = manifestUrl;
+        this.download = new TagFeedDownload(client, this::isStopped);
     }
 
     public static void startWork(Context context) {
@@ -60,9 +69,12 @@ public class ScrapeTags extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        SQLiteDatabase database = Database.getDatabase();
+        return refresh(Database.getDatabase());
+    }
+
+    Result refresh(SQLiteDatabase database) {
         if (database == null) return failureOrRetry();
-        boolean published = !BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty();
+        boolean published = !manifestUrl.isEmpty();
         try {
             int publishedRevision = TagCatalog.installedPublishedRevision(database);
             if (!published && publishedRevision > 0) return Result.success();
@@ -75,11 +87,10 @@ public class ScrapeTags extends Worker {
                 return Result.success();
             }
 
-            int revision = published ? checkPublished(database, installed) : fetchRevision();
-            if (!published && revision > installed) downloadAndApply(database, revision);
+            int revision = published ? checkPublished(database, installed) : checkLegacy(database, installed);
             download.checkCancelled();
             // Record only the revision this check verified; another installer may run concurrently.
-            checks.edit().putInt(CHECKED_REVISION, Math.max(installed, revision))
+            checks.edit().putInt(CHECKED_REVISION, revision)
                 .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
             return Result.success();
         } catch (IOException | SQLiteException error) {
@@ -89,8 +100,15 @@ public class ScrapeTags extends Worker {
         }
     }
 
+    private int checkLegacy(SQLiteDatabase database, int installed) throws IOException {
+        int revision = fetchRevision();
+        if (revision < installed) throw new IOException("Legacy tag catalog revision is stale");
+        if (revision > installed) downloadAndApply(database, revision);
+        return revision;
+    }
+
     private int checkPublished(SQLiteDatabase database, int installed) throws IOException {
-        HttpUrl url = TagCatalogManifest.manifestUrl(BuildConfig.TAG_CATALOG_MANIFEST_URL);
+        HttpUrl url = TagCatalogManifest.manifestUrl(manifestUrl);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         download.copy(url, output, TagCatalogManifest.MAX_BYTES, true);
         TagCatalogManifest manifest = TagCatalogManifest.parse(output.toByteArray());

@@ -32,6 +32,9 @@ limited to 256 UTF-16 code units and must fit the site's quote syntax.
 Revisions are comparable only within this source. Once installed, a
 configured NReader catalog takes precedence over the bundled and legacy
 sources. A stale or failed refresh keeps the installed catalog and rules.
+For both remote sources, a revision lower than the installed revision of
+that source also leaves the last successful check unchanged and uses the
+bounded retry policy. A matching revision needs no payload download.
 To correct a published catalog, publish a corrected snapshot at a higher
 revision; do not reset the counter. An omitted ID continues to resolve
 under the existing catalog merge policy.
