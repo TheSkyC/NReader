@@ -161,12 +161,17 @@ def recover_snapshot(directory: Path) -> None:
     staging = directory / stage_name
     if not staging.is_dir():
         raise ValueError("Catalog transaction recovery files are missing")
-    for name in TRANSACTION_FILES:
+    backups = {}
+    for name, existed in previous.items():
+        if not existed:
+            continue
         backup = staging / (name + ".previous")
-        if previous[name]:
-            if not backup.is_file():
-                raise ValueError("Catalog transaction recovery files are incomplete")
-            atomic_write(directory / name, read_bounded(backup, MAX_BYTES * 4))
+        if not backup.is_file():
+            raise ValueError("Catalog transaction recovery files are incomplete")
+        backups[name] = read_bounded(backup, MAX_BYTES * 4)
+    for name in TRANSACTION_FILES:
+        if name in backups:
+            atomic_write(directory / name, backups[name])
         else:
             (directory / name).unlink(missing_ok=True)
     journal.unlink()

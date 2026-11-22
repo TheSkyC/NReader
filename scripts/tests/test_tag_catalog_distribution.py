@@ -188,6 +188,33 @@ class CatalogCollectorTest(unittest.TestCase):
             self.assertFalse((path / collector.TRANSACTION).exists())
             self.assertFalse(staging.exists())
 
+    def test_snapshot_recovery_preserves_targets_when_later_backup_is_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            old = {"tagsPretty.json": b"old pretty", "tags.json": b"old catalog",
+                   "tagsVersion": b"43\n"}
+            interrupted = {**old, "tagsPretty.json": b"new pretty"}
+            for name, content in interrupted.items():
+                (path / name).write_bytes(content)
+            staging = path / ".tag-catalog-interrupted"
+            staging.mkdir()
+            for name in ("tagsPretty.json", "tags.json"):
+                (staging / (name + ".previous")).write_bytes(old[name])
+            journal = path / collector.TRANSACTION
+            journal.write_text(json.dumps(
+                {"directory": staging.name, "previous": {name: True for name in old}}))
+
+            with self.assertRaisesRegex(ValueError, "recovery files are incomplete"):
+                collector.recover_snapshot(path)
+            self.assertEqual(interrupted, {name: (path / name).read_bytes() for name in old})
+            self.assertTrue(journal.is_file())
+
+            (staging / "tagsVersion.previous").write_bytes(old["tagsVersion"])
+            collector.recover_snapshot(path)
+            self.assertEqual(old, {name: (path / name).read_bytes() for name in old})
+            self.assertFalse(journal.exists())
+            self.assertFalse(staging.exists())
+
     def test_snapshot_write_failure_restores_every_previous_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
