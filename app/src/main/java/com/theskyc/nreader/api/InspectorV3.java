@@ -344,6 +344,11 @@ public class InspectorV3 extends Thread implements Parcelable {
         }
     }
 
+    private static boolean isSiteQueryTag(Tag tag) {
+        return tag != null && tag.getType() != null && tag.getType().getId() > 0
+            && TagCatalog.isCanonicalName(tag.getName());
+    }
+
     private void createUrl() {
         String query;
         try {
@@ -367,8 +372,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         } else if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
             builder.append("search?query=").append(query);
             for (Tag tt : tags) {
-                if (tt == null || tt.getType() == null || tt.getType().getId() <= 0
-                    || !TagCatalog.isCanonicalName(tt.getName())) continue;
+                if (!isSiteQueryTag(tt)) continue;
                 if (builder.toString().contains(tt.toQueryTag(TagStatus.ACCEPTED))) continue;
                 builder.append('+');
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -473,17 +477,20 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     private void filterDocumentTags() {
-        if (galleries == null || tags == null) return;
-        ArrayList<SimpleGallery> galleryTag = new ArrayList<>(galleries.size());
-        for (GenericGallery gal : galleries) {
-            assert gal instanceof SimpleGallery;
-            SimpleGallery gallery = (SimpleGallery) gal;
-            if (gallery.hasTags(tags)) {
-                galleryTag.add(gallery);
-            }
+        if (galleries.isEmpty() || tags == null || tags.isEmpty()) return;
+        List<Tag> identifiedTags = new ArrayList<>();
+        for (Tag tag : tags) {
+            if (isSiteQueryTag(tag) && tag.getId() > 0) identifiedTags.add(tag);
         }
-        galleries.clear();
-        galleries.addAll(galleryTag);
+        if (identifiedTags.isEmpty()) return;
+        galleries.removeIf(result -> {
+            SimpleGallery gallery = (SimpleGallery) result;
+            for (Tag tag : identifiedTags) {
+                boolean include = tag.getStatus() != TagStatus.AVOIDED;
+                if (gallery.hasSiteTag(tag) != include) return true;
+            }
+            return false;
+        });
     }
 
     /**

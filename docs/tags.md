@@ -105,6 +105,12 @@ the exact lowercased spelling. An unmatched valid name is still usable as a
 custom search term. Search does not submit while an entry is being resolved.
 Uninstalled locales use canonical names only.
 
+With Match all search tags enabled, results must contain the site IDs of
+included structured tags and must omit the site IDs of excluded structured
+tags. This check uses the IDs returned with the gallery, so a missing directory
+entry does not affect it. Custom terms without a site ID and free-text terms
+are still sent to the site for matching.
+
 Custom terms have no site ID. A bookmark for a custom term saves the query,
 page, and sort. A single positive site-tag bookmark uses its site ID to
 follow canonical renames. If the ID is missing, it replays the saved query;

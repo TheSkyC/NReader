@@ -183,6 +183,11 @@ public class SimpleGallery extends GenericGallery {
         return tags;
     }
 
+    boolean hasSiteTag(Tag tag) {
+        if (!tagIds.isEmpty()) return tagIds.contains(tag.getId());
+        return tags != null && tags.hasTag(tag);
+    }
+
     public boolean hasTags(Collection<Tag> tags) {
         return this.tags.hasTags(tags);
     }
