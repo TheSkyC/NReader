@@ -111,13 +111,19 @@ are rejected. Android uses the bundled ICU data; translation tools require CPyth
 longer accepted; their normalization depended on the platform. Keep the original
 development files and build a corrected version 2 pack at a higher locale revision.
 
-Database version 28 rebuilds display and alias keys from stored text in the
-upgrade transaction. It preserves text, alias identities and order, revisions,
-rules, and account state, including aliases whose rebuilt keys collide. Export
-continues to reject colliding aliases until they are corrected.
-Database version 24 updates installed search keys without changing display names
-or pack revisions. If a tag has legacy aliases that become equivalent, the
-upgrade keeps the first stored alias for that key.
+Database version 28 rebuilt display and alias keys from stored text in the
+upgrade transaction. Version 29 upgrades older databases by recording a pending
+rebuild and processing bounded batches in the background. Each batch commits its
+keys and checkpoint together; interrupted work resumes. Until all keys are ready,
+tag displays and search use canonical names, while installed packs remain available
+for export, replacement, and removal. Completion refreshes translation observers.
+The rebuild preserves text, alias identities and order, revisions, rules, and
+account state, including aliases whose rebuilt keys collide. Export continues to
+reject colliding aliases until they are corrected. Version 28 databases already
+have rebuilt keys and do not need this work.
+The historical version 24 upgrade kept the first alias when legacy keys became
+equivalent. A direct upgrade from version 23 to version 29 instead preserves
+the distinct aliases before rebuilding their keys in the background.
 
 Prepare a pack using CPython 3.14 from a local JSON array of entries, using the
 checked-in catalog snapshot to reject unknown IDs:

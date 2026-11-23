@@ -60,6 +60,8 @@ public final class TagTranslationCatalog {
         + "locale TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK (revision > 0))";
     private static final String CREATE_GENERATIONS = "CREATE TABLE IF NOT EXISTS TagTranslationGenerations ("
         + "locale TEXT PRIMARY KEY NOT NULL, generation INTEGER NOT NULL CHECK (generation > 0))";
+    private static final String CREATE_KEY_REBUILD_STATE = "CREATE TABLE IF NOT EXISTS TagTranslationKeyRebuild ("
+        + "id INTEGER PRIMARY KEY CHECK (id = 1), stage INTEGER NOT NULL CHECK (stage IN (0, 1)), lastRowId INTEGER)";
     private static final String CREATE_DISPLAY_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslations_locale_key_idx"
         + " ON TagTranslations (locale, displayKey, idTag)";
     private static final String CREATE_ALIAS_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslationAliases_locale_key_idx"
@@ -114,6 +116,7 @@ public final class TagTranslationCatalog {
         database.execSQL(CREATE_ALIASES);
         database.execSQL(CREATE_STATE);
         createGenerationTable(database);
+        createKeyRebuildState(database);
         database.execSQL(CREATE_DISPLAY_INDEX);
         database.execSQL(CREATE_ALIAS_INDEX);
         database.execSQL(CREATE_ALIAS_TAG_INDEX);
@@ -123,6 +126,20 @@ public final class TagTranslationCatalog {
         database.execSQL(CREATE_GENERATIONS);
         database.execSQL("CREATE INDEX IF NOT EXISTS TagTranslationGenerations_generation_idx"
             + " ON TagTranslationGenerations (generation)");
+    }
+
+    static void createKeyRebuildState(SQLiteDatabase database) {
+        database.execSQL(CREATE_KEY_REBUILD_STATE);
+    }
+
+    static void scheduleKeyRebuild(SQLiteDatabase database) {
+        database.execSQL("INSERT INTO TagTranslationKeyRebuild (id, stage, lastRowId) VALUES (1, 0, NULL)");
+    }
+
+    public static boolean isKeyRebuildPending(SQLiteDatabase database) {
+        try (Cursor cursor = database.rawQuery("SELECT 1 FROM TagTranslationKeyRebuild WHERE id = 1", null)) {
+            return cursor.moveToFirst();
+        }
     }
 
     static void upgradeAliasOrder(SQLiteDatabase database) {
@@ -398,6 +415,72 @@ public final class TagTranslationCatalog {
         if (update.executeUpdateDelete() != count) throw new IllegalStateException("Translation key rebuild lost rows");
     }
 
+    /** Commits one bounded checkpoint and returns true when no rebuild remains. */
+    public static boolean rebuildUnicodeKeyBatch(SQLiteDatabase database, BooleanSupplier cancelled) throws IOException {
+        final int batchSize = 100;
+        boolean completed = false;
+        boolean finished = false;
+        database.beginTransactionNonExclusive();
+        try {
+            checkCancelled(cancelled);
+            int stage;
+            Long lastRowId;
+            try (Cursor state = database.rawQuery("SELECT stage, lastRowId FROM TagTranslationKeyRebuild WHERE id = 1", null)) {
+                if (!state.moveToFirst()) {
+                    finished = true;
+                    database.setTransactionSuccessful();
+                    return true;
+                }
+                stage = state.getInt(0);
+                lastRowId = state.isNull(1) ? null : state.getLong(1);
+            }
+            String table = stage == 0 ? "TagTranslations" : "TagTranslationAliases";
+            String textColumn = stage == 0 ? "displayName" : "alias";
+            String keyColumn = stage == 0 ? "displayKey" : "aliasKey";
+            long[] rowIds = new long[batchSize];
+            String[] keys = new String[batchSize];
+            int changed = 0;
+            int scanned = 0;
+            long last = 0;
+            String sql = "SELECT rowid, " + textColumn + ", " + keyColumn + " FROM " + table
+                + (lastRowId == null ? "" : " WHERE rowid > ?") + " ORDER BY rowid LIMIT " + batchSize;
+            String[] args = lastRowId == null ? null : new String[]{Long.toString(lastRowId)};
+            try (Cursor rows = database.rawQuery(sql, args)) {
+                while (rows.moveToNext()) {
+                    checkCancelled(cancelled);
+                    scanned++;
+                    last = rows.getLong(0);
+                    String key = TagUnicode.searchKey(rows.getString(1));
+                    if (!key.equals(rows.getString(2))) {
+                        rowIds[changed] = last;
+                        keys[changed++] = key;
+                    }
+                }
+            }
+            if (changed != 0) {
+                try (SQLiteStatement update = compileKeyBatch(database, table, keyColumn, changed)) {
+                    executeKeyBatch(update, rowIds, keys, changed);
+                }
+            }
+            checkCancelled(cancelled);
+            if (scanned != 0) {
+                database.execSQL("UPDATE TagTranslationKeyRebuild SET lastRowId = ? WHERE id = 1", new Object[]{last});
+            } else if (stage == 0) {
+                database.execSQL("UPDATE TagTranslationKeyRebuild SET stage = 1, lastRowId = NULL WHERE id = 1");
+            } else {
+                database.execSQL("DELETE FROM TagTranslationKeyRebuild WHERE id = 1");
+                completed = true;
+                finished = true;
+            }
+            checkCancelled(cancelled);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+        if (completed) CHANGES.postValue(null);
+        return finished;
+    }
+
     public static int installedRevision(SQLiteDatabase database, String locale) {
         String canonicalLocale = validateLocale(locale);
         try (Cursor cursor = database.rawQuery("SELECT revision FROM TagTranslationState WHERE locale = ?",
@@ -417,6 +500,7 @@ public final class TagTranslationCatalog {
 
     public static String resolveInstalledLocale(SQLiteDatabase database, Locale appLocale) {
         if (appLocale == null || appLocale.getLanguage().isEmpty()) return null;
+        if (isKeyRebuildPending(database)) return null;
         List<String> candidates = new ArrayList<>();
         String language = appLocale.toLanguageTag().split("-", 2)[0];
         String script = appLocale.getScript();

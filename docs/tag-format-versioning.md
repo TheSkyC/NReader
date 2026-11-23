@@ -8,7 +8,7 @@ be used in place of another.
 
 ## Current contracts
 
-- The application database is schema version 28. `DatabaseHelper.onUpgrade`
+- The application database is schema version 29. `DatabaseHelper.onUpgrade`
   applies upgrades in order; downgrade is deliberately unsupported. A storage
   change requires a new database version, an upgrade path from every supported
   prior version, and rollback tests for an injected migration failure.
@@ -25,7 +25,7 @@ The `:app:prepareTagUnicodeIcu` build task prepares a trimmed ICU4J 77.1 JAR
 from a digest-checked dependency for Unicode search keys.
 The JAR is an application dependency and includes ICU's versioned license and
 third-party notices, also packaged as an application asset. Pack version 2 and
-database version 28 use its Unicode 16.0 normalization and lowercase data.
+database versions 28 and later use its Unicode 16.0 normalization and lowercase data.
 Version 1 translation packs are rejected because their Unicode behavior depended
 on the platform. This is a development-format transition, not a public-feed
 migration policy. Already installed translations retain their text and revision.

@@ -454,6 +454,7 @@ public class Queries {
         }
 
         public static List<TagSuggestion> getTagSuggestions(TagType type, String prefix, @Nullable String locale) {
+            if (locale != null && TagTranslationCatalog.isKeyRebuildPending(db)) locale = null;
             String canonicalPattern = escapeLikePrefix(prefix) + "%";
             String normalizedPrefix = TagTranslationCatalog.searchKey(prefix);
             String normalizedUpperBound = TagTranslationCatalog.prefixUpperBound(normalizedPrefix);

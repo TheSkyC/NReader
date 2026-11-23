@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 
 @RunWith(AndroidJUnit4.class)
 public class TagUnicodeMigrationDeviceTest {
-    @Test public void rebuildsLargeStoredTranslationIndex() {
+    @Test public void rebuildsLargeStoredTranslationIndex() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
         int entries = 86030;
@@ -55,15 +55,26 @@ public class TagUnicodeMigrationDeviceTest {
             long start = SystemClock.elapsedRealtime();
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                long elapsed = SystemClock.elapsedRealtime() - start;
-                assertEquals(28, database.getVersion());
+                long openMs = SystemClock.elapsedRealtime() - start;
+                assertEquals(29, database.getVersion());
+                assertTrue(TagTranslationCatalog.isKeyRebuildPending(database));
+                long rebuildStart = SystemClock.elapsedRealtime();
+                long maxBatchMs = 0;
+                boolean finished;
+                do {
+                    long batchStart = SystemClock.elapsedRealtime();
+                    finished = TagTranslationCatalog.rebuildUnicodeKeyBatch(database, () -> false);
+                    maxBatchMs = Math.max(maxBatchMs, SystemClock.elapsedRealtime() - batchStart);
+                } while (!finished);
+                long rebuildMs = SystemClock.elapsedRealtime() - rebuildStart;
                 assertEquals(entries, DatabaseUtils.longForQuery(database,
                     "SELECT COUNT(*) FROM TagTranslations WHERE displayName = '\u1c89 name ' || idTag"
                         + " AND displayKey = '\u1c8a name ' || idTag", null));
                 assertEquals(entries * 2L, DatabaseUtils.longForQuery(database,
                     "SELECT COUNT(*) FROM TagTranslationAliases WHERE alias = '\u1c89 alias ' || idTag || ' ' || aliasOrder"
                         + " AND aliasKey = '\u1c8a alias ' || idTag || ' ' || aliasOrder", null));
-                Log.i("TagUnicodeMigration", "entries=" + entries + " aliases=" + entries * 2 + " upgradeMs=" + elapsed);
+                Log.i("TagUnicodeMigration", "entries=" + entries + " aliases=" + entries * 2
+                    + " openMs=" + openMs + " rebuildMs=" + rebuildMs + " maxBatchMs=" + maxBatchMs);
             }
         } finally {
             Queries.setDb(null);
@@ -89,7 +100,9 @@ public class TagUnicodeMigrationDeviceTest {
             }
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                assertEquals(28, database.getVersion());
+                assertEquals(29, database.getVersion());
+                assertTrue(TagTranslationCatalog.isKeyRebuildPending(database));
+                while (!TagTranslationCatalog.rebuildUnicodeKeyBatch(database, () -> false)) { }
                 assertEquals("\u1c8a old", DatabaseUtils.stringForQuery(database,
                     "SELECT aliasKey FROM TagTranslationAliases", null));
                 assertEquals(1, DatabaseUtils.longForQuery(database,

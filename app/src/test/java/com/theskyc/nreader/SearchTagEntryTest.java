@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Filterable;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
@@ -43,6 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 import static org.junit.Assert.assertEquals;
@@ -55,6 +57,34 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void suggestionsRefreshAfterTranslationKeyRebuild() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("refresh fixture", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            String pack = "{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
+                + "\"entries\":[{\"id\":501001,\"name\":\"Translated label\",\"aliases\":[\"refresh alias\"]}]}";
+            assertTrue(TagTranslationCatalog.apply(database,
+                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
+            database.execSQL("INSERT INTO TagTranslationKeyRebuild (id, stage, lastRowId) VALUES (1, 0, NULL)");
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                AlertDialog dialog = openTagDialog(controller.get());
+                AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                entry.setText("refresh alias", true);
+                AtomicBoolean filtered = new AtomicBoolean();
+                ((Filterable) entry.getAdapter()).getFilter().filter("refresh alias", count -> filtered.set(true));
+                await(filtered::get);
+                assertEquals(0, entry.getAdapter().getCount());
+                while (!TagTranslationCatalog.rebuildUnicodeKeyBatch(database, () -> false)) { }
+                await(() -> entry.getAdapter().getCount() == 1);
+                assertEquals("refresh alias", entry.getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void translatedSuggestionSubmitsOriginalSiteTag() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

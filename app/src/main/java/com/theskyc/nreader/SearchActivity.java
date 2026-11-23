@@ -38,6 +38,7 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.components.widgets.CustomLinearLayoutManager;
@@ -143,6 +144,9 @@ public class SearchActivity extends GeneralActivity {
         });
 
         populateGroup();
+        TagTranslationCatalog.changes().observe(this, ignored -> {
+            if (tagEntry != null) tagEntry.refreshSuggestions();
+        });
         AuthStore.observeIdentityChanges(authObserver);
         Login.observeOnlineTags(authObserver);
         synchronizeOnlineSearchTags();
@@ -493,6 +497,7 @@ public class SearchActivity extends GeneralActivity {
     private final class TagSuggestionAdapter extends ArrayAdapter<TagSuggestion> {
         private final TagType type;
         private final Locale locale;
+        private final AppCompatAutoCompleteTextView entry;
         private final Filter filter = new Filter() {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
@@ -508,6 +513,7 @@ public class SearchActivity extends GeneralActivity {
             @Override
             @SuppressWarnings("unchecked")
             protected void publishResults(CharSequence constraint, FilterResults results) {
+                if (!Objects.equals(constraint == null ? "" : constraint.toString(), entry.getText().toString())) return;
                 clear();
                 if (results.values != null) addAll((List<TagSuggestion>) results.values);
                 if (results.count > 0) notifyDataSetChanged();
@@ -520,9 +526,10 @@ public class SearchActivity extends GeneralActivity {
             }
         };
 
-        TagSuggestionAdapter(TagType type) {
+        TagSuggestionAdapter(TagType type, AppCompatAutoCompleteTextView entry) {
             super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
             this.type = type;
+            this.entry = entry;
             this.locale = getResources().getConfiguration().getLocales().get(0);
         }
 
@@ -573,6 +580,7 @@ public class SearchActivity extends GeneralActivity {
     private final class TagEntryDialog {
         private final TagType type;
         private final AppCompatAutoCompleteTextView entry;
+        private final TagSuggestionAdapter suggestions;
         private final AlertDialog dialog;
         private Tag selected;
         private Future<?> lookup;
@@ -581,7 +589,7 @@ public class SearchActivity extends GeneralActivity {
             this.type = type;
             entry = (AppCompatAutoCompleteTextView) getLayoutInflater().inflate(
                 R.layout.autocomplete_entry, findViewById(R.id.appbar), false);
-            TagSuggestionAdapter suggestions = new TagSuggestionAdapter(type);
+            suggestions = new TagSuggestionAdapter(type, entry);
             entry.setAdapter(suggestions);
             entry.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
@@ -611,6 +619,15 @@ public class SearchActivity extends GeneralActivity {
             dialog.setOnDismissListener(ignored -> retire());
             entry.requestFocus();
             inputMethodManager.showSoftInput(entry, InputMethodManager.SHOW_IMPLICIT);
+        }
+
+        private void refreshSuggestions() {
+            if (lookup != null || !dialog.isShowing() || entry.length() == 0) return;
+            String query = entry.getText().toString();
+            suggestions.getFilter().filter(query, count -> {
+                if (tagEntry == this && lookup == null && dialog.isShowing() && entry.hasFocus()
+                    && query.equals(entry.getText().toString()) && count > 0) entry.showDropDown();
+            });
         }
 
         private void resolve() {

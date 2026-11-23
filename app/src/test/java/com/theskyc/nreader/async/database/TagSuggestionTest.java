@@ -92,6 +92,20 @@ public class TagSuggestionTest {
         assertEquals(List.of("canonical"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "\u1c89", "ja")));
     }
 
+    @Test public void pendingRebuildUsesCanonicalNamesUntilCompletion() throws IOException {
+        insert(1, "canonical", TagType.TAG);
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":1,\"name\":\"translated\",\"aliases\":[\"alias\"]}]}")
+            .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
+        TagTranslationCatalog.scheduleKeyRebuild(database);
+        assertNull(TagTranslationCatalog.resolveInstalledLocale(database, Locale.JAPAN));
+        assertEquals(List.of(), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "alias", "ja")));
+        assertEquals(List.of("canonical"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "canon", "ja")));
+        while (!TagTranslationCatalog.rebuildUnicodeKeyBatch(database, () -> false)) { }
+        assertEquals(List.of("canonical"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "alias", "ja")));
+    }
+
     @Test public void translatedPrefixRangesMatchLiteralWildcardsAndUnicode() throws IOException {
         insert(1, "first", TagType.TAG);
         insert(2, "second", TagType.TAG);
