@@ -540,7 +540,13 @@
     <string name="tag_translation_install_failed">无法安装此标签语言包。</string>
     <string name="tag_translation_unknown_tags">当前标签目录缺少此语言包中的部分标签。请更新标签目录或应用后重试。如果仍然失败，语言包可能不兼容。</string>
     <string name="tag_catalog_check_updates">检查目录更新</string>
-    <string name="tag_catalog_check_requested">已请求检查标签目录更新，请稍后重试安装语言包。</string>
+    <string name="tag_catalog_check_close">关闭</string>
+    <string name="tag_catalog_check_queued">正在等待检查标签目录。需要网络连接，也可能正在等待重试。关闭此窗口后检查仍会继续。</string>
+    <string name="tag_catalog_check_running">正在检查标签目录…</string>
+    <string name="tag_catalog_check_complete">目录检查完成。请重新安装语言包；如果仍然失败，语言包可能不兼容。</string>
+    <string name="tag_catalog_check_no_source">当前安装的目录未配置更新源。请尝试更新应用或获取兼容的语言包。</string>
+    <string name="tag_catalog_check_failed">无法完成目录检查，请稍后重试。</string>
+    <string name="tag_catalog_check_cancelled">目录检查已取消或被新请求替代。如有需要，请重试。</string>
     <string name="local_tag_rule_save_error">无法保存本地标签规则，请重试。</string>
     <string name="tag_translation_browse_online">在线浏览</string>
     <string name="tag_translation_online_loading">正在检查可用的标签语言…</string>

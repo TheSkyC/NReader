@@ -38,9 +38,10 @@ bounded retry policy. A matching revision needs no payload download.
 When a translation pack contains IDs missing from the device, its error dialog
 offers a catalog update check. This replaces any pending catalog refresh,
 requires a network connection, and bypasses the normal seven-day check interval.
-The action only requests background work; it does not promise a newer catalog
-or automatically retry the translation. It keeps the same source precedence and
-failure handling as an ordinary refresh.
+The status dialog distinguishes waiting, running, a completed check, an
+unavailable source, failure, and cancellation. Closing it leaves the background
+work running. A completed check does not promise a newer catalog or automatically
+retry the translation. Source precedence and failure handling are unchanged.
 To correct a published catalog, publish a corrected snapshot at a higher
 revision; do not reset the counter. An omitted ID continues to resolve
 under the existing catalog merge policy.

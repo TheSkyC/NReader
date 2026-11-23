@@ -12,6 +12,7 @@ import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -73,12 +75,13 @@ public class ScrapeTags extends Worker {
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
-    public static void requestRefresh(Context context) {
+    public static Operation requestRefresh(Context context, UUID id) {
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ScrapeTags.class)
+            .setId(id)
             .setInputData(new Data.Builder().putBoolean(FORCE_CHECK, true).build())
             .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request);
+        return WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
     @NonNull

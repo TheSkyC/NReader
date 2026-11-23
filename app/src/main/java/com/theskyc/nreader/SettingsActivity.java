@@ -23,9 +23,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.async.TagTranslationFeed;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.async.database.TagTranslationManifest;
@@ -56,10 +56,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity {
+    private static final String CATALOG_CHECK_ID = "catalog_check_id";
     private static final String[] TRANSLATION_PACK_MIME_TYPES = {
         "application/json", "application/octet-stream", "text/*"
     };
@@ -72,6 +74,8 @@ public class SettingsActivity extends GeneralActivity {
     private ActivityResultLauncher<String[]> IMPORT_TRANSLATION_PACK;
     private TagTranslationFeed activeTranslationFeed;
     private AlertDialog translationFeedProgress;
+    private AlertDialog catalogCheckDialog;
+    private CatalogRefreshViewModel catalogRefresh;
     private int selectedItem;
 
     @Override
@@ -90,7 +94,34 @@ public class SettingsActivity extends GeneralActivity {
         fragment = Objects.requireNonNull((GeneralPreferenceFragment) getSupportFragmentManager().findFragmentById(R.id.fragment));
         fragment.setAct(this);
         fragment.setType(SettingsActivity.Type.values()[getIntent().getIntExtra(getPackageName() + ".TYPE", SettingsActivity.Type.MAIN.ordinal())]);
+        catalogRefresh = new ViewModelProvider(this).get(CatalogRefreshViewModel.class);
+        catalogRefresh.status().observe(this, this::updateCatalogCheckDialog);
+        if (savedInstanceState != null) {
+            String id = savedInstanceState.getString(CATALOG_CHECK_ID);
+            if (id != null) {
+                showCatalogCheckDialog();
+                catalogRefresh.restore(getApplicationContext(), UUID.fromString(id));
+                updateCatalogCheckDialog(catalogRefresh.status().getValue());
+            }
+        }
+    }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        if (catalogCheckDialog != null && catalogRefresh.requestId() != null) {
+            outState.putString(CATALOG_CHECK_ID, catalogRefresh.requestId().toString());
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (catalogCheckDialog != null) {
+            catalogCheckDialog.setOnDismissListener(null);
+            catalogCheckDialog.dismiss();
+            catalogCheckDialog = null;
+        }
+        super.onDestroy();
     }
 
     private void registerActivities() {
@@ -341,13 +372,39 @@ public class SettingsActivity extends GeneralActivity {
                 .setMessage(R.string.tag_translation_unknown_tags)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.tag_catalog_check_updates, (dialog, which) -> {
-                    ScrapeTags.requestRefresh(getApplicationContext());
-                    showTranslationToast(R.string.tag_catalog_check_requested, Toast.LENGTH_LONG);
+                    showCatalogCheckDialog();
+                    catalogRefresh.start(getApplicationContext());
                 })
                 .show();
         } else {
             Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void showCatalogCheckDialog() {
+        catalogCheckDialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_catalog_check_updates)
+            .setMessage(R.string.tag_catalog_check_queued)
+            .setPositiveButton(R.string.tag_catalog_check_close, null)
+            .setOnDismissListener(dialog -> {
+                catalogCheckDialog = null;
+                catalogRefresh.clearRequest();
+            })
+            .show();
+    }
+
+    private void updateCatalogCheckDialog(CatalogRefreshViewModel.Status status) {
+        if (catalogCheckDialog == null || status == null) return;
+        int message;
+        switch (status) {
+            case QUEUED: message = R.string.tag_catalog_check_queued; break;
+            case RUNNING: message = R.string.tag_catalog_check_running; break;
+            case CHECKED: message = R.string.tag_catalog_check_complete; break;
+            case NO_SOURCE: message = R.string.tag_catalog_check_no_source; break;
+            case CANCELLED: message = R.string.tag_catalog_check_cancelled; break;
+            default: message = R.string.tag_catalog_check_failed; break;
+        }
+        catalogCheckDialog.setMessage(getString(message));
     }
 
     private void showTranslationToast(CharSequence message, int duration) {
