@@ -188,6 +188,22 @@ public class TagRuleEditsTest {
         assertEquals(TagStatus.ACCEPTED, Queries.TagTable.storedRuleStatus(second));
     }
 
+    @Test public void bulkPreviewReportsMatchingCountWithoutWriting() {
+        Tag first = tag(42, TagStatus.DEFAULT);
+        Tag second = tag(43, TagStatus.DEFAULT);
+        Queries.TagTable.insert(first);
+        Queries.TagTable.insert(second);
+
+        edits.enqueuePreviewMatching("tag", TagType.TAG, false, null, null, false, results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.PREVIEW, results.get(0).outcome);
+        assertEquals(2, results.get(0).affected);
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(first));
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(second));
+    }
+
     @Test public void bulkSetRejectsLimitWithoutPartialWrites() {
         for (int id = 1; id <= TagV2.MAXTAGS; id++) {
             assertEquals(1, Queries.TagTable.updateTag(tag(id, TagStatus.ACCEPTED)));

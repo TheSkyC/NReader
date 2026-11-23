@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 
 /** Serializes local rule edits without holding the UI thread across a SQLite write. */
 public final class TagRuleEdits {
-    public enum Outcome { SAVED, NO_MATCHES, TOO_MANY, LIMIT_REACHED, SUPERSEDED, FAILED }
+    public enum Outcome { SAVED, PREVIEW, NO_MATCHES, TOO_MANY, LIMIT_REACHED, SUPERSEDED, FAILED }
 
     public static final int MAX_BULK_TAGS = 200;
 
@@ -101,6 +101,14 @@ public final class TagRuleEdits {
             translatedOnly, status, enforceLimit, callback);
     }
 
+    public static void previewMatching(@NonNull String query, @NonNull TagType type,
+                                       boolean sortByName, @Nullable Locale appLocale,
+                                       @Nullable TagStatus statusFilter, boolean translatedOnly,
+                                       Consumer<Result> callback) {
+        INSTANCE.enqueuePreviewMatching(query, type, sortByName, appLocale, statusFilter,
+            translatedOnly, callback);
+    }
+
     @WorkerThread
     public static TagStatus readStoredStatus(Tag tag) {
         return Queries.TagTable.storedRuleStatus(tag);
@@ -138,6 +146,19 @@ public final class TagRuleEdits {
             if (tags.isEmpty()) return new Result(Outcome.NO_MATCHES, status, 0);
             if (tags.size() > MAX_BULK_TAGS) return new Result(Outcome.TOO_MANY, status, 0);
             return bulkSetStored(tags, status, enforceLimit, generation);
+        }, callback);
+    }
+
+    void enqueuePreviewMatching(String query, TagType type, boolean sortByName,
+                                Locale appLocale, TagStatus statusFilter,
+                                boolean translatedOnly, Consumer<Result> callback) {
+        long generation = Login.onlineTagsRestoreGeneration();
+        submit(generation, () -> {
+            List<Tag> tags = Queries.TagTable.getFilteredTags(query, type, sortByName, appLocale,
+                statusFilter, translatedOnly, MAX_BULK_TAGS + 1);
+            if (tags.isEmpty()) return new Result(Outcome.NO_MATCHES, null, 0);
+            if (tags.size() > MAX_BULK_TAGS) return new Result(Outcome.TOO_MANY, null, 0);
+            return new Result(Outcome.PREVIEW, null, tags.size());
         }, callback);
     }
 
