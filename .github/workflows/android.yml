@@ -74,6 +74,16 @@ jobs:
             -   name: Grant execute permission for gradlew
                 run: chmod +x gradlew
 
+            -   name: Prepare pinned Unicode data for tag search
+                run: |
+                    TZ=Etc/GMT-14 ./gradlew --no-daemon --console plain :app:prepareTagUnicodeIcu --rerun-tasks
+                    cp app/build/tag-unicode/icu4j.jar "${RUNNER_TEMP}/tag-unicode-utc-plus-14.jar"
+                    TZ=Etc/GMT+12 ./gradlew --no-daemon --console plain :app:prepareTagUnicodeIcu --rerun-tasks
+                    cmp "${RUNNER_TEMP}/tag-unicode-utc-plus-14.jar" app/build/tag-unicode/icu4j.jar
+                    mkdir -p "${RUNNER_TEMP}/tag-unicode"
+                    javac -cp app/build/tag-unicode/icu4j.jar -d "${RUNNER_TEMP}/tag-unicode" scripts/tests/TagUnicodeProbe.java
+                    java -cp "app/build/tag-unicode/icu4j.jar:${RUNNER_TEMP}/tag-unicode" TagUnicodeProbe third_party/icu/LICENSE
+
             -   name: Check unsigned tag feed build guard
                 run: |
                     set -euo pipefail

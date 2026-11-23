@@ -21,6 +21,14 @@ be used in place of another.
   previous snapshot only after validation and an atomic database transaction.
   Unknown schema versions and fields are rejected before installation.
 
+The `:app:prepareTagUnicodeIcu` build task prepares a trimmed ICU4J 77.1 JAR
+from a digest-checked dependency for the planned Unicode search-key upgrade.
+The JAR includes ICU's versioned license and third-party notices. It is not yet
+an application dependency and does not change current pack or database
+semantics. Before using its output in an application, complete the format
+transition, index migration, platform tests, and applicable APK/AAB license
+packaging; the task alone does not establish Unicode compatibility.
+
 ## Change procedure
 
 When a format shape or field meaning must change:

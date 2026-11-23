@@ -3,10 +3,29 @@ import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.internal.extensions.stdlib.capitalized
 import java.io.File
+import java.security.MessageDigest
+import java.time.LocalDateTime
+import java.util.Collections
 import java.util.Properties
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 plugins {
     id("com.android.application")
+}
+
+val tagUnicodeIcu = configurations.create("tagUnicodeIcu") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+dependencies.add(tagUnicodeIcu.name, "com.ibm.icu:icu4j:77.1")
+
+tasks.register<PrepareTagUnicodeIcu>("prepareTagUnicodeIcu") {
+    sourceFiles.from(tagUnicodeIcu)
+    licenseFile.set(rootProject.layout.projectDirectory.file("third_party/icu/LICENSE"))
+    outputFile.set(layout.buildDirectory.file("tag-unicode/icu4j.jar"))
 }
 
 val keystorePropertiesFile: File = rootProject.file("keystore.properties")
@@ -282,6 +301,57 @@ dependencies {
 }
 
 
+
+abstract class PrepareTagUnicodeIcu : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val sourceFiles: ConfigurableFileCollection
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val licenseFile: RegularFileProperty
+
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
+
+    @TaskAction
+    fun prepare() {
+        val source = sourceFiles.singleFile
+        val digest = MessageDigest.getInstance("SHA-256").digest(source.readBytes())
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        require(digest == "b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3") {
+            "Unexpected ICU4J artifact digest"
+        }
+        val dataRoot = "com/ibm/icu/impl/data/icudata/"
+        val required = setOf("nfc.nrm", "ucase.icu", "uprops.icu").map { dataRoot + it }.toSet()
+        ZipFile(source).use { archive ->
+            val entries = Collections.list(archive.entries()).filter {
+                !it.isDirectory && (!it.name.startsWith(dataRoot) || it.name in required)
+            }.sortedBy { it.name }
+            require(entries.map { it.name }.toSet().size == entries.size) { "Duplicate ICU archive entry" }
+            require(entries.map { it.name }.containsAll(required)) { "Missing ICU data" }
+            val licenseEntry = "META-INF/LICENSE-ICU.txt"
+            val entriesByName = entries.associateBy { it.name }
+            require(licenseEntry !in entriesByName) { "Unexpected ICU license entry" }
+            val names = (entriesByName.keys + licenseEntry).sorted()
+            val output = outputFile.get().asFile
+            output.parentFile.mkdirs()
+            ZipOutputStream(output.outputStream().buffered()).use { target ->
+                names.forEach { name ->
+                    val next = ZipEntry(name)
+                    next.setTimeLocal(LocalDateTime.of(1980, 1, 2, 0, 0))
+                    target.putNextEntry(next)
+                    if (name == licenseEntry) {
+                        licenseFile.get().asFile.inputStream().use { it.copyTo(target) }
+                    } else {
+                        archive.getInputStream(entriesByName.getValue(name)).use { it.copyTo(target) }
+                    }
+                    target.closeEntry()
+                }
+            }
+        }
+    }
+}
 
 abstract class CopyLegalNotices : DefaultTask() {
     @get:InputFile
