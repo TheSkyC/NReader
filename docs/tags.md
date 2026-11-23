@@ -101,6 +101,9 @@ also allows users to browse and install newer packs online on demand.
 When a pack references tags missing from the catalog, Settings offers a catalog
 check only if a catalog feed is configured. Otherwise it recommends updating
 the app or selecting a compatible pack without queuing a network request.
+The local import continues through Settings configuration changes and reports
+its result once to the recreated screen. A second local import cannot start
+while the first is running. Import feedback is not persisted across process death.
 
 Tag suggestions use the app's active locale. Variants and Unicode extensions
 are ignored when matching a pack. An exact installed locale wins;

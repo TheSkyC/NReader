@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,7 +42,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -76,6 +74,7 @@ public class SettingsActivity extends GeneralActivity {
     private AlertDialog translationFeedProgress;
     private AlertDialog catalogCheckDialog;
     private CatalogRefreshViewModel catalogRefresh;
+    private TranslationImportViewModel translationImport;
     private int selectedItem;
 
     @Override
@@ -96,6 +95,8 @@ public class SettingsActivity extends GeneralActivity {
         fragment.setType(SettingsActivity.Type.values()[getIntent().getIntExtra(getPackageName() + ".TYPE", SettingsActivity.Type.MAIN.ordinal())]);
         catalogRefresh = new ViewModelProvider(this).get(CatalogRefreshViewModel.class);
         catalogRefresh.status().observe(this, this::updateCatalogCheckDialog);
+        translationImport = new ViewModelProvider(this).get(TranslationImportViewModel.class);
+        translationImport.result().observe(this, this::showTranslationImportResult);
         if (savedInstanceState != null) {
             String id = savedInstanceState.getString(CATALOG_CHECK_ID);
             if (id != null) {
@@ -420,28 +421,19 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void importTranslationPack(Uri uri) {
-        new Thread(() -> {
-            try {
-                SQLiteDatabase database = Database.getDatabase();
-                File scratchDirectory = getCacheDir();
-                try (InputStream input = getContentResolver().openInputStream(uri)) {
-                    if (input == null) throw new IOException("Unable to open selected translation pack");
-                    boolean changed = TagTranslationCatalog.apply(database, input, scratchDirectory,
-                        () -> Thread.currentThread().isInterrupted());
-                    runOnUiThread(() -> {
-                        if (isFinishing() || isDestroyed()) return;
-                        Toast.makeText(this,
-                            changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
-                            Toast.LENGTH_LONG).show();
-                    });
-                }
-            } catch (IOException | RuntimeException error) {
-                LogUtility.e("Unable to install tag translation pack", error);
-                runOnUiThread(() -> {
-                    showTranslationFailure(error, R.string.tag_translation_install_failed);
-                });
-            }
-        }).start();
+        if (!translationImport.start(getApplicationContext(), uri)) {
+            showTranslationToast(R.string.tag_translation_import_in_progress, Toast.LENGTH_SHORT);
+        }
+    }
+
+    private void showTranslationImportResult(TranslationImportViewModel.Result result) {
+        if (result == null || isFinishing() || isDestroyed() || !result.consume()) return;
+        if (result.error != null) {
+            showTranslationFailure(result.error, R.string.tag_translation_install_failed);
+        } else {
+            showTranslationToast(result.changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
+                Toast.LENGTH_LONG);
+        }
     }
 
     public void manageNotifications() {
