@@ -67,10 +67,10 @@ https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest.jso
 ```
 
 The workflow retains immutable payload files and moves the manifest pointer in
-the same commit. Feed files are excluded from the workflow trigger, so the
-publication commit does not start another publication run. A feed update
-therefore needs only a normal `main` push that changes the catalog data or
-release tooling; the workflow verifies the staged copy before publishing it.
+the same commit. Translation feed changes also trigger a verification run; a
+run with no catalog or translation changes exits without creating a new commit.
+A feed update therefore needs only a normal `main` push that changes the
+catalog data, translation feed, or release tooling.
 
 ## Preparing a release
 

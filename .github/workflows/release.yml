@@ -66,6 +66,7 @@ jobs:
         run: >-
           ./gradlew
           -PnreaderTagCatalogManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest.json
+          -PnreaderTagTranslationManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest.json
           -PnreaderEnableUnsignedTagFeeds=true
           assembleRelease bundleMinApi28Release
 

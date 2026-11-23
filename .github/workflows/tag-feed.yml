@@ -8,8 +8,11 @@ on:
     paths:
       - data/tags.json
       - data/tagsVersion
+      - feed/translations/**
       - scripts/build_tag_catalog.py
       - scripts/tag_catalog.py
+      - scripts/build_tag_translation_release.py
+      - scripts/build_tag_translation_pack.py
       - scripts/verify_tag_feed.py
       - scripts/requirements.txt
       - .github/workflows/tag-feed.yml
@@ -47,9 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           feed_root="$GITHUB_WORKSPACE/feed/catalog"
+          translation_root="$GITHUB_WORKSPACE/feed/translations"
           rm -rf "$feed_root/catalog"
-          mkdir -p "$feed_root"
+          mkdir -p "$feed_root" "$translation_root"
           echo "root=$feed_root" >> "$GITHUB_OUTPUT"
+          echo "translation_root=$translation_root" >> "$GITHUB_OUTPUT"
 
       - name: Build and verify catalog feed
         id: catalog
@@ -62,7 +67,8 @@ jobs:
             --revision "$revision" \
             --output "${{ steps.feed.outputs.root }}"
           python -m scripts.verify_tag_feed \
-            --catalog-feed "${{ steps.feed.outputs.root }}"
+            --catalog-feed "${{ steps.feed.outputs.root }}" \
+            --translation-feed "${{ steps.feed.outputs.translation_root }}"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
       - name: Publish immutable payload and manifest pointer
@@ -74,7 +80,7 @@ jobs:
           set -euo pipefail
           git -C "$FEED_ROOT" config user.name "github-actions[bot]"
           git -C "$FEED_ROOT" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add feed/catalog
+          git add feed/catalog feed/translations
           if git diff --cached --quiet; then
             echo "Catalog revision $REVISION is already published"
             exit 0

@@ -35,7 +35,9 @@ jobs:
             -   name: Verify the bundled catalog can be staged
                 run: |
                     python -m scripts.build_tag_catalog --catalog data/tags.json --revision 1 --output "${RUNNER_TEMP}/tag-catalog-feed"
-                    python -m scripts.verify_tag_feed --catalog-feed "${RUNNER_TEMP}/tag-catalog-feed"
+                    python -m scripts.verify_tag_feed \
+                        --catalog-feed "${RUNNER_TEMP}/tag-catalog-feed" \
+                        --translation-feed feed/translations
 
             -   name: Verify a translation feed can be staged against the catalog
                 run: |

@@ -61,8 +61,9 @@ the hosted `manifest.json`, and explicitly set
 `nreaderEnableUnsignedTagFeeds=true` for the current unsigned v1 contract. The
 default URL is empty. When configured, users can choose **Settings → Tag
 languages → Browse online** to fetch the locale list. The initial beta release
-publishes only the canonical catalog; keep the translation URL empty until a
-real reviewed locale pack and its attribution record are available.
+publishes the reviewed `zh-Hans` pack from `feed/translations/`; keep the
+translation URL empty in other builds unless the feed and attribution record
+are intentionally selected.
 Only new languages and revisions newer than the installed pack appear. The
 app shows the download size before installing the selected pack. Requests
 are started only from this action and can be cancelled. Import from a file
@@ -136,6 +137,17 @@ and matches its descriptor, then replace the hosted manifest. Keep older
 payload files available for clients that already read the old manifest. To
 correct a translation, publish a corrected pack at a higher revision for
 that locale. The release tool does not drop a locale from the feed.
+
+The checked-in translation feed is hosted at:
+
+```text
+https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest.json
+```
+
+The initial `zh-Hans` pack is maintained by TheSkyC and targets catalog
+revision 43. Unmatched catalog tags intentionally fall back to canonical
+English names; source attribution and reproduction details are recorded in
+[the zh-Hans source note](tag-translation-zh-Hans.md).
 
 Catalog and translation manifests are independent. When a new translation
 references IDs added to a catalog, publish and verify the catalog first, then

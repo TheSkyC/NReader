@@ -104,7 +104,8 @@ The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
 The default is empty; users can still install packs from local files. The
 beta release workflow opts into the unsigned v1 catalog feed hosted under
-`feed/catalog/` on the repository's `main` branch. Other builds must explicitly set
+`feed/catalog/` and the reviewed `zh-Hans` translation feed under `feed/translations/`
+on the repository's `main` branch. Other builds must explicitly set
 `nreaderEnableUnsignedTagFeeds=true` when configuring a feed; leaving URLs
 empty keeps ordinary development builds offline.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`

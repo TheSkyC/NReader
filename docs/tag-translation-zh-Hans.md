@@ -29,7 +29,9 @@ and the two `misc` rows as `同人志`, `漫画`, `非H`, `欧美`, `画师CG`, 
 | Pack size | `1,875,565` bytes |
 | SHA-256 | `49df957e214c4431f37b14444a52dc924777423f89bd2403005e2e2f4c8c1d64` |
 
-The pack was generated locally and verified against the catalog feed. It is not added to the public translation feed until the offline installation and UI checks are complete.
+The pack was generated locally, verified against the catalog feed, and passed
+offline Android installation, display-language, alias, removal, and fallback
+checks before publication under `feed/translations/`.
 
 ## Reproduction
 
