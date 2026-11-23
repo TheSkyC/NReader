@@ -373,11 +373,15 @@ adb -s $serial shell am force-stop com.theskyc.nreader.debug
 adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.theskyc.nreader.TagFilterActivity -d https://nhentai.net/tags/
 ```
 
-The check is complete only when the installed database reports schema 25,
+At revision 43, the check is complete when the installed database reports schema 26,
 bundled revision 43, and 86,030 catalog rows, and the live tag page displays
 an expected catalog name such as `glasses`. Record the Android API, flavor,
 network state, and whether the database was empty before launch. This is a
 runtime smoke check rather than a release performance threshold.
+
+On 2026-11-23, the isolated benchmark imported bundled revision 43 with
+86,030 rows on an API 26 emulator in 3,686 ms. This measures one benchmark
+import and does not establish the first-launch UI or network state.
 
 To check database contention, run
 `com.theskyc.nreader.async.database.TagImportContentionTest` with the same

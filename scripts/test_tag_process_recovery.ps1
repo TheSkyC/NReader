@@ -46,6 +46,7 @@ $userId = $null
 $runnerProcess = $null
 $cleanupProblem = $null
 $attemptedPackages = @()
+$creationAttempted = $false
 
 function Invoke-Adb([string[]]$Arguments) {
     $output = & $adb -s $serial @Arguments 2>&1
@@ -95,12 +96,24 @@ $stderrPath = Join-Path $logDirectory "instrument-$token.err"
 $userName = "NReaderTagRecovery-$token"
 
 try {
-    $createdUser = Invoke-Adb @("shell", "pm", "create-user", $userName)
+    # API 26 can create the user while returning a nonzero shell exit status.
+    # Capture the ID before checking status so the finally block can remove it.
+    $creationAttempted = $true
+    $createdUser = (& $adb -s $serial shell pm create-user $userName 2>&1) -join "`n"
+    $creationExitCode = $LASTEXITCODE
     $match = [regex]::Match($createdUser, "created user id (\d+)")
     if (-not $match.Success) {
-        throw "Could not determine the temporary Android user ID: $createdUser"
+        throw "Could not determine the temporary Android user ID (exit $creationExitCode): $createdUser"
     }
-    $userId = $match.Groups[1].Value
+    $candidateUserId = $match.Groups[1].Value
+    $users = Invoke-Adb @("shell", "pm", "list", "users")
+    if ($users -notmatch "UserInfo\{$($candidateUserId):$([regex]::Escape($userName)):") {
+        throw "Created user $userName (ID $candidateUserId) was not found: $createdUser"
+    }
+    $userId = $candidateUserId
+    if ($creationExitCode -ne 0 -and $sdkVersion -ne 26) {
+        throw "Creating user $userName returned exit $creationExitCode`: $createdUser"
+    }
 
     Invoke-Adb @("shell", "am", "start-user", $userId) | Out-Null
     $deadline = (Get-Date).AddMinutes(2)
@@ -177,6 +190,21 @@ try {
     }
 }
 finally {
+    if ($creationAttempted -and $null -eq $userId) {
+        try {
+            $users = Invoke-Adb @("shell", "pm", "list", "users")
+            $userNameMatches = [regex]::Matches($users, "UserInfo\{(\d+):$([regex]::Escape($userName)):")
+            if ($userNameMatches.Count -gt 1) {
+                throw "More than one user has the temporary name $userName"
+            }
+            if ($userNameMatches.Count -eq 1) {
+                $userId = $userNameMatches[0].Groups[1].Value
+            }
+        } catch {
+            $cleanupProblem = "Could not inspect temporary user $userName`: $_"
+            Write-Warning $cleanupProblem
+        }
+    }
     if ($userId -ne $null) {
         foreach ($package in $attemptedPackages) {
             try {

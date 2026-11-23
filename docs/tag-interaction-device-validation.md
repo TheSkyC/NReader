@@ -95,4 +95,5 @@ checks the resulting JSON. The driver uses a temporary Android user and removes
 the test packages afterward. This does not exercise the system document picker,
 an external provider, or ordinary process death while a picker is open.
 On 2026-11-23 this check passed on an API 28 emulator with both MinApi26 and
-MinApi28 builds; it did not test an API 26 or 27 device.
+MinApi28 builds and an API 26 emulator with MinApi26. API 27 and physical
+devices were not tested.
