@@ -527,7 +527,7 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">标签语言</string>
-    <string name="tag_translation_packs_summary">安装、更新或移除离线标签翻译。</string>
+    <string name="tag_translation_packs_summary">安装、导出或移除离线标签翻译。</string>
     <string name="tag_translation_packs_empty">尚未安装标签语言包。</string>
     <string name="tag_translation_pack_item">%1$s（版本 %2$d）</string>
     <string name="tag_translation_install">安装或更新</string>
@@ -536,6 +536,14 @@
     <string name="tag_translation_remove">移除</string>
     <string name="tag_translation_removed">已移除 %1$s。</string>
     <string name="tag_translation_remove_changed">语言包已发生变化，请重新打开列表后再移除。</string>
+    <string name="tag_translation_export">导出</string>
+    <string name="tag_translation_exporting">正在导出标签语言…</string>
+    <string name="tag_translation_export_cancelling">正在取消导出…</string>
+    <string name="tag_translation_export_picker_failed">无法打开保存位置，请重试。</string>
+    <string name="tag_translation_export_done">标签语言已导出。</string>
+    <string name="tag_translation_export_changed">语言包已发生变化，请重新打开列表后重试。所选文件可能为空。</string>
+    <string name="tag_translation_export_unknown_order">此旧语言包的别名顺序未知，无法导出。请使用原始语言包，或先移除并重新安装。所选文件可能为空。</string>
+    <string name="tag_translation_export_failed">导出未完成，所选文件可能为空或不完整。请重试。</string>
     <string name="tag_translation_import_changed">导入期间语言包已发生变化。如仍需安装，请重试。</string>
     <string name="tag_translation_installed">已安装或更新标签语言包。</string>
     <string name="tag_translation_not_newer">此语言包的相同或更新版本已安装。</string>

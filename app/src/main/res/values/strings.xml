@@ -667,7 +667,7 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Tag languages</string>
-    <string name="tag_translation_packs_summary">Install, update, or remove offline tag translations.</string>
+    <string name="tag_translation_packs_summary">Install, export, or remove offline tag translations.</string>
     <string name="tag_translation_packs_empty">No tag languages are installed.</string>
     <string name="tag_translation_pack_item">%1$s (revision %2$d)</string>
     <string name="tag_translation_install">Install or update</string>
@@ -676,6 +676,14 @@
     <string name="tag_translation_remove">Remove</string>
     <string name="tag_translation_removed">Removed %1$s.</string>
     <string name="tag_translation_remove_changed">The language pack changed. Open the list again to remove it.</string>
+    <string name="tag_translation_export">Export</string>
+    <string name="tag_translation_exporting">Exporting tag language…</string>
+    <string name="tag_translation_export_cancelling">Cancelling export…</string>
+    <string name="tag_translation_export_picker_failed">Could not open the save location. Try again.</string>
+    <string name="tag_translation_export_done">Tag language exported.</string>
+    <string name="tag_translation_export_changed">The language pack changed. Open the list and try again. The selected file may be empty.</string>
+    <string name="tag_translation_export_unknown_order">This older pack cannot be exported because its alias order is unknown. Use the original pack, or remove and reinstall it first. The selected file may be empty.</string>
+    <string name="tag_translation_export_failed">Export did not finish. The selected file may be empty or incomplete. Try again.</string>
     <string name="tag_translation_import_changed">The language pack changed during import. Try again if you still want to install it.</string>
     <string name="tag_translation_installed">Tag language installed or updated.</string>
     <string name="tag_translation_not_newer">This pack is already installed at the same or a newer revision.</string>

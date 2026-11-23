@@ -60,6 +60,9 @@ import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity {
     private static final String CATALOG_CHECK_ID = "catalog_check_id";
+    private static final String EXPORT_LOCALE = "translation_export_locale";
+    private static final String EXPORT_REVISION = "translation_export_revision";
+    private static final String EXPORT_GENERATION = "translation_export_generation";
     private static final String[] TRANSLATION_PACK_MIME_TYPES = {
         "application/json", "application/octet-stream", "text/*"
     };
@@ -70,12 +73,17 @@ public class SettingsActivity extends GeneralActivity {
     private ActivityResultLauncher<String> COPY_LOGS;
     private ActivityResultLauncher<String> notificationPermission;
     private ActivityResultLauncher<String[]> IMPORT_TRANSLATION_PACK;
+    private ActivityResultLauncher<String> EXPORT_TRANSLATION_PACK;
     private TagTranslationFeed activeTranslationFeed;
     private AlertDialog translationFeedProgress;
     private AlertDialog catalogCheckDialog;
     private AlertDialog translationImportErrorDialog;
+    private AlertDialog translationExportProgress;
+    private AlertDialog translationExportErrorDialog;
     private CatalogRefreshViewModel catalogRefresh;
     private TranslationImportViewModel translationImport;
+    private TranslationExportViewModel translationExport;
+    private TranslationExportViewModel.Selection pendingTranslationExport;
     private int selectedItem;
 
     @Override
@@ -98,7 +106,16 @@ public class SettingsActivity extends GeneralActivity {
         catalogRefresh.status().observe(this, this::updateCatalogCheckDialog);
         translationImport = new ViewModelProvider(this).get(TranslationImportViewModel.class);
         translationImport.result().observe(this, this::showTranslationImportResult);
+        translationExport = new ViewModelProvider(this).get(TranslationExportViewModel.class);
+        translationExport.running().observe(this, this::showTranslationExportProgress);
+        translationExport.result().observe(this, this::showTranslationExportResult);
         if (savedInstanceState != null) {
+            String locale = savedInstanceState.getString(EXPORT_LOCALE);
+            int revision = savedInstanceState.getInt(EXPORT_REVISION);
+            long generation = savedInstanceState.getLong(EXPORT_GENERATION, -1);
+            if (locale != null && revision > 0 && generation >= 0) {
+                pendingTranslationExport = new TranslationExportViewModel.Selection(locale, revision, generation);
+            }
             String id = savedInstanceState.getString(CATALOG_CHECK_ID);
             if (id != null) {
                 showCatalogCheckDialog();
@@ -113,11 +130,25 @@ public class SettingsActivity extends GeneralActivity {
         if (catalogCheckDialog != null && catalogRefresh.requestId() != null) {
             outState.putString(CATALOG_CHECK_ID, catalogRefresh.requestId().toString());
         }
+        if (pendingTranslationExport != null) {
+            outState.putString(EXPORT_LOCALE, pendingTranslationExport.locale);
+            outState.putInt(EXPORT_REVISION, pendingTranslationExport.revision);
+            outState.putLong(EXPORT_GENERATION, pendingTranslationExport.generation);
+        }
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onDestroy() {
+        if (translationExportProgress != null) {
+            translationExportProgress.dismiss();
+            translationExportProgress = null;
+        }
+        if (translationExportErrorDialog != null) {
+            translationExportErrorDialog.setOnDismissListener(null);
+            translationExportErrorDialog.dismiss();
+            translationExportErrorDialog = null;
+        }
         if (translationImportErrorDialog != null) {
             translationImportErrorDialog.setOnCancelListener(null);
             translationImportErrorDialog.setOnDismissListener(null);
@@ -145,6 +176,8 @@ public class SettingsActivity extends GeneralActivity {
         IMPORT_TRANSLATION_PACK = registerForActivityResult(new ActivityResultContracts.OpenDocument(), selectedFile -> {
             if (selectedFile != null) importTranslationPack(selectedFile);
         });
+        EXPORT_TRANSLATION_PACK = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"),
+            this::handleTranslationExportResult);
         IMPORT_ZIP = registerForActivityResult(new ActivityResultContracts.GetContent(), selectedFile -> {
             if (selectedFile == null) return;
             importSettings(selectedFile);
@@ -243,10 +276,99 @@ public class SettingsActivity extends GeneralActivity {
                 .toArray(String[]::new);
             builder.setItems(labels, (dialog, which) -> {
                 String locale = locales.get(which);
-                confirmRemoveTranslationPack(locale, packs.get(locale));
+                showTranslationPackActions(locale, packs.get(locale));
             });
         }
         builder.show();
+    }
+
+    private void showTranslationPackActions(String locale, TagTranslationCatalog.PackState state) {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.tag_translation_pack_item, locale, state.revision))
+            .setItems(new CharSequence[]{getText(R.string.tag_translation_export), getText(R.string.tag_translation_remove)},
+                (dialog, which) -> {
+                    if (which == 0) beginTranslationExport(locale, state);
+                    else confirmRemoveTranslationPack(locale, state);
+                })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void beginTranslationExport(String locale, TagTranslationCatalog.PackState state) {
+        if (translationExport.isRunning()) {
+            showTranslationExportProgress(true);
+            return;
+        }
+        pendingTranslationExport = new TranslationExportViewModel.Selection(locale, state.revision, state.generation);
+        try {
+            EXPORT_TRANSLATION_PACK.launch("tag-translations-" + locale + "-" + state.revision + ".json");
+        } catch (RuntimeException error) {
+            pendingTranslationExport = null;
+            LogUtility.e("Unable to open translation export picker", error);
+            showTranslationToast(R.string.tag_translation_export_picker_failed, Toast.LENGTH_LONG);
+        }
+    }
+
+    private void handleTranslationExportResult(Uri destination) {
+        TranslationExportViewModel.Selection selection = pendingTranslationExport;
+        pendingTranslationExport = null;
+        if (destination == null) return;
+        if (selection == null || !translationExport.start(getApplicationContext(), destination, selection)) {
+            showTranslationToast(R.string.tag_translation_export_picker_failed, Toast.LENGTH_LONG);
+        }
+    }
+
+    private void showTranslationExportProgress(Boolean running) {
+        if (!Boolean.TRUE.equals(running)) {
+            if (translationExportProgress != null) translationExportProgress.dismiss();
+            translationExportProgress = null;
+            return;
+        }
+        if (translationExportProgress != null || isFinishing() || isDestroyed()) return;
+        translationExportProgress = new MaterialAlertDialogBuilder(this)
+            .setMessage(translationExport.isCancelled() ? R.string.tag_translation_export_cancelling : R.string.tag_translation_exporting)
+            .setView(R.layout.dialog_tag_translation_progress)
+            .setCancelable(false)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.tag_catalog_check_close, null)
+            .setOnDismissListener(dialog -> {
+                if (translationExportProgress == dialog) translationExportProgress = null;
+            })
+            .show();
+        translationExportProgress.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(!translationExport.isCancelled());
+        translationExportProgress.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> {
+            translationExport.cancel();
+            translationExportProgress.setMessage(getString(R.string.tag_translation_export_cancelling));
+            translationExportProgress.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(false);
+        });
+    }
+
+    private void showTranslationExportResult(TranslationExportViewModel.Result result) {
+        if (result == null || result.isConsumed() || isFinishing() || isDestroyed()) return;
+        if (result.error == null) {
+            if (result.consume()) showTranslationToast(R.string.tag_translation_export_done, Toast.LENGTH_LONG);
+            return;
+        }
+        if (translationExportErrorDialog != null && translationExportErrorDialog.isShowing()) return;
+        int message;
+        if (result.error instanceof TagTranslationCatalog.UnknownAliasOrderException) {
+            message = R.string.tag_translation_export_unknown_order;
+        } else if (result.error instanceof TranslationExportViewModel.ChangedSelectionException
+            || result.error instanceof TagTranslationCatalog.ChangedDuringExportException) {
+            message = R.string.tag_translation_export_changed;
+        } else {
+            message = R.string.tag_translation_export_failed;
+        }
+        translationExportErrorDialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_translation_export)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .setOnDismissListener(dialog -> {
+                if (translationExportErrorDialog != dialog) return;
+                translationExportErrorDialog = null;
+                result.consume();
+            })
+            .show();
     }
 
     private void browseTranslationFeed() {

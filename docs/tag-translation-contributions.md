@@ -24,11 +24,12 @@ or authority to publish.
 
 3. As maintainer, generate and retain your own report and the base pack used
    for it. Use the current pack from your release files and the next revision.
-   The app does not export installed packs. Keep the original release pack:
-   aliases installed before database version 26 do not retain their input order,
-   while proposal comparisons and normalized base digests include that order.
-   Reconstructing a pack from those rows may therefore produce a different
-   review base even if the visible translations and aliases are the same.
+   Settings can export an installed pack whose alias order is known. The export
+   contains the locale, revision, tag IDs, translated names, and aliases, not
+   account data or rules. Aliases installed before database version 26 do not
+   retain their input order, so those packs cannot be exported when they contain
+   aliases. Use the original release pack, or remove and reinstall it first.
+   Keep the original release files as the authoritative publishing base.
 
    ```powershell
    python -m scripts.review_tag_translations review .gradle/proposal.json `

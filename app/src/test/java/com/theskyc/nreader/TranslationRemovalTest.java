@@ -51,6 +51,8 @@ public class TranslationRemovalTest {
                     ReflectionHelpers.ClassParameter.from(Map.class, displayed));
                 AlertDialog list = (AlertDialog) ShadowDialog.getLatestDialog();
                 list.getListView().performItemClick(list.getListView().getChildAt(0), 0, 0);
+                AlertDialog actions = (AlertDialog) ShadowDialog.getLatestDialog();
+                actions.getListView().performItemClick(actions.getListView().getChildAt(1), 1, 1);
                 AlertDialog confirm = (AlertDialog) ShadowDialog.getLatestDialog();
                 confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);

@@ -81,8 +81,12 @@ The export snapshot layer serializes one selected installation to an app-private
 temporary file under a database transaction, checks its revision and generation,
 and rejects unknown alias order. It limits the UTF-8 JSON to the 16 MiB import
 limit; the caller closes the temporary file. It does not write an external
-document while holding the transaction. The Settings export flow is not yet
-available.
+document while holding the transaction. Settings can save this snapshot as a
+JSON document. It checks the selected revision and generation again after the
+document picker returns. A failed or cancelled write may leave an empty or
+partial document; the installed language pack is unchanged. Configuration
+changes retain the running operation, but process death during a write can leave
+an incomplete document and requires the user to retry.
 
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether
