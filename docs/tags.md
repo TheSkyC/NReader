@@ -337,6 +337,21 @@ duplicate identities abort the database restore. An invalid backup cannot
 partially replace the rules. The database upgrade preserves public metadata,
 local rules, and library references, and discards legacy account flags.
 
+## Independent rule transfer
+
+The standalone rule document uses `schemaVersion: 1` and a `rules` array. Each
+row contains only `idTag`, `type`, `status`, and the last known canonical name;
+the site ID and type remain the identity. Status values are `1` for Avoided and
+`2` for Accepted. Catalog rows, translations, gallery references, account
+blacklist entries, and tag-manager views are not part of this document.
+
+The importer bounds the document at 2 MiB and 10,000 rows, rejects unknown
+fields, duplicate identities, invalid labels, unsupported types, and type
+conflicts. It previews additions, updates, unchanged rows, and conflicts before
+writing. Merge keeps unrelated rules; Replace clears all local rules first.
+Either mode commits in one SQLite transaction, enforces the existing rule
+limit, and leaves the previous rules unchanged if validation or the write fails.
+
 ## Directory refresh
 
 The upstream feed currently exposes an integer revision and a JSON array of

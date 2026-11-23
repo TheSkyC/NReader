@@ -333,6 +333,10 @@ public final class TagRuleEdits {
         }
     }
 
+    static void publishExternalChange() {
+        publishChange();
+    }
+
     private static Result clearStored(long generation) {
         return write(generation, () -> {
             Queries.TagTable.resetAllStatus();
