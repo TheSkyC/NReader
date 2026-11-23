@@ -147,13 +147,13 @@ public final class TagTranslationCatalog {
         String exact = appLocale.toLanguageTag();
         String language = exact.split("-", 2)[0];
         if (isSupportedLocale(exact)) candidates.add(exact);
-        if ("zh".equals(language)) {
-            String script = appLocale.getScript();
-            if (script.isEmpty()) {
-                String region = appLocale.getCountry();
-                script = "TW".equals(region) || "HK".equals(region) || "MO".equals(region) ? "Hant" : "Hans";
-            }
-            String scriptLocale = "zh-" + script;
+        String script = appLocale.getScript();
+        if (script.isEmpty() && "zh".equals(language)) {
+            String region = appLocale.getCountry();
+            script = "TW".equals(region) || "HK".equals(region) || "MO".equals(region) ? "Hant" : "Hans";
+        }
+        if (!script.isEmpty()) {
+            String scriptLocale = language + "-" + script;
             if (!candidates.contains(scriptLocale)) candidates.add(scriptLocale);
         }
         if (!candidates.contains(language)) candidates.add(language);

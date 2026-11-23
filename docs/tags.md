@@ -97,8 +97,10 @@ with a [configured translation feed](tag-translation-distribution.md#enabling-th
 also allows users to browse and install newer packs online on demand.
 
 Tag suggestions use the app's active locale. An exact installed locale wins;
-Chinese locales resolve to `zh-Hans` or `zh-Hant` from script and region, then
-to a generic installed language pack. Suggestions search canonical names,
+otherwise an explicitly specified script pack takes precedence over a generic
+language pack. Chinese locales without an explicit script infer `zh-Hans` or
+`zh-Hant` from the region before falling back to the generic language pack.
+Suggestions search canonical names,
 translated names, and aliases with a prefix query that returns at most 50
 results. The translation and alias indexes restrict lookups to the matching
 key range within the installed locale. A translated

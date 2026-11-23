@@ -278,6 +278,25 @@ public class TagTranslationCatalogTest {
         assertEquals("zh-Hant", TagTranslationCatalog.resolveInstalledLocale(database, Locale.forLanguageTag("zh-HK")));
     }
 
+    @Test public void explicitScriptFallbackWorksForOtherLanguagesWithoutCrossingScripts() throws IOException {
+        assertTrue(apply(pack("sr", 1, "[{\"id\":1,\"name\":\"generic\"}]")));
+        assertTrue(apply(pack("sr-Latn", 1, "[{\"id\":1,\"name\":\"latin\",\"aliases\":[\"latin-alias\"]}]")));
+        assertTrue(apply(pack("sr-Cyrl", 1, "[{\"id\":1,\"name\":\"cyrillic\"}]")));
+        assertTrue(apply(pack("sr-Latn-RS", 1, "[{\"id\":1,\"name\":\"regional\"}]")));
+        Locale latin = Locale.forLanguageTag("sr-Latn-RS");
+        assertEquals("sr-Latn-RS", TagTranslationCatalog.resolveInstalledLocale(database, latin));
+        TagTranslationCatalog.remove(database, "sr-Latn-RS");
+        assertEquals("sr-Latn", TagTranslationCatalog.resolveInstalledLocale(database, latin));
+        assertEquals(Map.of(1, "latin"), Queries.TagTable.getDisplayNames(List.of(1), latin));
+        assertEquals(List.of(1), matchingIds("latin-alias", latin));
+        TagTranslationCatalog.remove(database, "sr-Latn");
+        assertEquals("sr", TagTranslationCatalog.resolveInstalledLocale(database, latin));
+        TagTranslationCatalog.remove(database, "sr");
+        assertEquals(null, TagTranslationCatalog.resolveInstalledLocale(database, latin));
+        assertEquals("sr-Cyrl", TagTranslationCatalog.resolveInstalledLocale(database,
+            Locale.forLanguageTag("sr-Cyrl-BA")));
+    }
+
     @Test public void translatedAndAliasSuggestionsRetainCanonicalTagIdentity() throws IOException {
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\u4e3b\u9898\","
             + "\"aliases\":[\"\u9898\u6750\"]}]")));
