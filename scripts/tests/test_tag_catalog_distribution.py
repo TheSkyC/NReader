@@ -241,6 +241,21 @@ class CatalogCollectorTest(unittest.TestCase):
             self.assertEqual(old, {name: (path / name).read_bytes() for name in old})
             self.assertFalse((path / collector.TRANSACTION).exists())
 
+    def test_snapshot_rejects_oversized_staged_file_before_creating_transaction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            old = {"tagsPretty.json": b"old pretty", "tags.json": b"old catalog", "tagsVersion": b"43\n"}
+            for name, content in old.items():
+                (path / name).write_bytes(content)
+            for oversized in old:
+                with self.subTest(oversized=oversized), patch.object(collector, "MAX_BYTES", 4):
+                    proposed = {name: b"new" for name in old}
+                    proposed[oversized] = b"x" * 17
+                    with self.assertRaisesRegex(ValueError, "transaction file exceeds size limit"):
+                        collector.write_snapshot(path, proposed)
+                    self.assertEqual(old, {name: (path / name).read_bytes() for name in old})
+                    self.assertEqual(set(old), {entry.name for entry in path.iterdir()})
+
     def test_rate_limit_is_bounded_and_requests_have_timeouts(self):
         session = MagicMock()
         session.get.return_value.__enter__.return_value = Mock(status_code=429, headers={"Retry-After": "3"})

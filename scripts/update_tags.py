@@ -189,6 +189,8 @@ def recover_snapshot(directory: Path) -> None:
 def write_snapshot(directory: Path, contents: dict[str, bytes]) -> None:
     if set(contents) != set(TRANSACTION_FILES):
         raise ValueError("Invalid catalog transaction file set")
+    if any(len(content) > MAX_BYTES * 4 for content in contents.values()):
+        raise ValueError("Catalog transaction file exceeds size limit")
     stage_name = Path(tempfile.mkdtemp(prefix=".tag-catalog-txn-", dir=directory)).name
     staging = directory / stage_name
     previous = {}

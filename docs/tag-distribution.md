@@ -119,7 +119,9 @@ The CI job also has an overall timeout.
 The pull request is the publication unit for the bundled files, so review
 the row changes and revision together. Run one collector per checkout. The
 collector journals these files so an interrupted commit can restore the
-previous set. Recovery reads all required backups before changing any target.
+previous set. Each transaction file is limited to 64 MiB; oversized output is
+rejected before staging begins. Recovery reads all required backups before
+changing any target.
 If a backup is missing, unreadable, or exceeds the recovery size limit, it
 stops with the targets and journal intact. Restore the required backups
 before retrying; a failure while writing a restored file leaves the journal
