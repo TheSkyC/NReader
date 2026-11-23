@@ -8,7 +8,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import build_tag_catalog, build_tag_translation_release, verify_tag_feed
+from scripts import build_tag_catalog, build_tag_translation_pack, build_tag_translation_release, verify_tag_feed
 from scripts.build_tag_translation_pack import encode_pack
 from scripts.tag_catalog import MIN_ROWS, TYPE_IDS
 
@@ -66,6 +66,46 @@ class VerifyTagFeedTest(unittest.TestCase):
             "Translation zh-Hans: revision 1",
         ], stdout.getvalue().splitlines())
         self.assertEqual(before, self.capture_files(stage))
+
+    def test_unsupported_unicode_runtime_rejects_translation_but_not_catalog_verification(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 3)
+        before = self.capture_files(self.root)
+        candidate = self.root / "pack.json"
+        with patch.object(build_tag_translation_pack.unicodedata, "unidata_version", "15.0.0"):
+            with redirect_stdout(io.StringIO()) as stdout:
+                verify_tag_feed.main(["--catalog-feed", str(self.catalog_feed)])
+            self.assertIn("Catalog revision 7", stdout.getvalue())
+            self.failed_verification("CPython 3.14 with Unicode 16.0",
+                                     "--catalog-feed", str(self.catalog_feed),
+                                     "--translation-feed", str(self.translation_feed))
+            with self.assertRaisesRegex(ValueError, "CPython 3.14 with Unicode 16.0"):
+                build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+        self.assertEqual(before, self.capture_files(self.root))
+
+    def test_legacy_unicode_collision_preserves_existing_development_feed(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        legacy = ('{"schemaVersion":1,"locale":"ja","revision":1,"entries":'
+                  '[{"id":1,"name":"name","aliases":["\u1c89","\u1c8a"]}]}\n').encode("utf-8")
+        digest = hashlib.sha256(legacy).hexdigest()
+        self.translation_feed.mkdir()
+        (self.translation_feed / f"translation-{digest}.json").write_bytes(legacy)
+        manifest = {"schemaVersion": 1, "source": "nreader-translations", "kind": "translations",
+                    "packs": [{"locale": "ja", "revision": 1, "sizeBytes": len(legacy), "sha256": digest}]}
+        (self.translation_feed / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        candidate = self.root / "candidate.json"
+        candidate.write_bytes(encode_pack([{"id": 1, "name": "name", "aliases": ["\u1c89"]}], "ja", 2, {1}))
+        before = self.capture_files(self.root)
+        self.failed_verification("Duplicate normalized translation alias", "--catalog-feed", str(self.catalog_feed),
+                                 "--translation-feed", str(self.translation_feed))
+        with self.assertRaisesRegex(ValueError, "Duplicate normalized translation alias"):
+            build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+        self.assertEqual(before, self.capture_files(self.root))
+
+        fresh_feed = self.root / "corrected-development-feed"
+        build_tag_translation_release.prepare_release(candidate, {1}, fresh_feed)
+        with redirect_stdout(io.StringIO()):
+            verify_tag_feed.main(["--catalog-feed", str(self.catalog_feed), "--translation-feed", str(fresh_feed)])
 
     def test_translation_release_and_verifier_scan_each_feed_directory_once(self):
         build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)

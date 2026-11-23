@@ -112,6 +112,49 @@ class TagTranslationPackTest(unittest.TestCase):
                 '[{"id":1,"name":"name","aliases":["\u039f\u03a3","\u03bf\u03c2"]}]'.encode(),
                 "el", 1, {1})
 
+    def test_unicode_16_search_keys_match_fixed_samples(self):
+        for value, expected in [
+            ("\u1c89", "\u1c8a"),
+            ("Cafe\u0301", "caf\u00e9"),
+            ("\u1100\u1161", "\uac00"),
+            ("\u0130", "i\u0307"),
+            ("\U00010400", "\U00010428"),
+        ]:
+            with self.subTest(value=value):
+                self.assertEqual(expected, builder.search_key(value))
+        with self.assertRaisesRegex(ValueError, "Duplicate normalized translation alias"):
+            builder.normalize_translation({"name": "name", "aliases": ["\u1c89", "\u1c8a"]})
+
+    def test_translation_text_rejects_unpinned_runtime(self):
+        for target, attribute, value in [
+            (builder.sys, "version_info", (3, 13)),
+            (builder.sys.implementation, "name", "pypy"),
+            (builder.unicodedata, "unidata_version", "15.0.0"),
+        ]:
+            with self.subTest(attribute=attribute), patch.object(target, attribute, value):
+                with self.assertRaisesRegex(ValueError, "CPython 3.14 with Unicode 16.0"):
+                    builder.validate_text("name")
+                with self.assertRaisesRegex(ValueError, "CPython 3.14 with Unicode 16.0"):
+                    builder.search_key("name")
+
+    def test_unsupported_runtime_does_not_replace_existing_output(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / "source.json"
+            catalog = root / "catalog.json"
+            output = root / "pack.json"
+            source.write_bytes(b'[{"id":1,"name":"translated"}]')
+            catalog.write_bytes(b"catalog fixture")
+            output.write_bytes(b"previous pack")
+            with patch.object(builder, "parse_catalog", return_value={1}), \
+                    patch.object(builder.unicodedata, "unidata_version", "15.0.0"), \
+                    contextlib.redirect_stderr(io.StringIO()) as error:
+                with self.assertRaises(SystemExit):
+                    builder.main([str(source), "--catalog", str(catalog), "--locale", "ja",
+                                  "--revision", "1", "--output", str(output)])
+            self.assertIn("CPython 3.14 with Unicode 16.0", error.getvalue())
+            self.assertEqual(b"previous pack", output.read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()

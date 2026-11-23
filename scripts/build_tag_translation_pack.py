@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import sys
 import unicodedata
 from pathlib import Path
 
@@ -26,7 +27,14 @@ def validate_locale(locale):
     return locale
 
 
+def require_unicode_runtime():
+    if (sys.implementation.name != "cpython" or sys.version_info[:2] != (3, 14)
+            or unicodedata.unidata_version != "16.0.0"):
+        raise ValueError("Tag translation tools require CPython 3.14 with Unicode 16.0 data")
+
+
 def validate_text(value):
+    require_unicode_runtime()
     if not isinstance(value, str):
         raise ValueError("Translation text must be a string")
     value = unicodedata.normalize("NFC", value).strip(" ")
@@ -38,6 +46,7 @@ def validate_text(value):
 
 
 def search_key(value):
+    require_unicode_runtime()
     # Lowercase the full string, then remove contextual final-sigma behavior so
     # a prefix key is stable when the same text continues with more characters.
     return unicodedata.normalize("NFC", value).lower().replace("\u03c2", "\u03c3")

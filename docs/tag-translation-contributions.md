@@ -5,6 +5,17 @@ It works with local files and does not contact a server. A proposal, a review
 report, and an installable pack are three separate artifacts. The process does
 not establish contributor identity, permission to reuse outside translations,
 or authority to publish.
+Use CPython 3.14 with Unicode 16.0 data for translation validation, review,
+acceptance, and release preparation. Other runtimes are rejected when text is
+normalized so their Unicode data cannot silently change the candidate.
+
+An old development pack built with different Unicode data can contain aliases
+that now share a key. The tools reject such a pack as a base, including when
+reviewing a proposed correction. Preserve the original file, manually prepare
+and review a corrected source using its entries, and build a new pack with a
+higher locale revision. The original and corrected bytes must remain distinct.
+This recovery path is for unpublished development data; it does not establish a
+safe migration procedure for a public feed.
 
 1. Start from the checked-in tag catalog and the current pack for the locale.
    Omit `--base` only for a new locale. Draft a proposal for the affected tag

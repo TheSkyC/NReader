@@ -65,6 +65,18 @@ and removal of installed packs continue to work offline.
 
 ## Preparing a release locally
 
+Use CPython 3.14 with Unicode 16.0 data to validate or stage translation packs.
+The verifier has the same requirement when checking a translation feed; a
+catalog-only verification does not require it.
+
+If an unpublished development release contains a pack whose aliases collide
+under Unicode 16, verification of that retained pack or staging its replacement
+fails. Preserve that release directory. Correct and review the affected source
+as described in the contribution workflow, then stage the corrected packs in a
+new development directory. Do not replace immutable payloads or reuse a locale
+revision for different bytes. A publicly distributed feed would need an
+explicit compatibility and migration policy before using this recovery path.
+
 Start with a validated candidate from the
 [local contribution workflow](tag-translation-contributions.md), or a pack
 built by the authoring tool:
