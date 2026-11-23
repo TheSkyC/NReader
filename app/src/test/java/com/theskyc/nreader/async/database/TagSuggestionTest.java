@@ -227,6 +227,18 @@ public class TagSuggestionTest {
         }
     }
 
+    @Test public void translationCoverageFilterIsIgnoredWithoutInstalledLocale() {
+        insert(41, "first canonical", TagType.TAG);
+        insert(42, "second canonical", TagType.TAG);
+
+        try (Cursor rows = Queries.TagTable.getFilterCursor("", TagType.TAG, false, true,
+            Locale.FRANCE, null, true)) {
+            assertEquals(2, rows.getCount());
+            assertTrue(rows.moveToFirst());
+            assertNull(rows.getString(rows.getColumnIndexOrThrow("displayName")));
+        }
+    }
+
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {
         return suggestions.stream().map(suggestion -> suggestion.getTag().getName()).toList();
     }

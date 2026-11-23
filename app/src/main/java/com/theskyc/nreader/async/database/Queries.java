@@ -460,8 +460,9 @@ public class Queries {
                 if (statusFilter != TagStatus.DEFAULT) args.add(Integer.toString(statusFilter.ordinal()));
             }
             if (!online && type != null && translatedOnly) {
-                if (locale == null) sql.append(" AND 0");
-                else sql.append(" AND tr.idTag IS NOT NULL");
+                // Without a matching installed locale there is no meaningful coverage set.
+                // Keep the directory usable and treat the coverage filter as inactive.
+                if (locale != null) sql.append(" AND tr.idTag IS NOT NULL");
             }
             sql.append(sortByName ? " ORDER BY tags.name, tags.idTag" : " ORDER BY tags.count DESC, tags.name, tags.idTag");
             return db.rawQuery(sql.toString(), args.toArray(new String[0]));
