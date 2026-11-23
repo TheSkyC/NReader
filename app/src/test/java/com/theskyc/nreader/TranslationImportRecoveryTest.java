@@ -3,10 +3,10 @@ package com.theskyc.nreader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.Application;
 import android.database.sqlite.SQLiteDatabase;
@@ -181,7 +181,6 @@ public class TranslationImportRecoveryTest {
     }
 
     @Test public void failedImportSurvivesRecreationAndRejectsAnOverlappingImport() throws Exception {
-        assumeTrue(BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty());
         Application context = RuntimeEnvironment.getApplication();
         Global.initFromShared(context);
         Constructor<TagTranslationCatalog.UnknownTagException> constructor =
@@ -231,12 +230,50 @@ public class TranslationImportRecoveryTest {
                 assertNotNull(model.result().getValue());
                 AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
                 assertTrue(dialog.isShowing());
-                assertEquals(recreated.getString(R.string.tag_translation_unknown_tags_no_source),
+                int message = BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty()
+                    ? R.string.tag_translation_unknown_tags_no_source : R.string.tag_translation_unknown_tags;
+                assertEquals(recreated.getString(message),
                     ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                controller.pause().stop().start().resume();
+                assertSame(dialog, ShadowDialog.getLatestDialog());
+                controller.recreate();
+                AlertDialog restored = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotSame(dialog, restored);
+                assertTrue(restored.isShowing());
+                assertEquals(controller.get().getString(message),
+                    ((TextView) restored.findViewById(android.R.id.message)).getText().toString());
+                restored.getButton(BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty()
+                    ? AlertDialog.BUTTON_POSITIVE : AlertDialog.BUTTON_NEGATIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(model.result().getValue().consume());
+                controller.recreate();
+                assertSame(restored, ShadowDialog.getLatestDialog());
+                assertFalse(restored.isShowing());
             }
         } finally {
             release.countDown();
+        }
+    }
+
+    @Test public void cancellingUnknownTagDialogAcknowledgesItsResult() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        Global.initFromShared(context);
+        Constructor<TagTranslationCatalog.UnknownTagException> constructor =
+            TagTranslationCatalog.UnknownTagException.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        TranslationImportViewModel.Result result = new TranslationImportViewModel.Result(false, constructor.newInstance());
+        try (DatabaseHelper database = new DatabaseHelper(context)) {
+            database.getWritableDatabase();
+            try (ActivityController<SettingsActivity> controller =
+                     Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                ReflectionHelpers.callInstanceMethod(controller.get(), "showTranslationImportResult",
+                    ReflectionHelpers.ClassParameter.from(TranslationImportViewModel.Result.class, result));
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(dialog.isShowing());
+                dialog.cancel();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(result.consume());
+            }
         }
     }
 }

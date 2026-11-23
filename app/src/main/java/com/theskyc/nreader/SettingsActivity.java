@@ -73,6 +73,7 @@ public class SettingsActivity extends GeneralActivity {
     private TagTranslationFeed activeTranslationFeed;
     private AlertDialog translationFeedProgress;
     private AlertDialog catalogCheckDialog;
+    private AlertDialog translationImportErrorDialog;
     private CatalogRefreshViewModel catalogRefresh;
     private TranslationImportViewModel translationImport;
     private int selectedItem;
@@ -117,6 +118,12 @@ public class SettingsActivity extends GeneralActivity {
 
     @Override
     protected void onDestroy() {
+        if (translationImportErrorDialog != null) {
+            translationImportErrorDialog.setOnCancelListener(null);
+            translationImportErrorDialog.setOnDismissListener(null);
+            translationImportErrorDialog.dismiss();
+            translationImportErrorDialog = null;
+        }
         if (catalogCheckDialog != null) {
             catalogCheckDialog.setOnDismissListener(null);
             catalogCheckDialog.dismiss();
@@ -366,22 +373,46 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void showTranslationFailure(Throwable error, int fallbackMessage) {
+        showTranslationFailure(error, fallbackMessage, null);
+    }
+
+    private void showTranslationFailure(Throwable error, int fallbackMessage,
+                                        TranslationImportViewModel.Result pending) {
         if (isFinishing() || isDestroyed()) return;
         if (error instanceof TagTranslationCatalog.UnknownTagException) {
+            if (pending != null && translationImportErrorDialog != null
+                && translationImportErrorDialog.isShowing()) return;
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.tag_translation_packs_title);
             if (BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty()) {
                 builder.setMessage(R.string.tag_translation_unknown_tags_no_source)
-                    .setPositiveButton(android.R.string.ok, null);
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        if (pending != null) pending.consume();
+                    });
             } else {
                 builder.setMessage(R.string.tag_translation_unknown_tags)
-                    .setNegativeButton(android.R.string.cancel, null)
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                        if (pending != null) pending.consume();
+                    })
                     .setPositiveButton(R.string.tag_catalog_check_updates, (dialog, which) -> {
+                        if (pending != null) pending.consume();
                         showCatalogCheckDialog();
                         catalogRefresh.start(getApplicationContext());
                     });
             }
-            builder.show();
+            if (pending == null) {
+                builder.show();
+            } else {
+                builder.setOnCancelListener(dialog -> {
+                    if (translationImportErrorDialog == dialog) pending.consume();
+                });
+                builder.setOnDismissListener(dialog -> {
+                    if (translationImportErrorDialog != dialog) return;
+                    translationImportErrorDialog = null;
+                    pending.consume();
+                });
+                translationImportErrorDialog = builder.show();
+            }
         } else {
             Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();
         }
@@ -427,12 +458,17 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void showTranslationImportResult(TranslationImportViewModel.Result result) {
-        if (result == null || isFinishing() || isDestroyed() || !result.consume()) return;
-        if (result.error != null) {
-            showTranslationFailure(result.error, R.string.tag_translation_install_failed);
+        if (result == null || isFinishing() || isDestroyed() || result.isConsumed()) return;
+        if (result.error instanceof TagTranslationCatalog.UnknownTagException) {
+            showTranslationFailure(result.error, R.string.tag_translation_install_failed, result);
         } else {
-            showTranslationToast(result.changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
-                Toast.LENGTH_LONG);
+            if (!result.consume()) return;
+            if (result.error != null) {
+                showTranslationFailure(result.error, R.string.tag_translation_install_failed);
+            } else {
+                showTranslationToast(result.changed ? R.string.tag_translation_installed : R.string.tag_translation_not_newer,
+                    Toast.LENGTH_LONG);
+            }
         }
     }
 

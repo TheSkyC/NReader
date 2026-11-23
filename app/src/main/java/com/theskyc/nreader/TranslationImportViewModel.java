@@ -36,6 +36,10 @@ public class TranslationImportViewModel extends ViewModel {
             consumed = true;
             return true;
         }
+
+        boolean isConsumed() {
+            return consumed;
+        }
     }
 
     private final MutableLiveData<Result> result = new MutableLiveData<>();
