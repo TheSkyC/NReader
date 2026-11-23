@@ -81,6 +81,11 @@ public class TagFilterWorkflowTest {
                 View found = firstRow(activity, 1);
                 assertTrue(((TextView) found.findViewById(R.id.title)).getText().toString().contains("Localized fixture"));
                 assertTrue(found.findViewById(R.id.master_layout).performClick());
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.recent_tags));
+                AlertDialog recent = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(recent);
+                assertEquals("canonical fixture (Tags)", recent.getListView().getItemAtPosition(0).toString());
+                assertTrue(recent.getListView().performItemClick(null, 0, 0));
                 pager.setCurrentItem(0, false);
                 await(activity, () -> count(activity, 0) == 1 && firstRow(activity, 0) != null);
                 assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getStatus(wanted));

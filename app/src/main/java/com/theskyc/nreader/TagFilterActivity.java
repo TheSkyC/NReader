@@ -20,6 +20,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.adapters.TagsAdapter;
 import com.theskyc.nreader.api.enums.TagStatus;
+import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.components.widgets.TagTypePage;
@@ -212,6 +213,7 @@ public class TagFilterActivity extends GeneralActivity {
         int id = item.getItemId();
         TagTypePage page = getActualFragment();
         if (id == R.id.reset_tags) createDialog();
+        else if (id == R.id.recent_tags) showRecentTags();
         else if (id == R.id.reset_view_filters) {
             TagV2.resetFilterPreferences(this);
             if (sortFilterItem != null) updateSortItem(sortFilterItem);
@@ -295,6 +297,56 @@ public class TagFilterActivity extends GeneralActivity {
 
     private void updateMinCountItem(MenuItem item) {
         item.setTitle(getString(R.string.set_minimum_count_format, TagV2.getMinCount()));
+    }
+
+    private void showRecentTags() {
+        List<TagV2.RecentTag> recent = TagV2.getRecentTags(this);
+        if (recent.isEmpty()) {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.recent_tags)
+                .setMessage(R.string.no_recent_tags)
+                .setPositiveButton(R.string.ok, null)
+                .show();
+            return;
+        }
+        String[] labels = new String[recent.size()];
+        for (int index = 0; index < recent.size(); index++) {
+            TagV2.RecentTag tag = recent.get(index);
+            labels[index] = tag.name + " (" + getString(typeLabel(tag.type)) + ")";
+        }
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.recent_tags)
+            .setItems(labels, (dialog, which) -> {
+                TagV2.RecentTag selected = recent.get(which);
+                int page = pageForType(selected.type);
+                if (page >= 0) mViewPager.setCurrentItem(page, false);
+                if (searchView != null) searchView.setQuery(selected.name, false);
+                dialog.dismiss();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private int pageForType(TagType type) {
+        switch (type.getId()) {
+            case 1: return 4;
+            case 2: return 3;
+            case 3: return 1;
+            case 4: return 2;
+            case 5: return 5;
+            default: return -1;
+        }
+    }
+
+    private int typeLabel(TagType type) {
+        switch (type.getId()) {
+            case 1: return R.string.parodies;
+            case 2: return R.string.characters;
+            case 3: return R.string.tags;
+            case 4: return R.string.artists;
+            case 5: return R.string.groups;
+            default: return R.string.tags;
+        }
     }
 
     private void updateTranslationFilterItem(MenuItem item) {

@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
+import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.After;
@@ -255,6 +256,23 @@ public class TagSuggestionTest {
         assertEquals(false, TagV2.isSortedByName());
         assertNull(TagV2.getStatusFilter());
         assertEquals(false, TagV2.isTranslatedOnly());
+    }
+
+    @Test public void recentTagsKeepNewestFirstAndDeduplicateByIdentity() {
+        RuntimeEnvironment.getApplication().getSharedPreferences("ScrapedTags", 0).edit()
+            .remove("recent_tags").apply();
+        Tag first = new Tag("first", 20, 901, TagType.TAG, TagStatus.DEFAULT);
+        Tag second = new Tag("second", 20, 902, TagType.ARTIST, TagStatus.DEFAULT);
+
+        TagV2.recordRecentTag(RuntimeEnvironment.getApplication(), first);
+        TagV2.recordRecentTag(RuntimeEnvironment.getApplication(), second);
+        TagV2.recordRecentTag(RuntimeEnvironment.getApplication(), first);
+
+        List<TagV2.RecentTag> recent = TagV2.getRecentTags(RuntimeEnvironment.getApplication());
+        assertEquals(2, recent.size());
+        assertEquals(901, recent.get(0).id);
+        assertEquals("first", recent.get(0).name);
+        assertEquals(902, recent.get(1).id);
     }
 
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {

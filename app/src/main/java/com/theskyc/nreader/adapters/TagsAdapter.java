@@ -165,6 +165,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
                 case OFFLINE:
                 case TYPE:
                     if (closed) break;
+                    TagV2.recordRecentTag(context, ent);
                     TagRuleEdits.cycle(ent, true, result -> {
                         if (closed || context.isFinishing() || context.isDestroyed()) return;
                         if (result.outcome == TagRuleEdits.Outcome.LIMIT_REACHED) {

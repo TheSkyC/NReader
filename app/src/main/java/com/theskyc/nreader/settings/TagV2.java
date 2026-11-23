@@ -11,6 +11,11 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagCatalog;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +23,8 @@ import java.util.Set;
 public class TagV2 {
     public static final int MAXTAGS = 100;
     public static final int DEFAULT_MIN_COUNT = 25;
+    private static final String RECENT_TAGS = "recent_tags";
+    private static final int MAX_RECENT_TAGS = 20;
     private static int minCount;
     private static boolean sortByName;
     @Nullable
@@ -124,6 +131,67 @@ public class TagV2 {
         context.getSharedPreferences("ScrapedTags", 0).edit()
             .putBoolean("translated_only", translatedOnly).apply();
         return translatedOnly;
+    }
+
+    public static final class RecentTag {
+        public final int id;
+        @NonNull public final String name;
+        @NonNull public final TagType type;
+
+        private RecentTag(int id, @NonNull String name, @NonNull TagType type) {
+            this.id = id;
+            this.name = name;
+            this.type = type;
+        }
+    }
+
+    public static void recordRecentTag(Context context, @NonNull Tag tag) {
+        if (tag.getId() <= 0 || tag.getType() == null || tag.getType() == TagType.UNKNOWN
+            || tag.getType() == TagType.LANGUAGE || tag.getType() == TagType.CATEGORY
+            || tag.getName().isEmpty()) return;
+        try {
+            JSONObject current = new JSONObject()
+                .put("id", tag.getId())
+                .put("type", tag.getType().getId())
+                .put("name", tag.getName());
+            JSONArray result = new JSONArray().put(current);
+            for (RecentTag recent : getRecentTags(context)) {
+                if (recent.id == tag.getId() && recent.type.equals(tag.getType())) continue;
+                result.put(new JSONObject()
+                    .put("id", recent.id)
+                    .put("type", recent.type.getId())
+                    .put("name", recent.name));
+                if (result.length() >= MAX_RECENT_TAGS) break;
+            }
+            context.getSharedPreferences("ScrapedTags", 0).edit()
+                .putString(RECENT_TAGS, result.toString()).apply();
+        } catch (JSONException ignored) {
+            // Values originate from validated catalog rows; a malformed preference is ignored.
+        }
+    }
+
+    @NonNull
+    public static List<RecentTag> getRecentTags(Context context) {
+        List<RecentTag> result = new ArrayList<>();
+        String encoded = context.getSharedPreferences("ScrapedTags", 0).getString(RECENT_TAGS, null);
+        if (encoded == null) return result;
+        try {
+            JSONArray array = new JSONArray(encoded);
+            for (int index = 0; index < array.length() && result.size() < MAX_RECENT_TAGS; index++) {
+                JSONObject item = array.optJSONObject(index);
+                if (item == null) continue;
+                int id = item.optInt("id", -1);
+                int typeId = item.optInt("type", -1);
+                String name = item.optString("name", "");
+                if (id <= 0 || typeId <= 0 || typeId >= TagType.values.length || name.isEmpty()) continue;
+                TagType type = TagType.values[typeId];
+                if (type == TagType.LANGUAGE || type == TagType.CATEGORY) continue;
+                result.add(new RecentTag(id, name, type));
+            }
+        } catch (JSONException ignored) {
+            // A damaged history should not affect tag browsing.
+        }
+        return result;
     }
 
     public static void resetFilterPreferences(Context context) {
