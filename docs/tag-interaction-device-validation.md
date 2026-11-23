@@ -54,6 +54,26 @@ On 2026-11-23, all four cases passed with MinApi26 on a disposable API 26
 emulator. This run used synthetic translations and injected keys; it does not
 measure a physical keyboard, IME, frame presentation, or a physical device.
 
+## Catalog check after background process death
+
+On 2026-11-23, an isolated MinApi28 benchmark build was checked on a disposable
+API 28 emulator with no default network. A temporary test-only application
+subclass retained the normal application initialization and used reflection to
+open the catalog-check dialog and start a request. It recorded the saved request
+ID, task ID, process ID, dialog state, and WorkManager state without starting a
+second instrumentation process.
+
+The request was enqueued before the task was backgrounded. After `am kill`
+removed the background process, the original task remained in Recents. Opening
+that card created a new process in the same task; the saved and restored request
+IDs matched, WorkManager still reported the request as enqueued, and the visible
+dialog said it was waiting for a network connection. The temporary user and
+benchmark package were removed and networking was restored afterward.
+
+This observation uses a test-only entry point and an emulator. It does not
+establish a completed online refresh, force-stop recovery, or behavior on other
+Android versions and physical devices.
+
 ## Local translation pack picker
 
 On a disposable device, use **Settings → Tag languages → Install or update**
