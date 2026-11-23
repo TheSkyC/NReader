@@ -249,8 +249,7 @@ public final class TagTranslationCatalog {
                                 writer.endArray();
                                 writer.endObject();
                             }
-                            String name = rows.getString(1);
-                            if (!validateText(name).equals(name)) throw new IOException("Invalid installed translation name");
+                            String name = normalizeExportText(rows.getString(1));
                             writer.beginObject();
                             writer.name("id").value(id);
                             writer.name("name").value(name);
@@ -263,8 +262,7 @@ public final class TagTranslationCatalog {
                             if (rows.getInt(3) != nextAliasOrder || nextAliasOrder >= MAX_ALIASES_PER_ENTRY) {
                                 throw new UnknownAliasOrderException();
                             }
-                            String alias = rows.getString(2);
-                            if (!validateText(alias).equals(alias)) throw new IOException("Invalid installed translation alias");
+                            String alias = normalizeExportText(rows.getString(2));
                             if (!aliasKeys.add(searchKey(alias))) throw new DuplicateExportAliasException();
                             writer.value(alias);
                             nextAliasOrder++;
@@ -713,6 +711,11 @@ public final class TagTranslationCatalog {
         }
         String language = localeTag.split("-", 2)[0];
         return !"in".equals(language) && !"iw".equals(language) && !"ji".equals(language) && !"und".equals(language);
+    }
+
+    private static String normalizeExportText(String value) throws IOException {
+        if (!value.equals(value.trim())) throw new IOException("Invalid installed translation text");
+        return validateText(value);
     }
 
     private static String validateText(String value) throws IOException {

@@ -135,6 +135,46 @@ public class TagTranslationExportTest {
         assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(snapshot), scratch.getRoot(), () -> false));
     }
 
+    @Test public void normalizesExportWithoutChangingInstalledText() throws Exception {
+        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
+        String oldName = "Cafe\u0301";
+        String oldAlias = "A\u030a";
+        database.execSQL("UPDATE TagTranslations SET displayName = ? WHERE idTag = 1", new Object[]{oldName});
+        database.execSQL("UPDATE TagTranslationAliases SET alias = ? WHERE idTag = 1 AND aliasOrder = 0",
+            new Object[]{oldAlias});
+
+        byte[] snapshot = export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES);
+        JSONObject entry = new JSONObject(new String(snapshot, StandardCharsets.UTF_8))
+            .getJSONArray("entries").getJSONObject(0);
+        assertEquals("Caf\u00e9", entry.getString("name"));
+        assertEquals("\u00c5", entry.getJSONArray("aliases").getString(0));
+        assertEquals("second", entry.getJSONArray("aliases").getString(1));
+        assertEquals(oldName, android.database.DatabaseUtils.stringForQuery(database,
+            "SELECT displayName FROM TagTranslations WHERE idTag = 1", null));
+        assertEquals(oldAlias, android.database.DatabaseUtils.stringForQuery(database,
+            "SELECT alias FROM TagTranslationAliases WHERE idTag = 1 AND aliasOrder = 0", null));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+
+        TagTranslationCatalog.remove(database, "ja");
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(snapshot), scratch.getRoot(), () -> false));
+        assertArrayEquals(snapshot, export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES));
+    }
+
+    @Test public void rejectsInvalidOrCollidingExportTextAfterNormalization() throws Exception {
+        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
+        database.execSQL("UPDATE TagTranslations SET displayName = ' invalid ' WHERE idTag = 1");
+        assertThrows(IOException.class, () -> export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES));
+        database.execSQL("UPDATE TagTranslations SET displayName = 'one' WHERE idTag = 1");
+        database.execSQL("UPDATE TagTranslationAliases SET alias = ? WHERE aliasOrder = 0", new Object[]{"A\u030a"});
+        database.execSQL("UPDATE TagTranslationAliases SET alias = ? WHERE aliasOrder = 1", new Object[]{"\u00c5"});
+        assertThrows(TagTranslationCatalog.DuplicateExportAliasException.class,
+            () -> export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES));
+        assertEquals(2, android.database.DatabaseUtils.longForQuery(database,
+            "SELECT COUNT(*) FROM TagTranslationAliases WHERE idTag = 1", null));
+    }
+
     @Test public void enforcesByteLimitAndCleansCancelledSnapshots() throws Exception {
         assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"\u753b\",\"aliases\":[\"a\"]}]}"));
