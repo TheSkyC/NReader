@@ -284,6 +284,25 @@ class TranslationReleaseTest(unittest.TestCase):
         self.assertEqual(2, release.parse_manifest(pointer.read_bytes())["ja"]["revision"])
         self.assertEqual(old_data, old_payload.read_bytes())
 
+    def test_reviewed_release_can_remove_ids_absent_from_the_target_catalog(self):
+        old_catalog = {11: TagInfo(11, "one", 1, 3), 22: TagInfo(22, "two", 1, 3)}
+        target_catalog = {22: old_catalog[22]}
+        old_data = encode_pack([{"id": 11, "name": "obsolete"}, {"id": 22, "name": "keep"}],
+                               "ja", 1, old_catalog)
+        self.pack.write_bytes(old_data)
+        pointer = release.prepare_releases([self.pack], old_catalog, self.output)
+        base = parse_pack(old_data, old_catalog)
+        proposal = json.loads(review.draft_proposal(target_catalog, base, "ja", [11], old_catalog))
+        proposal["changes"][0]["after"] = None
+        report, candidate = review.review_proposal(target_catalog, base, review.encode_document(proposal), 2,
+                                                   old_catalog)
+        self.pack.write_bytes(candidate)
+        report_path = self.root / "review.json"
+        report_path.write_bytes(report)
+        release.prepare_releases([self.pack], target_catalog, self.output, [report_path])
+        self.assertEqual(2, release.parse_manifest(pointer.read_bytes())["ja"]["revision"])
+        self.assertEqual([22], [entry["id"] for entry in parse_pack(candidate, target_catalog)["entries"]])
+
     def test_replaced_payload_must_match_manifest_identity(self):
         self.candidate("ja", 1)
         pointer = self.publish()

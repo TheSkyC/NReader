@@ -135,6 +135,48 @@ class TranslationReviewTest(unittest.TestCase):
                 entries = parse_pack(output.read_bytes(), self.catalog)["entries"]
                 self.assertEqual(["accepted", "concurrent"], [entry["name"] for entry in entries])
 
+    def test_cli_reviews_removal_of_an_id_missing_from_target_catalog(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            target_file, old_file, base_file, proposal_file, report_file, output = (
+                root / name for name in ("target.json", "old.json", "base.json", "proposal.json",
+                                         "review.json", "candidate.json"))
+            target_file.write_bytes(b"target")
+            old_file.write_bytes(b"old")
+            target_catalog = {22: self.catalog[22], 33: self.catalog[33]}
+            base_file.write_bytes(encode_pack(self.base["entries"], "ja", 4, self.catalog))
+            common = ["--catalog", str(target_file), "--base-catalog", str(old_file), "--base", str(base_file)]
+
+            def parse_fixture(data):
+                return self.catalog if data == b"old" else target_catalog
+
+            with patch.object(review, "parse_catalog", side_effect=parse_fixture), contextlib.redirect_stdout(io.StringIO()):
+                review.main(["draft", *common, "--locale", "ja", "--id", "11", "--output", str(proposal_file)])
+                proposal = json.loads(proposal_file.read_bytes())
+                self.assertEqual("one", proposal["changes"][0]["canonicalName"])
+                proposal["changes"][0]["after"] = None
+                proposal_file.write_bytes(review.encode_document(proposal))
+                args = [str(proposal_file), *common, "--revision", "5"]
+                review.main(["review", *args, "--output", str(report_file)])
+                review.main(["accept", *args, "--review", str(report_file), "--output", str(output)])
+            self.assertEqual([22], [row["id"] for row in parse_pack(output.read_bytes(), target_catalog)["entries"]])
+            self.assertEqual(11, json.loads(report_file.read_bytes())["changes"][0]["id"])
+
+    def test_missing_target_ids_can_only_be_removed_and_must_all_be_resolved(self):
+        target = {33: self.catalog[33]}
+        proposal = json.loads(review.draft_proposal(target, self.base, "ja", [11], self.catalog))
+        proposal["changes"][0]["after"] = {"name": "still present"}
+        with self.assertRaisesRegex(ValueError, "must be removed"):
+            review.review_proposal(target, self.base, review.encode_document(proposal), 5, self.catalog)
+        proposal["changes"][0]["after"] = None
+        with self.assertRaisesRegex(ValueError, "unknown tag ID"):
+            review.review_proposal(target, self.base, review.encode_document(proposal), 5, self.catalog)
+        with self.assertRaisesRegex(ValueError, "unknown tag ID"):
+            review.draft_proposal(target, self.base, "ja", [11], target)
+        conflicting = {**self.catalog, 11: TagInfo(11, "one", 8, 4)}
+        with self.assertRaisesRegex(ValueError, "Catalog type changed"):
+            review.draft_proposal(conflicting, self.base, "ja", [11], self.catalog)
+
 
 if __name__ == "__main__":
     unittest.main()

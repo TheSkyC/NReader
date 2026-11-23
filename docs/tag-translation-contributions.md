@@ -79,6 +79,16 @@ Each proposal uses `schemaVersion: 1`, covers one locale, and contains 1 to
 from a locale or change a tag's canonical identity. The app pack format has
 its own separate schema version.
 
+If a target catalog omits IDs present in the current pack, pass the target
+snapshot as `--catalog` and the earlier snapshot that covers the base pack as
+`--base-catalog` to draft, review, and accept. For an omitted ID, the proposal
+shows its name and type from the earlier snapshot; its `after` must be `null`.
+The candidate must remove every ID absent from the target catalog, and both
+catalogs must agree on the type of every retained base ID. All removals must
+fit in one proposal alongside any additions or edits: the intermediate candidate
+cannot contain unknown IDs. For a larger correction, prepare a complete pack
+with the authoring tool and apply the maintainer's review process separately.
+
 Keep authoring inputs and generated outputs in separate files. The pack builder
 and proposal commands reject an output path that resolves to an input path.
 

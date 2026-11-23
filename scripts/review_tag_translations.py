@@ -24,31 +24,43 @@ def encode_document(document):
     return data
 
 
-def base_entries(base, locale):
+def base_entries(base, locale, catalog=None, base_catalog=None):
     if base is None:
         return {}
     if base["locale"] != locale:
         raise ValueError("Base pack locale does not match the proposal")
+    if catalog is not None and base_catalog is not None:
+        for entry in base["entries"]:
+            tag_id = entry["id"]
+            if tag_id not in base_catalog:
+                raise ValueError("Base translation references an unknown tag ID")
+            if tag_id in catalog and catalog[tag_id].category != base_catalog[tag_id].category:
+                raise ValueError(f"Catalog type changed for tag ID {tag_id}")
     return {entry["id"]: {"name": entry["name"], "aliases": entry["aliases"]} for entry in base["entries"]}
 
 
-def tag_context(catalog, tag_id):
-    if type(tag_id) is not int or tag_id not in catalog:
+def tag_context(catalog, tag_id, base_catalog=None, base_ids=()):
+    if type(tag_id) is not int:
         raise ValueError("Proposal references an unknown tag ID")
-    tag = catalog[tag_id]
+    tag = catalog.get(tag_id)
+    if tag is None and base_catalog is not None and tag_id in base_ids:
+        tag = base_catalog.get(tag_id)
+    if tag is None:
+        raise ValueError("Proposal references an unknown tag ID")
     return {"id": tag_id, "canonicalName": tag.title, "type": tag.category}
 
 
-def draft_proposal(catalog, base, locale, ids):
+def draft_proposal(catalog, base, locale, ids, base_catalog=None):
     validate_locale(locale)
     if not 1 <= len(ids) <= MAX_CHANGES or len(set(ids)) != len(ids):
         raise ValueError("Expected 1 to 1,000 unique tag IDs")
-    entries = base_entries(base, locale)
+    entries = base_entries(base, locale, catalog, base_catalog)
     return encode_document({
         "schemaVersion": SCHEMA_VERSION,
         "locale": locale,
         "changes": [
-            {**tag_context(catalog, tag_id), "before": entries.get(tag_id), "after": entries.get(tag_id)}
+            {**tag_context(catalog, tag_id, base_catalog, entries),
+             "before": entries.get(tag_id), "after": entries.get(tag_id)}
             for tag_id in sorted(ids)
         ],
     })
@@ -58,14 +70,14 @@ def optional_translation(value):
     return None if value is None else normalize_translation(value)
 
 
-def review_proposal(catalog, base, proposal_bytes, revision):
+def review_proposal(catalog, base, proposal_bytes, revision, base_catalog=None):
     validate_revision(revision)
     proposal = decode_json(proposal_bytes)
     if (not isinstance(proposal, dict) or proposal.keys() != {"schemaVersion", "locale", "changes"}
             or type(proposal["schemaVersion"]) is not int or proposal["schemaVersion"] != SCHEMA_VERSION):
         raise ValueError("Invalid translation proposal envelope")
     locale = validate_locale(proposal["locale"])
-    entries = base_entries(base, locale)
+    entries = base_entries(base, locale, catalog, base_catalog)
     base_revision = base["revision"] if base is not None else None
     if base_revision is not None and revision <= base_revision:
         raise ValueError("Candidate revision must be newer than the base revision")
@@ -79,7 +91,7 @@ def review_proposal(catalog, base, proposal_bytes, revision):
                 or change.keys() - (CHANGE_FIELDS | {"note"})):
             raise ValueError("Invalid proposed change fields")
         tag_id = change["id"]
-        context = tag_context(catalog, tag_id)
+        context = tag_context(catalog, tag_id, base_catalog, entries)
         if tag_id in reviewed:
             raise ValueError(f"Duplicate proposed change for tag ID {tag_id}")
         if (change["canonicalName"] != context["canonicalName"] or type(change["type"]) is not int
@@ -88,6 +100,8 @@ def review_proposal(catalog, base, proposal_bytes, revision):
 
         before = optional_translation(change["before"])
         after = optional_translation(change["after"])
+        if tag_id not in catalog and after is not None:
+            raise ValueError(f"Tag ID {tag_id} is absent from the target catalog and must be removed")
         if before != entries.get(tag_id):
             raise ValueError(f"Current translation changed for ID {tag_id}; draft the change again")
         if before == after:
@@ -125,6 +139,7 @@ def main(argv=None):
         sub = commands.add_parser(command)
         sub.add_argument("--catalog", type=Path, default=default_catalog)
         sub.add_argument("--base", type=Path, help="Current locale pack; omit for a new locale")
+        sub.add_argument("--base-catalog", type=Path, help="Catalog used by the current locale pack")
         sub.add_argument("--output", type=Path, required=True)
         if command == "draft":
             sub.add_argument("--locale", required=True)
@@ -137,15 +152,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
-        inputs = (args.catalog, args.base, getattr(args, "proposal", None), getattr(args, "review", None))
+        inputs = (args.catalog, args.base, args.base_catalog, getattr(args, "proposal", None),
+                  getattr(args, "review", None))
         if any(path is not None and path.resolve() == args.output.resolve() for path in inputs):
             raise ValueError("Output must be separate from the input files")
         catalog = parse_catalog(read_bounded(args.catalog, MAX_BYTES))
-        base = parse_pack(read_bounded(args.base, MAX_BYTES), catalog) if args.base else None
+        if args.base_catalog is not None and args.base is None:
+            raise ValueError("A base catalog requires a base pack")
+        base_catalog = (parse_catalog(read_bounded(args.base_catalog, MAX_BYTES))
+                        if args.base_catalog is not None else catalog)
+        base = parse_pack(read_bounded(args.base, MAX_BYTES), base_catalog) if args.base else None
         if args.command == "draft":
-            output = draft_proposal(catalog, base, args.locale, args.id)
+            output = draft_proposal(catalog, base, args.locale, args.id, base_catalog)
         else:
-            report, pack = review_proposal(catalog, base, read_bounded(args.proposal, MAX_BYTES), args.revision)
+            report, pack = review_proposal(catalog, base, read_bounded(args.proposal, MAX_BYTES), args.revision,
+                                           base_catalog)
             if args.command == "accept":
                 if read_bounded(args.review, MAX_BYTES) != report:
                     raise ValueError("Review does not match the current proposal and candidate")
