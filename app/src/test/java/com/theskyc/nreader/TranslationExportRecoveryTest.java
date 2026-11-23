@@ -7,14 +7,18 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 
 import androidx.appcompat.app.AlertDialog;
@@ -110,6 +114,61 @@ public class TranslationExportRecoveryTest {
             }
         } finally {
             resume.countDown();
+            ReflectionHelpers.setStaticField(Database.class, "database", previous);
+            Queries.setDb(previous);
+            assertTrue(file.delete());
+        }
+    }
+
+    @Test public void pickerResultIsDeliveredAfterFreshActivityRestoresSelection() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        Global.initFromShared(context);
+        SQLiteDatabase previous = Database.getDatabase();
+        File file = File.createTempFile("translation-export-restored", ".json", context.getCacheDir());
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Database.setDatabase(database);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700009, 'fixture', 3, 1)");
+            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+                + "\"entries\":[{\"id\":700009,\"name\":\"translated\"}]}";
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
+                context.getCacheDir(), () -> false));
+            TestProvider provider = new TestProvider(file, database, new CountDownLatch(0), new CountDownLatch(0), false);
+            ProviderInfo info = new ProviderInfo();
+            info.authority = "translation-export-restored";
+            provider.attachInfo(context, info);
+            ShadowContentResolver.registerProviderInternal(info.authority, provider);
+            Bundle state = new Bundle();
+            int requestCode;
+            try (ActivityController<SettingsActivity> original = Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                TagTranslationCatalog.PackState packState = TagTranslationCatalog.installedPackStates(database).get("ja");
+                ReflectionHelpers.callInstanceMethod(original.get(), "beginTranslationExport",
+                    ReflectionHelpers.ClassParameter.from(String.class, "ja"),
+                    ReflectionHelpers.ClassParameter.from(TagTranslationCatalog.PackState.class, packState));
+                requestCode = Shadows.shadowOf(original.get()).getNextStartedActivityForResult().requestCode;
+                original.pause().saveInstanceState(state).stop();
+            }
+            Parcel parcel = Parcel.obtain();
+            Bundle restoredState;
+            try {
+                state.writeToParcel(parcel, 0);
+                parcel.setDataPosition(0);
+                restoredState = Bundle.CREATOR.createFromParcel(parcel);
+            } finally {
+                parcel.recycle();
+            }
+            try (ActivityController<SettingsActivity> restored = Robolectric.buildActivity(SettingsActivity.class).create(restoredState)) {
+                Intent result = new Intent().setData(Uri.parse("content://translation-export-restored/pack"));
+                assertTrue(restored.get().getActivityResultRegistry().dispatchResult(requestCode, Activity.RESULT_OK, result));
+                restored.start().resume().visible();
+                TranslationExportViewModel model = ReflectionHelpers.getField(restored.get(), "translationExport");
+                awaitResult(model);
+                assertNull(model.result().getValue().error);
+                assertEquals("ja", new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8))
+                    .getString("locale"));
+                assertEquals(1, provider.opens);
+            }
+        } finally {
             ReflectionHelpers.setStaticField(Database.class, "database", previous);
             Queries.setDb(previous);
             assertTrue(file.delete());
