@@ -20,8 +20,10 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
+import android.widget.Filterable;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,13 +42,17 @@ import com.theskyc.nreader.settings.TagV2;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -97,6 +103,64 @@ public class TagInteractionDeviceBenchmarkTest {
                     long observed = SystemClock.elapsedRealtimeNanos();
                     Log.i(LOG, "aliasKeys=" + alias.length() + " inputToObservedMs=" + millis(start, observed)
                         + " afterKeysSentMs=" + millis(keysSent, observed));
+                } finally {
+                    info.flags = savedFlags;
+                    automation.setServiceInfo(info);
+                }
+            } finally {
+                close(activity);
+            }
+        });
+    }
+
+    @Test
+    public void refreshesVisibleSuggestionsAfterRebuild() throws Exception {
+        TagCatalogDeviceBenchmarkTest.withFixture("rebuild-suggestion", (context, database, directory) -> {
+            Global.initFromShared(context);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700004, 'canonical fixture', 3, 200000)");
+            SearchActivity activity = launch(context, SearchActivity.class, null);
+            try {
+                String locale = onMain(() -> activity.getResources().getConfiguration().getLocales().get(0).toLanguageTag());
+                String pack = "{\"schemaVersion\":2,\"locale\":\"" + locale + "\",\"revision\":1,"
+                    + "\"entries\":[{\"id\":700004,\"name\":\"translated fixture\",\"aliases\":[\"unique alias\"]}]}";
+                assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
+                    directory, () -> false));
+                instrumentation.waitForIdleSync();
+                TagTranslationCatalog.scheduleKeyRebuild(database);
+                waitFor("search options button", () -> onMain(() -> {
+                    View options = activity.findViewById(R.id.view_groups);
+                    return activity.hasWindowFocus() && options != null && options.isShown() && options.performClick();
+                }));
+                waitFor("visible add tag chip", () -> onMain(() -> {
+                    ViewGroup group = activity.findViewById(R.id.tag_group);
+                    View last = group.getChildAt(group.getChildCount() - 1);
+                    return activity.hasWindowFocus() && last instanceof Chip && !(last instanceof ChipTag)
+                        && last.isShown() && last.performClick();
+                }));
+                waitFor("dialog to take window focus", () -> onMain(() -> !activity.hasWindowFocus()));
+                UiAutomation automation = instrumentation.getUiAutomation();
+                AccessibilityServiceInfo info = automation.getServiceInfo();
+                int savedFlags = info.flags;
+                info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+                automation.setServiceInfo(info);
+                try {
+                    instrumentation.sendStringSync("unique alias");
+                    Field dialogField = SearchActivity.class.getDeclaredField("tagEntry");
+                    dialogField.setAccessible(true);
+                    Object tagEntry = dialogField.get(activity);
+                    Field entryField = tagEntry.getClass().getDeclaredField("entry");
+                    entryField.setAccessible(true);
+                    AppCompatAutoCompleteTextView entry = (AppCompatAutoCompleteTextView) entryField.get(tagEntry);
+                    CountDownLatch initialFilter = new CountDownLatch(1);
+                    instrumentation.runOnMainSync(() -> {
+                        assertTrue("Input must reach the tag field", "unique alias".contentEquals(entry.getText()));
+                        ((Filterable) entry.getAdapter()).getFilter().filter("unique alias", count -> initialFilter.countDown());
+                    });
+                    assertTrue("Initial filtering did not finish", initialFilter.await(25, TimeUnit.SECONDS));
+                    assertTrue("Translation must be hidden while rebuilding",
+                        !hasVisibleText(automation, "translated fixture"));
+                    while (!TagTranslationCatalog.rebuildUnicodeKeyBatch(database, () -> false)) { }
+                    waitFor("refreshed translated suggestion", () -> hasVisibleText(automation, "translated fixture"));
                 } finally {
                     info.flags = savedFlags;
                     automation.setServiceInfo(info);

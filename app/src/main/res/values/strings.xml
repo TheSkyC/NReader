@@ -667,6 +667,9 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Tag languages</string>
+    <string name="tag_translation_rebuild_title">Updating tag languages</string>
+    <string name="tag_translation_rebuild_message">Tag names and search temporarily use their original names while the update runs. The update resumes automatically. If it takes a long time, check that your device has free storage and reopen the app.</string>
+    <string name="tag_translation_rebuild_manage">Manage languages</string>
     <string name="tag_translation_packs_summary">Install, export, or remove offline tag translations.</string>
     <string name="tag_translation_packs_empty">No tag languages are installed.</string>
     <string name="tag_translation_pack_item">%1$s (revision %2$d)</string>

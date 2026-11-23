@@ -79,7 +79,8 @@ public class TagCatalogDeviceBenchmarkTest {
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
                 long upgradeMs = SystemClock.elapsedRealtime() - start;
-                assertEquals(27, database.getVersion());
+                assertEquals(29, database.getVersion());
+                assertTrue(TagTranslationCatalog.isKeyRebuildPending(database));
                 assertEquals(count, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagTranslationAliases", null));
                 assertEquals(4, TagTranslationCatalog.installedRevision(database, "ja"));
                 assertEquals(1, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagRules"

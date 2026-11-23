@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -247,15 +248,28 @@ public class SettingsActivity extends GeneralActivity {
     public void manageTranslationPacks() {
         new Thread(() -> {
             try {
-                Map<String, TagTranslationCatalog.PackState> packs = TagTranslationCatalog.installedPackStates(Database.getDatabase());
+                SQLiteDatabase database = Database.getDatabase();
+                Map<String, TagTranslationCatalog.PackState> packs = TagTranslationCatalog.installedPackStates(database);
+                boolean rebuilding = TagTranslationCatalog.isKeyRebuildPending(database);
                 runOnUiThread(() -> {
-                    if (!isFinishing() && !isDestroyed()) showTranslationPacks(packs);
+                    if (isFinishing() || isDestroyed()) return;
+                    if (rebuilding) showTranslationRebuildNotice(packs);
+                    else showTranslationPacks(packs);
                 });
             } catch (RuntimeException error) {
                 LogUtility.e("Unable to list tag translation packs", error);
                 runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
             }
         }).start();
+    }
+
+    private void showTranslationRebuildNotice(Map<String, TagTranslationCatalog.PackState> packs) {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_translation_rebuild_title)
+            .setMessage(R.string.tag_translation_rebuild_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.tag_translation_rebuild_manage, (dialog, which) -> showTranslationPacks(packs))
+            .show();
     }
 
     private void showTranslationPacks(Map<String, TagTranslationCatalog.PackState> packs) {

@@ -121,6 +121,10 @@ The rebuild preserves text, alias identities and order, revisions, rules, and
 account state, including aliases whose rebuilt keys collide. Export continues to
 reject colliding aliases until they are corrected. Version 28 databases already
 have rebuilt keys and do not need this work.
+While a rebuild is pending, Settings explains the temporary fallback before
+opening the language-pack list. The status is read when the list is requested,
+so the rebuild can finish before the notice is shown. If progress stalls,
+free storage and reopening the app can allow the scheduled work to resume.
 The historical version 24 upgrade kept the first alias when legacy keys became
 equivalent. A direct upgrade from version 23 to version 29 instead preserves
 the distinct aliases before rebuilding their keys in the background.

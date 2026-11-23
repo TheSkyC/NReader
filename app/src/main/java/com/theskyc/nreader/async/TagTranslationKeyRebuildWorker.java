@@ -28,8 +28,8 @@ public final class TagTranslationKeyRebuildWorker extends Worker {
         try {
             WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP,
                 new OneTimeWorkRequest.Builder(TagTranslationKeyRebuildWorker.class).build());
-        } catch (IllegalStateException ignored) {
-            // WorkManager may be disabled in local test processes.
+        } catch (IllegalStateException error) {
+            LogUtility.w("Unable to schedule translation key rebuild", error);
         }
     }
 
