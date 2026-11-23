@@ -12,6 +12,7 @@ from scripts.tag_catalog import MAX_BYTES, atomic_write, decode_json, parse_cata
 
 
 SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
 MAX_CHANGES = 1_000
 CHANGE_FIELDS = {"id", "canonicalName", "type", "before", "after"}
 
@@ -103,9 +104,11 @@ def review_proposal(catalog, base, proposal_bytes, revision):
         raise ValueError("A proposal cannot remove the last translation in a locale")
     pack = encode_pack([{"id": tag_id, **entry} for tag_id, entry in entries.items()], locale, revision, catalog)
     report = encode_document({
-        "schemaVersion": SCHEMA_VERSION,
+        "schemaVersion": REPORT_SCHEMA_VERSION,
         "locale": locale,
         "baseRevision": base_revision,
+        "baseSha256": (hashlib.sha256(encode_pack(base["entries"], locale, base_revision, None)).hexdigest()
+                       if base is not None else None),
         "candidateRevision": revision,
         "proposalSha256": hashlib.sha256(proposal_bytes).hexdigest(),
         "candidateSha256": hashlib.sha256(pack).hexdigest(),

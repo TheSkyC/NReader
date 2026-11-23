@@ -32,9 +32,10 @@ or authority to publish.
    ```
 
    Review all the changes together. The report includes canonical names and
-   types, before and after values, contributor notes, and the SHA-256 of the
-   resulting pack. JSON escapes invisible formatting characters so the review
-   file cannot use them to disguise the surrounding structure. If a tag changed
+   types, before and after values, contributor notes, and SHA-256 digests of the
+   normalized base and resulting pack. JSON escapes invisible formatting
+   characters so the review file cannot use them to disguise the surrounding
+   structure. If a tag changed
    name or type, or its current translation no longer matches `before`, draft
    it again against the current data. Count changes and edits to other tags do
    not invalidate a proposal. If they change the resulting pack or its revision
@@ -53,6 +54,25 @@ or authority to publish.
    atomically only if the report matches. The candidate retains unaffected
    translations and can be installed using Settings → Tag languages. For a
    different canonical snapshot, pass `--catalog` to all three commands.
+
+5. When staging a reviewed candidate, pass its report to the release tool:
+
+   ```powershell
+   python -m scripts.build_tag_translation_release .gradle/zh-Hans-candidate.json `
+     --review .gradle/review.json --catalog data/tags.json --output .gradle/translation-feed
+   ```
+
+   The tool checks the candidate digest and compares the report's normalized
+   base digest and revision with the current local release. If they differ,
+   review the proposal again against the current pack and accept a new candidate.
+   For a batch, repeat `--review` once per candidate locale. An identical
+   already-published candidate can be retried. Reports use schema version 2;
+   regenerate older reports before acceptance and staging. Release preparation
+   without `--review` remains available for packs built directly by the authoring
+   tool and does not perform this base check. Use a single publisher, and verify
+   the hosted manifest separately: this check only covers the local release. It
+   does not recompute the report from the proposal or authenticate its author;
+   retain and use the report you reviewed and accepted.
 
 Each proposal uses `schemaVersion: 1`, covers one locale, and contains 1 to
 1,000 changes with unique positive tag IDs. It cannot remove the last entry

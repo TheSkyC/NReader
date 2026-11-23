@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from scripts import build_tag_translation_release as release
 from scripts import review_tag_translations as review
-from scripts.build_tag_translation_pack import encode_pack
+from scripts.build_tag_translation_pack import encode_pack, parse_pack
 from scripts.tag_catalog import TagInfo
 
 
@@ -28,6 +28,94 @@ class TranslationReleaseTest(unittest.TestCase):
 
     def publish(self):
         return release.prepare_release(self.pack, self.catalog_ids, self.output)
+
+    def test_reviewed_release_rejects_stale_base_and_accepts_refreshed_review(self):
+        catalog = {11: TagInfo(11, "one", 1, 3), 22: TagInfo(22, "two", 1, 3)}
+        base_data = encode_pack([{"id": 11, "name": "old"}, {"id": 22, "name": "other"}], "ja", 1, catalog)
+        self.pack.write_bytes(base_data)
+        pointer = release.prepare_releases([self.pack], catalog, self.output)
+        base = parse_pack(base_data, catalog)
+        proposal = json.loads(review.draft_proposal(catalog, base, "ja", [11]))
+        proposal["changes"][0]["after"] = {"name": "updated"}
+        proposal_bytes = review.encode_document(proposal)
+        report_bytes, candidate = review.review_proposal(catalog, base, proposal_bytes, 4)
+        report_path = self.root / "review.json"
+        report_path.write_bytes(report_bytes)
+        candidate_path = self.root / "reviewed.json"
+        candidate_path.write_bytes(candidate)
+
+        different_base = parse_pack(encode_pack([{"id": 11, "name": "old"}, {"id": 22, "name": "different"}],
+                                                "ja", 1, catalog), catalog)
+        different_report, different_candidate = review.review_proposal(catalog, different_base, proposal_bytes, 4)
+        report_path.write_bytes(different_report)
+        candidate_path.write_bytes(different_candidate)
+        with self.assertRaisesRegex(ValueError, "Review base does not match"):
+            release.prepare_releases([candidate_path], catalog, self.output, [report_path])
+        report_path.write_bytes(report_bytes)
+        candidate_path.write_bytes(candidate)
+
+        newer = encode_pack([{"id": 11, "name": "old"}, {"id": 22, "name": "concurrent"}], "ja", 2, catalog)
+        self.pack.write_bytes(newer)
+        release.prepare_releases([self.pack], catalog, self.output)
+        original = pointer.read_bytes()
+        with self.assertRaisesRegex(ValueError, "Review base does not match"):
+            release.prepare_releases([candidate_path], catalog, self.output, [report_path])
+        self.assertEqual(original, pointer.read_bytes())
+        self.assertFalse((self.output / release.payload_name(hashlib.sha256(candidate).hexdigest())).exists())
+
+        report_bytes, candidate = review.review_proposal(catalog, parse_pack(newer, catalog), proposal_bytes, 4)
+        report_path.write_bytes(report_bytes)
+        candidate_path.write_bytes(candidate)
+        release.prepare_releases([candidate_path], catalog, self.output, [report_path])
+        descriptor = release.parse_manifest(pointer.read_bytes())["ja"]
+        self.assertEqual(4, descriptor["revision"])
+        self.assertEqual(["updated", "concurrent"], [row["name"] for row in parse_pack(candidate, catalog)["entries"]])
+        release.prepare_releases([candidate_path], catalog, self.output, [report_path])
+
+    def test_reviewed_release_checks_candidate_report_set_and_new_locale_base(self):
+        catalog = {11: TagInfo(11, "one", 1, 3)}
+        proposal = json.loads(review.draft_proposal(catalog, None, "ja", [11]))
+        proposal["changes"][0]["after"] = {"name": "new"}
+        report, candidate = review.review_proposal(catalog, None, review.encode_document(proposal), 1)
+        self.pack.write_bytes(candidate)
+        report_path = self.root / "review.json"
+        report_path.write_bytes(report)
+        with self.assertRaisesRegex(ValueError, "one review report"):
+            release.prepare_releases([self.pack], catalog, self.output, [])
+        with self.assertRaisesRegex(ValueError, "Duplicate review locale"):
+            release.prepare_releases([self.pack], catalog, self.output, [report_path, report_path])
+        altered = json.loads(report)
+        altered["candidateSha256"] = "0" * 64
+        report_path.write_bytes(review.encode_document(altered))
+        with self.assertRaisesRegex(ValueError, "Review does not match candidate"):
+            release.prepare_releases([self.pack], catalog, self.output, [report_path])
+        self.assertFalse(self.output.exists())
+        report_path.write_bytes(report)
+        catalog_path = self.root / "catalog.json"
+        catalog_path.write_bytes(b"fixture")
+        args = ["build_tag_translation_release", str(self.pack), "--catalog", str(catalog_path),
+                "--output", str(self.output), "--review", str(report_path)]
+        with patch.object(sys, "argv", args), patch.object(release, "parse_catalog", return_value=catalog):
+            release.main()
+
+    def test_reviewed_batch_requires_all_reports_before_staging(self):
+        catalog = {11: TagInfo(11, "one", 1, 3)}
+        candidates, reports = [], []
+        for locale in ("ja", "de"):
+            proposal = json.loads(review.draft_proposal(catalog, None, locale, [11]))
+            proposal["changes"][0]["after"] = {"name": locale}
+            report, candidate = review.review_proposal(catalog, None, review.encode_document(proposal), 1)
+            candidate_path = self.root / f"{locale}.json"
+            report_path = self.root / f"{locale}-review.json"
+            candidate_path.write_bytes(candidate)
+            report_path.write_bytes(report)
+            candidates.append(candidate_path)
+            reports.append(report_path)
+        with self.assertRaisesRegex(ValueError, "one review report"):
+            release.prepare_releases(candidates, catalog, self.output, reports[:1])
+        self.assertFalse(self.output.exists())
+        release.prepare_releases(candidates, catalog, self.output, list(reversed(reports)))
+        self.assertEqual({"ja", "de"}, set(release.parse_manifest((self.output / "manifest.json").read_bytes())))
 
     def test_review_candidate_and_release_match_the_android_fixture(self):
         fixtures = Path(__file__).resolve().parents[2] / "app/src/test/resources/tag-translation-release"

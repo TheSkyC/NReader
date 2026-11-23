@@ -104,9 +104,11 @@ proposal; Android verifies the payload digest, installs it, and finds the
 canonical tag through its localized alias.
 
 Release preparation is a packaging and integrity check. It accepts any
-normalized pack, including one made directly by the pack builder; it does not
-verify a review report, reviewer identity, or approval. A publisher must apply
-the chosen review and authorization process before hosting the generated files.
+normalized pack, including one made directly by the pack builder. For a
+reviewed candidate, pass `--review` as described in the contribution workflow
+to check the candidate and current local base against its report. This does not
+verify reviewer identity or approval. A publisher must apply the chosen review
+and authorization process before hosting the generated files.
 
 Before hosting a release, verify that every referenced payload is available
 and matches its descriptor, then replace the hosted manifest. Keep older
