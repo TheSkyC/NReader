@@ -9,9 +9,14 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.pm.ProviderInfo;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -30,12 +35,14 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowContentResolver;
 import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.shadows.ShadowToast;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -48,6 +55,105 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TranslationImportRecoveryTest {
+    @Test public void removalWhileProviderOpensDocumentPreventsReinstallation() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        SQLiteDatabase previous = Database.getDatabase();
+        File pack = File.createTempFile("tag-translation-provider", ".json", context.getCacheDir());
+        CountDownLatch opening = new CountDownLatch(1);
+        CountDownLatch resume = new CountDownLatch(1);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Database.setDatabase(database);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700003, 'fixture', 3, 1)");
+            String json = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+                + "\"entries\":[{\"id\":700003,\"name\":\"original\"}]}";
+            assertTrue(TagTranslationCatalog.apply(database,
+                new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), context.getCacheDir(), () -> false));
+            Files.write(pack.toPath(), json.replace("\"revision\":1", "\"revision\":2").getBytes(StandardCharsets.UTF_8));
+            BlockingProvider provider = new BlockingProvider(pack, opening, resume);
+            ProviderInfo info = new ProviderInfo();
+            info.authority = "translation-open-test";
+            provider.attachInfo(context, info);
+            ShadowContentResolver.registerProviderInternal(info.authority, provider);
+
+            TranslationImportViewModel model = new TranslationImportViewModel();
+            TranslationImportViewModel.Result pending = null;
+            try {
+                assertTrue(model.start(context, Uri.parse("content://translation-open-test/pack")));
+                assertTrue(opening.await(10, TimeUnit.SECONDS));
+                TagTranslationCatalog.remove(database, "ja");
+                resume.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                while (model.result().getValue() == null && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                TranslationImportViewModel.Result result = model.result().getValue();
+                assertNotNull(result);
+                assertTrue(result.error instanceof TagTranslationCatalog.ChangedDuringImportException);
+                assertFalse(result.changed);
+                assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
+
+                pending = result;
+                assertTrue(model.start(context, Uri.parse("content://translation-open-test/pack")));
+                deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                while (model.result().getValue() == result && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                TranslationImportViewModel.Result retry = model.result().getValue();
+                assertNotSame(result, retry);
+                assertNotNull(retry);
+                assertNull(retry.error);
+                assertTrue(retry.changed);
+                assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
+            } finally {
+                resume.countDown();
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                while (model.result().getValue() == pending && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+            }
+        } finally {
+            resume.countDown();
+            ReflectionHelpers.setStaticField(Database.class, "database", previous);
+            Queries.setDb(previous);
+            assertTrue(pack.delete());
+        }
+    }
+
+    private static final class BlockingProvider extends ContentProvider {
+        private final File file;
+        private final CountDownLatch opening;
+        private final CountDownLatch resume;
+
+        private BlockingProvider(File file, CountDownLatch opening, CountDownLatch resume) {
+            this.file = file;
+            this.opening = opening;
+            this.resume = resume;
+        }
+
+        @Override public boolean onCreate() { return true; }
+
+        @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+            opening.countDown();
+            try {
+                if (!resume.await(10, TimeUnit.SECONDS)) throw new FileNotFoundException("Provider timed out");
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                throw new FileNotFoundException("Provider interrupted");
+            }
+            return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
+        }
+
+        @Override public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) { return null; }
+        @Override public String getType(Uri uri) { return "application/json"; }
+        @Override public Uri insert(Uri uri, ContentValues values) { throw new UnsupportedOperationException(); }
+        @Override public int delete(Uri uri, String selection, String[] args) { throw new UnsupportedOperationException(); }
+        @Override public int update(Uri uri, ContentValues values, String selection, String[] args) { throw new UnsupportedOperationException(); }
+    }
+
     @Test public void localImportClosesProviderStreamOnceBeforeReportingSuccess() throws Exception {
         Application context = RuntimeEnvironment.getApplication();
         SQLiteDatabase previous = Database.getDatabase();
