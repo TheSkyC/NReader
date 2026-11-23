@@ -14,9 +14,11 @@ import com.theskyc.nreader.async.database.SearchPlanStore;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.status.StatusManager;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -45,6 +47,7 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class ImporterTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     private DatabaseHelper helper;
     private SQLiteDatabase database;
 

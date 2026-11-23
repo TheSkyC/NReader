@@ -13,7 +13,9 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
+import org.junit.Rule;
 import java.util.Collections;
 
 import org.junit.Test;
@@ -30,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class OnlineTagsIdentityTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     @Test public void restoreWaitsForInFlightMutationAndRejectsOldLoads() {
         Application context = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(context);
@@ -149,6 +152,42 @@ public class OnlineTagsIdentityTest {
             Queries.setDb(null);
             AuthSessionStore.clear(context);
             AuthStore.clear(context);
+        }
+    }
+
+    @Test public void accountBlacklistReplacementAndSwitchPreserveLocalRule() {
+        Application context = RuntimeEnvironment.getApplication();
+        AuthSessionStore.clear(context);
+        AuthStore.clear(context);
+        Global.initFromShared(context);
+        Login.initLogin(context);
+        AuthStore.saveApiKey(context, "rule-ownership-first-key", true);
+        try (SQLiteDatabase database = SQLiteDatabase.create(null)) {
+            Queries.setDb(database);
+            Queries.TagTable.createTables(database);
+            Tag tag = new Tag("locally avoided", 1, 44001, TagType.TAG, TagStatus.AVOIDED);
+            Queries.TagTable.updateTag(tag);
+
+            String firstIdentity = AuthStore.activeIdentity(context);
+            assertTrue(Login.replaceOnlineTags(context, firstIdentity, Login.beginOnlineTagsLoad(context, firstIdentity),
+                Collections.singletonList(tag)));
+            assertEquals(1, Queries.TagTable.getAllOnlineBlacklisted().size());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(tag.getId()).getStatus());
+
+            AuthStore.saveApiKey(context, "rule-ownership-second-key", true);
+            Login.updateUser(null);
+            String secondIdentity = AuthStore.activeIdentity(context);
+            assertFalse(Login.hasCurrentOnlineTags());
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertTrue(Login.replaceOnlineTags(context, secondIdentity, Login.beginOnlineTagsLoad(context, secondIdentity),
+                Collections.emptyList()));
+
+            assertTrue(Queries.TagTable.getAllOnlineBlacklisted().isEmpty());
+            assertEquals(TagStatus.AVOIDED, Queries.TagTable.getTagById(tag.getId()).getStatus());
+        } finally {
+            Queries.setDb(null);
+            AuthStore.clear(context);
+            Login.updateUser(null);
         }
     }
 

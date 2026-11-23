@@ -27,10 +27,12 @@ import com.theskyc.nreader.async.database.GalleryStateRepository;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.settings.AuthStore;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 import com.theskyc.nreader.settings.Global;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.json.JSONObject;
@@ -52,6 +54,7 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class GalleryStateBadgeTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     private ActivityController<Activity> controller;
     private Activity activity;
     private DatabaseHelper database;

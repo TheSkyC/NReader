@@ -8,6 +8,8 @@ import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -29,6 +31,7 @@ import static org.junit.Assert.*;
 @Config(sdk = 28, application = Application.class)
 @LooperMode(LooperMode.Mode.PAUSED)
 public class MainActivityRequestTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     @Test public void expiredAccountTagsDoNotBlockPublicBrowse() {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);

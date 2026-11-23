@@ -18,9 +18,11 @@ import com.theskyc.nreader.async.update.UpdateStateStore;
 import com.theskyc.nreader.components.activities.CrashApplication;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.NotificationSettings;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RuntimeEnvironment;
@@ -36,6 +38,7 @@ public class UpdateStateRecoveryTest {
     private Context context;
     private File previousFolder;
     private File updateFolder;
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
 
     @Before
     public void setUp() {

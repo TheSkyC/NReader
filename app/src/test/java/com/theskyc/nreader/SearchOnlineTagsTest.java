@@ -16,8 +16,10 @@ import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -38,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class SearchOnlineTagsTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     @Test public void searchAppliesBlacklistChangedWhileScreenIsOpen() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         AuthSessionStore.clear(app);

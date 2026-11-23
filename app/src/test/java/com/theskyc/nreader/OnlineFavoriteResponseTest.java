@@ -5,11 +5,13 @@ import android.app.Application;
 
 import com.theskyc.nreader.api.OnlineFavoriteClient;
 import com.theskyc.nreader.settings.AuthStore;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
@@ -17,6 +19,7 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class OnlineFavoriteResponseTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     @Test
     public void parsesFavoritedBooleanWithoutMatchingUnrelatedFields() {
         assertEquals(Boolean.TRUE, OnlineFavoriteClient.parseResponse("{\"favorited\":true}"));

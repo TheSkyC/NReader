@@ -17,7 +17,9 @@ import com.google.common.util.concurrent.Futures;
 import com.theskyc.nreader.async.converters.CreatePdfOrZip;
 import com.theskyc.nreader.async.downloader.DownloadGalleryV2;
 import com.theskyc.nreader.components.activities.CrashApplication;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -31,6 +33,8 @@ import kotlin.coroutines.EmptyCoroutineContext;
 
 @RunWith(RobolectricTestRunner.class)
 public class LegacyWorkerFactoryTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
+
     @Test
     public void restoresEveryPreviouslyScheduledWorker() {
         Context context = RuntimeEnvironment.getApplication();

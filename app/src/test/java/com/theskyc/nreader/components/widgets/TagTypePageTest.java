@@ -18,7 +18,9 @@ import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 import androidx.recyclerview.widget.RecyclerView;
+import org.junit.Rule;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -28,12 +30,14 @@ import static org.junit.Assert.assertSame;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TagTypePageTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     public static class ControlledPage extends TagTypePage {
         final java.util.List<com.theskyc.nreader.loginapi.LoadTags.Completion> completions = new java.util.ArrayList<>();
         @Override void startOnlineTagsLoad(com.theskyc.nreader.loginapi.LoadTags.Completion completion) {
             completions.add(completion);
         }
     }
+
 
     @Test public void oldRefreshCannotOverwriteNewIdentityStatus() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
@@ -307,6 +311,7 @@ public class TagTypePageTest {
             Login.updateUser(null);
         }
     }
+
     @Test public void refreshStatusReflectsNewerAvailableData() {
         assertFalse(TagTypePage.refreshHasCurrentData(false, -1, -1));
         assertFalse(TagTypePage.refreshHasCurrentData(false, 4, 4));

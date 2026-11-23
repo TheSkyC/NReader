@@ -7,9 +7,11 @@ import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 import com.theskyc.nreader.settings.Global;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class OnlineFavoriteClientTest {
+    @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
     private Application context;
 
     @Before public void setUp() {
