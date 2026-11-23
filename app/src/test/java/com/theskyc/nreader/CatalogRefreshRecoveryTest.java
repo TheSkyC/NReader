@@ -2,21 +2,29 @@ package com.theskyc.nreader;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Looper;
+import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.work.Configuration;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.testing.WorkManagerTestInitHelper;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.theskyc.nreader.async.database.DatabaseHelper;
+import com.theskyc.nreader.settings.Global;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.android.controller.ActivityController;
+import org.robolectric.util.ReflectionHelpers;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +39,51 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class CatalogRefreshRecoveryTest {
+    @Test public void settingsRestoresTheSavedRequestAndDisplaysItsLaterStatus() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        Global.initFromShared(context);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        WorkManagerTestInitHelper.initializeTestWorkManager(context,
+            new Configuration.Builder().setExecutor(executor).build(),
+            WorkManagerTestInitHelper.ExecutorsMode.PRESERVE_EXECUTORS);
+        WorkManager manager = WorkManager.getInstance(context);
+        try (DatabaseHelper database = new DatabaseHelper(context)) {
+            database.getWritableDatabase();
+            Bundle saved = new Bundle();
+            UUID id;
+            try (ActivityController<SettingsActivity> controller =
+                     Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                SettingsActivity activity = controller.get();
+                CatalogRefreshViewModel model = ReflectionHelpers.getField(activity, "catalogRefresh");
+                ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
+                model.start(context);
+                id = model.requestId();
+                assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, id).getState());
+                activity.onSaveInstanceState(saved);
+                assertEquals(id.toString(), saved.getString("catalog_check_id"));
+            }
+            try (ActivityController<SettingsActivity> controller = Robolectric.buildActivity(SettingsActivity.class)
+                     .create(saved).start().resume().visible()) {
+                SettingsActivity activity = controller.get();
+                CatalogRefreshViewModel model = ReflectionHelpers.getField(activity, "catalogRefresh");
+                assertEquals(id, model.requestId());
+                awaitFuture(manager.cancelWorkById(id).getResult());
+                awaitStatus(model, CatalogRefreshViewModel.Status.CANCELLED);
+                AlertDialog dialog = ReflectionHelpers.getField(activity, "catalogCheckDialog");
+                TextView message = dialog.findViewById(android.R.id.message);
+                assertNotNull(message);
+                assertEquals(activity.getString(R.string.tag_catalog_check_cancelled), message.getText().toString());
+                dialog.dismiss();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Bundle dismissed = new Bundle();
+                activity.onSaveInstanceState(dismissed);
+                assertNull(dismissed.getString("catalog_check_id"));
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     @Test public void restoredObserverTracksTheSameQueuedWorkAndDismissalDoesNotCancelIt() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         ExecutorService executor = Executors.newFixedThreadPool(3);
