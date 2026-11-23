@@ -1,4 +1,4 @@
-"""Stage a translation pack and update the local feed manifest."""
+"""Stage translation packs and update the local feed manifest."""
 
 import argparse
 import hashlib
@@ -67,40 +67,57 @@ def verify_payload(directory: Path, descriptor: dict, catalog_ids) -> None:
 
 
 def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
-    data = read_bounded(pack_path, MAX_BYTES)
-    pack = parse_release_pack(data, catalog_ids)
-    locale = pack["locale"]
-    revision = pack["revision"]
-    digest = hashlib.sha256(data).hexdigest()
-    descriptor = {"locale": locale, "revision": revision, "sizeBytes": len(data), "sha256": digest}
+    return prepare_releases([pack_path], catalog_ids, output)
+
+
+def prepare_releases(pack_paths, catalog_ids, output: Path) -> Path:
+    candidates = {}
+    for pack_path in pack_paths:
+        data = read_bounded(pack_path, MAX_BYTES)
+        pack = parse_release_pack(data, catalog_ids)
+        locale = pack["locale"]
+        if locale in candidates:
+            raise ValueError(f"Duplicate candidate locale: {locale}")
+        if len(candidates) >= MAX_LOCALES:
+            raise ValueError("Translation manifest locale count outside limits")
+        digest = hashlib.sha256(data).hexdigest()
+        descriptor = {"locale": locale, "revision": pack["revision"], "sizeBytes": len(data), "sha256": digest}
+        candidates[locale] = (pack_path, descriptor)
+    if not candidates:
+        raise ValueError("At least one translation pack is required")
 
     pointer = output / "manifest.json"
     packs = parse_manifest(read_bounded(pointer, MAX_MANIFEST_BYTES)) if pointer.exists() else {}
-    prior = packs.get(locale)
-    if prior is None and len(packs) >= MAX_LOCALES:
+    if len(packs.keys() | candidates.keys()) > MAX_LOCALES:
         raise ValueError("Translation manifest locale count outside limits")
-    if prior is not None and (revision < prior["revision"] or (revision == prior["revision"] and descriptor != prior)):
-        raise ValueError("A locale revision cannot be lowered or reused for different bytes")
+    for locale, (_, descriptor) in candidates.items():
+        prior = packs.get(locale)
+        if prior is not None and (descriptor["revision"] < prior["revision"]
+                or (descriptor["revision"] == prior["revision"] and descriptor != prior)):
+            raise ValueError("A locale revision cannot be lowered or reused for different bytes")
 
     for retained_locale, retained in packs.items():
-        if retained_locale == locale and retained == descriptor:
+        replacement = candidates.get(retained_locale)
+        if replacement is not None and retained == replacement[1]:
             continue
         try:
             # A superseded pack may refer to IDs removed from the new catalog.
-            verify_payload(output, retained, None if retained_locale == locale else catalog_ids)
+            verify_payload(output, retained, None if replacement is not None else catalog_ids)
         except (OSError, ValueError) as error:
             raise ValueError(f"Cannot verify retained translation payload for {retained_locale}: {error}") from error
 
     output.mkdir(parents=True, exist_ok=True)
-    payload = output / payload_name(digest)
-    if payload.exists():
-        if read_bounded(payload, MAX_BYTES) != data:
-            raise ValueError("Existing immutable file does not match its digest")
-    else:
-        atomic_write(payload, data)
+    for pack_path, descriptor in candidates.values():
+        data = read_verified_payload(pack_path, descriptor["sizeBytes"], descriptor["sha256"])
+        payload = output / payload_name(descriptor["sha256"])
+        if payload.exists():
+            if read_bounded(payload, MAX_BYTES) != data:
+                raise ValueError("Existing immutable file does not match its digest")
+        else:
+            atomic_write(payload, data)
 
-    if descriptor != prior:
-        packs[locale] = descriptor
+    if any(packs.get(locale) != descriptor for locale, (_, descriptor) in candidates.items()):
+        packs.update({locale: descriptor for locale, (_, descriptor) in candidates.items()})
         manifest = {**IDENTITY, "packs": [packs[key] for key in sorted(packs)]}
         atomic_write(pointer, (json.dumps(manifest, separators=(",", ":")) + "\n").encode("utf-8"))
     return pointer
@@ -108,13 +125,13 @@ def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("pack", type=Path)
+    parser.add_argument("pack", type=Path, nargs="+")
     parser.add_argument("--catalog", type=Path, default=Path(__file__).resolve().parents[1] / "data" / "tags.json")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         catalog = parse_catalog(read_bounded(args.catalog, MAX_BYTES))
-        print(prepare_release(args.pack, catalog, args.output))
+        print(prepare_releases(args.pack, catalog, args.output))
     except (OSError, ValueError) as error:
         parser.exit(1, f"Could not prepare translation release: {error}\n")
 

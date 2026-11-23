@@ -1,5 +1,6 @@
 import hashlib
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -207,6 +208,105 @@ class TranslationReleaseTest(unittest.TestCase):
             self.publish()
         self.assertEqual(original, pointer.read_bytes())
         self.assertFalse(new_payload.exists())
+
+    def test_batch_replaces_obsolete_packs_with_one_manifest_switch(self):
+        old_payloads = []
+        for locale in ("ja", "de"):
+            data, payload = self.candidate(locale, 1)
+            self.publish()
+            old_payloads.append((payload, data))
+        pointer = self.output / "manifest.json"
+        original = pointer.read_bytes()
+        new_catalog = {12}
+        candidates = []
+        for locale in ("ja", "de"):
+            path = self.root / f"{locale}.json"
+            path.write_bytes(encode_pack([{"id": 12, "name": locale}], locale, 2, new_catalog))
+            candidates.append(path)
+
+        for path in candidates:
+            with self.assertRaisesRegex(ValueError, "unknown tag ID"):
+                release.prepare_release(path, new_catalog, self.output)
+            self.assertEqual(original, pointer.read_bytes())
+
+        original_write = release.atomic_write
+
+        def fail_pointer(path, content):
+            if path == pointer:
+                raise OSError("Simulated interruption")
+            original_write(path, content)
+
+        with patch.object(release, "atomic_write", side_effect=fail_pointer):
+            with self.assertRaisesRegex(OSError, "interruption"):
+                release.prepare_releases(candidates, new_catalog, self.output)
+        self.assertEqual(original, pointer.read_bytes())
+        for path, data in old_payloads:
+            self.assertEqual(data, path.read_bytes())
+        for path in candidates:
+            data = path.read_bytes()
+            self.assertEqual(data, (self.output / release.payload_name(hashlib.sha256(data).hexdigest())).read_bytes())
+
+        release.prepare_releases(candidates, new_catalog, self.output)
+        packs = release.parse_manifest(pointer.read_bytes())
+        self.assertEqual({"de": 2, "ja": 2}, {locale: row["revision"] for locale, row in packs.items()})
+        for descriptor in packs.values():
+            release.verify_payload(self.output, descriptor, new_catalog)
+        for path, data in old_payloads:
+            self.assertEqual(data, path.read_bytes())
+
+    def test_batch_rejects_duplicate_invalid_and_missing_retained_packs_before_staging(self):
+        old_data, old_payload = self.candidate("ja", 1)
+        pointer = self.publish()
+        original = pointer.read_bytes()
+        new_data, new_payload = self.candidate("ja", 2)
+        first = self.root / "first.json"
+        first.write_bytes(new_data)
+        second = self.root / "second.json"
+        second.write_bytes(new_data)
+        with self.assertRaisesRegex(ValueError, "Duplicate candidate locale"):
+            release.prepare_releases([first, second], self.catalog_ids, self.output)
+        second.write_bytes(b"invalid")
+        with self.assertRaises(ValueError):
+            release.prepare_releases([first, second], self.catalog_ids, self.output)
+        second.write_bytes(encode_pack([{"id": 11, "name": "Deutsch"}], "de", 1, self.catalog_ids))
+        old_payload.unlink()
+        with self.assertRaisesRegex(ValueError, "retained translation payload for ja"):
+            release.prepare_releases([first, second], self.catalog_ids, self.output)
+        self.assertEqual(original, pointer.read_bytes())
+        self.assertFalse(new_payload.exists())
+        old_payload.write_bytes(old_data)
+        release.prepare_releases([first, second], self.catalog_ids, self.output)
+        self.assertEqual({"ja", "de"}, set(release.parse_manifest(pointer.read_bytes())))
+
+    def test_batch_rejects_changed_candidate_before_publishing(self):
+        self.candidate("ja", 1)
+        pointer = self.publish()
+        original = pointer.read_bytes()
+        self.candidate("ja", 2)
+        original_verify = release.verify_payload
+
+        def change_candidate(directory, descriptor, catalog_ids):
+            original_verify(directory, descriptor, catalog_ids)
+            self.pack.write_bytes(b"changed")
+
+        with patch.object(release, "verify_payload", side_effect=change_candidate):
+            with self.assertRaisesRegex(ValueError, "Payload size or digest|Input exceeds size limit"):
+                release.prepare_releases([self.pack], self.catalog_ids, self.output)
+        self.assertEqual(original, pointer.read_bytes())
+
+    def test_command_line_accepts_multiple_candidates(self):
+        paths = []
+        for locale in ("de", "ja"):
+            path = self.root / f"{locale}.json"
+            path.write_bytes(encode_pack([{"id": 11, "name": locale}], locale, 1, self.catalog_ids))
+            paths.append(path)
+        catalog_path = self.root / "catalog.json"
+        catalog_path.write_bytes(b"[]")
+        args = ["build_tag_translation_release", *(str(path) for path in paths),
+                "--catalog", str(catalog_path), "--output", str(self.output)]
+        with patch.object(sys, "argv", args), patch.object(release, "parse_catalog", return_value=self.catalog_ids):
+            release.main()
+        self.assertEqual({"de", "ja"}, set(release.parse_manifest((self.output / "manifest.json").read_bytes())))
 
     def test_retained_pack_keeps_its_original_encoding_when_another_locale_is_published(self):
         self.candidate("ja", 1)

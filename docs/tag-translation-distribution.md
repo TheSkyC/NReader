@@ -84,6 +84,20 @@ candidate can restore its own missing payload. It stages the new immutable file
 first, then atomically updates `manifest.json`.
 Retrying after an interrupted manifest write can reuse the staged file.
 
+When a catalog change requires corrections in multiple locales, pass all
+affected candidates in one invocation, before the options:
+
+```powershell
+python -m scripts.build_tag_translation_release .gradle/ja-candidate.json .gradle/de-candidate.json `
+  --catalog data/tags.json --output .gradle/translation-feed
+```
+
+Each locale must appear at most once. The tool validates all candidates and
+retained packs, stages the immutable payloads, then replaces the manifest once.
+If staging or the manifest update fails, the previous manifest remains in use;
+already staged files can be reused on retry. The publisher must still verify
+the staged feed and upload all payloads before switching the hosted manifest.
+
 The producer and Android feed tests share a small synthetic release fixture.
 The producer regenerates its exact manifest and candidate bytes from a
 proposal; Android verifies the payload digest, installs it, and finds the
