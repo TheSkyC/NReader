@@ -273,6 +273,7 @@
     <string name="setting_off_remove_ignored">Blur galleries with ignored tags.</string>
     <string name="remove_ignored_galleries">Hide ignored galleries</string>
     <string name="clear_tag_preferences">Clear tag preferences</string>
+    <string name="reset_tag_view_filters">Reset tag view filters</string>
     <string name="check_for_update_on_startup">Check for update on startup</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="no_updates_found">No updates found</string>

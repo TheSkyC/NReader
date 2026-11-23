@@ -239,6 +239,24 @@ public class TagSuggestionTest {
         }
     }
 
+    @Test public void tagViewFilterPreferencesCanBeRestoredToDefaults() {
+        TagV2.initMinCount(RuntimeEnvironment.getApplication());
+        TagV2.initSortByName(RuntimeEnvironment.getApplication());
+        TagV2.initStatusFilter(RuntimeEnvironment.getApplication());
+        TagV2.initTranslatedOnly(RuntimeEnvironment.getApplication());
+        TagV2.updateMinCount(RuntimeEnvironment.getApplication(), 80);
+        if (!TagV2.isSortedByName()) TagV2.updateSortByName(RuntimeEnvironment.getApplication());
+        TagV2.updateStatusFilter(RuntimeEnvironment.getApplication(), TagStatus.ACCEPTED);
+        if (!TagV2.isTranslatedOnly()) TagV2.updateTranslatedOnly(RuntimeEnvironment.getApplication());
+
+        TagV2.resetFilterPreferences(RuntimeEnvironment.getApplication());
+
+        assertEquals(TagV2.DEFAULT_MIN_COUNT, TagV2.getMinCount());
+        assertEquals(false, TagV2.isSortedByName());
+        assertNull(TagV2.getStatusFilter());
+        assertEquals(false, TagV2.isTranslatedOnly());
+    }
+
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {
         return suggestions.stream().map(suggestion -> suggestion.getTag().getName()).toList();
     }

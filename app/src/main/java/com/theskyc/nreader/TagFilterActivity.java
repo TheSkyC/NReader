@@ -43,6 +43,7 @@ public class TagFilterActivity extends GeneralActivity {
     private SearchView searchView;
     private ViewPager2 mViewPager;
     private String query = "";
+    private MenuItem sortFilterItem;
     private MenuItem statusFilterItem;
     private MenuItem translationFilterItem;
 
@@ -160,7 +161,8 @@ public class TagFilterActivity extends GeneralActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
-        updateSortItem(menu.findItem(R.id.sort_by_name));
+        sortFilterItem = menu.findItem(R.id.sort_by_name);
+        updateSortItem(sortFilterItem);
         statusFilterItem = menu.findItem(R.id.filter_status);
         updateStatusFilterItem(statusFilterItem);
         translationFilterItem = menu.findItem(R.id.filter_translated);
@@ -207,6 +209,13 @@ public class TagFilterActivity extends GeneralActivity {
         int id = item.getItemId();
         TagTypePage page = getActualFragment();
         if (id == R.id.reset_tags) createDialog();
+        else if (id == R.id.reset_view_filters) {
+            TagV2.resetFilterPreferences(this);
+            if (sortFilterItem != null) updateSortItem(sortFilterItem);
+            if (statusFilterItem != null) updateStatusFilterItem(statusFilterItem);
+            if (translationFilterItem != null) updateTranslationFilterItem(translationFilterItem);
+            if (page != null) page.changeSize();
+        }
         else if (id == R.id.set_min_count) minCountBuild();
         else if (id == R.id.filter_status) statusFilterBuild();
         else if (id == R.id.filter_translated) {

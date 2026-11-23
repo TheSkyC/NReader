@@ -197,6 +197,7 @@
     <string name="setting_off_remove_ignored">模糊显示带有已忽略标签的画廊</string>
     <string name="remove_ignored_galleries">隐藏已忽略的画廊</string>
     <string name="clear_tag_preferences">清除标签偏好</string>
+    <string name="reset_tag_view_filters">重置标签浏览筛选</string>
     <string name="check_for_update_on_startup">启动时检查更新</string>
     <string name="check_for_updates">检查更新</string>
     <string name="no_updates_found">未发现更新</string>

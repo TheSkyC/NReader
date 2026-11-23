@@ -17,6 +17,7 @@ import java.util.Set;
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class TagV2 {
     public static final int MAXTAGS = 100;
+    public static final int DEFAULT_MIN_COUNT = 25;
     private static int minCount;
     private static boolean sortByName;
     @Nullable
@@ -86,7 +87,7 @@ public class TagV2 {
     }
 
     public static void initMinCount(Context context) {
-        minCount = context.getSharedPreferences("ScrapedTags", 0).getInt("min_count", 25);
+        minCount = context.getSharedPreferences("ScrapedTags", 0).getInt("min_count", DEFAULT_MIN_COUNT);
     }
 
     public static void initSortByName(Context context) {
@@ -123,6 +124,19 @@ public class TagV2 {
         context.getSharedPreferences("ScrapedTags", 0).edit()
             .putBoolean("translated_only", translatedOnly).apply();
         return translatedOnly;
+    }
+
+    public static void resetFilterPreferences(Context context) {
+        minCount = DEFAULT_MIN_COUNT;
+        sortByName = false;
+        statusFilter = null;
+        translatedOnly = false;
+        context.getSharedPreferences("ScrapedTags", 0).edit()
+            .remove("min_count")
+            .remove("sort_by_name")
+            .remove("status_filter")
+            .remove("translated_only")
+            .apply();
     }
 
     public static boolean updateSortByName(Context context) {
