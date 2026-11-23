@@ -44,6 +44,7 @@ public class TagFilterActivity extends GeneralActivity {
     private ViewPager2 mViewPager;
     private String query = "";
     private MenuItem statusFilterItem;
+    private MenuItem translationFilterItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,6 +163,8 @@ public class TagFilterActivity extends GeneralActivity {
         updateSortItem(menu.findItem(R.id.sort_by_name));
         statusFilterItem = menu.findItem(R.id.filter_status);
         updateStatusFilterItem(statusFilterItem);
+        translationFilterItem = menu.findItem(R.id.filter_translated);
+        updateTranslationFilterItem(translationFilterItem);
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -206,6 +209,11 @@ public class TagFilterActivity extends GeneralActivity {
         if (id == R.id.reset_tags) createDialog();
         else if (id == R.id.set_min_count) minCountBuild();
         else if (id == R.id.filter_status) statusFilterBuild();
+        else if (id == R.id.filter_translated) {
+            TagV2.updateTranslatedOnly(this);
+            if (translationFilterItem != null) updateTranslationFilterItem(translationFilterItem);
+            if (page != null) page.refilter(query);
+        }
         else if (id == R.id.sort_by_name) {
             TagV2.updateSortByName(this);
             updateSortItem(item);
@@ -269,6 +277,12 @@ public class TagFilterActivity extends GeneralActivity {
         item.setTitle(status == null ? R.string.filter_by_status : status == TagStatus.DEFAULT
             ? R.string.filter_status_default : status == TagStatus.ACCEPTED
                 ? R.string.filter_status_accepted : R.string.filter_status_avoided);
+    }
+
+    private void updateTranslationFilterItem(MenuItem item) {
+        item.setTitle(TagV2.isTranslatedOnly() ? R.string.filter_translated_only
+            : R.string.filter_translated_all);
+        item.setChecked(TagV2.isTranslatedOnly());
     }
 
 

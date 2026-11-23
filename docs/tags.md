@@ -223,7 +223,10 @@ A shared alias can return each matching tag, and `%` and `_` in a search are
 matched literally rather than treated as SQL wildcards.
 The type pages can also be filtered by local rule status: all tags, tags without
 a rule, accepted tags, or avoided tags. This preference is stored locally and
-does not affect the Applied filters or Online tags pages.
+does not affect the Applied filters or Online tags pages. When an installed
+translation is selected, a separate coverage filter can show only tags with a
+display translation; it is ignored on the other page types and when no matching
+translation pack is installed.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
 

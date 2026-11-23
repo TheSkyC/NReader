@@ -21,6 +21,7 @@ public class TagV2 {
     private static boolean sortByName;
     @Nullable
     private static TagStatus statusFilter;
+    private static boolean translatedOnly;
 
     public static List<Tag> getTagSet(TagType type) {
         return Queries.TagTable.getAllTagOfType(type);
@@ -106,6 +107,22 @@ public class TagV2 {
         statusFilter = status;
         context.getSharedPreferences("ScrapedTags", 0).edit()
             .putInt("status_filter", status == null ? -1 : status.ordinal()).apply();
+    }
+
+    public static void initTranslatedOnly(Context context) {
+        translatedOnly = context.getSharedPreferences("ScrapedTags", 0)
+            .getBoolean("translated_only", false);
+    }
+
+    public static boolean isTranslatedOnly() {
+        return translatedOnly;
+    }
+
+    public static boolean updateTranslatedOnly(Context context) {
+        translatedOnly = !translatedOnly;
+        context.getSharedPreferences("ScrapedTags", 0).edit()
+            .putBoolean("translated_only", translatedOnly).apply();
+        return translatedOnly;
     }
 
     public static boolean updateSortByName(Context context) {

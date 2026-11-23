@@ -288,6 +288,8 @@
     <string name="filter_status_default">Not configured</string>
     <string name="filter_status_accepted">Accepted only</string>
     <string name="filter_status_avoided">Avoided only</string>
+    <string name="filter_translated_all">All translation coverage</string>
+    <string name="filter_translated_only">Translated tags only</string>
     <string name="next_page_volume_up">Volume up turns to the next page</string>
     <string name="next_page_volume_down">Volume down turns to the next page</string>
     <string name="change_title_type">Change title type</string>

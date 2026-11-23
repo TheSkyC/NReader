@@ -212,6 +212,8 @@
     <string name="filter_status_default">未设置</string>
     <string name="filter_status_accepted">仅接受</string>
     <string name="filter_status_avoided">仅避免</string>
+    <string name="filter_translated_all">全部翻译覆盖情况</string>
+    <string name="filter_translated_only">仅显示已有翻译</string>
     <string name="next_page_volume_up">按音量加键翻到下一页</string>
     <string name="next_page_volume_down">按音量减键翻到下一页</string>
     <string name="change_title_type">更改标题类型</string>

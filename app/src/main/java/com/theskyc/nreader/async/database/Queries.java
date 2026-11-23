@@ -407,6 +407,12 @@ public class Queries {
 
         public static Cursor getFilterCursor(@NonNull String query, TagType type, boolean online, boolean sortByName,
                                              @Nullable Locale appLocale, @Nullable TagStatus statusFilter) {
+            return getFilterCursor(query, type, online, sortByName, appLocale, statusFilter, false);
+        }
+
+        public static Cursor getFilterCursor(@NonNull String query, TagType type, boolean online, boolean sortByName,
+                                             @Nullable Locale appLocale, @Nullable TagStatus statusFilter,
+                                             boolean translatedOnly) {
             String projection = online ? ONLINE_SELECT : type == null ? RULE_SELECT : METADATA_SELECT;
             String locale = TagTranslationCatalog.resolveInstalledLocale(db, appLocale);
             StringBuilder sql = new StringBuilder("SELECT tags.*, ");
@@ -452,6 +458,10 @@ public class Queries {
                     + " WHERE filterRules.idTag = tags.idTag AND filterRules.type = tags.type"
                     + " AND filterRules.status = ?)");
                 if (statusFilter != TagStatus.DEFAULT) args.add(Integer.toString(statusFilter.ordinal()));
+            }
+            if (!online && type != null && translatedOnly) {
+                if (locale == null) sql.append(" AND 0");
+                else sql.append(" AND tr.idTag IS NOT NULL");
             }
             sql.append(sortByName ? " ORDER BY tags.name, tags.idTag" : " ORDER BY tags.count DESC, tags.name, tags.idTag");
             return db.rawQuery(sql.toString(), args.toArray(new String[0]));

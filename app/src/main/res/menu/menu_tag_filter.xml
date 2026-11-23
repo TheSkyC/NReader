@@ -25,4 +25,9 @@
         android:id="@+id/filter_status"
         android:title="@string/filter_by_status"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/filter_translated"
+        android:title="@string/filter_translated_all"
+        android:checkable="true"
+        app:showAsAction="never" />
 </menu>

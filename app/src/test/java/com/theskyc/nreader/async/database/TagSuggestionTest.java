@@ -211,6 +211,22 @@ public class TagSuggestionTest {
         }
     }
 
+    @Test public void managerCanFilterTypePagesToInstalledTranslations() throws IOException {
+        insert(31, "translated canonical", TagType.TAG);
+        insert(32, "untranslated canonical", TagType.TAG);
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":31,\"name\":\"翻訳済み\"}]}"
+        ).getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
+
+        try (Cursor translated = Queries.TagTable.getFilterCursor("", TagType.TAG, false, true,
+            Locale.JAPAN, null, true)) {
+            assertEquals(1, translated.getCount());
+            assertEquals(31, translated.moveToFirst()
+                ? translated.getInt(translated.getColumnIndexOrThrow("idTag")) : -1);
+        }
+    }
+
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {
         return suggestions.stream().map(suggestion -> suggestion.getTag().getName()).toList();
     }
