@@ -113,6 +113,29 @@ jobs:
             -   name: Bundle Debug with Gradle
                 run: ./gradlew bundleDebug
 
+            -   name: Test the application Unicode helper
+                run: >-
+                    ./gradlew :app:testMinApi26DebugUnitTest :app:testMinApi28DebugUnitTest
+                    --tests 'com.theskyc.nreader.async.database.TagUnicodeTest'
+
+            -   name: Check packaged ICU data and license
+                run: |
+                    python - <<'PY'
+                    from pathlib import Path
+                    from zipfile import ZipFile
+
+                    license_bytes = Path('third_party/icu/LICENSE').read_bytes()
+                    for flavor in ('minApi26', 'minApi28'):
+                        for artifact, prefix in (
+                            (Path(f'app/build/outputs/apk/{flavor}/debug/app-{flavor}-debug.apk'), ''),
+                            (Path(f'app/build/outputs/bundle/{flavor}Debug/app-{flavor}-debug.aab'), 'base/'),
+                        ):
+                            with ZipFile(artifact) as archive:
+                                assert archive.read(prefix + 'assets/LICENSE-ICU.txt') == license_bytes, artifact
+                                for data in ('nfc.nrm', 'ucase.icu', 'uprops.icu'):
+                                    assert any(name.endswith('/' + data) for name in archive.namelist()), (artifact, data)
+                    PY
+
             -   name: Upload Artifact
                 uses: actions/upload-artifact@v7
                 with:

@@ -22,7 +22,7 @@ val tagUnicodeIcu = configurations.create("tagUnicodeIcu") {
 }
 dependencies.add(tagUnicodeIcu.name, "com.ibm.icu:icu4j:77.1")
 
-tasks.register<PrepareTagUnicodeIcu>("prepareTagUnicodeIcu") {
+val prepareTagUnicodeIcu = tasks.register<PrepareTagUnicodeIcu>("prepareTagUnicodeIcu") {
     sourceFiles.from(tagUnicodeIcu)
     licenseFile.set(rootProject.layout.projectDirectory.file("third_party/icu/LICENSE"))
     outputFile.set(layout.buildDirectory.file("tag-unicode/icu4j.jar"))
@@ -206,6 +206,7 @@ androidComponents {
         val copyLegalNotices = tasks.register<CopyLegalNotices>("copy${variant.name.capitalized()}LegalNotices") {
             licenseFile.set(rootProject.layout.projectDirectory.file("LICENSE"))
             noticeFile.set(rootProject.layout.projectDirectory.file("NOTICE"))
+            icuLicenseFile.set(rootProject.layout.projectDirectory.file("third_party/icu/LICENSE"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(copyLegalNotices, CopyLegalNotices::outputDirectory)
         val copyTagCatalog = tasks.register<CopyTagCatalog>("copy${variant.name.capitalized()}TagCatalog") {
@@ -262,6 +263,7 @@ tasks.register("printNReaderMetadata") {
 
 
 dependencies {
+    implementation(files(prepareTagUnicodeIcu.flatMap { it.outputFile }))
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
     testImplementation("androidx.work:work-testing:2.12.0")
@@ -360,6 +362,9 @@ abstract class CopyLegalNotices : DefaultTask() {
     @get:InputFile
     abstract val noticeFile: RegularFileProperty
 
+    @get:InputFile
+    abstract val icuLicenseFile: RegularFileProperty
+
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
 
@@ -369,6 +374,7 @@ abstract class CopyLegalNotices : DefaultTask() {
         output.mkdirs()
         licenseFile.get().asFile.copyTo(output.resolve("LICENSE"), overwrite = true)
         noticeFile.get().asFile.copyTo(output.resolve("NOTICE"), overwrite = true)
+        icuLicenseFile.get().asFile.copyTo(output.resolve("LICENSE-ICU.txt"), overwrite = true)
     }
 }
 

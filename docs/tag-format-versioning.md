@@ -23,11 +23,11 @@ be used in place of another.
 
 The `:app:prepareTagUnicodeIcu` build task prepares a trimmed ICU4J 77.1 JAR
 from a digest-checked dependency for the planned Unicode search-key upgrade.
-The JAR includes ICU's versioned license and third-party notices. It is not yet
-an application dependency and does not change current pack or database
-semantics. Before using its output in an application, complete the format
-transition, index migration, platform tests, and applicable APK/AAB license
-packaging; the task alone does not establish Unicode compatibility.
+The JAR is an application dependency and includes ICU's versioned license and
+third-party notices, also packaged as an application asset. The isolated
+Unicode helper does not yet change pack or database semantics. Before using it
+for installed translations, complete the format transition, index migration,
+and platform tests; the dependency alone does not establish compatibility.
 
 ## Change procedure
 

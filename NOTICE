@@ -33,6 +33,10 @@ NReader modifications are licensed under Apache License 2.0, as is NClientV3.
 See LICENSE for the full terms. Third-party libraries retain their own licenses.
 This NOTICE is informational and does not alter any license terms.
 
+NReader includes ICU4J 77.1 and a reduced set of its Unicode data files.
+The ICU license and third-party notices are in third_party/icu/LICENSE and
+are distributed with the application as LICENSE-ICU.txt.
+
 Third-party artwork: Tabler Flags
 https://github.com/tabler/tabler-flags
 Revision: 2c204eaa24e845b232c96cc125dd6054696b7a38
