@@ -155,6 +155,18 @@ public class TagTranslationCatalogTest {
             scalarString("SELECT displayName FROM TagTranslations WHERE idTag = 131 AND locale = 'ja'"));
         assertEquals("Alias131", scalarString(
             "SELECT alias FROM TagTranslationAliases WHERE idTag = 131 AND locale = 'ja' AND aliasKey = 'alias131'"));
+        assertEquals(0, scalar("SELECT aliasOrder FROM TagTranslationAliases WHERE idTag = 131 AND aliasKey = 'alias131'"));
+        assertEquals(1, scalar("SELECT aliasOrder FROM TagTranslationAliases WHERE idTag = 131 AND aliasKey = 'second131'"));
+    }
+
+    @Test public void failedReplacementPreservesAliasOrder() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"name\",\"aliases\":[\"second\",\"first\"]}]")));
+        assertThrows(IOException.class, () -> TagTranslationCatalog.apply(database,
+            bytes(pack("ja", 2, "[{\"id\":1,\"name\":\"new\",\"aliases\":[\"first\",\"second\"]}]")),
+            scratch.getRoot(), () -> database.inTransaction() && TagTranslationCatalog.installedRevision(database, "ja") == 2));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("second", scalarString("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja' AND aliasOrder = 0"));
+        assertEquals("first", scalarString("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja' AND aliasOrder = 1"));
     }
 
     @Test public void providerCloseFailureCannotCommitPreparedRows() throws IOException {

@@ -25,10 +25,10 @@ or authority to publish.
 3. As maintainer, generate and retain your own report and the base pack used
    for it. Use the current pack from your release files and the next revision.
    The app does not export installed packs. Keep the original release pack:
-   installed aliases do not retain their input order, while proposal comparisons
-   and normalized base digests include that order. Reconstructing a pack from
-   installed rows may therefore produce a different review base even if the
-   visible translations and aliases are the same.
+   aliases installed before database version 26 do not retain their input order,
+   while proposal comparisons and normalized base digests include that order.
+   Reconstructing a pack from those rows may therefore produce a different
+   review base even if the visible translations and aliases are the same.
 
    ```powershell
    python -m scripts.review_tag_translations review .gradle/proposal.json `

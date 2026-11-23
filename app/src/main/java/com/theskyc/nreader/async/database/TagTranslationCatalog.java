@@ -50,6 +50,7 @@ public final class TagTranslationCatalog {
         + " PRIMARY KEY (idTag, locale))";
     private static final String CREATE_ALIASES = "CREATE TABLE IF NOT EXISTS TagTranslationAliases ("
         + "idTag INTEGER NOT NULL, locale TEXT NOT NULL, alias TEXT NOT NULL, aliasKey TEXT NOT NULL,"
+        + " aliasOrder INTEGER NOT NULL DEFAULT -1 CHECK (aliasOrder >= -1),"
         + " PRIMARY KEY (idTag, locale, aliasKey))";
     private static final String CREATE_STATE = "CREATE TABLE IF NOT EXISTS TagTranslationState ("
         + "locale TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK (revision > 0))";
@@ -115,6 +116,11 @@ public final class TagTranslationCatalog {
         database.execSQL(CREATE_GENERATIONS);
         database.execSQL("CREATE INDEX IF NOT EXISTS TagTranslationGenerations_generation_idx"
             + " ON TagTranslationGenerations (generation)");
+    }
+
+    static void upgradeAliasOrder(SQLiteDatabase database) {
+        database.execSQL("ALTER TABLE TagTranslationAliases ADD COLUMN aliasOrder INTEGER NOT NULL"
+            + " DEFAULT -1 CHECK (aliasOrder >= -1)");
     }
 
     public static long generationSnapshot(SQLiteDatabase database) {
@@ -314,15 +320,15 @@ public final class TagTranslationCatalog {
             database.execSQL("DELETE FROM TagTranslationAliases WHERE locale = ?", new Object[]{metadata.locale});
             database.execSQL("DELETE FROM TagTranslations WHERE locale = ?", new Object[]{metadata.locale});
             try (TranslationInsert entries = new TranslationInsert(database, metadata.locale, entryCount,
-                    "TagTranslations (idTag, locale, displayName, displayKey)");
+                    "TagTranslations (idTag, locale, displayName, displayKey)", false);
                  TranslationInsert aliases = new TranslationInsert(database, metadata.locale, aliasCount,
-                    "TagTranslationAliases (idTag, locale, alias, aliasKey)")) {
+                    "TagTranslationAliases (idTag, locale, alias, aliasKey, aliasOrder)", true)) {
                 for (int row = 0; row < entryCount; row++) {
                     checkCancelled(cancelled);
                     int id = rows.readInt();
-                    entries.add(id, rows);
+                    entries.add(id, rows, 0);
                     int aliasesForTag = rows.readUnsignedByte();
-                    for (int index = 0; index < aliasesForTag; index++) aliases.add(id, rows);
+                    for (int index = 0; index < aliasesForTag; index++) aliases.add(id, rows, index);
                 }
             }
             try (Cursor unknown = database.rawQuery("SELECT 1 FROM TagTranslations e"
@@ -474,33 +480,36 @@ public final class TagTranslationCatalog {
         private final SQLiteDatabase database;
         private final String locale;
         private final String table;
+        private final boolean ordered;
         private SQLiteStatement statement;
         private int remaining;
         private int size;
         private int bound;
 
-        TranslationInsert(SQLiteDatabase database, String locale, int count, String table) {
+        TranslationInsert(SQLiteDatabase database, String locale, int count, String table, boolean ordered) {
             this.database = database;
             this.locale = locale;
             this.table = table;
+            this.ordered = ordered;
             remaining = count;
         }
 
-        void add(int id, DataInputStream rows) throws IOException {
+        void add(int id, DataInputStream rows, int order) throws IOException {
             int nextSize = Math.min(remaining, INSERT_BATCH_SIZE);
             if (nextSize != size) {
                 close();
                 size = nextSize;
                 statement = database.compileStatement("INSERT INTO " + table + " VALUES "
-                    + String.join(",", Collections.nCopies(size, "(?,?,?,?)")));
+                    + String.join(",", Collections.nCopies(size, ordered ? "(?,?,?,?,?)" : "(?,?,?,?)")));
             }
             String text = rows.readUTF();
             String key = rows.readUTF();
-            int parameter = bound * 4;
+            int parameter = bound * (ordered ? 5 : 4);
             statement.bindLong(parameter + 1, id);
             statement.bindString(parameter + 2, locale);
             statement.bindString(parameter + 3, text);
             statement.bindString(parameter + 4, key.isEmpty() ? text : key);
+            if (ordered) statement.bindLong(parameter + 5, order);
             if (++bound == size) {
                 statement.execute();
                 remaining -= bound;

@@ -72,6 +72,12 @@ and asks the user to retry. Changes to other locales do not prevent installation
 These checks do not hold a database write transaction while reading, validating,
 or downloading.
 
+Database version 26 records the original order of aliases for newly installed
+packs. Aliases installed before this upgrade have unknown order, marked by -1;
+the upgrade preserves their searchable text but cannot reconstruct their input
+order. Removing and importing a pack again records its order. This storage
+change does not add an export feature or alter the pack format.
+
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether
 it ends a query or continues inside a tag name. Pack authoring and Android

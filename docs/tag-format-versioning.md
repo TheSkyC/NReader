@@ -8,7 +8,7 @@ be used in place of another.
 
 ## Current contracts
 
-- The application database is schema version 24. `DatabaseHelper.onUpgrade`
+- The application database is schema version 26. `DatabaseHelper.onUpgrade`
   applies upgrades in order; downgrade is deliberately unsupported. A storage
   change requires a new database version, an upgrade path from every supported
   prior version, and rollback tests for an injected migration failure.
