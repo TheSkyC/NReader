@@ -25,9 +25,11 @@ public class TagTranslationTransactionRecoveryTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         try (SQLiteDatabase database = TranslationRecoveryFixture.createBaseline(
                 TranslationRecoveryFixture.databaseFile(context, token), context.getCacheDir())) {
+            assertEquals(1, TagTranslationCatalog.generationSnapshot(database));
             TagTranslationCatalog.apply(database, candidate(), context.getCacheDir(), () -> {
                 if (database.inTransaction() && TagTranslationCatalog.installedRevision(database, "ja") == 2) {
                     TranslationRecoveryFixture.assertInstalled(database, 2, "after");
+                    assertEquals(2, TagTranslationCatalog.generationSnapshot(database));
                     TagRecoveryProcess.awaitExternalStop(token);
                 }
                 return false;
@@ -45,8 +47,10 @@ public class TagTranslationTransactionRecoveryTest {
         try (SQLiteDatabase database = TranslationRecoveryFixture.reopen(
                 TranslationRecoveryFixture.databaseFile(context, token))) {
             TranslationRecoveryFixture.assertInstalled(database, 1, "before");
+            assertEquals(1, TagTranslationCatalog.generationSnapshot(database));
             assertTrue(TagTranslationCatalog.apply(database, candidate(), context.getCacheDir(), () -> false));
             TranslationRecoveryFixture.assertInstalled(database, 2, "after");
+            assertEquals(2, TagTranslationCatalog.generationSnapshot(database));
         }
     }
 

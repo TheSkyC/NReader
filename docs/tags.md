@@ -357,7 +357,7 @@ adb -s $serial shell am force-stop com.theskyc.nreader.debug
 adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.theskyc.nreader.TagFilterActivity -d https://nhentai.net/tags/
 ```
 
-The check is complete only when the installed database reports schema 24,
+The check is complete only when the installed database reports schema 25,
 bundled revision 43, and 86,030 catalog rows, and the live tag page displays
 an expected catalog name such as `glasses`. Record the Android API, flavor,
 network state, and whether the database was empty before launch. This is a
@@ -399,9 +399,9 @@ attached, pass `-Serial` with the exact ADB device serial:
   previous translation and rule, then retries the digest-verified download
   and checks that the partial file is removed.
 - `-Scenario TranslationTransaction` stops the process after the translated
-  name, alias, and revision are written but before SQLite commits. Restart
-  checks the previous translation and rule and the absence of a stranded
-  prepared pack, then retries the import.
+  name, alias, revision, and change generation are written but before SQLite
+  commits. Restart checks the previous translation, generation, and rule and
+  the absence of a stranded prepared pack, then retries the import.
 
 Each run installs the benchmark packages for its own temporary Android user.
 It uninstalls them for that user before removing the user. The driver checks
