@@ -297,6 +297,21 @@ public class TagTranslationCatalogTest {
             Locale.forLanguageTag("sr-Cyrl-BA")));
     }
 
+    @Test public void localeExtensionsAndVariantsDoNotHideRegionalPacks() throws IOException {
+        assertTrue(apply(pack("zh-TW", 1, "[{\"id\":1,\"name\":\"regional\",\"aliases\":[\"region-alias\"]}]")));
+        assertTrue(apply(pack("zh-Hant", 1, "[{\"id\":1,\"name\":\"script\"}]")));
+        assertTrue(apply(pack("sr-Latn-RS", 1, "[{\"id\":1,\"name\":\"serbian regional\"}]")));
+        assertTrue(apply(pack("sr-Latn", 1, "[{\"id\":1,\"name\":\"serbian script\"}]")));
+        Locale taiwan = Locale.forLanguageTag("zh-TW-u-nu-hanidec");
+        assertEquals("zh-TW", TagTranslationCatalog.resolveInstalledLocale(database, taiwan));
+        assertEquals(Map.of(1, "regional"), Queries.TagTable.getDisplayNames(List.of(1), taiwan));
+        assertEquals(List.of(1), matchingIds("region-alias", taiwan));
+        assertEquals("sr-Latn-RS", TagTranslationCatalog.resolveInstalledLocale(database,
+            Locale.forLanguageTag("sr-Latn-RS-1901-u-nu-latn")));
+        TagTranslationCatalog.remove(database, "zh-TW");
+        assertEquals("zh-Hant", TagTranslationCatalog.resolveInstalledLocale(database, taiwan));
+    }
+
     @Test public void translatedAndAliasSuggestionsRetainCanonicalTagIdentity() throws IOException {
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\u4e3b\u9898\","
             + "\"aliases\":[\"\u9898\u6750\"]}]")));

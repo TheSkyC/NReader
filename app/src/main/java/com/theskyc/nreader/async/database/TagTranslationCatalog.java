@@ -144,12 +144,13 @@ public final class TagTranslationCatalog {
     public static String resolveInstalledLocale(SQLiteDatabase database, Locale appLocale) {
         if (appLocale == null || appLocale.getLanguage().isEmpty()) return null;
         List<String> candidates = new ArrayList<>();
-        String exact = appLocale.toLanguageTag();
-        String language = exact.split("-", 2)[0];
-        if (isSupportedLocale(exact)) candidates.add(exact);
+        String language = appLocale.toLanguageTag().split("-", 2)[0];
         String script = appLocale.getScript();
+        String region = appLocale.getCountry();
+        String exact = language + (script.isEmpty() ? "" : "-" + script)
+            + (region.isEmpty() ? "" : "-" + region);
+        if (isSupportedLocale(exact)) candidates.add(exact);
         if (script.isEmpty() && "zh".equals(language)) {
-            String region = appLocale.getCountry();
             script = "TW".equals(region) || "HK".equals(region) || "MO".equals(region) ? "Hant" : "Hans";
         }
         if (!script.isEmpty()) {

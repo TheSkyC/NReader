@@ -96,7 +96,8 @@ the picker or an invalid pack leaves current translations intact. A build
 with a [configured translation feed](tag-translation-distribution.md#enabling-the-settings-action)
 also allows users to browse and install newer packs online on demand.
 
-Tag suggestions use the app's active locale. An exact installed locale wins;
+Tag suggestions use the app's active locale. Variants and Unicode extensions
+are ignored when matching a pack. An exact installed locale wins;
 otherwise an explicitly specified script pack takes precedence over a generic
 language pack. Chinese locales without an explicit script infer `zh-Hans` or
 `zh-Hant` from the region before falling back to the generic language pack.

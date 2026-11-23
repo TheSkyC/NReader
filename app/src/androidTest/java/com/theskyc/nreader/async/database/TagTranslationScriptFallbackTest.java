@@ -34,6 +34,12 @@ public class TagTranslationScriptFallbackTest {
                 install(database, context, "sr", "generic", "generic-alias");
                 install(database, context, "sr-Latn", "latin", "latin-alias");
                 install(database, context, "sr-Cyrl", "cyrillic", "cyrillic-alias");
+                install(database, context, "sr-Latn-RS", "regional", "regional-alias");
+                Locale extended = Locale.forLanguageTag("sr-Latn-RS-1901-u-nu-latn");
+                assertEquals("sr-Latn-RS", TagTranslationCatalog.resolveInstalledLocale(database, extended));
+                assertEquals(Collections.singletonMap(1, "regional"), Queries.TagTable.getDisplayNames(
+                    Collections.singletonList(1), extended));
+                TagTranslationCatalog.remove(database, "sr-Latn-RS");
                 Locale locale = Locale.forLanguageTag("sr-Latn-RS");
                 assertEquals("sr-Latn", TagTranslationCatalog.resolveInstalledLocale(database, locale));
                 assertEquals(Collections.singletonMap(1, "latin"), Queries.TagTable.getDisplayNames(
