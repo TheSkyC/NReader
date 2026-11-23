@@ -240,6 +240,50 @@ public class TranslationExportRecoveryTest {
         }
     }
 
+    @Test public void partialWriteFailureCanBeRetriedWithoutChangingInstalledPack() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        SQLiteDatabase previous = Database.getDatabase();
+        AtomicInteger attempts = new AtomicInteger();
+        ByteArrayOutputStream retryOutput = new ByteArrayOutputStream();
+        TranslationExportViewModel model = new TranslationExportViewModel((app, uri) -> {
+            if (attempts.incrementAndGet() > 1) return retryOutput;
+            return new OutputStream() {
+                private int written;
+                @Override public void write(int value) throws IOException {
+                    if (written++ == 8) throw new IOException("Synthetic partial write failure");
+                }
+            };
+        });
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Database.setDatabase(database);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700010, 'fixture', 3, 1)");
+            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+                + "\"entries\":[{\"id\":700010,\"name\":\"translated\",\"aliases\":[\"z\",\"a\"]}]}";
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
+                context.getCacheDir(), () -> false));
+            TagTranslationCatalog.PackState state = TagTranslationCatalog.installedPackStates(database).get("ja");
+            TranslationExportViewModel.Selection selection = new TranslationExportViewModel.Selection("ja", state.revision, state.generation);
+            Uri destination = Uri.parse("content://translation-export-test/pack");
+            assertTrue(model.start(context, destination, selection));
+            awaitResult(model);
+            assertNotNull(model.result().getValue().error);
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+            assertTrue(model.start(context, destination, selection));
+            awaitResult(model);
+            assertNull(model.result().getValue().error);
+            JSONObject exported = new JSONObject(retryOutput.toString("UTF-8"));
+            assertEquals("ja", exported.getString("locale"));
+            assertEquals("z", exported.getJSONArray("entries").getJSONObject(0).getJSONArray("aliases").getString(0));
+            assertEquals(2, attempts.get());
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        } finally {
+            if (model.isRunning()) awaitResult(model);
+            ReflectionHelpers.setStaticField(Database.class, "database", previous);
+            Queries.setDb(previous);
+        }
+    }
+
     @Test public void cancellationWhileProviderOpensDoesNotReportSuccess() throws Exception {
         Application context = RuntimeEnvironment.getApplication();
         SQLiteDatabase previous = Database.getDatabase();
