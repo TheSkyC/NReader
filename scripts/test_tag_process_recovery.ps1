@@ -1,7 +1,7 @@
 param(
     [ValidateSet("MinApi26", "MinApi28")]
     [string]$Flavor = "MinApi28",
-    [ValidateSet("CatalogTransaction", "CatalogStaging", "TranslationStaging", "TranslationTransaction", "TranslationExport")]
+    [ValidateSet("CatalogTransaction", "CatalogStaging", "TranslationStaging", "TranslationTransaction", "TranslationExport", "TranslationExportMediaStore")]
     [string]$Scenario = "CatalogTransaction",
     [string]$Serial
 )
@@ -35,11 +35,16 @@ if ($Scenario -eq "CatalogTransaction") {
     $crashMethod = "$testClass#holdsTranslationTransactionForExternalProcessStop"
     $verifyMethod = "$testClass#previousTranslationSurvivesProcessDeathAndCanBeUpdated"
     $crashPhase = "translation-transaction"
-} else {
+} elseif ($Scenario -eq "TranslationExport") {
     $testClass = "com.theskyc.nreader.TranslationExportProcessRecoveryTest"
     $crashMethod = "$testClass#holdsPartialExportForExternalProcessStop"
     $verifyMethod = "$testClass#interruptedExportLeavesPackIntactAndCanBeRetried"
     $crashPhase = "translation-export"
+} else {
+    $testClass = "com.theskyc.nreader.TranslationExportMediaStoreRecoveryTest"
+    $crashMethod = "$testClass#holdsMediaStoreExportForExternalProcessStop"
+    $verifyMethod = "$testClass#interruptedMediaStoreExportCanBeRetried"
+    $crashPhase = "translation-export-media"
 }
 $logDirectory = Join-Path $repoRoot "app\build\tag-recovery"
 $userId = $null
@@ -75,6 +80,9 @@ $sdkVersion = 0
 $sdk = Invoke-Adb @("shell", "getprop", "ro.build.version.sdk")
 if (-not [int]::TryParse($sdk.Trim(), [ref]$sdkVersion) -or $sdkVersion -lt 26) {
     throw "Recovery tests require Android API 26 or newer"
+}
+if ($Scenario -eq "TranslationExportMediaStore" -and $sdkVersion -lt 29) {
+    throw "MediaStore export recovery requires Android API 29 or newer"
 }
 $existingPackages = Invoke-Adb @("shell", "pm", "list", "packages", "-u")
 foreach ($package in @($targetPackage, $testPackage)) {

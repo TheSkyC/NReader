@@ -101,3 +101,18 @@ an external provider, or ordinary process death while a picker is open.
 On 2026-11-23 this check passed on an API 28 emulator with both MinApi26 and
 MinApi28 builds and an API 26 emulator with MinApi26. API 27 and physical
 devices were not tested.
+
+On API 29 or newer, run the following check against a pending MediaStore
+Downloads item created by the isolated app:
+
+```powershell
+.\scripts\test_tag_process_recovery.ps1 -Scenario TranslationExportMediaStore
+```
+
+The test pauses after writing and
+flushing eight bytes through the provider, then the driver force-stops the app.
+After restart it reads the partial item, verifies the installed pack and rule,
+and retries using the normal `content:` output path. The item and temporary user
+are removed. This checks MediaStore ownership and provider I/O; it does not use
+the system picker, a temporary URI grant, or a third-party/cloud provider.
+On 2026-11-23 it passed on an API 37 emulator with both compatibility builds.
