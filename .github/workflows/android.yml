@@ -115,7 +115,9 @@ jobs:
 
             -   name: Test the application Unicode helper
                 run: >-
-                    ./gradlew :app:testMinApi26DebugUnitTest :app:testMinApi28DebugUnitTest
+                    ./gradlew :app:testMinApi26DebugUnitTest
+                    --tests 'com.theskyc.nreader.async.database.TagUnicodeTest'
+                    :app:testMinApi28DebugUnitTest
                     --tests 'com.theskyc.nreader.async.database.TagUnicodeTest'
 
             -   name: Check packaged ICU data and license
