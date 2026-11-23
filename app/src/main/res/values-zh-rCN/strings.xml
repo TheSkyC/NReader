@@ -567,6 +567,17 @@
     <string name="tag_translation_rebuild_message">更新期间，标签名称和搜索暂时使用原名。更新会自动继续；如果长时间未完成，请检查设备存储空间并重新打开应用。</string>
     <string name="tag_translation_rebuild_manage">管理语言</string>
     <string name="tag_translation_packs_summary">安装、导出或移除离线标签翻译。</string>
+    <string name="tag_rule_transfer_title">标签规则</string>
+    <string name="tag_rule_transfer_summary">导出或导入本地接受和避免的标签。</string>
+    <string name="tag_rule_export">导出规则</string>
+    <string name="tag_rule_import">导入规则</string>
+    <string name="tag_rule_export_done">标签规则已导出。</string>
+    <string name="tag_rule_transfer_failed">无法传输标签规则。</string>
+    <string name="tag_rule_import_preview" formatted="true">共 %1$d 条规则：新增 %2$d，更新 %3$d，未变化 %4$d，冲突 %5$d。</string>
+    <string name="tag_rule_import_merge">合并</string>
+    <string name="tag_rule_import_replace">全部替换</string>
+    <string name="tag_rule_import_conflict">请先解决类型冲突，再导入。</string>
+    <string name="tag_rule_import_done" formatted="true">已导入 %1$d 条标签规则。</string>
     <string name="tag_translation_packs_empty">尚未安装标签语言包。</string>
     <string name="tag_translation_pack_item">%1$s（版本 %2$d）</string>
     <string name="tag_translation_install">安装或更新</string>

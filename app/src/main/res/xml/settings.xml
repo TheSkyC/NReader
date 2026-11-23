@@ -39,6 +39,11 @@
             android:summary="@string/tag_translation_packs_summary"
             app:iconSpaceReserved="false" />
         <Preference
+            android:key="@string/preference_key_tag_rule_transfer"
+            android:title="@string/tag_rule_transfer_title"
+            android:summary="@string/tag_rule_transfer_summary"
+            app:iconSpaceReserved="false" />
+        <Preference
             android:key="@string/preference_key_tag_display_language"
             android:title="@string/tag_display_language_title"
             android:summary="@string/tag_display_language_summary"

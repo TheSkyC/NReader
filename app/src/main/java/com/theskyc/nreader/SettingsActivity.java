@@ -29,6 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.theskyc.nreader.async.TagTranslationFeed;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.async.database.TagTranslationManifest;
+import com.theskyc.nreader.async.database.TagRuleTransfer;
 import com.theskyc.nreader.async.database.export.BackupPreview;
 import com.theskyc.nreader.async.database.export.Exporter;
 import com.theskyc.nreader.async.database.export.Importer;
@@ -42,8 +43,11 @@ import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -76,6 +80,8 @@ public class SettingsActivity extends GeneralActivity {
     private ActivityResultLauncher<String> notificationPermission;
     private ActivityResultLauncher<String[]> IMPORT_TRANSLATION_PACK;
     private ActivityResultLauncher<String> EXPORT_TRANSLATION_PACK;
+    private ActivityResultLauncher<String[]> IMPORT_TAG_RULES;
+    private ActivityResultLauncher<String> EXPORT_TAG_RULES;
     private TagTranslationFeed activeTranslationFeed;
     private AlertDialog translationFeedProgress;
     private AlertDialog catalogCheckDialog;
@@ -180,6 +186,11 @@ public class SettingsActivity extends GeneralActivity {
         });
         EXPORT_TRANSLATION_PACK = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"),
             this::handleTranslationExportResult);
+        IMPORT_TAG_RULES = registerForActivityResult(new ActivityResultContracts.OpenDocument(), selectedFile -> {
+            if (selectedFile != null) importTagRules(selectedFile);
+        });
+        EXPORT_TAG_RULES = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"),
+            this::exportTagRules);
         IMPORT_ZIP = registerForActivityResult(new ActivityResultContracts.GetContent(), selectedFile -> {
             if (selectedFile == null) return;
             importSettings(selectedFile);
@@ -278,6 +289,110 @@ public class SettingsActivity extends GeneralActivity {
                 runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
             }
         }).start();
+    }
+
+    public void manageTagRules() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_rule_transfer_title)
+            .setItems(new CharSequence[]{getText(R.string.tag_rule_export), getText(R.string.tag_rule_import)},
+                (dialog, which) -> {
+                    if (which == 0) {
+                        try {
+                            EXPORT_TAG_RULES.launch("nreader-tag-rules.json");
+                        } catch (RuntimeException error) {
+                            LogUtility.e("Unable to open tag rule export picker", error);
+                            showTranslationToast(R.string.tag_rule_transfer_failed, Toast.LENGTH_LONG);
+                        }
+                    } else {
+                        try {
+                            IMPORT_TAG_RULES.launch(new String[]{"application/json", "application/octet-stream", "text/*"});
+                        } catch (RuntimeException error) {
+                            LogUtility.e("Unable to open tag rule import picker", error);
+                            showTranslationToast(R.string.tag_rule_transfer_failed, Toast.LENGTH_LONG);
+                        }
+                    }
+                })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void exportTagRules(Uri destination) {
+        if (destination == null) return;
+        new Thread(() -> {
+            try {
+                String json = TagRuleTransfer.exportJson(Database.getDatabase());
+                try (OutputStream output = getContentResolver().openOutputStream(destination)) {
+                    if (output == null) throw new IOException("Unable to open tag rule destination");
+                    output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                runOnUiThread(() -> showTranslationToast(R.string.tag_rule_export_done, Toast.LENGTH_LONG));
+            } catch (Exception error) {
+                LogUtility.e("Unable to export tag rules", error);
+                runOnUiThread(() -> showTranslationToast(R.string.tag_rule_transfer_failed, Toast.LENGTH_LONG));
+            }
+        }).start();
+    }
+
+    private void importTagRules(Uri source) {
+        new Thread(() -> {
+            try {
+                byte[] bytes = readTagRuleBytes(source);
+                TagRuleTransfer.Preview preview = TagRuleTransfer.preview(Database.getDatabase(),
+                    new ByteArrayInputStream(bytes));
+                runOnUiThread(() -> showTagRulePreview(bytes, preview));
+            } catch (Exception error) {
+                LogUtility.e("Unable to preview tag rules", error);
+                runOnUiThread(() -> showTranslationToast(R.string.tag_rule_transfer_failed, Toast.LENGTH_LONG));
+            }
+        }).start();
+    }
+
+    private void showTagRulePreview(byte[] bytes, TagRuleTransfer.Preview preview) {
+        if (isFinishing() || isDestroyed()) return;
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_rule_import)
+            .setMessage(getString(R.string.tag_rule_import_preview, preview.total, preview.additions,
+                preview.updates, preview.unchanged, preview.conflicts))
+            .setNegativeButton(R.string.cancel, null);
+        if (preview.conflicts == 0) {
+            builder.setPositiveButton(R.string.tag_rule_import_merge,
+                (dialog, which) -> applyTagRules(bytes, TagRuleTransfer.Mode.MERGE));
+            builder.setNeutralButton(R.string.tag_rule_import_replace,
+                (dialog, which) -> applyTagRules(bytes, TagRuleTransfer.Mode.REPLACE));
+        } else {
+            builder.setPositiveButton(R.string.tag_rule_import_conflict, null);
+        }
+        builder.show();
+    }
+
+    private void applyTagRules(byte[] bytes, TagRuleTransfer.Mode mode) {
+        new Thread(() -> {
+            try {
+                TagRuleTransfer.Result result = TagRuleTransfer.apply(Database.getDatabase(),
+                    new ByteArrayInputStream(bytes), mode);
+                runOnUiThread(() -> showTranslationToast(
+                    getString(R.string.tag_rule_import_done, result.affected), Toast.LENGTH_LONG));
+            } catch (Exception error) {
+                LogUtility.e("Unable to import tag rules", error);
+                runOnUiThread(() -> showTranslationToast(R.string.tag_rule_transfer_failed, Toast.LENGTH_LONG));
+            }
+        }).start();
+    }
+
+    private byte[] readTagRuleBytes(Uri source) throws IOException {
+        try (InputStream input = getContentResolver().openInputStream(source);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) throw new IOException("Unable to open tag rule source");
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                total += read;
+                if (total > TagRuleTransfer.MAX_BYTES) throw new IOException("Tag rule document is too large");
+                output.write(buffer, 0, read);
+            }
+            return output.toByteArray();
+        }
     }
 
     public void manageTranslationPacks() {

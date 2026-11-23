@@ -707,6 +707,17 @@
     <string name="tag_translation_rebuild_message">Tag names and search temporarily use their original names while the update runs. The update resumes automatically. If it takes a long time, check that your device has free storage and reopen the app.</string>
     <string name="tag_translation_rebuild_manage">Manage languages</string>
     <string name="tag_translation_packs_summary">Install, export, or remove offline tag translations.</string>
+    <string name="tag_rule_transfer_title">Tag rules</string>
+    <string name="tag_rule_transfer_summary">Export or import local accepted and avoided tags.</string>
+    <string name="tag_rule_export">Export rules</string>
+    <string name="tag_rule_import">Import rules</string>
+    <string name="tag_rule_export_done">Tag rules exported.</string>
+    <string name="tag_rule_transfer_failed">Could not transfer tag rules.</string>
+    <string name="tag_rule_import_preview" formatted="true">%1$d rules: %2$d additions, %3$d updates, %4$d unchanged, %5$d conflicts.</string>
+    <string name="tag_rule_import_merge">Merge</string>
+    <string name="tag_rule_import_replace">Replace all</string>
+    <string name="tag_rule_import_conflict">Resolve type conflicts before importing.</string>
+    <string name="tag_rule_import_done" formatted="true">Imported %1$d tag rules.</string>
     <string name="tag_translation_packs_empty">No tag languages are installed.</string>
     <string name="tag_translation_pack_item">%1$s (revision %2$d)</string>
     <string name="tag_translation_install">Install or update</string>
@@ -741,6 +752,7 @@
     <string name="tag_catalog_check_cancelled">The catalog check was cancelled or replaced. Try again if needed.</string>
     <string name="local_tag_rule_save_error">Could not save local tag rules. Try again.</string>
     <string name="preference_key_tag_translation_packs" translatable="false">tag_translation_packs</string>
+    <string name="preference_key_tag_rule_transfer" translatable="false">tag_rule_transfer</string>
     <string name="preference_key_tag_display_language" translatable="false">tag_display_language</string>
     <string name="tag_translation_browse_online">Browse online</string>
     <string name="tag_translation_online_loading">Checking available tag languages…</string>

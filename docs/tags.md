@@ -351,6 +351,10 @@ conflicts. It previews additions, updates, unchanged rows, and conflicts before
 writing. Merge keeps unrelated rules; Replace clears all local rules first.
 Either mode commits in one SQLite transaction, enforces the existing rule
 limit, and leaves the previous rules unchanged if validation or the write fails.
+Settings exposes the transfer as an offline action. Export writes the current
+rules as JSON. Import reads and validates the complete file before showing the
+preview; choosing Merge or Replace then applies the selected mode in the
+background and reports the result once.
 
 ## Directory refresh
 
