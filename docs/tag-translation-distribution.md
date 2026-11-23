@@ -60,8 +60,9 @@ Set the Gradle property `nreaderTagTranslationManifestUrl` to the HTTPS URL of
 the hosted `manifest.json`, and explicitly set
 `nreaderEnableUnsignedTagFeeds=true` for the current unsigned v1 contract. The
 default URL is empty. When configured, users can choose **Settings → Tag
-languages → Browse online** to fetch the locale list. Leave both properties
-empty until the feed trust and publishing policy is approved.
+languages → Browse online** to fetch the locale list. The initial beta release
+publishes only the canonical catalog; keep the translation URL empty until a
+real reviewed locale pack and its attribution record are available.
 Only new languages and revisions newer than the installed pack appear. The
 app shows the download size before installing the selected pack. Requests
 are started only from this action and can be cancelled. Import from a file

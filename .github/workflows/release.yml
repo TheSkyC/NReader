@@ -63,7 +63,11 @@ jobs:
           } > keystore.properties
 
       - name: Assemble release APKs and bundle
-        run: ./gradlew assembleRelease bundleMinApi28Release
+        run: >-
+          ./gradlew
+          -PnreaderTagCatalogManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/tag-feed/catalog/manifest.json
+          -PnreaderEnableUnsignedTagFeeds=true
+          assembleRelease bundleMinApi28Release
 
       - name: Name release bundle
         env:

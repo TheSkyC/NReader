@@ -46,17 +46,30 @@ To correct a published catalog, publish a corrected snapshot at a higher
 revision; do not reset the counter. An omitted ID continues to resolve
 under the existing catalog merge policy.
 
-The HTTPS origin is the trust boundary. The digest detects byte mismatch
-and does not authenticate a compromised publisher or provide first-install
-replay protection. A production origin, release owner, and any independent
-signing or expiry policy need to be established before configuring a feed.
+The HTTPS origin is the trust boundary. The digest detects byte mismatch and
+does not authenticate a compromised publisher or provide first-install replay
+protection. The initial beta feed uses the public NReader GitHub repository as
+the origin and accepts this unsigned v1 tradeoff; the release workflow opts in
+explicitly. A later signed manifest can replace this contract without changing
+the offline catalog or local rules.
 The app build accepts the manifest URL through Gradle property
 `nreaderTagCatalogManifestUrl`. The default is empty, which keeps the
 existing legacy feed active.
 Because manifest v1 has no publisher signature, a build that configures either
-NReader manifest URL must also set `nreaderEnableUnsignedTagFeeds=true`.
-Leave both properties empty until the feed trust and publishing policy is
-approved; this guard prevents an accidental unsigned-feed release.
+NReader manifest URL must also set `nreaderEnableUnsignedTagFeeds=true`. This
+keeps ordinary development builds offline while making the beta opt-in clear.
+
+The checked-in `Publish Tag Catalog Feed` workflow publishes the validated
+catalog to the public `tag-feed` branch. Its catalog manifest URL is:
+
+```text
+https://raw.githubusercontent.com/TheSkyC/NReader/tag-feed/catalog/manifest.json
+```
+
+The workflow retains immutable payload files and moves the manifest pointer in
+the same commit. A feed update therefore needs only a normal `main` push that
+changes the catalog data or release tooling; the workflow verifies the staged
+copy before publishing it.
 
 ## Preparing a release
 
