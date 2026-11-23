@@ -367,15 +367,20 @@ public class SettingsActivity extends GeneralActivity {
     private void showTranslationFailure(Throwable error, int fallbackMessage) {
         if (isFinishing() || isDestroyed()) return;
         if (error instanceof TagTranslationCatalog.UnknownTagException) {
-            new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.tag_translation_packs_title)
-                .setMessage(R.string.tag_translation_unknown_tags)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.tag_catalog_check_updates, (dialog, which) -> {
-                    showCatalogCheckDialog();
-                    catalogRefresh.start(getApplicationContext());
-                })
-                .show();
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tag_translation_packs_title);
+            if (BuildConfig.TAG_CATALOG_MANIFEST_URL.isEmpty()) {
+                builder.setMessage(R.string.tag_translation_unknown_tags_no_source)
+                    .setPositiveButton(android.R.string.ok, null);
+            } else {
+                builder.setMessage(R.string.tag_translation_unknown_tags)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.tag_catalog_check_updates, (dialog, which) -> {
+                        showCatalogCheckDialog();
+                        catalogRefresh.start(getApplicationContext());
+                    });
+            }
+            builder.show();
         } else {
             Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();
         }

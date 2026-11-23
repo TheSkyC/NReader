@@ -679,6 +679,7 @@
     <string name="tag_translation_not_newer">This pack is already installed at the same or a newer revision.</string>
     <string name="tag_translation_install_failed">Could not install this tag language pack.</string>
     <string name="tag_translation_unknown_tags">Some tags in this pack are missing from your tag catalog. Update the catalog or the app and try again. If it still fails, the pack may be incompatible.</string>
+    <string name="tag_translation_unknown_tags_no_source">Some tags in this pack are missing from your tag catalog. No catalog update source is configured. Update the app or choose a compatible language pack.</string>
     <string name="tag_catalog_check_updates">Check catalog updates</string>
     <string name="tag_catalog_check_close">Close</string>
     <string name="tag_catalog_check_queued">Waiting to check the catalog. A network connection is required; a retry may also be pending. You can close this dialog while the check continues.</string>

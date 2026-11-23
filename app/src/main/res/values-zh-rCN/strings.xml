@@ -539,6 +539,7 @@
     <string name="tag_translation_not_newer">此语言包的相同或更新版本已安装。</string>
     <string name="tag_translation_install_failed">无法安装此标签语言包。</string>
     <string name="tag_translation_unknown_tags">当前标签目录缺少此语言包中的部分标签。请更新标签目录或应用后重试。如果仍然失败，语言包可能不兼容。</string>
+    <string name="tag_translation_unknown_tags_no_source">当前标签目录缺少此语言包中的部分标签，且未配置目录更新源。请更新应用或选择兼容的语言包。</string>
     <string name="tag_catalog_check_updates">检查目录更新</string>
     <string name="tag_catalog_check_close">关闭</string>
     <string name="tag_catalog_check_queued">正在等待检查标签目录。需要网络连接，也可能正在等待重试。关闭此窗口后检查仍会继续。</string>

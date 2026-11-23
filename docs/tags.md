@@ -98,6 +98,9 @@ background. The installed-locale list is independently removable; cancelling
 the picker or an invalid pack leaves current translations intact. A build
 with a [configured translation feed](tag-translation-distribution.md#enabling-the-settings-action)
 also allows users to browse and install newer packs online on demand.
+When a pack references tags missing from the catalog, Settings offers a catalog
+check only if a catalog feed is configured. Otherwise it recommends updating
+the app or selecting a compatible pack without queuing a network request.
 
 Tag suggestions use the app's active locale. Variants and Unicode extensions
 are ignored when matching a pack. An exact installed locale wins;
