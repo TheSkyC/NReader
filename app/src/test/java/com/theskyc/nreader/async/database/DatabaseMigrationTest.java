@@ -16,13 +16,46 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class DatabaseMigrationTest {
+    @Test
+    public void translationRemovalGenerationSurvivesDatabaseReopen() throws IOException {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        byte[] pack = ("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":700004,\"name\":\"name\"}]}").getBytes(StandardCharsets.UTF_8);
+        long beforeRemoval;
+        TagTranslationCatalog.PackState oldSelection;
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700004, 'fixture', 3, 1)");
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack), context.getCacheDir(), () -> false));
+            beforeRemoval = TagTranslationCatalog.generationSnapshot(database);
+            oldSelection = TagTranslationCatalog.installedPackStates(database).get("ja");
+            assertTrue(TagTranslationCatalog.removeIfUnchanged(database, "ja", oldSelection));
+        }
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertTrue(TagTranslationCatalog.generationSnapshot(database) > beforeRemoval);
+            assertThrows(TagTranslationCatalog.ChangedDuringImportException.class, () ->
+                TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack), context.getCacheDir(), beforeRemoval, () -> false));
+            assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
+            assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack), context.getCacheDir(), () -> false));
+            assertFalse(TagTranslationCatalog.removeIfUnchanged(database, "ja", oldSelection));
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        }
+    }
+
     @Test
     public void version24UpgradePreservesInstalledTranslations() {
         Context context = RuntimeEnvironment.getApplication();
