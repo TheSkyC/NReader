@@ -37,6 +37,7 @@ import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.Test;
@@ -287,6 +288,53 @@ public class TagInteractionDeviceBenchmarkTest {
                 }));
                 Log.i(LOG, "translationRemovalUiToFallbackMs=" + elapsedMillis(start));
             } finally {
+                close(activity);
+            }
+        });
+    }
+
+    @Test
+    public void switchesIndependentTagLanguageOnVisibleList() throws Exception {
+        TagCatalogDeviceBenchmarkTest.withFixture("tag-language-selection", (context, database, directory) -> {
+            TagCatalogDeviceBenchmarkTest.importCatalog(context, database, "setup");
+            Global.initFromShared(context);
+            String appLocale = context.getResources().getConfiguration().getLocales().get(0).toLanguageTag();
+            String selectedLocale = "ja".equals(appLocale) ? "en" : "ja";
+            assertTrue("Unsupported benchmark locale: " + selectedLocale,
+                TagTranslationCatalog.isSupportedLocale(selectedLocale));
+            int id = TagCatalogDeviceBenchmarkTest.eligibleTagId(database, TagV2.getMinCount());
+            String canonicalName = Queries.TagTable.getTagById(id).getName();
+            File pack = writeSingleTranslation(directory, selectedLocale, id);
+            try (InputStream input = new FileInputStream(pack)) {
+                assertTrue(TagTranslationCatalog.apply(database, input, directory, () -> false));
+            } finally {
+                if (pack.exists() && !pack.delete()) Log.w(LOG, "Could not remove tag-language pack");
+            }
+            TagLanguage.select(context, selectedLocale);
+            TagFilterActivity activity = launch(context, TagFilterActivity.class,
+                Uri.parse("https://nhentai.net/tags/"));
+            try {
+                AtomicReference<RecyclerView> list = new AtomicReference<>();
+                waitFor("tag list with selected language", () -> onMain(() -> {
+                    TagTypePage page = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                    RecyclerView recycler = page == null ? null : page.getRecyclerView();
+                    if (recycler == null || !recycler.isShown() || !hasTitleAt(recycler, 0)) return false;
+                    list.set(recycler);
+                    return true;
+                }));
+                waitFor("translated visible tag in selected language", () -> onMain(() -> {
+                    TextView title = titleAt(list.get(), 0);
+                    return title != null && title.getText().toString().contains("translated-" + id);
+                }));
+                TagLanguage.select(context, "");
+                waitFor("canonical visible tag after returning to app language", () -> onMain(() -> {
+                    TextView title = titleAt(list.get(), 0);
+                    if (title == null) return false;
+                    String value = title.getText().toString();
+                    return value.contains(canonicalName) && !value.contains("translated-" + id);
+                }));
+            } finally {
+                TagLanguage.select(context, "");
                 close(activity);
             }
         });

@@ -41,6 +41,11 @@ supported by the pack format, such as `en-US` or `zh-CN`.
   and wait for the same row to return to its canonical label. This checks the
   removal event and the same live adapter refresh path. It does not test
   removal through the Settings document picker.
+- **Independent tag language:** Install a translation under a locale different
+  from the emulator's app locale, select it through the tag-language setting,
+  and wait for a visible row to change. Clear the selection and wait for the
+  canonical row to return. This checks preference invalidation and locale
+  selection on an already running list.
 
 Record the APK flavor, Android API, host or hardware, catalog size, and repeated
 samples. The tests assert UI behavior and log durations; they do not impose
@@ -53,6 +58,12 @@ make the harness time out before any UI assertion runs.
 On 2026-11-23, all four cases passed with MinApi26 on a disposable API 26
 emulator. This run used synthetic translations and injected keys; it does not
 measure a physical keyboard, IME, frame presentation, or a physical device.
+
+The independent tag-language case also passed with MinApi26 on the same API 26
+emulator. It selected a synthetic `ja` pack while the app used its default
+English locale, observed the translated row, then returned to the canonical row
+after clearing the preference. It does not cover a physical device or a missing
+pack selected through the Settings dialog.
 
 ## Catalog check after background process death
 
