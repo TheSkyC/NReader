@@ -125,6 +125,10 @@ While a rebuild is pending, Settings explains the temporary fallback before
 opening the language-pack list. The status is read when the list is requested,
 so the rebuild can finish before the notice is shown. If progress stalls,
 free storage and reopening the app can allow the scheduled work to resume.
+`TranslationRebuildNoticeDeviceTest` checks the notice, its management action,
+and the list after the marker is removed in an isolated benchmark installation.
+On 2026-11-23 it passed on an API 26 emulator in its default locale and theme;
+this observation does not cover other locales, themes, or physical devices.
 The historical version 24 upgrade kept the first alias when legacy keys became
 equivalent. A direct upgrade from version 23 to version 29 instead preserves
 the distinct aliases before rebuilding their keys in the background.
