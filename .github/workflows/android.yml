@@ -71,6 +71,11 @@ jobs:
                     distribution: 'temurin'
                     cache: gradle
 
+            -   name: Set up Python for Unicode comparison
+                uses: actions/setup-python@v7
+                with:
+                    python-version: '3.14'
+
             -   name: Grant execute permission for gradlew
                 run: chmod +x gradlew
 
@@ -83,6 +88,7 @@ jobs:
                     mkdir -p "${RUNNER_TEMP}/tag-unicode"
                     javac -cp app/build/tag-unicode/icu4j.jar -d "${RUNNER_TEMP}/tag-unicode" scripts/tests/TagUnicodeProbe.java
                     java -cp "app/build/tag-unicode/icu4j.jar:${RUNNER_TEMP}/tag-unicode" TagUnicodeProbe third_party/icu/LICENSE
+                    python -m scripts.compare_tag_unicode --classpath "app/build/tag-unicode/icu4j.jar:${RUNNER_TEMP}/tag-unicode"
 
             -   name: Check unsigned tag feed build guard
                 run: |

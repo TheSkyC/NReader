@@ -4,6 +4,8 @@ import com.ibm.icu.text.Normalizer2;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -20,6 +22,18 @@ public final class TagUnicodeProbe {
     }
 
     public static void main(String[] args) throws Exception {
+        if (args.length == 1 && "--scalar-digest".equals(args[0])) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            for (int codePoint = 0; codePoint <= Character.MAX_CODE_POINT; codePoint++) {
+                if (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE) continue;
+                String value = new String(Character.toChars(codePoint));
+                String normalized = NFC.normalize(value);
+                updateDigest(digest, normalized);
+                updateDigest(digest, UCharacter.toLowerCase(Locale.ROOT, normalized).replace('\u03c2', '\u03c3'));
+            }
+            System.out.println(java.util.HexFormat.of().formatHex(digest.digest()));
+            return;
+        }
         try (InputStream license = TagUnicodeProbe.class.getResourceAsStream("/META-INF/LICENSE-ICU.txt")) {
             if (license == null || !Arrays.equals(Files.readAllBytes(Path.of(args[0])), license.readAllBytes())) {
                 throw new AssertionError("ICU license is missing or does not match");
@@ -34,5 +48,15 @@ public final class TagUnicodeProbe {
         expectKey("\u0130", "i\u0307");
         expectKey("\ud801\udc00", "\ud801\udc28");
         System.out.println("Pinned Unicode NFC and search-key samples passed");
+    }
+
+    private static void updateDigest(MessageDigest digest, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        int length = bytes.length;
+        digest.update((byte) (length >>> 24));
+        digest.update((byte) (length >>> 16));
+        digest.update((byte) (length >>> 8));
+        digest.update((byte) length);
+        digest.update(bytes);
     }
 }
