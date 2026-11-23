@@ -65,3 +65,9 @@ the foreground user with `adb -s $serial shell am get-current-user` and confirm
 the document is visible in the picker before interpreting an empty list as an
 import failure. Remove the test document and restore the original user after
 the check.
+
+To check recovery guidance, select a valid higher-revision pack containing a
+positive ID absent from the installed catalog. The app should show the missing
+tags dialog; after dismissing it, the previously installed locale and revision
+should still be listed. This check does not establish that the catalog can be
+updated on the device or that the pack will become compatible.

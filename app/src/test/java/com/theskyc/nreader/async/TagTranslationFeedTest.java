@@ -179,6 +179,17 @@ public class TagTranslationFeedTest {
         assertEmptyStagingDirectory();
     }
 
+    @Test public void unknownCatalogIdIsReportedWithoutReplacingInstalledPack() throws Exception {
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(bytes(PACK)), files.getRoot(), () -> false));
+        String update = PACK.replace("\"revision\":1", "\"revision\":2").replace("\"id\":8378", "\"id\":8379");
+        TagTranslationManifest.Pack pack = TagTranslationManifest.parse(bytes(manifest(sha256(update), 2, update)))
+            .getPacks().get("ja");
+        TagTranslationFeed feed = feed(chain -> response(chain, 200, body(update)));
+        assertThrows(TagTranslationCatalog.UnknownTagException.class, () -> feed.install(database, pack));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEmptyStagingDirectory();
+    }
+
     @Test public void cancelsAnActivePackCallAndDiscardsStaging() throws Exception {
         String digest = sha256(PACK);
         TagTranslationManifest.Pack pack = TagTranslationManifest.parse(bytes(manifest(digest, 1, PACK)))

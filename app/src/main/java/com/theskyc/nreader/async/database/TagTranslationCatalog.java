@@ -67,6 +67,12 @@ public final class TagTranslationCatalog {
 
     private TagTranslationCatalog() {}
 
+    public static final class UnknownTagException extends IOException {
+        private UnknownTagException() {
+            super("Translation pack references an unknown tag ID");
+        }
+    }
+
     public static LiveData<Void> changes() {
         return CHANGES;
     }
@@ -243,7 +249,7 @@ public final class TagTranslationCatalog {
             try (Cursor unknown = database.rawQuery("SELECT 1 FROM TagTranslations e"
                 + " LEFT JOIN Tags t ON t.idTag = e.idTag WHERE e.locale = ? AND t.idTag IS NULL LIMIT 1",
                 new String[]{metadata.locale})) {
-                if (unknown.moveToFirst()) throw new IOException("Translation pack references an unknown tag ID");
+                if (unknown.moveToFirst()) throw new UnknownTagException();
             }
             checkCancelled(cancelled);
             database.execSQL("INSERT OR REPLACE INTO TagTranslationState (locale, revision) VALUES (?, ?)",

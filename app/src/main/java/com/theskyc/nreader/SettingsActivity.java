@@ -276,7 +276,7 @@ public class SettingsActivity extends GeneralActivity {
                 runOnUiThread(() -> {
                     if (finishTranslationFeedTask(feed)) {
                         LogUtility.e("Tag translation feed request failed", error);
-                        Toast.makeText(this, failureMessage, Toast.LENGTH_LONG).show();
+                        showTranslationFailure(error, failureMessage);
                     }
                 });
             }
@@ -332,6 +332,19 @@ public class SettingsActivity extends GeneralActivity {
         Toast.makeText(this, messageId, duration).show();
     }
 
+    private void showTranslationFailure(Throwable error, int fallbackMessage) {
+        if (isFinishing() || isDestroyed()) return;
+        if (error instanceof TagTranslationCatalog.UnknownTagException) {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tag_translation_packs_title)
+                .setMessage(R.string.tag_translation_unknown_tags)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+        } else {
+            Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void showTranslationToast(CharSequence message, int duration) {
         if (isFinishing() || isDestroyed()) return;
         Toast.makeText(this, message, duration).show();
@@ -356,8 +369,7 @@ public class SettingsActivity extends GeneralActivity {
             } catch (IOException | RuntimeException error) {
                 LogUtility.e("Unable to install tag translation pack", error);
                 runOnUiThread(() -> {
-                    if (isFinishing() || isDestroyed()) return;
-                    Toast.makeText(this, R.string.tag_translation_install_failed, Toast.LENGTH_LONG).show();
+                    showTranslationFailure(error, R.string.tag_translation_install_failed);
                 });
             }
         }).start();

@@ -131,7 +131,8 @@ public class TagTranslationManifestTest {
             + "{\"id\":1,\"name\":\"updated\",\"aliases\":[\"new alias\"]},"
             + "{\"id\":2,\"name\":\"new tag\",\"aliases\":[\"new tag alias\"]}]}";
         TagTranslationManifest.Pack descriptor = pack("ja", 3, update);
-        assertThrows(IOException.class, () -> descriptor.apply(database, stage(update), () -> false));
+        assertThrows(TagTranslationCatalog.UnknownTagException.class,
+            () -> descriptor.apply(database, stage(update), () -> false));
         assertEquals(Map.of("ja", 2), TagTranslationCatalog.installedPacks(database));
         try (Cursor rows = database.rawQuery("SELECT displayName FROM TagTranslations WHERE locale = 'ja'", null);
              Cursor aliases = database.rawQuery("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja'", null)) {
