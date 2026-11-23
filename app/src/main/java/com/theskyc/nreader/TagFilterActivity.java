@@ -2,10 +2,13 @@
 package com.theskyc.nreader;
 
 import android.content.res.Configuration;
+import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +33,7 @@ import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 import com.theskyc.nreader.async.database.TagRuleEdits;
+import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
@@ -53,6 +57,8 @@ public class TagFilterActivity extends GeneralActivity {
     private MenuItem translationFilterItem;
     private MenuItem bulkEditItem;
     private MenuItem undoBulkEditItem;
+    private MenuItem saveTagViewItem;
+    private MenuItem savedTagViewsItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +89,7 @@ public class TagFilterActivity extends GeneralActivity {
                 TagTypePage page = getFragment(position);
                 if (page != null) page.refilter(query);
                 updateBulkEditItem();
+                updateTagViewItems();
             }
         });
 
@@ -182,6 +189,9 @@ public class TagFilterActivity extends GeneralActivity {
         updateBulkEditItem();
         undoBulkEditItem = menu.findItem(R.id.undo_bulk_edit);
         updateBulkUndoItem();
+        saveTagViewItem = menu.findItem(R.id.save_tag_view);
+        savedTagViewsItem = menu.findItem(R.id.saved_tag_views);
+        updateTagViewItems();
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -198,6 +208,7 @@ public class TagFilterActivity extends GeneralActivity {
                     page.refilter(newText);
                 }
                 updateBulkEditItem();
+                updateTagViewItems();
                 return true;
             }
         });
@@ -226,6 +237,8 @@ public class TagFilterActivity extends GeneralActivity {
         TagTypePage page = getActualFragment();
         if (id == R.id.reset_tags) createDialog();
         else if (id == R.id.recent_tags) showRecentTags();
+        else if (id == R.id.save_tag_view) showSaveTagViewDialog();
+        else if (id == R.id.saved_tag_views) showSavedTagViews();
         else if (id == R.id.reset_view_filters) {
             TagV2.resetFilterPreferences(this);
             if (sortFilterItem != null) updateSortItem(sortFilterItem);
@@ -332,8 +345,8 @@ public class TagFilterActivity extends GeneralActivity {
             .setTitle(R.string.recent_tags)
             .setItems(labels, (dialog, which) -> {
                 TagV2.RecentTag selected = recent.get(which);
-                int page = pageForType(selected.type);
-                if (page >= 0) mViewPager.setCurrentItem(page, false);
+                Integer page = pageForType(selected.type);
+                if (page != null) mViewPager.setCurrentItem(page, false);
                 if (searchView != null) searchView.setQuery(selected.name, false);
                 dialog.dismiss();
             })
@@ -346,13 +359,18 @@ public class TagFilterActivity extends GeneralActivity {
     }
 
     private int pageForType(TagType type) {
-        switch (type.getId()) {
+        return pageForTypeId(type.getId());
+    }
+
+    @Nullable
+    private Integer pageForTypeId(int typeId) {
+        switch (typeId) {
             case 1: return 4;
             case 2: return 3;
             case 3: return 1;
             case 4: return 2;
             case 5: return 5;
-            default: return -1;
+            default: return null;
         }
     }
 
@@ -380,6 +398,143 @@ public class TagFilterActivity extends GeneralActivity {
         boolean eligible = type != null && type != TagType.UNKNOWN && type != TagType.CATEGORY
             && !query.trim().isEmpty();
         bulkEditItem.setVisible(eligible);
+    }
+
+    private void updateTagViewItems() {
+        if (saveTagViewItem == null) return;
+        TagTypePage page = getActualFragment();
+        TagType type = page == null ? null : page.getTagType();
+        saveTagViewItem.setVisible(isSavedViewType(type));
+        if (savedTagViewsItem != null) savedTagViewsItem.setVisible(true);
+    }
+
+    private static boolean isSavedViewType(@Nullable TagType type) {
+        return type != null && type.getId() >= TagType.PARODY.getId()
+            && type.getId() <= TagType.GROUP.getId();
+    }
+
+    private void showSaveTagViewDialog() {
+        TagTypePage page = getActualFragment();
+        TagType type = page == null ? null : page.getTagType();
+        if (!isSavedViewType(type)) {
+            updateTagViewItems();
+            return;
+        }
+        EditText name = new EditText(this);
+        name.setId(android.R.id.edit);
+        name.setSingleLine(true);
+        name.setHint(R.string.tag_view_name_hint);
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.save_tag_view)
+            .setView(name)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok, null)
+            .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            .setOnClickListener(button -> {
+                ContentValues values = buildTagView(name.getText().toString().trim(), type);
+                if (!TagViewStore.isValid(values, false)) {
+                    name.setError(getString(R.string.tag_view_invalid_name));
+                    return;
+                }
+                button.setEnabled(false);
+                TagViewStore.execute(() -> {
+                    try {
+                        TagViewStore.insert(values);
+                        runOnUiThread(() -> {
+                            if (isFinishing() || isDestroyed()) return;
+                            dialog.dismiss();
+                            Toast.makeText(this, R.string.tag_view_saved, Toast.LENGTH_SHORT).show();
+                        });
+                    } catch (RuntimeException exception) {
+                        LogUtility.e("Unable to save tag view", exception);
+                        runOnUiThread(() -> {
+                            if (isFinishing() || isDestroyed()) return;
+                            button.setEnabled(true);
+                            Toast.makeText(this, R.string.tag_view_storage_error, Toast.LENGTH_LONG).show();
+                        });
+                    }
+                });
+            }));
+        dialog.show();
+    }
+
+    private ContentValues buildTagView(String name, @NonNull TagType type) {
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("query", query);
+        values.put("tag_type", type.getId());
+        values.put("min_count", TagV2.getMinCount());
+        values.put("sort_by_name", TagV2.isSortedByName() ? 1 : 0);
+        TagStatus status = TagV2.getStatusFilter();
+        values.put("status_filter", status == null ? -1 : status.ordinal());
+        values.put("translated_only", TagV2.isTranslatedOnly() ? 1 : 0);
+        values.put("pinned", 0);
+        return values;
+    }
+
+    private void showSavedTagViews() {
+        TagViewStore.execute(() -> {
+            List<ContentValues> views;
+            try {
+                views = TagViewStore.list();
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to load tag views", exception);
+                runOnUiThread(() -> Toast.makeText(this, R.string.tag_view_storage_error,
+                    Toast.LENGTH_LONG).show());
+                return;
+            }
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (views.isEmpty()) {
+                    new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.saved_tag_views)
+                        .setMessage(R.string.no_saved_tag_views)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                    return;
+                }
+                String[] labels = new String[views.size()];
+                for (int index = 0; index < views.size(); index++) {
+                    ContentValues view = views.get(index);
+                    String label = view.getAsString("name");
+                    labels[index] = view.getAsInteger("pinned") == 1
+                        ? getString(R.string.tag_view_pinned_format, label) : label;
+                }
+                new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.saved_tag_views)
+                    .setItems(labels, (dialog, which) -> applyTagView(views.get(which)))
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+            });
+        });
+    }
+
+    private void applyTagView(ContentValues view) {
+        Integer typeId = view.getAsInteger("tag_type");
+        Integer page = typeId == null ? null : pageForTypeId(typeId);
+        if (page == null || page < 0) return;
+        Integer minCount = view.getAsInteger("min_count");
+        Integer sortByName = view.getAsInteger("sort_by_name");
+        Integer status = view.getAsInteger("status_filter");
+        Integer translatedOnly = view.getAsInteger("translated_only");
+        if (minCount == null || sortByName == null || status == null || translatedOnly == null
+            || status < -1 || status >= TagStatus.values().length) return;
+        TagV2.updateMinCount(this, minCount);
+        TagV2.setSortByName(this, sortByName == 1);
+        TagV2.updateStatusFilter(this, status < 0 ? null : TagStatus.values()[status]);
+        TagV2.setTranslatedOnly(this, translatedOnly == 1);
+        query = view.getAsString("query");
+        if (query == null) query = "";
+        mViewPager.setCurrentItem(page, false);
+        if (searchView != null) searchView.setQuery(query, false);
+        updateSortItem(sortFilterItem);
+        updateMinCountItem(minCountFilterItem);
+        updateStatusFilterItem(statusFilterItem);
+        updateTranslationFilterItem(translationFilterItem);
+        updateTagViewItems();
+        TagTypePage current = getActualFragment();
+        if (current != null) current.refilter(query);
     }
 
     private void updateBulkUndoItem() {

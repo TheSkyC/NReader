@@ -127,10 +127,14 @@ public class TagV2 {
     }
 
     public static boolean updateTranslatedOnly(Context context) {
-        translatedOnly = !translatedOnly;
+        setTranslatedOnly(context, !translatedOnly);
+        return translatedOnly;
+    }
+
+    public static void setTranslatedOnly(Context context, boolean value) {
+        translatedOnly = value;
         context.getSharedPreferences("ScrapedTags", 0).edit()
             .putBoolean("translated_only", translatedOnly).apply();
-        return translatedOnly;
     }
 
     public static final class RecentTag {
@@ -212,8 +216,13 @@ public class TagV2 {
     }
 
     public static boolean updateSortByName(Context context) {
-        context.getSharedPreferences("ScrapedTags", 0).edit().putBoolean("sort_by_name", sortByName = !sortByName).apply();
+        setSortByName(context, !sortByName);
         return sortByName;
+    }
+
+    public static void setSortByName(Context context, boolean value) {
+        sortByName = value;
+        context.getSharedPreferences("ScrapedTags", 0).edit().putBoolean("sort_by_name", value).apply();
     }
 
     public static boolean isSortedByName() {

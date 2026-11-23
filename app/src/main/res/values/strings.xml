@@ -276,6 +276,14 @@
     <string name="recent_tags">Recent tags</string>
     <string name="no_recent_tags">No recently used tags.</string>
     <string name="clear_recent_tags">Clear history</string>
+    <string name="save_tag_view">Save tag view</string>
+    <string name="saved_tag_views">Saved tag views</string>
+    <string name="tag_view_name_hint">Name this tag view</string>
+    <string name="tag_view_invalid_name">Enter a name for this tag view.</string>
+    <string name="tag_view_saved">Tag view saved.</string>
+    <string name="tag_view_storage_error">Could not save the tag view.</string>
+    <string name="no_saved_tag_views">No saved tag views.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (Pinned)</string>
     <string name="reset_tag_view_filters">Reset tag view filters</string>
     <string name="check_for_update_on_startup">Check for update on startup</string>
     <string name="check_for_updates">Check for updates</string>

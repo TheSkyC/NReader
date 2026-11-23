@@ -237,9 +237,10 @@ the history does not change saved rules or site query identity. The recent-tags
 dialog can clear this local history without changing any tag data.
 A tag manager view can save the current type, search text, minimum count, sort,
 rule-status, and translation-coverage filters. Views are local database rows,
-can be pinned, and remain independent of the active catalog and selected
-translation language. Loading a view restores only its stored filters; it does
-not change saved rules or account blacklist state.
+remain independent of the active catalog and selected translation language.
+Newly saved views are unpinned; the stored pin field controls their future
+management order. Loading a view restores only its stored filters; it does not
+change saved rules or account blacklist state.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
 On a concrete type page, entering a non-empty search enables **Bulk edit matching

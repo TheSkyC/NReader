@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Looper;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -24,6 +25,7 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
+import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
@@ -149,6 +151,57 @@ public class TagFilterWorkflowTest {
                 await(activity, () -> Queries.TagTable.getStatus(first) == TagStatus.DEFAULT
                     && Queries.TagTable.getStatus(second) == TagStatus.DEFAULT
                     && !toolbar.getMenu().findItem(R.id.undo_bulk_edit).isVisible());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    @Test public void savesAndRestoresTagViewFilters() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        Tag fixture = new Tag("saved view fixture", 60, 500_021, TagType.TAG, TagStatus.DEFAULT);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase db = helper.getWritableDatabase();
+            db.delete(TagViewStore.TABLE_NAME, null, null);
+            Queries.TagTable.insert(fixture);
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                ViewPager2 pager = activity.findViewById(R.id.container);
+                pager.setCurrentItem(1, false);
+                await(activity, () -> count(activity, 1) == 1);
+                Toolbar toolbar = activity.findViewById(R.id.toolbar);
+                SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
+                search.setQuery("saved view", false);
+                TagV2.updateMinCount(app, 77);
+                TagV2.setSortByName(app, true);
+                TagV2.updateStatusFilter(app, TagStatus.ACCEPTED);
+                TagV2.setTranslatedOnly(app, true);
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.save_tag_view));
+                await(activity, () -> ShadowDialog.getLatestDialog() instanceof AlertDialog);
+                AlertDialog save = (AlertDialog) ShadowDialog.getLatestDialog();
+                EditText name = save.findViewById(android.R.id.edit);
+                assertNotNull(name);
+                name.setText("Review view");
+                assertTrue(save.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                await(activity, () -> TagViewStore.list().size() == 1);
+
+                search.setQuery("changed", false);
+                TagV2.updateMinCount(app, 25);
+                TagV2.setSortByName(app, false);
+                TagV2.updateStatusFilter(app, null);
+                TagV2.setTranslatedOnly(app, false);
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.saved_tag_views));
+                await(activity, () -> ShadowDialog.getLatestDialog() instanceof AlertDialog);
+                AlertDialog saved = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertEquals("Review view", saved.getListView().getItemAtPosition(0).toString());
+                assertTrue(saved.getListView().performItemClick(null, 0, 0));
+                await(activity, () -> "saved view".equals(activity.getSearchQuery())
+                    && TagV2.getMinCount() == 77 && TagV2.isSortedByName()
+                    && TagV2.getStatusFilter() == TagStatus.ACCEPTED && TagV2.isTranslatedOnly());
             }
         } finally {
             Queries.setDb(null);

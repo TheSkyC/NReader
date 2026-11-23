@@ -22,6 +22,15 @@
         android:title="@string/recent_tags"
         app:showAsAction="never" />
     <item
+        android:id="@+id/save_tag_view"
+        android:title="@string/save_tag_view"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/saved_tag_views"
+        android:title="@string/saved_tag_views"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/reset_view_filters"
         android:title="@string/reset_tag_view_filters"
         app:showAsAction="never" />

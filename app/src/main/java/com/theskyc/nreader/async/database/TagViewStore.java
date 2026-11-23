@@ -9,9 +9,12 @@ import com.theskyc.nreader.settings.Database;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** Stores reusable tag-manager filters in the main application database. */
 public final class TagViewStore {
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     public static final String TABLE_NAME = "TagViews";
     public static final int DEFAULT_MIN_COUNT = 25;
     private static final int MAX_NAME_LENGTH = 200;
@@ -27,6 +30,10 @@ public final class TagViewStore {
         + "pinned INTEGER NOT NULL CHECK(pinned IN (0,1)));";
 
     private TagViewStore() {}
+
+    public static void execute(Runnable action) {
+        executor.execute(action);
+    }
 
     public static boolean isValid(ContentValues values, boolean requireId) {
         String name = values.getAsString("name");

@@ -200,6 +200,14 @@
     <string name="recent_tags">最近使用的標籤</string>
     <string name="no_recent_tags">目前沒有最近使用的標籤。</string>
     <string name="clear_recent_tags">清除歷史</string>
+    <string name="save_tag_view">儲存標籤檢視</string>
+    <string name="saved_tag_views">已儲存的標籤檢視</string>
+    <string name="tag_view_name_hint">為此標籤檢視命名</string>
+    <string name="tag_view_invalid_name">請輸入標籤檢視名稱。</string>
+    <string name="tag_view_saved">標籤檢視已儲存。</string>
+    <string name="tag_view_storage_error">無法儲存標籤檢視。</string>
+    <string name="no_saved_tag_views">沒有已儲存的標籤檢視。</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s（已置頂）</string>
     <string name="reset_tag_view_filters">重設標籤瀏覽篩選</string>
     <string name="check_for_update_on_startup">啟動時檢查更新</string>
     <string name="check_for_updates">檢查更新</string>
