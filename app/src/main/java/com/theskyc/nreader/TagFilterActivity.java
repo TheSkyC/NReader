@@ -43,6 +43,7 @@ public class TagFilterActivity extends GeneralActivity {
     private SearchView searchView;
     private ViewPager2 mViewPager;
     private String query = "";
+    private MenuItem statusFilterItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,6 +160,8 @@ public class TagFilterActivity extends GeneralActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
         updateSortItem(menu.findItem(R.id.sort_by_name));
+        statusFilterItem = menu.findItem(R.id.filter_status);
+        updateStatusFilterItem(statusFilterItem);
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -252,12 +255,20 @@ public class TagFilterActivity extends GeneralActivity {
             .setTitle(R.string.filter_by_status)
             .setSingleChoiceItems(labels, checked, (dialog, which) -> {
                 TagV2.updateStatusFilter(this, statuses[which]);
+                if (statusFilterItem != null) updateStatusFilterItem(statusFilterItem);
                 TagTypePage page = getActualFragment();
                 if (page != null) page.refilter(query);
                 dialog.dismiss();
             })
             .setNegativeButton(R.string.cancel, null)
             .show();
+    }
+
+    private void updateStatusFilterItem(MenuItem item) {
+        TagStatus status = TagV2.getStatusFilter();
+        item.setTitle(status == null ? R.string.filter_by_status : status == TagStatus.DEFAULT
+            ? R.string.filter_status_default : status == TagStatus.ACCEPTED
+                ? R.string.filter_status_accepted : R.string.filter_status_avoided);
     }
 
 
