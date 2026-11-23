@@ -90,6 +90,15 @@ benchmark app and a temporary Android user. A pack installed by an older build
 first correctly failed export because its alias order was unknown; removing and
 reinstalling the fixture with the current build allowed the successful check.
 
+On 2026-11-23, a fresh MinApi26 debug install passed the same picker recovery
+check on a disposable API 26 emulator with no default network. The app process
+changed from PID 4013 to 4546 while the save picker and Settings stayed in task
+3. The saved JSON retained the fixture's locale, revision, ID, translated name,
+and alias order. A subsequent one-byte malformed JSON selected in the picker
+logged an end-of-input error; the installed revision, name, and aliases remained
+unchanged in the database. The transient error toast was not observed. This
+does not test process death during the provider write or a cloud provider.
+
 The controlled export interruption check can also be run with
 `scripts/test_tag_process_recovery.ps1 -Scenario TranslationExport`. It starts an
 export to a test-owned file stream, syncs eight bytes, and waits for the driver
