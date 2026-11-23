@@ -34,7 +34,10 @@ import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.shadows.ShadowToast;
 import org.robolectric.util.ReflectionHelpers;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -45,6 +48,65 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TranslationImportRecoveryTest {
+    @Test public void localImportClosesProviderStreamOnceBeforeReportingSuccess() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        SQLiteDatabase previous = Database.getDatabase();
+        Uri uri = Uri.parse("content://test.invalid/single-close-pack");
+        String json = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":700002,\"name\":\"translated\"}]}";
+        AtomicInteger closes = new AtomicInteger();
+        FilterInputStream input = new FilterInputStream(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
+            @Override public void close() throws IOException {
+                if (closes.incrementAndGet() > 1) throw new IOException("Stream closed twice");
+                super.close();
+            }
+        };
+        Shadows.shadowOf(context.getContentResolver()).registerInputStream(uri, input);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Database.setDatabase(database);
+            database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700002, 'fixture', 3, 1)");
+            TranslationImportViewModel model = new TranslationImportViewModel();
+            assertTrue(model.start(context, uri));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (model.result().getValue() == null && System.nanoTime() < deadline) {
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Thread.sleep(10);
+            }
+            TranslationImportViewModel.Result result = model.result().getValue();
+            assertNotNull(result);
+            assertNull(result.error);
+            assertTrue(result.changed);
+            assertEquals(1, closes.get());
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+
+            Uri failingUri = Uri.parse("content://test.invalid/close-failure-pack");
+            String update = json.replace("\"revision\":1", "\"revision\":2");
+            FilterInputStream failing = new FilterInputStream(
+                new ByteArrayInputStream(update.getBytes(StandardCharsets.UTF_8))) {
+                @Override public void close() throws IOException {
+                    super.close();
+                    throw new IOException("Provider close failed");
+                }
+            };
+            Shadows.shadowOf(context.getContentResolver()).registerInputStream(failingUri, failing);
+            assertTrue(model.start(context, failingUri));
+            deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (model.result().getValue() == result && System.nanoTime() < deadline) {
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Thread.sleep(10);
+            }
+            TranslationImportViewModel.Result failure = model.result().getValue();
+            assertNotNull(failure);
+            assertTrue(failure.error instanceof IOException);
+            assertFalse(failure.changed);
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        } finally {
+            ReflectionHelpers.setStaticField(Database.class, "database", previous);
+            Queries.setDb(previous);
+        }
+    }
+
     @Test public void localDocumentUsesTheRealImporter() throws Exception {
         Application context = RuntimeEnvironment.getApplication();
         SQLiteDatabase previous = Database.getDatabase();

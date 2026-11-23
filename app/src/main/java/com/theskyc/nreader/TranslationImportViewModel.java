@@ -76,10 +76,10 @@ public class TranslationImportViewModel extends ViewModel {
     }
 
     private static boolean importPack(Context context, Uri uri) throws IOException {
-        try (InputStream input = context.getContentResolver().openInputStream(uri)) {
-            if (input == null) throw new IOException("Unable to open selected translation pack");
-            return TagTranslationCatalog.apply(Database.getDatabase(), input, context.getCacheDir(),
-                () -> Thread.currentThread().isInterrupted());
-        }
+        InputStream input = context.getContentResolver().openInputStream(uri);
+        if (input == null) throw new IOException("Unable to open selected translation pack");
+        // The importer closes the stream before committing the translation.
+        return TagTranslationCatalog.apply(Database.getDatabase(), input, context.getCacheDir(),
+            () -> Thread.currentThread().isInterrupted());
     }
 }
