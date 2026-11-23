@@ -47,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           feed_root="$GITHUB_WORKSPACE/feed/catalog"
+          rm -rf "$feed_root/catalog"
           mkdir -p "$feed_root"
           echo "root=$feed_root" >> "$GITHUB_OUTPUT"
 
@@ -59,7 +60,7 @@ jobs:
           python -m scripts.build_tag_catalog \
             --catalog data/tags.json \
             --revision "$revision" \
-            --output "${{ steps.feed.outputs.root }}/catalog"
+            --output "${{ steps.feed.outputs.root }}"
           python -m scripts.verify_tag_feed \
             --catalog-feed "${{ steps.feed.outputs.root }}/catalog"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
