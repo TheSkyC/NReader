@@ -379,6 +379,51 @@ public class DatabaseMigrationTest {
         }
     }
 
+    @Test
+    public void version27UnicodeRebuildHandlesMultipleBatchesAndUnchangedRows() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.beginTransaction();
+            try {
+                for (int id = 1; id <= 403; id++) {
+                    boolean unchanged = id % 2 == 0;
+                    database.execSQL("INSERT INTO TagTranslations (idTag, locale, displayName, displayKey)"
+                            + " VALUES (?, 'ja', ?, ?)",
+                        new Object[]{id, unchanged ? "unchanged" : "\u1c89 name " + id,
+                            unchanged ? "unchanged" : "old"});
+                }
+                database.execSQL("CREATE TRIGGER protect_unchanged BEFORE UPDATE ON TagTranslations"
+                    + " WHEN OLD.displayKey = 'unchanged' BEGIN SELECT RAISE(ABORT, 'unchanged row updated'); END");
+                database.execSQL("CREATE TRIGGER fail_later_batch BEFORE UPDATE ON TagTranslations"
+                    + " WHEN OLD.idTag = 301 BEGIN SELECT RAISE(ABORT, 'later batch failed'); END");
+                database.setTransactionSuccessful();
+            } finally {
+                database.endTransaction();
+            }
+            database.setVersion(27);
+        }
+        assertThrows(SQLiteException.class, () -> {
+            try (DatabaseHelper helper = new DatabaseHelper(context)) {
+                helper.getWritableDatabase();
+            }
+        });
+        try (SQLiteDatabase database = context.openOrCreateDatabase(DatabaseHelper.DATABASE_NAME, 0, null)) {
+            assertEquals(27, database.getVersion());
+            assertEquals(202, scalar(database, "SELECT COUNT(*) FROM TagTranslations WHERE displayKey = 'old'"));
+            database.execSQL("DROP TRIGGER fail_later_batch");
+        }
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertEquals(28, database.getVersion());
+            assertEquals(202, scalar(database, "SELECT COUNT(*) FROM TagTranslations"
+                + " WHERE displayKey = '\u1c8a name ' || idTag AND displayName = '\u1c89 name ' || idTag"));
+            assertEquals(201, scalar(database, "SELECT COUNT(*) FROM TagTranslations"
+                + " WHERE displayKey = 'unchanged' AND displayName = 'unchanged'"));
+        }
+    }
+
     private static void useVersion26AliasTable(SQLiteDatabase database) {
         database.execSQL("DROP TABLE TagTranslationAliases");
         database.execSQL("CREATE TABLE TagTranslationAliases (idTag INTEGER NOT NULL, locale TEXT NOT NULL,"

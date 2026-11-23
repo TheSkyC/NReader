@@ -350,18 +350,52 @@ public final class TagTranslationCatalog {
     }
 
     private static void rebuildUnicodeKeys(SQLiteDatabase database, String table, String textColumn, String keyColumn) {
+        final int batchSize = 100;
+        long[] rowIds = new long[batchSize];
+        String[] keys = new String[batchSize];
+        int count = 0;
         try (Cursor rows = database.rawQuery("SELECT rowid, " + textColumn + ", " + keyColumn
                 + " FROM " + table + " ORDER BY rowid", null);
-             SQLiteStatement update = database.compileStatement("UPDATE " + table + " SET " + keyColumn
-                + " = ? WHERE rowid = ?")) {
+             SQLiteStatement update = compileKeyBatch(database, table, keyColumn, batchSize)) {
             while (rows.moveToNext()) {
                 String key = TagUnicode.searchKey(rows.getString(1));
                 if (key.equals(rows.getString(2))) continue;
-                update.bindString(1, key);
-                update.bindLong(2, rows.getLong(0));
-                update.executeUpdateDelete();
+                rowIds[count] = rows.getLong(0);
+                keys[count++] = key;
+                if (count == batchSize) {
+                    executeKeyBatch(update, rowIds, keys, count);
+                    count = 0;
+                }
+            }
+            if (count != 0) {
+                try (SQLiteStatement remainder = compileKeyBatch(database, table, keyColumn, count)) {
+                    executeKeyBatch(remainder, rowIds, keys, count);
+                }
             }
         }
+    }
+
+    private static SQLiteStatement compileKeyBatch(SQLiteDatabase database, String table, String keyColumn, int size) {
+        // Reuse each numbered rowid parameter in the CASE and the IN clause.
+        StringBuilder sql = new StringBuilder("UPDATE ").append(table).append(" SET ").append(keyColumn)
+            .append(" = CASE rowid");
+        for (int i = 0; i < size; i++) {
+            sql.append(" WHEN ?").append(2 * i + 1).append(" THEN ?").append(2 * i + 2);
+        }
+        sql.append(" END WHERE rowid IN (");
+        for (int i = 0; i < size; i++) {
+            if (i != 0) sql.append(',');
+            sql.append('?').append(2 * i + 1);
+        }
+        return database.compileStatement(sql.append(')').toString());
+    }
+
+    private static void executeKeyBatch(SQLiteStatement update, long[] rowIds, String[] keys, int count) {
+        for (int i = 0; i < count; i++) {
+            update.bindLong(2 * i + 1, rowIds[i]);
+            update.bindString(2 * i + 2, keys[i]);
+        }
+        if (update.executeUpdateDelete() != count) throw new IllegalStateException("Translation key rebuild lost rows");
     }
 
     public static int installedRevision(SQLiteDatabase database, String locale) {
