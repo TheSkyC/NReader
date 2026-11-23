@@ -59,6 +59,9 @@ Each proposal uses `schemaVersion: 1`, covers one locale, and contains 1 to
 from a locale or change a tag's canonical identity. The app pack format has
 its own separate schema version.
 
+Keep authoring inputs and generated outputs in separate files. The pack builder
+and proposal commands reject an output path that resolves to an input path.
+
 For public contributions, the maintainer still needs to establish licensing
 and attribution requirements, an authorized reviewer and publisher process,
 and rules for moderating and correcting published translations. Anyone with the

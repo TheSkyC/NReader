@@ -131,6 +131,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
+        if args.output.resolve() in (args.source.resolve(), args.catalog.resolve()):
+            raise ValueError("Output must be separate from the input files")
         catalog = parse_catalog(read_bounded(args.catalog, MAX_BYTES))
         output = build_pack(read_bounded(args.source, MAX_BYTES), args.locale, args.revision, set(catalog))
         args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,38 @@
+import contextlib
+import io
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from scripts import build_tag_translation_pack as builder
 
 
 class TagTranslationPackTest(unittest.TestCase):
+    def test_cli_preserves_inputs_when_output_aliases_source_or_catalog(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / "source.json"
+            catalog = root / "catalog.json"
+            source.write_bytes(b'[{"id":1,"name":"translated"}]')
+            catalog.write_bytes(b"catalog fixture")
+            originals = {path: path.read_bytes() for path in (source, catalog)}
+            common = [str(source), "--catalog", str(catalog), "--locale", "ja", "--revision", "1"]
+            for target in (source, catalog):
+                alias = target.parent / "." / target.name
+                with self.subTest(target=target), contextlib.redirect_stderr(io.StringIO()) as error:
+                    with self.assertRaises(SystemExit):
+                        builder.main([*common, "--output", str(alias)])
+                    self.assertIn("Output must be separate", error.getvalue())
+                self.assertEqual(originals, {path: path.read_bytes() for path in originals})
+
+            output = root / "pack.json"
+            with patch.object(builder, "parse_catalog", return_value={1}), contextlib.redirect_stdout(io.StringIO()):
+                builder.main([*common, "--output", str(output)])
+            self.assertEqual("translated", builder.parse_pack(output.read_bytes(), {1})["entries"][0]["name"])
+            self.assertEqual(originals, {path: path.read_bytes() for path in originals})
+
     def test_builds_sorted_deterministic_pack_with_normalized_text(self):
         source = json.dumps([
             {"id": 2, "name": " Cafe\u0301 ", "aliases": ["coffee"]},
