@@ -273,6 +273,8 @@ public class TagSuggestionTest {
         assertEquals(901, recent.get(0).id);
         assertEquals("first", recent.get(0).name);
         assertEquals(902, recent.get(1).id);
+        TagV2.clearRecentTags(RuntimeEnvironment.getApplication());
+        assertTrue(TagV2.getRecentTags(RuntimeEnvironment.getApplication()).isEmpty());
     }
 
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {

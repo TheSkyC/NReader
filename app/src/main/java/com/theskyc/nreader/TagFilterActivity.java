@@ -323,6 +323,7 @@ public class TagFilterActivity extends GeneralActivity {
                 if (searchView != null) searchView.setQuery(selected.name, false);
                 dialog.dismiss();
             })
+            .setNeutralButton(R.string.clear_recent_tags, (dialog, which) -> TagV2.clearRecentTags(this))
             .setNegativeButton(R.string.cancel, null)
             .show();
     }

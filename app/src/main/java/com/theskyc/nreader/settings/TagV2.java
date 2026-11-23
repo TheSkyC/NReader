@@ -194,6 +194,10 @@ public class TagV2 {
         return result;
     }
 
+    public static void clearRecentTags(Context context) {
+        context.getSharedPreferences("ScrapedTags", 0).edit().remove(RECENT_TAGS).apply();
+    }
+
     public static void resetFilterPreferences(Context context) {
         minCount = DEFAULT_MIN_COUNT;
         sortByName = false;

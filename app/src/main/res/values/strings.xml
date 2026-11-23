@@ -275,6 +275,7 @@
     <string name="clear_tag_preferences">Clear tag preferences</string>
     <string name="recent_tags">Recent tags</string>
     <string name="no_recent_tags">No recently used tags.</string>
+    <string name="clear_recent_tags">Clear history</string>
     <string name="reset_tag_view_filters">Reset tag view filters</string>
     <string name="check_for_update_on_startup">Check for update on startup</string>
     <string name="check_for_updates">Check for updates</string>

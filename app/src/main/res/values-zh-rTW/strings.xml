@@ -199,6 +199,7 @@
     <string name="clear_tag_preferences">清除標籤偏好</string>
     <string name="recent_tags">最近使用的標籤</string>
     <string name="no_recent_tags">目前沒有最近使用的標籤。</string>
+    <string name="clear_recent_tags">清除歷史</string>
     <string name="reset_tag_view_filters">重設標籤瀏覽篩選</string>
     <string name="check_for_update_on_startup">啟動時檢查更新</string>
     <string name="check_for_updates">檢查更新</string>

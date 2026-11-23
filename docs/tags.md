@@ -233,7 +233,8 @@ without clearing saved rules.
 The minimum-count menu item includes its current threshold.
 Selecting a tag records its canonical ID and type in a bounded local recent list.
 The **Recent tags** menu can jump to a supported type page and fill its search;
-the history does not change saved rules or site query identity.
+the history does not change saved rules or site query identity. The recent-tags
+dialog can clear this local history without changing any tag data.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
 
