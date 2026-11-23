@@ -77,6 +77,12 @@ packs. Aliases installed before this upgrade have unknown order, marked by -1;
 the upgrade preserves their searchable text but cannot reconstruct their input
 order. Removing and importing a pack again records its order. This storage
 change does not add an export feature or alter the pack format.
+The export snapshot layer serializes one selected installation to an app-private
+temporary file under a database transaction, checks its revision and generation,
+and rejects unknown alias order. It limits the UTF-8 JSON to the 16 MiB import
+limit; the caller closes the temporary file. It does not write an external
+document while holding the transaction. The Settings export flow is not yet
+available.
 
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether

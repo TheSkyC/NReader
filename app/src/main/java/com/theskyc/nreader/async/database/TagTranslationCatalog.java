@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.util.JsonReader;
 import android.util.JsonToken;
+import android.util.JsonWriter;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -18,11 +19,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.text.Normalizer;
@@ -166,6 +171,131 @@ public final class TagTranslationCatalog {
             }
         }
         return packs;
+    }
+
+    public static final class UnknownAliasOrderException extends IOException {
+        private UnknownAliasOrderException() {
+            super("Installed translation alias order is unknown");
+        }
+    }
+
+    public static final class ChangedDuringExportException extends IOException {
+        private ChangedDuringExportException() {
+            super("Translation pack changed before export");
+        }
+    }
+
+    /** Returns a rewound app-private snapshot; the caller must close the channel. */
+    public static SeekableByteChannel exportSnapshot(SQLiteDatabase database, PackState expected,
+                                                      File scratchDirectory, BooleanSupplier cancelled) throws IOException {
+        return exportSnapshot(database, expected, scratchDirectory, cancelled, MAX_PACK_BYTES);
+    }
+
+    static SeekableByteChannel exportSnapshot(SQLiteDatabase database, PackState expected,
+                                               File scratchDirectory, BooleanSupplier cancelled, int byteLimit) throws IOException {
+        if (expected == null || byteLimit < 1 || byteLimit > MAX_PACK_BYTES) {
+            throw new IllegalArgumentException("Invalid translation export request");
+        }
+        SeekableByteChannel scratch = openScratch(scratchDirectory);
+        try {
+            database.beginTransactionNonExclusive();
+            try {
+                checkCancelled(cancelled);
+                if (installedRevision(database, expected.locale) != expected.revision
+                    || localeGeneration(database, expected.locale) != expected.generation) {
+                    throw new ChangedDuringExportException();
+                }
+                JsonWriter writer = new JsonWriter(new OutputStreamWriter(new BufferedOutputStream(
+                    new ExportOutputStream(Channels.newOutputStream(scratch), byteLimit, cancelled)), StandardCharsets.UTF_8));
+                writer.beginObject();
+                writer.name("schemaVersion").value(1);
+                writer.name("locale").value(expected.locale);
+                writer.name("revision").value(expected.revision);
+                writer.name("entries").beginArray();
+                int previousId = 0;
+                int entries = 0;
+                int nextAliasOrder = 0;
+                try (Cursor rows = database.rawQuery("SELECT t.idTag, t.displayName, a.alias, a.aliasOrder"
+                    + " FROM TagTranslations t LEFT JOIN TagTranslationAliases a"
+                    + " ON a.idTag = t.idTag AND a.locale = t.locale"
+                    + " WHERE t.locale = ? ORDER BY t.idTag, a.aliasOrder", new String[]{expected.locale})) {
+                    while (rows.moveToNext()) {
+                        checkCancelled(cancelled);
+                        int id = rows.getInt(0);
+                        if (id <= 0) throw new IOException("Invalid translation tag ID");
+                        if (id != previousId) {
+                            if (id <= previousId || ++entries > MAX_ENTRIES) throw new IOException("Invalid translation entries");
+                            if (previousId != 0) {
+                                writer.endArray();
+                                writer.endObject();
+                            }
+                            String name = rows.getString(1);
+                            if (!validateText(name).equals(name)) throw new IOException("Invalid installed translation name");
+                            writer.beginObject();
+                            writer.name("id").value(id);
+                            writer.name("name").value(name);
+                            writer.name("aliases").beginArray();
+                            previousId = id;
+                            nextAliasOrder = 0;
+                        }
+                        if (!rows.isNull(2)) {
+                            if (rows.getInt(3) != nextAliasOrder || nextAliasOrder >= MAX_ALIASES_PER_ENTRY) {
+                                throw new UnknownAliasOrderException();
+                            }
+                            String alias = rows.getString(2);
+                            if (!validateText(alias).equals(alias)) throw new IOException("Invalid installed translation alias");
+                            writer.value(alias);
+                            nextAliasOrder++;
+                        }
+                    }
+                }
+                if (entries == 0) throw new IOException("Empty installed translation pack");
+                writer.endArray();
+                writer.endObject();
+                writer.endArray();
+                writer.endObject();
+                writer.flush();
+                checkCancelled(cancelled);
+                database.setTransactionSuccessful();
+            } finally {
+                database.endTransaction();
+            }
+            scratch.position(0);
+            return scratch;
+        } catch (IOException | RuntimeException | Error error) {
+            try {
+                scratch.close();
+            } catch (IOException closeError) {
+                error.addSuppressed(closeError);
+            }
+            throw error;
+        }
+    }
+
+    private static final class ExportOutputStream extends FilterOutputStream {
+        private final int limit;
+        private final BooleanSupplier cancelled;
+        private int total;
+
+        ExportOutputStream(OutputStream output, int limit, BooleanSupplier cancelled) {
+            super(output);
+            this.limit = limit;
+            this.cancelled = cancelled;
+        }
+
+        @Override public void write(int value) throws IOException {
+            checkCancelled(cancelled);
+            if (total == limit) throw new IOException("Translation export exceeds size limit");
+            out.write(value);
+            total++;
+        }
+
+        @Override public void write(byte[] buffer, int offset, int length) throws IOException {
+            checkCancelled(cancelled);
+            if (length > limit - total) throw new IOException("Translation export exceeds size limit");
+            out.write(buffer, offset, length);
+            total += length;
+        }
     }
 
     public static final class ChangedDuringImportException extends IOException {
