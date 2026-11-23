@@ -57,6 +57,14 @@ def read_bounded(path: Path, limit: int) -> bytes:
     return data
 
 
+def check_feed_filename(path: Path) -> None:
+    if not path.parent.exists():
+        return
+    for entry in path.parent.iterdir():
+        if entry.name != path.name and entry.name.casefold() == path.name.casefold():
+            raise ValueError(f"Conflicting filename casing: {entry}; expected {path.name}")
+
+
 def read_verified_payload(path: Path, size: int, digest: str) -> bytes:
     data = read_bounded(path, size)
     if len(data) != size or hashlib.sha256(data).hexdigest() != digest:

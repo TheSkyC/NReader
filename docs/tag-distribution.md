@@ -69,6 +69,9 @@ remain usable; rerunning can reuse the new payload. Stage and verify the
 immutable payload on the host before replacing the hosted pointer. Keep
 payloads available for clients that already read an older manifest. Do not
 publish a feed as part of the bundled data PR.
+Both catalog and translation release tools reject existing manifest or payload
+filenames whose casing conflicts with the required name. Correct the filenames
+before retrying, including when staging on a case-insensitive filesystem.
 
 The Android legacy-feed worker writes downloads to an app-private `.part` file
 and removes abandoned catalog stages before the next import. A process stop

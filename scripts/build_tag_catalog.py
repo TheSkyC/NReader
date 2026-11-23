@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from scripts.tag_catalog import (
-    MAX_BYTES, MAX_INTEGER, MAX_MANIFEST_STRING_UNITS, atomic_write, decode_json, parse_catalog,
+    MAX_BYTES, MAX_INTEGER, MAX_MANIFEST_STRING_UNITS, atomic_write, check_feed_filename, decode_json, parse_catalog,
     read_bounded, read_verified_payload,
 )
 
@@ -37,7 +37,9 @@ def payload_name(digest: str) -> str:
 
 def read_payload(directory: Path, manifest: dict) -> dict:
     digest = manifest["sha256"]
-    data = read_verified_payload(directory / payload_name(digest), manifest["sizeBytes"], digest)
+    payload = directory / payload_name(digest)
+    check_feed_filename(payload)
+    data = read_verified_payload(payload, manifest["sizeBytes"], digest)
     return parse_catalog(data)
 
 
@@ -50,6 +52,7 @@ def prepare_release(catalog: Path, revision: int, output: Path) -> Path:
     manifest = {**IDENTITY, "revision": revision, "sizeBytes": len(data), "sha256": digest}
 
     pointer = output / "manifest.json"
+    check_feed_filename(pointer)
     previous = parse_manifest(read_bounded(pointer, MAX_MANIFEST_BYTES)) if pointer.exists() else None
     if previous is not None and (revision < previous["revision"]
                                   or (revision == previous["revision"] and manifest != previous)):
@@ -61,6 +64,7 @@ def prepare_release(catalog: Path, revision: int, output: Path) -> Path:
 
     output.mkdir(parents=True, exist_ok=True)
     payload = output / payload_name(digest)
+    check_feed_filename(payload)
     if payload.exists():
         if read_bounded(payload, MAX_BYTES) != data:
             raise ValueError("Existing immutable file does not match its digest")

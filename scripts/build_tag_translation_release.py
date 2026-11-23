@@ -8,7 +8,7 @@ from pathlib import Path
 
 from scripts.build_tag_translation_pack import encode_normalized_pack, parse_pack, validate_locale, validate_revision
 from scripts.tag_catalog import (
-    MAX_BYTES, MAX_MANIFEST_STRING_UNITS, atomic_write, decode_json, parse_catalog,
+    MAX_BYTES, MAX_MANIFEST_STRING_UNITS, atomic_write, check_feed_filename, decode_json, parse_catalog,
     read_bounded, read_verified_payload,
 )
 
@@ -60,7 +60,9 @@ def payload_name(digest: str) -> str:
 
 def verify_payload(directory: Path, descriptor: dict, catalog_ids) -> None:
     digest = descriptor["sha256"]
-    data = read_verified_payload(directory / payload_name(digest), descriptor["sizeBytes"], digest)
+    payload = directory / payload_name(digest)
+    check_feed_filename(payload)
+    data = read_verified_payload(payload, descriptor["sizeBytes"], digest)
     pack = parse_pack(data, catalog_ids)
     if pack["locale"] != descriptor["locale"] or pack["revision"] != descriptor["revision"]:
         raise ValueError("Payload locale or revision does not match manifest")
@@ -87,6 +89,7 @@ def prepare_releases(pack_paths, catalog_ids, output: Path) -> Path:
         raise ValueError("At least one translation pack is required")
 
     pointer = output / "manifest.json"
+    check_feed_filename(pointer)
     packs = parse_manifest(read_bounded(pointer, MAX_MANIFEST_BYTES)) if pointer.exists() else {}
     if len(packs.keys() | candidates.keys()) > MAX_LOCALES:
         raise ValueError("Translation manifest locale count outside limits")
@@ -110,6 +113,7 @@ def prepare_releases(pack_paths, catalog_ids, output: Path) -> Path:
     for pack_path, descriptor in candidates.values():
         data = read_verified_payload(pack_path, descriptor["sizeBytes"], descriptor["sha256"])
         payload = output / payload_name(descriptor["sha256"])
+        check_feed_filename(payload)
         if payload.exists():
             if read_bounded(payload, MAX_BYTES) != data:
                 raise ValueError("Existing immutable file does not match its digest")

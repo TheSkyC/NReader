@@ -105,6 +105,84 @@ class VerifyTagFeedTest(unittest.TestCase):
                 wrong_case.rename(intermediate)
                 intermediate.rename(path)
 
+    def test_publishers_reject_wrong_case_existing_files_without_changing_release(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 3)
+        catalog_pointer = self.catalog_feed / "manifest.json"
+        translation_pointer = self.translation_feed / "manifest.json"
+        candidate = self.root / "pack.json"
+        paths = (
+            catalog_pointer,
+            next(self.catalog_feed.glob("catalog-*.json")),
+            translation_pointer,
+            next(self.translation_feed.glob("translation-*.json")),
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                intermediate = path.with_suffix(".renaming")
+                wrong_case = path.with_name(path.name.upper())
+                path.rename(intermediate)
+                intermediate.rename(wrong_case)
+                before = self.capture_files(self.root)
+                with self.assertRaisesRegex(ValueError, "Conflicting filename casing"):
+                    if path.parent == self.catalog_feed:
+                        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+                    else:
+                        build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+                self.assertEqual(before, self.capture_files(self.root))
+                wrong_case.rename(intermediate)
+                intermediate.rename(path)
+
+    def test_publishers_reject_wrong_case_new_payload_before_switching_manifest(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 3)
+        catalog_pointer = self.catalog_feed / "manifest.json"
+        translation_pointer = self.translation_feed / "manifest.json"
+        catalog_before = catalog_pointer.read_bytes()
+        translation_before = translation_pointer.read_bytes()
+
+        updated_catalog = self.catalog_data + b"\n"
+        self.catalog.write_bytes(updated_catalog)
+        catalog_name = build_tag_catalog.payload_name(hashlib.sha256(updated_catalog).hexdigest())
+        (self.catalog_feed / catalog_name.upper()).write_bytes(updated_catalog)
+        with self.assertRaisesRegex(ValueError, "Conflicting filename casing"):
+            build_tag_catalog.prepare_release(self.catalog, 8, self.catalog_feed)
+        self.assertEqual(catalog_before, catalog_pointer.read_bytes())
+
+        candidate = self.root / "new-pack.json"
+        data = encode_pack([{"id": 1, "name": "New translation"}], "ja", 4, {1})
+        candidate.write_bytes(data)
+        translation_name = build_tag_translation_release.payload_name(hashlib.sha256(data).hexdigest())
+        (self.translation_feed / translation_name.upper()).write_bytes(data)
+        with self.assertRaisesRegex(ValueError, "Conflicting filename casing"):
+            build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+        self.assertEqual(translation_before, translation_pointer.read_bytes())
+
+    def test_publishers_reject_wrong_case_previous_payload_before_new_release(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 3)
+        catalog_pointer = self.catalog_feed / "manifest.json"
+        translation_pointer = self.translation_feed / "manifest.json"
+        catalog_before = catalog_pointer.read_bytes()
+        translation_before = translation_pointer.read_bytes()
+        for feed, pattern in ((self.catalog_feed, "catalog-*.json"),
+                              (self.translation_feed, "translation-*.json")):
+            path = next(feed.glob(pattern))
+            intermediate = path.with_suffix(".renaming")
+            path.rename(intermediate)
+            intermediate.rename(path.with_name(path.name.upper()))
+
+        self.catalog.write_bytes(self.catalog_data + b"\n")
+        with self.assertRaisesRegex(ValueError, "Conflicting filename casing"):
+            build_tag_catalog.prepare_release(self.catalog, 8, self.catalog_feed)
+        self.assertEqual(catalog_before, catalog_pointer.read_bytes())
+
+        candidate = self.root / "new-pack.json"
+        candidate.write_bytes(encode_pack([{"id": 1, "name": "New translation"}], "ja", 4, {1}))
+        with self.assertRaisesRegex(ValueError, "Conflicting filename casing"):
+            build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+        self.assertEqual(translation_before, translation_pointer.read_bytes())
+
     def test_client_manifest_limit_counts_the_opening_quote_and_escape_spelling(self):
         build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
         self.publish_translation("ja", 3)
