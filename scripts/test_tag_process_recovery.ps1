@@ -40,7 +40,7 @@ $logDirectory = Join-Path $repoRoot "app\build\tag-recovery"
 $userId = $null
 $runnerProcess = $null
 $cleanupProblem = $null
-$installedPackages = @()
+$attemptedPackages = @()
 
 function Invoke-Adb([string[]]$Arguments) {
     $output = & $adb -s $serial @Arguments 2>&1
@@ -69,6 +69,12 @@ $sdkVersion = 0
 $sdk = Invoke-Adb @("shell", "getprop", "ro.build.version.sdk")
 if (-not [int]::TryParse($sdk.Trim(), [ref]$sdkVersion) -or $sdkVersion -lt 26) {
     throw "Recovery tests require Android API 26 or newer"
+}
+$existingPackages = Invoke-Adb @("shell", "pm", "list", "packages", "-u")
+foreach ($package in @($targetPackage, $testPackage)) {
+    if ($existingPackages -match ("(?m)^package:" + [regex]::Escape($package) + "\r?$")) {
+        throw "Recovery test package already exists on the device: $package"
+    }
 }
 # Android 9 and newer replace packages by default. On Android 9, -R must be
 # the first option passed to the package manager.
@@ -103,10 +109,10 @@ try {
     if ($userState.Trim() -ne "RUNNING_UNLOCKED") {
         throw "Temporary Android user $userId did not unlock: $userState"
     }
+    $attemptedPackages += $targetPackage
     Invoke-Adb ($installOptions + @("--user", $userId, $targetApk)) | Out-Null
-    $installedPackages += $targetPackage
+    $attemptedPackages += $testPackage
     Invoke-Adb ($installOptions + @("--user", $userId, "-t", $testApk)) | Out-Null
-    $installedPackages += $testPackage
 
     $crashArguments = @(
         "-s", $serial, "shell", "am", "instrument", "--user", $userId, "-w", "-r",
@@ -167,11 +173,16 @@ try {
 }
 finally {
     if ($userId -ne $null) {
-        foreach ($package in $installedPackages) {
+        foreach ($package in $attemptedPackages) {
             try {
+                $userPackages = Invoke-Adb @("shell", "pm", "list", "packages", "--user", $userId)
+                if ($userPackages -notmatch ("(?m)^package:" + [regex]::Escape($package) + "\r?$")) {
+                    continue
+                }
                 Invoke-Adb @("shell", "am", "force-stop", "--user", $userId, $package) | Out-Null
             } catch {
-                Write-Warning "Could not stop $package for temporary user $userId"
+                $cleanupProblem = "Could not inspect or stop $package for temporary user $userId`: $_"
+                Write-Warning $cleanupProblem
             }
             try {
                 $removed = Invoke-Adb @("shell", "pm", "uninstall", "--user", $userId, $package)

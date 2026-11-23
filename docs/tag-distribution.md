@@ -79,6 +79,11 @@ during the download therefore leaves the installed catalog and local rules
 unchanged; the next refresh can discard the partial file and retry. The
 disposable-device recovery check can be run for both benchmark flavors with
 `scripts/test_tag_process_recovery.ps1 -Scenario CatalogStaging`.
+The driver refuses to run if either benchmark package is already known to the
+device, including retained uninstalled packages. After an installation error it
+checks the temporary user for packages that were nevertheless installed and
+attempts to remove them. A forcibly terminated driver cannot run its cleanup;
+check the temporary user and packages manually if the driver is interrupted.
 
 To check a local copy of the staged feed before switching the hosted pointer:
 
