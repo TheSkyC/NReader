@@ -60,16 +60,17 @@ NReader manifest URL must also set `nreaderEnableUnsignedTagFeeds=true`. This
 keeps ordinary development builds offline while making the beta opt-in clear.
 
 The checked-in `Publish Tag Catalog Feed` workflow publishes the validated
-catalog to the public `tag-feed` branch. Its catalog manifest URL is:
+catalog to `feed/catalog/` on the public `main` branch. Its catalog manifest URL is:
 
 ```text
-https://raw.githubusercontent.com/TheSkyC/NReader/tag-feed/catalog/manifest.json
+https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest.json
 ```
 
 The workflow retains immutable payload files and moves the manifest pointer in
-the same commit. A feed update therefore needs only a normal `main` push that
-changes the catalog data or release tooling; the workflow verifies the staged
-copy before publishing it.
+the same commit. Feed files are excluded from the workflow trigger, so the
+publication commit does not start another publication run. A feed update
+therefore needs only a normal `main` push that changes the catalog data or
+release tooling; the workflow verifies the staged copy before publishing it.
 
 ## Preparing a release
 

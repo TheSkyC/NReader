@@ -15,6 +15,10 @@ on:
       - .github/workflows/tag-feed.yml
   workflow_dispatch:
 
+concurrency:
+  group: tag-catalog-feed
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -37,22 +41,13 @@ jobs:
       - name: Install script dependencies
         run: python -m pip install -r scripts/requirements.txt
 
-      - name: Prepare feed worktree
+      - name: Prepare feed directory
         id: feed
         shell: bash
         run: |
           set -euo pipefail
-          feed_root="$RUNNER_TEMP/nreader-tag-feed"
-          git fetch origin tag-feed:refs/remotes/origin/tag-feed || true
-          if git show-ref --verify --quiet refs/remotes/origin/tag-feed; then
-            git worktree add "$feed_root" refs/remotes/origin/tag-feed
-          else
-            git worktree add --detach "$feed_root" HEAD
-            git -C "$feed_root" checkout --orphan tag-feed
-            git -C "$feed_root" rm -rf . || true
-            git -C "$feed_root" clean -fdx
-          fi
-          mkdir -p "$feed_root/catalog"
+          feed_root="$GITHUB_WORKSPACE/feed/catalog"
+          mkdir -p "$feed_root"
           echo "root=$feed_root" >> "$GITHUB_OUTPUT"
 
       - name: Build and verify catalog feed
@@ -78,15 +73,10 @@ jobs:
           set -euo pipefail
           git -C "$FEED_ROOT" config user.name "github-actions[bot]"
           git -C "$FEED_ROOT" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$FEED_ROOT" add catalog
-          if git -C "$FEED_ROOT" diff --cached --quiet; then
+          git add feed/catalog
+          if git diff --cached --quiet; then
             echo "Catalog revision $REVISION is already published"
             exit 0
           fi
-          git -C "$FEED_ROOT" commit -m "data(tags): publish catalog revision $REVISION"
-          git -C "$FEED_ROOT" push origin HEAD:refs/heads/tag-feed
-
-      - name: Remove feed worktree
-        if: always()
-        shell: bash
-        run: git worktree remove --force "${{ steps.feed.outputs.root }}" || true
+          git commit -m "data(tags): publish catalog revision $REVISION"
+          git push origin HEAD:main

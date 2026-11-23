@@ -103,8 +103,8 @@ with the Gradle property `nreaderTagCatalogManifestUrl`; see the
 The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
 The default is empty; users can still install packs from local files. The
-beta release workflow opts into the unsigned v1 catalog feed hosted on the
-repository's `tag-feed` branch. Other builds must explicitly set
+beta release workflow opts into the unsigned v1 catalog feed hosted under
+`feed/catalog/` on the repository's `main` branch. Other builds must explicitly set
 `nreaderEnableUnsignedTagFeeds=true` when configuring a feed; leaving URLs
 empty keeps ordinary development builds offline.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
