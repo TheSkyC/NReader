@@ -543,6 +543,7 @@
     <string name="tag_translation_export_done">標籤語言已匯出。</string>
     <string name="tag_translation_export_changed">語言包已變更，請重新開啟清單後重試。所選檔案可能為空。</string>
     <string name="tag_translation_export_unknown_order">此舊語言包的別名順序未知，無法匯出。請使用原始語言包，或先移除並重新安裝。所選檔案可能為空。</string>
+    <string name="tag_translation_export_duplicate_alias">此語言包中的部分別名現在被視為相同，無法匯出。請使用原始檔案或安裝修正後的語言包。所選檔案可能為空。</string>
     <string name="tag_translation_export_failed">匯出未完成，所選檔案可能為空或不完整。請重試。</string>
     <string name="tag_translation_import_changed">匯入期間語言包已變更。如仍需安裝，請重試。</string>
     <string name="tag_translation_installed">已安裝或更新標籤語言包。</string>

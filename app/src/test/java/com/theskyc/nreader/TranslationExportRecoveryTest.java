@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -207,6 +208,24 @@ public class TranslationExportRecoveryTest {
             assertTrue(model.result().getValue().error instanceof TagTranslationCatalog.UnknownAliasOrderException);
             assertEquals(1, provider.opens);
             database.execSQL("UPDATE TagTranslationAliases SET aliasOrder = 0 WHERE locale = 'ja'");
+            database.execSQL("INSERT INTO TagTranslationAliases (idTag, locale, alias, aliasKey, aliasOrder)"
+                + " VALUES (700006, 'ja', 'ALIAS', 'old-key', 1)");
+            assertTrue(model.start(context, destination, selection));
+            awaitResult(model);
+            assertTrue(model.result().getValue().error instanceof TagTranslationCatalog.DuplicateExportAliasException);
+            assertEquals(1, provider.opens);
+            assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+            Global.initFromShared(context);
+            try (ActivityController<SettingsActivity> controller = Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                ReflectionHelpers.callInstanceMethod(controller.get(), "showTranslationExportResult",
+                    ReflectionHelpers.ClassParameter.from(TranslationExportViewModel.Result.class, model.result().getValue()));
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                TextView message = dialog.findViewById(android.R.id.message);
+                assertNotNull(message);
+                assertEquals(context.getString(R.string.tag_translation_export_duplicate_alias), message.getText().toString());
+                dialog.dismiss();
+            }
+            database.execSQL("DELETE FROM TagTranslationAliases WHERE idTag = 700006 AND aliasOrder = 1");
             AtomicInteger written = new AtomicInteger();
             AtomicInteger closes = new AtomicInteger();
             TranslationExportViewModel failingWrite = new TranslationExportViewModel((app, uri) -> new OutputStream() {

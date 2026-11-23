@@ -192,6 +192,12 @@ public final class TagTranslationCatalog {
         }
     }
 
+    public static final class DuplicateExportAliasException extends IOException {
+        private DuplicateExportAliasException() {
+            super("Installed translation aliases have duplicate search keys");
+        }
+    }
+
     public static final class ChangedDuringExportException extends IOException {
         private ChangedDuringExportException() {
             super("Translation pack changed before export");
@@ -228,6 +234,7 @@ public final class TagTranslationCatalog {
                 int previousId = 0;
                 int entries = 0;
                 int nextAliasOrder = 0;
+                Set<String> aliasKeys = new HashSet<>();
                 try (Cursor rows = database.rawQuery("SELECT t.idTag, t.displayName, a.alias, a.aliasOrder"
                     + " FROM TagTranslations t LEFT JOIN TagTranslationAliases a"
                     + " ON a.idTag = t.idTag AND a.locale = t.locale"
@@ -250,6 +257,7 @@ public final class TagTranslationCatalog {
                             writer.name("aliases").beginArray();
                             previousId = id;
                             nextAliasOrder = 0;
+                            aliasKeys.clear();
                         }
                         if (!rows.isNull(2)) {
                             if (rows.getInt(3) != nextAliasOrder || nextAliasOrder >= MAX_ALIASES_PER_ENTRY) {
@@ -257,6 +265,7 @@ public final class TagTranslationCatalog {
                             }
                             String alias = rows.getString(2);
                             if (!validateText(alias).equals(alias)) throw new IOException("Invalid installed translation alias");
+                            if (!aliasKeys.add(searchKey(alias))) throw new DuplicateExportAliasException();
                             writer.value(alias);
                             nextAliasOrder++;
                         }

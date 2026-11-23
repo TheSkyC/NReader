@@ -353,6 +353,8 @@ public class SettingsActivity extends GeneralActivity {
         int message;
         if (result.error instanceof TagTranslationCatalog.UnknownAliasOrderException) {
             message = R.string.tag_translation_export_unknown_order;
+        } else if (result.error instanceof TagTranslationCatalog.DuplicateExportAliasException) {
+            message = R.string.tag_translation_export_duplicate_alias;
         } else if (result.error instanceof TranslationExportViewModel.ChangedSelectionException
             || result.error instanceof TagTranslationCatalog.ChangedDuringExportException) {
             message = R.string.tag_translation_export_changed;

@@ -112,6 +112,29 @@ public class TagTranslationExportTest {
         assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
     }
 
+    @Test public void refusesAliasesThatNowShareAKeyWithoutDiscardingThem() throws Exception {
+        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
+        database.execSQL("UPDATE TagTranslationAliases SET alias = 'FIRST', aliasKey = 'old-different-key'"
+            + " WHERE idTag = 1 AND aliasOrder = 1");
+        assertThrows(TagTranslationCatalog.DuplicateExportAliasException.class,
+            () -> export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES));
+        assertEquals(2, android.database.DatabaseUtils.longForQuery(database,
+            "SELECT COUNT(*) FROM TagTranslationAliases WHERE idTag = 1", null));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("FIRST", android.database.DatabaseUtils.stringForQuery(database,
+            "SELECT alias FROM TagTranslationAliases WHERE idTag = 1 AND aliasOrder = 1", null));
+    }
+
+    @Test public void allowsTheSameAliasForDifferentTags() throws Exception {
+        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"shared\"]},"
+            + "{\"id\":2,\"name\":\"two\",\"aliases\":[\"shared\"]}]}"));
+        byte[] snapshot = export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES);
+        TagTranslationCatalog.remove(database, "ja");
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(snapshot), scratch.getRoot(), () -> false));
+    }
+
     @Test public void enforcesByteLimitAndCleansCancelledSnapshots() throws Exception {
         assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"\u753b\",\"aliases\":[\"a\"]}]}"));

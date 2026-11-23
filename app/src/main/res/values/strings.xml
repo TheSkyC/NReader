@@ -683,6 +683,7 @@
     <string name="tag_translation_export_done">Tag language exported.</string>
     <string name="tag_translation_export_changed">The language pack changed. Open the list and try again. The selected file may be empty.</string>
     <string name="tag_translation_export_unknown_order">This older pack cannot be exported because its alias order is unknown. Use the original pack, or remove and reinstall it first. The selected file may be empty.</string>
+    <string name="tag_translation_export_duplicate_alias">This language pack has aliases that now match each other, so it cannot be exported. Use the original file or install a corrected pack. The selected file may be empty.</string>
     <string name="tag_translation_export_failed">Export did not finish. The selected file may be empty or incomplete. Try again.</string>
     <string name="tag_translation_import_changed">The language pack changed during import. Try again if you still want to install it.</string>
     <string name="tag_translation_installed">Tag language installed or updated.</string>

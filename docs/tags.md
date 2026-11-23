@@ -85,7 +85,10 @@ collide. The importer still rejects duplicate normalized aliases in a new pack;
 this storage change does not change the pack format or fix Unicode-version drift.
 The export snapshot layer serializes one selected installation to an app-private
 temporary file under a database transaction, checks its revision and generation,
-and rejects unknown alias order. It limits the UTF-8 JSON to the 16 MiB import
+and rejects unknown alias order and aliases for one tag that now normalize to
+the same key, rather than producing a pack the current importer would reject.
+The installed aliases remain unchanged; use the original file or a corrected
+pack for export. It limits the UTF-8 JSON to the 16 MiB import
 limit; the caller closes the temporary file. It does not write an external
 document while holding the transaction. Settings can save this snapshot as a
 JSON document. It checks the selected revision and generation again after the
