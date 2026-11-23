@@ -237,6 +237,13 @@ the history does not change saved rules or site query identity. The recent-tags
 dialog can clear this local history without changing any tag data.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
+On a concrete type page, entering a non-empty search enables **Bulk edit matching
+tags**. The operation previews the matching count, refuses more than 200 rows,
+and can set all matches to Accepted, Avoided, or Default. The write uses one
+SQLite transaction and either changes every selected tag or leaves all rules
+unchanged. Accepted changes still enforce the existing maximum-rule limit;
+translation and status filters used for the preview are applied again when the
+operation commits.
 
 Gallery details show canonical labels immediately, then look up installed
 translations for that gallery's positive site IDs in the background. A
