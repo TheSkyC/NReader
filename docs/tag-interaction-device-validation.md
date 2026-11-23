@@ -85,3 +85,14 @@ On 2026-11-23 this passed on an API 28 emulator using the MinApi28 isolated
 benchmark app and a temporary Android user. A pack installed by an older build
 first correctly failed export because its alias order was unknown; removing and
 reinstalling the fixture with the current build allowed the successful check.
+
+The controlled export interruption check can also be run with
+`scripts/test_tag_process_recovery.ps1 -Scenario TranslationExport`. It starts an
+export to a test-owned file stream, syncs eight bytes, and waits for the driver
+to force-stop the isolated app. A new instrumentation process checks the partial
+file, scratch cleanup, installed pack and local rule, then retries export and
+checks the resulting JSON. The driver uses a temporary Android user and removes
+the test packages afterward. This does not exercise the system document picker,
+an external provider, or ordinary process death while a picker is open.
+On 2026-11-23 this check passed on an API 28 emulator with both MinApi26 and
+MinApi28 builds; it did not test an API 26 or 27 device.

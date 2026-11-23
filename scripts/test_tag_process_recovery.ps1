@@ -1,7 +1,7 @@
 param(
     [ValidateSet("MinApi26", "MinApi28")]
     [string]$Flavor = "MinApi28",
-    [ValidateSet("CatalogTransaction", "CatalogStaging", "TranslationStaging", "TranslationTransaction")]
+    [ValidateSet("CatalogTransaction", "CatalogStaging", "TranslationStaging", "TranslationTransaction", "TranslationExport")]
     [string]$Scenario = "CatalogTransaction",
     [string]$Serial
 )
@@ -30,11 +30,16 @@ if ($Scenario -eq "CatalogTransaction") {
     $crashMethod = "$testClass#leavesPartialTranslationStageForExternalProcessStop"
     $verifyMethod = "$testClass#removesInterruptedTranslationStageAndInstallsVerifiedPack"
     $crashPhase = "stage"
-} else {
+} elseif ($Scenario -eq "TranslationTransaction") {
     $testClass = "com.theskyc.nreader.async.database.TagTranslationTransactionRecoveryTest"
     $crashMethod = "$testClass#holdsTranslationTransactionForExternalProcessStop"
     $verifyMethod = "$testClass#previousTranslationSurvivesProcessDeathAndCanBeUpdated"
     $crashPhase = "translation-transaction"
+} else {
+    $testClass = "com.theskyc.nreader.TranslationExportProcessRecoveryTest"
+    $crashMethod = "$testClass#holdsPartialExportForExternalProcessStop"
+    $verifyMethod = "$testClass#interruptedExportLeavesPackIntactAndCanBeRetried"
+    $crashPhase = "translation-export"
 }
 $logDirectory = Join-Path $repoRoot "app\build\tag-recovery"
 $userId = $null
