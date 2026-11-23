@@ -90,6 +90,20 @@ class TagTranslationPackTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             builder.build_pack(b'[{"id":1,"name":"first","name":"second"}]', "zh-Hans", 1, {1})
 
+    def test_pack_parser_enforces_android_wire_string_limit(self):
+        def pack(name):
+            return ('{"schemaVersion":1,"locale":"ja","revision":1,"entries":'
+                    '[{"id":1,"name":"' + name + '"}]}').encode("utf-8")
+
+        self.assertEqual("x", builder.parse_pack(pack("x" + " " * 3071), {1})["entries"][0]["name"])
+        with self.assertRaisesRegex(ValueError, "JSON string exceeds limit"):
+            builder.parse_pack(pack("x" + " " * 3072), {1})
+
+        escaped_supplementary = r"\ud83d\ude00" * 256
+        self.assertEqual(256, len(builder.parse_pack(pack(escaped_supplementary), {1})["entries"][0]["name"]))
+        with self.assertRaisesRegex(ValueError, "JSON string exceeds limit"):
+            builder.parse_pack(pack(escaped_supplementary + " "), {1})
+
     def test_search_keys_keep_greek_sigma_prefixes_stable(self):
         self.assertEqual("\u03bf\u03c3", builder.search_key("\u039f\u03a3"))
         self.assertEqual("\u03bf\u03c3\u03b1", builder.search_key("\u039f\u03a3\u0391"))

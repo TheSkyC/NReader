@@ -13,6 +13,7 @@ else:
 
 MAX_ENTRIES = 250_000
 MAX_TEXT_LENGTH = 256
+MAX_WIRE_STRING_UNITS = MAX_TEXT_LENGTH * 12 + 1
 MAX_ALIASES = 20
 PACK_SCHEMA_VERSION = 1
 LOCALE_PATTERN = re.compile(r"[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?\Z")
@@ -91,7 +92,7 @@ def normalize_entries(rows, catalog_ids):
 
 
 def parse_pack(data, catalog_ids):
-    pack = decode_json(data)
+    pack = decode_json(data, max_wire_string_units=MAX_WIRE_STRING_UNITS)
     if (not isinstance(pack, dict) or pack.keys() != {"schemaVersion", "locale", "revision", "entries"}
             or type(pack["schemaVersion"]) is not int or pack["schemaVersion"] != PACK_SCHEMA_VERSION):
         raise ValueError("Invalid translation pack envelope")

@@ -110,6 +110,24 @@ class VerifyTagFeedTest(unittest.TestCase):
                 self.failed_verification("Payload size or digest does not match manifest", *args)
                 self.assertEqual(damaged, payload.read_bytes())
 
+    def test_verifier_rejects_translation_exceeding_android_wire_limit(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 3)
+        pointer = self.translation_feed / "manifest.json"
+        manifest = json.loads(pointer.read_bytes())
+        payload = ('{"schemaVersion":1,"locale":"ja","revision":3,"entries":'
+                   '[{"id":1,"name":"x' + ' ' * 3072 + '"}]}').encode()
+        digest = hashlib.sha256(payload).hexdigest()
+        descriptor = manifest["packs"][0]
+        descriptor.update(sizeBytes=len(payload), sha256=digest)
+        (self.translation_feed / build_tag_translation_release.payload_name(digest)).write_bytes(payload)
+        pointer.write_text(json.dumps(manifest), encoding="utf-8")
+        before = self.capture_files(self.root)
+
+        self.failed_verification("JSON string exceeds limit", "--catalog-feed", str(self.catalog_feed),
+                                 "--translation-feed", str(self.translation_feed))
+        self.assertEqual(before, self.capture_files(self.root))
+
     def test_feed_filenames_must_match_exactly(self):
         build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
         self.publish_translation("ja", 3)

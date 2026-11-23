@@ -45,6 +45,9 @@ optional list of plain-text search aliases. Site IDs remain the only identity;
 translation text never enters a site query or changes a saved rule.
 Write schema version, revision, and site IDs as JSON integers without decimal
 points or exponents, as in the pack builder and manifest formats.
+Each JSON string's wire spelling is limited to 3,073 UTF-16 units, counting
+the opening quote and escape characters but not the closing quote. This bound
+is separate from the 256-code-point limit on normalized translation text.
 
 The installer reads, validates, and normalizes the bounded payload outside the
 database write transaction. It keeps prepared rows in an app-private scratch
