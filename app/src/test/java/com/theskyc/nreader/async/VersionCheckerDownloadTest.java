@@ -21,6 +21,7 @@ import androidx.work.testing.WorkManagerTestInitHelper;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.UpdateCenterActivity;
+import com.theskyc.nreader.WorkManagerTestScope;
 import com.theskyc.nreader.async.update.UpdateDownloadRecord;
 import com.theskyc.nreader.async.update.UpdatePhase;
 import com.theskyc.nreader.async.update.UpdateState;
@@ -29,6 +30,7 @@ import com.theskyc.nreader.settings.Global;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -56,6 +58,7 @@ import okhttp3.OkHttpClient;
 
 @RunWith(RobolectricTestRunner.class)
 public class VersionCheckerDownloadTest {
+    @Rule public final WorkManagerTestScope workManagerScope = new WorkManagerTestScope();
     private static final String TEST_DIGEST = "0000000000000000000000000000000000000000000000000000000000000000";
     private ActivityController<AppCompatActivity> controller;
     private VersionChecker checker;

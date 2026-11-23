@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.settings.Global;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -39,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class CatalogRefreshRecoveryTest {
+    @Rule public final WorkManagerTestScope workManagerScope = new WorkManagerTestScope();
     @Test public void repeatedCatalogCheckKeepsOneDialogAndItsTrackedRequest() throws Exception {
         Application context = RuntimeEnvironment.getApplication();
         Global.initFromShared(context);

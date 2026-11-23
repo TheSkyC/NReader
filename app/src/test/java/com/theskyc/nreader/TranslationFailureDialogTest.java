@@ -19,6 +19,7 @@ import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.settings.Global;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -37,6 +38,7 @@ import java.util.concurrent.Executors;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TranslationFailureDialogTest {
+    @Rule public final WorkManagerTestScope workManagerScope = new WorkManagerTestScope();
     private TagTranslationCatalog.UnknownTagException unknownTag() throws Exception {
         Constructor<TagTranslationCatalog.UnknownTagException> constructor =
             TagTranslationCatalog.UnknownTagException.class.getDeclaredConstructor();

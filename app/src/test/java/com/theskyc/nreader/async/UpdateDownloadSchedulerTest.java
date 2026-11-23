@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.WorkManagerTestScope;
 import com.theskyc.nreader.async.update.UpdateDownloadRecord;
 import com.theskyc.nreader.async.update.UpdatePhase;
 import com.theskyc.nreader.async.update.UpdateState;
@@ -34,6 +35,7 @@ import com.theskyc.nreader.settings.Global;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -57,6 +59,7 @@ import kotlin.coroutines.EmptyCoroutineContext;
 
 @RunWith(RobolectricTestRunner.class)
 public class UpdateDownloadSchedulerTest {
+    @Rule public final WorkManagerTestScope workManagerScope = new WorkManagerTestScope();
     private Context context;
     private UpdateStateStore store;
     private WorkManager manager;
