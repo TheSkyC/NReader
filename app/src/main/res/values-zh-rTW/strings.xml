@@ -225,6 +225,10 @@
     <string name="bulk_edit_saved_format">已更新 %1$d 個標籤。</string>
     <string name="bulk_edit_no_matches">沒有符合的標籤。</string>
     <string name="bulk_edit_too_many">符合的標籤超過 %1$d 個，請先縮小搜尋範圍。</string>
+    <string name="undo_bulk_edit">復原上次批次編輯</string>
+    <string name="bulk_undo_saved_format">已復原 %1$d 個標籤。</string>
+    <string name="bulk_undo_stale">符合的標籤已變更，因此沒有執行復原。</string>
+    <string name="bulk_undo_unavailable">沒有可復原的批次編輯。</string>
     <string name="filter_translated_all">全部翻譯覆蓋情況</string>
     <string name="filter_translated_only">僅顯示已有翻譯</string>
     <string name="next_page_volume_up">音量+切換下一頁</string>

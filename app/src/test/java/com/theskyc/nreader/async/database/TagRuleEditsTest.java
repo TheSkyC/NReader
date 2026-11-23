@@ -41,6 +41,7 @@ public class TagRuleEditsTest {
     }
 
     @After public void closeDatabase() {
+        TagRuleEdits.clearUndo();
         Queries.setDb(null);
         database.close();
     }
@@ -239,6 +240,53 @@ public class TagRuleEditsTest {
         assertEquals(TagRuleEdits.Outcome.FAILED, results.get(0).outcome);
         assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(first));
         assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(second));
+    }
+
+    @Test public void bulkUndoRestoresPreviousStatuses() {
+        Tag first = tag(42, TagStatus.DEFAULT);
+        Tag second = tag(43, TagStatus.AVOIDED);
+        Queries.TagTable.insert(first);
+        Queries.TagTable.insert(second);
+        Queries.TagTable.updateTag(second);
+        List<Tag> candidates = new ArrayList<>();
+        candidates.add(first);
+        candidates.add(second);
+
+        edits.enqueueBulkSet(candidates, TagStatus.ACCEPTED, true, true, results::add);
+        drain(worker);
+        drain(delivery);
+        assertEquals(TagRuleEdits.Outcome.SAVED, results.get(0).outcome);
+        assertTrue(TagRuleEdits.hasUndo());
+
+        edits.enqueueUndo(results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.SAVED, results.get(1).outcome);
+        assertEquals(2, results.get(1).affected);
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(first));
+        assertEquals(TagStatus.AVOIDED, Queries.TagTable.storedRuleStatus(second));
+        assertTrue(!TagRuleEdits.hasUndo());
+    }
+
+    @Test public void bulkUndoRefusesToOverwriteALaterEdit() {
+        Tag first = tag(42, TagStatus.DEFAULT);
+        Queries.TagTable.insert(first);
+        List<Tag> candidates = new ArrayList<>();
+        candidates.add(first);
+
+        edits.enqueueBulkSet(candidates, TagStatus.ACCEPTED, true, true, results::add);
+        drain(worker);
+        drain(delivery);
+        assertEquals(1, Queries.TagTable.updateTag(new Tag("tag-42", 50, 42, TagType.TAG, TagStatus.AVOIDED)));
+
+        edits.enqueueUndo(results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.UNDO_STALE, results.get(1).outcome);
+        assertEquals(TagStatus.AVOIDED, Queries.TagTable.storedRuleStatus(first));
+        assertTrue(!TagRuleEdits.hasUndo());
     }
 
     private static Tag tag(int id, TagStatus status) {

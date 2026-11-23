@@ -31,7 +31,10 @@ import java.util.function.Supplier;
 
 /** Serializes local rule edits without holding the UI thread across a SQLite write. */
 public final class TagRuleEdits {
-    public enum Outcome { SAVED, PREVIEW, NO_MATCHES, TOO_MANY, LIMIT_REACHED, SUPERSEDED, FAILED }
+    public enum Outcome {
+        SAVED, PREVIEW, NO_MATCHES, TOO_MANY, LIMIT_REACHED,
+        UNDO_UNAVAILABLE, UNDO_STALE, SUPERSEDED, FAILED
+    }
 
     public static final int MAX_BULK_TAGS = 200;
 
@@ -50,6 +53,29 @@ public final class TagRuleEdits {
     private static final MutableLiveData<Void> CHANGES = new MutableLiveData<>();
     private static final AtomicLong REVISION = new AtomicLong();
     private static final int QUEUE_CAPACITY = 32;
+    private static final Object UNDO_LOCK = new Object();
+    @Nullable
+    private static BulkUndo lastBulkUndo;
+
+    private static final class UndoEntry {
+        private final Tag tag;
+        private final TagStatus before;
+        private final TagStatus after;
+
+        private UndoEntry(Tag tag, TagStatus before, TagStatus after) {
+            this.tag = tag;
+            this.before = before;
+            this.after = after;
+        }
+    }
+
+    private static final class BulkUndo {
+        private final List<UndoEntry> entries;
+
+        private BulkUndo(List<UndoEntry> entries) {
+            this.entries = entries;
+        }
+    }
 
     private static final class MainDelivery {
         private static final Handler HANDLER = new Handler(Looper.getMainLooper());
@@ -109,6 +135,16 @@ public final class TagRuleEdits {
             translatedOnly, callback);
     }
 
+    public static boolean hasUndo() {
+        synchronized (UNDO_LOCK) {
+            return lastBulkUndo != null;
+        }
+    }
+
+    public static void undoLastBulk(Consumer<Result> callback) {
+        INSTANCE.enqueueUndo(callback);
+    }
+
     @WorkerThread
     public static TagStatus readStoredStatus(Tag tag) {
         return Queries.TagTable.storedRuleStatus(tag);
@@ -131,8 +167,18 @@ public final class TagRuleEdits {
     }
 
     void enqueueBulkSet(List<Tag> tags, TagStatus status, boolean enforceLimit, Consumer<Result> callback) {
+        enqueueBulkSet(tags, status, enforceLimit, false, callback);
+    }
+
+    void enqueueBulkSet(List<Tag> tags, TagStatus status, boolean enforceLimit,
+                        boolean recordUndo, Consumer<Result> callback) {
         long generation = Login.onlineTagsRestoreGeneration();
-        submit(generation, () -> bulkSetStored(tags, status, enforceLimit, generation), callback);
+        submit(generation, () -> bulkSetStored(tags, status, enforceLimit, recordUndo, generation), callback);
+    }
+
+    void enqueueUndo(Consumer<Result> callback) {
+        long generation = Login.onlineTagsRestoreGeneration();
+        submit(generation, () -> undoStored(generation), callback);
     }
 
     private void enqueueBulkSetMatching(String query, TagType type, boolean sortByName,
@@ -145,7 +191,7 @@ public final class TagRuleEdits {
                 statusFilter, translatedOnly, MAX_BULK_TAGS + 1);
             if (tags.isEmpty()) return new Result(Outcome.NO_MATCHES, status, 0);
             if (tags.size() > MAX_BULK_TAGS) return new Result(Outcome.TOO_MANY, status, 0);
-            return bulkSetStored(tags, status, enforceLimit, generation);
+            return bulkSetStored(tags, status, enforceLimit, true, generation);
         }, callback);
     }
 
@@ -210,10 +256,11 @@ public final class TagRuleEdits {
     }
 
     private static Result bulkSetStored(List<Tag> tags, TagStatus status, boolean enforceLimit,
-                                        long generation) {
+                                        boolean recordUndo, long generation) {
         if (tags.isEmpty()) return new Result(Outcome.NO_MATCHES, status, 0);
         boolean countAvoided = Global.removeAvoidedGalleries();
-        return write(generation, () -> {
+        List<UndoEntry> applied = new java.util.ArrayList<>();
+        Result result = write(generation, () -> {
             int currentCount = enforceLimit && status == TagStatus.ACCEPTED
                 ? TagV2.getListPrefer(countAvoided).size() : 0;
             int delta = 0;
@@ -227,16 +274,63 @@ public final class TagRuleEdits {
             }
             int affected = 0;
             for (Tag tag : tags) {
-                if (Queries.TagTable.storedRuleStatus(tag) == status) continue;
+                TagStatus current = Queries.TagTable.storedRuleStatus(tag);
+                if (current == status) continue;
                 if (!Queries.TagTable.storeRule(tag, status)) return new Result(Outcome.FAILED, null, 0);
+                applied.add(new UndoEntry(snapshot(tag), current, status));
                 affected++;
             }
             return new Result(Outcome.SAVED, status, affected);
         });
+        if (recordUndo && result.outcome == Outcome.SAVED && !applied.isEmpty()) {
+            synchronized (UNDO_LOCK) {
+                lastBulkUndo = new BulkUndo(new java.util.ArrayList<>(applied));
+            }
+        }
+        return result;
     }
 
     private static int ruleCountContribution(TagStatus status, boolean countAvoided) {
         return status == TagStatus.ACCEPTED || (countAvoided && status == TagStatus.AVOIDED) ? 1 : 0;
+    }
+
+    private static Result undoStored(long generation) {
+        BulkUndo undo;
+        synchronized (UNDO_LOCK) {
+            undo = lastBulkUndo;
+        }
+        if (undo == null) return new Result(Outcome.UNDO_UNAVAILABLE, null, 0);
+        Result result = write(generation, () -> {
+            for (UndoEntry entry : undo.entries) {
+                if (Queries.TagTable.storedRuleStatus(entry.tag) != entry.after) {
+                    return new Result(Outcome.UNDO_STALE, null, 0);
+                }
+            }
+            int affected = 0;
+            for (UndoEntry entry : undo.entries) {
+                if (!Queries.TagTable.storeRule(entry.tag, entry.before)) {
+                    return new Result(Outcome.FAILED, null, 0);
+                }
+                affected++;
+            }
+            return new Result(Outcome.SAVED, TagStatus.DEFAULT, affected);
+        });
+        if (result.outcome == Outcome.SAVED) {
+            synchronized (UNDO_LOCK) {
+                if (lastBulkUndo == undo) lastBulkUndo = null;
+            }
+        } else if (result.outcome == Outcome.UNDO_STALE) {
+            synchronized (UNDO_LOCK) {
+                if (lastBulkUndo == undo) lastBulkUndo = null;
+            }
+        }
+        return result;
+    }
+
+    static void clearUndo() {
+        synchronized (UNDO_LOCK) {
+            lastBulkUndo = null;
+        }
     }
 
     private static Result clearStored(long generation) {

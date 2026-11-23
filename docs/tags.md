@@ -244,6 +244,11 @@ SQLite transaction and either changes every selected tag or leaves all rules
 unchanged. Accepted changes still enforce the existing maximum-rule limit;
 translation and status filters used for the preview are applied again when the
 operation commits.
+After a successful bulk edit, **Undo last bulk edit** keeps one in-memory
+snapshot. Undo checks that every affected rule still has the bulk target status
+before restoring the previous statuses; if any tag changed, it refuses the
+whole undo. The snapshot is cleared after undo, after a stale check, or when
+the app process ends.
 
 Gallery details show canonical labels immediately, then look up installed
 translations for that gallery's positive site IDs in the background. A

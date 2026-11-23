@@ -301,6 +301,10 @@
     <string name="bulk_edit_saved_format">Updated %1$d tags.</string>
     <string name="bulk_edit_no_matches">No matching tags.</string>
     <string name="bulk_edit_too_many">More than %1$d tags match. Narrow the search first.</string>
+    <string name="undo_bulk_edit">Undo last bulk edit</string>
+    <string name="bulk_undo_saved_format">Restored %1$d tags.</string>
+    <string name="bulk_undo_stale">The matching tags changed, so nothing was undone.</string>
+    <string name="bulk_undo_unavailable">There is no bulk edit to undo.</string>
     <string name="filter_translated_all">All translation coverage</string>
     <string name="filter_translated_only">Translated tags only</string>
     <string name="next_page_volume_up">Volume up turns to the next page</string>

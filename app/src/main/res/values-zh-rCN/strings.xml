@@ -225,6 +225,10 @@
     <string name="bulk_edit_saved_format">已更新 %1$d 个标签。</string>
     <string name="bulk_edit_no_matches">没有匹配的标签。</string>
     <string name="bulk_edit_too_many">匹配标签超过 %1$d 个，请先缩小搜索范围。</string>
+    <string name="undo_bulk_edit">撤销上次批量编辑</string>
+    <string name="bulk_undo_saved_format">已恢复 %1$d 个标签。</string>
+    <string name="bulk_undo_stale">匹配的标签已发生变化，因此没有执行撤销。</string>
+    <string name="bulk_undo_unavailable">没有可撤销的批量编辑。</string>
     <string name="filter_translated_all">全部翻译覆盖情况</string>
     <string name="filter_translated_only">仅显示已有翻译</string>
     <string name="next_page_volume_up">按音量加键翻到下一页</string>

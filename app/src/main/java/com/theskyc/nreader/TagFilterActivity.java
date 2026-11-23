@@ -52,6 +52,7 @@ public class TagFilterActivity extends GeneralActivity {
     private MenuItem statusFilterItem;
     private MenuItem translationFilterItem;
     private MenuItem bulkEditItem;
+    private MenuItem undoBulkEditItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,7 @@ public class TagFilterActivity extends GeneralActivity {
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mTagTypePageAdapter);
         mViewPager.setOffscreenPageLimit(1);
+        TagRuleEdits.changes().observe(this, ignored -> updateBulkUndoItem());
 
         TabLayout tabLayout = findViewById(R.id.tabs);
 
@@ -178,6 +180,8 @@ public class TagFilterActivity extends GeneralActivity {
         updateTranslationFilterItem(translationFilterItem);
         bulkEditItem = menu.findItem(R.id.bulk_edit_rules);
         updateBulkEditItem();
+        undoBulkEditItem = menu.findItem(R.id.undo_bulk_edit);
+        updateBulkUndoItem();
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -238,6 +242,7 @@ public class TagFilterActivity extends GeneralActivity {
             if (page != null) page.refilter(query);
         }
         else if (id == R.id.bulk_edit_rules) showBulkEditDialog();
+        else if (id == R.id.undo_bulk_edit) undoBulkEdit();
         else if (id == R.id.sort_by_name) {
             TagV2.updateSortByName(this);
             updateSortItem(item);
@@ -377,6 +382,10 @@ public class TagFilterActivity extends GeneralActivity {
         bulkEditItem.setVisible(eligible);
     }
 
+    private void updateBulkUndoItem() {
+        if (undoBulkEditItem != null) undoBulkEditItem.setVisible(TagRuleEdits.hasUndo());
+    }
+
     private void showBulkEditDialog() {
         TagTypePage page = getActualFragment();
         TagType type = page == null ? null : page.getTagType();
@@ -448,6 +457,29 @@ public class TagFilterActivity extends GeneralActivity {
                         android.widget.Toast.LENGTH_SHORT).show();
                 }
             });
+    }
+
+    private void undoBulkEdit() {
+        TagRuleEdits.undoLastBulk(result -> {
+            updateBulkUndoItem();
+            if (result.outcome == TagRuleEdits.Outcome.SAVED) {
+                android.widget.Toast.makeText(this,
+                    getString(R.string.bulk_undo_saved_format, result.affected),
+                    android.widget.Toast.LENGTH_SHORT).show();
+                TagTypePage page = getActualFragment();
+                if (page != null) page.refilter(query);
+            } else if (result.outcome == TagRuleEdits.Outcome.UNDO_STALE) {
+                android.widget.Toast.makeText(this, R.string.bulk_undo_stale,
+                    android.widget.Toast.LENGTH_LONG).show();
+            } else if (result.outcome == TagRuleEdits.Outcome.UNDO_UNAVAILABLE) {
+                android.widget.Toast.makeText(this, R.string.bulk_undo_unavailable,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            } else if (result.outcome == TagRuleEdits.Outcome.FAILED
+                || result.outcome == TagRuleEdits.Outcome.SUPERSEDED) {
+                android.widget.Toast.makeText(this, R.string.local_tag_rule_save_error,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 

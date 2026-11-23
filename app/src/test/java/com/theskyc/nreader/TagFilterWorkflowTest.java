@@ -144,6 +144,11 @@ public class TagFilterWorkflowTest {
                 assertTrue(confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
                 await(activity, () -> Queries.TagTable.getStatus(first) == TagStatus.ACCEPTED
                     && Queries.TagTable.getStatus(second) == TagStatus.ACCEPTED);
+                await(activity, () -> toolbar.getMenu().findItem(R.id.undo_bulk_edit).isVisible());
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.undo_bulk_edit));
+                await(activity, () -> Queries.TagTable.getStatus(first) == TagStatus.DEFAULT
+                    && Queries.TagTable.getStatus(second) == TagStatus.DEFAULT
+                    && !toolbar.getMenu().findItem(R.id.undo_bulk_edit).isVisible());
             }
         } finally {
             Queries.setDb(null);
