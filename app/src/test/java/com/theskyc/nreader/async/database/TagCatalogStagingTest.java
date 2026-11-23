@@ -60,6 +60,28 @@ public class TagCatalogStagingTest {
         assertEquals("newer", Queries.TagTable.getTagById(1).getName());
     }
 
+    @Test public void ruleAndAccountBlacklistWrittenDuringStagingSurviveCatalogCommit() throws Exception {
+        try (InputStream source = new FilterInputStream(snapshot("updated", 7)) {
+            private boolean written;
+
+            @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+                if (!written) {
+                    written = true;
+                    database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'saved rule', 1, 1)");
+                    database.execSQL("INSERT INTO AccountTagBlacklist (idTag) VALUES (2)");
+                }
+                return super.read(buffer, offset, length);
+            }
+        }) {
+            assertTrue(TagCatalog.apply(database, source, 1, 7, () -> false));
+        }
+        assertEquals(1, DatabaseUtils.longForQuery(database,
+            "SELECT COUNT(*) FROM TagRules WHERE idTag = 1 AND name = 'saved rule'", null));
+        assertEquals(1, DatabaseUtils.longForQuery(database,
+            "SELECT COUNT(*) FROM AccountTagBlacklist WHERE idTag = 2", null));
+        assertEquals("updated", Queries.TagTable.getTagById(1).getName());
+    }
+
     @Test public void importsAcrossBatchBoundariesAndRejectsDuplicateAcrossBatches() throws Exception {
         assertTrue(TagCatalog.apply(database, snapshot("first", 260), 1, 7, () -> false));
         assertEquals(260, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM Tags", null));
