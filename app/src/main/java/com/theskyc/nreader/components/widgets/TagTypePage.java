@@ -113,6 +113,11 @@ public class TagTypePage extends Fragment {
         return recyclerView;
     }
 
+    @Nullable
+    public TagType getTagType() {
+        return type;
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

@@ -27,13 +27,16 @@ import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
+import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class TagFilterActivity extends GeneralActivity {
@@ -48,6 +51,7 @@ public class TagFilterActivity extends GeneralActivity {
     private MenuItem minCountFilterItem;
     private MenuItem statusFilterItem;
     private MenuItem translationFilterItem;
+    private MenuItem bulkEditItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +80,7 @@ public class TagFilterActivity extends GeneralActivity {
             public void onPageSelected(int position) {
                 TagTypePage page = getFragment(position);
                 if (page != null) page.refilter(query);
+                updateBulkEditItem();
             }
         });
 
@@ -171,6 +176,8 @@ public class TagFilterActivity extends GeneralActivity {
         updateStatusFilterItem(statusFilterItem);
         translationFilterItem = menu.findItem(R.id.filter_translated);
         updateTranslationFilterItem(translationFilterItem);
+        bulkEditItem = menu.findItem(R.id.bulk_edit_rules);
+        updateBulkEditItem();
         searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
         Objects.requireNonNull(searchView).setQuery(query, false);
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -186,6 +193,7 @@ public class TagFilterActivity extends GeneralActivity {
                 if (page != null) {
                     page.refilter(newText);
                 }
+                updateBulkEditItem();
                 return true;
             }
         });
@@ -229,6 +237,7 @@ public class TagFilterActivity extends GeneralActivity {
             if (translationFilterItem != null) updateTranslationFilterItem(translationFilterItem);
             if (page != null) page.refilter(query);
         }
+        else if (id == R.id.bulk_edit_rules) showBulkEditDialog();
         else if (id == R.id.sort_by_name) {
             TagV2.updateSortByName(this);
             updateSortItem(item);
@@ -357,6 +366,88 @@ public class TagFilterActivity extends GeneralActivity {
         item.setTitle(TagV2.isTranslatedOnly() ? R.string.filter_translated_only
             : R.string.filter_translated_all);
         item.setChecked(TagV2.isTranslatedOnly());
+    }
+
+    private void updateBulkEditItem() {
+        if (bulkEditItem == null) return;
+        TagTypePage page = getActualFragment();
+        TagType type = page == null ? null : page.getTagType();
+        boolean eligible = type != null && type != TagType.UNKNOWN && type != TagType.CATEGORY
+            && !query.trim().isEmpty();
+        bulkEditItem.setVisible(eligible);
+    }
+
+    private void showBulkEditDialog() {
+        TagTypePage page = getActualFragment();
+        TagType type = page == null ? null : page.getTagType();
+        String selectedQuery = query.trim();
+        if (type == null || type == TagType.UNKNOWN || type == TagType.CATEGORY || selectedQuery.isEmpty()) {
+            updateBulkEditItem();
+            return;
+        }
+        Locale locale = TagLanguage.current(this);
+        TagRuleEdits.previewMatching(selectedQuery, type, TagV2.isSortedByName(), locale,
+            TagV2.getStatusFilter(), TagV2.isTranslatedOnly(), result -> {
+                TagTypePage currentPage = getActualFragment();
+                if (isFinishing() || isDestroyed() || !Objects.equals(query, selectedQuery)
+                    || currentPage == null || currentPage.getTagType() != type) return;
+                if (result.outcome == TagRuleEdits.Outcome.PREVIEW) {
+                    showBulkEditConfirmation(selectedQuery, type, locale, result.affected);
+                } else if (result.outcome == TagRuleEdits.Outcome.TOO_MANY) {
+                    android.widget.Toast.makeText(this,
+                        getString(R.string.bulk_edit_too_many, TagRuleEdits.MAX_BULK_TAGS),
+                        android.widget.Toast.LENGTH_LONG).show();
+                } else if (result.outcome == TagRuleEdits.Outcome.NO_MATCHES) {
+                    android.widget.Toast.makeText(this, R.string.bulk_edit_no_matches, android.widget.Toast.LENGTH_SHORT).show();
+                } else if (result.outcome == TagRuleEdits.Outcome.FAILED) {
+                    android.widget.Toast.makeText(this, R.string.local_tag_rule_save_error, android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void showBulkEditConfirmation(String selectedQuery, TagType type, Locale locale, int count) {
+        String message = getString(R.string.bulk_edit_count_format, count, TagRuleEdits.MAX_BULK_TAGS);
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.bulk_edit_rules)
+            .setMessage(message)
+            .setPositiveButton(R.string.bulk_set_accepted,
+                (dialog, which) -> applyBulkEdit(selectedQuery, type, locale, TagStatus.ACCEPTED))
+            .setNegativeButton(R.string.bulk_set_avoided,
+                (dialog, which) -> applyBulkEdit(selectedQuery, type, locale, TagStatus.AVOIDED))
+            .setNeutralButton(R.string.bulk_clear_rules,
+                (dialog, which) -> applyBulkEdit(selectedQuery, type, locale, TagStatus.DEFAULT))
+            .setCancelable(true)
+            .show();
+    }
+
+    private void applyBulkEdit(String selectedQuery, TagType type, Locale locale, TagStatus status) {
+        TagTypePage currentPage = getActualFragment();
+        if (isFinishing() || isDestroyed() || !Objects.equals(query, selectedQuery)
+            || currentPage == null || currentPage.getTagType() != type) return;
+        TagRuleEdits.bulkSetMatching(selectedQuery, type, TagV2.isSortedByName(), locale,
+            TagV2.getStatusFilter(), TagV2.isTranslatedOnly(), status, true, result -> {
+                if (result.outcome == TagRuleEdits.Outcome.SAVED) {
+                    android.widget.Toast.makeText(this,
+                        getString(R.string.bulk_edit_saved_format, result.affected),
+                        android.widget.Toast.LENGTH_SHORT).show();
+                    TagTypePage page = getActualFragment();
+                    if (page != null) page.refilter(query);
+                } else if (result.outcome == TagRuleEdits.Outcome.LIMIT_REACHED) {
+                    android.widget.Toast.makeText(this,
+                        getResources().getQuantityString(R.plurals.tags_max_reached,
+                            TagV2.MAXTAGS, TagV2.MAXTAGS),
+                        android.widget.Toast.LENGTH_LONG).show();
+                } else if (result.outcome == TagRuleEdits.Outcome.TOO_MANY) {
+                    android.widget.Toast.makeText(this,
+                        getString(R.string.bulk_edit_too_many, TagRuleEdits.MAX_BULK_TAGS),
+                        android.widget.Toast.LENGTH_LONG).show();
+                } else if (result.outcome == TagRuleEdits.Outcome.NO_MATCHES
+                    || result.outcome == TagRuleEdits.Outcome.FAILED
+                    || result.outcome == TagRuleEdits.Outcome.SUPERSEDED) {
+                    android.widget.Toast.makeText(this, R.string.local_tag_rule_save_error,
+                        android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
     }
 
 

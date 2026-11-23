@@ -113,6 +113,43 @@ public class TagFilterWorkflowTest {
         }
     }
 
+    @Test public void bulkEditUsesSearchResultsAndShowsAffectedCount() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        Tag first = new Tag("bulk fixture one", 60, 500_011, TagType.TAG, TagStatus.DEFAULT);
+        Tag second = new Tag("bulk fixture two", 60, 500_012, TagType.TAG, TagStatus.DEFAULT);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase db = helper.getWritableDatabase();
+            Queries.TagTable.insert(first);
+            Queries.TagTable.insert(second);
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                ViewPager2 pager = activity.findViewById(R.id.container);
+                pager.setCurrentItem(1, false);
+                await(activity, () -> count(activity, 1) == 2);
+                Toolbar toolbar = activity.findViewById(R.id.toolbar);
+                SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
+                search.setQuery("bulk fixture", false);
+                await(activity, () -> toolbar.getMenu().findItem(R.id.bulk_edit_rules).isVisible());
+
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.bulk_edit_rules));
+                await(activity, () -> ShadowDialog.getLatestDialog() instanceof AlertDialog);
+                AlertDialog confirm = (AlertDialog) ShadowDialog.getLatestDialog();
+                TextView message = confirm.findViewById(android.R.id.message);
+                assertNotNull(message);
+                assertTrue(message.getText().toString().contains("2"));
+                assertTrue(confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                await(activity, () -> Queries.TagTable.getStatus(first) == TagStatus.ACCEPTED
+                    && Queries.TagTable.getStatus(second) == TagStatus.ACCEPTED);
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     private static RecyclerView list(TagFilterActivity activity, int page) {
         TagTypePage fragment = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f" + page);
         return fragment == null ? null : fragment.getRecyclerView();

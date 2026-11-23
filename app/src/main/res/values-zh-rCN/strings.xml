@@ -217,6 +217,14 @@
     <string name="filter_status_default">未设置</string>
     <string name="filter_status_accepted">仅接受</string>
     <string name="filter_status_avoided">仅避免</string>
+    <string name="bulk_edit_rules">批量编辑匹配标签</string>
+    <string name="bulk_edit_count_format">将处理 %1$d 个标签（最多 %2$d 个）。请选择新的规则状态。</string>
+    <string name="bulk_set_accepted">接受</string>
+    <string name="bulk_set_avoided">避免</string>
+    <string name="bulk_clear_rules">清除规则</string>
+    <string name="bulk_edit_saved_format">已更新 %1$d 个标签。</string>
+    <string name="bulk_edit_no_matches">没有匹配的标签。</string>
+    <string name="bulk_edit_too_many">匹配标签超过 %1$d 个，请先缩小搜索范围。</string>
     <string name="filter_translated_all">全部翻译覆盖情况</string>
     <string name="filter_translated_only">仅显示已有翻译</string>
     <string name="next_page_volume_up">按音量加键翻到下一页</string>

@@ -293,6 +293,14 @@
     <string name="filter_status_default">Not configured</string>
     <string name="filter_status_accepted">Accepted only</string>
     <string name="filter_status_avoided">Avoided only</string>
+    <string name="bulk_edit_rules">Bulk edit matching tags</string>
+    <string name="bulk_edit_count_format">This will affect %1$d tags (maximum %2$d). Choose the new rule status.</string>
+    <string name="bulk_set_accepted">Accept</string>
+    <string name="bulk_set_avoided">Avoid</string>
+    <string name="bulk_clear_rules">Clear rules</string>
+    <string name="bulk_edit_saved_format">Updated %1$d tags.</string>
+    <string name="bulk_edit_no_matches">No matching tags.</string>
+    <string name="bulk_edit_too_many">More than %1$d tags match. Narrow the search first.</string>
     <string name="filter_translated_all">All translation coverage</string>
     <string name="filter_translated_only">Translated tags only</string>
     <string name="next_page_volume_up">Volume up turns to the next page</string>
