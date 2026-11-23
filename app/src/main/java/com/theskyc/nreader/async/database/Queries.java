@@ -469,6 +469,25 @@ public class Queries {
         }
 
         /**
+         * Read a bounded set of tags for a batch rule operation.
+         */
+        public static List<Tag> getFilteredTags(@NonNull String query, @NonNull TagType type,
+                                                boolean sortByName, @Nullable Locale appLocale,
+                                                @Nullable TagStatus statusFilter, boolean translatedOnly,
+                                                int limit) {
+            if (limit <= 0) return new ArrayList<>();
+            try (Cursor cursor = getFilterCursor(query, type, false, sortByName, appLocale,
+                statusFilter, translatedOnly)) {
+                int count = Math.min(cursor.getCount(), limit);
+                List<Tag> tags = new ArrayList<>(count);
+                for (int index = 0; index < count && cursor.moveToPosition(index); index++) {
+                    tags.add(cursorToTag(cursor));
+                }
+                return tags;
+            }
+        }
+
+        /**
          * Returns a List of all tags of a specific type and which have a min count
          *
          * @param type The type to fetch

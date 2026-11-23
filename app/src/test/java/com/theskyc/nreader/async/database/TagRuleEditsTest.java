@@ -169,6 +169,62 @@ public class TagRuleEditsTest {
         assertEquals(TagStatus.AVOIDED, Queries.TagTable.storedRuleStatus(accepted));
     }
 
+    @Test public void bulkSetChangesAllCandidatesInOneOperation() {
+        Tag first = tag(42, TagStatus.DEFAULT);
+        Tag second = tag(43, TagStatus.DEFAULT);
+        Queries.TagTable.insert(first);
+        Queries.TagTable.insert(second);
+        List<Tag> candidates = new ArrayList<>();
+        candidates.add(first);
+        candidates.add(second);
+
+        edits.enqueueBulkSet(candidates, TagStatus.ACCEPTED, true, results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.SAVED, results.get(0).outcome);
+        assertEquals(2, results.get(0).affected);
+        assertEquals(TagStatus.ACCEPTED, Queries.TagTable.storedRuleStatus(first));
+        assertEquals(TagStatus.ACCEPTED, Queries.TagTable.storedRuleStatus(second));
+    }
+
+    @Test public void bulkSetRejectsLimitWithoutPartialWrites() {
+        for (int id = 1; id <= TagV2.MAXTAGS; id++) {
+            assertEquals(1, Queries.TagTable.updateTag(tag(id, TagStatus.ACCEPTED)));
+        }
+        Tag candidate = tag(1000, TagStatus.DEFAULT);
+        Queries.TagTable.insert(candidate);
+        List<Tag> candidates = new ArrayList<>();
+        candidates.add(candidate);
+
+        edits.enqueueBulkSet(candidates, TagStatus.ACCEPTED, true, results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.LIMIT_REACHED, results.get(0).outcome);
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(candidate));
+    }
+
+    @Test public void bulkSetRollsBackWhenOneRuleWriteFails() {
+        Tag first = tag(42, TagStatus.DEFAULT);
+        Tag second = tag(43, TagStatus.DEFAULT);
+        Queries.TagTable.insert(first);
+        Queries.TagTable.insert(second);
+        database.execSQL("CREATE TRIGGER fail_bulk_rule BEFORE INSERT ON TagRules"
+            + " BEGIN SELECT RAISE(ABORT, 'injected bulk failure'); END");
+        List<Tag> candidates = new ArrayList<>();
+        candidates.add(first);
+        candidates.add(second);
+
+        edits.enqueueBulkSet(candidates, TagStatus.ACCEPTED, true, results::add);
+        drain(worker);
+        drain(delivery);
+
+        assertEquals(TagRuleEdits.Outcome.FAILED, results.get(0).outcome);
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(first));
+        assertEquals(TagStatus.DEFAULT, Queries.TagTable.storedRuleStatus(second));
+    }
+
     private static Tag tag(int id, TagStatus status) {
         return new Tag("tag-" + id, 50, id, TagType.TAG, status);
     }
