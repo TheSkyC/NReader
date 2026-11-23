@@ -539,6 +539,8 @@
     <string name="tag_translation_not_newer">此語言包的相同或更新版本已安裝。</string>
     <string name="tag_translation_install_failed">無法安裝此標籤語言包。</string>
     <string name="tag_translation_unknown_tags">目前的標籤目錄缺少此語言包中的部分標籤。請更新標籤目錄或應用程式後重試。如果仍然失敗，語言包可能不相容。</string>
+    <string name="tag_catalog_check_updates">檢查目錄更新</string>
+    <string name="tag_catalog_check_requested">已請求檢查標籤目錄更新，請稍後重試安裝語言包。</string>
     <string name="local_tag_rule_save_error">無法儲存本機標籤規則，請重試。</string>
     <string name="tag_translation_browse_online">線上瀏覽</string>
     <string name="tag_translation_online_loading">正在檢查可用的標籤語言…</string>

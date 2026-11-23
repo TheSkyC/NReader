@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteException;
 
 import androidx.annotation.NonNull;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
@@ -43,6 +44,7 @@ public class ScrapeTags extends Worker {
     private static final String TAGS = DATA_FOLDER + "tags.json";
     private static final String VERSION = DATA_FOLDER + "tagsVersion";
     private static final String WORK_NAME = "tag-catalog-refresh";
+    static final String FORCE_CHECK = "force_check";
     private static final String CHECKED_REVISION = "checked_revision";
     private static final String CHECKED_AT = "checked_at";
     private static final Set<File> CLEANED_STAGING_DIRECTORIES = new HashSet<>();
@@ -68,6 +70,14 @@ public class ScrapeTags extends Worker {
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
+    public static void requestRefresh(Context context) {
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ScrapeTags.class)
+            .setInputData(new Data.Builder().putBoolean(FORCE_CHECK, true).build())
+            .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build();
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request);
+    }
+
     @NonNull
     @Override
     public Result doWork() {
@@ -84,7 +94,8 @@ public class ScrapeTags extends Worker {
             SharedPreferences checks = getApplicationContext().getSharedPreferences(
                 published ? "PublishedTagCatalogChecks" : "TagCatalogChecks", Context.MODE_PRIVATE);
             long elapsed = System.currentTimeMillis() - checks.getLong(CHECKED_AT, 0);
-            if (installed > 0 && installed == checks.getInt(CHECKED_REVISION, 0)
+            if (!getInputData().getBoolean(FORCE_CHECK, false)
+                && installed > 0 && installed == checks.getInt(CHECKED_REVISION, 0)
                 && elapsed >= 0 && elapsed < CHECK_INTERVAL_MS) {
                 return Result.success();
             }

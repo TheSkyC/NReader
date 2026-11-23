@@ -25,6 +25,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.async.TagTranslationFeed;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.async.database.TagTranslationManifest;
@@ -338,7 +339,11 @@ public class SettingsActivity extends GeneralActivity {
             new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.tag_translation_packs_title)
                 .setMessage(R.string.tag_translation_unknown_tags)
-                .setPositiveButton(android.R.string.ok, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.tag_catalog_check_updates, (dialog, which) -> {
+                    ScrapeTags.requestRefresh(getApplicationContext());
+                    showTranslationToast(R.string.tag_catalog_check_requested, Toast.LENGTH_LONG);
+                })
                 .show();
         } else {
             Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();

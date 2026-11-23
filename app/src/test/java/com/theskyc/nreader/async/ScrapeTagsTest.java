@@ -92,6 +92,65 @@ public class ScrapeTagsTest {
         assertEquals(Collections.nCopies(4, "tagsVersion"), requests);
     }
 
+    @Test public void explicitRefreshBypassesRecentCheckAndPreservesStateOnFailure() {
+        installState("legacy-upstream");
+        SharedPreferences checks = checks(false);
+        long checkedAt = System.currentTimeMillis();
+        checks.edit().putInt("checked_revision", 10).putLong("checked_at", checkedAt).commit();
+        List<String> requests = new ArrayList<>();
+        Function<String, String> server = path -> {
+            requests.add(path);
+            return "9";
+        };
+        assertEquals(Result.success(), worker("", 0, server).refresh(database));
+        assertTrue(requests.isEmpty());
+        Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
+        assertEquals(Result.retry(), worker(context, "", 0, server, force).refresh(database));
+        assertEquals(List.of("tagsVersion"), requests);
+        assertEquals(checkedAt, checks.getLong("checked_at", 0L));
+        assertEquals(10, TagCatalog.installedRevision(database));
+        assertPreservedData();
+    }
+
+    @Test public void explicitRefreshChecksPublishedFeedDespiteRecentCheck() {
+        installState("nreader-catalog");
+        SharedPreferences checks = checks(true);
+        long checkedAt = System.currentTimeMillis();
+        checks.edit().putInt("checked_revision", 10).putLong("checked_at", checkedAt).commit();
+        List<String> requests = new ArrayList<>();
+        Function<String, String> server = path -> {
+            requests.add(path);
+            return STALE_MANIFEST;
+        };
+        assertEquals(Result.success(), worker(PUBLISHED_URL, 0, server).refresh(database));
+        assertTrue(requests.isEmpty());
+        Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
+        assertEquals(Result.retry(), worker(context, PUBLISHED_URL, 0, server, force).refresh(database));
+        assertEquals(List.of("manifest.json"), requests);
+        assertEquals(checkedAt, checks.getLong("checked_at", 0L));
+        assertEquals(10, TagCatalog.installedPublishedRevision(database));
+        assertPreservedData();
+    }
+
+    @Test public void explicitRefreshInstallsNewerCatalogDespiteRecentCheck() {
+        installState("legacy-upstream");
+        checks(false).edit().putInt("checked_revision", 10)
+            .putLong("checked_at", System.currentTimeMillis()).commit();
+        String snapshot = updatedSnapshot();
+        List<String> requests = new ArrayList<>();
+        Function<String, String> server = path -> {
+            requests.add(path);
+            return "tags.json".equals(path) ? snapshot : "11";
+        };
+        Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
+        assertEquals(Result.success(), worker(context, "", 0, server, force).refresh(database));
+        assertEquals(List.of("tagsVersion", "tags.json", "tagsVersion"), requests);
+        assertEquals(11, TagCatalog.installedRevision(database));
+        assertEquals("updated name", DatabaseUtils.stringForQuery(database, "SELECT name FROM Tags WHERE idTag = 10001", null));
+        assertPreservedRule();
+        assertNoStagedCatalog();
+    }
+
     @Test public void movingLegacyRevisionDiscardsStagingAndLeavesSuccessfulCheckUnchanged() {
         installState("legacy-upstream");
         String snapshot = updatedSnapshot();
@@ -227,8 +286,13 @@ public class ScrapeTagsTest {
 
     private ScrapeTags worker(Context workerContext, String manifestUrl, int attempt,
                               Function<String, String> server) {
+        return worker(workerContext, manifestUrl, attempt, server, Data.EMPTY);
+    }
+
+    private ScrapeTags worker(Context workerContext, String manifestUrl, int attempt,
+                              Function<String, String> server, Data input) {
         Executor direct = Runnable::run;
-        WorkerParameters params = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+        WorkerParameters params = new WorkerParameters(UUID.randomUUID(), input, Collections.emptyList(),
             new WorkerParameters.RuntimeExtras(), attempt, 0, direct, EmptyCoroutineContext.INSTANCE,
             new WorkManagerTaskExecutor(direct), new LegacyWorkerFactory(),
             (app, id, data) -> Futures.immediateFuture(null), (app, id, info) -> Futures.immediateFuture(null));
