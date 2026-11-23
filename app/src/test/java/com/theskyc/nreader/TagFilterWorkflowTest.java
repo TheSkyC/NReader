@@ -86,6 +86,10 @@ public class TagFilterWorkflowTest {
                 assertNotNull(recent);
                 assertEquals("canonical fixture (Tags)", recent.getListView().getItemAtPosition(0).toString());
                 assertTrue(recent.getListView().performItemClick(null, 0, 0));
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.recent_tags));
+                AlertDialog recentAgain = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(recentAgain);
+                assertTrue(recentAgain.getButton(AlertDialog.BUTTON_NEUTRAL).performClick());
                 pager.setCurrentItem(0, false);
                 await(activity, () -> count(activity, 0) == 1 && firstRow(activity, 0) != null);
                 assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getStatus(wanted));
