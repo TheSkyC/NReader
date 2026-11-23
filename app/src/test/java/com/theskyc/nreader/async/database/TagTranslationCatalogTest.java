@@ -265,6 +265,16 @@ public class TagTranslationCatalogTest {
         assertTrue(apply(pack("en", 1, "[{\"id\":1,\"name\":\"" + escaped + "\"}]")));
     }
 
+    @Test public void wireStringLimitPreservesInstalledTranslationOnRejection() throws IOException {
+        String maximumWireName = "x" + " ".repeat(3071);
+        assertTrue(apply(pack("en", 1, "[{\"id\":1,\"name\":\"" + maximumWireName + "\"}]")));
+        assertEquals(Map.of(1, "x"), Queries.TagTable.getDisplayNames(List.of(1), Locale.ENGLISH));
+        assertThrows(IOException.class, () -> apply(pack("en", 2,
+            "[{\"id\":1,\"name\":\"" + maximumWireName + " \"}]")));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "en"));
+        assertEquals(Map.of(1, "x"), Queries.TagTable.getDisplayNames(List.of(1), Locale.ENGLISH));
+    }
+
     @Test public void exactChineseLocaleWinsThenExplicitScriptThenRegion() throws IOException {
         String entries = "[{\"id\":1,\"name\":\"Name\"}]";
         assertTrue(apply(pack("zh", 1, entries)));
