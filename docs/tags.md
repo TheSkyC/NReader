@@ -488,6 +488,22 @@ runner skips normal application startup and its scheduled background work.
 The staging scenario uses a synthetic response. These checks do not
 simulate a network interruption over TLS or a device power loss.
 
+`scripts/test_tag_rebuild_process_recovery.ps1 -Flavor MinApi26 -Serial emulator-5560`
+checks translation-key rebuild recovery on a dedicated
+`NReader_Tag_Validation_API26` or `NReader_Tag_Validation_API28` AVD in its
+owner profile. Build the corresponding benchmark and AndroidTest APKs first;
+the script refuses to replace existing benchmark packages and removes its own
+installations. The setup uses real WorkManager to fail the second batch after
+the first checkpoint commits. The host kills that app process while its retry
+is queued, launches a benchmark-only probe through the normal application
+startup, and checks that the same work succeeds in a new process with its keys,
+alias, revision, rule, and account blacklist intact. It checks logs on both sides
+of the kill to reject a rebuild completed by the old process.
+On 2026-11-23 this passed on an API 26 emulator. The test explicitly relaunches
+the app; it does not prove unattended scheduling after process death, force-stop,
+interruption during a database transaction, device power loss, or behavior on a
+physical device.
+
 Run `com.theskyc.nreader.async.database.TagImportStorageLimitTest` with the
 same runner and a fresh benchmark installation to exercise SQLite's
 out-of-space rollback. It lowers the maximum page count on a private test
