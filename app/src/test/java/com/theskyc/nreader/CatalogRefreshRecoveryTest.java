@@ -39,6 +39,58 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class CatalogRefreshRecoveryTest {
+    @Test public void repeatedCatalogCheckKeepsOneDialogAndItsTrackedRequest() throws Exception {
+        Application context = RuntimeEnvironment.getApplication();
+        Global.initFromShared(context);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        WorkManagerTestInitHelper.initializeTestWorkManager(context,
+            new Configuration.Builder().setExecutor(executor).build(),
+            WorkManagerTestInitHelper.ExecutorsMode.PRESERVE_EXECUTORS);
+        WorkManager manager = WorkManager.getInstance(context);
+        try (DatabaseHelper database = new DatabaseHelper(context)) {
+            database.getWritableDatabase();
+            try (ActivityController<SettingsActivity> controller =
+                     Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                SettingsActivity activity = controller.get();
+                CatalogRefreshViewModel model = ReflectionHelpers.getField(activity, "catalogRefresh");
+                ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
+                AlertDialog dialog = ReflectionHelpers.getField(activity, "catalogCheckDialog");
+                model.start(context);
+                UUID id = model.requestId();
+                assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, id).getState());
+
+                ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
+                assertTrue(dialog == ReflectionHelpers.getField(activity, "catalogCheckDialog"));
+                assertTrue(dialog.isShowing());
+                model.start(context);
+                UUID replacement = model.requestId();
+                assertTrue(!id.equals(replacement));
+                assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, replacement).getState());
+                awaitFuture(manager.cancelWorkById(replacement).getResult());
+                awaitStatus(model, CatalogRefreshViewModel.Status.CANCELLED);
+                assertEquals(replacement, model.requestId());
+                assertEquals(activity.getString(R.string.tag_catalog_check_cancelled),
+                    ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+
+                dialog.dismiss();
+                ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
+                AlertDialog next = ReflectionHelpers.getField(activity, "catalogCheckDialog");
+                model.start(context);
+                UUID nextId = model.requestId();
+                assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, nextId).getState());
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(next.isShowing());
+                assertEquals(nextId, model.requestId());
+                awaitFuture(manager.cancelWorkById(nextId).getResult());
+                next.dismiss();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertNull(model.requestId());
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     @Test public void settingsRestoresTheSavedRequestAndDisplaysItsLaterStatus() throws Exception {
         Application context = RuntimeEnvironment.getApplication();
         Global.initFromShared(context);

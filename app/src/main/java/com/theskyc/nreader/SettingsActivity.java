@@ -382,11 +382,13 @@ public class SettingsActivity extends GeneralActivity {
     }
 
     private void showCatalogCheckDialog() {
+        if (catalogCheckDialog != null && catalogCheckDialog.isShowing()) return;
         catalogCheckDialog = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_catalog_check_updates)
             .setMessage(R.string.tag_catalog_check_queued)
             .setPositiveButton(R.string.tag_catalog_check_close, null)
             .setOnDismissListener(dialog -> {
+                if (catalogCheckDialog != dialog) return;
                 catalogCheckDialog = null;
                 catalogRefresh.clearRequest();
             })
