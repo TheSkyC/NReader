@@ -71,3 +71,17 @@ positive ID absent from the installed catalog. The app should show the missing
 tags dialog; after dismissing it, the previously installed locale and revision
 should still be listed. This check does not establish that the catalog can be
 updated on the device or that the pack will become compatible.
+
+To check export picker recovery, install a synthetic pack with the current app,
+then select its locale and **Export**. With the system save picker in front,
+record the app process ID and terminate only that process, without force-stopping
+the package. Confirm the picker remains in the original task and the old process
+is gone. Save to a new document, then verify that a new app process receives the
+result and that the saved JSON has the expected locale, revision, IDs, names, and
+alias order. Reopen **Tag languages** and confirm the installed locale remains.
+This exercises picker-result recovery and that provider's temporary write grant;
+it does not establish recovery from process death during the subsequent write.
+On 2026-11-23 this passed on an API 28 emulator using the MinApi28 isolated
+benchmark app and a temporary Android user. A pack installed by an older build
+first correctly failed export because its alias order was unknown; removing and
+reinstalling the fixture with the current build allowed the successful check.
