@@ -143,12 +143,45 @@ public class ScrapeTagsTest {
             return "tags.json".equals(path) ? snapshot : "11";
         };
         Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
-        assertEquals(Result.success(), worker(context, "", 0, server, force).refresh(database));
+        assertEquals(explicitSuccess(ScrapeTags.CHECKED), worker(context, "", 0, server, force).refresh(database));
         assertEquals(List.of("tagsVersion", "tags.json", "tagsVersion"), requests);
         assertEquals(11, TagCatalog.installedRevision(database));
         assertEquals("updated name", DatabaseUtils.stringForQuery(database, "SELECT name FROM Tags WHERE idTag = 10001", null));
         assertPreservedRule();
         assertNoStagedCatalog();
+    }
+
+    @Test public void explicitRefreshReportsCheckedWhenRevisionIsCurrent() {
+        installState("legacy-upstream");
+        List<String> requests = new ArrayList<>();
+        Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
+        Result result = worker(context, "", 0, path -> {
+            requests.add(path);
+            return "10";
+        }, force).refresh(database);
+
+        assertEquals(explicitSuccess(ScrapeTags.CHECKED), result);
+        assertEquals(List.of("tagsVersion"), requests);
+        assertPreservedData();
+    }
+
+    @Test public void explicitRefreshReportsMissingPublishedSourceWithoutFallingBack() {
+        installState("nreader-catalog");
+        List<String> requests = new ArrayList<>();
+        Function<String, String> server = path -> {
+            requests.add(path);
+            return "10";
+        };
+        Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
+
+        assertEquals(explicitSuccess(ScrapeTags.NO_SOURCE), worker(context, "", 0, server, force).refresh(database));
+        assertEquals(Result.success(), worker("", 0, server).refresh(database));
+        assertTrue(requests.isEmpty());
+        assertPreservedData();
+    }
+
+    private static Result explicitSuccess(String status) {
+        return Result.success(new Data.Builder().putString(ScrapeTags.CHECK_RESULT, status).build());
     }
 
     @Test public void movingLegacyRevisionDiscardsStagingAndLeavesSuccessfulCheckUnchanged() {

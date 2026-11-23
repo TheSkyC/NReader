@@ -45,6 +45,9 @@ public class ScrapeTags extends Worker {
     private static final String VERSION = DATA_FOLDER + "tagsVersion";
     private static final String WORK_NAME = "tag-catalog-refresh";
     static final String FORCE_CHECK = "force_check";
+    public static final String CHECK_RESULT = "catalog_check_result";
+    public static final String CHECKED = "checked";
+    public static final String NO_SOURCE = "no_source";
     private static final String CHECKED_REVISION = "checked_revision";
     private static final String CHECKED_AT = "checked_at";
     private static final Set<File> CLEANED_STAGING_DIRECTORIES = new HashSet<>();
@@ -89,7 +92,7 @@ public class ScrapeTags extends Worker {
         boolean published = !manifestUrl.isEmpty();
         try {
             int publishedRevision = TagCatalog.installedPublishedRevision(database);
-            if (!published && publishedRevision > 0) return Result.success();
+            if (!published && publishedRevision > 0) return success(NO_SOURCE);
             int installed = published ? publishedRevision : TagCatalog.installedRevision(database);
             SharedPreferences checks = getApplicationContext().getSharedPreferences(
                 published ? "PublishedTagCatalogChecks" : "TagCatalogChecks", Context.MODE_PRIVATE);
@@ -105,12 +108,17 @@ public class ScrapeTags extends Worker {
             // Record only the revision this check verified; another installer may run concurrently.
             checks.edit().putInt(CHECKED_REVISION, revision)
                 .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
-            return Result.success();
+            return success(CHECKED);
         } catch (IOException | SQLiteException error) {
             if (isStopped()) return Result.failure();
             LogUtility.w("Tag catalog refresh failed", error);
             return failureOrRetry();
         }
+    }
+
+    private Result success(String checkResult) {
+        if (!getInputData().getBoolean(FORCE_CHECK, false)) return Result.success();
+        return Result.success(new Data.Builder().putString(CHECK_RESULT, checkResult).build());
     }
 
     private int checkLegacy(SQLiteDatabase database, int installed) throws IOException {
