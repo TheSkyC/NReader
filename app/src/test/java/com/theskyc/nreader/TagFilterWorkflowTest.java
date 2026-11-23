@@ -27,6 +27,7 @@ import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +53,7 @@ public class TagFilterWorkflowTest {
         Application app = RuntimeEnvironment.getApplication();
         Global.initFromShared(app);
         Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
         Tag wanted = new Tag("canonical fixture", 60, 500_001, TagType.TAG, TagStatus.DEFAULT);
         try (DatabaseHelper helper = new DatabaseHelper(app)) {
             SQLiteDatabase db = helper.getWritableDatabase();
@@ -65,8 +67,14 @@ public class TagFilterWorkflowTest {
             try (ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
                 TagFilterActivity activity = controller.get();
                 ViewPager2 pager = activity.findViewById(R.id.container);
-                await(activity, () -> count(activity, 1) == 2);
                 Toolbar toolbar = activity.findViewById(R.id.toolbar);
+                assertEquals("Minimum gallery count per tag (25)",
+                    toolbar.getMenu().findItem(R.id.set_min_count).getTitle().toString());
+                TagV2.updateMinCount(app, 80);
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.reset_view_filters));
+                assertEquals("Minimum gallery count per tag (25)",
+                    toolbar.getMenu().findItem(R.id.set_min_count).getTitle().toString());
+                await(activity, () -> count(activity, 1) == 2);
                 SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
                 search.setQuery("lookup phrase", false);
                 await(activity, () -> count(activity, 1) == 1 && firstRow(activity, 1) != null);
