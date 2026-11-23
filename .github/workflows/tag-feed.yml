@@ -62,7 +62,7 @@ jobs:
             --revision "$revision" \
             --output "${{ steps.feed.outputs.root }}"
           python -m scripts.verify_tag_feed \
-            --catalog-feed "${{ steps.feed.outputs.root }}/catalog"
+            --catalog-feed "${{ steps.feed.outputs.root }}"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
       - name: Publish immutable payload and manifest pointer
