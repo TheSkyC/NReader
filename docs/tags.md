@@ -149,8 +149,11 @@ translated names and aliases in the active locale. It checks aliases by tag ID
 within the eligible type or rule list. It shows both names when
 a translation is available. The order, count threshold, applied-rule
 visibility, and account blocklist eligibility still use the canonical data.
+A shared alias can return each matching tag, and `%` and `_` in a search are
+matched literally rather than treated as SQL wildcards.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
+
 Gallery details show canonical labels immediately, then look up installed
 translations for that gallery's positive site IDs in the background. A
 translated tag button shows both names and can wrap onto multiple lines.

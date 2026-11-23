@@ -45,6 +45,9 @@ configured manifest URL and derives the payload URL from the selected
 descriptor. It requests identity encoding and bounds each response even
 when the server does not declare a length. It stages only the selected
 locale and discards the staging file on success, failure, or cancellation.
+The Android public feed client rejects redirects and has no cookie jar,
+authenticator, or application/network interceptors, so a configured feed
+cannot silently hand off the request to another origin or account context.
 
 ## Enabling the Settings action
 
