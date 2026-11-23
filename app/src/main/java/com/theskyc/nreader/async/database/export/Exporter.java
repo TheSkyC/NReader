@@ -13,6 +13,7 @@ import com.theskyc.nreader.SettingsActivity;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.DownloadTaskStore;
 import com.theskyc.nreader.async.database.SearchPlanStore;
+import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.utility.LogUtility;
@@ -45,6 +46,7 @@ public class Exporter {
         Queries.GalleryBridgeTable.TABLE_NAME,
         Queries.BookmarkTable.TABLE_NAME,
         SearchPlanStore.TABLE_NAME,
+        TagViewStore.TABLE_NAME,
         Queries.DownloadTable.TABLE_NAME,
         DownloadTaskStore.TABLE_NAME,
         Queries.HistoryTable.TABLE_NAME,

@@ -17,6 +17,7 @@ import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
 import com.theskyc.nreader.async.database.DownloadTaskStore;
 import com.theskyc.nreader.async.database.SearchPlanStore;
+import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.IOException;
@@ -123,6 +124,7 @@ public class Importer {
             db.delete(Queries.ReadingProgressTable.TABLE_NAME, null, null);
             db.delete(DownloadTaskStore.TABLE_NAME, null, null);
             db.delete(SearchPlanStore.TABLE_NAME, null, null);
+            db.delete(TagViewStore.TABLE_NAME, null, null);
             Set<String> seenTables = new HashSet<>();
             while (reader.hasNext()) {
                 String tableName = reader.nextName();
@@ -167,6 +169,8 @@ public class Importer {
                     if (tableName.equals(DownloadTaskStore.TABLE_NAME)) validateDownloadTask(values);
                     if (tableName.equals(SearchPlanStore.TABLE_NAME) && !SearchPlanStore.isValid(values, true))
                         throw new IOException("Invalid search plan");
+                    if (tableName.equals(TagViewStore.TABLE_NAME) && !TagViewStore.isValid(values, true))
+                        throw new IOException("Invalid tag view");
                     if (db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE) == -1)
                         throw new IOException("Unable to restore backup row");
                     reader.endObject();

@@ -12,6 +12,7 @@ import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.ReadingProgress;
 import com.theskyc.nreader.async.database.SearchPlanStore;
 import com.theskyc.nreader.async.database.TagCatalog;
+import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.AccountRuntimeTestScope;
@@ -245,6 +246,37 @@ public class ImporterTest {
             fail("Expected invalid plan to fail");
         } catch (IOException expected) {
             assertEquals("Keep", SearchPlanStore.list().get(0).getAsString("name"));
+        }
+    }
+
+    @Test
+    public void tagViewsRoundTripAndInvalidRestoreRollsBack() throws IOException {
+        ContentValues view = new ContentValues();
+        view.put("name", "Artists to review");
+        view.put("query", "artist:");
+        view.put("tag_type", 4);
+        view.put("min_count", 12);
+        view.put("sort_by_name", 1);
+        view.put("status_filter", 0);
+        view.put("translated_only", 1);
+        view.put("pinned", 1);
+        TagViewStore.insert(view);
+
+        byte[] backup = Exporter.currentDatabaseBytes();
+        database.delete(TagViewStore.TABLE_NAME, null, null);
+        restore(new String(backup, StandardCharsets.UTF_8));
+        assertEquals(1, TagViewStore.list().size());
+        assertEquals("Artists to review", TagViewStore.list().get(0).getAsString("name"));
+        assertEquals(1, TagViewStore.list().get(0).getAsInteger("translated_only").intValue());
+
+        try {
+            restore("{\"TagViews\":[{\"id\":1,\"name\":\"bad\",\"query\":\"x\","
+                + "\"tag_type\":7,\"min_count\":1,\"sort_by_name\":0,\"status_filter\":-1,"
+                + "\"translated_only\":0,\"pinned\":0}]}");
+            fail("Expected invalid tag view to fail");
+        } catch (IOException expected) {
+            assertEquals(1, TagViewStore.list().size());
+            assertEquals("Artists to review", TagViewStore.list().get(0).getAsString("name"));
         }
     }
 

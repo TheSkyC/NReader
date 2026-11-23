@@ -235,6 +235,11 @@ Selecting a tag records its canonical ID and type in a bounded local recent list
 The **Recent tags** menu can jump to a supported type page and fill its search;
 the history does not change saved rules or site query identity. The recent-tags
 dialog can clear this local history without changing any tag data.
+A tag manager view can save the current type, search text, minimum count, sort,
+rule-status, and translation-coverage filters. Views are local database rows,
+can be pinned, and remain independent of the active catalog and selected
+translation language. Loading a view restores only its stored filters; it does
+not change saved rules or account blacklist state.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
 On a concrete type page, entering a non-empty search enables **Bulk edit matching
@@ -314,7 +319,8 @@ Account blacklist rows are cleared when their account or revision changes.
 Version 4 exports `TagRules` rows with `idTag`, `name`, `type`, and
 `status` (1 for Avoided, 2 for Accepted). `TagReferences` contains
 `idTag`, `name`, `type`, and `count` only for tags referenced by saved
-galleries and bookmarks. The backup excludes the full directory, its applied
+galleries and bookmarks. `TagViews` contains the local tag-manager view name,
+type, query, and filter values. The backup excludes the full directory, its applied
 revisions, and account blacklist data. Restore replaces the saved rules,
 merges missing reference metadata, and keeps the installed directory and its
 revisions. An authoritative catalog can subsequently correct a provisional
