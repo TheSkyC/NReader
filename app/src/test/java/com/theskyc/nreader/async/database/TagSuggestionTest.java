@@ -188,6 +188,29 @@ public class TagSuggestionTest {
         }
     }
 
+    @Test public void managerCanFilterTypePagesBySavedRuleStatus() {
+        insert(21, "default tag", TagType.TAG);
+        insert(22, "accepted tag", TagType.TAG);
+        insert(23, "avoided tag", TagType.TAG);
+        database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES"
+            + " (22, 'accepted tag', ?, 2), (23, 'avoided tag', ?, 1)",
+            new Object[]{TagType.TAG.getId(), TagType.TAG.getId()});
+
+        try (Cursor accepted = Queries.TagTable.getFilterCursor("", TagType.TAG, false, true,
+            null, TagStatus.ACCEPTED);
+             Cursor avoided = Queries.TagTable.getFilterCursor("", TagType.TAG, false, true,
+                 null, TagStatus.AVOIDED);
+             Cursor defaults = Queries.TagTable.getFilterCursor("", TagType.TAG, false, true,
+                 null, TagStatus.DEFAULT)) {
+            assertEquals(1, accepted.getCount());
+            assertEquals(22, accepted.moveToFirst() ? accepted.getInt(accepted.getColumnIndexOrThrow("idTag")) : -1);
+            assertEquals(1, avoided.getCount());
+            assertEquals(23, avoided.moveToFirst() ? avoided.getInt(avoided.getColumnIndexOrThrow("idTag")) : -1);
+            assertEquals(1, defaults.getCount());
+            assertEquals(21, defaults.moveToFirst() ? defaults.getInt(defaults.getColumnIndexOrThrow("idTag")) : -1);
+        }
+    }
+
     private List<String> names(List<com.theskyc.nreader.api.components.TagSuggestion> suggestions) {
         return suggestions.stream().map(suggestion -> suggestion.getTag().getName()).toList();
     }

@@ -21,4 +21,8 @@
         android:id="@+id/set_min_count"
         android:title="@string/set_minimum_count"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/filter_status"
+        android:title="@string/filter_by_status"
+        app:showAsAction="never" />
 </menu>

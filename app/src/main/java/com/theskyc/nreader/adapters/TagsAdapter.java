@@ -92,12 +92,14 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         lastQuery = query == null ? "" : query;
         String requestedQuery = lastQuery;
         boolean sortedByName = TagV2.isSortedByName();
+        TagStatus statusFilter = tagMode == TagMode.TYPE ? TagV2.getStatusFilter() : null;
         Locale uiLocale = TagLanguage.current(context);
         long requestedRevision = tagMode == TagMode.ONLINE ? Login.currentOnlineTagsRevision() : -1;
         if (tagMode == TagMode.ONLINE && displayedOnlineRevision != requestedRevision && rows.size() > 0) {
             clearVisibleRows();
         }
-        rows.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE, sortedByName, uiLocale),
+        rows.load(() -> Queries.TagTable.getFilterCursor(requestedQuery, type, tagMode == TagMode.ONLINE,
+                sortedByName, uiLocale, statusFilter),
             () -> tagMode != TagMode.ONLINE || (Objects.equals(identity, AuthStore.activeIdentity(context))
                 && requestedRevision >= 0 && requestedRevision == Login.currentOnlineTagsRevision()), (oldCount, newCount) -> {
             displayedOnlineRevision = newCount == 0 ? -1 : requestedRevision;

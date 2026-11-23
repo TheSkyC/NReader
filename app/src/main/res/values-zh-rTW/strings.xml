@@ -207,6 +207,11 @@
     <string name="set_minimum_count">標籤的最少作品數</string>
     <string name="sort_by_title">按標題排列</string>
     <string name="sort_by_popular">按熱度排列</string>
+    <string name="filter_by_status">按規則狀態篩選</string>
+    <string name="filter_status_all">全部標籤</string>
+    <string name="filter_status_default">未設定</string>
+    <string name="filter_status_accepted">僅接受</string>
+    <string name="filter_status_avoided">僅避免</string>
     <string name="next_page_volume_up">音量+切換下一頁</string>
     <string name="next_page_volume_down">音量-切換下一頁</string>
     <string name="change_title_type">更改標題類型</string>

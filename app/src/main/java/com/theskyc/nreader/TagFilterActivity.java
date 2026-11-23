@@ -19,6 +19,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.adapters.TagsAdapter;
+import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.components.widgets.TagTypePage;
@@ -201,6 +202,7 @@ public class TagFilterActivity extends GeneralActivity {
         TagTypePage page = getActualFragment();
         if (id == R.id.reset_tags) createDialog();
         else if (id == R.id.set_min_count) minCountBuild();
+        else if (id == R.id.filter_status) statusFilterBuild();
         else if (id == R.id.sort_by_name) {
             TagV2.updateSortByName(this);
             updateSortItem(item);
@@ -228,6 +230,34 @@ public class TagFilterActivity extends GeneralActivity {
             }
         });
         DefaultDialogs.pageChangerDialog(builder);
+    }
+
+    private void statusFilterBuild() {
+        TagStatus current = TagV2.getStatusFilter();
+        TagStatus[] statuses = {null, TagStatus.DEFAULT, TagStatus.ACCEPTED, TagStatus.AVOIDED};
+        String[] labels = {
+            getString(R.string.filter_status_all),
+            getString(R.string.filter_status_default),
+            getString(R.string.filter_status_accepted),
+            getString(R.string.filter_status_avoided)
+        };
+        int checked = 0;
+        for (int index = 0; index < statuses.length; index++) {
+            if (statuses[index] == current) {
+                checked = index;
+                break;
+            }
+        }
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.filter_by_status)
+            .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                TagV2.updateStatusFilter(this, statuses[which]);
+                TagTypePage page = getActualFragment();
+                if (page != null) page.refilter(query);
+                dialog.dismiss();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
     }
 
 

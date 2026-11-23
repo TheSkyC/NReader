@@ -74,6 +74,7 @@ public class CrashApplication extends Application implements Configuration.Provi
         NetworkUtil.initConnectivity(this);
         TagV2.initMinCount(this);
         TagV2.initSortByName(this);
+        TagV2.initStatusFilter(this);
         TagCatalogSeedWorker.schedule(this);
         TagTranslationKeyRebuildWorker.schedule(this);
         DownloadGalleryV2.loadDownloads(this);

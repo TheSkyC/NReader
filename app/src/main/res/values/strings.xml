@@ -283,6 +283,11 @@
     <string name="set_minimum_count">Minimum gallery count per tag</string>
     <string name="sort_by_title">Sort by title</string>
     <string name="sort_by_popular">Sort by popularity</string>
+    <string name="filter_by_status">Filter by rule status</string>
+    <string name="filter_status_all">All tags</string>
+    <string name="filter_status_default">Not configured</string>
+    <string name="filter_status_accepted">Accepted only</string>
+    <string name="filter_status_avoided">Avoided only</string>
     <string name="next_page_volume_up">Volume up turns to the next page</string>
     <string name="next_page_volume_down">Volume down turns to the next page</string>
     <string name="change_title_type">Change title type</string>

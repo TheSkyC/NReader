@@ -3,6 +3,7 @@ package com.theskyc.nreader.settings;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
@@ -18,6 +19,8 @@ public class TagV2 {
     public static final int MAXTAGS = 100;
     private static int minCount;
     private static boolean sortByName;
+    @Nullable
+    private static TagStatus statusFilter;
 
     public static List<Tag> getTagSet(TagType type) {
         return Queries.TagTable.getAllTagOfType(type);
@@ -87,6 +90,22 @@ public class TagV2 {
 
     public static void initSortByName(Context context) {
         sortByName = context.getSharedPreferences("ScrapedTags", 0).getBoolean("sort_by_name", false);
+    }
+
+    public static void initStatusFilter(Context context) {
+        int ordinal = context.getSharedPreferences("ScrapedTags", 0).getInt("status_filter", -1);
+        statusFilter = ordinal >= 0 && ordinal < TagStatus.values().length ? TagStatus.values()[ordinal] : null;
+    }
+
+    @Nullable
+    public static TagStatus getStatusFilter() {
+        return statusFilter;
+    }
+
+    public static void updateStatusFilter(Context context, @Nullable TagStatus status) {
+        statusFilter = status;
+        context.getSharedPreferences("ScrapedTags", 0).edit()
+            .putInt("status_filter", status == null ? -1 : status.ordinal()).apply();
     }
 
     public static boolean updateSortByName(Context context) {
