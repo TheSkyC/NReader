@@ -114,6 +114,21 @@ payload files available for clients that already read the old manifest. To
 correct a translation, publish a corrected pack at a higher revision for
 that locale. The release tool does not drop a locale from the feed.
 
+Catalog and translation manifests are independent. When a new translation
+references IDs added to a catalog, publish and verify the catalog first, then
+publish the translations. This ordering alone cannot update every client:
+offline devices, cached responses, and failed catalog updates may leave an
+older catalog installed. Such a device rejects the entire translation pack and
+keeps its installed locale unchanged; after its catalog receives the missing
+IDs, the user can retry the same pack revision. A build without a configured
+catalog feed may need an app update to receive a newer bundled catalog.
+
+To support devices still using a specific older catalog, verify the staged
+translation feed against that snapshot as well as the target catalog with
+`scripts.verify_tag_feed --catalog <snapshot> --translation-feed <directory>`.
+A successful check covers that snapshot's IDs, not all older or customized
+devices. Retain old immutable payloads for clients that read earlier manifests.
+
 This tool writes local release files. The digest binds bytes to the manifest
 and does not establish approval, publisher identity, or freshness on a first
 install. A production origin, publisher ownership, contribution license,

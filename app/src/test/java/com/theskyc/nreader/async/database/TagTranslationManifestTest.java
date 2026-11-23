@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -121,6 +122,48 @@ public class TagTranslationManifestTest {
             assertEquals(1, rows.getCount());
             assertTrue(rows.moveToFirst());
             assertEquals("\u753b\u5bb6", rows.getString(0));
+        }
+    }
+
+    @Test public void newerTranslationCanBeRetriedAfterCatalogCatchesUp() throws Exception {
+        assertTrue(pack("ja", 2, PACK).apply(database, stage(PACK), () -> false));
+        String update = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":3,\"entries\":["
+            + "{\"id\":1,\"name\":\"updated\",\"aliases\":[\"new alias\"]},"
+            + "{\"id\":2,\"name\":\"new tag\",\"aliases\":[\"new tag alias\"]}]}";
+        TagTranslationManifest.Pack descriptor = pack("ja", 3, update);
+        assertThrows(IOException.class, () -> descriptor.apply(database, stage(update), () -> false));
+        assertEquals(Map.of("ja", 2), TagTranslationCatalog.installedPacks(database));
+        try (Cursor rows = database.rawQuery("SELECT displayName FROM TagTranslations WHERE locale = 'ja'", null);
+             Cursor aliases = database.rawQuery("SELECT alias FROM TagTranslationAliases WHERE locale = 'ja'", null)) {
+            assertTrue(rows.moveToFirst());
+            assertEquals("\u753b\u5bb6", rows.getString(0));
+            assertEquals(1, rows.getCount());
+            assertTrue(aliases.moveToFirst());
+            assertEquals("\u3048", aliases.getString(0));
+            assertEquals(1, aliases.getCount());
+        }
+
+        database.execSQL(TagCatalog.CREATE_STATE);
+        String catalog = "[[1,\"canonical\",100,3],[2,\"new\",10,3],[3,\"parody\",1,1],"
+            + "[4,\"character\",1,2],[5,\"artist\",1,4],[6,\"group\",1,5],"
+            + "[7,\"language\",1,6],[8,\"category\",1,7]]";
+        assertTrue(TagCatalog.applyPublished(database, new ByteArrayInputStream(bytes(catalog)), 1, 1, () -> false));
+        assertTrue(descriptor.apply(database, stage(update), () -> false));
+        assertEquals(Map.of("ja", 3), TagTranslationCatalog.installedPacks(database));
+        try (Cursor rows = database.rawQuery("SELECT idTag, displayName FROM TagTranslations WHERE locale = 'ja' ORDER BY idTag", null);
+             Cursor aliases = database.rawQuery("SELECT idTag, alias FROM TagTranslationAliases WHERE locale = 'ja' ORDER BY idTag", null)) {
+            assertEquals(2, rows.getCount());
+            assertTrue(rows.moveToFirst());
+            assertEquals(1, rows.getInt(0));
+            assertEquals("updated", rows.getString(1));
+            assertTrue(rows.moveToNext());
+            assertEquals(2, rows.getInt(0));
+            assertEquals("new tag", rows.getString(1));
+            assertEquals(2, aliases.getCount());
+            assertTrue(aliases.moveToFirst());
+            assertEquals("new alias", aliases.getString(1));
+            assertTrue(aliases.moveToNext());
+            assertEquals("new tag alias", aliases.getString(1));
         }
     }
 
