@@ -49,3 +49,19 @@ Keep the device awake and unlocked for the whole run. On Android 9 emulators,
 `adb shell cmd window dismiss-keyguard` may be needed after switching to a
 temporary user; a locked or dreaming display can pause the launched activity and
 make the harness time out before any UI assertion runs.
+
+## Local translation pack picker
+
+On a disposable device, use **Settings → Tag languages → Install or update**
+to select a valid pack through the system document picker. Reopen **Tag
+languages** and confirm that its locale and revision are listed. This checks
+the picker, provider permission, and installation path; a successful dialog
+alone does not verify translated search or replacement and recovery behavior.
+
+When testing with multiple Android users, ensure the document is visible to the
+foreground user's document provider. A file pushed to the shell user's
+`/sdcard` can belong to a different user from the one running the app. Check
+the foreground user with `adb -s $serial shell am get-current-user` and confirm
+the document is visible in the picker before interpreting an empty list as an
+import failure. Remove the test document and restore the original user after
+the check.
