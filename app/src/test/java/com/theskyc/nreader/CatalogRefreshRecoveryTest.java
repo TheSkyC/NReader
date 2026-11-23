@@ -65,12 +65,52 @@ public class CatalogRefreshRecoveryTest {
 
             missing.restore(context, UUID.randomUUID());
             awaitStatus(missing, CatalogRefreshViewModel.Status.FAILED);
+
+            original.start(context);
+            UUID replacedId = original.requestId();
+            awaitWork(manager, replacedId);
+            restored.clearRequest();
+            restored.restore(context, replacedId);
+            original.start(context);
+            UUID replacementId = original.requestId();
+            assertTrue(!replacedId.equals(replacementId));
+            assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, replacementId).getState());
+            awaitReplacedStatus(restored);
+            awaitStatus(original, CatalogRefreshViewModel.Status.QUEUED);
+            assertEquals(replacementId, original.requestId());
+            WorkInfo replaced = awaitFuture(manager.getWorkInfoById(replacedId));
+            assertTrue(replaced == null || replaced.getState() == WorkInfo.State.CANCELLED);
+            awaitFuture(manager.cancelWorkById(replacementId).getResult());
+            awaitStatus(original, CatalogRefreshViewModel.Status.CANCELLED);
         } finally {
             original.clearRequest();
             restored.clearRequest();
             missing.clearRequest();
             executor.shutdownNow();
         }
+    }
+
+    private static void awaitReplacedStatus(CatalogRefreshViewModel model) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        do {
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            CatalogRefreshViewModel.Status current = model.status().getValue();
+            if (current == CatalogRefreshViewModel.Status.CANCELLED
+                || current == CatalogRefreshViewModel.Status.FAILED) return;
+            Thread.sleep(10);
+        } while (System.nanoTime() < deadline);
+        throw new AssertionError("Replaced work did not finish: " + model.status().getValue());
+    }
+
+    private static WorkInfo awaitWork(WorkManager manager, UUID id) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        WorkInfo info;
+        do {
+            info = awaitFuture(manager.getWorkInfoById(id));
+            if (info == null) Thread.sleep(10);
+        } while (info == null && System.nanoTime() < deadline);
+        assertNotNull(info);
+        return info;
     }
 
     private static <T> T awaitFuture(ListenableFuture<T> future) throws Exception {
