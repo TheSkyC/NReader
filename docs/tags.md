@@ -62,9 +62,15 @@ replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
 
-When removing a pack from Settings, the app checks its revision in the removal
-transaction. If it changed since the list was displayed, the app keeps the pack
-and asks the user to reopen the list.
+Database version 25 records a durable change generation for each locale,
+including removed locales. Settings checks the displayed installation's revision
+and generation in the removal transaction, including after a same-revision
+reinstall. Local imports capture a generation before opening the document;
+online installs capture one before downloading. If that locale changes before
+an otherwise eligible import commits, the import leaves the current state intact
+and asks the user to retry. Changes to other locales do not prevent installation.
+These checks do not hold a database write transaction while reading, validating,
+or downloading.
 
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether

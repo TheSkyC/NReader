@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 24;
+    private static final int DATABASE_VERSION = 25;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -93,6 +93,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 21) db.execSQL(Queries.TagTable.CREATE_SUGGESTION_INDEX);
         if (oldVersion <= 22) TagTranslationCatalog.createTables(db);
         if (oldVersion == 23) TagTranslationCatalog.upgradeSearchKeys(db);
+        if (oldVersion <= 24) TagTranslationCatalog.createGenerationTable(db);
         if (oldVersion == 2) insertLanguageTags();
         if (oldVersion <= 3) insertCategoryTags();
         if (oldVersion <= 4) db.execSQL(Queries.BookmarkTable.CREATE_TABLE);

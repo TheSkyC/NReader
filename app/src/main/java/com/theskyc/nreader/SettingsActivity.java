@@ -214,7 +214,7 @@ public class SettingsActivity extends GeneralActivity {
     public void manageTranslationPacks() {
         new Thread(() -> {
             try {
-                Map<String, Integer> packs = TagTranslationCatalog.installedPacks(Database.getDatabase());
+                Map<String, TagTranslationCatalog.PackState> packs = TagTranslationCatalog.installedPackStates(Database.getDatabase());
                 runOnUiThread(() -> {
                     if (!isFinishing() && !isDestroyed()) showTranslationPacks(packs);
                 });
@@ -225,7 +225,7 @@ public class SettingsActivity extends GeneralActivity {
         }).start();
     }
 
-    private void showTranslationPacks(Map<String, Integer> packs) {
+    private void showTranslationPacks(Map<String, TagTranslationCatalog.PackState> packs) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_translation_packs_title)
             .setNegativeButton(R.string.cancel, null)
@@ -239,7 +239,7 @@ public class SettingsActivity extends GeneralActivity {
         } else {
             List<String> locales = new ArrayList<>(packs.keySet());
             String[] labels = locales.stream()
-                .map(locale -> getString(R.string.tag_translation_pack_item, locale, packs.get(locale)))
+                .map(locale -> getString(R.string.tag_translation_pack_item, locale, packs.get(locale).revision))
                 .toArray(String[]::new);
             builder.setItems(labels, (dialog, which) -> {
                 String locale = locales.get(which);
@@ -352,14 +352,14 @@ public class SettingsActivity extends GeneralActivity {
         T run() throws IOException;
     }
 
-    private void confirmRemoveTranslationPack(String locale, int revision) {
+    private void confirmRemoveTranslationPack(String locale, TagTranslationCatalog.PackState state) {
         new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_translation_remove_title)
             .setMessage(getString(R.string.tag_translation_remove_message, locale))
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.tag_translation_remove, (dialog, which) -> new Thread(() -> {
                 try {
-                    boolean removed = TagTranslationCatalog.removeIfRevision(Database.getDatabase(), locale, revision);
+                    boolean removed = TagTranslationCatalog.removeIfUnchanged(Database.getDatabase(), locale, state);
                     runOnUiThread(() -> showTranslationToast(removed
                         ? getString(R.string.tag_translation_removed, locale)
                         : getString(R.string.tag_translation_remove_changed), Toast.LENGTH_LONG));
@@ -417,6 +417,8 @@ public class SettingsActivity extends GeneralActivity {
                 });
                 translationImportErrorDialog = builder.show();
             }
+        } else if (error instanceof TagTranslationCatalog.ChangedDuringImportException) {
+            Toast.makeText(this, R.string.tag_translation_import_changed, Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(this, fallbackMessage, Toast.LENGTH_LONG).show();
         }

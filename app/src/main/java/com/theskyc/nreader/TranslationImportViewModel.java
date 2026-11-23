@@ -1,6 +1,7 @@
 package com.theskyc.nreader;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -80,10 +81,12 @@ public class TranslationImportViewModel extends ViewModel {
     }
 
     private static boolean importPack(Context context, Uri uri) throws IOException {
+        SQLiteDatabase database = Database.getDatabase();
+        long generation = TagTranslationCatalog.generationSnapshot(database);
         InputStream input = context.getContentResolver().openInputStream(uri);
         if (input == null) throw new IOException("Unable to open selected translation pack");
         // The importer closes the stream before committing the translation.
-        return TagTranslationCatalog.apply(Database.getDatabase(), input, context.getCacheDir(),
-            () -> Thread.currentThread().isInterrupted());
+        return TagTranslationCatalog.apply(database, input, context.getCacheDir(),
+            generation, () -> Thread.currentThread().isInterrupted());
     }
 }

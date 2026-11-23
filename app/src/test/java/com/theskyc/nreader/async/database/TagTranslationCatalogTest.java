@@ -3,6 +3,7 @@ package com.theskyc.nreader.async.database;
 import android.app.Application;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
 import com.theskyc.nreader.api.components.TagSuggestion;
 import com.theskyc.nreader.api.enums.TagType;
@@ -186,18 +187,71 @@ public class TagTranslationCatalogTest {
     @Test public void removalRejectsStaleRevisionAndPreservesTheUpdatedPack() throws IOException {
         assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"old\"}]")));
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"other\"}]")));
-        int selectedRevision = TagTranslationCatalog.installedRevision(database, "ja");
+        TagTranslationCatalog.PackState selected = TagTranslationCatalog.installedPackStates(database).get("ja");
+        assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.removeIfUnchanged(database, "zh-Hans", selected));
         assertTrue(apply(pack("ja", 2, "[{\"id\":1,\"name\":\"new\",\"aliases\":[\"alias\"]}]")));
 
-        assertFalse(TagTranslationCatalog.removeIfRevision(database, "ja", selectedRevision));
+        assertFalse(TagTranslationCatalog.removeIfUnchanged(database, "ja", selected));
         assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
         assertEquals("new", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
         assertEquals(1, scalar("SELECT COUNT(*) FROM TagTranslationAliases WHERE locale='ja'"));
-        assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.removeIfRevision(database, "ja", 0));
-        assertTrue(TagTranslationCatalog.removeIfRevision(database, "ja", 2));
-        assertFalse(TagTranslationCatalog.removeIfRevision(database, "ja", 2));
+        assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.removeIfUnchanged(database, "ja", null));
+        TagTranslationCatalog.PackState current = TagTranslationCatalog.installedPackStates(database).get("ja");
+        assertTrue(TagTranslationCatalog.removeIfUnchanged(database, "ja", current));
+        assertFalse(TagTranslationCatalog.removeIfUnchanged(database, "ja", current));
         assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
         assertEquals(1, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
+    }
+
+    @Test public void staleListCannotRemoveAReinstalledSameRevision() throws IOException {
+        String first = pack("ja", 1, "[{\"id\":1,\"name\":\"first\"}]");
+        assertTrue(apply(first));
+        TagTranslationCatalog.PackState displayed = TagTranslationCatalog.installedPackStates(database).get("ja");
+        TagTranslationCatalog.remove(database, "ja");
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"reinstalled\"}]")));
+        assertFalse(TagTranslationCatalog.removeIfUnchanged(database, "ja", displayed));
+        assertEquals("reinstalled", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
+    }
+
+    @Test public void removalDuringPreparationRejectsImportAndAllowsRetry() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\"}]")));
+        String update = pack("ja", 2, "[{\"id\":1,\"name\":\"after\"}]");
+        FilterInputStream input = new FilterInputStream(bytes(update)) {
+            private boolean removed;
+            @Override public int read(byte[] buffer, int offset, int length) throws IOException {
+                if (!removed) {
+                    TagTranslationCatalog.remove(database, "ja");
+                    removed = true;
+                }
+                return super.read(buffer, offset, length);
+            }
+        };
+        assertThrows(TagTranslationCatalog.ChangedDuringImportException.class,
+            () -> TagTranslationCatalog.apply(database, input, scratch.getRoot(), () -> false));
+        assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertTrue(apply(update));
+        assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
+    }
+
+    @Test public void unrelatedLocaleChangeDoesNotPreventImport() throws IOException {
+        long generation = TagTranslationCatalog.generationSnapshot(database);
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"one\"}]")));
+        assertTrue(TagTranslationCatalog.apply(database,
+            bytes(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"two\"}]")), scratch.getRoot(), generation, () -> false));
+    }
+
+    @Test public void generationWriteFailureRollsBackRemovalAndAllowsRetry() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\"}]")));
+        long generation = TagTranslationCatalog.generationSnapshot(database);
+        TagTranslationCatalog.PackState selected = TagTranslationCatalog.installedPackStates(database).get("ja");
+        database.execSQL("CREATE TRIGGER fail_translation_generation BEFORE INSERT ON TagTranslationGenerations"
+            + " BEGIN SELECT RAISE(ABORT, 'synthetic generation failure'); END");
+        assertThrows(SQLiteException.class, () -> TagTranslationCatalog.removeIfUnchanged(database, "ja", selected));
+        assertEquals(generation, TagTranslationCatalog.generationSnapshot(database));
+        assertEquals("before", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "ja"));
+        database.execSQL("DROP TRIGGER fail_translation_generation");
+        assertTrue(TagTranslationCatalog.removeIfUnchanged(database, "ja", selected));
     }
 
     @Test public void scratchWriteFailureRetainsInstalledDataAndAllowsSameRevisionRetry() throws IOException {

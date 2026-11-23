@@ -53,6 +53,8 @@ public final class TagTranslationCatalog {
         + " PRIMARY KEY (idTag, locale, aliasKey))";
     private static final String CREATE_STATE = "CREATE TABLE IF NOT EXISTS TagTranslationState ("
         + "locale TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK (revision > 0))";
+    private static final String CREATE_GENERATIONS = "CREATE TABLE IF NOT EXISTS TagTranslationGenerations ("
+        + "locale TEXT PRIMARY KEY NOT NULL, generation INTEGER NOT NULL CHECK (generation > 0))";
     private static final String CREATE_DISPLAY_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslations_locale_key_idx"
         + " ON TagTranslations (locale, displayKey, idTag)";
     private static final String CREATE_ALIAS_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslationAliases_locale_key_idx"
@@ -104,8 +106,66 @@ public final class TagTranslationCatalog {
         database.execSQL(CREATE_TABLE);
         database.execSQL(CREATE_ALIASES);
         database.execSQL(CREATE_STATE);
+        createGenerationTable(database);
         database.execSQL(CREATE_DISPLAY_INDEX);
         database.execSQL(CREATE_ALIAS_INDEX);
+    }
+
+    static void createGenerationTable(SQLiteDatabase database) {
+        database.execSQL(CREATE_GENERATIONS);
+        database.execSQL("CREATE INDEX IF NOT EXISTS TagTranslationGenerations_generation_idx"
+            + " ON TagTranslationGenerations (generation)");
+    }
+
+    public static long generationSnapshot(SQLiteDatabase database) {
+        try (Cursor cursor = database.rawQuery("SELECT COALESCE(MAX(generation), 0) FROM TagTranslationGenerations", null)) {
+            cursor.moveToFirst();
+            return cursor.getLong(0);
+        }
+    }
+
+    private static long localeGeneration(SQLiteDatabase database, String locale) {
+        try (Cursor cursor = database.rawQuery("SELECT generation FROM TagTranslationGenerations WHERE locale = ?",
+            new String[]{locale})) {
+            return cursor.moveToFirst() ? cursor.getLong(0) : 0;
+        }
+    }
+
+    private static void advanceGeneration(SQLiteDatabase database, String locale) {
+        long current = generationSnapshot(database);
+        if (current == Long.MAX_VALUE) throw new IllegalStateException("Translation generation exhausted");
+        database.execSQL("INSERT OR REPLACE INTO TagTranslationGenerations (locale, generation) VALUES (?, ?)",
+            new Object[]{locale, current + 1});
+    }
+
+    public static final class PackState {
+        private final String locale;
+        public final int revision;
+        public final long generation;
+
+        private PackState(String locale, int revision, long generation) {
+            this.locale = locale;
+            this.revision = revision;
+            this.generation = generation;
+        }
+    }
+
+    public static Map<String, PackState> installedPackStates(SQLiteDatabase database) {
+        Map<String, PackState> packs = new TreeMap<>();
+        try (Cursor cursor = database.rawQuery("SELECT s.locale, s.revision, COALESCE(g.generation, 0)"
+            + " FROM TagTranslationState s LEFT JOIN TagTranslationGenerations g ON g.locale = s.locale", null)) {
+            while (cursor.moveToNext()) {
+                String locale = cursor.getString(0);
+                packs.put(locale, new PackState(locale, cursor.getInt(1), cursor.getLong(2)));
+            }
+        }
+        return packs;
+    }
+
+    public static final class ChangedDuringImportException extends IOException {
+        private ChangedDuringImportException() {
+            super("Translation pack changed during import");
+        }
     }
 
     static void upgradeSearchKeys(SQLiteDatabase database) {
@@ -173,9 +233,20 @@ public final class TagTranslationCatalog {
         return apply(database, input, scratchDirectory, null, 0, cancelled);
     }
 
+    public static boolean apply(SQLiteDatabase database, InputStream input, File scratchDirectory,
+                                long generation, BooleanSupplier cancelled) throws IOException {
+        if (generation < 0) throw new IllegalArgumentException("Invalid translation generation");
+        return apply(database, input, scratchDirectory, null, 0, generation, cancelled);
+    }
+
     static boolean apply(SQLiteDatabase database, InputStream input, File scratchDirectory, String expectedLocale,
                          int expectedRevision, BooleanSupplier cancelled) throws IOException {
-        return apply(database, input, () -> openScratch(scratchDirectory), expectedLocale, expectedRevision, cancelled);
+        return apply(database, input, () -> openScratch(scratchDirectory), expectedLocale, expectedRevision, -1, cancelled);
+    }
+
+    static boolean apply(SQLiteDatabase database, InputStream input, File scratchDirectory, String expectedLocale,
+                         int expectedRevision, long generation, BooleanSupplier cancelled) throws IOException {
+        return apply(database, input, () -> openScratch(scratchDirectory), expectedLocale, expectedRevision, generation, cancelled);
     }
 
     static SeekableByteChannel openScratch(File directory) throws IOException {
@@ -192,6 +263,11 @@ public final class TagTranslationCatalog {
 
     static boolean apply(SQLiteDatabase database, InputStream input, ScratchOpener opener, String expectedLocale,
                          int expectedRevision, BooleanSupplier cancelled) throws IOException {
+        return apply(database, input, opener, expectedLocale, expectedRevision, -1, cancelled);
+    }
+
+    private static boolean apply(SQLiteDatabase database, InputStream input, ScratchOpener opener, String expectedLocale,
+                                 int expectedRevision, long generation, BooleanSupplier cancelled) throws IOException {
         SeekableByteChannel scratch = null;
         try {
             PreparedRows prepared;
@@ -199,6 +275,7 @@ public final class TagTranslationCatalog {
             // A supplementary code point can be written as two escaped UTF-16 code units.
             try (JsonReader reader = JsonStringGuard.open(new BoundedInputStream(input, cancelled), MAX_TEXT_CODE_POINTS * 12 + 1)) {
                 checkCancelled(cancelled);
+                if (generation < 0) generation = generationSnapshot(database);
                 scratch = opener.open();
                 // The channel owns the scratch file; flush its writer before rewinding for SQLite.
                 DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(scratch)));
@@ -215,7 +292,7 @@ public final class TagTranslationCatalog {
             scratch.position(0);
             DataInputStream rows = new DataInputStream(new BufferedInputStream(Channels.newInputStream(scratch)));
             checkCancelled(cancelled);
-            return install(database, metadata, rows, prepared.entries, prepared.aliases, cancelled);
+            return install(database, metadata, rows, prepared.entries, prepared.aliases, generation, cancelled);
         } finally {
             if (scratch != null) {
                 try {
@@ -228,11 +305,12 @@ public final class TagTranslationCatalog {
     }
 
     private static boolean install(SQLiteDatabase database, PackMetadata metadata, DataInputStream rows,
-                                   int entryCount, int aliasCount, BooleanSupplier cancelled) throws IOException {
+                                   int entryCount, int aliasCount, long generation, BooleanSupplier cancelled) throws IOException {
         database.beginTransactionNonExclusive();
         try {
             checkCancelled(cancelled);
             if (metadata.revision <= installedRevision(database, metadata.locale)) return false;
+            if (localeGeneration(database, metadata.locale) > generation) throw new ChangedDuringImportException();
             database.execSQL("DELETE FROM TagTranslationAliases WHERE locale = ?", new Object[]{metadata.locale});
             database.execSQL("DELETE FROM TagTranslations WHERE locale = ?", new Object[]{metadata.locale});
             try (TranslationInsert entries = new TranslationInsert(database, metadata.locale, entryCount,
@@ -255,6 +333,7 @@ public final class TagTranslationCatalog {
             checkCancelled(cancelled);
             database.execSQL("INSERT OR REPLACE INTO TagTranslationState (locale, revision) VALUES (?, ?)",
                 new Object[]{metadata.locale, metadata.revision});
+            advanceGeneration(database, metadata.locale);
             checkCancelled(cancelled);
             database.setTransactionSuccessful();
         } finally {
@@ -265,23 +344,25 @@ public final class TagTranslationCatalog {
     }
 
     public static void remove(SQLiteDatabase database, String locale) {
-        removeInternal(database, locale, null);
+        removeInternal(database, locale, null, null);
     }
 
-    /** Removes a locale only if its revision still matches. */
-    public static boolean removeIfRevision(SQLiteDatabase database, String locale, int expectedRevision) {
-        if (expectedRevision <= 0) throw new IllegalArgumentException("Invalid expected translation revision");
-        return removeInternal(database, locale, expectedRevision);
+    public static boolean removeIfUnchanged(SQLiteDatabase database, String locale, PackState expected) {
+        if (expected == null) throw new IllegalArgumentException("Missing translation state");
+        if (!expected.locale.equals(validateLocale(locale))) throw new IllegalArgumentException("Translation locale mismatch");
+        return removeInternal(database, locale, expected.revision, expected.generation);
     }
 
-    private static boolean removeInternal(SQLiteDatabase database, String locale, Integer expectedRevision) {
+    private static boolean removeInternal(SQLiteDatabase database, String locale, Integer expectedRevision, Long expectedGeneration) {
         String canonicalLocale = validateLocale(locale);
         database.beginTransactionNonExclusive();
         try {
             if (expectedRevision != null && installedRevision(database, canonicalLocale) != expectedRevision) return false;
+            if (expectedGeneration != null && localeGeneration(database, canonicalLocale) != expectedGeneration) return false;
             database.delete("TagTranslationAliases", "locale = ?", new String[]{canonicalLocale});
             database.delete("TagTranslations", "locale = ?", new String[]{canonicalLocale});
             database.delete("TagTranslationState", "locale = ?", new String[]{canonicalLocale});
+            advanceGeneration(database, canonicalLocale);
             database.setTransactionSuccessful();
         } finally {
             database.endTransaction();

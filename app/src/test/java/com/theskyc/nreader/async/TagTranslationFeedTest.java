@@ -190,6 +190,20 @@ public class TagTranslationFeedTest {
         assertEmptyStagingDirectory();
     }
 
+    @Test public void removalDuringDownloadDoesNotReinstallThePack() throws Exception {
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(bytes(PACK)), files.getRoot(), () -> false));
+        String update = PACK.replace("\"revision\":1", "\"revision\":2");
+        TagTranslationManifest.Pack pack = TagTranslationManifest.parse(bytes(manifest(sha256(update), 2, update)))
+            .getPacks().get("ja");
+        TagTranslationFeed feed = feed(chain -> {
+            TagTranslationCatalog.remove(database, "ja");
+            return response(chain, 200, body(update));
+        });
+        assertThrows(TagTranslationCatalog.ChangedDuringImportException.class, () -> feed.install(database, pack));
+        assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEmptyStagingDirectory();
+    }
+
     @Test public void cancelsAnActivePackCallAndDiscardsStaging() throws Exception {
         String digest = sha256(PACK);
         TagTranslationManifest.Pack pack = TagTranslationManifest.parse(bytes(manifest(digest, 1, PACK)))

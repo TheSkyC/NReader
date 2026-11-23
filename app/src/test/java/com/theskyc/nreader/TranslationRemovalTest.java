@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.Global;
 
@@ -40,12 +41,14 @@ public class TranslationRemovalTest {
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
-            database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('ja', 2)");
+            database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('ja', 1)");
+            Map<String, TagTranslationCatalog.PackState> displayed = TagTranslationCatalog.installedPackStates(database);
+            database.execSQL("UPDATE TagTranslationState SET revision = 2 WHERE locale = 'ja'");
             try (ActivityController<SettingsActivity> controller =
                      Robolectric.buildActivity(SettingsActivity.class).setup()) {
                 SettingsActivity activity = controller.get();
                 ReflectionHelpers.callInstanceMethod(activity, "showTranslationPacks",
-                    ReflectionHelpers.ClassParameter.from(Map.class, Map.of("ja", 1)));
+                    ReflectionHelpers.ClassParameter.from(Map.class, displayed));
                 AlertDialog list = (AlertDialog) ShadowDialog.getLatestDialog();
                 list.getListView().performItemClick(list.getListView().getChildAt(0), 0, 0);
                 AlertDialog confirm = (AlertDialog) ShadowDialog.getLatestDialog();

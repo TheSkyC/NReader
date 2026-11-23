@@ -50,13 +50,14 @@ public final class TagTranslationFeed {
 
     public synchronized boolean install(SQLiteDatabase database, TagTranslationManifest.Pack pack) throws IOException {
         download.checkCancelled();
+        long generation = TagTranslationCatalog.generationSnapshot(database);
         if (pack.revision <= TagTranslationCatalog.installedRevision(database, pack.locale)) return false;
         File file = createStagingFile(new File(cacheDirectory.get(), "tag-translation-feed"));
         try {
             try (OutputStream output = new FileOutputStream(file)) {
                 download.copy(pack.payloadUrl(manifestUrl), output, pack.sizeBytes, true);
             }
-            return pack.apply(database, file, () -> cancelled);
+            return pack.apply(database, file, generation, () -> cancelled);
         } finally {
             deleteStaged(file);
         }

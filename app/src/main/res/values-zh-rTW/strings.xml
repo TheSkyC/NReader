@@ -536,6 +536,7 @@
     <string name="tag_translation_remove">移除</string>
     <string name="tag_translation_removed">已移除 %1$s。</string>
     <string name="tag_translation_remove_changed">語言包已變更，請重新開啟清單後再移除。</string>
+    <string name="tag_translation_import_changed">匯入期間語言包已變更。如仍需安裝，請重試。</string>
     <string name="tag_translation_installed">已安裝或更新標籤語言包。</string>
     <string name="tag_translation_not_newer">此語言包的相同或更新版本已安裝。</string>
     <string name="tag_translation_install_failed">無法安裝此標籤語言包。</string>

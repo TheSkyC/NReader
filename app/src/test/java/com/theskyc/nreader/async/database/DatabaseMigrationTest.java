@@ -24,6 +24,30 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class DatabaseMigrationTest {
     @Test
+    public void version24UpgradePreservesInstalledTranslations() {
+        Context context = RuntimeEnvironment.getApplication();
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('ja', 3)");
+            database.execSQL("INSERT INTO TagTranslations (idTag, locale, displayName, displayKey)"
+                + " VALUES (1, 'ja', 'name', 'name')");
+            database.execSQL("DROP TABLE TagTranslationGenerations");
+            database.setVersion(24);
+        }
+        try (DatabaseHelper helper = new DatabaseHelper(context)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            assertEquals(25, database.getVersion());
+            assertEquals(3, TagTranslationCatalog.installedRevision(database, "ja"));
+            assertEquals("name", scalarString(database, "SELECT displayName FROM TagTranslations WHERE locale='ja'"));
+            assertEquals(0, TagTranslationCatalog.generationSnapshot(database));
+            TagTranslationCatalog.PackState state = TagTranslationCatalog.installedPackStates(database).get("ja");
+            assertTrue(TagTranslationCatalog.removeIfUnchanged(database, "ja", state));
+            assertEquals(1, TagTranslationCatalog.generationSnapshot(database));
+        }
+    }
+
+    @Test
     public void version22UpgradeCreatesTranslationTablesAndIndexes() {
         Context context = RuntimeEnvironment.getApplication();
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
@@ -36,7 +60,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM sqlite_master"
                 + " WHERE type='table' AND name='TagTranslations'"));
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM sqlite_master"
@@ -65,7 +89,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(7, TagTranslationCatalog.installedRevision(database, "el"));
             assertEquals(5, TagTranslationCatalog.installedRevision(database, "ja"));
             assertEquals("\u03bf\u03c3", scalarString(database,
@@ -113,7 +137,7 @@ public class DatabaseMigrationTest {
 
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(7, TagTranslationCatalog.installedRevision(database, "el"));
             assertEquals("\u039f\u03a3", scalarString(database,
                 "SELECT displayName FROM TagTranslations WHERE idTag = 1 AND locale = 'el'"));
@@ -135,7 +159,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM sqlite_master"
                 + " WHERE type='index' AND name='Tags_type_name_suggestion_idx'"));
         }
@@ -161,7 +185,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(43, TagCatalog.installedSeedRevision(database));
             assertEquals(TagStatus.ACCEPTED, Queries.TagTable.getTagById(132).getStatus());
             assertEquals(TagStatus.DEFAULT, Queries.TagTable.getTagById(133).getStatus());
@@ -187,7 +211,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(42, TagCatalog.installedRevision(database));
             assertEquals(0, TagCatalog.installedSeedRevision(database));
         }
@@ -204,7 +228,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(42, TagCatalog.installedRevision(database));
             assertEquals(43, TagCatalog.installedSeedRevision(database));
         }
@@ -222,7 +246,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM Bookmark WHERE page=2"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM SearchPlans"));
             assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReaderBookmarks"));
@@ -256,7 +280,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(7, scalar(database, "SELECT page FROM Resume WHERE id_gallery=123"));
             assertEquals(99, scalar(database, "SELECT time FROM Favorite WHERE id_gallery=123"));
             assertEquals(12345, scalar(database, "SELECT color FROM Status WHERE name='Custom'"));
@@ -286,7 +310,7 @@ public class DatabaseMigrationTest {
         }
         try (DatabaseHelper helper = new DatabaseHelper(context)) {
             SQLiteDatabase database = helper.getWritableDatabase();
-            assertEquals(24, database.getVersion());
+            assertEquals(25, database.getVersion());
             assertEquals(1, scalar(database, "SELECT COUNT(*) FROM ReadingProgress " +
                 "WHERE id_gallery=123 AND page=7 AND offset=0.5 AND updated_at=456"));
             database.execSQL("INSERT INTO ReaderBookmarks (id_gallery,page,title,created_at,updated_at) " +
@@ -363,7 +387,7 @@ public class DatabaseMigrationTest {
             }
             try (DatabaseHelper helper = new DatabaseHelper(context)) {
                 SQLiteDatabase database = helper.getWritableDatabase();
-                assertEquals(24, database.getVersion());
+                assertEquals(25, database.getVersion());
                 assertEquals(0, scalar(database, "SELECT COUNT(time) FROM Favorite"));
                 assertEquals(0, scalar(database, "SELECT COUNT(range_start) FROM Downloads"));
                 assertEquals(0, scalar(database, "SELECT COUNT(*) FROM ReadingProgress"));

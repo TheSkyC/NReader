@@ -125,11 +125,16 @@ public final class TagTranslationManifest {
 
         /** The staged file must be app-private and unchanged during verification and import. */
         public boolean apply(SQLiteDatabase database, File staged, BooleanSupplier cancelled) throws IOException {
+            return apply(database, staged, TagTranslationCatalog.generationSnapshot(database), cancelled);
+        }
+
+        public boolean apply(SQLiteDatabase database, File staged, long generation, BooleanSupplier cancelled) throws IOException {
+            if (generation < 0) throw new IllegalArgumentException("Invalid translation generation");
             if (revision <= TagTranslationCatalog.installedRevision(database, locale)) return false;
             try (FileInputStream input = new FileInputStream(staged)) {
                 TagFeedFiles.verifyAndRewind(input, sizeBytes, sha256, cancelled);
                 return TagTranslationCatalog.apply(database, input, staged.getAbsoluteFile().getParentFile(),
-                    locale, revision, cancelled);
+                    locale, revision, generation, cancelled);
             }
         }
     }
