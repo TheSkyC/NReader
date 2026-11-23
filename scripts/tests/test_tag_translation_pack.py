@@ -42,7 +42,7 @@ class TagTranslationPackTest(unittest.TestCase):
         result = builder.build_pack(source, "zh-Hans", 4, {1, 2})
 
         self.assertEqual(
-            ("{\"schemaVersion\":1,\"locale\":\"zh-Hans\",\"revision\":4,\"entries\":["
+            ("{\"schemaVersion\":2,\"locale\":\"zh-Hans\",\"revision\":4,\"entries\":["
              "{\"id\":1,\"name\":\"\u4e3b\u9898\",\"aliases\":[\"\u9898\u6750\"]},"
              "{\"id\":2,\"name\":\"Caf\u00e9\",\"aliases\":[\"coffee\"]}]}\n").encode("utf-8"),
             result,
@@ -90,9 +90,14 @@ class TagTranslationPackTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             builder.build_pack(b'[{"id":1,"name":"first","name":"second"}]', "zh-Hans", 1, {1})
 
+    def test_rejects_old_pack_schema(self):
+        pack = builder.encode_pack([{"id": 1, "name": "name"}], "ja", 1, {1})
+        with self.assertRaisesRegex(ValueError, "Invalid translation pack envelope"):
+            builder.parse_pack(pack.replace(b'"schemaVersion":2', b'"schemaVersion":1'), {1})
+
     def test_pack_parser_enforces_android_wire_string_limit(self):
         def pack(name):
-            return ('{"schemaVersion":1,"locale":"ja","revision":1,"entries":'
+            return ('{"schemaVersion":2,"locale":"ja","revision":1,"entries":'
                     '[{"id":1,"name":"' + name + '"}]}').encode("utf-8")
 
         self.assertEqual("x", builder.parse_pack(pack("x" + " " * 3071), {1})["entries"][0]["name"])

@@ -30,7 +30,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -227,7 +226,7 @@ public final class TagTranslationCatalog {
                 JsonWriter writer = new JsonWriter(new OutputStreamWriter(new BufferedOutputStream(
                     new ExportOutputStream(Channels.newOutputStream(scratch), byteLimit, cancelled)), StandardCharsets.UTF_8));
                 writer.beginObject();
-                writer.name("schemaVersion").value(1);
+                writer.name("schemaVersion").value(2);
                 writer.name("locale").value(expected.locale);
                 writer.name("revision").value(expected.revision);
                 writer.name("entries").beginArray();
@@ -338,6 +337,31 @@ public final class TagTranslationCatalog {
             new Object[]{FINAL_SIGMA, SIGMA});
         database.execSQL("UPDATE TagTranslationAliases SET aliasKey = replace(aliasKey, ?, ?)"
             + " WHERE instr(aliasKey, ?) > 0", sigmaReplacement);
+    }
+
+    static void rebuildUnicodeKeys(SQLiteDatabase database) {
+        if (!database.inTransaction()) throw new IllegalStateException("Translation key rebuild requires a transaction");
+        database.execSQL("DROP INDEX IF EXISTS TagTranslations_locale_key_idx");
+        database.execSQL("DROP INDEX IF EXISTS TagTranslationAliases_locale_key_idx");
+        rebuildUnicodeKeys(database, "TagTranslations", "displayName", "displayKey");
+        rebuildUnicodeKeys(database, "TagTranslationAliases", "alias", "aliasKey");
+        database.execSQL(CREATE_DISPLAY_INDEX);
+        database.execSQL(CREATE_ALIAS_INDEX);
+    }
+
+    private static void rebuildUnicodeKeys(SQLiteDatabase database, String table, String textColumn, String keyColumn) {
+        try (Cursor rows = database.rawQuery("SELECT rowid, " + textColumn + ", " + keyColumn
+                + " FROM " + table + " ORDER BY rowid", null);
+             SQLiteStatement update = database.compileStatement("UPDATE " + table + " SET " + keyColumn
+                + " = ? WHERE rowid = ?")) {
+            while (rows.moveToNext()) {
+                String key = TagUnicode.searchKey(rows.getString(1));
+                if (key.equals(rows.getString(2))) continue;
+                update.bindString(1, key);
+                update.bindLong(2, rows.getLong(0));
+                update.executeUpdateDelete();
+            }
+        }
     }
 
     public static int installedRevision(SQLiteDatabase database, String locale) {
@@ -537,7 +561,7 @@ public final class TagTranslationCatalog {
             String field = reader.nextName();
             if (!fields.add(field)) throw new IOException("Duplicate translation pack field");
             switch (field) {
-                case "schemaVersion": schemaVersion = readInteger(reader, 1, 1); break;
+                case "schemaVersion": schemaVersion = readInteger(reader, 2, 2); break;
                 case "revision": revision = readInteger(reader, 1, Integer.MAX_VALUE); break;
                 case "locale":
                     if (reader.peek() != JsonToken.STRING) throw new IOException("Expected translation locale");
@@ -550,7 +574,7 @@ public final class TagTranslationCatalog {
             }
         }
         reader.endObject();
-        if (reader.peek() != JsonToken.END_DOCUMENT || schemaVersion != 1 || revision == 0 || locale == null
+        if (reader.peek() != JsonToken.END_DOCUMENT || schemaVersion != 2 || revision == 0 || locale == null
             || rows.entries == 0) throw new IOException("Invalid translation pack header");
         return new PackMetadata(locale, revision);
     }
@@ -719,7 +743,7 @@ public final class TagTranslationCatalog {
     }
 
     private static String validateText(String value) throws IOException {
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFC);
+        String normalized = TagUnicode.normalize(value);
         for (int offset = 0; offset < normalized.length();) {
             int codePoint = normalized.codePointAt(offset);
             if (Character.isISOControl(codePoint) || Character.getType(codePoint) == Character.SURROGATE) {
@@ -734,8 +758,7 @@ public final class TagTranslationCatalog {
     }
 
     static String searchKey(String value) {
-        return Normalizer.normalize(value, Normalizer.Form.NFC).toLowerCase(Locale.ROOT)
-            .replace(FINAL_SIGMA, SIGMA);
+        return TagUnicode.searchKey(value);
     }
 
     static String prefixUpperBound(String prefix) {

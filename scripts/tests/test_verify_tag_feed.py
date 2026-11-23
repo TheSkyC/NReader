@@ -85,7 +85,7 @@ class VerifyTagFeedTest(unittest.TestCase):
 
     def test_legacy_unicode_collision_preserves_existing_development_feed(self):
         build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
-        legacy = ('{"schemaVersion":1,"locale":"ja","revision":1,"entries":'
+        legacy = ('{"schemaVersion":2,"locale":"ja","revision":1,"entries":'
                   '[{"id":1,"name":"name","aliases":["\u1c89","\u1c8a"]}]}\n').encode("utf-8")
         digest = hashlib.sha256(legacy).hexdigest()
         self.translation_feed.mkdir()
@@ -106,6 +106,27 @@ class VerifyTagFeedTest(unittest.TestCase):
         build_tag_translation_release.prepare_release(candidate, {1}, fresh_feed)
         with redirect_stdout(io.StringIO()):
             verify_tag_feed.main(["--catalog-feed", str(self.catalog_feed), "--translation-feed", str(fresh_feed)])
+
+    def test_version_one_development_feed_is_rejected_without_mutation(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        self.publish_translation("ja", 1)
+        pointer = self.translation_feed / "manifest.json"
+        manifest = json.loads(pointer.read_bytes())
+        descriptor = manifest["packs"][0]
+        old_payload = self.translation_feed / build_tag_translation_release.payload_name(descriptor["sha256"])
+        legacy = old_payload.read_bytes().replace(b'"schemaVersion":2', b'"schemaVersion":1')
+        digest = hashlib.sha256(legacy).hexdigest()
+        descriptor.update(sizeBytes=len(legacy), sha256=digest)
+        (self.translation_feed / build_tag_translation_release.payload_name(digest)).write_bytes(legacy)
+        pointer.write_text(json.dumps(manifest), encoding="utf-8")
+        candidate = self.root / "candidate.json"
+        candidate.write_bytes(encode_pack([{"id": 1, "name": "new"}], "ja", 2, {1}))
+        before = self.capture_files(self.root)
+        self.failed_verification("Invalid translation pack envelope", "--catalog-feed", str(self.catalog_feed),
+                                 "--translation-feed", str(self.translation_feed))
+        with self.assertRaisesRegex(ValueError, "Invalid translation pack envelope"):
+            build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+        self.assertEqual(before, self.capture_files(self.root))
 
     def test_translation_release_and_verifier_scan_each_feed_directory_once(self):
         build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
@@ -155,7 +176,7 @@ class VerifyTagFeedTest(unittest.TestCase):
         self.publish_translation("ja", 3)
         pointer = self.translation_feed / "manifest.json"
         manifest = json.loads(pointer.read_bytes())
-        payload = ('{"schemaVersion":1,"locale":"ja","revision":3,"entries":'
+        payload = ('{"schemaVersion":2,"locale":"ja","revision":3,"entries":'
                    '[{"id":1,"name":"x' + ' ' * 3072 + '"}]}').encode()
         digest = hashlib.sha256(payload).hexdigest()
         descriptor = manifest["packs"][0]

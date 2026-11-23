@@ -246,7 +246,7 @@ public class TagCatalogDeviceBenchmarkTest {
         try (Cursor tags = database.rawQuery("SELECT idTag FROM Tags ORDER BY idTag", null);
              JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
             writer.beginObject();
-            writer.name("schemaVersion").value(1);
+            writer.name("schemaVersion").value(2);
             writer.name("locale").value(locale);
             writer.name("revision").value(1);
             writer.name("entries").beginArray();

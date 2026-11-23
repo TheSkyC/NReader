@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class TagTranslationManifestTest {
-    private static final String PACK = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":2,"
+    private static final String PACK = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":2,"
         + "\"entries\":[{\"id\":1,\"name\":\"\u753b\u5bb6\",\"aliases\":[\"\u3048\"]}]}\n";
     private static final String DESCRIPTOR = "{\"locale\":\"%s\",\"revision\":%d,\"sizeBytes\":%d,\"sha256\":\"%s\"}";
     private static final String MANIFEST = "{\"schemaVersion\":1,\"source\":\"nreader-translations\","
@@ -127,7 +127,7 @@ public class TagTranslationManifestTest {
 
     @Test public void newerTranslationCanBeRetriedAfterCatalogCatchesUp() throws Exception {
         assertTrue(pack("ja", 2, PACK).apply(database, stage(PACK), () -> false));
-        String update = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":3,\"entries\":["
+        String update = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":3,\"entries\":["
             + "{\"id\":1,\"name\":\"updated\",\"aliases\":[\"new alias\"]},"
             + "{\"id\":2,\"name\":\"new tag\",\"aliases\":[\"new tag alias\"]}]}";
         TagTranslationManifest.Pack descriptor = pack("ja", 3, update);

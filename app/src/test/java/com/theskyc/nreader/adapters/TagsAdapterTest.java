@@ -105,7 +105,7 @@ public class TagsAdapterTest {
             Tag tag = new Tag("example", 1, 42, TagType.TAG, TagStatus.DEFAULT);
             assertTrue(Login.replaceOnlineTags(app, identity, Login.beginOnlineTagsLoad(app, identity),
                 Collections.singletonList(tag)));
-            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":42,\"name\":\"translated name\"}]}";
             assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 app.getCacheDir(), () -> false));

@@ -49,7 +49,7 @@ public class TagBackupTest {
             Queries.TagTable.insert(bookmark);
             Queries.TagTable.insert(catalogOnly);
             assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream((
-                "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
                     + "{\"id\":301,\"name\":\"translated source\",\"aliases\":[\"source alias\"]}]}"
             ).getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             Queries.TagTable.updateTag(gallery);
@@ -82,7 +82,7 @@ public class TagBackupTest {
             Queries.TagTable.insert(catalogOnly);
             db.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES ('legacy-upstream', 44)");
             assertTrue(TagTranslationCatalog.apply(db, new ByteArrayInputStream((
-                "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":7,\"entries\":["
+                "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":7,\"entries\":["
                     + "{\"id\":302,\"name\":\"target translation\",\"aliases\":[\"target alias\"]}]}"
             ).getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             Importer.importData(app, Uri.fromFile(backup));

@@ -38,7 +38,7 @@ rules, account data, and backups. A locale pack is a complete snapshot for one
 canonical BCP 47 locale using a two- or three-letter language and optional
 script and region, such as `ja`, `pt-BR`, or `zh-Hant`. Use `id`, `he`, and `yi`
 in place of the legacy codes `in`, `iw`, and `ji`. The JSON envelope contains
-`schemaVersion: 1`, the locale, a positive monotonically increasing revision,
+`schemaVersion: 2`, the locale, a positive monotonically increasing revision,
 and an `entries` array.
 Each entry contains a positive site tag ID, one plain-text display name, and an
 optional list of plain-text search aliases. Site IDs remain the only identity;
@@ -82,14 +82,14 @@ using its search key as part of the primary key. The version 26 to 27 step
 preserves alias text, search keys, and order, including unknown legacy order.
 This allows a later search-key rebuild to retain distinct aliases whose new keys
 collide. The importer still rejects duplicate normalized aliases in a new pack;
-this storage change does not change the pack format or fix Unicode-version drift.
+this storage change did not change the pack format or fix Unicode-version drift.
 The export snapshot layer serializes one selected installation to an app-private
 temporary file under a database transaction, checks its revision and generation,
 and rejects unknown alias order and aliases for one tag that now normalize to
 the same key, rather than producing a pack the current importer would reject.
-If an installed name or alias has a different NFC spelling under the current
-runtime's Unicode data, export writes its normalized spelling while retaining
-the stored text unchanged. Exported bytes can therefore differ from the original
+If an installed name or alias has a different NFC spelling under Unicode 16,
+export writes its normalized spelling while retaining the stored text unchanged.
+Exported bytes can therefore differ from the original
 release file even when the revision is unchanged; keep the original release file
 as the publishing authority. Export still rejects invalid text or alias collisions;
 use the original file or a corrected pack when aliases collide. It limits the
@@ -102,17 +102,19 @@ partial document; the installed language pack is unchanged. Configuration
 changes retain the running operation, but process death during a write can leave
 an incomplete document and requires the user to retry.
 
-Search keys use NFC normalization and locale-independent lowercase. Greek final
-sigma is normalized to ordinary sigma so a prefix produces the same key whether
-it ends a query or continues inside a tag name. The translation tools require
-CPython 3.14 with Unicode 16.0 data for normalization and lowercase; they reject
-other runtimes. Android uses its platform Unicode data for the same algorithm.
-Different Unicode data versions can produce different keys for some characters. Consequently, a pack
-accepted by the builder is not guaranteed to pass duplicate-alias checks on
-every Android version. A platform Unicode-data change can also make stored keys
-inconsistent with newly normalized queries until the pack is reinstalled. A
-version-pinned normalization implementation and an index rebuild are needed to
-remove this limitation; the current schema does not record the Unicode version.
+Pack version 2 uses Unicode 16.0 NFC normalization, removes surrounding U+0020
+spaces, rejects control and surrogate code points, and limits normalized text to
+256 Unicode code points. Search keys apply NFC, full-string root lowercase, and
+replace Greek final sigma with ordinary sigma. Duplicate alias keys for one tag
+are rejected. Android uses the bundled ICU data; translation tools require CPython
+3.14 with Unicode 16.0 data and reject other runtimes. Version 1 packs are no
+longer accepted; their normalization depended on the platform. Keep the original
+development files and build a corrected version 2 pack at a higher locale revision.
+
+Database version 28 rebuilds display and alias keys from stored text in the
+upgrade transaction. It preserves text, alias identities and order, revisions,
+rules, and account state, including aliases whose rebuilt keys collide. Export
+continues to reject colliding aliases until they are corrected.
 Database version 24 updates installed search keys without changing display names
 or pack revisions. If a tag has legacy aliases that become equivalent, the
 upgrade keeps the first stored alias for that key.
@@ -127,7 +129,7 @@ python scripts/build_tag_translation_pack.py .gradle/zh-Hans-source.json `
 
 Each source entry has `id`, `name`, and an optional `aliases` string array.
 The builder normalizes text, sorts entries by ID, checks limits and duplicate
-identities, and writes the deterministic v1 envelope. Empty packs are rejected;
+identities, and writes the deterministic v2 envelope. Empty packs are rejected;
 removal uses the locale-scoped database operation.
 
 For contributions, use the [local proposal and review workflow](tag-translation-contributions.md)

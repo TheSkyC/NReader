@@ -54,7 +54,7 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class TagTranslationFeedTest {
     private static final String POINTER = "https://feed.example:8443/tags/manifest.json";
-    private static final String PACK = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+    private static final String PACK = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
         + "\"entries\":[{\"id\":8378,\"name\":\"\u753b\u5bb6\",\"aliases\":[]}]}\n";
 
     @Rule public TemporaryFolder files = new TemporaryFolder();

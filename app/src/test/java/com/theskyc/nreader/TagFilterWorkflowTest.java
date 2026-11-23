@@ -57,7 +57,7 @@ public class TagFilterWorkflowTest {
             SQLiteDatabase db = helper.getWritableDatabase();
             Queries.TagTable.insert(wanted);
             Queries.TagTable.insert(new Tag("unrelated", 50, 500_002, TagType.TAG, TagStatus.DEFAULT));
-            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":500001,\"name\":\"Localized fixture\",\"aliases\":[\"lookup phrase\"]}]}";
             assertTrue(TagTranslationCatalog.apply(db,
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));

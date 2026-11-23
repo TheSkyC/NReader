@@ -32,6 +32,10 @@ no URLs in the manifest. The payload's locale and revision must match the
 descriptor. The byte count and digest cover the uncompressed JSON file as
 written. For network use, the manifest and payload must come from the same
 configured HTTPS origin without redirects or account credentials.
+The v1 manifest does not advertise a pack schema version. Current tooling and
+the current client require pack version 2; older clients reject it during import
+and retain their installed pack. Do not expose this unsigned development feed
+as a public compatibility or rollout mechanism.
 
 Android verifies the staged file's length and digest before starting a pack
 import. The importer compares the payload's locale and revision with the
@@ -69,9 +73,9 @@ Use CPython 3.14 with Unicode 16.0 data to validate or stage translation packs.
 The verifier has the same requirement when checking a translation feed; a
 catalog-only verification does not require it.
 
-If an unpublished development release contains a pack whose aliases collide
-under Unicode 16, verification of that retained pack or staging its replacement
-fails. Preserve that release directory. Correct and review the affected source
+If an unpublished development release contains a version 1 pack or aliases that
+collide under Unicode 16, verification or staging its replacement fails. Preserve
+that release directory. Correct and review the affected source
 as described in the contribution workflow, then stage the corrected packs in a
 new development directory. Do not replace immutable payloads or reuse a locale
 revision for different bytes. A publicly distributed feed would need an

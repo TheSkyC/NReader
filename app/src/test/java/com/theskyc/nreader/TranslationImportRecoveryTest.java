@@ -65,7 +65,7 @@ public class TranslationImportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700003, 'fixture', 3, 1)");
-            String json = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String json = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700003,\"name\":\"original\"}]}";
             assertTrue(TagTranslationCatalog.apply(database,
                 new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), context.getCacheDir(), () -> false));
@@ -158,7 +158,7 @@ public class TranslationImportRecoveryTest {
         Application context = RuntimeEnvironment.getApplication();
         SQLiteDatabase previous = Database.getDatabase();
         Uri uri = Uri.parse("content://test.invalid/single-close-pack");
-        String json = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        String json = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":700002,\"name\":\"translated\"}]}";
         AtomicInteger closes = new AtomicInteger();
         FilterInputStream input = new FilterInputStream(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
@@ -221,7 +221,7 @@ public class TranslationImportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700001, 'fixture', 3, 1)");
-            String json = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String json = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700001,\"name\":\"fixture translation\"}]}";
             Files.write(pack.toPath(), json.getBytes(StandardCharsets.UTF_8));
             TranslationImportViewModel model = new TranslationImportViewModel();

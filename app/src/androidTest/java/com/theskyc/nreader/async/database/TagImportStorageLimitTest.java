@@ -63,7 +63,7 @@ public class TagImportStorageLimitTest {
         File cache = context.getCacheDir();
         File file = new File(cache, "translation-page-limit.sqlite");
         byte[] update = translation(TAG_COUNT);
-        byte[] otherLocale = ("{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+        byte[] otherLocale = ("{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"other\"}]}").getBytes(StandardCharsets.UTF_8);
         try (SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(file, null)) {
             Queries.TagTable.createTables(database);
@@ -117,7 +117,7 @@ public class TagImportStorageLimitTest {
         StringWriter output = new StringWriter();
         try (JsonWriter json = new JsonWriter(output)) {
             json.beginObject();
-            json.name("schemaVersion").value(1);
+            json.name("schemaVersion").value(2);
             json.name("locale").value("ja");
             json.name("revision").value(2);
             json.name("entries").beginArray();

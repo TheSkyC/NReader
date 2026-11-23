@@ -9,10 +9,11 @@ Use CPython 3.14 with Unicode 16.0 data for translation validation, review,
 acceptance, and release preparation. Other runtimes are rejected when text is
 normalized so their Unicode data cannot silently change the candidate.
 
-An old development pack built with different Unicode data can contain aliases
-that now share a key. The tools reject such a pack as a base, including when
+Version 1 development packs are not accepted as review bases. A pack built with
+different Unicode data can contain aliases that now share a key. The tools reject
+such a pack as a base, including when
 reviewing a proposed correction. Preserve the original file, manually prepare
-and review a corrected source using its entries, and build a new pack with a
+and review a corrected source using its entries, and build a version 2 pack with a
 higher locale revision. The original and corrected bytes must remain distinct.
 This recovery path is for unpublished development data; it does not establish a
 safe migration procedure for a public feed.

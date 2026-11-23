@@ -61,7 +61,7 @@ public class TagTranslationScriptFallbackTest {
 
     private void install(SQLiteDatabase database, Context context, String locale, String name, String alias)
         throws Exception {
-        String pack = "{\"schemaVersion\":1,\"locale\":\"" + locale + "\",\"revision\":1,"
+        String pack = "{\"schemaVersion\":2,\"locale\":\"" + locale + "\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"" + name + "\",\"aliases\":[\"" + alias + "\"]}]}";
         assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
             context.getCacheDir(), () -> false));

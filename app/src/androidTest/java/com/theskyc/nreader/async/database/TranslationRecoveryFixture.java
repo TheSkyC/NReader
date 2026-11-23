@@ -42,7 +42,7 @@ public final class TranslationRecoveryFixture {
     }
 
     public static byte[] payload(int revision, String label) {
-        return ("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":" + revision
+        return ("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":" + revision
             + ",\"entries\":[{\"id\":1,\"name\":\"" + label + "\",\"aliases\":[\"" + label + "-alias\"]}]}")
             .getBytes(StandardCharsets.UTF_8);
     }

@@ -91,7 +91,8 @@ public class TagTranslationCatalogTest {
         assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\"}]")));
         String update = pack("ja", 2, "[{\"id\":1,\"name\":\"after\"}]");
         String[] invalidPacks = {
-            update.replace("\"schemaVersion\":1", "\"schemaVersion\":1.0"),
+            update.replace("\"schemaVersion\":2", "\"schemaVersion\":2.0"),
+            update.replace("\"schemaVersion\":2", "\"schemaVersion\":1"),
             update.replace("\"revision\":2", "\"revision\":2e0"),
             update.replace("\"id\":1", "\"id\":1.00000000000000001")
         };
@@ -332,13 +333,13 @@ public class TagTranslationCatalogTest {
 
     @Test public void rejectsNonCanonicalLocalesAndInvalidText() {
         assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.installedRevision(database, "zh-cn"));
-        assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"zh-Hans\","
+        assertThrows(IOException.class, () -> apply("{\"schemaVersion\":2,\"locale\":\"zh-Hans\","
             + "\"revision\":1,\"entries\":[]}"));
         assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"bad\\nname\"}]")));
         assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\\tname\"}]")));
         assertThrows(IOException.class, () -> apply(pack("zh-Hans", 1, "[{\"id\":1,\"name\":\"\\ud800\"}]")));
         assertThrows(IOException.class, () -> apply(pack("iw-IL", 1, "[{\"id\":1,\"name\":\"name\"}]")));
-        assertThrows(IOException.class, () -> apply("{\"schemaVersion\":1,\"locale\":\"und\","
+        assertThrows(IOException.class, () -> apply("{\"schemaVersion\":2,\"locale\":\"und\","
             + "\"revision\":1,\"entries\":[]}"));
     }
 
@@ -501,7 +502,7 @@ public class TagTranslationCatalogTest {
     }
 
     private String pack(String locale, int revision, String entries) {
-        return "{\"schemaVersion\":1,\"locale\":\"" + locale + "\",\"revision\":" + revision
+        return "{\"schemaVersion\":2,\"locale\":\"" + locale + "\",\"revision\":" + revision
             + ",\"entries\":" + entries + "}";
     }
 

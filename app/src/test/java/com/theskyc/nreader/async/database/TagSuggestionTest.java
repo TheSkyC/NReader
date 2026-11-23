@@ -82,12 +82,22 @@ public class TagSuggestionTest {
         }
     }
 
+    @Test public void unicode16AliasSearchUsesPinnedKeysAndPreservesCanonicalIdentity() throws IOException {
+        insert(1, "canonical", TagType.TAG);
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":1,\"name\":\"name\",\"aliases\":[\"\u1c89 suffix\"]}]}")
+            .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
+        assertEquals(List.of("canonical"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "\u1c8a", "ja")));
+        assertEquals(List.of("canonical"), names(Queries.TagTable.getTagSuggestions(TagType.TAG, "\u1c89", "ja")));
+    }
+
     @Test public void translatedPrefixRangesMatchLiteralWildcardsAndUnicode() throws IOException {
         insert(1, "first", TagType.TAG);
         insert(2, "second", TagType.TAG);
         String lastCodePoint = new String(Character.toChars(Character.MAX_CODE_POINT));
         assertTrue(TagTranslationCatalog.apply(database,
-            new ByteArrayInputStream(("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            new ByteArrayInputStream(("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":1,\"name\":\"prefix%literal\",\"aliases\":[\"prefix_%alias\","
                 + "\"Caf\u00e9\uD83D\uDE00\",\"" + lastCodePoint + "alias\",\"x" + lastCodePoint + "alias\"]},"
                 + "{\"id\":2,\"name\":\"prefixXliteral\",\"aliases\":[\"prefixXalias\",\"cafeteria\",\"y\"]}]}")
@@ -105,7 +115,7 @@ public class TagSuggestionTest {
         insert(11, "canonical-first", TagType.TAG);
         insert(12, "canonical-second", TagType.TAG);
         assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
-            "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
                 + "{\"id\":11,\"name\":\"Z Caf\u00e9\",\"aliases\":[\"a%_match\",\"b%_match\"]},"
                 + "{\"id\":12,\"name\":\"A Caf\u00e9\",\"aliases\":[\"normal match\"]}]}")
             .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
@@ -141,7 +151,7 @@ public class TagSuggestionTest {
             + " (11, 'kept rule', 2, 1), (12, 'compatible rule', 3, 2)");
         database.execSQL("INSERT INTO AccountTagBlacklist (idTag) VALUES (11),(12)");
         assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
-            "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
                 + "{\"id\":11,\"name\":\"hidden translation\",\"aliases\":[\"hidden alias\"]},"
                 + "{\"id\":12,\"name\":\"shown translation\",\"aliases\":[\"shown alias\"]}]}")
             .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));

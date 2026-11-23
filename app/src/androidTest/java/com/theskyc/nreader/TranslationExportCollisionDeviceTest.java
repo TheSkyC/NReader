@@ -40,7 +40,7 @@ public class TranslationExportCollisionDeviceTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700006, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700006,\"name\":\"translated\",\"aliases\":[\"alias\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));

@@ -8,7 +8,7 @@ be used in place of another.
 
 ## Current contracts
 
-- The application database is schema version 27. `DatabaseHelper.onUpgrade`
+- The application database is schema version 28. `DatabaseHelper.onUpgrade`
   applies upgrades in order; downgrade is deliberately unsupported. A storage
   change requires a new database version, an upgrade path from every supported
   prior version, and rollback tests for an injected migration failure.
@@ -16,18 +16,19 @@ be used in place of another.
   revisions are monotonic within `bundled`, `legacy-upstream`, or
   `nreader-catalog`; a corrected snapshot uses a higher revision. The payload
   shape and site ID meaning are not reinterpreted by a revision change.
-- Translation packs and translation manifests use schema version 1. A pack is
-  a complete snapshot for one locale. A locale revision replaces that locale's
+- Translation packs use schema version 2; translation manifests use version 1.
+  A pack is a complete snapshot for one locale. A locale revision replaces that locale's
   previous snapshot only after validation and an atomic database transaction.
   Unknown schema versions and fields are rejected before installation.
 
 The `:app:prepareTagUnicodeIcu` build task prepares a trimmed ICU4J 77.1 JAR
-from a digest-checked dependency for the planned Unicode search-key upgrade.
+from a digest-checked dependency for Unicode search keys.
 The JAR is an application dependency and includes ICU's versioned license and
-third-party notices, also packaged as an application asset. The isolated
-Unicode helper does not yet change pack or database semantics. Before using it
-for installed translations, complete the format transition, index migration,
-and platform tests; the dependency alone does not establish compatibility.
+third-party notices, also packaged as an application asset. Pack version 2 and
+database version 28 use its Unicode 16.0 normalization and lowercase data.
+Version 1 translation packs are rejected because their Unicode behavior depended
+on the platform. This is a development-format transition, not a public-feed
+migration policy. Already installed translations retain their text and revision.
 
 ## Change procedure
 

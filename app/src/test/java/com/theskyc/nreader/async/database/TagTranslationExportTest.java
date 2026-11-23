@@ -69,10 +69,10 @@ public class TagTranslationExportTest {
     }
 
     @Test public void exportRoundTripsUnicodeAndAliasOrderForOnlyTheSelectedLocale() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":4,\"entries\":["
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":4,\"entries\":["
             + "{\"id\":2,\"name\":\"two\"},{\"id\":1,\"name\":\"\u753b\ud83d\ude00\","
             + "\"aliases\":[\"zebra\",\"alpha\"]}]}"));
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"zh-Hans\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"zh-Hans\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"other language\"}]}"));
         database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (1, 'private-rule-marker', 3, 1)");
         byte[] snapshot = export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES);
@@ -95,11 +95,11 @@ public class TagTranslationExportTest {
     }
 
     @Test public void rejectsStaleSelectionAndUnknownOrInvalidOrderWithoutChangingData() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"z\",\"a\"]}]}"));
         TagTranslationCatalog.PackState stale = state("ja");
         TagTranslationCatalog.remove(database, "ja");
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"z\",\"a\"]}]}"));
         assertThrows(TagTranslationCatalog.ChangedDuringExportException.class,
             () -> export(stale, TagTranslationCatalog.MAX_PACK_BYTES));
@@ -113,7 +113,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void refusesAliasesThatNowShareAKeyWithoutDiscardingThem() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
         database.execSQL("UPDATE TagTranslationAliases SET alias = 'FIRST', aliasKey = 'old-different-key'"
             + " WHERE idTag = 1 AND aliasOrder = 1");
@@ -127,7 +127,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void allowsTheSameAliasForDifferentTags() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"shared\"]},"
             + "{\"id\":2,\"name\":\"two\",\"aliases\":[\"shared\"]}]}"));
         byte[] snapshot = export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES);
@@ -136,7 +136,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void normalizesExportWithoutChangingInstalledText() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
         String oldName = "Cafe\u0301";
         String oldAlias = "A\u030a";
@@ -162,7 +162,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void rejectsInvalidOrCollidingExportTextAfterNormalization() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"first\",\"second\"]}]}"));
         database.execSQL("UPDATE TagTranslations SET displayName = ' invalid ' WHERE idTag = 1");
         assertThrows(IOException.class, () -> export(state("ja"), TagTranslationCatalog.MAX_PACK_BYTES));
@@ -176,7 +176,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void enforcesByteLimitAndCleansCancelledSnapshots() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"\u753b\",\"aliases\":[\"a\"]}]}"));
         TagTranslationCatalog.PackState state = state("ja");
         byte[] snapshot = export(state, TagTranslationCatalog.MAX_PACK_BYTES);
@@ -189,7 +189,7 @@ public class TagTranslationExportTest {
     }
 
     @Test public void snapshotRemainsConsistentWhenRemovalStartsDuringExport() throws Exception {
-        assertTrue(install("{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+        assertTrue(install("{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
             + "\"entries\":[{\"id\":1,\"name\":\"one\",\"aliases\":[\"z\",\"a\"]}]}"));
         TagTranslationCatalog.PackState state = state("ja");
         CountDownLatch insideTransaction = new CountDownLatch(1);

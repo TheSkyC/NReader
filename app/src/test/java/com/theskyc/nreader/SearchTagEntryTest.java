@@ -63,7 +63,7 @@ public class SearchTagEntryTest {
         try (DatabaseHelper helper = new DatabaseHelper(app)) {
             SQLiteDatabase database = helper.getWritableDatabase();
             Queries.TagTable.insert(new Tag("Mixed Case", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
-            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":501001,\"name\":\"Translated label\",\"aliases\":[\"alias term\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database,
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
@@ -111,7 +111,7 @@ public class SearchTagEntryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Queries.TagTable.insert(new Tag("Same name", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
             Queries.TagTable.insert(new Tag("Same name", 50, 501002, TagType.TAG, TagStatus.DEFAULT));
-            String pack = "{\"schemaVersion\":1,\"locale\":\"en\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"en\",\"revision\":1,"
                 + "\"entries\":[{\"id\":501002,\"name\":\"Second translation\",\"aliases\":[\"second alias\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database,
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));

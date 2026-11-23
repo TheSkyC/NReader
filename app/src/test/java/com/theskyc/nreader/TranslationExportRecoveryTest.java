@@ -72,7 +72,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700005, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700005,\"name\":\"translated\",\"aliases\":[\"z\",\"a\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
@@ -130,7 +130,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700009, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700009,\"name\":\"translated\"}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
@@ -184,7 +184,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700006, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700006,\"name\":\"translated\",\"aliases\":[\"alias\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
@@ -277,7 +277,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700010, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700010,\"name\":\"translated\",\"aliases\":[\"z\",\"a\"]}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
@@ -313,7 +313,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700007, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700007,\"name\":\"translated\"}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
@@ -366,7 +366,7 @@ public class TranslationExportRecoveryTest {
             SQLiteDatabase database = helper.getWritableDatabase();
             Database.setDatabase(database);
             database.execSQL("INSERT INTO Tags (idTag, name, type, count) VALUES (700008, 'fixture', 3, 1)");
-            String pack = "{\"schemaVersion\":1,\"locale\":\"ja\",\"revision\":1,"
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
                 + "\"entries\":[{\"id\":700008,\"name\":\"translated\"}]}";
             assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)),
                 context.getCacheDir(), () -> false));
