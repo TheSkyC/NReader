@@ -76,7 +76,8 @@ def normalize_entries(rows, catalog_ids):
         if not isinstance(row, dict) or "id" not in row:
             raise ValueError("Invalid translation entry fields")
         tag_id = row["id"]
-        if type(tag_id) is not int or not 1 <= tag_id <= MAX_INTEGER or tag_id not in catalog_ids:
+        if (type(tag_id) is not int or not 1 <= tag_id <= MAX_INTEGER
+                or (catalog_ids is not None and tag_id not in catalog_ids)):
             raise ValueError("Translation references an unknown tag ID")
         if tag_id in seen_ids:
             raise ValueError("Duplicate translation tag ID")

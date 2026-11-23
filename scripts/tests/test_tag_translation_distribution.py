@@ -155,6 +155,59 @@ class TranslationReleaseTest(unittest.TestCase):
         self.publish()
         self.assertEqual({"ja", "zh-Hant"}, set(release.parse_manifest(pointer.read_bytes())))
 
+    def test_replaced_payload_must_be_available_before_publishing(self):
+        old_data, old_payload = self.candidate("ja", 1)
+        pointer = self.publish()
+        original = pointer.read_bytes()
+        _, new_payload = self.candidate("ja", 2)
+
+        for damaged in (None, b"corrupt"):
+            with self.subTest(damaged=damaged):
+                if damaged is None:
+                    old_payload.unlink()
+                else:
+                    old_payload.write_bytes(damaged)
+                with self.assertRaisesRegex(ValueError, "retained translation payload for ja"):
+                    self.publish()
+                self.assertEqual(original, pointer.read_bytes())
+                self.assertFalse(new_payload.exists())
+
+        old_payload.write_bytes(old_data)
+        self.publish()
+        self.assertEqual(2, release.parse_manifest(pointer.read_bytes())["ja"]["revision"])
+        self.assertEqual(old_data, old_payload.read_bytes())
+
+    def test_identical_candidate_restores_missing_payload(self):
+        data, payload = self.candidate("ja", 1)
+        pointer = self.publish()
+        original = pointer.read_bytes()
+        payload.unlink()
+        self.publish()
+        self.assertEqual(data, payload.read_bytes())
+        self.assertEqual(original, pointer.read_bytes())
+
+    def test_replaced_pack_can_reference_tags_absent_from_current_catalog(self):
+        old_data, old_payload = self.candidate("ja", 1)
+        pointer = self.publish()
+        new_catalog = {12}
+        self.pack.write_bytes(encode_pack([{"id": 12, "name": "New"}], "ja", 2, new_catalog))
+        release.prepare_release(self.pack, new_catalog, self.output)
+        self.assertEqual(2, release.parse_manifest(pointer.read_bytes())["ja"]["revision"])
+        self.assertEqual(old_data, old_payload.read_bytes())
+
+    def test_replaced_payload_must_match_manifest_identity(self):
+        self.candidate("ja", 1)
+        pointer = self.publish()
+        manifest = json.loads(pointer.read_bytes())
+        manifest["packs"][0]["revision"] = 2
+        original = json.dumps(manifest).encode()
+        pointer.write_bytes(original)
+        _, new_payload = self.candidate("ja", 3)
+        with self.assertRaisesRegex(ValueError, "Payload locale or revision does not match manifest"):
+            self.publish()
+        self.assertEqual(original, pointer.read_bytes())
+        self.assertFalse(new_payload.exists())
+
     def test_retained_pack_keeps_its_original_encoding_when_another_locale_is_published(self):
         self.candidate("ja", 1)
         pointer = self.publish()

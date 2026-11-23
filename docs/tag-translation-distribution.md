@@ -75,9 +75,13 @@ payloads in the release directory. Use the exact bytes produced by the pack
 builder or review tool. The tool validates the input pack against the
 catalog, reuses an exact repeat, and rejects an older revision or a
 revision reused for different bytes. It verifies the bytes, locale, revision,
-and catalog IDs of each retained pack. It stages the new immutable file
-first, then atomically updates `manifest.json`. Restore missing or damaged
-retained files before retrying.
+and catalog IDs of each pack still referenced by the new manifest. Before
+replacing a locale, it also verifies the old pack's bytes and identity without
+requiring its IDs to exist in the new catalog. This allows a replacement to
+remove obsolete IDs while preserving the old pack for clients with the old
+manifest. Restore missing or damaged old packs before retrying; an identical
+candidate can restore its own missing payload. It stages the new immutable file
+first, then atomically updates `manifest.json`.
 Retrying after an interrupted manifest write can reuse the staged file.
 
 The producer and Android feed tests share a small synthetic release fixture.

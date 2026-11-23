@@ -82,13 +82,14 @@ def prepare_release(pack_path: Path, catalog_ids, output: Path) -> Path:
     if prior is not None and (revision < prior["revision"] or (revision == prior["revision"] and descriptor != prior)):
         raise ValueError("A locale revision cannot be lowered or reused for different bytes")
 
-    for other_locale, retained in packs.items():
-        if other_locale == locale:
+    for retained_locale, retained in packs.items():
+        if retained_locale == locale and retained == descriptor:
             continue
         try:
-            verify_payload(output, retained, catalog_ids)
+            # A superseded pack may refer to IDs removed from the new catalog.
+            verify_payload(output, retained, None if retained_locale == locale else catalog_ids)
         except (OSError, ValueError) as error:
-            raise ValueError(f"Cannot verify retained translation payload for {other_locale}: {error}") from error
+            raise ValueError(f"Cannot verify retained translation payload for {retained_locale}: {error}") from error
 
     output.mkdir(parents=True, exist_ok=True)
     payload = output / payload_name(digest)
