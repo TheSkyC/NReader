@@ -15,6 +15,7 @@ import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.AccountRuntimeTestScope;
+import com.theskyc.nreader.settings.TagLanguage;
 
 import org.junit.After;
 import org.junit.Before;
@@ -108,6 +109,22 @@ public class ImporterTest {
         java.util.List<String> imported = new java.util.ArrayList<>();
         BackupArchive.read(new ByteArrayInputStream(bytes.toByteArray()), (name, source) -> imported.add(name));
         assertEquals(java.util.Collections.singletonList("Settings.json"), imported);
+    }
+
+    @Test
+    public void tagLanguagePreferenceRoundTripsThroughBackup() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        File backup = new File(app.getCacheDir(), "tag-language-backup.zip");
+        try {
+            TagLanguage.select(app, "ja");
+            Exporter.exportData(app, Uri.fromFile(backup));
+            TagLanguage.select(app, "");
+            Importer.importData(app, Uri.fromFile(backup));
+            assertEquals("ja", TagLanguage.selected(app));
+        } finally {
+            TagLanguage.select(app, "");
+            Files.deleteIfExists(backup.toPath());
+        }
     }
 
     @Before
