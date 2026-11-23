@@ -53,26 +53,34 @@ class CatalogApi:
                 time.sleep(delay)
             started = time.monotonic()
             self.next_request = started + MIN_REQUEST_INTERVAL
-            with self.session.get(API_URL + endpoint, timeout=(5, 10), stream=True,
-                                  allow_redirects=False) as response:
-                if response.status_code in (429, 502, 503, 504):
-                    if attempt + 1 == MAX_ATTEMPTS:
-                        raise ValueError(f"Tag collection exhausted retries (HTTP {response.status_code})")
-                    retry_delay = read_retry_delay(response.headers.get("Retry-After"))
-                    self.next_request = max(self.next_request, time.monotonic() + max(2 ** attempt, retry_delay))
-                    continue
-                if response.status_code != 200:
-                    raise ValueError(f"Tag collection failed (HTTP {response.status_code})")
-                if response.headers.get("Content-Encoding", "identity").lower() != "identity":
-                    raise ValueError("Unexpected tag API content encoding")
-                data = bytearray()
-                for block in response.iter_content(4096):
-                    if time.monotonic() - started > REQUEST_DEADLINE or len(data) + len(block) > MAX_PAGE_BYTES:
-                        raise ValueError("Tag API page exceeded its time or size limit")
-                    data.extend(block)
-                if time.monotonic() - started > REQUEST_DEADLINE:
-                    raise ValueError("Tag API page exceeded its time limit")
-                return decode_json(data)
+            try:
+                with self.session.get(API_URL + endpoint, timeout=(5, 10), stream=True,
+                                      allow_redirects=False) as response:
+                    if response.status_code in (429, 502, 503, 504):
+                        if attempt + 1 == MAX_ATTEMPTS:
+                            raise ValueError(f"Tag collection exhausted retries (HTTP {response.status_code})")
+                        retry_delay = read_retry_delay(response.headers.get("Retry-After"))
+                        self.next_request = max(self.next_request, time.monotonic() + max(2 ** attempt, retry_delay))
+                        continue
+                    if response.status_code != 200:
+                        raise ValueError(f"Tag collection failed (HTTP {response.status_code})")
+                    if response.headers.get("Content-Encoding", "identity").lower() != "identity":
+                        raise ValueError("Unexpected tag API content encoding")
+                    data = bytearray()
+                    for block in response.iter_content(4096):
+                        if time.monotonic() - started > REQUEST_DEADLINE or len(data) + len(block) > MAX_PAGE_BYTES:
+                            raise ValueError("Tag API page exceeded its time or size limit")
+                        data.extend(block)
+                    if time.monotonic() - started > REQUEST_DEADLINE:
+                        raise ValueError("Tag API page exceeded its time limit")
+                    return decode_json(data)
+            except requests.exceptions.SSLError:
+                raise
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError,
+                    requests.exceptions.ChunkedEncodingError) as error:
+                if attempt + 1 == MAX_ATTEMPTS:
+                    raise ValueError("Tag collection exhausted retries (network error)") from error
+                self.next_request = max(self.next_request, time.monotonic() + 2 ** attempt)
         raise AssertionError("Unreachable retry state")
 
 

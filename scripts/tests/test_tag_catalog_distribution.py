@@ -251,6 +251,64 @@ class CatalogCollectorTest(unittest.TestCase):
         self.assertEqual((5, 10), session.get.call_args.kwargs["timeout"])
         self.assertFalse(session.get.call_args.kwargs["allow_redirects"])
 
+    def test_transient_connection_and_partial_body_failures_retry_the_whole_page(self):
+        session = MagicMock()
+        partial = MagicMock()
+        partial_response = partial.__enter__.return_value
+        partial_response.status_code = 200
+        partial_response.headers = {}
+
+        def interrupted_body(_size):
+            yield b'{"partial":'
+            raise requests.exceptions.ChunkedEncodingError("interrupted")
+
+        partial_response.iter_content.side_effect = interrupted_body
+        success = MagicMock()
+        success_response = success.__enter__.return_value
+        success_response.status_code = 200
+        success_response.headers = {}
+        success_response.iter_content.return_value = [b'{"result":[]}']
+        session.get.side_effect = [requests.exceptions.ConnectTimeout("timeout"), partial, success]
+        with patch.object(collector.time, "sleep") as sleep:
+            self.assertEqual({"result": []}, collector.CatalogApi(session).get("fixture"))
+        self.assertEqual(3, session.get.call_count)
+        self.assertEqual(2, sleep.call_count)
+        partial.__exit__.assert_called_once()
+        success.__exit__.assert_called_once()
+
+    def test_network_retry_budget_is_bounded_and_certificate_errors_fail_immediately(self):
+        for error in (requests.exceptions.ReadTimeout("timeout"), requests.exceptions.ConnectionError("lost"),
+                      requests.exceptions.ChunkedEncodingError("interrupted")):
+            with self.subTest(error=error):
+                session = MagicMock()
+                session.get.side_effect = error
+                with patch.object(collector.time, "sleep"), self.assertRaisesRegex(ValueError, "exhausted retries"):
+                    collector.CatalogApi(session).get("fixture")
+                self.assertEqual(collector.MAX_ATTEMPTS, session.get.call_count)
+        session = MagicMock()
+        session.get.side_effect = requests.exceptions.SSLError("certificate rejected")
+        with self.assertRaises(requests.exceptions.SSLError):
+            collector.CatalogApi(session).get("fixture")
+        self.assertEqual(1, session.get.call_count)
+
+        unavailable = MagicMock()
+        unavailable.__enter__.return_value = Mock(status_code=503, headers={})
+        session = MagicMock()
+        session.get.side_effect = [unavailable, requests.exceptions.ReadTimeout("timeout"), unavailable]
+        with patch.object(collector.time, "sleep"), self.assertRaisesRegex(ValueError, "HTTP 503"):
+            collector.CatalogApi(session).get("fixture")
+        self.assertEqual(collector.MAX_ATTEMPTS, session.get.call_count)
+
+    def test_invalid_json_does_not_retry(self):
+        session = MagicMock()
+        response = session.get.return_value.__enter__.return_value
+        response.status_code = 200
+        response.headers = {}
+        response.iter_content.return_value = [b"invalid json"]
+        with self.assertRaises(ValueError):
+            collector.CatalogApi(session).get("fixture")
+        self.assertEqual(1, session.get.call_count)
+
     def test_oversized_api_response_is_rejected(self):
         session = MagicMock()
         response = session.get.return_value.__enter__.return_value

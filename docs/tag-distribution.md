@@ -112,7 +112,10 @@ of the prior snapshot's IDs in each category before it can propose changes.
 It retains omitted IDs, accepts canonical renames, and updates counts when
 they change by more than 10%. Count changes alone can advance the revision.
 The collector uses connection and read-idle timeouts and checks elapsed
-time between body reads. The CI job also has an overall timeout.
+time between body reads. Transient connection, read timeout, and interrupted
+response errors share the bounded retry budget with rate-limit and temporary
+HTTP errors. Certificate errors and invalid responses stop the collection.
+The CI job also has an overall timeout.
 The pull request is the publication unit for the bundled files, so review
 the row changes and revision together. Run one collector per checkout. The
 collector journals these files so an interrupted commit can restore the
