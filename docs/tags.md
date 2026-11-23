@@ -77,6 +77,12 @@ packs. Aliases installed before this upgrade have unknown order, marked by -1;
 the upgrade preserves their searchable text but cannot reconstruct their input
 order. Removing and importing a pack again records its order. This storage
 change does not alter the pack format.
+Database version 27 gives each stored alias a separate row identity instead of
+using its search key as part of the primary key. The version 26 to 27 step
+preserves alias text, search keys, and order, including unknown legacy order.
+This allows a later search-key rebuild to retain distinct aliases whose new keys
+collide. The importer still rejects duplicate normalized aliases in a new pack;
+this storage change does not change the pack format or fix Unicode-version drift.
 The export snapshot layer serializes one selected installation to an app-private
 temporary file under a database transaction, checks its revision and generation,
 and rejects unknown alias order. It limits the UTF-8 JSON to the 16 MiB import
@@ -323,13 +329,15 @@ failure, then retries the upgrade after the failure is removed.
 
 ## Device-scale benchmark
 
-`TagCatalogDeviceBenchmarkTest` uses a separate file-backed SQLite database
-in the isolated benchmark app's private cache for each case. Choose one method
+`TagCatalogDeviceBenchmarkTest` uses the isolated benchmark app. Most cases use
+a separate file-backed SQLite database in its private cache. Choose one method
 with the `Class#method` syntax: `importsBundledCatalog`,
-`importsFullCatalogTranslationPack`, or `queriesInstalledAliases`.
+`importsFullCatalogTranslationPack`, `queriesInstalledAliases`, or
+`upgradesLargeVersion26AliasTable`. The upgrade case deletes and recreates the
+benchmark app's main database and refuses to run outside the benchmark package.
 Each case logs setup and measured phases separately. Translation data is
 generated from the bundled catalog and checked against the normal pack size
-limit. No phase uses the installed app database or a live translation source.
+limit. No phase uses the regular app's database or a live translation source.
 Run it on an attached API 26+ emulator or device with the isolated
 `tagBenchmark` variant, whose APKs are kept out of the release archive:
 
@@ -354,6 +362,11 @@ logged under `TagCatalogBenchmark`; results are device- and workload-specific.
 The test reports import duration, first and warm alias-query timings, and
 SQLite journal mode, synchronous setting, and page count. The first query
 runs after import in the same process and is not a cold-start measurement.
+The upgrade case times opening a version 26 database containing 172,060 synthetic
+aliases and checks the upgrade, revision, sample alias, rule, account blacklist,
+and indexes. Measurements are observations, not performance limits.
+On an API 28 emulator, one such run took 381 ms; physical-device startup,
+storage exhaustion, and power-loss behavior were not measured.
 The test does not measure peak memory, battery use, UI input-to-render latency,
 process-death recovery, or reviewed production translations. Do not compare
 numbers across devices as a release threshold without controlling hardware,
@@ -383,7 +396,7 @@ adb -s $serial shell am force-stop com.theskyc.nreader.debug
 adb -s $serial shell am start -W -n com.theskyc.nreader.debug/com.theskyc.nreader.TagFilterActivity -d https://nhentai.net/tags/
 ```
 
-At revision 43, the check is complete when the installed database reports schema 26,
+At revision 43, the check is complete when the installed database reports schema 27,
 bundled revision 43, and 86,030 catalog rows, and the live tag page displays
 an expected catalog name such as `glasses`. Record the Android API, flavor,
 network state, and whether the database was empty before launch. This is a

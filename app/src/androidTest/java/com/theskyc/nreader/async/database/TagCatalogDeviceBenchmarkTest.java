@@ -7,6 +7,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.os.SystemClock;
 import android.util.JsonWriter;
 import android.util.Log;
@@ -37,6 +38,66 @@ public class TagCatalogDeviceBenchmarkTest {
     private static final String TAG = "TagCatalogBenchmark";
     private static final String LOCALE = "zh-Hans";
     private static final int SEARCH_RUNS = 25;
+
+    @Test
+    public void upgradesLargeVersion26AliasTable() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertTrue("This fixture requires the isolated benchmark package",
+            context.getPackageName().endsWith(".tagbenchmark"));
+        context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        final int count = 172_060;
+        try {
+            try (DatabaseHelper helper = new DatabaseHelper(context)) {
+                SQLiteDatabase database = helper.getWritableDatabase();
+                database.execSQL("DROP TABLE TagTranslationAliases");
+                database.execSQL("CREATE TABLE TagTranslationAliases (idTag INTEGER NOT NULL, locale TEXT NOT NULL,"
+                    + " alias TEXT NOT NULL, aliasKey TEXT NOT NULL, aliasOrder INTEGER NOT NULL DEFAULT -1"
+                    + " CHECK (aliasOrder >= -1), PRIMARY KEY (idTag, locale, aliasKey))");
+                database.execSQL("CREATE INDEX TagTranslationAliases_locale_key_idx"
+                    + " ON TagTranslationAliases (locale, aliasKey, idTag)");
+                database.execSQL("INSERT INTO TagTranslationState (locale, revision) VALUES ('ja', 4)");
+                database.execSQL("INSERT INTO TagRules (idTag, name, type, status) VALUES (123, 'rule', 1, 2)");
+                database.execSQL("INSERT INTO AccountTagBlacklist (idTag) VALUES (456)");
+                database.beginTransaction();
+                try (SQLiteStatement insert = database.compileStatement("INSERT INTO TagTranslationAliases"
+                    + " (idTag, locale, alias, aliasKey, aliasOrder) VALUES (?, 'ja', ?, ?, ? )")) {
+                    for (int i = 0; i < count; i++) {
+                        String alias = "alias-" + i;
+                        insert.bindLong(1, i / 2 + 1);
+                        insert.bindString(2, alias);
+                        insert.bindString(3, alias);
+                        insert.bindLong(4, i % 2);
+                        insert.executeInsert();
+                    }
+                    database.setTransactionSuccessful();
+                } finally {
+                    database.endTransaction();
+                }
+                database.setVersion(26);
+            }
+            long start = SystemClock.elapsedRealtime();
+            try (DatabaseHelper helper = new DatabaseHelper(context)) {
+                SQLiteDatabase database = helper.getWritableDatabase();
+                long upgradeMs = SystemClock.elapsedRealtime() - start;
+                assertEquals(27, database.getVersion());
+                assertEquals(count, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagTranslationAliases", null));
+                assertEquals(4, TagTranslationCatalog.installedRevision(database, "ja"));
+                assertEquals(1, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagRules"
+                    + " WHERE idTag = 123 AND name = 'rule' AND type = 1 AND status = 2", null));
+                assertEquals(1, DatabaseUtils.longForQuery(database,
+                    "SELECT COUNT(*) FROM AccountTagBlacklist WHERE idTag = 456", null));
+                assertEquals(1, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM TagTranslationAliases"
+                    + " WHERE idTag = 86030 AND alias = 'alias-172059' AND aliasOrder = 1", null));
+                assertEquals(2, DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM sqlite_master"
+                    + " WHERE type = 'index' AND name IN ('TagTranslationAliases_locale_key_idx',"
+                    + " 'TagTranslationAliases_tag_order_idx')", null));
+                Log.i(TAG, "measurement=aliasUpgrade aliases=" + count + " upgradeMs=" + upgradeMs);
+            }
+        } finally {
+            Queries.setDb(null);
+            context.deleteDatabase(DatabaseHelper.DATABASE_NAME);
+        }
+    }
 
     @Test
     public void importsBundledCatalog() throws Exception {

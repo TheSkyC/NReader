@@ -56,7 +56,7 @@ public final class TagTranslationCatalog {
     private static final String CREATE_ALIASES = "CREATE TABLE IF NOT EXISTS TagTranslationAliases ("
         + "idTag INTEGER NOT NULL, locale TEXT NOT NULL, alias TEXT NOT NULL, aliasKey TEXT NOT NULL,"
         + " aliasOrder INTEGER NOT NULL DEFAULT -1 CHECK (aliasOrder >= -1),"
-        + " PRIMARY KEY (idTag, locale, aliasKey))";
+        + " aliasId INTEGER PRIMARY KEY)";
     private static final String CREATE_STATE = "CREATE TABLE IF NOT EXISTS TagTranslationState ("
         + "locale TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK (revision > 0))";
     private static final String CREATE_GENERATIONS = "CREATE TABLE IF NOT EXISTS TagTranslationGenerations ("
@@ -65,6 +65,8 @@ public final class TagTranslationCatalog {
         + " ON TagTranslations (locale, displayKey, idTag)";
     private static final String CREATE_ALIAS_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslationAliases_locale_key_idx"
         + " ON TagTranslationAliases (locale, aliasKey, idTag)";
+    private static final String CREATE_ALIAS_TAG_INDEX = "CREATE INDEX IF NOT EXISTS TagTranslationAliases_tag_order_idx"
+        + " ON TagTranslationAliases (idTag, locale, aliasOrder)";
     static final int MAX_PACK_BYTES = 16 * 1024 * 1024;
     private static final int MAX_PREPARED_BYTES = 8 * MAX_PACK_BYTES;
     private static final int MAX_ENTRIES = 250_000;
@@ -115,6 +117,7 @@ public final class TagTranslationCatalog {
         createGenerationTable(database);
         database.execSQL(CREATE_DISPLAY_INDEX);
         database.execSQL(CREATE_ALIAS_INDEX);
+        database.execSQL(CREATE_ALIAS_TAG_INDEX);
     }
 
     static void createGenerationTable(SQLiteDatabase database) {
@@ -126,6 +129,16 @@ public final class TagTranslationCatalog {
     static void upgradeAliasOrder(SQLiteDatabase database) {
         database.execSQL("ALTER TABLE TagTranslationAliases ADD COLUMN aliasOrder INTEGER NOT NULL"
             + " DEFAULT -1 CHECK (aliasOrder >= -1)");
+    }
+
+    static void upgradeAliasIdentity(SQLiteDatabase database) {
+        database.execSQL("ALTER TABLE TagTranslationAliases RENAME TO TagTranslationAliases_v26");
+        database.execSQL(CREATE_ALIASES);
+        database.execSQL("INSERT INTO TagTranslationAliases (idTag, locale, alias, aliasKey, aliasOrder)"
+            + " SELECT idTag, locale, alias, aliasKey, aliasOrder FROM TagTranslationAliases_v26");
+        database.execSQL("DROP TABLE TagTranslationAliases_v26");
+        database.execSQL(CREATE_ALIAS_INDEX);
+        database.execSQL(CREATE_ALIAS_TAG_INDEX);
     }
 
     public static long generationSnapshot(SQLiteDatabase database) {
