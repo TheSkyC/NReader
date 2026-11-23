@@ -38,6 +38,11 @@
             android:title="@string/tag_translation_packs_title"
             android:summary="@string/tag_translation_packs_summary"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="@string/preference_key_tag_display_language"
+            android:title="@string/tag_display_language_title"
+            android:summary="@string/tag_display_language_summary"
+            app:iconSpaceReserved="false" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="@string/preference_key_auto_reauthenticate"

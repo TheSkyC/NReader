@@ -22,6 +22,7 @@ import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 import com.google.android.material.chip.Chip;
 
@@ -57,6 +58,37 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void suggestionsFollowSelectedTagLanguageWhileDialogIsOpen() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        TagLanguage.select(app, "");
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("site name", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
+                + "\"entries\":[{\"id\":501001,\"name\":\"Japanese label\",\"aliases\":[\"unique alias\"]}]}";
+            assertTrue(TagTranslationCatalog.apply(database,
+                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                AlertDialog dialog = openTagDialog(controller.get());
+                AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                entry.setText("unique alias", true);
+                AtomicBoolean filtered = new AtomicBoolean();
+                ((Filterable) entry.getAdapter()).getFilter().filter("unique alias", count -> filtered.set(true));
+                await(filtered::get);
+                assertEquals(0, entry.getAdapter().getCount());
+                TagLanguage.select(app, "ja");
+                await(() -> entry.getAdapter().getCount() == 1);
+                TagLanguage.select(app, "");
+                await(() -> entry.getAdapter().getCount() == 0);
+                assertEquals("unique alias", entry.getText().toString());
+            }
+        } finally {
+            TagLanguage.select(app, "");
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void suggestionsRefreshAfterTranslationKeyRebuild() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

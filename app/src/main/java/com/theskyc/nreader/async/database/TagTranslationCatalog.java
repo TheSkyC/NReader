@@ -88,6 +88,10 @@ public final class TagTranslationCatalog {
         return CHANGES;
     }
 
+    public static void notifyDisplayLanguageChanged() {
+        CHANGES.postValue(null);
+    }
+
     static Map<Integer, String> getDisplayNames(SQLiteDatabase database, Collection<Integer> ids, Locale appLocale) {
         if (ids.isEmpty()) return Collections.emptyMap();
         String locale = resolveInstalledLocale(database, appLocale);
@@ -847,7 +851,7 @@ public final class TagTranslationCatalog {
         return localeTag;
     }
 
-    static boolean isSupportedLocale(String localeTag) {
+    public static boolean isSupportedLocale(String localeTag) {
         if (localeTag == null || !localeTag.matches("[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?")) {
             return false;
         }

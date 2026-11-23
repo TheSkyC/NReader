@@ -218,6 +218,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             act.manageTranslationPacks();
             return true;
         });
+        Preference tagLanguage = Objects.requireNonNull(findPreference(getString(R.string.preference_key_tag_display_language)));
+        tagLanguage.setOnPreferenceClickListener(preference -> {
+            act.chooseTagLanguage();
+            return true;
+        });
 
         {
             Preference statusScreen = Objects.requireNonNull(findPreference(getString(R.string.preference_key_status_screen)));

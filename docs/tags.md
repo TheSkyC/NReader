@@ -170,8 +170,13 @@ while the first is running. An unknown-tag dialog remains available through
 configuration changes until dismissed. Import feedback is not persisted across
 process death.
 
-Tag suggestions use the app's active locale. Variants and Unicode extensions
-are ignored when matching a pack. An exact installed locale wins;
+Tag display and search follow the app's active locale by default. Settings can
+instead select an installed tag-language pack independently of the interface
+language. The selection is retained if that pack is removed, so reinstalling it
+restores the choice; until then, locale fallback may use a compatible installed
+pack or canonical names. The selection is a normal backed-up preference, not
+part of a translation pack. Invalid stored selections use the app locale.
+Variants and Unicode extensions are ignored when matching a pack. An exact installed locale wins;
 otherwise an explicitly specified script pack takes precedence over a generic
 language pack. Chinese locales without an explicit script infer `zh-Hans` or
 `zh-Hant` from the region before falling back to the generic language pack.

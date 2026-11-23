@@ -527,6 +527,10 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">标签语言</string>
+    <string name="tag_display_language_title">标签显示语言</string>
+    <string name="tag_display_language_summary">单独选择标签语言，不受应用语言影响。</string>
+    <string name="tag_display_language_follow_app">跟随应用语言</string>
+    <string name="tag_display_language_uninstalled">%1$s（未安装）</string>
     <string name="tag_translation_rebuild_title">正在更新标签语言</string>
     <string name="tag_translation_rebuild_message">更新期间，标签名称和搜索暂时使用原名。更新会自动继续；如果长时间未完成，请检查设备存储空间并重新打开应用。</string>
     <string name="tag_translation_rebuild_manage">管理语言</string>

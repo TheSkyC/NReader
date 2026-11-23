@@ -667,6 +667,10 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Tag languages</string>
+    <string name="tag_display_language_title">Tag display language</string>
+    <string name="tag_display_language_summary">Choose a tag language independently of the app language.</string>
+    <string name="tag_display_language_follow_app">Follow app language</string>
+    <string name="tag_display_language_uninstalled">%1$s (not installed)</string>
     <string name="tag_translation_rebuild_title">Updating tag languages</string>
     <string name="tag_translation_rebuild_message">Tag names and search temporarily use their original names while the update runs. The update resumes automatically. If it takes a long time, check that your device has free storage and reopen the app.</string>
     <string name="tag_translation_rebuild_manage">Manage languages</string>
@@ -705,6 +709,7 @@
     <string name="tag_catalog_check_cancelled">The catalog check was cancelled or replaced. Try again if needed.</string>
     <string name="local_tag_rule_save_error">Could not save local tag rules. Try again.</string>
     <string name="preference_key_tag_translation_packs" translatable="false">tag_translation_packs</string>
+    <string name="preference_key_tag_display_language" translatable="false">tag_display_language</string>
     <string name="tag_translation_browse_online">Browse online</string>
     <string name="tag_translation_online_loading">Checking available tag languages…</string>
     <string name="tag_translation_online_failed">Could not check online tag languages.</string>

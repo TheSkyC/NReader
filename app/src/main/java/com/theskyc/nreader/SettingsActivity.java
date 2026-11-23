@@ -37,6 +37,7 @@ import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.views.GeneralPreferenceFragment;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.BufferedReader;
@@ -243,6 +244,40 @@ public class SettingsActivity extends GeneralActivity {
                 Toast.makeText(this, getString(R.string.copy_logs_fail), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void chooseTagLanguage() {
+        new Thread(() -> {
+            try {
+                List<String> locales = new ArrayList<>(TagTranslationCatalog.installedPacks(Database.getDatabase()).keySet());
+                locales.sort(String::compareTo);
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    String selected = TagLanguage.selected(this);
+                    boolean missingSelection = !selected.isEmpty() && !locales.contains(selected);
+                    if (missingSelection) locales.add(selected);
+                    locales.add(0, "");
+                    Locale uiLocale = getResources().getConfiguration().getLocales().get(0);
+                    String[] labels = locales.stream().map(locale -> {
+                        if (locale.isEmpty()) return getString(R.string.tag_display_language_follow_app);
+                        String name = Locale.forLanguageTag(locale).getDisplayName(uiLocale) + " (" + locale + ")";
+                        return missingSelection && locale.equals(selected)
+                            ? getString(R.string.tag_display_language_uninstalled, name) : name;
+                    }).toArray(String[]::new);
+                    new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.tag_display_language_title)
+                        .setSingleChoiceItems(labels, locales.indexOf(selected), (dialog, which) -> {
+                            TagLanguage.select(this, locales.get(which));
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+                });
+            } catch (RuntimeException error) {
+                LogUtility.e("Unable to list tag display languages", error);
+                runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
+            }
+        }).start();
     }
 
     public void manageTranslationPacks() {

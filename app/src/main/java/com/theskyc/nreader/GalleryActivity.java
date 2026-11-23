@@ -72,6 +72,7 @@ import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.Favorites;
 import com.theskyc.nreader.settings.Global;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
 
@@ -360,7 +361,7 @@ public class GalleryActivity extends BaseActivity {
             if (tag.getId() > 0) siteIds.add(tag.getId());
         }
         if (siteIds.isEmpty()) return;
-        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        Locale locale = TagLanguage.current(this);
         tagLabelRequest = tagLabelLoader.submit(() -> {
             Map<Integer, String> names;
             try {

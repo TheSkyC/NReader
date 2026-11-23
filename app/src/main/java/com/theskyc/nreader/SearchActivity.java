@@ -47,6 +47,7 @@ import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
@@ -496,26 +497,27 @@ public class SearchActivity extends GeneralActivity {
 
     private final class TagSuggestionAdapter extends ArrayAdapter<TagSuggestion> {
         private final TagType type;
-        private final Locale locale;
         private final AppCompatAutoCompleteTextView entry;
         private final Filter filter = new Filter() {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
+                Locale locale = TagLanguage.current(SearchActivity.this);
                 List<TagSuggestion> suggestions = constraint == null || constraint.length() == 0
                     ? new ArrayList<>()
                     : Queries.TagTable.getTagSuggestions(type, constraint.toString(), locale);
-                results.values = suggestions;
+                results.values = new TagSuggestionResults(locale, suggestions);
                 results.count = suggestions.size();
                 return results;
             }
 
             @Override
-            @SuppressWarnings("unchecked")
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (!Objects.equals(constraint == null ? "" : constraint.toString(), entry.getText().toString())) return;
+                TagSuggestionResults result = (TagSuggestionResults) results.values;
+                if (result == null || !result.locale.equals(TagLanguage.current(SearchActivity.this))) return;
                 clear();
-                if (results.values != null) addAll((List<TagSuggestion>) results.values);
+                addAll(result.suggestions);
                 if (results.count > 0) notifyDataSetChanged();
                 else notifyDataSetInvalidated();
             }
@@ -530,7 +532,6 @@ public class SearchActivity extends GeneralActivity {
             super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
             this.type = type;
             this.entry = entry;
-            this.locale = getResources().getConfiguration().getLocales().get(0);
         }
 
         @NonNull
@@ -548,6 +549,16 @@ public class SearchActivity extends GeneralActivity {
         @Override
         public Filter getFilter() {
             return filter;
+        }
+    }
+
+    private static final class TagSuggestionResults {
+        final Locale locale;
+        final List<TagSuggestion> suggestions;
+
+        TagSuggestionResults(Locale locale, List<TagSuggestion> suggestions) {
+            this.locale = locale;
+            this.suggestions = suggestions;
         }
     }
 

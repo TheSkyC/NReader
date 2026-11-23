@@ -28,6 +28,7 @@ import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.ImageDownloadUtility;
@@ -91,7 +92,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         lastQuery = query == null ? "" : query;
         String requestedQuery = lastQuery;
         boolean sortedByName = TagV2.isSortedByName();
-        Locale uiLocale = context.getResources().getConfiguration().getLocales().get(0);
+        Locale uiLocale = TagLanguage.current(context);
         long requestedRevision = tagMode == TagMode.ONLINE ? Login.currentOnlineTagsRevision() : -1;
         if (tagMode == TagMode.ONLINE && displayedOnlineRevision != requestedRevision && rows.size() > 0) {
             clearVisibleRows();
