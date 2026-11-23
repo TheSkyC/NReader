@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts import build_tag_catalog, build_tag_translation_release, verify_tag_feed
 from scripts.build_tag_translation_pack import encode_pack
@@ -65,6 +66,30 @@ class VerifyTagFeedTest(unittest.TestCase):
             "Translation zh-Hans: revision 1",
         ], stdout.getvalue().splitlines())
         self.assertEqual(before, self.capture_files(stage))
+
+    def test_translation_release_and_verifier_scan_each_feed_directory_once(self):
+        build_tag_catalog.prepare_release(self.catalog, 7, self.catalog_feed)
+        for locale in ("ja", "de", "fr"):
+            self.publish_translation(locale, 1)
+        candidate = self.root / "new-pack.json"
+        candidate.write_bytes(encode_pack([{"id": 1, "name": "New"}], "ja", 2, {1}))
+        original_iterdir = Path.iterdir
+        scans = []
+
+        def record_scan(path):
+            if path in (self.catalog_feed, self.translation_feed):
+                scans.append(path)
+            return original_iterdir(path)
+
+        with patch.object(Path, "iterdir", record_scan):
+            build_tag_translation_release.prepare_release(candidate, {1}, self.translation_feed)
+            self.assertEqual([self.translation_feed], scans)
+            scans.clear()
+            with redirect_stdout(io.StringIO()):
+                verify_tag_feed.main([
+                    "--catalog-feed", str(self.catalog_feed), "--translation-feed", str(self.translation_feed),
+                ])
+            self.assertEqual([self.catalog_feed, self.translation_feed], scans)
 
     @staticmethod
     def capture_files(directory):

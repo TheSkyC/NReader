@@ -7,7 +7,8 @@ import re
 from pathlib import Path
 
 from scripts.tag_catalog import (
-    MAX_BYTES, MAX_INTEGER, MAX_MANIFEST_STRING_UNITS, atomic_write, check_feed_filename, decode_json, parse_catalog,
+    MAX_BYTES, MAX_INTEGER, MAX_MANIFEST_STRING_UNITS, atomic_write, check_feed_filename, decode_json,
+    feed_filename_index, parse_catalog,
     read_bounded, read_verified_payload,
 )
 
@@ -35,10 +36,10 @@ def payload_name(digest: str) -> str:
     return f"catalog-{digest}.json"
 
 
-def read_payload(directory: Path, manifest: dict) -> dict:
+def read_payload(directory: Path, manifest: dict, names=None) -> dict:
     digest = manifest["sha256"]
     payload = directory / payload_name(digest)
-    check_feed_filename(payload)
+    check_feed_filename(payload, names)
     data = read_verified_payload(payload, manifest["sizeBytes"], digest)
     return parse_catalog(data)
 
@@ -52,19 +53,20 @@ def prepare_release(catalog: Path, revision: int, output: Path) -> Path:
     manifest = {**IDENTITY, "revision": revision, "sizeBytes": len(data), "sha256": digest}
 
     pointer = output / "manifest.json"
-    check_feed_filename(pointer)
+    names = feed_filename_index(output)
+    check_feed_filename(pointer, names)
     previous = parse_manifest(read_bounded(pointer, MAX_MANIFEST_BYTES)) if pointer.exists() else None
     if previous is not None and (revision < previous["revision"]
                                   or (revision == previous["revision"] and manifest != previous)):
         raise ValueError("A catalog revision cannot be lowered or reused for different bytes")
     if previous is not None and previous["sha256"] != digest:
-        for tag_id, tag in read_payload(output, previous).items():
+        for tag_id, tag in read_payload(output, previous, names).items():
             if tag_id not in tags or tag.category != tags[tag_id].category:
                 raise ValueError(f"Catalog identity must be retained for tag ID {tag_id}")
 
     output.mkdir(parents=True, exist_ok=True)
     payload = output / payload_name(digest)
-    check_feed_filename(payload)
+    check_feed_filename(payload, names)
     if payload.exists():
         if read_bounded(payload, MAX_BYTES) != data:
             raise ValueError("Existing immutable file does not match its digest")

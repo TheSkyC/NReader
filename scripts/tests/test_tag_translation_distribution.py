@@ -285,8 +285,8 @@ class TranslationReleaseTest(unittest.TestCase):
         self.candidate("ja", 2)
         original_verify = release.verify_payload
 
-        def change_candidate(directory, descriptor, catalog_ids):
-            original_verify(directory, descriptor, catalog_ids)
+        def change_candidate(directory, descriptor, catalog_ids, names):
+            original_verify(directory, descriptor, catalog_ids, names)
             self.pack.write_bytes(b"changed")
 
         with patch.object(release, "verify_payload", side_effect=change_candidate):

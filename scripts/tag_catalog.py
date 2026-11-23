@@ -57,12 +57,20 @@ def read_bounded(path: Path, limit: int) -> bytes:
     return data
 
 
-def check_feed_filename(path: Path) -> None:
-    if not path.parent.exists():
-        return
-    for entry in path.parent.iterdir():
-        if entry.name != path.name and entry.name.casefold() == path.name.casefold():
-            raise ValueError(f"Conflicting filename casing: {entry}; expected {path.name}")
+def feed_filename_index(directory: Path) -> dict[str, set[str]]:
+    names = {}
+    if directory.exists():
+        for entry in directory.iterdir():
+            names.setdefault(entry.name.casefold(), set()).add(entry.name)
+    return names
+
+
+def check_feed_filename(path: Path, names=None) -> None:
+    if names is None:
+        names = feed_filename_index(path.parent)
+    for name in names.get(path.name.casefold(), ()):
+        if name != path.name:
+            raise ValueError(f"Conflicting filename casing: {path.parent / name}; expected {path.name}")
 
 
 def read_verified_payload(path: Path, size: int, digest: str) -> bytes:
