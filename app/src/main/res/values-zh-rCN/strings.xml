@@ -206,6 +206,7 @@
     <string name="update_version_format" formatted="true">要从 %1$s 版更新到 %2$s 版吗？\n\n更新日志：\n%3$s</string>
     <string name="clear_this_list">要清空此列表吗？</string>
     <string name="set_minimum_count">设置标签的最少作品数</string>
+    <string name="set_minimum_count_format" formatted="true">设置标签的最少作品数（%1$d）</string>
     <string name="sort_by_title">按标题排序</string>
     <string name="sort_by_popular">按热度排序</string>
     <string name="filter_by_status">按规则状态筛选</string>

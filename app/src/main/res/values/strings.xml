@@ -282,6 +282,7 @@
     <string name="update_version_format" formatted="true">Update from version %1$s to version %2$s?\n\nChangelog:\n%3$s</string>
     <string name="clear_this_list">Clear this list?</string>
     <string name="set_minimum_count">Minimum gallery count per tag</string>
+    <string name="set_minimum_count_format" formatted="true">Minimum gallery count per tag (%1$d)</string>
     <string name="sort_by_title">Sort by title</string>
     <string name="sort_by_popular">Sort by popularity</string>
     <string name="filter_by_status">Filter by rule status</string>

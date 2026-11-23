@@ -230,6 +230,7 @@ translation pack is installed.
 The tag manager's **Reset tag view filters** action restores the default minimum
 count, popularity sort, rule-status filter, and translation-coverage filter
 without clearing saved rules.
+The minimum-count menu item includes its current threshold.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.
 

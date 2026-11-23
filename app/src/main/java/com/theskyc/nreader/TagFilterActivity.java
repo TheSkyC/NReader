@@ -44,6 +44,7 @@ public class TagFilterActivity extends GeneralActivity {
     private ViewPager2 mViewPager;
     private String query = "";
     private MenuItem sortFilterItem;
+    private MenuItem minCountFilterItem;
     private MenuItem statusFilterItem;
     private MenuItem translationFilterItem;
 
@@ -163,6 +164,8 @@ public class TagFilterActivity extends GeneralActivity {
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
         sortFilterItem = menu.findItem(R.id.sort_by_name);
         updateSortItem(sortFilterItem);
+        minCountFilterItem = menu.findItem(R.id.set_min_count);
+        updateMinCountItem(minCountFilterItem);
         statusFilterItem = menu.findItem(R.id.filter_status);
         updateStatusFilterItem(statusFilterItem);
         translationFilterItem = menu.findItem(R.id.filter_translated);
@@ -212,6 +215,7 @@ public class TagFilterActivity extends GeneralActivity {
         else if (id == R.id.reset_view_filters) {
             TagV2.resetFilterPreferences(this);
             if (sortFilterItem != null) updateSortItem(sortFilterItem);
+            if (minCountFilterItem != null) updateMinCountItem(minCountFilterItem);
             if (statusFilterItem != null) updateStatusFilterItem(statusFilterItem);
             if (translationFilterItem != null) updateTranslationFilterItem(translationFilterItem);
             if (page != null) page.changeSize();
@@ -243,6 +247,7 @@ public class TagFilterActivity extends GeneralActivity {
             public void positive(int actual) {
                 LogUtility.d("ACTUAL: " + actual);
                 TagV2.updateMinCount(TagFilterActivity.this, actual);
+                if (minCountFilterItem != null) updateMinCountItem(minCountFilterItem);
                 TagTypePage page = getActualFragment();
                 if (page != null) {
                     page.changeSize();
@@ -286,6 +291,10 @@ public class TagFilterActivity extends GeneralActivity {
         item.setTitle(status == null ? R.string.filter_by_status : status == TagStatus.DEFAULT
             ? R.string.filter_status_default : status == TagStatus.ACCEPTED
                 ? R.string.filter_status_accepted : R.string.filter_status_avoided);
+    }
+
+    private void updateMinCountItem(MenuItem item) {
+        item.setTitle(getString(R.string.set_minimum_count_format, TagV2.getMinCount()));
     }
 
     private void updateTranslationFilterItem(MenuItem item) {
