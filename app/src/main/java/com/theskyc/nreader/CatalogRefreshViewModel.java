@@ -12,6 +12,7 @@ import androidx.work.Operation;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.theskyc.nreader.async.ScrapeTags;
 import com.theskyc.nreader.utility.LogUtility;
 
@@ -66,7 +67,21 @@ public class CatalogRefreshViewModel extends ViewModel {
         requestId = id;
         status.setValue(Status.QUEUED);
         try {
-            observeWork(context.getApplicationContext(), id);
+            Context app = context.getApplicationContext();
+            observeWork(app, id);
+            ListenableFuture<WorkInfo> lookup = WorkManager.getInstance(app).getWorkInfoById(id);
+            lookup.addListener(() -> {
+                if (!id.equals(requestId)) return;
+                try {
+                    if (lookup.get() == null) status.setValue(Status.FAILED);
+                } catch (ExecutionException | RuntimeException error) {
+                    LogUtility.w("Unable to find tag catalog check", error);
+                    status.setValue(Status.FAILED);
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                    status.setValue(Status.FAILED);
+                }
+            }, ContextCompat.getMainExecutor(app));
         } catch (RuntimeException error) {
             LogUtility.w("Unable to restore tag catalog check", error);
             status.setValue(Status.FAILED);
