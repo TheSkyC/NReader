@@ -675,6 +675,7 @@
     <string name="tag_translation_remove_message">Remove the installed translations for %1$s?</string>
     <string name="tag_translation_remove">Remove</string>
     <string name="tag_translation_removed">Removed %1$s.</string>
+    <string name="tag_translation_remove_changed">The language pack changed. Open the list again to remove it.</string>
     <string name="tag_translation_installed">Tag language installed or updated.</string>
     <string name="tag_translation_not_newer">This pack is already installed at the same or a newer revision.</string>
     <string name="tag_translation_install_failed">Could not install this tag language pack.</string>

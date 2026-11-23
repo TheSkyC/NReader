@@ -265,9 +265,20 @@ public final class TagTranslationCatalog {
     }
 
     public static void remove(SQLiteDatabase database, String locale) {
+        removeInternal(database, locale, null);
+    }
+
+    /** Removes a locale only if its revision still matches. */
+    public static boolean removeIfRevision(SQLiteDatabase database, String locale, int expectedRevision) {
+        if (expectedRevision <= 0) throw new IllegalArgumentException("Invalid expected translation revision");
+        return removeInternal(database, locale, expectedRevision);
+    }
+
+    private static boolean removeInternal(SQLiteDatabase database, String locale, Integer expectedRevision) {
         String canonicalLocale = validateLocale(locale);
         database.beginTransactionNonExclusive();
         try {
+            if (expectedRevision != null && installedRevision(database, canonicalLocale) != expectedRevision) return false;
             database.delete("TagTranslationAliases", "locale = ?", new String[]{canonicalLocale});
             database.delete("TagTranslations", "locale = ?", new String[]{canonicalLocale});
             database.delete("TagTranslationState", "locale = ?", new String[]{canonicalLocale});
@@ -276,6 +287,7 @@ public final class TagTranslationCatalog {
             database.endTransaction();
         }
         CHANGES.postValue(null);
+        return true;
     }
 
     private static PackMetadata readPack(JsonReader reader, PreparedRows rows, BooleanSupplier cancelled) throws IOException {

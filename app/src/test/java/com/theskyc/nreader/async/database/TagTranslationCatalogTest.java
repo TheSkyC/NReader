@@ -183,6 +183,23 @@ public class TagTranslationCatalogTest {
         assertTrue(TagTranslationCatalog.installedPacks(database).containsKey("zh-Hans"));
     }
 
+    @Test public void removalRejectsStaleRevisionAndPreservesTheUpdatedPack() throws IOException {
+        assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"old\"}]")));
+        assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"other\"}]")));
+        int selectedRevision = TagTranslationCatalog.installedRevision(database, "ja");
+        assertTrue(apply(pack("ja", 2, "[{\"id\":1,\"name\":\"new\",\"aliases\":[\"alias\"]}]")));
+
+        assertFalse(TagTranslationCatalog.removeIfRevision(database, "ja", selectedRevision));
+        assertEquals(2, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals("new", scalarString("SELECT displayName FROM TagTranslations WHERE locale='ja'"));
+        assertEquals(1, scalar("SELECT COUNT(*) FROM TagTranslationAliases WHERE locale='ja'"));
+        assertThrows(IllegalArgumentException.class, () -> TagTranslationCatalog.removeIfRevision(database, "ja", 0));
+        assertTrue(TagTranslationCatalog.removeIfRevision(database, "ja", 2));
+        assertFalse(TagTranslationCatalog.removeIfRevision(database, "ja", 2));
+        assertEquals(0, TagTranslationCatalog.installedRevision(database, "ja"));
+        assertEquals(1, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
+    }
+
     @Test public void scratchWriteFailureRetainsInstalledDataAndAllowsSameRevisionRetry() throws IOException {
         assertTrue(apply(pack("ja", 1, "[{\"id\":1,\"name\":\"before\",\"aliases\":[\"prior\"]}]")));
         assertTrue(apply(pack("zh-Hans", 1, "[{\"id\":2,\"name\":\"other\"}]")));

@@ -535,6 +535,7 @@
     <string name="tag_translation_remove_message">要移除已安装的 %1$s 翻译吗？</string>
     <string name="tag_translation_remove">移除</string>
     <string name="tag_translation_removed">已移除 %1$s。</string>
+    <string name="tag_translation_remove_changed">语言包已发生变化，请重新打开列表后再移除。</string>
     <string name="tag_translation_installed">已安装或更新标签语言包。</string>
     <string name="tag_translation_not_newer">此语言包的相同或更新版本已安装。</string>
     <string name="tag_translation_install_failed">无法安装此标签语言包。</string>

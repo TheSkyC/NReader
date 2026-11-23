@@ -62,6 +62,10 @@ replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
 license, moderation workflow, or default display mode.
 
+When removing a pack from Settings, the app checks its revision in the removal
+transaction. If it changed since the list was displayed, the app keeps the pack
+and asks the user to reopen the list.
+
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether
 it ends a query or continues inside a tag name. Pack authoring and Android

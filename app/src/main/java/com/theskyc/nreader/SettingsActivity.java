@@ -241,7 +241,10 @@ public class SettingsActivity extends GeneralActivity {
             String[] labels = locales.stream()
                 .map(locale -> getString(R.string.tag_translation_pack_item, locale, packs.get(locale)))
                 .toArray(String[]::new);
-            builder.setItems(labels, (dialog, which) -> confirmRemoveTranslationPack(locales.get(which)));
+            builder.setItems(labels, (dialog, which) -> {
+                String locale = locales.get(which);
+                confirmRemoveTranslationPack(locale, packs.get(locale));
+            });
         }
         builder.show();
     }
@@ -349,16 +352,17 @@ public class SettingsActivity extends GeneralActivity {
         T run() throws IOException;
     }
 
-    private void confirmRemoveTranslationPack(String locale) {
+    private void confirmRemoveTranslationPack(String locale, int revision) {
         new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_translation_remove_title)
             .setMessage(getString(R.string.tag_translation_remove_message, locale))
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.tag_translation_remove, (dialog, which) -> new Thread(() -> {
                 try {
-                    TagTranslationCatalog.remove(Database.getDatabase(), locale);
-                    runOnUiThread(() -> showTranslationToast(
-                        getString(R.string.tag_translation_removed, locale), Toast.LENGTH_SHORT));
+                    boolean removed = TagTranslationCatalog.removeIfRevision(Database.getDatabase(), locale, revision);
+                    runOnUiThread(() -> showTranslationToast(removed
+                        ? getString(R.string.tag_translation_removed, locale)
+                        : getString(R.string.tag_translation_remove_changed), Toast.LENGTH_LONG));
                 } catch (RuntimeException error) {
                     LogUtility.e("Unable to remove tag translation pack", error);
                     runOnUiThread(() -> showTranslationToast(R.string.failed, Toast.LENGTH_SHORT));
