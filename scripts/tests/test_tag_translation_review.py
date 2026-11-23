@@ -64,6 +64,28 @@ class TranslationReviewTest(unittest.TestCase):
         _, pack = review.review_proposal(counts_only, current_pack, data, 6)
         self.assertEqual("concurrent", parse_pack(pack, self.catalog)["entries"][1]["name"])
 
+    def test_alias_order_is_part_of_the_reviewed_base(self):
+        original = parse_pack(encode_pack([
+            {"id": 11, "name": "old", "aliases": ["second", "first"]},
+            {"id": 22, "name": "unchanged"},
+        ], "ja", 4, self.catalog), self.catalog)
+        reordered = parse_pack(encode_pack([
+            {"id": 11, "name": "old", "aliases": ["first", "second"]},
+            {"id": 22, "name": "unchanged"},
+        ], "ja", 4, self.catalog), self.catalog)
+        proposal = json.loads(review.draft_proposal(self.catalog, original, "ja", [11]))
+        proposal["changes"][0]["after"] = {"name": "updated"}
+        data = review.encode_document(proposal)
+
+        with self.assertRaisesRegex(ValueError, "Current translation changed"):
+            review.review_proposal(self.catalog, reordered, data, 5)
+
+        unrelated = json.loads(review.draft_proposal(self.catalog, original, "ja", [22]))
+        unrelated["changes"][0]["after"] = {"name": "updated"}
+        original_report, _ = review.review_proposal(self.catalog, original, review.encode_document(unrelated), 5)
+        reordered_report, _ = review.review_proposal(self.catalog, reordered, review.encode_document(unrelated), 5)
+        self.assertNotEqual(json.loads(original_report)["baseSha256"], json.loads(reordered_report)["baseSha256"])
+
     def test_rejects_noops_stale_revisions_duplicates_and_empty_pack(self):
         proposal = self.proposal(11, 22)
         original = review.encode_document(proposal)

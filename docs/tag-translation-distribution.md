@@ -34,9 +34,10 @@ written. For network use, the manifest and payload must come from the same
 configured HTTPS origin without redirects or account credentials.
 
 Android verifies the staged file's length and digest before starting a pack
-import. The importer compares the payload's locale and revision inside the
-transaction before replacing anything. A rejected or cancelled pack leaves
-installed data intact. A descriptor can replace a locale only if its revision
+import. The importer compares the payload's locale and revision with the
+descriptor before the transaction, and checks the installed revision again
+inside the transaction before replacing anything. A rejected or cancelled pack
+leaves installed data intact. A descriptor can replace a locale only if its revision
 is newer than the currently installed pack, including one installed from a
 local file. The app does not automatically switch sources.
 
