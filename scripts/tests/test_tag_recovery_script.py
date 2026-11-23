@@ -34,6 +34,7 @@ elif args[:2] == ["-s", "emulator-test"]:
         output = "\n".join("package:" + name for name in state["existing"])
     elif command[:3] == ["shell", "pm", "create-user"]:
         state["user"] = True
+        state["user_name"] = command[3]
         output = "Success: created user id 12"
     elif command[:3] == ["shell", "am", "start-user"]:
         output = "Success"
@@ -60,6 +61,8 @@ elif args[:2] == ["-s", "emulator-test"]:
         output = "Success: removed user"
     elif command == ["shell", "pm", "list", "users"]:
         output = "Users:\n\tUserInfo{0:Owner:4c13} running"
+        if state["user"]:
+            output += "\n\tUserInfo{12:" + state["user_name"] + ":0} running"
     else:
         code = 1
         output = "Unexpected command: " + repr(command)
