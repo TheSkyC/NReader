@@ -50,6 +50,10 @@ Keep the device awake and unlocked for the whole run. On Android 9 emulators,
 temporary user; a locked or dreaming display can pause the launched activity and
 make the harness time out before any UI assertion runs.
 
+On 2026-11-23, all four cases passed with MinApi26 on a disposable API 26
+emulator. This run used synthetic translations and injected keys; it does not
+measure a physical keyboard, IME, frame presentation, or a physical device.
+
 ## Local translation pack picker
 
 On a disposable device, use **Settings → Tag languages → Install or update**

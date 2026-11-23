@@ -34,6 +34,10 @@ On a browsed tag page with local rules enabled, check that the tag title and
 local rules survive, results reload, and the new request uses neither the
 original nor the replacement account exclusions.
 
+On 2026-11-23, the activity delivery and stale-revision recreation test passed
+with MinApi26 on a disposable API 26 emulator. This does not establish the
+separate process-death case or physical-device behavior.
+
 For suggestion and list responsiveness, run the separate
 [tag interaction benchmarks](tag-interaction-device-validation.md).
 
