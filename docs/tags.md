@@ -91,7 +91,14 @@ an incomplete document and requires the user to retry.
 Search keys use NFC normalization and locale-independent lowercase. Greek final
 sigma is normalized to ordinary sigma so a prefix produces the same key whether
 it ends a query or continues inside a tag name. Pack authoring and Android
-installation use the same rule for alias duplicate detection and indexed keys.
+installation use the same algorithm for alias duplicate detection and indexed
+keys, but rely on their respective runtime Unicode data. Different Unicode data
+versions can produce different keys for some characters. Consequently, a pack
+accepted by the builder is not guaranteed to pass duplicate-alias checks on
+every Android version. A platform Unicode-data change can also make stored keys
+inconsistent with newly normalized queries until the pack is reinstalled. A
+version-pinned normalization implementation and an index rebuild are needed to
+remove this limitation; the current schema does not record the Unicode version.
 Database version 24 updates installed search keys without changing display names
 or pack revisions. If a tag has legacy aliases that become equivalent, the
 upgrade keeps the first stored alias for that key.
