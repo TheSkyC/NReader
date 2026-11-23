@@ -361,6 +361,9 @@ disable Wi-Fi and mobile data, and launch the application. After the first
 startup, force-stop and relaunch it before checking the tag manager. The
 database must contain the bundled catalog revision and the tag page must show
 catalog names while the device has no default network.
+Check the active default network before launching and again during the check;
+do not assume that `svc` succeeded just because the command returned. On the
+API 26 emulator below, disabling Wi-Fi as the shell user did not take effect.
 
 For a disposable API 28 AVD, the check can be recorded with:
 
@@ -378,6 +381,12 @@ bundled revision 43, and 86,030 catalog rows, and the live tag page displays
 an expected catalog name such as `glasses`. Record the Android API, flavor,
 network state, and whether the database was empty before launch. This is a
 runtime smoke check rather than a release performance threshold.
+
+On 2026-11-23, a fresh MinApi26 debug install on an API 26 emulator started
+with no default network. After force-stop and relaunch, its database contained
+schema 26, bundled revision 43, and 86,030 rows. The tag page displayed
+`glasses`, and searching for it returned `glasses` and `sunglasses` with no
+default network. The test app was removed and the prior network state restored.
 
 On 2026-11-23, the isolated benchmark imported bundled revision 43 with
 86,030 rows on an API 26 emulator in 3,686 ms. This measures one benchmark
