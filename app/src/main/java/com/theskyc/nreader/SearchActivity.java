@@ -296,6 +296,13 @@ public class SearchActivity extends GeneralActivity {
         LinearLayout uploadRangeLayout = findViewById(R.id.upload_range);
         ((TextView) pageRangeLayout.findViewById(R.id.title)).setText(R.string.page_range);
         ((TextView) uploadRangeLayout.findViewById(R.id.title)).setText(R.string.upload_time);
+        ((TextView) pageRangeLayout.findViewById(R.id.from_label)).setText(R.string.search_range_min_pages);
+        ((TextView) pageRangeLayout.findViewById(R.id.to_label)).setText(R.string.search_range_max_pages);
+        ((TextView) uploadRangeLayout.findViewById(R.id.from_label)).setText(R.string.search_range_from_time);
+        ((TextView) uploadRangeLayout.findViewById(R.id.to_label)).setText(R.string.search_range_to_time);
+        TextView timeHelp = uploadRangeLayout.findViewById(R.id.range_help);
+        timeHelp.setText(R.string.search_range_relative_time);
+        timeHelp.setVisibility(View.VISIBLE);
         Button fromPage = pageRangeLayout.findViewById(R.id.fromButton);
         Button toPage = pageRangeLayout.findViewById(R.id.toButton);
         Button fromDate = uploadRangeLayout.findViewById(R.id.fromButton);
@@ -307,7 +314,7 @@ public class SearchActivity extends GeneralActivity {
                 fromPage.setText(String.format(Locale.US, "%d", actual));
                 if (ranges.getFromPage() > ranges.getToPage()) {
                     ranges.setToPage(Ranges.UNDEFINED);
-                    toPage.setText("");
+                    toPage.setText(R.string.search_range_any);
                 }
                 advanced = true;
             }
@@ -315,7 +322,7 @@ public class SearchActivity extends GeneralActivity {
             @Override
             public void neutral() {
                 ranges.setFromPage(Ranges.UNDEFINED);
-                fromPage.setText("");
+                fromPage.setText(R.string.search_range_any);
             }
         }));
         toPage.setOnClickListener(v -> createPageBuilder(R.string.to_page, ranges.getFromPage(), 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
@@ -329,7 +336,7 @@ public class SearchActivity extends GeneralActivity {
             @Override
             public void neutral() {
                 ranges.setToPage(Ranges.UNDEFINED);
-                toPage.setText("");
+                toPage.setText(R.string.search_range_any);
             }
         }));
         fromDate.setOnClickListener(v -> showUnitDialog(fromDate, true));
@@ -357,7 +364,7 @@ public class SearchActivity extends GeneralActivity {
                         ranges.setToDateUnit(temporaryUnit);
                         ranges.setToDate(actual);
                     }
-                    button.setText(String.format(Locale.US, "%d %c", actual, Character.toUpperCase(temporaryUnit.getVal())));
+                    button.setText(getString(R.string.search_range_time_value, actual, getString(temporaryUnit.getString())));
                     advanced = true;
                 }
 
@@ -370,7 +377,7 @@ public class SearchActivity extends GeneralActivity {
                         ranges.setToDateUnit(Ranges.UNDEFINED_DATE);
                         ranges.setToDate(Ranges.UNDEFINED);
                     }
-                    button.setText("");
+                    button.setText(R.string.search_range_any);
                 }
             });
         });
@@ -382,7 +389,7 @@ public class SearchActivity extends GeneralActivity {
                 ranges.setToDateUnit(Ranges.UNDEFINED_DATE);
                 ranges.setToDate(Ranges.UNDEFINED);
             }
-            button.setText("");
+            button.setText(R.string.search_range_any);
         });
         builder.show();
     }

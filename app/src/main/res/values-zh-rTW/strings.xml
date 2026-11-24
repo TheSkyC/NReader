@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_range_any">不限</string>
+    <string name="search_range_min_pages">最少頁數</string>
+    <string name="search_range_max_pages">最多頁數</string>
+    <string name="search_range_from_time">從</string>
+    <string name="search_range_to_time">至</string>
+    <string name="search_range_relative_time">相對於目前時間</string>
+    <string name="search_range_time_value">%1$d %2$s</string>
     <string name="auto_reauthenticate_title">自動恢復登入</string>
     <string name="auto_reauthenticate_summary">已儲存密碼的登入工作階段過期時，在前景自動開始驗證。你可能需要手動完成驗證。</string>
     <string name="comment_choose_account">登入後發表留言</string>

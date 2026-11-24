@@ -2,6 +2,13 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 
 <resources>
+    <string name="search_range_any">Any</string>
+    <string name="search_range_min_pages">Minimum pages</string>
+    <string name="search_range_max_pages">Maximum pages</string>
+    <string name="search_range_from_time">From</string>
+    <string name="search_range_to_time">To</string>
+    <string name="search_range_relative_time">Time relative to now</string>
+    <string name="search_range_time_value">%1$d %2$s</string>
     <string name="account_remember_password">Remember password on this device</string>
     <string name="preference_key_auto_reauthenticate" translatable="false">auto_reauthenticate</string>
     <string name="auto_reauthenticate_title">Automatically restore sign-in</string>

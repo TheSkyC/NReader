@@ -72,6 +72,11 @@ public class SearchTagEntryTest {
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
                 assertEquals(View.GONE, activity.findViewById(R.id.recycler).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.search_actions).getVisibility());
+                View pageRange = activity.findViewById(R.id.page_range);
+                assertEquals(activity.getString(R.string.search_range_any),
+                    ((android.widget.Button) pageRange.findViewById(R.id.fromButton)).getText().toString());
+                assertEquals(activity.getString(R.string.search_range_any),
+                    ((android.widget.Button) pageRange.findViewById(R.id.toButton)).getText().toString());
                 activity.findViewById(R.id.search_submit).performClick();
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
