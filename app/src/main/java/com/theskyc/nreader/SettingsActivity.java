@@ -92,6 +92,7 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
     private ActivityResultLauncher<String> EXPORT_TRANSLATION_PACK;
     private ActivityResultLauncher<String[]> IMPORT_TAG_RULES;
     private ActivityResultLauncher<String> EXPORT_TAG_RULES;
+    private ActivityResultLauncher<Intent> settingsScreenLauncher;
     private TagTranslationFeed activeTranslationFeed;
     private AlertDialog translationFeedProgress;
     private AlertDialog catalogCheckDialog;
@@ -278,6 +279,9 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
                 LogUtility.e("Error getting logcat", e);
                 Toast.makeText(this, getString(R.string.copy_logs_fail), Toast.LENGTH_SHORT).show();
             }
+        });
+        settingsScreenLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK) finishAfterDataRestore();
         });
     }
 
@@ -856,7 +860,7 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.ok, (dialog, which) -> new Manager(selectedFile, this, false, () -> {
                         Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show();
-                        finish();
+                        finishAfterDataRestore();
                     }).start()).show());
             } catch (IOException exception) {
                 LogUtility.e("Unable to preview backup", exception);
@@ -887,7 +891,7 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
                     Importer.restoreLastSnapshot(this);
                     runOnUiThread(() -> {
                         Toast.makeText(this, R.string.import_finished, Toast.LENGTH_SHORT).show();
-                        finish();
+                        finishAfterDataRestore();
                     });
                 } catch (IOException exception) {
                     LogUtility.e("Unable to restore backup snapshot", exception);
@@ -933,8 +937,13 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
     public boolean onPreferenceStartScreen(PreferenceFragmentCompat caller, PreferenceScreen screen) {
         Intent intent = new Intent(this, SettingsActivity.class);
         intent.putExtra(SETTINGS_SCREEN, screen.getKey());
-        startActivity(intent);
+        settingsScreenLauncher.launch(intent);
         return true;
+    }
+
+    void finishAfterDataRestore() {
+        setResult(RESULT_OK);
+        finish();
     }
 
     @Override

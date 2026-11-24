@@ -2,6 +2,7 @@
 package com.theskyc.nreader;
 
 import android.app.Application;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Looper;
 import android.widget.ListView;
@@ -30,6 +31,35 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class SettingsNavigationTest {
+    @Test
+    public void successfulRestoreClosesSettingsStackButCancellationDoesNot() {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        try (ActivityController<SettingsActivity> root = Robolectric.buildActivity(SettingsActivity.class).setup()) {
+            root.get().fragment.findPreference("settings_screen_data").performClick();
+            Intent childIntent = Shadows.shadowOf(root.get()).getNextStartedActivity();
+            try (ActivityController<SettingsActivity> child =
+                     Robolectric.buildActivity(SettingsActivity.class, childIntent).setup()) {
+                child.get().restoreLastSnapshot();
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+                assertFalse(child.get().isFinishing());
+                child.get().finishAfterDataRestore();
+                assertTrue(child.get().isFinishing());
+                assertEquals(Activity.RESULT_OK, Shadows.shadowOf(child.get()).getResultCode());
+            }
+            root.recreate();
+            Shadows.shadowOf(root.get()).receiveResult(childIntent, Activity.RESULT_OK, null);
+            assertTrue(root.get().isFinishing());
+        }
+        try (ActivityController<SettingsActivity> root = Robolectric.buildActivity(SettingsActivity.class).setup()) {
+            root.get().fragment.findPreference("settings_screen_data").performClick();
+            Intent childIntent = Shadows.shadowOf(root.get()).getNextStartedActivity();
+            Shadows.shadowOf(root.get()).receiveResult(childIntent, Activity.RESULT_CANCELED, null);
+            assertFalse(root.get().isFinishing());
+        }
+    }
+
     @Test
     public void sectionsOpenWithTheirPreferencesAndSurviveRecreation() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
