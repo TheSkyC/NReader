@@ -76,4 +76,14 @@
                 android:text="@string/search_range_any" />
         </LinearLayout>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/range_error"
+        style="@style/TextAppearance.MaterialComponents.Body2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:text="@string/search_upload_range_conflict"
+        android:textColor="?attr/colorError"
+        android:visibility="gone" />
 </LinearLayout>

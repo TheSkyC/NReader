@@ -263,6 +263,13 @@ public class SearchActivity extends GeneralActivity {
 
     private void submitSearch(String query, boolean withoutOnlineTags) {
         if (isResolvingTagEntry() || (!groupsPopulated && (advanced || filtersVisible))) return;
+        if ((advanced || filtersVisible || withoutOnlineTags) && ranges.hasConflictingUploadBounds()) {
+            new MaterialAlertDialogBuilder(this)
+                .setMessage(R.string.search_upload_range_conflict)
+                .setPositiveButton(R.string.ok, null)
+                .show();
+            return;
+        }
         removeStaleOnlineTags();
         Login.OnlineTagScope scope = withoutOnlineTags ? null
             : Login.currentOnlineTagScope(onlineChipsIdentity, onlineChipsRevision);
@@ -652,6 +659,8 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void updateFilterSummary() {
+        findViewById(R.id.upload_range).findViewById(R.id.range_error)
+            .setVisibility(ranges.hasConflictingUploadBounds() ? View.VISIBLE : View.GONE);
         int included = 0;
         int excluded = 0;
         ArrayList<ChipTag> selected = new ArrayList<>();

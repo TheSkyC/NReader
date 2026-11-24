@@ -47,6 +47,11 @@ public class Ranges implements Parcelable {
             && toPage == UNDEFINED && fromPage == UNDEFINED;
     }
 
+    public boolean hasConflictingUploadBounds() {
+        return fromDate != UNDEFINED && toDate != UNDEFINED && fromDateUnit != null
+            && fromDateUnit == toDateUnit && fromDate > toDate;
+    }
+
     public int getFromPage() {
         return fromPage;
     }

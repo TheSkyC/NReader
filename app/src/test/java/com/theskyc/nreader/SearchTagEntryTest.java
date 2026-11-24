@@ -141,6 +141,41 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void conflictingUploadBoundsBlockSubmissionUntilCorrected() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                await(() -> activity.findViewById(R.id.tag_add).isEnabled());
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromDate(10);
+                ranges.setFromDateUnit(Ranges.TimeUnit.DAY);
+                ranges.setToDate(2);
+                ranges.setToDateUnit(Ranges.TimeUnit.DAY);
+                ReflectionHelpers.callInstanceMethod(activity, "updateFilterSummary");
+                View rangeError = activity.findViewById(R.id.upload_range).findViewById(R.id.range_error);
+                assertEquals(View.VISIBLE, rangeError.getVisibility());
+                activity.findViewById(R.id.search_submit).performClick();
+                assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
+                AlertDialog error = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(error.isShowing());
+                error.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                ranges.setToDate(20);
+                ReflectionHelpers.callInstanceMethod(activity, "updateFilterSummary");
+                assertEquals(View.GONE, rangeError.getVisibility());
+                activity.findViewById(R.id.search_submit).performClick();
+                assertNotNull(Shadows.shadowOf(activity).getNextStartedActivity());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void editingUploadTimePreservesExistingValue() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
