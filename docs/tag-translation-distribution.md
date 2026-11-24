@@ -57,14 +57,13 @@ cannot silently hand off the request to another origin or account context.
 
 ## Enabling the Settings action
 
-Set the Gradle property `nreaderTagTranslationManifestUrl` to the HTTPS URL of
-the hosted `manifest.json`, and explicitly set
-`nreaderEnableUnsignedTagFeeds=true` for the current unsigned v1 contract. The
-default URL is empty. When configured, users can choose **Settings → Tag
-languages → Browse online** to fetch the locale list. The initial beta release
-selects the `zh-Hans` pack from `feed/translations/`; keep the
-translation URL empty in other builds unless the feed and attribution record
-are intentionally selected.
+Debug builds default to the signed v2 `zh-Hans` feed configured by the release
+workflow. Other build types default to an empty URL; the release workflow
+configures its feed explicitly. Set the Gradle property
+`nreaderTagTranslationManifestUrl` to override the URL, or set it to an empty
+value to disable the feed, including in debug builds. An unsigned v1 manifest
+also requires `nreaderEnableUnsignedTagFeeds=true`. When configured, users can
+choose **Settings → Tag language packs → Browse online** to fetch the locale list.
 Only new languages and revisions newer than the installed pack appear. The
 app shows the download size before installing the selected pack. Requests
 are started only from this action and can be cancelled. Import from a file

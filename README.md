@@ -102,13 +102,14 @@ with the Gradle property `nreaderTagCatalogManifestUrl`; see the
 [tag directory and rules](docs/tags.md) for the refresh and storage contract.
 The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
-The default is empty; users can still install packs from local files. The
-beta release workflow opts into the unsigned v1 catalog feed hosted under
-`feed/catalog/` and the `zh-Hans` translation feed under `feed/translations/`
-on the repository's `main` branch. Other builds must explicitly set
-`nreaderEnableUnsignedTagFeeds=true` when configuring a feed. Ordinary
-development builds leave the NReader feed URLs empty; the legacy upstream
-catalog feed may still be checked.
+Debug builds default to the signed `zh-Hans` translation feed used by the
+release workflow. Set the property explicitly to override it, or to an empty
+value to disable online translation downloads. Other build types default to an
+empty translation URL; the release workflow configures the signed catalog and
+translation feeds under `feed/` on the repository's `main` branch. Unsigned v1
+feeds require `nreaderEnableUnsignedTagFeeds=true`. Without a translation feed,
+users can still install packs from local files. The legacy upstream catalog
+feed may still be checked independently.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.
