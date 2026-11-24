@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">Suchbegriffe</string>
+    <string name="search_show_filters">Erweiterte Filter</string>
+    <string name="search_hide_filters">Erweiterte Filter schließen</string>
+    <string name="search_filters_title">Erweiterte Suche</string>
+    <string name="search_filters_none">Keine Tag-Filter ausgewählt</string>
+    <string name="search_filters_summary">Eingeschlossen: %1$d · Ausgeschlossen: %2$d</string>
+    <string name="search_filter_section_count">%1$s · %2$d ausgewählt</string>
+    <string name="search_filter_expanded">Ausgeklappt</string>
+    <string name="search_filter_collapsed">Eingeklappt</string>
+    <string name="search_tag_hint">Tippe auf ein Tag, um es ein- oder auszuschließen.</string>
+    <string name="search_add_tag_type">%1$s hinzufügen</string>
+    <string name="search_tag_any">Keine Einschränkung</string>
+    <string name="search_tag_include">Einschließen</string>
+    <string name="search_tag_exclude">Ausschließen</string>
+    <string name="search_tag_remove">Aus dieser Liste entfernen</string>
+    <string name="search_tag_account_exclusion">Durch Konto ausgeschlossen</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">Filter entfernen: %1$s</string>
+    <string name="search_selected_show_all">Alle %1$d anzeigen</string>
+    <string name="search_selected_show_less">Weniger anzeigen</string>
+    <string name="search_clear_filters">Filter zurücksetzen</string>
+    <string name="search_clear_filters_message">Seiten-, Zeit- und Tag-Auswahl zurücksetzen? Suchbegriffe und Kontoausschlüsse bleiben erhalten. Gespeicherte Tag-Regeln werden nicht geändert.</string>
+    <string name="search_account_filter_notice">Kontoausschlüsse angewendet: %1$d</string>
+    <string name="search_range_any">Beliebig</string>
+    <string name="search_range_min_pages">Mindestens Seiten</string>
+    <string name="search_range_max_pages">Höchstens Seiten</string>
+    <string name="search_page_range_conflict">Die Mindestseitenzahl darf die Höchstseitenzahl nicht überschreiten. Ändere oder entferne einen der Werte.</string>
+    <string name="search_range_from_time">Mindestens so lange her</string>
+    <string name="search_range_to_time">Höchstens so lange her</string>
+    <string name="search_range_relative_time">Zeit seit dem Upload</string>
+    <string name="search_upload_range_conflict">Die Mindestzeit seit dem Upload darf die Höchstzeit nicht überschreiten. Ändere oder entferne einen der Werte.</string>
     <string name="auto_reauthenticate_title">Anmeldung automatisch wiederherstellen</string>
     <string name="auto_reauthenticate_summary">Wenn eine Sitzung mit gespeichertem Passwort abläuft, wird die Überprüfung im Vordergrund gestartet. Möglicherweise musst du sie abschließen.</string>
     <string name="gallery_loading_details">Galeriedetails werden geladen</string>

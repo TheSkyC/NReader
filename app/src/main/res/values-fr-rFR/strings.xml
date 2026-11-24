@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">Mots-clés de recherche</string>
+    <string name="search_show_filters">Filtres avancés</string>
+    <string name="search_hide_filters">Fermer les filtres avancés</string>
+    <string name="search_filters_title">Recherche avancée</string>
+    <string name="search_filters_none">Aucun filtre de tag sélectionné</string>
+    <string name="search_filters_summary">Inclus : %1$d · Exclus : %2$d</string>
+    <string name="search_filter_section_count">%1$s · %2$d sélectionnés</string>
+    <string name="search_filter_expanded">Développé</string>
+    <string name="search_filter_collapsed">Réduit</string>
+    <string name="search_tag_hint">Touchez un tag pour l\'inclure ou l\'exclure.</string>
+    <string name="search_add_tag_type">Ajouter %1$s</string>
+    <string name="search_tag_any">Sans restriction</string>
+    <string name="search_tag_include">Inclure</string>
+    <string name="search_tag_exclude">Exclure</string>
+    <string name="search_tag_remove">Retirer de cette liste</string>
+    <string name="search_tag_account_exclusion">Exclu par le compte</string>
+    <string name="search_selected_filter">%1$s : %2$s</string>
+    <string name="search_remove_filter">Retirer le filtre : %1$s</string>
+    <string name="search_selected_show_all">Tout afficher (%1$d)</string>
+    <string name="search_selected_show_less">Afficher moins</string>
+    <string name="search_clear_filters">Effacer les filtres</string>
+    <string name="search_clear_filters_message">Effacer les sélections de pages, de temps et de tags ? Les mots-clés et les exclusions du compte seront conservés. Les règles de tags enregistrées ne seront pas modifiées.</string>
+    <string name="search_account_filter_notice">Exclusions du compte appliquées : %1$d</string>
+    <string name="search_range_any">Indifférent</string>
+    <string name="search_range_min_pages">Pages au minimum</string>
+    <string name="search_range_max_pages">Pages au maximum</string>
+    <string name="search_page_range_conflict">Le nombre minimal de pages ne peut pas dépasser le maximum. Modifiez ou effacez une des valeurs.</string>
+    <string name="search_range_from_time">Il y a au moins</string>
+    <string name="search_range_to_time">Il y a au plus</string>
+    <string name="search_range_relative_time">Temps depuis la publication</string>
+    <string name="search_upload_range_conflict">Le temps minimal depuis la publication ne peut pas dépasser le maximum. Modifiez ou effacez une des valeurs.</string>
     <string name="auto_reauthenticate_title">Rétablir automatiquement la connexion</string>
     <string name="auto_reauthenticate_summary">À l’expiration d’une session avec mot de passe enregistré, la vérification démarre au premier plan. Vous devrez peut-être la terminer.</string>
     <string name="gallery_loading_details">Chargement des détails de la galerie</string>
