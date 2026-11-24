@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">كلمات البحث</string>
+    <string name="search_show_filters">عوامل التصفية المتقدمة</string>
+    <string name="search_hide_filters">إغلاق عوامل التصفية المتقدمة</string>
+    <string name="search_filters_title">البحث المتقدم</string>
+    <string name="search_filters_none">لم تُحدد عوامل تصفية للوسوم</string>
+    <string name="search_filters_summary">المضمّنة: %1$d · المستبعدة: %2$d</string>
+    <string name="search_filter_section_count">%1$s · المحدد: %2$d</string>
+    <string name="search_filter_expanded">موسّع</string>
+    <string name="search_filter_collapsed">مطوي</string>
+    <string name="search_tag_hint">اضغط على وسم لتضمينه أو استبعاده.</string>
+    <string name="search_add_tag_type">إضافة %1$s</string>
+    <string name="search_tag_any">بلا قيود</string>
+    <string name="search_tag_include">تضمين</string>
+    <string name="search_tag_exclude">استبعاد</string>
+    <string name="search_tag_remove">إزالة من هذه القائمة</string>
+    <string name="search_tag_account_exclusion">مستبعد من الحساب</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">إزالة عامل التصفية: %1$s</string>
+    <string name="search_selected_show_all">عرض الكل (%1$d)</string>
+    <string name="search_selected_show_less">عرض أقل</string>
+    <string name="search_clear_filters">مسح عوامل التصفية</string>
+    <string name="search_clear_filters_message">هل تريد مسح اختيارات الصفحات والوقت والوسوم؟ ستبقى كلمات البحث واستبعادات الحساب. لن تتغير قواعد الوسوم المحفوظة.</string>
+    <string name="search_account_filter_notice">استبعادات الحساب المطبقة: %1$d</string>
+    <string name="search_range_any">أي قيمة</string>
+    <string name="search_range_min_pages">الحد الأدنى للصفحات</string>
+    <string name="search_range_max_pages">الحد الأقصى للصفحات</string>
+    <string name="search_page_range_conflict">لا يمكن أن يتجاوز الحد الأدنى للصفحات الحد الأقصى. عدّل إحدى القيمتين أو امسحها.</string>
+    <string name="search_range_from_time">قبل هذه المدة على الأقل</string>
+    <string name="search_range_to_time">قبل هذه المدة على الأكثر</string>
+    <string name="search_range_relative_time">الوقت منذ الرفع</string>
+    <string name="search_upload_range_conflict">لا يمكن أن يتجاوز الحد الأدنى للوقت منذ الرفع الحد الأقصى. عدّل إحدى القيمتين أو امسحها.</string>
     <string name="auto_reauthenticate_title">استعادة تسجيل الدخول تلقائيًا</string>
     <string name="auto_reauthenticate_summary">عند انتهاء جلسة حساب ذي كلمة مرور محفوظة، يبدأ التحقق أثناء استخدام التطبيق. قد تحتاج إلى إكماله.</string>
     <string name="gallery_loading_details">جارٍ تحميل تفاصيل المعرض</string>

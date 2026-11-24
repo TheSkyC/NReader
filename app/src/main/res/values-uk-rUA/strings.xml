@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">Ключові слова</string>
+    <string name="search_show_filters">Розширені фільтри</string>
+    <string name="search_hide_filters">Закрити розширені фільтри</string>
+    <string name="search_filters_title">Розширений пошук</string>
+    <string name="search_filters_none">Фільтри тегів не вибрано</string>
+    <string name="search_filters_summary">Включено: %1$d · Виключено: %2$d</string>
+    <string name="search_filter_section_count">%1$s · вибрано: %2$d</string>
+    <string name="search_filter_expanded">Розгорнуто</string>
+    <string name="search_filter_collapsed">Згорнуто</string>
+    <string name="search_tag_hint">Торкніться тега, щоб включити або виключити його.</string>
+    <string name="search_add_tag_type">Додати: %1$s</string>
+    <string name="search_tag_any">Без обмежень</string>
+    <string name="search_tag_include">Включити</string>
+    <string name="search_tag_exclude">Виключити</string>
+    <string name="search_tag_remove">Прибрати зі списку</string>
+    <string name="search_tag_account_exclusion">Виключено обліковим записом</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">Прибрати фільтр: %1$s</string>
+    <string name="search_selected_show_all">Показати всі (%1$d)</string>
+    <string name="search_selected_show_less">Показати менше</string>
+    <string name="search_clear_filters">Очистити фільтри</string>
+    <string name="search_clear_filters_message">Очистити вибір сторінок, часу й тегів? Ключові слова та виключення облікового запису залишаться. Збережені правила тегів не зміняться.</string>
+    <string name="search_account_filter_notice">Застосовано виключень облікового запису: %1$d</string>
+    <string name="search_range_any">Будь-яке</string>
+    <string name="search_range_min_pages">Мінімум сторінок</string>
+    <string name="search_range_max_pages">Максимум сторінок</string>
+    <string name="search_page_range_conflict">Мінімальна кількість сторінок не може перевищувати максимальну. Змініть або очистіть одне зі значень.</string>
+    <string name="search_range_from_time">Щонайменше стільки часу тому</string>
+    <string name="search_range_to_time">Щонайбільше стільки часу тому</string>
+    <string name="search_range_relative_time">Час від завантаження</string>
+    <string name="search_upload_range_conflict">Мінімальний час від завантаження не може перевищувати максимальний. Змініть або очистіть одне зі значень.</string>
     <string name="auto_reauthenticate_title">Автоматично відновлювати вхід</string>
     <string name="auto_reauthenticate_summary">Коли сеанс зі збереженим паролем завершиться, перевірка почнеться на екрані застосунку. Можливо, її потрібно буде завершити вручну.</string>
     <string name="gallery_loading_details">Завантаження відомостей про галерею</string>

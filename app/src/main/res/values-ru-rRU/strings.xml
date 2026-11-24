@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">Ключевые слова</string>
+    <string name="search_show_filters">Расширенные фильтры</string>
+    <string name="search_hide_filters">Закрыть расширенные фильтры</string>
+    <string name="search_filters_title">Расширенный поиск</string>
+    <string name="search_filters_none">Фильтры тегов не выбраны</string>
+    <string name="search_filters_summary">Включено: %1$d · Исключено: %2$d</string>
+    <string name="search_filter_section_count">%1$s · выбрано: %2$d</string>
+    <string name="search_filter_expanded">Развёрнуто</string>
+    <string name="search_filter_collapsed">Свёрнуто</string>
+    <string name="search_tag_hint">Нажмите на тег, чтобы включить или исключить его.</string>
+    <string name="search_add_tag_type">Добавить: %1$s</string>
+    <string name="search_tag_any">Без ограничений</string>
+    <string name="search_tag_include">Включить</string>
+    <string name="search_tag_exclude">Исключить</string>
+    <string name="search_tag_remove">Убрать из списка</string>
+    <string name="search_tag_account_exclusion">Исключено аккаунтом</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">Убрать фильтр: %1$s</string>
+    <string name="search_selected_show_all">Показать все (%1$d)</string>
+    <string name="search_selected_show_less">Показать меньше</string>
+    <string name="search_clear_filters">Очистить фильтры</string>
+    <string name="search_clear_filters_message">Очистить выбор страниц, времени и тегов? Ключевые слова и исключения аккаунта сохранятся. Сохранённые правила тегов не изменятся.</string>
+    <string name="search_account_filter_notice">Применено исключений аккаунта: %1$d</string>
+    <string name="search_range_any">Любое</string>
+    <string name="search_range_min_pages">Минимум страниц</string>
+    <string name="search_range_max_pages">Максимум страниц</string>
+    <string name="search_page_range_conflict">Минимальное число страниц не может превышать максимальное. Измените или очистите одно из значений.</string>
+    <string name="search_range_from_time">Не менее этого времени назад</string>
+    <string name="search_range_to_time">Не более этого времени назад</string>
+    <string name="search_range_relative_time">Время с момента загрузки</string>
+    <string name="search_upload_range_conflict">Минимальное время с момента загрузки не может превышать максимальное. Измените или очистите одно из значений.</string>
     <string name="auto_reauthenticate_title">Автоматически восстанавливать вход</string>
     <string name="auto_reauthenticate_summary">При истечении сеанса с сохранённым паролем проверка начнётся на экране приложения. Возможно, её потребуется завершить вручную.</string>
     <string name="gallery_loading_details">Загрузка сведений о галерее</string>
