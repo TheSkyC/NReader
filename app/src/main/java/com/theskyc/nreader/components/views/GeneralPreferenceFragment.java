@@ -94,20 +94,33 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
 
     private void dataMenu() {
         addPreferencesFromResource(R.xml.settings_data);
-        SeekBarPreference mobile = Objects.requireNonNull(findPreference(getString(R.string.key_mobile_usage)));
-        SeekBarPreference wifi = Objects.requireNonNull(findPreference(getString(R.string.key_wifi_usage)));
-        mobile.setOnPreferenceChangeListener((preference, newValue) -> {
-            mobile.setTitle(getDataUsageString((Integer) newValue));
+        configureDataUsage(Objects.requireNonNull(findPreference(getString(R.string.key_mobile_usage))));
+        configureDataUsage(Objects.requireNonNull(findPreference(getString(R.string.key_wifi_usage))));
+    }
+
+    private void configureDataUsage(Preference preference) {
+        SharedPreferences settings = getPreferenceManager().getSharedPreferences();
+        int value = settings.getInt(preference.getKey(), 2);
+        preference.setSummary(getDataUsageString(value));
+        preference.setOnPreferenceClickListener(clicked -> {
+            CharSequence[] options = {
+                getText(R.string.data_usage_no),
+                getText(R.string.data_usage_thumb),
+                getText(R.string.data_usage_full)
+            };
+            int selected = settings.getInt(preference.getKey(), 2);
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(preference.getTitle())
+                .setSingleChoiceItems(options, selected >= 0 && selected < options.length ? selected : -1,
+                    (dialog, which) -> {
+                        settings.edit().putInt(preference.getKey(), which).apply();
+                        preference.setSummary(getDataUsageString(which));
+                        dialog.dismiss();
+                    })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
             return true;
         });
-        wifi.setOnPreferenceChangeListener((preference, newValue) -> {
-            wifi.setTitle(getDataUsageString((Integer) newValue));
-            return true;
-        });
-        mobile.setTitle(getDataUsageString(mobile.getValue()));
-        wifi.setTitle(getDataUsageString(wifi.getValue()));
-        mobile.setUpdatesContinuously(true);
-        wifi.setUpdatesContinuously(true);
     }
 
     private int getDataUsageString(int val) {

@@ -3,7 +3,9 @@ package com.theskyc.nreader;
 
 import android.app.Application;
 import android.content.Intent;
+import android.widget.ListView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
@@ -17,6 +19,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
+import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.annotation.Config;
 import org.robolectric.android.controller.ActivityController;
 
@@ -69,6 +72,36 @@ public class SettingsNavigationTest {
                 }
             }
             assertFalse(application.getSharedPreferences("Settings", 0).getBoolean("change_page_buttons", true));
+        }
+    }
+
+    @Test
+    public void networkChoicesPreserveIntegerValuesAndAreIndependent() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        String wifiKey = application.getString(R.string.key_wifi_usage);
+        String mobileKey = application.getString(R.string.key_mobile_usage);
+        application.getSharedPreferences("Settings", 0).edit()
+            .putInt(wifiKey, 1).putInt(mobileKey, 0).commit();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra(application.getPackageName() + ".TYPE", SettingsActivity.Type.DATA.ordinal());
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            Preference wifi = controller.get().fragment.findPreference(wifiKey);
+            Preference mobile = controller.get().fragment.findPreference(mobileKey);
+            assertEquals(application.getString(R.string.data_usage_thumb), wifi.getSummary());
+            assertEquals(application.getString(R.string.data_usage_no), mobile.getSummary());
+            wifi.performClick();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            ListView list = dialog.getListView();
+            assertEquals(1, list.getCheckedItemPosition());
+            list.performItemClick(list.getChildAt(2), 2, list.getItemIdAtPosition(2));
+            assertEquals(2, application.getSharedPreferences("Settings", 0).getInt(wifiKey, -1));
+            assertEquals(0, application.getSharedPreferences("Settings", 0).getInt(mobileKey, -1));
+            assertEquals(application.getString(R.string.data_usage_full), wifi.getSummary());
+            controller.recreate();
+            assertEquals(application.getString(R.string.data_usage_full),
+                controller.get().fragment.findPreference(wifiKey).getSummary());
         }
     }
 }
