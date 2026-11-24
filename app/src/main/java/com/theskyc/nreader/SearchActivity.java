@@ -200,7 +200,7 @@ public class SearchActivity extends GeneralActivity {
             public boolean onQueryTextSubmit(String query) {
                 if (isResolvingTagEntry()) return true;
                 query = query.trim();
-                if (query.isEmpty() && !advanced) return true;
+                if (query.isEmpty() && !advanced && !filtersVisible) return true;
                 submitSearch(query, false);
                 return true;
             }
@@ -274,7 +274,7 @@ public class SearchActivity extends GeneralActivity {
                 .setNeutralButton(R.string.cancel, null).show();
             return;
         }
-        boolean useAdvanced = withoutOnlineTags || advanced || (scope != null
+        boolean useAdvanced = withoutOnlineTags || advanced || filtersVisible || (scope != null
             && (!onlineChips.isEmpty() || !onlineMergedChips.isEmpty()));
         if (!query.isEmpty()) adapter.addHistory(query);
         Intent intent = new Intent(this, MainActivity.class);

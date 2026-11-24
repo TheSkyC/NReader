@@ -133,6 +133,27 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void keyboardSubmissionAppliesVisibleFilters() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                await(() -> activity.findViewById(R.id.tag_add).isEnabled());
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                ((SearchView) activity.findViewById(R.id.search)).setQuery("keywords", true);
+                Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertNotNull(sent);
+                assertTrue(sent.getBooleanExtra(activity.getPackageName() + ".ADVANCED", false));
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void visibleTagFollowsLanguageWithoutChangingSearchIdentity() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
