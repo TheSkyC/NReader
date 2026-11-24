@@ -691,15 +691,13 @@ public class SearchActivity extends GeneralActivity {
             addRangeSummary(selectedGroup, getString(R.string.search_range_max_pages),
                 String.valueOf(ranges.getToPage()), () -> ranges.setToPage(Ranges.UNDEFINED));
         if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
-            addRangeSummary(selectedGroup, getString(R.string.search_selected_filter, getString(R.string.upload_time),
-                getString(R.string.search_range_from_time)), getString(R.string.search_range_time_value,
+            addRangeSummary(selectedGroup, getString(R.string.search_range_from_time), getString(R.string.search_range_time_value,
                 ranges.getFromDate(), getString(ranges.getFromDateUnit().getString())), () -> {
                     ranges.setFromDate(Ranges.UNDEFINED);
                     ranges.setFromDateUnit(Ranges.UNDEFINED_DATE);
                 });
         if (ranges.getToDate() != Ranges.UNDEFINED && ranges.getToDateUnit() != null)
-            addRangeSummary(selectedGroup, getString(R.string.search_selected_filter, getString(R.string.upload_time),
-                getString(R.string.search_range_to_time)), getString(R.string.search_range_time_value,
+            addRangeSummary(selectedGroup, getString(R.string.search_range_to_time), getString(R.string.search_range_time_value,
                 ranges.getToDate(), getString(ranges.getToDateUnit().getString())), () -> {
                     ranges.setToDate(Ranges.UNDEFINED);
                     ranges.setToDateUnit(Ranges.UNDEFINED_DATE);

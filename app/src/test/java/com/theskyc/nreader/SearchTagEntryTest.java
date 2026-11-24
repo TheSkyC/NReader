@@ -97,6 +97,8 @@ public class SearchTagEntryTest {
                 ViewGroup summary = restored.findViewById(R.id.search_selected_filters);
                 assertEquals(3, summary.getChildCount());
                 assertTrue(((Chip) summary.getChildAt(0)).getText().toString().contains("20"));
+                assertTrue(((Chip) summary.getChildAt(1)).getText().toString()
+                    .startsWith(restored.getString(R.string.search_range_to_time)));
                 assertTrue(((Chip) summary.getChildAt(0)).performCloseIconClick());
                 assertEquals(Ranges.UNDEFINED, restoredRanges.getFromPage());
                 assertEquals("uploaded:<=2w", restoredRanges.toQuery());
