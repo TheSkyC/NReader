@@ -38,6 +38,13 @@
             android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
+        <TextView
+            style="@style/TextAppearance.MaterialComponents.Body2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/search_tag_hint" />
+
 
         <include
             android:id="@+id/page_range"

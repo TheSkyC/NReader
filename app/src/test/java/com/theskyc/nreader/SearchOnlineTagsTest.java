@@ -121,8 +121,7 @@ public class SearchOnlineTagsTest {
                 }
                 assertNotNull(chip);
                 assertEquals(TagStatus.AVOIDED, chip.getTag().getStatus());
-                chip.performClick();
-                chip.performClick();
+                SearchUiTestSupport.selectStatus(chip, 1);
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
                 AuthStore.saveApiKey(app, "different-fixture-key", true);
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
@@ -215,7 +214,7 @@ public class SearchOnlineTagsTest {
                 assertNotNull(blockedChip);
                 ChipTag manualChip = findChipById(group, manual.getId());
                 assertNotNull(manualChip);
-                assertTrue(manualChip.performClick());
+                SearchUiTestSupport.selectStatus(manualChip, 1);
                 app.getSharedPreferences("Settings", 0).edit().putBoolean(accountTagsKey, false).commit();
                 Global.initFromShared(app);
                 assertFalse(Login.useAccountTag());

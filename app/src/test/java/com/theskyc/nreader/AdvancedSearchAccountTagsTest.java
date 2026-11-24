@@ -343,7 +343,7 @@ public class AdvancedSearchAccountTagsTest {
             SearchActivity activity = controller.get();
             awaitBlacklist(activity);
             ViewGroup group = activity.findViewById(R.id.tag_group);
-            assertTrue(chip(group, MANUAL_ID).performClick());
+            SearchUiTestSupport.selectStatus(chip(group, MANUAL_ID), 0);
             ReflectionHelpers.callInstanceMethod(activity, "submitSearch",
                 ReflectionHelpers.ClassParameter.from(String.class, ""),
                 ReflectionHelpers.ClassParameter.from(boolean.class, false));
@@ -395,9 +395,9 @@ public class AdvancedSearchAccountTagsTest {
             ChipTag removed = chip(group, AUTOMATIC_ID);
             assertNotNull(neutral);
             assertNotNull(removed);
-            assertTrue(neutral.performClick());
+            SearchUiTestSupport.selectStatus(neutral, 0);
             assertEquals(TagStatus.DEFAULT, neutral.getTag().getStatus());
-            assertTrue(removed.performCloseIconClick());
+            SearchUiTestSupport.removeTag(removed);
             replaceBlacklist(Arrays.asList(
                 new Tag("manual selection", 100000, MANUAL_ID, TagType.TAG, TagStatus.DEFAULT),
                 new Tag("automatic selection", 1, AUTOMATIC_ID, TagType.TAG, TagStatus.DEFAULT)));
@@ -434,8 +434,7 @@ public class AdvancedSearchAccountTagsTest {
             assertNotNull(automatic);
             assertEquals(TagStatus.AVOIDED, automatic.getTag().getStatus());
             assertEquals(TagStatus.AVOIDED, manual.getTag().getStatus());
-            manual.performClick();
-            manual.performClick();
+            SearchUiTestSupport.selectStatus(manual, 1);
             assertEquals(TagStatus.ACCEPTED, manual.getTag().getStatus());
             ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
             Intent intent = Shadows.shadowOf(activity).getNextStartedActivity();

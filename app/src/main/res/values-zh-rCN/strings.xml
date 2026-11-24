@@ -7,6 +7,12 @@
     <string name="search_filter_section_count">%1$s · 已选 %2$d</string>
     <string name="search_filter_expanded">已展开</string>
     <string name="search_filter_collapsed">已收起</string>
+    <string name="search_tag_hint">点按标签可选择包含或排除。</string>
+    <string name="search_tag_any">不限制</string>
+    <string name="search_tag_include">包含</string>
+    <string name="search_tag_exclude">排除</string>
+    <string name="search_tag_remove">从此列表移除</string>
+    <string name="search_tag_account_exclusion">账号自动排除</string>
     <string name="search_account_filter_notice">已应用账号排除条件：%1$d</string>
     <string name="search_range_any">不限</string>
     <string name="search_range_min_pages">最少页数</string>

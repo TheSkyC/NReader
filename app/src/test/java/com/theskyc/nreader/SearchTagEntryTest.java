@@ -108,7 +108,7 @@ public class SearchTagEntryTest {
                 ViewGroup group = controller.get().findViewById(R.id.tag_group);
                 await(() -> group.getChildCount() > 1);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
-                chip.performClick();
+                SearchUiTestSupport.selectStatus(chip, 1);
                 assertEquals(controller.get().getString(R.string.search_filters_summary, 1, 0),
                     ((android.widget.TextView) controller.get().findViewById(R.id.search_filter_summary)).getText().toString());
                 TagLanguage.select(app, "ja");
@@ -199,10 +199,11 @@ public class SearchTagEntryTest {
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
-                AlertDialog dialog = openTagDialog(activity);
                 ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 1);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
-                chip.performClick();
+                SearchUiTestSupport.selectStatus(chip, 1);
+                AlertDialog dialog = openTagDialog(activity);
                 AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
                 entry.setText("alias term", true);
                 await(() -> entry.getAdapter().getCount() == 1);
@@ -248,11 +249,12 @@ public class SearchTagEntryTest {
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
-                AlertDialog dialog = openTagDialog(activity);
                 ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 1);
                 ChipTag first = (ChipTag) group.getChildAt(0);
                 assertEquals(501001, first.getTag().getId());
-                assertTrue(first.performClick());
+                SearchUiTestSupport.selectStatus(first, 1);
+                AlertDialog dialog = openTagDialog(activity);
                 AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
                 entry.setText("second alias", true);
                 await(() -> entry.getAdapter().getCount() == 1);
@@ -265,8 +267,8 @@ public class SearchTagEntryTest {
                 assertEquals(3, group.getChildCount());
                 ChipTag second = (ChipTag) group.getChildAt(1);
                 assertEquals(501002, second.getTag().getId());
-                assertEquals(TagStatus.DEFAULT, second.getTag().getStatus());
-                assertTrue(second.performClick());
+                assertEquals(TagStatus.ACCEPTED, second.getTag().getStatus());
+                SearchUiTestSupport.selectStatus(second, 1);
                 ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
@@ -314,9 +316,8 @@ public class SearchTagEntryTest {
                 ViewGroup group = activity.findViewById(R.id.tag_group);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
                 assertEquals(501002, chip.getTag().getId());
-                assertEquals(TagStatus.DEFAULT, chip.getTag().getStatus());
-                chip.performClick();
-                chip.performClick();
+                assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                SearchUiTestSupport.selectStatus(chip, 2);
                 assertEquals(TagStatus.AVOIDED, chip.getTag().getStatus());
                 ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();

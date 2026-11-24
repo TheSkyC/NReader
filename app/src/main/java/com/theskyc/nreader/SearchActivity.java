@@ -2,6 +2,7 @@ package com.theskyc.nreader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.Editable;
@@ -54,6 +55,7 @@ import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -502,29 +504,61 @@ public class SearchActivity extends GeneralActivity {
     private ChipTag addChipTag(Tag t, boolean close, boolean canBeAvoided) {
         ChipGroup cg = getGroup(t.getType());
         ChipTag c = (ChipTag) getLayoutInflater().inflate(R.layout.chip_layout_entry, cg, false);
-        c.init(t, close, canBeAvoided);
-        c.setOnCloseIconClickListener(v -> {
-            cg.removeView(c);
-            tags.remove(c);
-            markManualTag(c);
-            advanced = true;
-            updateFilterSummary();
-        });
-        c.setOnClickListener(v -> {
-            markManualTag(c);
-            c.updateStatus();
-            advanced = true;
-            updateFilterSummary();
-        });
+        c.init(t, false, canBeAvoided);
+        c.setEnsureMinTouchTargetSize(true);
+        c.setOnClickListener(v -> showTagStatusDialog(c, close, canBeAvoided));
         cg.addView(c);
         tags.add(c);
         return c;
+    }
+
+    private void showTagStatusDialog(ChipTag chip, boolean removable, boolean canBeAvoided) {
+        String[] choices = canBeAvoided
+            ? new String[]{getString(R.string.search_tag_any), getString(R.string.search_tag_include),
+                getString(R.string.search_tag_exclude)}
+            : new String[]{getString(R.string.search_tag_any), getString(R.string.search_tag_include)};
+        TagStatus current = chip.getTag().getStatus();
+        int selected = current == TagStatus.ACCEPTED ? 1 : current == TagStatus.AVOIDED ? 2 : 0;
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+            .setTitle(chip.getText())
+            .setSingleChoiceItems(choices, selected, (dialog, which) -> {
+                markManualTag(chip);
+                chip.changeStatus(which == 1 ? TagStatus.ACCEPTED
+                    : which == 2 ? TagStatus.AVOIDED : TagStatus.DEFAULT);
+                advanced = true;
+                updateFilterSummary();
+                dialog.dismiss();
+            })
+            .setNegativeButton(R.string.cancel, null);
+        if (removable) builder.setNeutralButton(R.string.search_tag_remove, (dialog, which) -> {
+            getGroup(chip.getTag().getType()).removeView(chip);
+            tags.remove(chip);
+            markManualTag(chip);
+            advanced = true;
+            updateFilterSummary();
+        });
+        builder.show();
+    }
+
+    private void updateChipAppearance(ChipTag chip) {
+        TagStatus status = chip.getTag().getStatus();
+        int state = status == TagStatus.ACCEPTED ? R.string.search_tag_include
+            : status == TagStatus.AVOIDED ? R.string.search_tag_exclude : R.string.search_tag_any;
+        if (onlineChips.contains(chip) || onlineMergedChips.contains(chip))
+            state = R.string.search_tag_account_exclusion;
+        ViewCompat.setStateDescription(chip, getString(state));
+        int surface = MaterialColors.getColor(chip, com.google.android.material.R.attr.colorSurface);
+        int accent = MaterialColors.getColor(chip, status == TagStatus.AVOIDED
+            ? androidx.appcompat.R.attr.colorError : androidx.appcompat.R.attr.colorPrimary);
+        chip.setChipBackgroundColor(ColorStateList.valueOf(MaterialColors.layer(surface, accent,
+            status == TagStatus.DEFAULT ? 0.04f : 0.16f)));
     }
 
     private void updateFilterSummary() {
         int included = 0;
         int excluded = 0;
         for (ChipTag chip : tags) {
+            updateChipAppearance(chip);
             if (chip.getTag().getStatus() == TagStatus.ACCEPTED) included++;
             if (chip.getTag().getStatus() == TagStatus.AVOIDED) excluded++;
         }
@@ -700,7 +734,9 @@ public class SearchActivity extends GeneralActivity {
         ChipGroup group = getGroup(tag.getType());
         Chip add = addChip[tag.getType().getId()];
         group.removeView(add);
-        addChipTag(tag, true, true);
+        tag.setStatus(TagStatus.ACCEPTED);
+        ChipTag added = addChipTag(tag, true, true);
+        markManualTag(added);
         group.addView(add);
         advanced = true;
         updateFilterSummary();
