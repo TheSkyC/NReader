@@ -8,6 +8,10 @@ Pack maintainer and curator: **TheSkyC**.
 
 The translated names are derived from [EhTagTranslation/Database](https://github.com/EhTagTranslation/Database), source commit `568e68b6e8e5811016fddd8d4d0c7a491ad1e663`, database version `7`. The source database is a collaborative work released under [CC BY-NC-SA 3.0 China Mainland](https://github.com/EhTagTranslation/Database/blob/master/LICENSE.md). This attribution and license apply to the translated content derived from that database; NReader does not claim authorship of the source translations.
 
+The feed's [attribution notice](../feed/translations/README.md) includes a local
+copy of that license and identifies the source contributors. The standalone
+JSON payload does not embed this notice or the license text.
+
 The converter keeps the source database's namespace distinction, strips Markdown presentation from display names, and matches rows by the NReader canonical tag name and tag type. It does not invent translations for unmatched tags. NReader falls back to the canonical English name for those tags.
 
 The source database does not include a category namespace. The maintainer added

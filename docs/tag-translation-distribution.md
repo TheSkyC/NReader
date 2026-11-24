@@ -34,8 +34,9 @@ written. For network use, the manifest and payload must come from the same
 configured HTTPS origin without redirects or account credentials.
 The v1 manifest does not advertise a pack schema version. Current tooling and
 the current client require pack version 2; older clients reject it during import
-and retain their installed pack. Do not expose this unsigned development feed
-as a public compatibility or rollout mechanism.
+and retain their installed pack. The current feed is publicly hosted for beta
+use, but this unsigned manifest is not a stable compatibility or rollout
+mechanism: it does not authenticate the publisher or prevent first-install replay.
 
 Android verifies the staged file's length and digest before starting a pack
 import. The importer compares the payload's locale and revision with the
@@ -61,7 +62,7 @@ the hosted `manifest.json`, and explicitly set
 `nreaderEnableUnsignedTagFeeds=true` for the current unsigned v1 contract. The
 default URL is empty. When configured, users can choose **Settings → Tag
 languages → Browse online** to fetch the locale list. The initial beta release
-publishes the reviewed `zh-Hans` pack from `feed/translations/`; keep the
+selects the `zh-Hans` pack from `feed/translations/`; keep the
 translation URL empty in other builds unless the feed and attribution record
 are intentionally selected.
 Only new languages and revisions newer than the installed pack appear. The
@@ -80,8 +81,8 @@ collide under Unicode 16, verification or staging its replacement fails. Preserv
 that release directory. Correct and review the affected source
 as described in the contribution workflow, then stage the corrected packs in a
 new development directory. Do not replace immutable payloads or reuse a locale
-revision for different bytes. A publicly distributed feed would need an
-explicit compatibility and migration policy before using this recovery path.
+revision for different bytes. The public beta feed needs an explicit
+compatibility and migration policy before using this recovery path.
 
 Start with a validated candidate from the
 [local contribution workflow](tag-translation-contributions.md), or a pack
@@ -148,6 +149,9 @@ The initial `zh-Hans` pack is maintained by TheSkyC and targets catalog
 revision 43. Unmatched catalog tags intentionally fall back to canonical
 English names; source attribution and reproduction details are recorded in
 [the zh-Hans source note](tag-translation-zh-Hans.md).
+The feed directory also contains an [attribution notice](../feed/translations/README.md)
+and a copy of the source license. These files are not included in the JSON
+payload downloaded by the client.
 
 Catalog and translation manifests are independent. When a new translation
 references IDs added to a catalog, publish and verify the catalog first, then
