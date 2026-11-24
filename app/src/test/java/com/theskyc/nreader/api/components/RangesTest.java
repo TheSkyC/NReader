@@ -7,6 +7,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class RangesTest {
+    @Test public void pageBoundsConflictOnlyWhenMinimumExceedsMaximum() {
+        Ranges ranges = new Ranges();
+        ranges.setFromPage(20);
+        assertFalse(ranges.hasConflictingPageBounds());
+        ranges.setToPage(10);
+        assertTrue(ranges.hasConflictingPageBounds());
+        ranges.setToPage(20);
+        assertFalse(ranges.hasConflictingPageBounds());
+        ranges.setToPage(30);
+        assertFalse(ranges.hasConflictingPageBounds());
+    }
+
     @Test public void conflictingUploadBoundsAreDetectedOnlyWhenComparable() {
         Ranges ranges = new Ranges();
         ranges.setFromDate(10);

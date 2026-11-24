@@ -52,6 +52,10 @@ public class Ranges implements Parcelable {
             && fromDateUnit == toDateUnit && fromDate > toDate;
     }
 
+    public boolean hasConflictingPageBounds() {
+        return fromPage != UNDEFINED && toPage != UNDEFINED && fromPage > toPage;
+    }
+
     public int getFromPage() {
         return fromPage;
     }

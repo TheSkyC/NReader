@@ -28,6 +28,7 @@
     <string name="search_range_any">Any</string>
     <string name="search_range_min_pages">Minimum pages</string>
     <string name="search_range_max_pages">Maximum pages</string>
+    <string name="search_page_range_conflict">The minimum page count must not exceed the maximum. Adjust either value or clear it.</string>
     <string name="search_range_from_time">At least this long ago</string>
     <string name="search_range_to_time">At most this long ago</string>
     <string name="search_range_relative_time">Time since upload</string>

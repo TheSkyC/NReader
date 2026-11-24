@@ -263,9 +263,11 @@ public class SearchActivity extends GeneralActivity {
 
     private void submitSearch(String query, boolean withoutOnlineTags) {
         if (isResolvingTagEntry() || (!groupsPopulated && (advanced || filtersVisible))) return;
-        if ((advanced || filtersVisible || withoutOnlineTags) && ranges.hasConflictingUploadBounds()) {
+        if ((advanced || filtersVisible || withoutOnlineTags)
+            && (ranges.hasConflictingPageBounds() || ranges.hasConflictingUploadBounds())) {
             new MaterialAlertDialogBuilder(this)
-                .setMessage(R.string.search_upload_range_conflict)
+                .setMessage(ranges.hasConflictingPageBounds()
+                    ? R.string.search_page_range_conflict : R.string.search_upload_range_conflict)
                 .setPositiveButton(R.string.ok, null)
                 .show();
             return;
@@ -394,6 +396,7 @@ public class SearchActivity extends GeneralActivity {
         ((TextView) uploadRangeLayout.findViewById(R.id.title)).setText(R.string.upload_time);
         ((TextView) pageRangeLayout.findViewById(R.id.from_label)).setText(R.string.search_range_min_pages);
         ((TextView) pageRangeLayout.findViewById(R.id.to_label)).setText(R.string.search_range_max_pages);
+        ((TextView) pageRangeLayout.findViewById(R.id.range_error)).setText(R.string.search_page_range_conflict);
         ((TextView) uploadRangeLayout.findViewById(R.id.from_label)).setText(R.string.search_range_from_time);
         ((TextView) uploadRangeLayout.findViewById(R.id.to_label)).setText(R.string.search_range_to_time);
         TextView timeHelp = uploadRangeLayout.findViewById(R.id.range_help);
@@ -420,10 +423,6 @@ public class SearchActivity extends GeneralActivity {
             public void positive(int actual) {
                 ranges.setFromPage(actual);
                 fromPage.setText(String.format(Locale.US, "%d", actual));
-                if (ranges.getFromPage() > ranges.getToPage()) {
-                    ranges.setToPage(Ranges.UNDEFINED);
-                    toPage.setText(R.string.search_range_any);
-                }
                 advanced = true;
                 updateFilterSummary();
             }
@@ -435,7 +434,7 @@ public class SearchActivity extends GeneralActivity {
                 updateFilterSummary();
             }
         }));
-        toPage.setOnClickListener(v -> createPageBuilder(R.string.to_page, ranges.getFromPage(), 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
+        toPage.setOnClickListener(v -> createPageBuilder(R.string.to_page, 1, 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
             @Override
             public void positive(int actual) {
                 ranges.setToPage(actual);
@@ -659,6 +658,8 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void updateFilterSummary() {
+        findViewById(R.id.page_range).findViewById(R.id.range_error)
+            .setVisibility(ranges.hasConflictingPageBounds() ? View.VISIBLE : View.GONE);
         findViewById(R.id.upload_range).findViewById(R.id.range_error)
             .setVisibility(ranges.hasConflictingUploadBounds() ? View.VISIBLE : View.GONE);
         int included = 0;

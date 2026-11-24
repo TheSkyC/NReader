@@ -143,6 +143,45 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void editingPageBoundsPreservesConflictingValuesUntilCorrected() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                await(() -> activity.findViewById(R.id.tag_add).isEnabled());
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setToPage(10);
+                View pageRange = activity.findViewById(R.id.page_range);
+                pageRange.findViewById(R.id.fromButton).performClick();
+                AlertDialog value = (AlertDialog) ShadowDialog.getLatestDialog();
+                ((android.widget.EditText) value.findViewById(R.id.edit_page)).setText("20");
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                value.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(20, ranges.getFromPage());
+                assertEquals(10, ranges.getToPage());
+                assertEquals(View.VISIBLE, pageRange.findViewById(R.id.range_error).getVisibility());
+                activity.findViewById(R.id.search_submit).performClick();
+                assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
+                AlertDialog error = (AlertDialog) ShadowDialog.getLatestDialog();
+                error.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                ViewGroup summary = activity.findViewById(R.id.search_selected_filters);
+                assertTrue(((Chip) summary.getChildAt(0)).performCloseIconClick());
+                assertEquals(10, ranges.getToPage());
+                assertEquals(View.GONE, pageRange.findViewById(R.id.range_error).getVisibility());
+                activity.findViewById(R.id.search_submit).performClick();
+                assertNotNull(Shadows.shadowOf(activity).getNextStartedActivity());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void conflictingUploadBoundsBlockSubmissionUntilCorrected() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

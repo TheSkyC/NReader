@@ -27,6 +27,7 @@
     <string name="search_range_any">不限</string>
     <string name="search_range_min_pages">最少页数</string>
     <string name="search_range_max_pages">最多页数</string>
+    <string name="search_page_range_conflict">最少页数不能超过最多页数，请调整或清除其中一项。</string>
     <string name="search_range_from_time">至少多久以前</string>
     <string name="search_range_to_time">最多多久以前</string>
     <string name="search_range_relative_time">距上传的时间</string>
