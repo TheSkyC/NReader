@@ -78,10 +78,18 @@ jobs:
       - name: Sign verified feed manifests
         env:
           NREADER_FEED_SIGNING_KEY: ${{ secrets.NREADER_FEED_SIGNING_KEY }}
-        run: >-
-          python -m scripts.publish_signed_tag_feeds
-          --catalog-feed "${{ steps.feed.outputs.root }}"
-          --translation-feed "${{ steps.feed.outputs.translation_root }}"
+        run: |
+          set -euo pipefail
+          scratch="$(mktemp -d "$RUNNER_TEMP/feed-signing-XXXXXX")"
+          trap 'rm -rf "$scratch"' EXIT
+          mkdir -p "$scratch/catalog" "$scratch/translations"
+          cp "${{ steps.feed.outputs.root }}/manifest.json" "$scratch/catalog/manifest.json"
+          cp "${{ steps.feed.outputs.translation_root }}/manifest.json" "$scratch/translations/manifest.json"
+          python -m scripts.publish_signed_tag_feeds \
+            --catalog-feed "$scratch/catalog" --translation-feed "$scratch/translations"
+          python -m scripts.publish_signed_tag_feeds \
+            --catalog-feed "${{ steps.feed.outputs.root }}" \
+            --translation-feed "${{ steps.feed.outputs.translation_root }}"
 
       - name: Publish immutable payloads and manifest pointers
         shell: bash
