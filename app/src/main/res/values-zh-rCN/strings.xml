@@ -32,7 +32,6 @@
     <string name="search_range_to_time">最多多久以前</string>
     <string name="search_range_relative_time">距上传的时间</string>
     <string name="search_upload_range_conflict">最短距上传时间不能超过最长时间，请调整或清除其中一项。</string>
-    <string name="search_range_time_value">%1$d %2$s</string>
     <string name="auto_reauthenticate_title">自动恢复登录</string>
     <string name="auto_reauthenticate_summary">已保存密码的登录会话过期时，在前台自动开始验证。你可能需要手动完成验证。</string>
     <string name="comment_choose_account">登录后发表评论</string>

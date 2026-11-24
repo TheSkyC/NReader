@@ -217,6 +217,80 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void uploadAgeUsesLocalizedQuantityInControlsAndSummary() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                await(() -> activity.findViewById(R.id.tag_add).isEnabled());
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromDate(1);
+                ranges.setFromDateUnit(Ranges.TimeUnit.DAY);
+                ranges.setToDate(2);
+                ranges.setToDateUnit(Ranges.TimeUnit.DAY);
+                ReflectionHelpers.callInstanceMethod(activity, "initRanges");
+                ReflectionHelpers.callInstanceMethod(activity, "updateFilterSummary");
+                View range = activity.findViewById(R.id.upload_range);
+                assertEquals("1 day", ((android.widget.Button) range.findViewById(R.id.fromButton)).getText().toString());
+                assertEquals("2 days", ((android.widget.Button) range.findViewById(R.id.toButton)).getText().toString());
+                ViewGroup summary = activity.findViewById(R.id.search_selected_filters);
+                assertTrue(((Chip) summary.getChildAt(0)).getText().toString().contains("1 day"));
+                assertTrue(((Chip) summary.getChildAt(1)).getText().toString().contains("2 days"));
+                assertEquals("uploaded:>=1d uploaded:<=2d", ranges.toQuery());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    @Test @Config(qualifiers = "ru-rRU")
+    public void uploadAgeUsesLocalePluralRules() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromDate(1);
+                ranges.setFromDateUnit(Ranges.TimeUnit.DAY);
+                ranges.setToDate(2);
+                ranges.setToDateUnit(Ranges.TimeUnit.DAY);
+                ReflectionHelpers.callInstanceMethod(activity, "initRanges");
+                View range = activity.findViewById(R.id.upload_range);
+                assertEquals("1 день", ((android.widget.Button) range.findViewById(R.id.fromButton)).getText().toString());
+                assertEquals("2 дня", ((android.widget.Button) range.findViewById(R.id.toButton)).getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    @Test @Config(qualifiers = "zh-rCN")
+    public void uploadAgeUsesChinese() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromDate(1);
+                ranges.setFromDateUnit(Ranges.TimeUnit.DAY);
+                ReflectionHelpers.callInstanceMethod(activity, "initRanges");
+                View range = activity.findViewById(R.id.upload_range);
+                String text = ((android.widget.Button) range.findViewById(R.id.fromButton)).getText().toString();
+                assertTrue(text.contains("1"));
+                assertTrue(text.contains("天"));
+                assertEquals("uploaded:>=1d", ranges.toQuery());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void editingUploadTimePreservesExistingValue() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

@@ -33,7 +33,6 @@
     <string name="search_range_to_time">At most this long ago</string>
     <string name="search_range_relative_time">Time since upload</string>
     <string name="search_upload_range_conflict">The minimum time since upload must not exceed the maximum. Adjust either value or clear it.</string>
-    <string name="search_range_time_value">%1$d %2$s</string>
     <string name="account_remember_password">Remember password on this device</string>
     <string name="preference_key_auto_reauthenticate" translatable="false">auto_reauthenticate</string>
     <string name="auto_reauthenticate_title">Automatically restore sign-in</string>

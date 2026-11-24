@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.sqlite.SQLiteException;
+import android.icu.text.MeasureFormat;
+import android.icu.util.Measure;
+import android.icu.util.MeasureUnit;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -413,11 +416,9 @@ public class SearchActivity extends GeneralActivity {
         fromDate.setText(R.string.search_range_any);
         toDate.setText(R.string.search_range_any);
         if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
-            fromDate.setText(getString(R.string.search_range_time_value, ranges.getFromDate(),
-                getString(ranges.getFromDateUnit().getString())));
+            fromDate.setText(formatUploadAge(ranges.getFromDate(), ranges.getFromDateUnit()));
         if (ranges.getToDate() != Ranges.UNDEFINED && ranges.getToDateUnit() != null)
-            toDate.setText(getString(R.string.search_range_time_value, ranges.getToDate(),
-                getString(ranges.getToDateUnit().getString())));
+            toDate.setText(formatUploadAge(ranges.getToDate(), ranges.getToDateUnit()));
         fromPage.setOnClickListener(v -> createPageBuilder(R.string.from_page, 0, 2000, ranges.getFromPage(), new DefaultDialogs.CustomDialogResults() {
             @Override
             public void positive(int actual) {
@@ -478,7 +479,7 @@ public class SearchActivity extends GeneralActivity {
                         ranges.setToDateUnit(temporaryUnit);
                         ranges.setToDate(actual);
                     }
-                    button.setText(getString(R.string.search_range_time_value, actual, getString(temporaryUnit.getString())));
+                    button.setText(formatUploadAge(actual, temporaryUnit));
                     advanced = true;
                     updateFilterSummary();
                 }
@@ -509,6 +510,21 @@ public class SearchActivity extends GeneralActivity {
             updateFilterSummary();
         });
         builder.show();
+    }
+
+    private String formatUploadAge(int amount, Ranges.TimeUnit unit) {
+        MeasureUnit measureUnit;
+        switch (unit) {
+            case HOUR: measureUnit = MeasureUnit.HOUR; break;
+            case DAY: measureUnit = MeasureUnit.DAY; break;
+            case WEEK: measureUnit = MeasureUnit.WEEK; break;
+            case MONTH: measureUnit = MeasureUnit.MONTH; break;
+            case YEAR: measureUnit = MeasureUnit.YEAR; break;
+            default: throw new IllegalArgumentException("Unknown upload age unit: " + unit);
+        }
+        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        return MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+            .formatMeasures(new Measure(amount, measureUnit));
     }
 
     private void populateGroup() {
@@ -692,14 +708,14 @@ public class SearchActivity extends GeneralActivity {
             addRangeSummary(selectedGroup, getString(R.string.search_range_max_pages),
                 String.valueOf(ranges.getToPage()), () -> ranges.setToPage(Ranges.UNDEFINED));
         if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
-            addRangeSummary(selectedGroup, getString(R.string.search_range_from_time), getString(R.string.search_range_time_value,
-                ranges.getFromDate(), getString(ranges.getFromDateUnit().getString())), () -> {
+            addRangeSummary(selectedGroup, getString(R.string.search_range_from_time),
+                formatUploadAge(ranges.getFromDate(), ranges.getFromDateUnit()), () -> {
                     ranges.setFromDate(Ranges.UNDEFINED);
                     ranges.setFromDateUnit(Ranges.UNDEFINED_DATE);
                 });
         if (ranges.getToDate() != Ranges.UNDEFINED && ranges.getToDateUnit() != null)
-            addRangeSummary(selectedGroup, getString(R.string.search_range_to_time), getString(R.string.search_range_time_value,
-                ranges.getToDate(), getString(ranges.getToDateUnit().getString())), () -> {
+            addRangeSummary(selectedGroup, getString(R.string.search_range_to_time),
+                formatUploadAge(ranges.getToDate(), ranges.getToDateUnit()), () -> {
                     ranges.setToDate(Ranges.UNDEFINED);
                     ranges.setToDateUnit(Ranges.UNDEFINED_DATE);
                 });
