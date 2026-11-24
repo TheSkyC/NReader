@@ -112,6 +112,10 @@ public class SearchActivity extends GeneralActivity {
         //find IDs
         searchView = findViewById(R.id.search);
         RecyclerView recyclerView = findViewById(R.id.recycler);
+        findViewById(R.id.search_submit).setOnClickListener(view -> {
+            advanced = true;
+            submitSearch(searchView.getQuery().toString().trim(), false);
+        });
 
         groups = new ChipGroup[]{
             null,
@@ -756,8 +760,15 @@ public class SearchActivity extends GeneralActivity {
             View v = findViewById(R.id.groups);
             boolean isVisible = v.getVisibility() == View.VISIBLE;
             v.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+            findViewById(R.id.search_actions).setVisibility(isVisible ? View.GONE : View.VISIBLE);
+            findViewById(R.id.recycler).setVisibility(isVisible ? View.VISIBLE : View.GONE);
             item.setIcon(isVisible ? R.drawable.ic_add : R.drawable.ic_close);
             Global.setTint(this, item.getIcon());
+            if (!isVisible) {
+                searchView.clearFocus();
+                inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

@@ -58,6 +58,31 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void filterModeProvidesSearchForAnEmptyKeyword() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                await(() -> ((ViewGroup) activity.findViewById(R.id.tag_group)).getChildCount() > 0);
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.recycler).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.search_actions).getVisibility());
+                activity.findViewById(R.id.search_submit).performClick();
+                Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertNotNull(sent);
+                assertEquals("", sent.getStringExtra(activity.getPackageName() + ".QUERY"));
+                assertTrue(sent.getBooleanExtra(activity.getPackageName() + ".ADVANCED", false));
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void visibleTagFollowsLanguageWithoutChangingSearchIdentity() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
