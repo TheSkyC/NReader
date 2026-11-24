@@ -393,6 +393,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         {
             ListPreference savePath = Objects.requireNonNull(findPreference(getString(R.string.preference_key_save_path)));
             initStoragePaths(savePath);
+            Preference storageCategory = Objects.requireNonNull(findPreference("settings_storage_category"));
+            storageCategory.setVisible(savePath.isVisible());
             savePath.setOnPreferenceChangeListener((preference, newValue) -> {
                 if (!newValue.equals(getString(R.string.custom_path))) return true;
                 manageCustomPath();

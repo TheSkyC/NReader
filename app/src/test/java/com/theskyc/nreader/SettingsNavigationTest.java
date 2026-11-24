@@ -108,6 +108,21 @@ public class SettingsNavigationTest {
     }
 
     @Test
+    public void storageSectionTracksWhetherItsSettingIsAvailable() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_downloads");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            Preference category = controller.get().fragment.findPreference("settings_storage_category");
+            Preference path = controller.get().fragment.findPreference(
+                application.getString(R.string.preference_key_save_path));
+            assertEquals(path.isVisible(), category.isVisible());
+        }
+    }
+
+    @Test
     public void webCookieRemovalRequiresConfirmation() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         Global.initFromShared(application);
