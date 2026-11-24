@@ -35,7 +35,8 @@
                 style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/fromButton" />
+                android:labelFor="@id/fromButton"
+                android:text="@string/search_range_from_time" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/fromButton"
@@ -62,7 +63,8 @@
                 style="@style/TextAppearance.MaterialComponents.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/toButton" />
+                android:labelFor="@id/toButton"
+                android:text="@string/search_range_to_time" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/toButton"
