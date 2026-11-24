@@ -58,6 +58,7 @@ import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.ui.TagLabel;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
@@ -151,6 +152,7 @@ public class SearchActivity extends GeneralActivity {
             showAllSelected = !showAllSelected;
             updateFilterSummary();
         });
+        findViewById(R.id.search_active_filters).setOnClickListener(view -> setFiltersVisible(true));
         findViewById(R.id.search_clear_filters).setOnClickListener(view ->
             new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.search_clear_filters)
@@ -693,6 +695,15 @@ public class SearchActivity extends GeneralActivity {
             }
         }
         selected.addAll(automaticTags);
+        int activeFilterCount = selected.size()
+            + (ranges.getFromPage() != Ranges.UNDEFINED ? 1 : 0)
+            + (ranges.getToPage() != Ranges.UNDEFINED ? 1 : 0)
+            + (ranges.getFromDate() != Ranges.UNDEFINED ? 1 : 0)
+            + (ranges.getToDate() != Ranges.UNDEFINED ? 1 : 0);
+        MaterialButton activeFilters = findViewById(R.id.search_active_filters);
+        activeFilters.setText(getString(R.string.search_filter_section_count,
+            getString(R.string.search_show_filters), activeFilterCount));
+        activeFilters.setVisibility(!filtersVisible && activeFilterCount > 0 ? View.VISIBLE : View.GONE);
         TextView summary = findViewById(R.id.search_filter_summary);
         summary.setText(included + excluded == 0 ? getString(R.string.search_filters_none)
             : getString(R.string.search_filters_summary, included, excluded));
@@ -1095,15 +1106,10 @@ public class SearchActivity extends GeneralActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.view_groups) {
-            filtersVisible = !filtersVisible;
-            applyFilterVisibility();
+            setFiltersVisible(!filtersVisible);
             item.setIcon(filtersVisible ? R.drawable.ic_close : R.drawable.ic_filter_list);
             item.setTitle(filtersVisible ? R.string.search_hide_filters : R.string.search_show_filters);
             Global.setTint(this, item.getIcon());
-            if (filtersVisible) {
-                searchView.clearFocus();
-                inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
-            }
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -1113,6 +1119,18 @@ public class SearchActivity extends GeneralActivity {
         findViewById(R.id.groups).setVisibility(filtersVisible ? View.VISIBLE : View.GONE);
         findViewById(R.id.search_actions).setVisibility(filtersVisible ? View.VISIBLE : View.GONE);
         findViewById(R.id.recycler).setVisibility(filtersVisible ? View.GONE : View.VISIBLE);
+        findViewById(R.id.search_active_filters).setVisibility(View.GONE);
+    }
+
+    private void setFiltersVisible(boolean visible) {
+        filtersVisible = visible;
+        applyFilterVisibility();
+        updateFilterSummary();
+        invalidateOptionsMenu();
+        if (visible) {
+            searchView.clearFocus();
+            inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+        }
     }
 
 

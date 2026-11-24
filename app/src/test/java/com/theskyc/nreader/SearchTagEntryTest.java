@@ -143,6 +143,44 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void activeFiltersRemainVisibleAndReachableInHistoryMode() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("fixture", 100, 501002, TagType.TAG, TagStatus.DEFAULT));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 0);
+
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                activity.findViewById(R.id.tag_header).performClick();
+                SearchUiTestSupport.selectStatus((ChipTag) group.getChildAt(0), 2);
+
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                View activeFilters = activity.findViewById(R.id.search_active_filters);
+                assertEquals(View.VISIBLE, activeFilters.getVisibility());
+                assertEquals(activity.getString(R.string.search_filter_section_count,
+                    activity.getString(R.string.search_show_filters), 1),
+                    ((android.widget.Button) activeFilters).getText().toString());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.recycler).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.groups).getVisibility());
+
+                activeFilters.performClick();
+                assertEquals(View.GONE, activeFilters.getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.recycler).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void editingPageBoundsPreservesConflictingValuesUntilCorrected() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
