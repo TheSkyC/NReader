@@ -758,6 +758,8 @@ public class SearchActivity extends GeneralActivity {
         header.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0,
             getGroup(type).getVisibility() == View.VISIBLE ? R.drawable.ic_comment_chevron_down
                 : R.drawable.ic_keyboard_arrow_right, 0);
+        header.setCompoundDrawableTintList(ColorStateList.valueOf(
+            MaterialColors.getColor(header, com.google.android.material.R.attr.colorOnSurface)));
         ViewCompat.setStateDescription(header, getString(getGroup(type).getVisibility() == View.VISIBLE
             ? R.string.search_filter_expanded : R.string.search_filter_collapsed));
     }
