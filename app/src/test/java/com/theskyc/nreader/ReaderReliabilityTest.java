@@ -27,6 +27,7 @@ import com.bumptech.glide.request.BaseRequestOptions;
 import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.api.components.GenericGallery;
@@ -601,6 +602,10 @@ public class ReaderReliabilityTest {
                 ZoomActivity activity = controller.get();
                 activity.findViewById(R.id.reader_settings).performClick();
                 BottomSheetDialog sheet = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(sheet.getBehavior().isFitToContents());
+                assertEquals(0.5f, sheet.getBehavior().getHalfExpandedRatio(), 0f);
+                assertEquals(BottomSheetBehavior.STATE_HALF_EXPANDED, sheet.getBehavior().getState());
                 sheet.findViewById(R.id.reader_scale_toggle).performClick();
                 AlertDialog choices = (AlertDialog) ShadowDialog.getLatestDialog();
                 choices.getListView().performItemClick(choices.getListView().getChildAt(2), 2,

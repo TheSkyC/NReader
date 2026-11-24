@@ -1096,7 +1096,10 @@ public class ZoomActivity extends GeneralActivity {
         bindReaderSectionDialog(dialog, R.id.reader_presets_toggle, R.id.reader_presets_content, R.string.reader_preset_title);
         bindReaderSectionDialog(dialog, R.id.reader_adjustments_toggle, R.id.reader_adjustments_content,
             R.string.reader_adjustments_title);
-        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        BottomSheetBehavior<?> behavior = dialog.getBehavior();
+        behavior.setFitToContents(false);
+        behavior.setHalfExpandedRatio(0.5f);
+        dialog.setOnShowListener(ignored -> behavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED));
         dialog.show();
     }
 
