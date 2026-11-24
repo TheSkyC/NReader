@@ -84,7 +84,6 @@ public class SearchActivity extends GeneralActivity {
     private long onlineChipsRevision = -1;
     private String onlineTagsLoadingIdentity;
     private final Runnable authObserver = () -> runOnUiThread(this::synchronizeOnlineSearchTags);
-    private final Chip[] addChip = new Chip[TagType.values.length];
     private ChipGroup[] groups;
     private TextView[] groupHeaders;
     private SearchView searchView;
@@ -360,11 +359,7 @@ public class SearchActivity extends GeneralActivity {
                 }
                 continue;
             }
-            ChipGroup group = getGroup(tag.getType());
-            Chip add = addChip[tag.getType().getId()];
-            if (add != null) group.removeView(add);
             onlineChips.add(addChipTag(tag, true, true));
-            if (add != null) group.addView(add);
         }
         updateFilterSummary();
         refreshTagLabels();
@@ -559,17 +554,16 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void addTagButtons() {
-        //add + button
-        for (TagType type : TagType.values) {
-            //ignore these tags
-            if (type == TagType.UNKNOWN || type == TagType.LANGUAGE || type == TagType.CATEGORY) {
-                addChip[type.getId()] = null;
-                continue;
-            }
-            ChipGroup cg = getGroup(type);
-            Chip add = createAddChip(type, cg);
-            addChip[type.getId()] = add;
-            cg.addView(add);
+        int[] buttonIds = {0, R.id.parody_add, R.id.character_add, R.id.tag_add,
+            R.id.artist_add, R.id.group_add};
+        int[] titles = {0, R.string.parodies, R.string.characters, R.string.tags,
+            R.string.artists, R.string.groups};
+        for (int i = 1; i < buttonIds.length; i++) {
+            TagType type = TagType.values[i];
+            View add = findViewById(buttonIds[i]);
+            add.setContentDescription(getString(R.string.search_add_tag_type, getString(titles[i])));
+            add.setOnClickListener(view -> loadTag(type));
+            add.setEnabled(true);
         }
     }
 
@@ -580,16 +574,6 @@ public class SearchActivity extends GeneralActivity {
         Login.removeOnlineTagsObserver(authObserver);
         tagLoader.shutdownNow();
         super.onDestroy();
-    }
-
-    private Chip createAddChip(TagType type, ChipGroup group) {
-        Chip c = (Chip) getLayoutInflater().inflate(R.layout.chip_layout, group, false);
-        c.setCloseIconVisible(false);
-        c.setChipIconResource(R.drawable.ic_add);
-        c.setText(getString(R.string.add));
-        c.setOnClickListener(v -> loadTag(type));
-        Global.setTint(this, c.getChipIcon());
-        return c;
     }
 
     private boolean tagAlreadyExist(Tag tag) {
@@ -889,16 +873,21 @@ public class SearchActivity extends GeneralActivity {
         ChipTag existing = findTagChip(tag);
         if (existing != null) {
             if (tag.getId() > 0) existing.refreshTag(tag);
+            if (existing.getTag().getStatus() == TagStatus.DEFAULT) {
+                markManualTag(existing);
+                existing.changeStatus(TagStatus.ACCEPTED);
+                advanced = true;
+            }
+            getGroup(tag.getType()).setVisibility(View.VISIBLE);
+            updateFilterSummary();
             refreshTagLabels();
             return;
         }
         ChipGroup group = getGroup(tag.getType());
-        Chip add = addChip[tag.getType().getId()];
-        group.removeView(add);
         tag.setStatus(TagStatus.ACCEPTED);
         ChipTag added = addChipTag(tag, true, true);
         markManualTag(added);
-        group.addView(add);
+        group.setVisibility(View.VISIBLE);
         advanced = true;
         updateFilterSummary();
         refreshTagLabels();

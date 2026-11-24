@@ -12,6 +12,7 @@
     <string name="search_filter_expanded">Expanded</string>
     <string name="search_filter_collapsed">Collapsed</string>
     <string name="search_tag_hint">Tap a tag to include or exclude it.</string>
+    <string name="search_add_tag_type">Add %1$s</string>
     <string name="search_tag_any">No restriction</string>
     <string name="search_tag_include">Include</string>
     <string name="search_tag_exclude">Exclude</string>

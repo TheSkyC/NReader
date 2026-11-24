@@ -11,6 +11,7 @@
     <string name="search_filter_expanded">已展開</string>
     <string name="search_filter_collapsed">已收合</string>
     <string name="search_tag_hint">點按標籤可選擇包含或排除。</string>
+    <string name="search_add_tag_type">新增%1$s</string>
     <string name="search_tag_any">不限制</string>
     <string name="search_tag_include">包含</string>
     <string name="search_tag_exclude">排除</string>

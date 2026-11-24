@@ -70,7 +70,7 @@ public class SearchTagEntryTest {
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
                 ViewGroup group = activity.findViewById(R.id.tag_group);
-                await(() -> group.getChildCount() > 1);
+                await(() -> group.getChildCount() > 0);
                 android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
                 activity.onCreateOptionsMenu(popup.getMenu());
                 activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
@@ -85,7 +85,7 @@ public class SearchTagEntryTest {
                 controller.recreate();
                 SearchActivity restored = controller.get();
                 ViewGroup restoredGroup = restored.findViewById(R.id.tag_group);
-                await(() -> restoredGroup.getChildCount() > 1);
+                await(() -> restoredGroup.getChildCount() > 0);
                 assertEquals(View.VISIBLE, restored.findViewById(R.id.groups).getVisibility());
                 assertEquals(View.VISIBLE, restoredGroup.getVisibility());
                 assertEquals("keywords", ((SearchView) restored.findViewById(R.id.search)).getQuery().toString());
@@ -107,7 +107,7 @@ public class SearchTagEntryTest {
             helper.getWritableDatabase();
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
-                await(() -> ((ViewGroup) activity.findViewById(R.id.tag_group)).getChildCount() > 0);
+                await(() -> activity.findViewById(R.id.tag_add).isEnabled());
                 android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
                 activity.onCreateOptionsMenu(popup.getMenu());
                 activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
@@ -148,7 +148,7 @@ public class SearchTagEntryTest {
                 new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 ViewGroup group = controller.get().findViewById(R.id.tag_group);
-                await(() -> group.getChildCount() > 1);
+                await(() -> group.getChildCount() > 0);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
                 SearchUiTestSupport.selectStatus(chip, 1);
                 assertEquals(controller.get().getString(R.string.search_filters_summary, 1, 0),
@@ -248,7 +248,7 @@ public class SearchTagEntryTest {
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
                 ViewGroup group = activity.findViewById(R.id.tag_group);
-                await(() -> group.getChildCount() > 1);
+                await(() -> group.getChildCount() > 0);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
                 SearchUiTestSupport.selectStatus(chip, 1);
                 AlertDialog dialog = openTagDialog(activity);
@@ -263,7 +263,7 @@ public class SearchTagEntryTest {
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
 
                 await(() -> !dialog.isShowing());
-                assertEquals(2, group.getChildCount());
+                assertEquals(1, group.getChildCount());
                 assertEquals(501001, chip.getTag().getId());
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
                 assertEquals("Canonical Rename", chip.getTag().getName());
@@ -298,7 +298,7 @@ public class SearchTagEntryTest {
             try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
                 SearchActivity activity = controller.get();
                 ViewGroup group = activity.findViewById(R.id.tag_group);
-                await(() -> group.getChildCount() > 1);
+                await(() -> group.getChildCount() > 0);
                 ChipTag first = (ChipTag) group.getChildAt(0);
                 assertEquals(501001, first.getTag().getId());
                 SearchUiTestSupport.selectStatus(first, 1);
@@ -312,7 +312,7 @@ public class SearchTagEntryTest {
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
 
                 await(() -> !dialog.isShowing());
-                assertEquals(3, group.getChildCount());
+                assertEquals(2, group.getChildCount());
                 ChipTag second = (ChipTag) group.getChildAt(1);
                 assertEquals(501002, second.getTag().getId());
                 assertEquals(TagStatus.ACCEPTED, second.getTag().getStatus());
@@ -397,7 +397,7 @@ public class SearchTagEntryTest {
                 assertFalse(dialog.isShowing());
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 ViewGroup group = activity.findViewById(R.id.tag_group);
-                assertEquals(1, group.getChildCount());
+                assertEquals(0, group.getChildCount());
                 AlertDialog next = openTagDialog(activity);
                 AppCompatAutoCompleteTextView newEntry = next.findViewById(R.id.edit);
                 newEntry.setText("Custom Label", false);
@@ -413,7 +413,7 @@ public class SearchTagEntryTest {
                 thirdEntry.setText("another custom label", false);
                 third.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
                 await(() -> !third.isShowing());
-                assertEquals(3, group.getChildCount());
+                assertEquals(2, group.getChildCount());
                 assertEquals("another custom label", ((ChipTag) group.getChildAt(1)).getTag().getName());
             }
         } finally {
@@ -442,7 +442,7 @@ public class SearchTagEntryTest {
             }
             assertFalse("Destroyed activity left its tag dialog open", dialog.isShowing());
             Shadows.shadowOf(Looper.getMainLooper()).idle();
-            assertEquals(1, group.getChildCount());
+            assertEquals(0, group.getChildCount());
         } finally {
             Queries.setDb(null);
         }
@@ -467,7 +467,7 @@ public class SearchTagEntryTest {
                 assertTrue(dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled());
                 assertEquals("CAF\u00c9", entry.getText().toString());
                 ViewGroup group = activity.findViewById(R.id.tag_group);
-                assertEquals(1, group.getChildCount());
+                assertEquals(0, group.getChildCount());
 
                 Queries.setDb(database);
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
@@ -490,11 +490,9 @@ public class SearchTagEntryTest {
     }
 
     private static AlertDialog openTagDialog(SearchActivity activity) throws InterruptedException {
-        ViewGroup group = activity.findViewById(R.id.tag_group);
-        await(() -> group.getChildCount() > 0);
-        View last = group.getChildAt(group.getChildCount() - 1);
-        assertEquals(activity.getString(R.string.add), ((Chip) last).getText().toString());
-        assertTrue(last.performClick());
+        View add = activity.findViewById(R.id.tag_add);
+        await(add::isEnabled);
+        assertTrue(add.performClick());
         return (AlertDialog) ShadowDialog.getLatestDialog();
     }
 

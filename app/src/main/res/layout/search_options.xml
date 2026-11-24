@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/groups"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -87,17 +88,37 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <TextView
-            android:id="@+id/tag_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:text="@string/tags" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tag_header"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/tags" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tag_add"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:minHeight="48dp"
+                android:text="@string/add"
+                android:textColor="?attr/colorOnSurface"
+                app:icon="@drawable/ic_add"
+                app:iconTint="?attr/colorOnSurface" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/tag_group"
@@ -109,17 +130,37 @@
             android:layout_marginRight="8dp"
             android:animateLayoutChanges="true" />
 
-        <TextView
-            android:id="@+id/parody_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:text="@string/parodies" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/parody_header"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/parodies" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/parody_add"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:minHeight="48dp"
+                android:text="@string/add"
+                android:textColor="?attr/colorOnSurface"
+                app:icon="@drawable/ic_add"
+                app:iconTint="?attr/colorOnSurface" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/parody_group"
@@ -131,17 +172,37 @@
             android:layout_marginRight="8dp"
             android:animateLayoutChanges="true" />
 
-        <TextView
-            android:id="@+id/character_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:text="@string/characters" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/character_header"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/characters" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/character_add"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:minHeight="48dp"
+                android:text="@string/add"
+                android:textColor="?attr/colorOnSurface"
+                app:icon="@drawable/ic_add"
+                app:iconTint="?attr/colorOnSurface" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/character_group"
@@ -153,17 +214,37 @@
             android:layout_marginRight="8dp"
             android:animateLayoutChanges="true" />
 
-        <TextView
-            android:id="@+id/artist_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:text="@string/artists" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/artist_header"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/artists" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/artist_add"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:minHeight="48dp"
+                android:text="@string/add"
+                android:textColor="?attr/colorOnSurface"
+                app:icon="@drawable/ic_add"
+                app:iconTint="?attr/colorOnSurface" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/artist_group"
@@ -175,17 +256,37 @@
             android:layout_marginRight="8dp"
             android:animateLayoutChanges="true" />
 
-        <TextView
-            android:id="@+id/group_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:text="@string/groups" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/group_header"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/groups" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/group_add"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:minHeight="48dp"
+                android:text="@string/add"
+                android:textColor="?attr/colorOnSurface"
+                app:icon="@drawable/ic_add"
+                app:iconTint="?attr/colorOnSurface" />
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/group_group"
