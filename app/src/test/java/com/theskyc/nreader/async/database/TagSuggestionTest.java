@@ -63,8 +63,9 @@ public class TagSuggestionTest {
 
         try (Cursor plan = database.rawQuery("EXPLAIN QUERY PLAN "
             + Queries.TagTable.buildTagSuggestionQuery("zh-Hans", true), new String[]{
-                Integer.toString(TagType.TAG.getId()), "0", "suggestion%", "zh-Hans", "suggestion", "suggestioo",
-                "zh-Hans", "suggestion", "suggestioo", "zh-Hans", Integer.toString(TagType.TAG.getId()), "0"
+                "suggestion", Integer.toString(TagType.TAG.getId()), "0", "suggestion%",
+                "suggestion", "zh-Hans", "suggestion", "suggestioo",
+                "suggestion", "zh-Hans", "suggestion", "suggestioo", "zh-Hans", Integer.toString(TagType.TAG.getId()), "0"
             })) {
             boolean usesTagIndex = false;
             boolean boundsTranslationPrefix = false;
@@ -81,6 +82,24 @@ public class TagSuggestionTest {
             assertTrue(boundsTranslationPrefix);
             assertTrue(boundsAliasPrefix);
         }
+    }
+
+    @Test public void exactMatchesRankAheadOfOtherPrefixesAcrossNamesAndAliases() throws IOException {
+        insert(1, "target", TagType.TAG);
+        insert(2, "a canonical", TagType.TAG);
+        insert(3, "b canonical", TagType.TAG);
+        insert(4, "target suffix", TagType.TAG);
+        insert(5, "c canonical", TagType.TAG);
+        insert(6, "d canonical", TagType.TAG);
+        assertTrue(TagTranslationCatalog.apply(database, new ByteArrayInputStream((
+            "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,\"entries\":["
+                + "{\"id\":2,\"name\":\"target\"},"
+                + "{\"id\":3,\"name\":\"other\",\"aliases\":[\"target\"]},"
+                + "{\"id\":5,\"name\":\"target translated suffix\"},"
+                + "{\"id\":6,\"name\":\"other 2\",\"aliases\":[\"target alias suffix\"]}]}")
+            .getBytes(StandardCharsets.UTF_8)), RuntimeEnvironment.getApplication().getCacheDir(), () -> false));
+        assertEquals(List.of("target", "a canonical", "b canonical", "target suffix", "c canonical", "d canonical"),
+            names(Queries.TagTable.getTagSuggestions(TagType.TAG, "TARGET", "ja")));
     }
 
     @Test public void unicode16AliasSearchUsesPinnedKeysAndPreservesCanonicalIdentity() throws IOException {

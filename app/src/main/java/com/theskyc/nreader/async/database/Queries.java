@@ -504,14 +504,17 @@ public class Queries {
             String normalizedUpperBound = TagTranslationCatalog.prefixUpperBound(normalizedPrefix);
             boolean useTranslationRange = normalizedUpperBound != null;
             List<String> args = new ArrayList<>();
+            args.add(prefix);
             args.add(Integer.toString(type.getId()));
             args.add(Integer.toString(TagV2.getMinCount()));
             args.add(canonicalPattern);
             if (locale != null) {
                 String translationPrefix = useTranslationRange ? normalizedPrefix : escapeLikePrefix(normalizedPrefix) + "%";
+                args.add(normalizedPrefix);
                 args.add(locale);
                 args.add(translationPrefix);
                 if (useTranslationRange) args.add(normalizedUpperBound);
+                args.add(normalizedPrefix);
                 args.add(locale);
                 args.add(translationPrefix);
                 if (useTranslationRange) args.add(normalizedUpperBound);
@@ -533,12 +536,15 @@ public class Queries {
         }
 
         static String buildTagSuggestionQuery(@Nullable String locale, boolean useTranslationRange) {
-            StringBuilder matches = new StringBuilder("SELECT idTag, 0 AS matchRank FROM Tags"
+            StringBuilder matches = new StringBuilder("SELECT idTag, CASE WHEN name = ? COLLATE NOCASE"
+                + " THEN 0 ELSE 3 END AS matchRank FROM Tags"
                 + " WHERE type = ? AND count >= ? AND name COLLATE NOCASE LIKE ? ESCAPE '\\'");
             if (locale != null) {
-                matches.append(" UNION ALL SELECT idTag, 1 FROM TagTranslations WHERE locale = ? AND ");
+                matches.append(" UNION ALL SELECT idTag, CASE WHEN displayKey = ? THEN 1 ELSE 4 END"
+                    + " FROM TagTranslations WHERE locale = ? AND ");
                 appendTranslationPrefix(matches, "displayKey", useTranslationRange);
-                matches.append(" UNION ALL SELECT idTag, 2 FROM TagTranslationAliases WHERE locale = ? AND ");
+                matches.append(" UNION ALL SELECT idTag, CASE WHEN aliasKey = ? THEN 2 ELSE 5 END"
+                    + " FROM TagTranslationAliases WHERE locale = ? AND ");
                 appendTranslationPrefix(matches, "aliasKey", useTranslationRange);
             }
             return "SELECT t.idTag, t.name, t.type, t.count, COALESCE(r.status, 0) AS status,"
