@@ -72,6 +72,9 @@ public class SearchTagEntryTest {
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
                 assertEquals(View.GONE, activity.findViewById(R.id.recycler).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.search_actions).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.tag_group).getVisibility());
+                activity.findViewById(R.id.tag_header).performClick();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.tag_group).getVisibility());
                 View pageRange = activity.findViewById(R.id.page_range);
                 assertEquals(activity.getString(R.string.search_range_any),
                     ((android.widget.Button) pageRange.findViewById(R.id.fromButton)).getText().toString());
@@ -106,6 +109,8 @@ public class SearchTagEntryTest {
                 await(() -> group.getChildCount() > 1);
                 ChipTag chip = (ChipTag) group.getChildAt(0);
                 chip.performClick();
+                assertEquals(controller.get().getString(R.string.search_filters_summary, 1, 0),
+                    ((android.widget.TextView) controller.get().findViewById(R.id.search_filter_summary)).getText().toString());
                 TagLanguage.select(app, "ja");
                 await(() -> chip.getText().toString().contains("Translated label"));
                 assertEquals("original name", chip.getTag().getName());

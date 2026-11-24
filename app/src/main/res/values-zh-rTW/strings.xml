@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_filters_title">進階搜尋</string>
+    <string name="search_filters_none">未選取標籤條件</string>
+    <string name="search_filters_summary">包含：%1$d · 排除：%2$d</string>
+    <string name="search_filter_section_count">%1$s · 已選 %2$d</string>
+    <string name="search_filter_expanded">已展開</string>
+    <string name="search_filter_collapsed">已收合</string>
+    <string name="search_account_filter_notice">已套用帳號排除條件：%1$d</string>
     <string name="search_range_any">不限</string>
     <string name="search_range_min_pages">最少頁數</string>
     <string name="search_range_max_pages">最多頁數</string>

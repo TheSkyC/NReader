@@ -2,6 +2,13 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 
 <resources>
+    <string name="search_filters_title">Advanced search</string>
+    <string name="search_filters_none">No tag filters selected</string>
+    <string name="search_filters_summary">Included: %1$d · Excluded: %2$d</string>
+    <string name="search_filter_section_count">%1$s · %2$d selected</string>
+    <string name="search_filter_expanded">Expanded</string>
+    <string name="search_filter_collapsed">Collapsed</string>
+    <string name="search_account_filter_notice">Account exclusions applied: %1$d</string>
     <string name="search_range_any">Any</string>
     <string name="search_range_min_pages">Minimum pages</string>
     <string name="search_range_max_pages">Maximum pages</string>

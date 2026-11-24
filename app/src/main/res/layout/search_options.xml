@@ -15,6 +15,29 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <TextView
+            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/search_filters_title" />
+
+        <TextView
+            android:id="@+id/search_filter_summary"
+            style="@style/TextAppearance.MaterialComponents.Body2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/search_filters_none" />
+
+        <TextView
+            android:id="@+id/search_account_filters"
+            style="@style/TextAppearance.MaterialComponents.Body2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
 
         <include
             android:id="@+id/page_range"
@@ -29,9 +52,15 @@
             android:layout_height="wrap_content" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/tag_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/tags" />
 
         <com.google.android.material.chip.ChipGroup
@@ -45,9 +74,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/parody_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/parodies" />
 
         <com.google.android.material.chip.ChipGroup
@@ -61,9 +96,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/character_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/characters" />
 
         <com.google.android.material.chip.ChipGroup
@@ -77,9 +118,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/artist_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/artists" />
 
         <com.google.android.material.chip.ChipGroup
@@ -93,9 +140,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/group_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/groups" />
 
         <com.google.android.material.chip.ChipGroup
@@ -109,9 +162,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/category_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/categories" />
 
         <com.google.android.material.chip.ChipGroup
@@ -125,9 +184,15 @@
             android:animateLayoutChanges="true" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Headline6"
+            android:id="@+id/language_header"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
             android:text="@string/languages" />
 
         <com.google.android.material.chip.ChipGroup

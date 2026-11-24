@@ -24,6 +24,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -82,6 +83,7 @@ public class SearchActivity extends GeneralActivity {
     private final Runnable authObserver = () -> runOnUiThread(this::synchronizeOnlineSearchTags);
     private final Chip[] addChip = new Chip[TagType.values.length];
     private ChipGroup[] groups;
+    private TextView[] groupHeaders;
     private SearchView searchView;
     private HistoryAdapter adapter;
     private boolean advanced = false;
@@ -127,6 +129,27 @@ public class SearchActivity extends GeneralActivity {
             findViewById(R.id.language_group),
             findViewById(R.id.category_group),
         };
+        groupHeaders = new TextView[]{
+            null,
+            findViewById(R.id.parody_header),
+            findViewById(R.id.character_header),
+            findViewById(R.id.tag_header),
+            findViewById(R.id.artist_header),
+            findViewById(R.id.group_header),
+            findViewById(R.id.language_header),
+            findViewById(R.id.category_header),
+        };
+        for (TagType type : TagType.values) {
+            if (type == TagType.UNKNOWN) continue;
+            ChipGroup group = getGroup(type);
+            group.setVisibility(View.GONE);
+            TextView header = groupHeaders[type.getId()];
+            header.setOnClickListener(view -> {
+                group.setVisibility(group.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                updateGroupHeader(type);
+            });
+        }
+        updateFilterSummary();
         initRanges();
         adapter = new HistoryAdapter(this);
         //init recyclerview
@@ -273,6 +296,7 @@ public class SearchActivity extends GeneralActivity {
             onlineChips.add(addChipTag(tag, true, true));
             if (add != null) group.addView(add);
         }
+        updateFilterSummary();
         refreshTagLabels();
     }
 
@@ -419,6 +443,11 @@ public class SearchActivity extends GeneralActivity {
                 }
                 if (identity != null) addOnlineSearchTags(identity, revision, online);
                 addTagButtons();
+                for (ChipTag chip : tags) {
+                    if (chip.getTag().getStatus() != TagStatus.DEFAULT)
+                        getGroup(chip.getTag().getType()).setVisibility(View.VISIBLE);
+                }
+                updateFilterSummary();
                 refreshTagLabels();
             });
         });
@@ -479,15 +508,53 @@ public class SearchActivity extends GeneralActivity {
             tags.remove(c);
             markManualTag(c);
             advanced = true;
+            updateFilterSummary();
         });
         c.setOnClickListener(v -> {
             markManualTag(c);
             c.updateStatus();
             advanced = true;
+            updateFilterSummary();
         });
         cg.addView(c);
         tags.add(c);
         return c;
+    }
+
+    private void updateFilterSummary() {
+        int included = 0;
+        int excluded = 0;
+        for (ChipTag chip : tags) {
+            if (chip.getTag().getStatus() == TagStatus.ACCEPTED) included++;
+            if (chip.getTag().getStatus() == TagStatus.AVOIDED) excluded++;
+        }
+        TextView summary = findViewById(R.id.search_filter_summary);
+        summary.setText(included + excluded == 0 ? getString(R.string.search_filters_none)
+            : getString(R.string.search_filters_summary, included, excluded));
+        int automatic = onlineChips.size() + onlineMergedChips.size();
+        TextView account = findViewById(R.id.search_account_filters);
+        account.setVisibility(automatic == 0 ? View.GONE : View.VISIBLE);
+        if (automatic != 0) account.setText(getString(R.string.search_account_filter_notice, automatic));
+        for (TagType type : TagType.values) {
+            if (type != TagType.UNKNOWN) updateGroupHeader(type);
+        }
+    }
+
+    private void updateGroupHeader(TagType type) {
+        int count = 0;
+        for (ChipTag chip : tags) {
+            if (chip.getTag().getType().equals(type) && chip.getTag().getStatus() != TagStatus.DEFAULT) count++;
+        }
+        int[] titles = {0, R.string.parodies, R.string.characters, R.string.tags,
+            R.string.artists, R.string.groups, R.string.languages, R.string.categories};
+        TextView header = groupHeaders[type.getId()];
+        String title = getString(titles[type.getId()]);
+        header.setText(count == 0 ? title : getString(R.string.search_filter_section_count, title, count));
+        header.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0,
+            getGroup(type).getVisibility() == View.VISIBLE ? R.drawable.ic_comment_chevron_down
+                : R.drawable.ic_keyboard_arrow_right, 0);
+        ViewCompat.setStateDescription(header, getString(getGroup(type).getVisibility() == View.VISIBLE
+            ? R.string.search_filter_expanded : R.string.search_filter_collapsed));
     }
 
     private void refreshTagLabels() {
@@ -541,6 +608,7 @@ public class SearchActivity extends GeneralActivity {
         onlineMergedChips.clear();
         onlineChipsIdentity = null;
         onlineChipsRevision = -1;
+        updateFilterSummary();
     }
 
     private final class TagSuggestionAdapter extends ArrayAdapter<TagSuggestion> {
@@ -635,6 +703,7 @@ public class SearchActivity extends GeneralActivity {
         addChipTag(tag, true, true);
         group.addView(add);
         advanced = true;
+        updateFilterSummary();
         refreshTagLabels();
     }
 
