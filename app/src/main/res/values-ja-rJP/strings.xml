@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">検索キーワード</string>
+    <string name="search_show_filters">詳細フィルター</string>
+    <string name="search_hide_filters">詳細フィルターを閉じる</string>
+    <string name="search_filters_title">詳細検索</string>
+    <string name="search_filters_none">タグの条件は未選択です</string>
+    <string name="search_filters_summary">含める: %1$d · 除外: %2$d</string>
+    <string name="search_filter_section_count">%1$s · %2$d件選択中</string>
+    <string name="search_filter_expanded">展開中</string>
+    <string name="search_filter_collapsed">折りたたみ中</string>
+    <string name="search_tag_hint">タグをタップして、含めるか除外するかを選択します。</string>
+    <string name="search_add_tag_type">%1$sを追加</string>
+    <string name="search_tag_any">指定なし</string>
+    <string name="search_tag_include">含める</string>
+    <string name="search_tag_exclude">除外する</string>
+    <string name="search_tag_remove">この一覧から削除</string>
+    <string name="search_tag_account_exclusion">アカウント設定で除外</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">条件を削除: %1$s</string>
+    <string name="search_selected_show_all">全%1$d件を表示</string>
+    <string name="search_selected_show_less">折りたたむ</string>
+    <string name="search_clear_filters">条件をクリア</string>
+    <string name="search_clear_filters_message">ページ数、時間、タグの選択をクリアしますか？キーワードとアカウントの除外条件は残ります。保存済みのタグルールは変更されません。</string>
+    <string name="search_account_filter_notice">アカウントの除外条件を適用中: %1$d件</string>
+    <string name="search_range_any">指定なし</string>
+    <string name="search_range_min_pages">最小ページ数</string>
+    <string name="search_range_max_pages">最大ページ数</string>
+    <string name="search_page_range_conflict">最小ページ数は最大ページ数以下にしてください。いずれかを変更またはクリアしてください。</string>
+    <string name="search_range_from_time">この時間以上前</string>
+    <string name="search_range_to_time">この時間以内</string>
+    <string name="search_range_relative_time">アップロードからの経過時間</string>
+    <string name="search_upload_range_conflict">最短の経過時間は最長の経過時間以下にしてください。いずれかを変更またはクリアしてください。</string>
     <string name="auto_reauthenticate_title">ログインを自動的に復元</string>
     <string name="auto_reauthenticate_summary">パスワードを保存したアカウントのセッションが期限切れになると、フォアグラウンドで認証を開始します。操作が必要な場合があります。</string>
     <string name="gallery_loading_details">ギャラリーの詳細を読み込み中</string>
