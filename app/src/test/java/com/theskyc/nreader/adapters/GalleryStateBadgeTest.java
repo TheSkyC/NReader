@@ -220,6 +220,41 @@ public class GalleryStateBadgeTest {
     }
 
     @Test
+    public void onlineProgressBadgeHandlesUnknownTotalsAndRecycling() throws Exception {
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        GalleryStateBadge badge = new GalleryStateBadge(card);
+        Queries.ReadingProgressTable.insert(181, new ReadingPosition(3, 0));
+        GalleryStateRepository.invalidate();
+        SimpleGallery known = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":180,\"media_id\":\"1\",\"english_title\":\"Known\",\"num_pages\":16}"));
+        SimpleGallery reading = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":181,\"media_id\":\"1\",\"english_title\":\"Reading\"}"));
+        SimpleGallery unknown = SimpleGallery.fromV2ListItem(activity, new JSONObject(
+            "{\"id\":182,\"media_id\":\"1\",\"english_title\":\"Unknown\"}"));
+        TextView progress = card.findViewById(R.id.gallery_reading_progress);
+
+        badge.bind(known);
+        awaitProgress(card, activity.getResources().getQuantityString(R.plurals.page_count_format, 16, 16));
+        badge.bind(unknown);
+        assertEquals(View.GONE, progress.getVisibility());
+        awaitProgress(card, null);
+        assertNull(progress.getContentDescription());
+        badge.bind(reading);
+        awaitProgress(card, "3/?");
+        int width = Math.round(116 * activity.getResources().getDisplayMetrics().density);
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+        card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        card.layout(0, 0, card.getMeasuredWidth(), card.getMeasuredHeight());
+        assertTrue(progress.getWidth() >= Math.round(36 * activity.getResources().getDisplayMetrics().density));
+        assertEquals("3/?", progress.getText().toString());
+        assertEquals(activity.getString(R.string.state_reading_page_unknown, 3), progress.getContentDescription());
+    }
+
+    @Test
     public void narrowCardKeepsLargeProgressAndIconsInsideTheStateStrip() throws Exception {
         android.content.res.Configuration configuration = new android.content.res.Configuration(
             activity.getResources().getConfiguration());

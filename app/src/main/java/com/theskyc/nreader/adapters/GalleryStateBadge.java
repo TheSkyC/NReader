@@ -72,6 +72,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
     private Boolean onlineFavoriteState;
     private String onlineFavoriteIdentity;
     private boolean compactProgressStyle;
+    private boolean progressStyleInitialized;
     private boolean onlinePrimaryStyle;
     private final DownloadObserver observer = new DownloadObserver() {
         private void update(GalleryDownloaderV2 downloader) {
@@ -152,7 +153,8 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         float badgeOffset = ((onlinePrimaryStyle ? compactBadge : compact) ? 6 : 9) * density;
         onlineFavorite.setTranslationX(badgeOffset);
         onlineFavorite.setTranslationY(badgeOffset);
-        if (compact == compactProgressStyle) return;
+        if (progressStyleInitialized && compact == compactProgressStyle) return;
+        progressStyleInitialized = true;
         compactProgressStyle = compact;
         int horizontal = Math.round((compact ? 4 : 6) * density);
         int vertical = Math.round((compact ? 2 : 3) * density);
@@ -212,7 +214,10 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         follow(null);
         strip.setVisibility(View.INVISIBLE);
         customStatus.setVisibility(View.GONE);
-        progress.setVisibility(View.INVISIBLE);
+        progress.setVisibility(View.GONE);
+        progress.setText(null);
+        progress.setContentDescription(null);
+        progress.setTooltipText(null);
         downloadProgress.setVisibility(View.GONE);
         favorite.setOnClickListener(null);
         localFiles.setOnClickListener(null);
@@ -352,7 +357,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         } else {
             progress.setText(total > 0 ? context.getResources().getQuantityString(
                 R.plurals.page_count_format, total, total) : "");
-            progress.setContentDescription(progress.getText());
+            progress.setContentDescription(progress.length() == 0 ? null : progress.getText());
         }
         progress.setVisibility(progress.length() == 0 ? View.GONE : View.VISIBLE);
         progress.setTooltipText(progress.getContentDescription());
