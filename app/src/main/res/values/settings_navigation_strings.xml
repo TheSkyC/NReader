@@ -33,4 +33,9 @@
     <string name="settings_about">About and updates</string>
     <string name="settings_about_summary">Updates, support and licenses</string>
     <string name="settings_support">Support and diagnostics</string>
+    <string name="settings_popular_tags">Popular tags in advanced search</string>
+    <string name="settings_tag_language_packs">Tag language packs</string>
+    <string name="settings_clear_web_cookies">Clear web cookies</string>
+    <string name="settings_clear_web_cookies_summary">Clears cookies stored by the embedded web browser. Website verification may be required again.</string>
+    <string name="settings_account_tags_unavailable">Sign in with an account session to use account tag preferences.</string>
 </resources>

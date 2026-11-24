@@ -33,4 +33,9 @@
     <string name="settings_about">Про застосунок та оновлення</string>
     <string name="settings_about_summary">Оновлення, підтримка та ліцензії</string>
     <string name="settings_support">Підтримка та діагностика</string>
+    <string name="settings_popular_tags">Популярні теги в розширеному пошуку</string>
+    <string name="settings_tag_language_packs">Мовні пакети тегів</string>
+    <string name="settings_clear_web_cookies">Очистити веб-cookie</string>
+    <string name="settings_clear_web_cookies_summary">Видаляє cookie вбудованого браузера. Може знадобитися повторна перевірка на сайті.</string>
+    <string name="settings_account_tags_unavailable">Увійдіть в обліковий запис, щоб використовувати його налаштування тегів.</string>
 </resources>

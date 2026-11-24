@@ -33,4 +33,9 @@
     <string name="settings_about">Acerca de y actualizaciones</string>
     <string name="settings_about_summary">Actualizaciones, ayuda y licencias</string>
     <string name="settings_support">Ayuda y diagnóstico</string>
+    <string name="settings_popular_tags">Etiquetas populares en búsqueda avanzada</string>
+    <string name="settings_tag_language_packs">Paquetes de idioma de etiquetas</string>
+    <string name="settings_clear_web_cookies">Borrar cookies web</string>
+    <string name="settings_clear_web_cookies_summary">Borra las cookies del navegador integrado. Es posible que debas verificarte de nuevo en el sitio.</string>
+    <string name="settings_account_tags_unavailable">Inicia sesión con una cuenta para usar sus preferencias de etiquetas.</string>
 </resources>

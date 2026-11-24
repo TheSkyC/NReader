@@ -109,7 +109,7 @@
             app:iconSpaceReserved="false">
             <Preference
                 android:key="@string/preference_key_col_screen"
-                android:title="@string/navigation_settings_per_screen"
+                android:title="@string/settings_list_layout"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
         <PreferenceCategory
@@ -154,7 +154,7 @@
                 android:key="@string/preference_key_favorite_limit"
                 android:max="20"
                 android:summary="@string/popular_tag_count"
-                android:title="@string/favorite_count"
+                android:title="@string/settings_popular_tags"
                 app:iconSpaceReserved="false"
                 app:showSeekBarValue="true" />
         </PreferenceCategory>
@@ -194,7 +194,7 @@
                 app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_tag_translation_packs"
-                android:title="@string/tag_translation_packs_title"
+                android:title="@string/settings_tag_language_packs"
                 android:summary="@string/tag_translation_packs_summary"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
@@ -349,7 +349,8 @@
                 app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_cookie"
-                android:title="@string/clear_cookies"
+                android:title="@string/settings_clear_web_cookies"
+                android:summary="@string/settings_clear_web_cookies_summary"
                 app:iconSpaceReserved="false" />
         </PreferenceCategory>
         <PreferenceCategory

@@ -33,4 +33,9 @@
     <string name="settings_about">Hakkında ve güncellemeler</string>
     <string name="settings_about_summary">Güncellemeler, destek ve lisanslar</string>
     <string name="settings_support">Destek ve tanılama</string>
+    <string name="settings_popular_tags">Gelişmiş aramada popüler etiketler</string>
+    <string name="settings_tag_language_packs">Etiket dil paketleri</string>
+    <string name="settings_clear_web_cookies">Web çerezlerini temizle</string>
+    <string name="settings_clear_web_cookies_summary">Yerleşik tarayıcının çerezlerini temizler. Site doğrulaması yeniden gerekebilir.</string>
+    <string name="settings_account_tags_unavailable">Hesap etiket tercihlerini kullanmak için hesap oturumuyla giriş yapın.</string>
 </resources>

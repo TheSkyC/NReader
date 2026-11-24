@@ -301,7 +301,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
         {
             Preference useAccountTag = Objects.requireNonNull(findPreference(getString(R.string.preference_key_use_account_tag)));
-            useAccountTag.setEnabled(Login.isLogged());
+            updateAccountTagAvailability(useAccountTag);
         }
 
         {
@@ -424,7 +424,13 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         {
             Preference cookie = Objects.requireNonNull(findPreference(getString(R.string.preference_key_cookie)));
             cookie.setOnPreferenceClickListener(preference -> {
-                CookieManager.getInstance().removeAllCookies(null);
+                new MaterialAlertDialogBuilder(act)
+                    .setTitle(R.string.settings_clear_web_cookies)
+                    .setMessage(R.string.settings_clear_web_cookies_summary)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.clear_cookies, (dialog, which) ->
+                        CookieManager.getInstance().removeAllCookies(null))
+                    .show();
                 return true;
             });
         }
@@ -534,9 +540,22 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         super.onResume();
         if (act == null) return;
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
-        if (accountTags != null) accountTags.setEnabled(Login.isLogged());
+        if (accountTags != null) updateAccountTagAvailability(accountTags);
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
         if (restore != null) updateSnapshotAvailability(restore);
+    }
+
+    private void updateAccountTagAvailability(Preference preference) {
+        boolean loggedIn = Login.isLogged();
+        preference.setEnabled(loggedIn);
+        SwitchPreferenceCompat accountTags = (SwitchPreferenceCompat) preference;
+        if (loggedIn) {
+            accountTags.setSummaryOn(R.string.setting_on_use_account_tag);
+            accountTags.setSummaryOff(R.string.setting_off_use_account_tag);
+        } else {
+            accountTags.setSummaryOn(R.string.settings_account_tags_unavailable);
+            accountTags.setSummaryOff(R.string.settings_account_tags_unavailable);
+        }
     }
 
     @Override

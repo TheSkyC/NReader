@@ -33,4 +33,9 @@
     <string name="settings_about">حول التطبيق والتحديثات</string>
     <string name="settings_about_summary">التحديثات والدعم والتراخيص</string>
     <string name="settings_support">الدعم والتشخيص</string>
+    <string name="settings_popular_tags">عدد الوسوم الشائعة في البحث المتقدم</string>
+    <string name="settings_tag_language_packs">حزم لغات الوسوم</string>
+    <string name="settings_clear_web_cookies">مسح ملفات تعريف ارتباط الويب</string>
+    <string name="settings_clear_web_cookies_summary">يمسح ملفات تعريف الارتباط في المتصفح المدمج. قد يلزم التحقق من الموقع مجدداً.</string>
+    <string name="settings_account_tags_unavailable">سجّل الدخول بجلسة حساب لاستخدام تفضيلات وسوم الحساب.</string>
 </resources>

@@ -33,4 +33,9 @@
     <string name="settings_about">À propos et mises à jour</string>
     <string name="settings_about_summary">Mises à jour, aide et licences</string>
     <string name="settings_support">Aide et diagnostic</string>
+    <string name="settings_popular_tags">Tags populaires en recherche avancée</string>
+    <string name="settings_tag_language_packs">Packs de langue des tags</string>
+    <string name="settings_clear_web_cookies">Effacer les cookies web</string>
+    <string name="settings_clear_web_cookies_summary">Efface les cookies du navigateur intégré. Une nouvelle vérification du site peut être nécessaire.</string>
+    <string name="settings_account_tags_unavailable">Connectez-vous avec une session de compte pour utiliser ses préférences de tags.</string>
 </resources>

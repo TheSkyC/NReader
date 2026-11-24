@@ -33,4 +33,9 @@
     <string name="settings_about">Informazioni e aggiornamenti</string>
     <string name="settings_about_summary">Aggiornamenti, supporto e licenze</string>
     <string name="settings_support">Supporto e diagnostica</string>
+    <string name="settings_popular_tags">Tag popolari nella ricerca avanzata</string>
+    <string name="settings_tag_language_packs">Pacchetti lingua dei tag</string>
+    <string name="settings_clear_web_cookies">Cancella cookie web</string>
+    <string name="settings_clear_web_cookies_summary">Cancella i cookie del browser integrato. Potrebbe essere necessario ripetere la verifica sul sito.</string>
+    <string name="settings_account_tags_unavailable">Accedi con una sessione account per usare le preferenze dei tag.</string>
 </resources>

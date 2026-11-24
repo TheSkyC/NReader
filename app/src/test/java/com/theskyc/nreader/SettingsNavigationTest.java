@@ -3,7 +3,9 @@ package com.theskyc.nreader;
 
 import android.app.Application;
 import android.content.Intent;
+import android.os.Looper;
 import android.widget.ListView;
+import android.webkit.CookieManager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
@@ -102,6 +104,30 @@ public class SettingsNavigationTest {
             controller.recreate();
             assertEquals(application.getString(R.string.data_usage_full),
                 controller.get().fragment.findPreference(wifiKey).getSummary());
+        }
+    }
+
+    @Test
+    public void webCookieRemovalRequiresConfirmation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_data");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            CookieManager cookies = CookieManager.getInstance();
+            cookies.setCookie("https://example.test", "test=value");
+            Preference clear = controller.get().fragment.findPreference(
+                application.getString(R.string.preference_key_cookie));
+            clear.performClick();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+            assertNotNull(cookies.getCookie("https://example.test"));
+            clear.performClick();
+            dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNull(cookies.getCookie("https://example.test"));
         }
     }
 }

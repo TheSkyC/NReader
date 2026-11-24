@@ -33,4 +33,9 @@
     <string name="settings_about">關於與更新</string>
     <string name="settings_about_summary">更新、支援和授權</string>
     <string name="settings_support">支援與診斷</string>
+    <string name="settings_popular_tags">進階搜尋熱門標籤數</string>
+    <string name="settings_tag_language_packs">標籤語言包</string>
+    <string name="settings_clear_web_cookies">清除網頁 Cookie</string>
+    <string name="settings_clear_web_cookies_summary">清除內建瀏覽器儲存的 Cookie，之後可能需要重新完成網站驗證。</string>
+    <string name="settings_account_tags_unavailable">登入帳號工作階段後才能使用帳號標籤偏好。</string>
 </resources>

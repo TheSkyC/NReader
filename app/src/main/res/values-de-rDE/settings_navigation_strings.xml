@@ -33,4 +33,9 @@
     <string name="settings_about">Über die App und Updates</string>
     <string name="settings_about_summary">Updates, Hilfe und Lizenzen</string>
     <string name="settings_support">Hilfe und Diagnose</string>
+    <string name="settings_popular_tags">Beliebte Tags in der erweiterten Suche</string>
+    <string name="settings_tag_language_packs">Tag-Sprachpakete</string>
+    <string name="settings_clear_web_cookies">Web-Cookies löschen</string>
+    <string name="settings_clear_web_cookies_summary">Löscht Cookies des integrierten Browsers. Eine erneute Website-Verifizierung kann erforderlich sein.</string>
+    <string name="settings_account_tags_unavailable">Melde dich mit einer Kontositzung an, um Konto-Tagvorlieben zu verwenden.</string>
 </resources>

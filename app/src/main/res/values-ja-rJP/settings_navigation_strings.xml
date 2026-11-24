@@ -33,4 +33,9 @@
     <string name="settings_about">アプリ情報と更新</string>
     <string name="settings_about_summary">更新、サポート、ライセンス</string>
     <string name="settings_support">サポートと診断</string>
+    <string name="settings_popular_tags">高度な検索の人気タグ数</string>
+    <string name="settings_tag_language_packs">タグ言語パック</string>
+    <string name="settings_clear_web_cookies">Web Cookieを削除</string>
+    <string name="settings_clear_web_cookies_summary">内蔵ブラウザーに保存されたCookieを削除します。サイトの認証が再び必要になる場合があります。</string>
+    <string name="settings_account_tags_unavailable">アカウントのタグ設定を使うには、アカウントセッションでログインしてください。</string>
 </resources>
