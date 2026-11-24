@@ -24,57 +24,57 @@
         android:layout_marginTop="4dp"
         android:orientation="horizontal">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/from_label"
+            style="@style/TextAppearance.MaterialComponents.Caption"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/from_label"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:labelFor="@id/fromButton"
-                android:text="@string/search_range_from_time" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/fromButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:textColor="?attr/colorOnSurface"
-                android:text="@string/search_range_any" />
-        </LinearLayout>
+            android:labelFor="@id/fromButton"
+            android:text="@string/search_range_from_time" />
 
         <Space
             android:layout_width="12dp"
             android:layout_height="1dp" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/to_label"
+            style="@style/TextAppearance.MaterialComponents.Caption"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:labelFor="@id/toButton"
+            android:text="@string/search_range_to_time" />
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/to_label"
-                style="@style/TextAppearance.MaterialComponents.Caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:labelFor="@id/toButton"
-                android:text="@string/search_range_to_time" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/toButton"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:textColor="?attr/colorOnSurface"
-                android:text="@string/search_range_any" />
-        </LinearLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/fromButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:textColor="?attr/colorOnSurface"
+            android:text="@string/search_range_any" />
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="1dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/toButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:textColor="?attr/colorOnSurface"
+            android:text="@string/search_range_any" />
     </LinearLayout>
 
     <TextView
