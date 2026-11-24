@@ -106,8 +106,9 @@ The default is empty; users can still install packs from local files. The
 beta release workflow opts into the unsigned v1 catalog feed hosted under
 `feed/catalog/` and the `zh-Hans` translation feed under `feed/translations/`
 on the repository's `main` branch. Other builds must explicitly set
-`nreaderEnableUnsignedTagFeeds=true` when configuring a feed; leaving URLs
-empty keeps ordinary development builds offline.
+`nreaderEnableUnsignedTagFeeds=true` when configuring a feed. Ordinary
+development builds leave the NReader feed URLs empty; the legacy upstream
+catalog feed may still be checked.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.

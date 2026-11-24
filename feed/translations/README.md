@@ -30,3 +30,11 @@ The v1 manifest provides a digest for detecting byte mismatches, but does not
 authenticate a publisher or protect a first-time installation from replay. See
 the [distribution contract](../../docs/tag-translation-distribution.md) for
 the beta feed's limitations.
+
+## Report a translation problem
+
+Use the [tag translation correction form](https://github.com/TheSkyC/NReader/issues/new?template=tag_translation.yaml)
+to report an incorrect or missing translation. Include the original tag name,
+type, language, and pack revision. A suggested correction is optional; if it
+comes from another source, include its origin and reuse permission. Reports are
+public, so do not include account details, personal data, or logs.

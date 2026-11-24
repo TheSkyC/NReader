@@ -1,4 +1,16 @@
-# Reviewing tag translation contributions locally
+# Tag translation reports and local review
+
+Users can report an incorrect or missing translation through the
+[tag translation correction form](https://github.com/TheSkyC/NReader/issues/new?template=tag_translation.yaml).
+A report can identify a problem without proposing replacement text. Reports are
+public; do not include account details, personal data, or logs. For suggested
+text copied from another source, identify that source and its reuse permission.
+The maintainer reviews the tag identity, context, and any applicable permission
+before incorporating a suggestion; a report does not automatically grant a
+license or become part of a release. Corrections are published as a higher
+locale revision with the existing source and contributor credits retained.
+
+## Local review workflow
 
 Use this workflow to exchange proposals and produce a candidate locale pack.
 It works with local files and does not contact a server. A proposal, a review

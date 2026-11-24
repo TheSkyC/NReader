@@ -176,9 +176,10 @@ devices. Retain old immutable payloads for clients that read earlier manifests.
 
 This tool writes local release files. The digest binds bytes to the manifest
 and does not establish approval, publisher identity, or freshness on a first
-install. A production origin, publisher ownership, contribution license,
-review process, and any stronger signing or expiration policy must be settled
-before distribution is enabled.
+install. The checked-in feed is an unsigned public beta; it is not an
+authenticated production feed. Review source permissions and attribution before
+incorporating contributions, and revisit publisher authentication and
+freshness before describing the feed as production-ready.
 
 ## Verifying a staged copy
 

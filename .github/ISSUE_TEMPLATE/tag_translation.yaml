@@ -1,0 +1,38 @@
+name: Tag translation correction
+description: Report an incorrect or missing tag translation
+title: "[Tag translation] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports are public. Do not include account details, personal data, or logs.
+        You may report a problem without proposing a replacement.
+  - type: input
+    id: language
+    attributes:
+      label: Tag language and pack revision
+      placeholder: "zh-Hans, revision 1"
+    validations:
+      required: true
+  - type: input
+    id: canonical
+    attributes:
+      label: Original tag name and type
+      description: Include the tag ID if you know it.
+      placeholder: "female:example, ID 1234"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: Include the current translation if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested correction and context
+      description: Optional. If the suggestion comes from another source, link it and explain its license or permission to reuse.
+    validations:
+      required: false
