@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">Palavras da busca</string>
+    <string name="search_show_filters">Filtros avançados</string>
+    <string name="search_hide_filters">Fechar filtros avançados</string>
+    <string name="search_filters_title">Busca avançada</string>
+    <string name="search_filters_none">Nenhum filtro de tag selecionado</string>
+    <string name="search_filters_summary">Incluídas: %1$d · Excluídas: %2$d</string>
+    <string name="search_filter_section_count">%1$s · %2$d selecionados</string>
+    <string name="search_filter_expanded">Expandido</string>
+    <string name="search_filter_collapsed">Recolhido</string>
+    <string name="search_tag_hint">Toque em uma tag para incluí-la ou excluí-la.</string>
+    <string name="search_add_tag_type">Adicionar %1$s</string>
+    <string name="search_tag_any">Sem restrição</string>
+    <string name="search_tag_include">Incluir</string>
+    <string name="search_tag_exclude">Excluir</string>
+    <string name="search_tag_remove">Remover desta lista</string>
+    <string name="search_tag_account_exclusion">Excluída pela conta</string>
+    <string name="search_selected_filter">%1$s: %2$s</string>
+    <string name="search_remove_filter">Remover filtro: %1$s</string>
+    <string name="search_selected_show_all">Mostrar todos (%1$d)</string>
+    <string name="search_selected_show_less">Mostrar menos</string>
+    <string name="search_clear_filters">Limpar filtros</string>
+    <string name="search_clear_filters_message">Limpar as seleções de páginas, tempo e tags? As palavras da busca e as exclusões da conta serão mantidas. As regras de tags salvas não serão alteradas.</string>
+    <string name="search_account_filter_notice">Exclusões da conta aplicadas: %1$d</string>
+    <string name="search_range_any">Qualquer</string>
+    <string name="search_range_min_pages">Mínimo de páginas</string>
+    <string name="search_range_max_pages">Máximo de páginas</string>
+    <string name="search_page_range_conflict">O mínimo de páginas não pode ser maior que o máximo. Ajuste ou limpe um dos valores.</string>
+    <string name="search_range_from_time">Há pelo menos</string>
+    <string name="search_range_to_time">Há no máximo</string>
+    <string name="search_range_relative_time">Tempo desde o envio</string>
+    <string name="search_upload_range_conflict">O tempo mínimo desde o envio não pode ser maior que o máximo. Ajuste ou limpe um dos valores.</string>
     <string name="auto_reauthenticate_title">Restaurar login automaticamente</string>
     <string name="auto_reauthenticate_summary">Quando uma sessão com senha salva expirar, iniciar a verificação em primeiro plano. Talvez você precise concluí-la.</string>
     <string name="gallery_loading_details">Carregando detalhes da galeria</string>
