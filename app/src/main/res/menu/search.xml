@@ -9,7 +9,7 @@
         app:showAsAction="always" /-->
     <item
         android:id="@+id/view_groups"
-        android:icon="@drawable/ic_add"
-        android:title="@string/options"
+        android:icon="@drawable/ic_filter_list"
+        android:title="@string/search_show_filters"
         app:showAsAction="always" />
 </menu>

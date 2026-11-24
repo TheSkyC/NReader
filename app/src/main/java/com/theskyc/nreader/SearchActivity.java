@@ -115,6 +115,7 @@ public class SearchActivity extends GeneralActivity {
 
         //find IDs
         searchView = findViewById(R.id.search);
+        searchView.setQueryHint(getString(R.string.search_keyword_hint));
         RecyclerView recyclerView = findViewById(R.id.recycler);
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
@@ -874,7 +875,8 @@ public class SearchActivity extends GeneralActivity {
             v.setVisibility(isVisible ? View.GONE : View.VISIBLE);
             findViewById(R.id.search_actions).setVisibility(isVisible ? View.GONE : View.VISIBLE);
             findViewById(R.id.recycler).setVisibility(isVisible ? View.VISIBLE : View.GONE);
-            item.setIcon(isVisible ? R.drawable.ic_add : R.drawable.ic_close);
+            item.setIcon(isVisible ? R.drawable.ic_filter_list : R.drawable.ic_close);
+            item.setTitle(isVisible ? R.string.search_show_filters : R.string.search_hide_filters);
             Global.setTint(this, item.getIcon());
             if (!isVisible) {
                 searchView.clearFocus();

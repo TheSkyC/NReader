@@ -43,6 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/search_range_any" />
         </LinearLayout>
 
@@ -69,6 +70,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/search_range_any" />
         </LinearLayout>
     </LinearLayout>

@@ -2,6 +2,9 @@
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 
 <resources>
+    <string name="search_keyword_hint">Search keywords</string>
+    <string name="search_show_filters">Advanced filters</string>
+    <string name="search_hide_filters">Close advanced filters</string>
     <string name="search_filters_title">Advanced search</string>
     <string name="search_filters_none">No tag filters selected</string>
     <string name="search_filters_summary">Included: %1$d · Excluded: %2$d</string>

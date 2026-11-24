@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="search_keyword_hint">搜索关键词</string>
+    <string name="search_show_filters">高级筛选</string>
+    <string name="search_hide_filters">关闭高级筛选</string>
     <string name="search_filters_title">高级搜索</string>
     <string name="search_filters_none">未选择标签条件</string>
     <string name="search_filters_summary">包含：%1$d · 排除：%2$d</string>
