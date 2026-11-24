@@ -88,7 +88,8 @@ public class Ranges implements Parcelable {
             if (toPage != UNDEFINED) builder.append("pages:<=").append(toPage).append(' ');
         }
 
-        if (fromDate != UNDEFINED && toDate != UNDEFINED && fromDate == toDate) {
+        if (fromDate != UNDEFINED && toDate != UNDEFINED && fromDate == toDate
+            && fromDateUnit == toDateUnit) {
             builder.append("uploaded:").append(fromDate).append(fromDateUnit.val);
         } else {
             if (fromDate != UNDEFINED)
