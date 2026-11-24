@@ -74,12 +74,24 @@ public class ChipTag extends Chip {
     }
 
     private void loadStatusIcon() {
-        Drawable drawable = ContextCompat.getDrawable(getContext(), tag.getStatus() == TagStatus.ACCEPTED ? R.drawable.ic_check : tag.getStatus() == TagStatus.AVOIDED ? R.drawable.ic_close : R.drawable.ic_void);
+        int iconResource = getStatusIconResource();
+        Drawable drawable = ContextCompat.getDrawable(getContext(), iconResource);
         if (drawable == null) {
-            setChipIconResource(tag.getStatus() == TagStatus.ACCEPTED ? R.drawable.ic_check : tag.getStatus() == TagStatus.AVOIDED ? R.drawable.ic_close : R.drawable.ic_void);
+            setChipIconResource(iconResource);
             return;
         }
         setChipIcon(drawable);
         Global.setTint(getContext(), getChipIcon());
+    }
+
+    private int getStatusIconResource() {
+        switch (tag.getStatus()) {
+            case ACCEPTED:
+                return R.drawable.ic_check;
+            case AVOIDED:
+                return R.drawable.ic_close;
+            default:
+                return R.drawable.ic_neutral;
+        }
     }
 }
