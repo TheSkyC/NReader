@@ -75,18 +75,6 @@
             android:text="@string/search_tag_hint" />
 
 
-        <include
-            android:id="@+id/page_range"
-            layout="@layout/search_range"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <include
-            android:id="@+id/upload_range"
-            layout="@layout/search_range"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -128,6 +116,18 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:animateLayoutChanges="true" />
+
+        <include
+            android:id="@+id/page_range"
+            layout="@layout/search_range"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <include
+            android:id="@+id/upload_range"
+            layout="@layout/search_range"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <LinearLayout
             android:layout_width="match_parent"

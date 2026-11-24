@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · %2$d seçili</string>
     <string name="search_filter_expanded">Genişletildi</string>
     <string name="search_filter_collapsed">Daraltıldı</string>
-    <string name="search_tag_hint">Bir etiketi dahil etmek veya hariç tutmak için dokunun.</string>
+    <string name="search_tag_hint">Etikete dokunarak herhangi biri, dahil et ve hariç tut durumları arasında geçiş yapın. Seçenekleri açmak için basılı tutun.</string>
     <string name="search_add_tag_type">%1$s ekle</string>
     <string name="search_tag_any">Kısıtlama yok</string>
     <string name="search_tag_include">Dahil et</string>

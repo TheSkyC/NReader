@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · 已选 %2$d</string>
     <string name="search_filter_expanded">已展开</string>
     <string name="search_filter_collapsed">已收起</string>
-    <string name="search_tag_hint">点按标签可选择包含或排除。</string>
+    <string name="search_tag_hint">点按标签可在不限、包含和排除之间循环；长按可直接选择状态或移除标签。</string>
     <string name="search_add_tag_type">添加%1$s</string>
     <string name="search_tag_any">不限制</string>
     <string name="search_tag_include">包含</string>

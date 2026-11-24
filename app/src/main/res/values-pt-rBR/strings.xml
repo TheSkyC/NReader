@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · %2$d selecionados</string>
     <string name="search_filter_expanded">Expandido</string>
     <string name="search_filter_collapsed">Recolhido</string>
-    <string name="search_tag_hint">Toque em uma tag para incluí-la ou excluí-la.</string>
+    <string name="search_tag_hint">Toque em uma tag para alternar entre qualquer, incluir e excluir. Mantenha pressionada para escolher uma opção diretamente.</string>
     <string name="search_add_tag_type">Adicionar %1$s</string>
     <string name="search_tag_any">Sem restrição</string>
     <string name="search_tag_include">Incluir</string>

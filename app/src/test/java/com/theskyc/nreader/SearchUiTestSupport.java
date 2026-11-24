@@ -17,7 +17,7 @@ final class SearchUiTestSupport {
     private SearchUiTestSupport() {}
 
     static void selectStatus(ChipTag chip, int position) {
-        assertTrue(chip.performClick());
+        assertTrue(chip.performLongClick());
         AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
         ListView choices = dialog.getListView();
         assertNotNull(choices);
@@ -25,7 +25,7 @@ final class SearchUiTestSupport {
     }
 
     static void removeTag(ChipTag chip) {
-        assertTrue(chip.performClick());
+        assertTrue(chip.performLongClick());
         AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
         assertTrue(dialog.getButton(AlertDialog.BUTTON_NEUTRAL).performClick());
         Shadows.shadowOf(Looper.getMainLooper()).idle();

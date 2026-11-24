@@ -28,6 +28,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.core.widget.TextViewCompat;
@@ -572,6 +573,7 @@ public class SearchActivity extends GeneralActivity {
                     for (int i = 1; i < groups.length; i++)
                         groups[i].setVisibility(restoredExpandedGroups[i] ? View.VISIBLE : View.GONE);
                 } else {
+                    getGroup(TagType.TAG).setVisibility(View.VISIBLE);
                     for (ChipTag chip : tags) {
                         if (chip.getTag().getStatus() != TagStatus.DEFAULT)
                             getGroup(chip.getTag().getType()).setVisibility(View.VISIBLE);
@@ -628,7 +630,16 @@ public class SearchActivity extends GeneralActivity {
         ChipTag c = (ChipTag) getLayoutInflater().inflate(R.layout.chip_layout_entry, cg, false);
         c.init(t, false, canBeAvoided);
         c.setEnsureMinTouchTargetSize(true);
-        c.setOnClickListener(v -> showTagStatusDialog(c, close, canBeAvoided));
+        c.setOnClickListener(v -> {
+            markManualTag(c);
+            c.updateStatus();
+            advanced = true;
+            updateFilterSummary();
+        });
+        c.setOnLongClickListener(v -> {
+            showTagStatusDialog(c, close, canBeAvoided);
+            return true;
+        });
         cg.addView(c);
         tags.add(c);
         return c;
@@ -672,6 +683,11 @@ public class SearchActivity extends GeneralActivity {
         int surface = MaterialColors.getColor(chip, com.google.android.material.R.attr.colorSurface);
         int accent = MaterialColors.getColor(chip, status == TagStatus.AVOIDED
             ? androidx.appcompat.R.attr.colorError : androidx.appcompat.R.attr.colorPrimary);
+        int iconColor = status == TagStatus.DEFAULT
+            ? ColorUtils.setAlphaComponent(MaterialColors.getColor(chip,
+                com.google.android.material.R.attr.colorOnSurface), 0x99)
+            : accent;
+        chip.setChipIconTint(ColorStateList.valueOf(iconColor));
         chip.setChipBackgroundColor(ColorStateList.valueOf(MaterialColors.layer(surface, accent,
             status == TagStatus.DEFAULT ? 0.04f : 0.16f)));
     }

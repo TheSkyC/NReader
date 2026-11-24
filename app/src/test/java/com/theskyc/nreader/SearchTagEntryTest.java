@@ -74,7 +74,7 @@ public class SearchTagEntryTest {
                 android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
                 activity.onCreateOptionsMenu(popup.getMenu());
                 activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
-                activity.findViewById(R.id.tag_header).performClick();
+                assertEquals(View.VISIBLE, group.getVisibility());
                 SearchUiTestSupport.selectStatus((ChipTag) group.getChildAt(0), 2);
                 ((SearchView) activity.findViewById(R.id.search)).setQuery("keywords", false);
                 Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
@@ -124,6 +124,8 @@ public class SearchTagEntryTest {
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
                 assertEquals(View.GONE, activity.findViewById(R.id.recycler).getVisibility());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.search_actions).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.tag_group).getVisibility());
+                activity.findViewById(R.id.tag_header).performClick();
                 assertEquals(View.GONE, activity.findViewById(R.id.tag_group).getVisibility());
                 activity.findViewById(R.id.tag_header).performClick();
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.tag_group).getVisibility());
@@ -141,6 +143,48 @@ public class SearchTagEntryTest {
         } finally {
             Queries.setDb(null);
         }
+    }
+
+    @Test public void tappingTagCyclesStatusWithoutChangingChipWidth() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("State cycle", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 0);
+                ChipTag chip = null;
+                for (int index = 0; index < group.getChildCount(); index++) {
+                    ChipTag candidate = (ChipTag) group.getChildAt(index);
+                    if (candidate.getTag().getId() == 501001) chip = candidate;
+                }
+                assertNotNull(chip);
+                int defaultWidth = measureChipWidth(chip);
+                assertNotNull(chip.getChipIcon());
+
+                assertTrue(chip.performClick());
+                assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                assertEquals(defaultWidth, measureChipWidth(chip));
+                assertTrue(chip.performClick());
+                assertEquals(TagStatus.AVOIDED, chip.getTag().getStatus());
+                assertEquals(defaultWidth, measureChipWidth(chip));
+                assertTrue(chip.performClick());
+                assertEquals(TagStatus.DEFAULT, chip.getTag().getStatus());
+                assertEquals(defaultWidth, measureChipWidth(chip));
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    private static int measureChipWidth(ChipTag chip) {
+        chip.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        return chip.getMeasuredWidth();
     }
 
     @Test public void activeFiltersRemainVisibleAndReachableInHistoryMode() throws Exception {

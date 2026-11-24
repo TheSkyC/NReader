@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · выбрано: %2$d</string>
     <string name="search_filter_expanded">Развёрнуто</string>
     <string name="search_filter_collapsed">Свёрнуто</string>
-    <string name="search_tag_hint">Нажмите на тег, чтобы включить или исключить его.</string>
+    <string name="search_tag_hint">Нажимайте на тег, чтобы переключать состояния «любой», «включить» и «исключить». Для выбора нажмите и удерживайте.</string>
     <string name="search_add_tag_type">Добавить: %1$s</string>
     <string name="search_tag_any">Без ограничений</string>
     <string name="search_tag_include">Включить</string>
