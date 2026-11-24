@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -55,11 +56,11 @@ public class CatalogRefreshRecoveryTest {
                      Robolectric.buildActivity(SettingsActivity.class).setup()) {
                 SettingsActivity activity = controller.get();
                 CatalogRefreshViewModel model = ReflectionHelpers.getField(activity, "catalogRefresh");
-                ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
+                activity.fragment.findPreference(activity.getString(R.string.preference_key_tag_catalog_updates)).performClick();
                 AlertDialog dialog = ReflectionHelpers.getField(activity, "catalogCheckDialog");
-                model.start(context);
                 UUID id = model.requestId();
                 assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, id).getState());
+                assertEquals(View.GONE, dialog.getButton(AlertDialog.BUTTON_NEUTRAL).getVisibility());
 
                 ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");
                 assertTrue(dialog == ReflectionHelpers.getField(activity, "catalogCheckDialog"));
@@ -73,6 +74,14 @@ public class CatalogRefreshRecoveryTest {
                 assertEquals(replacement, model.requestId());
                 assertEquals(activity.getString(R.string.tag_catalog_check_cancelled),
                     ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+                assertEquals(View.VISIBLE, dialog.getButton(AlertDialog.BUTTON_NEUTRAL).getVisibility());
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).performClick();
+                UUID retry = model.requestId();
+                assertTrue(!replacement.equals(retry));
+                assertTrue(dialog.isShowing());
+                assertEquals(View.GONE, dialog.getButton(AlertDialog.BUTTON_NEUTRAL).getVisibility());
+                assertEquals(WorkInfo.State.ENQUEUED, awaitWork(manager, retry).getState());
+                awaitFuture(manager.cancelWorkById(retry).getResult());
 
                 dialog.dismiss();
                 ReflectionHelpers.callInstanceMethod(activity, "showCatalogCheckDialog");

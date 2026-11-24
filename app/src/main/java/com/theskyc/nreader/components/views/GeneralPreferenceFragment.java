@@ -218,6 +218,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             act.manageTranslationPacks();
             return true;
         });
+        Preference catalogUpdates = Objects.requireNonNull(findPreference(getString(R.string.preference_key_tag_catalog_updates)));
+        catalogUpdates.setOnPreferenceClickListener(preference -> {
+            act.checkTagCatalogUpdates();
+            return true;
+        });
         Preference tagRuleTransfer = Objects.requireNonNull(findPreference(getString(R.string.preference_key_tag_rule_transfer)));
         tagRuleTransfer.setOnPreferenceClickListener(preference -> {
             act.manageTagRules();

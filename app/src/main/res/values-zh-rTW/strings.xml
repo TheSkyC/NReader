@@ -615,7 +615,10 @@
     <string name="tag_catalog_check_close">關閉</string>
     <string name="tag_catalog_check_queued">正在等待檢查標籤目錄。需要網路連線，也可能正在等待重試。關閉此視窗後檢查仍會繼續。</string>
     <string name="tag_catalog_check_running">正在檢查標籤目錄…</string>
-    <string name="tag_catalog_check_complete">目錄檢查完成。請重新安裝語言包；如果仍然失敗，語言包可能不相容。</string>
+    <string name="tag_catalog_check_complete">標籤目錄已是最新版本，離線標籤仍可使用。</string>
+    <string name="tag_catalog_check_updated">標籤目錄已更新，可以離線使用。</string>
+    <string name="tag_catalog_check_summary">檢查離線標籤目錄是否有更新</string>
+    <string name="tag_catalog_check_retry">重試</string>
     <string name="tag_catalog_check_no_source">目前安裝的目錄未設定更新來源。請嘗試更新應用程式或取得相容的語言包。</string>
     <string name="tag_catalog_check_failed">無法完成目錄檢查，請稍後重試。</string>
     <string name="tag_catalog_check_cancelled">目錄檢查已取消或被新要求取代。如有需要，請重試。</string>

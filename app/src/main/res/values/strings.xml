@@ -755,12 +755,16 @@
     <string name="tag_catalog_check_close">Close</string>
     <string name="tag_catalog_check_queued">Waiting to check the catalog. A network connection is required; a retry may also be pending. You can close this dialog while the check continues.</string>
     <string name="tag_catalog_check_running">Checking the tag catalog…</string>
-    <string name="tag_catalog_check_complete">Catalog check complete. Try installing the language pack again. If it still fails, the pack may be incompatible.</string>
+    <string name="tag_catalog_check_complete">The tag catalog is up to date. Your offline tags remain available.</string>
+    <string name="tag_catalog_check_updated">The tag catalog has been updated. Your offline tags are ready to use.</string>
+    <string name="tag_catalog_check_summary">Check for a newer offline tag catalog</string>
+    <string name="tag_catalog_check_retry">Retry</string>
     <string name="tag_catalog_check_no_source">No update source is configured for the installed catalog. Try updating the app or obtain a compatible language pack.</string>
     <string name="tag_catalog_check_failed">The catalog check could not be completed. Try again later.</string>
     <string name="tag_catalog_check_cancelled">The catalog check was cancelled or replaced. Try again if needed.</string>
     <string name="local_tag_rule_save_error">Could not save local tag rules. Try again.</string>
     <string name="preference_key_tag_translation_packs" translatable="false">tag_translation_packs</string>
+    <string name="preference_key_tag_catalog_updates" translatable="false">tag_catalog_updates</string>
     <string name="preference_key_tag_rule_transfer" translatable="false">tag_rule_transfer</string>
     <string name="preference_key_tag_display_language" translatable="false">tag_display_language</string>
     <string name="tag_translation_browse_online">Browse online</string>

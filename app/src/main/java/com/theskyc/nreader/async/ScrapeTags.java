@@ -49,6 +49,7 @@ public class ScrapeTags extends Worker {
     static final String FORCE_CHECK = "force_check";
     public static final String CHECK_RESULT = "catalog_check_result";
     public static final String CHECKED = "checked";
+    public static final String UPDATED = "updated";
     public static final String NO_SOURCE = "no_source";
     private static final String CHECKED_REVISION = "checked_revision";
     private static final String CHECKED_AT = "checked_at";
@@ -112,7 +113,8 @@ public class ScrapeTags extends Worker {
             // Record only the revision this check verified; another installer may run concurrently.
             checks.edit().putInt(CHECKED_REVISION, revision)
                 .putLong(CHECKED_AT, System.currentTimeMillis()).apply();
-            return success(CHECKED);
+            int current = published ? TagCatalog.installedPublishedRevision(database) : TagCatalog.installedRevision(database);
+            return success(current > installed ? UPDATED : CHECKED);
         } catch (IOException | SQLiteException error) {
             if (isStopped()) return Result.failure();
             LogUtility.w("Tag catalog refresh failed", error);

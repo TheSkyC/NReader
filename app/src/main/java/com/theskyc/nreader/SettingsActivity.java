@@ -12,6 +12,7 @@ import android.provider.Settings;
 import android.text.format.Formatter;
 import android.text.util.Linkify;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -734,18 +735,27 @@ public class SettingsActivity extends GeneralActivity {
         }
     }
 
+    public void checkTagCatalogUpdates() {
+        showCatalogCheckDialog();
+        catalogRefresh.start(getApplicationContext());
+    }
+
     private void showCatalogCheckDialog() {
         if (catalogCheckDialog != null && catalogCheckDialog.isShowing()) return;
         catalogCheckDialog = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_catalog_check_updates)
             .setMessage(R.string.tag_catalog_check_queued)
             .setPositiveButton(R.string.tag_catalog_check_close, null)
+            .setNeutralButton(R.string.tag_catalog_check_retry, null)
             .setOnDismissListener(dialog -> {
                 if (catalogCheckDialog != dialog) return;
                 catalogCheckDialog = null;
                 catalogRefresh.clearRequest();
             })
             .show();
+        catalogCheckDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setVisibility(View.GONE);
+        catalogCheckDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(view ->
+            catalogRefresh.start(getApplicationContext()));
     }
 
     private void updateCatalogCheckDialog(CatalogRefreshViewModel.Status status) {
@@ -755,11 +765,15 @@ public class SettingsActivity extends GeneralActivity {
             case QUEUED: message = R.string.tag_catalog_check_queued; break;
             case RUNNING: message = R.string.tag_catalog_check_running; break;
             case CHECKED: message = R.string.tag_catalog_check_complete; break;
+            case UPDATED: message = R.string.tag_catalog_check_updated; break;
             case NO_SOURCE: message = R.string.tag_catalog_check_no_source; break;
             case CANCELLED: message = R.string.tag_catalog_check_cancelled; break;
             default: message = R.string.tag_catalog_check_failed; break;
         }
         catalogCheckDialog.setMessage(getString(message));
+        catalogCheckDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setVisibility(
+            status == CatalogRefreshViewModel.Status.FAILED || status == CatalogRefreshViewModel.Status.CANCELLED
+                ? View.VISIBLE : View.GONE);
     }
 
     private void showTranslationToast(CharSequence message, int duration) {

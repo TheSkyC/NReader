@@ -22,6 +22,8 @@ public class CatalogRefreshViewModelTest {
     @Test public void onlyKnownSuccessOutputsAreReportedAsCompleted() {
         assertEquals(CatalogRefreshViewModel.Status.CHECKED,
             CatalogRefreshViewModel.statusFor(WorkInfo.State.SUCCEEDED, output(ScrapeTags.CHECKED)));
+        assertEquals(CatalogRefreshViewModel.Status.UPDATED,
+            CatalogRefreshViewModel.statusFor(WorkInfo.State.SUCCEEDED, output(ScrapeTags.UPDATED)));
         assertEquals(CatalogRefreshViewModel.Status.NO_SOURCE,
             CatalogRefreshViewModel.statusFor(WorkInfo.State.SUCCEEDED, output(ScrapeTags.NO_SOURCE)));
         assertEquals(CatalogRefreshViewModel.Status.FAILED,

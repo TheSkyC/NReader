@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class CatalogRefreshViewModel extends ViewModel {
-    enum Status { QUEUED, RUNNING, CHECKED, NO_SOURCE, FAILED, CANCELLED }
+    enum Status { QUEUED, RUNNING, CHECKED, UPDATED, NO_SOURCE, FAILED, CANCELLED }
 
     private final MutableLiveData<Status> status = new MutableLiveData<>();
     private UUID requestId;
@@ -107,6 +107,7 @@ public class CatalogRefreshViewModel extends ViewModel {
             case SUCCEEDED:
                 String result = output.getString(ScrapeTags.CHECK_RESULT);
                 if (ScrapeTags.CHECKED.equals(result)) return Status.CHECKED;
+                if (ScrapeTags.UPDATED.equals(result)) return Status.UPDATED;
                 if (ScrapeTags.NO_SOURCE.equals(result)) return Status.NO_SOURCE;
                 return Status.FAILED;
             case CANCELLED:

@@ -143,7 +143,7 @@ public class ScrapeTagsTest {
             return "tags.json".equals(path) ? snapshot : "11";
         };
         Data force = new Data.Builder().putBoolean(ScrapeTags.FORCE_CHECK, true).build();
-        assertEquals(explicitSuccess(ScrapeTags.CHECKED), worker(context, "", 0, server, force).refresh(database));
+        assertEquals(explicitSuccess(ScrapeTags.UPDATED), worker(context, "", 0, server, force).refresh(database));
         assertEquals(List.of("tagsVersion", "tags.json", "tagsVersion"), requests);
         assertEquals(11, TagCatalog.installedRevision(database));
         assertEquals("updated name", DatabaseUtils.stringForQuery(database, "SELECT name FROM Tags WHERE idTag = 10001", null));
