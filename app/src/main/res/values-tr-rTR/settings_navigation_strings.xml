@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Okuyucu</string>
+    <string name="settings_reader_summary">Sayfa çevirme, yön, yakınlaştırma ve ön yükleme</string>
+    <string name="settings_turning">Sayfa çevirme</string>
+    <string name="settings_zoom">Görseller ve yakınlaştırma</string>
+    <string name="settings_reading_experience">Okuma deneyimi</string>
+    <string name="settings_galleries">Galeriler ve listeler</string>
+    <string name="settings_galleries_summary">Başlıklar, düzenler, favoriler ve geçmiş</string>
+    <string name="settings_gallery_display">Galeri görünümü</string>
+    <string name="settings_list_layout">Liste düzeni ve kaydırma</string>
+    <string name="settings_history_status">Okuma geçmişi ve durumlar</string>
+    <string name="settings_search">Arama, etiketler ve filtreler</string>
+    <string name="settings_search_summary">Arama, etiket dilleri ve içerik filtreleri</string>
+    <string name="settings_content_filter">İçerik filtreleri</string>
+    <string name="settings_tag_display">Etiket görünümü</string>
+    <string name="settings_tag_data">Etiket verileri ve kuralları</string>
+    <string name="settings_downloads">İndirmeler ve ağ</string>
+    <string name="settings_downloads_summary">Depolama, ağ görselleri ve bildirimler</string>
+    <string name="settings_storage">Depolama</string>
+    <string name="settings_network_images">Ağ görselleri</string>
+    <string name="settings_notifications">Bildirimler</string>
+    <string name="settings_accounts_summary">Hesapları yönet ve oturumları kurtar</string>
+    <string name="settings_appearance">Görünüm ve dil</string>
+    <string name="settings_appearance_summary">Tema ve uygulama dili</string>
+    <string name="settings_privacy">Gizlilik ve güvenlik</string>
+    <string name="settings_privacy_summary">Cihaz doğrulaması ve uygulama gizleme</string>
+    <string name="settings_data_maintenance">Veriler ve bakım</string>
+    <string name="settings_data_summary">Yedekler, önbellek ve uyumluluk</string>
+    <string name="settings_backup">Yedekleme ve geri yükleme</string>
+    <string name="settings_storage_maintenance">Depolama bakımı</string>
+    <string name="settings_compatibility">Uyumluluk ve tanılama</string>
+    <string name="settings_about">Hakkında ve güncellemeler</string>
+    <string name="settings_about_summary">Güncellemeler, destek ve lisanslar</string>
+    <string name="settings_support">Destek ve tanılama</string>
+</resources>

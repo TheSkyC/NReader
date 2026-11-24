@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Читання</string>
+    <string name="settings_reader_summary">Гортання, напрямок, масштаб і попереднє завантаження</string>
+    <string name="settings_turning">Гортання сторінок</string>
+    <string name="settings_zoom">Зображення та масштаб</string>
+    <string name="settings_reading_experience">Налаштування читання</string>
+    <string name="settings_galleries">Галереї та списки</string>
+    <string name="settings_galleries_summary">Назви, вигляд списків, обране та історія</string>
+    <string name="settings_gallery_display">Відображення галерей</string>
+    <string name="settings_list_layout">Вигляд і прокручування списків</string>
+    <string name="settings_history_status">Історія читання та статуси</string>
+    <string name="settings_search">Пошук, теги та фільтри</string>
+    <string name="settings_search_summary">Пошук, мови тегів і фільтри вмісту</string>
+    <string name="settings_content_filter">Фільтри вмісту</string>
+    <string name="settings_tag_display">Відображення тегів</string>
+    <string name="settings_tag_data">Дані та правила тегів</string>
+    <string name="settings_downloads">Завантаження та мережа</string>
+    <string name="settings_downloads_summary">Сховище, мережеві зображення та сповіщення</string>
+    <string name="settings_storage">Сховище</string>
+    <string name="settings_network_images">Мережеві зображення</string>
+    <string name="settings_notifications">Сповіщення</string>
+    <string name="settings_accounts_summary">Керування обліковими записами та відновлення сеансів</string>
+    <string name="settings_appearance">Вигляд і мова</string>
+    <string name="settings_appearance_summary">Тема та мова застосунку</string>
+    <string name="settings_privacy">Приватність і безпека</string>
+    <string name="settings_privacy_summary">Автентифікація пристрою та маскування застосунку</string>
+    <string name="settings_data_maintenance">Дані та обслуговування</string>
+    <string name="settings_data_summary">Резервні копії, кеш і сумісність</string>
+    <string name="settings_backup">Резервне копіювання та відновлення</string>
+    <string name="settings_storage_maintenance">Обслуговування сховища</string>
+    <string name="settings_compatibility">Сумісність і діагностика</string>
+    <string name="settings_about">Про застосунок та оновлення</string>
+    <string name="settings_about_summary">Оновлення, підтримка та ліцензії</string>
+    <string name="settings_support">Підтримка та діагностика</string>
+</resources>

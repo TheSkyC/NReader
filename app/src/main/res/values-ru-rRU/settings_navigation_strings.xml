@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Чтение</string>
+    <string name="settings_reader_summary">Перелистывание, направление, масштаб и предзагрузка</string>
+    <string name="settings_turning">Перелистывание</string>
+    <string name="settings_zoom">Изображения и масштаб</string>
+    <string name="settings_reading_experience">Настройки чтения</string>
+    <string name="settings_galleries">Галереи и списки</string>
+    <string name="settings_galleries_summary">Названия, вид списков, избранное и история</string>
+    <string name="settings_gallery_display">Отображение галерей</string>
+    <string name="settings_list_layout">Вид и прокрутка списков</string>
+    <string name="settings_history_status">История чтения и статусы</string>
+    <string name="settings_search">Поиск, теги и фильтры</string>
+    <string name="settings_search_summary">Поиск, языки тегов и фильтры содержимого</string>
+    <string name="settings_content_filter">Фильтры содержимого</string>
+    <string name="settings_tag_display">Отображение тегов</string>
+    <string name="settings_tag_data">Данные и правила тегов</string>
+    <string name="settings_downloads">Загрузки и сеть</string>
+    <string name="settings_downloads_summary">Хранилище, сетевые изображения и уведомления</string>
+    <string name="settings_storage">Хранилище</string>
+    <string name="settings_network_images">Сетевые изображения</string>
+    <string name="settings_notifications">Уведомления</string>
+    <string name="settings_accounts_summary">Управление аккаунтами и восстановление сеансов</string>
+    <string name="settings_appearance">Внешний вид и язык</string>
+    <string name="settings_appearance_summary">Тема и язык приложения</string>
+    <string name="settings_privacy">Конфиденциальность и безопасность</string>
+    <string name="settings_privacy_summary">Аутентификация устройства и маскировка приложения</string>
+    <string name="settings_data_maintenance">Данные и обслуживание</string>
+    <string name="settings_data_summary">Резервные копии, кеш и совместимость</string>
+    <string name="settings_backup">Резервное копирование и восстановление</string>
+    <string name="settings_storage_maintenance">Обслуживание хранилища</string>
+    <string name="settings_compatibility">Совместимость и диагностика</string>
+    <string name="settings_about">О приложении и обновления</string>
+    <string name="settings_about_summary">Обновления, поддержка и лицензии</string>
+    <string name="settings_support">Поддержка и диагностика</string>
+</resources>

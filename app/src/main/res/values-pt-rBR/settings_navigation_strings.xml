@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Leitor</string>
+    <string name="settings_reader_summary">Mudança de página, direção, zoom e pré-carregamento</string>
+    <string name="settings_turning">Mudança de página</string>
+    <string name="settings_zoom">Imagens e zoom</string>
+    <string name="settings_reading_experience">Experiência de leitura</string>
+    <string name="settings_galleries">Galerias e listas</string>
+    <string name="settings_galleries_summary">Títulos, layouts, favoritos e histórico</string>
+    <string name="settings_gallery_display">Exibição de galerias</string>
+    <string name="settings_list_layout">Layout e rolagem das listas</string>
+    <string name="settings_history_status">Histórico de leitura e estados</string>
+    <string name="settings_search">Pesquisa, tags e filtros</string>
+    <string name="settings_search_summary">Pesquisa, idiomas das tags e filtros de conteúdo</string>
+    <string name="settings_content_filter">Filtros de conteúdo</string>
+    <string name="settings_tag_display">Exibição de tags</string>
+    <string name="settings_tag_data">Dados e regras de tags</string>
+    <string name="settings_downloads">Downloads e rede</string>
+    <string name="settings_downloads_summary">Armazenamento, imagens de rede e notificações</string>
+    <string name="settings_storage">Armazenamento</string>
+    <string name="settings_network_images">Imagens de rede</string>
+    <string name="settings_notifications">Notificações</string>
+    <string name="settings_accounts_summary">Gerenciar contas e restaurar sessões</string>
+    <string name="settings_appearance">Aparência e idioma</string>
+    <string name="settings_appearance_summary">Tema e idioma do aplicativo</string>
+    <string name="settings_privacy">Privacidade e segurança</string>
+    <string name="settings_privacy_summary">Autenticação do dispositivo e disfarce do aplicativo</string>
+    <string name="settings_data_maintenance">Dados e manutenção</string>
+    <string name="settings_data_summary">Backups, cache e compatibilidade</string>
+    <string name="settings_backup">Backup e restauração</string>
+    <string name="settings_storage_maintenance">Manutenção do armazenamento</string>
+    <string name="settings_compatibility">Compatibilidade e diagnóstico</string>
+    <string name="settings_about">Sobre e atualizações</string>
+    <string name="settings_about_summary">Atualizações, suporte e licenças</string>
+    <string name="settings_support">Suporte e diagnóstico</string>
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Leser</string>
+    <string name="settings_reader_summary">Umblättern, Richtung, Zoom und Vorladen</string>
+    <string name="settings_turning">Umblättern</string>
+    <string name="settings_zoom">Bilder und Zoom</string>
+    <string name="settings_reading_experience">Leseerlebnis</string>
+    <string name="settings_galleries">Galerien und Listen</string>
+    <string name="settings_galleries_summary">Titel, Layouts, Favoriten und Verlauf</string>
+    <string name="settings_gallery_display">Galerieanzeige</string>
+    <string name="settings_list_layout">Listenlayout und Scrollen</string>
+    <string name="settings_history_status">Leseverlauf und Status</string>
+    <string name="settings_search">Suche, Tags und Filter</string>
+    <string name="settings_search_summary">Suche, Tag-Sprachen und Inhaltsfilter</string>
+    <string name="settings_content_filter">Inhaltsfilter</string>
+    <string name="settings_tag_display">Tag-Anzeige</string>
+    <string name="settings_tag_data">Tag-Daten und Regeln</string>
+    <string name="settings_downloads">Downloads und Netzwerk</string>
+    <string name="settings_downloads_summary">Speicher, Netzwerkbilder und Benachrichtigungen</string>
+    <string name="settings_storage">Speicher</string>
+    <string name="settings_network_images">Netzwerkbilder</string>
+    <string name="settings_notifications">Benachrichtigungen</string>
+    <string name="settings_accounts_summary">Konten verwalten und Sitzungen wiederherstellen</string>
+    <string name="settings_appearance">Darstellung und Sprache</string>
+    <string name="settings_appearance_summary">Design und App-Sprache</string>
+    <string name="settings_privacy">Datenschutz und Sicherheit</string>
+    <string name="settings_privacy_summary">Geräteauthentifizierung und App-Tarnung</string>
+    <string name="settings_data_maintenance">Daten und Wartung</string>
+    <string name="settings_data_summary">Sicherungen, Cache und Kompatibilität</string>
+    <string name="settings_backup">Sichern und Wiederherstellen</string>
+    <string name="settings_storage_maintenance">Speicherverwaltung</string>
+    <string name="settings_compatibility">Kompatibilität und Diagnose</string>
+    <string name="settings_about">Über die App und Updates</string>
+    <string name="settings_about_summary">Updates, Hilfe und Lizenzen</string>
+    <string name="settings_support">Hilfe und Diagnose</string>
+</resources>

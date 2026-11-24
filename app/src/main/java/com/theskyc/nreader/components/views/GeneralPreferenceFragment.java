@@ -29,6 +29,7 @@ import androidx.core.os.LocaleListCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
 import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -200,7 +201,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 DebugImageMask.setEnabled(requireContext(), (Boolean) value);
                 return true;
             });
-            getPreferenceScreen().addPreference(mask);
+            PreferenceScreen maintenance = Objects.requireNonNull(findPreference("settings_screen_data"));
+            maintenance.addPreference(mask);
         }
 
         Preference updateSettings = Objects.requireNonNull(findPreference(getString(R.string.preference_key_update_settings)));

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">Reader</string>
+    <string name="settings_reader_summary">Page turning, direction, zoom and preloading</string>
+    <string name="settings_turning">Page turning</string>
+    <string name="settings_zoom">Images and zoom</string>
+    <string name="settings_reading_experience">Reading experience</string>
+    <string name="settings_galleries">Galleries and lists</string>
+    <string name="settings_galleries_summary">Titles, layouts, favorites and history</string>
+    <string name="settings_gallery_display">Gallery display</string>
+    <string name="settings_list_layout">List layout and scrolling</string>
+    <string name="settings_history_status">Reading history and statuses</string>
+    <string name="settings_search">Search, tags and filters</string>
+    <string name="settings_search_summary">Search behavior, tag languages and content filters</string>
+    <string name="settings_content_filter">Content filters</string>
+    <string name="settings_tag_display">Tag display</string>
+    <string name="settings_tag_data">Tag data and rules</string>
+    <string name="settings_downloads">Downloads and network</string>
+    <string name="settings_downloads_summary">Storage, network images and notifications</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_network_images">Network images</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_accounts_summary">Manage accounts and restore sessions</string>
+    <string name="settings_appearance">Appearance and language</string>
+    <string name="settings_appearance_summary">Theme and app language</string>
+    <string name="settings_privacy">Privacy and security</string>
+    <string name="settings_privacy_summary">Device authentication and launcher disguise</string>
+    <string name="settings_data_maintenance">Data and maintenance</string>
+    <string name="settings_data_summary">Backups, cache and compatibility</string>
+    <string name="settings_backup">Backup and restore</string>
+    <string name="settings_storage_maintenance">Storage maintenance</string>
+    <string name="settings_compatibility">Compatibility and diagnostics</string>
+    <string name="settings_about">About and updates</string>
+    <string name="settings_about_summary">Updates, support and licenses</string>
+    <string name="settings_support">Support and diagnostics</string>
+</resources>

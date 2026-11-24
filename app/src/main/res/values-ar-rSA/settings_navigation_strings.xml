@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">القارئ</string>
+    <string name="settings_reader_summary">تقليب الصفحات والاتجاه والتكبير والتحميل المسبق</string>
+    <string name="settings_turning">تقليب الصفحات</string>
+    <string name="settings_zoom">الصور والتكبير</string>
+    <string name="settings_reading_experience">تجربة القراءة</string>
+    <string name="settings_galleries">المعارض والقوائم</string>
+    <string name="settings_galleries_summary">العناوين والتخطيطات والمفضلة والسجل</string>
+    <string name="settings_gallery_display">عرض المعارض</string>
+    <string name="settings_list_layout">تخطيط القوائم والتمرير</string>
+    <string name="settings_history_status">سجل القراءة والحالات</string>
+    <string name="settings_search">البحث والوسوم والتصفية</string>
+    <string name="settings_search_summary">البحث ولغات الوسوم وتصفية المحتوى</string>
+    <string name="settings_content_filter">تصفية المحتوى</string>
+    <string name="settings_tag_display">عرض الوسوم</string>
+    <string name="settings_tag_data">بيانات الوسوم والقواعد</string>
+    <string name="settings_downloads">التنزيلات والشبكة</string>
+    <string name="settings_downloads_summary">التخزين وصور الشبكة والإشعارات</string>
+    <string name="settings_storage">التخزين</string>
+    <string name="settings_network_images">صور الشبكة</string>
+    <string name="settings_notifications">الإشعارات</string>
+    <string name="settings_accounts_summary">إدارة الحسابات واستعادة الجلسات</string>
+    <string name="settings_appearance">المظهر واللغة</string>
+    <string name="settings_appearance_summary">السمة ولغة التطبيق</string>
+    <string name="settings_privacy">الخصوصية والأمان</string>
+    <string name="settings_privacy_summary">مصادقة الجهاز وتمويه التطبيق</string>
+    <string name="settings_data_maintenance">البيانات والصيانة</string>
+    <string name="settings_data_summary">النسخ الاحتياطي والذاكرة المؤقتة والتوافق</string>
+    <string name="settings_backup">النسخ الاحتياطي والاستعادة</string>
+    <string name="settings_storage_maintenance">صيانة التخزين</string>
+    <string name="settings_compatibility">التوافق والتشخيص</string>
+    <string name="settings_about">حول التطبيق والتحديثات</string>
+    <string name="settings_about_summary">التحديثات والدعم والتراخيص</string>
+    <string name="settings_support">الدعم والتشخيص</string>
+</resources>

@@ -27,6 +27,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.theskyc.nreader.async.TagTranslationFeed;
@@ -67,7 +69,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SettingsActivity extends GeneralActivity {
+public class SettingsActivity extends GeneralActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
+    private static final String SETTINGS_SCREEN = "settings_screen";
     private static final String CATALOG_CHECK_ID = "catalog_check_id";
     private static final String EXPORT_LOCALE = "translation_export_locale";
     private static final String EXPORT_REVISION = "translation_export_revision";
@@ -116,7 +119,21 @@ public class SettingsActivity extends GeneralActivity {
         actionBar.setDisplayShowTitleEnabled(true);
         fragment = Objects.requireNonNull((GeneralPreferenceFragment) getSupportFragmentManager().findFragmentById(R.id.fragment));
         fragment.setAct(this);
-        fragment.setType(SettingsActivity.Type.values()[getIntent().getIntExtra(getPackageName() + ".TYPE", SettingsActivity.Type.MAIN.ordinal())]);
+        int typeIndex = getIntent().getIntExtra(getPackageName() + ".TYPE", Type.MAIN.ordinal());
+        Type type = typeIndex >= 0 && typeIndex < Type.values().length ? Type.values()[typeIndex] : Type.MAIN;
+        fragment.setType(type);
+        if (type == Type.MAIN) {
+            String screenKey = getIntent().getStringExtra(SETTINGS_SCREEN);
+            if (screenKey != null) {
+                PreferenceScreen screen = fragment.findPreference(screenKey);
+                if (screen != null && screen.getParent() == fragment.getPreferenceScreen()) {
+                    fragment.setPreferenceScreen(screen);
+                    actionBar.setTitle(screen.getTitle());
+                }
+            }
+        } else {
+            actionBar.setTitle(type == Type.COLUMN ? R.string.settings_list_layout : R.string.settings_network_images);
+        }
         catalogRefresh = new ViewModelProvider(this).get(CatalogRefreshViewModel.class);
         catalogRefresh.status().observe(this, this::updateCatalogCheckDialog);
         translationImport = new ViewModelProvider(this).get(TranslationImportViewModel.class);
@@ -910,6 +927,14 @@ public class SettingsActivity extends GeneralActivity {
         }
         Date actualTime = new Date();
         COPY_LOGS.launch(String.format("NReader_Log_%s.log", new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(actualTime)));
+    }
+
+    @Override
+    public boolean onPreferenceStartScreen(PreferenceFragmentCompat caller, PreferenceScreen screen) {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        intent.putExtra(SETTINGS_SCREEN, screen.getKey());
+        startActivity(intent);
+        return true;
     }
 
     @Override

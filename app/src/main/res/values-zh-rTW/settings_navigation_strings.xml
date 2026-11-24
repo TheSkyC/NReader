@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">閱讀器</string>
+    <string name="settings_reader_summary">翻頁、方向、縮放和預載</string>
+    <string name="settings_turning">翻頁</string>
+    <string name="settings_zoom">圖片與縮放</string>
+    <string name="settings_reading_experience">閱讀體驗</string>
+    <string name="settings_galleries">圖庫與列表</string>
+    <string name="settings_galleries_summary">標題、版面、收藏和歷史</string>
+    <string name="settings_gallery_display">圖庫顯示</string>
+    <string name="settings_list_layout">列表版面與捲動</string>
+    <string name="settings_history_status">閱讀歷史與狀態</string>
+    <string name="settings_search">搜尋、標籤與篩選</string>
+    <string name="settings_search_summary">搜尋行為、標籤語言和內容篩選</string>
+    <string name="settings_content_filter">內容篩選</string>
+    <string name="settings_tag_display">標籤顯示</string>
+    <string name="settings_tag_data">標籤資料與規則</string>
+    <string name="settings_downloads">下載與網路</string>
+    <string name="settings_downloads_summary">儲存、網路圖片和通知</string>
+    <string name="settings_storage">儲存</string>
+    <string name="settings_network_images">網路圖片</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_accounts_summary">管理帳號和恢復登入</string>
+    <string name="settings_appearance">外觀與語言</string>
+    <string name="settings_appearance_summary">主題和應用程式語言</string>
+    <string name="settings_privacy">隱私與安全</string>
+    <string name="settings_privacy_summary">裝置驗證和啟動器偽裝</string>
+    <string name="settings_data_maintenance">資料與維護</string>
+    <string name="settings_data_summary">備份、快取和相容性</string>
+    <string name="settings_backup">備份與還原</string>
+    <string name="settings_storage_maintenance">儲存空間維護</string>
+    <string name="settings_compatibility">相容性與診斷</string>
+    <string name="settings_about">關於與更新</string>
+    <string name="settings_about_summary">更新、支援和授權</string>
+    <string name="settings_support">支援與診斷</string>
+</resources>

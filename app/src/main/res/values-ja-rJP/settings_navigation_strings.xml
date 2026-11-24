@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_reader">リーダー</string>
+    <string name="settings_reader_summary">ページ送り、方向、拡大、先読み</string>
+    <string name="settings_turning">ページ送り</string>
+    <string name="settings_zoom">画像と拡大</string>
+    <string name="settings_reading_experience">閲覧時の動作</string>
+    <string name="settings_galleries">ギャラリーと一覧</string>
+    <string name="settings_galleries_summary">タイトル、表示形式、お気に入り、履歴</string>
+    <string name="settings_gallery_display">ギャラリー表示</string>
+    <string name="settings_list_layout">一覧の表示形式とスクロール</string>
+    <string name="settings_history_status">閲覧履歴とステータス</string>
+    <string name="settings_search">検索・タグ・フィルター</string>
+    <string name="settings_search_summary">検索動作、タグの言語、コンテンツのフィルター</string>
+    <string name="settings_content_filter">コンテンツフィルター</string>
+    <string name="settings_tag_display">タグ表示</string>
+    <string name="settings_tag_data">タグデータとルール</string>
+    <string name="settings_downloads">ダウンロードとネットワーク</string>
+    <string name="settings_downloads_summary">保存先、ネットワーク画像、通知</string>
+    <string name="settings_storage">ストレージ</string>
+    <string name="settings_network_images">ネットワーク画像</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_accounts_summary">アカウントの管理とセッションの復元</string>
+    <string name="settings_appearance">外観と言語</string>
+    <string name="settings_appearance_summary">テーマとアプリの言語</string>
+    <string name="settings_privacy">プライバシーとセキュリティ</string>
+    <string name="settings_privacy_summary">端末認証とランチャーの偽装</string>
+    <string name="settings_data_maintenance">データとメンテナンス</string>
+    <string name="settings_data_summary">バックアップ、キャッシュ、互換性</string>
+    <string name="settings_backup">バックアップと復元</string>
+    <string name="settings_storage_maintenance">ストレージのメンテナンス</string>
+    <string name="settings_compatibility">互換性と診断</string>
+    <string name="settings_about">アプリ情報と更新</string>
+    <string name="settings_about_summary">更新、サポート、ライセンス</string>
+    <string name="settings_support">サポートと診断</string>
+</resources>
