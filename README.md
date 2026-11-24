@@ -95,21 +95,22 @@ The relevant fields in [app/build.gradle.kts](app/build.gradle.kts) are:
 
 Leave `ISSUE_TRACKER_URL` empty to keep issue reporting disabled. Publish APKs
 built with NReader's application ID and your own signing key. NReader bundles a
-tag directory for offline search and checks the upstream NClientV3 data feed
-by default, independently of APK updates. A build can select a NReader feed
-with the Gradle property `nreaderTagCatalogManifestUrl`; see the
-[catalog distribution contract](docs/tag-distribution.md). See
-[tag directory and rules](docs/tags.md) for the refresh and storage contract.
+tag directory for offline search. Debug builds check the upstream NClientV3
+data feed by default, independently of APK updates. Release builds use the
+signed NReader catalog feed by default. The Gradle property
+`nreaderTagCatalogManifestUrl` overrides either default; set it to an empty
+value to disable the NReader feed. See the
+[catalog distribution contract](docs/tag-distribution.md) and
+[tag directory and rules](docs/tags.md) for refresh and storage behavior.
 The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
 Debug builds default to the signed `zh-Hans` translation feed used by the
 release workflow. Set the property explicitly to override it, or to an empty
 value to disable online translation downloads. Other build types default to an
-empty translation URL; the release workflow configures the signed catalog and
-translation feeds under `feed/` on the repository's `main` branch. Unsigned v1
-feeds require `nreaderEnableUnsignedTagFeeds=true`. Without a translation feed,
-users can still install packs from local files. The legacy upstream catalog
-feed may still be checked independently.
+empty translation URL; the release workflow configures both signed feeds under
+`feed/` on the repository's `main` branch. Unsigned v1 feeds require
+`nreaderEnableUnsignedTagFeeds=true`. Without a translation feed, users can
+still install packs from local files.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream
 Crowdin project.

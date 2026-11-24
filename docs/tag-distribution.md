@@ -4,8 +4,9 @@ NReader modifications by TheSkyC (2026); see NOTICE.
 
 The catalog tool builds an independent feed from a validated full snapshot.
 The files in `data/` still supply the bundled catalog. A data pull request does
-not publish a runtime feed. The app continues to use the legacy upstream
-feed until a NReader feed is configured.
+not publish a runtime feed. Release builds use the signed NReader catalog feed
+by default. Debug builds keep using the legacy upstream feed unless a NReader
+feed is explicitly configured.
 
 ## Catalog manifest v1
 
@@ -46,24 +47,28 @@ To correct a published catalog, publish a corrected snapshot at a higher
 revision; do not reset the counter. An omitted ID continues to resolve
 under the existing catalog merge policy.
 
-The HTTPS origin is the trust boundary. The digest detects byte mismatch and
-does not authenticate a compromised publisher or provide first-install replay
-protection. The initial beta feed uses the public NReader GitHub repository as
-the origin and accepts this unsigned v1 tradeoff; the release workflow opts in
-explicitly. A later signed manifest can replace this contract without changing
-the offline catalog or local rules.
+Manifest v1 is retained for compatibility and local feed tooling. Release
+builds use the signed v2 manifest, which authenticates the manifest contents
+against the public key bundled in the app. The HTTPS origin remains the
+transport boundary for payload downloads. The signature protects publisher
+identity for the manifest; payload size and digest bind the downloaded bytes to
+that signed descriptor.
+
 The app build accepts the manifest URL through Gradle property
-`nreaderTagCatalogManifestUrl`. The default is empty, which keeps the
-existing legacy feed active.
-Because manifest v1 has no publisher signature, a build that configures either
-NReader manifest URL must also set `nreaderEnableUnsignedTagFeeds=true`. This
-keeps ordinary development builds offline while making the beta opt-in clear.
+`nreaderTagCatalogManifestUrl`. Its Release default is
+`https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest-v2.json`.
+Debug defaults to an empty NReader URL and continues checking the legacy
+upstream feed. An explicit property overrides the relevant default; an explicit
+empty value disables the NReader catalog feed. Because manifest v1 has no
+publisher signature, a build that configures either NReader manifest URL to a
+v1 `manifest.json` must also set `nreaderEnableUnsignedTagFeeds=true`.
 
 The checked-in `Publish Tag Catalog Feed` workflow publishes the validated
-catalog to `feed/catalog/` on the public `main` branch. Its catalog manifest URL is:
+catalog to `feed/catalog/` on the public `main` branch. Release builds use this
+signed v2 manifest URL:
 
 ```text
-https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest.json
+https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest-v2.json
 ```
 
 The workflow retains immutable payload files and moves the manifest pointer in

@@ -48,7 +48,10 @@ val updateEndpoint = providers.gradleProperty("nreaderUpdateEndpoint").orNull ?:
 val updateEndpointConfig = updateEndpoint
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
-val tagCatalogManifestUrl = providers.gradleProperty("nreaderTagCatalogManifestUrl").orNull ?: ""
+val configuredTagCatalogManifestUrl = providers.gradleProperty("nreaderTagCatalogManifestUrl").orNull
+val tagCatalogManifestUrl = configuredTagCatalogManifestUrl
+    ?: "https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest-v2.json"
+val debugTagCatalogManifestUrl = configuredTagCatalogManifestUrl ?: ""
 val configuredTagTranslationManifestUrl = providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull
 val tagTranslationManifestUrl = configuredTagTranslationManifestUrl ?: ""
 val debugTagTranslationManifestUrl = configuredTagTranslationManifestUrl
@@ -63,6 +66,9 @@ require(allowUnsignedTagFeeds || listOf(tagCatalogManifestUrl, tagTranslationMan
     "Unsigned tag manifest URLs require nreaderEnableUnsignedTagFeeds=true"
 }
 val tagCatalogManifestUrlConfig = tagCatalogManifestUrl
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+val debugTagCatalogManifestUrlConfig = debugTagCatalogManifestUrl
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 val tagTranslationManifestUrlConfig = tagTranslationManifestUrl
@@ -154,6 +160,7 @@ android {
             versionNameSuffix = "-debug"
             resValue("string", "app_name", "NReader Debug")
             buildConfigField("String", "UPDATE_ENDPOINT", "\"$updateEndpointConfig\"")
+            buildConfigField("String", "TAG_CATALOG_MANIFEST_URL", "\"$debugTagCatalogManifestUrlConfig\"")
             buildConfigField("String", "TAG_TRANSLATION_MANIFEST_URL", "\"$debugTagTranslationManifestUrlConfig\"")
         }
         create("tagBenchmark") {
