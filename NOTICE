@@ -72,9 +72,10 @@ VectorDrawable resources for the gallery metadata row. These icons are
 distributed under the Apache License 2.0 as stated by the upstream icon
 collection. See LICENSE for the full Apache License 2.0 text.
 
-Third-party icon: Feather
+Third-party icons: Feather
 https://github.com/feathericons/feather
-Icon: sliders, converted to an Android VectorDrawable for reader controls.
+Icons: book-open, image, sliders, and smartphone, converted to Android
+VectorDrawable resources for reader controls and settings.
 
 The MIT License (MIT)
 
