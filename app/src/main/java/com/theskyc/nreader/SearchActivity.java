@@ -100,6 +100,7 @@ public class SearchActivity extends GeneralActivity {
     private int restoredScrollY;
     private boolean groupsPopulated;
     private boolean filtersVisible;
+    private boolean showAllSelected;
 
     public void setQuery(String str, boolean submit) {
         runOnUiThread(() -> searchView.setQuery(str, submit));
@@ -117,6 +118,7 @@ public class SearchActivity extends GeneralActivity {
             restoredExpandedGroups = savedInstanceState.getBooleanArray("search.expanded");
             restoredScrollY = savedInstanceState.getInt("search.scroll");
             filtersVisible = savedInstanceState.getBoolean("search.filtersVisible");
+            showAllSelected = savedInstanceState.getBoolean("search.showAllSelected");
             advanced = savedInstanceState.getBoolean("search.advanced");
             int[] manualIds = savedInstanceState.getIntArray("search.manualIds");
             if (manualIds != null) for (int id : manualIds) manualTagDecisions.add(id);
@@ -140,6 +142,10 @@ public class SearchActivity extends GeneralActivity {
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
             submitSearch(searchView.getQuery().toString().trim(), false);
+        });
+        findViewById(R.id.search_selected_more).setOnClickListener(view -> {
+            showAllSelected = !showAllSelected;
+            updateFilterSummary();
         });
 
         groups = new ChipGroup[]{
@@ -216,6 +222,7 @@ public class SearchActivity extends GeneralActivity {
         outState.putParcelable("search.ranges", ranges);
         outState.putBoolean("search.advanced", advanced);
         outState.putBoolean("search.filtersVisible", filtersVisible);
+        outState.putBoolean("search.showAllSelected", showAllSelected);
         outState.putString("search.query", searchView.getQuery().toString());
         int[] manualIds = new int[manualTagDecisions.size()];
         int index = 0;
@@ -640,11 +647,18 @@ public class SearchActivity extends GeneralActivity {
     private void updateFilterSummary() {
         int included = 0;
         int excluded = 0;
+        ArrayList<ChipTag> selected = new ArrayList<>();
+        ArrayList<ChipTag> automaticTags = new ArrayList<>();
         for (ChipTag chip : tags) {
             updateChipAppearance(chip);
             if (chip.getTag().getStatus() == TagStatus.ACCEPTED) included++;
             if (chip.getTag().getStatus() == TagStatus.AVOIDED) excluded++;
+            if (chip.getTag().getStatus() != TagStatus.DEFAULT) {
+                if (onlineChips.contains(chip) || onlineMergedChips.contains(chip)) automaticTags.add(chip);
+                else selected.add(chip);
+            }
         }
+        selected.addAll(automaticTags);
         TextView summary = findViewById(R.id.search_filter_summary);
         summary.setText(included + excluded == 0 ? getString(R.string.search_filters_none)
             : getString(R.string.search_filters_summary, included, excluded));
@@ -652,6 +666,37 @@ public class SearchActivity extends GeneralActivity {
         TextView account = findViewById(R.id.search_account_filters);
         account.setVisibility(automatic == 0 ? View.GONE : View.VISIBLE);
         if (automatic != 0) account.setText(getString(R.string.search_account_filter_notice, automatic));
+        ChipGroup selectedGroup = findViewById(R.id.search_selected_filters);
+        selectedGroup.removeAllViews();
+        int limit = showAllSelected ? selected.size() : Math.min(selected.size(), 6);
+        for (int i = 0; i < limit; i++) {
+            ChipTag original = selected.get(i);
+            boolean automaticTag = onlineChips.contains(original) || onlineMergedChips.contains(original);
+            Chip summaryChip = (Chip) getLayoutInflater().inflate(R.layout.chip_layout, selectedGroup, false);
+            int state = automaticTag ? R.string.search_tag_account_exclusion
+                : original.getTag().getStatus() == TagStatus.ACCEPTED
+                    ? R.string.search_tag_include : R.string.search_tag_exclude;
+            summaryChip.setText(getString(R.string.search_selected_filter, getString(state), original.getText()));
+            summaryChip.setEnsureMinTouchTargetSize(true);
+            summaryChip.setCloseIconVisible(!automaticTag);
+            if (!automaticTag) {
+                summaryChip.setCloseIconContentDescription(getString(R.string.search_remove_filter, original.getText()));
+                summaryChip.setOnCloseIconClickListener(view -> {
+                    markManualTag(original);
+                    original.changeStatus(TagStatus.DEFAULT);
+                    advanced = true;
+                    updateFilterSummary();
+                });
+            }
+            TagType type = original.getTag().getType();
+            boolean editable = !type.equals(TagType.CATEGORY) && !type.equals(TagType.LANGUAGE);
+            summaryChip.setOnClickListener(view -> showTagStatusDialog(original, editable, editable));
+            selectedGroup.addView(summaryChip);
+        }
+        Button more = findViewById(R.id.search_selected_more);
+        more.setVisibility(selected.size() > 6 ? View.VISIBLE : View.GONE);
+        if (selected.size() > 6) more.setText(showAllSelected ? getString(R.string.search_selected_show_less)
+            : getString(R.string.search_selected_show_all, selected.size()));
         for (TagType type : TagType.values) {
             if (type != TagType.UNKNOWN) updateGroupHeader(type);
         }
@@ -698,6 +743,7 @@ public class SearchActivity extends GeneralActivity {
                         Tag tag = chip.getTag();
                         chip.setText(TagLabel.format(chip, tag.getName(), displayNames.get(tag.getId())));
                     }
+                    updateFilterSummary();
                 });
             });
         } catch (java.util.concurrent.RejectedExecutionException ignored) {

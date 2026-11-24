@@ -158,9 +158,15 @@ public class SearchTagEntryTest {
                 assertEquals("original name", chip.getTag().getName());
                 assertEquals(501001, chip.getTag().getId());
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                ViewGroup selected = controller.get().findViewById(R.id.search_selected_filters);
+                assertEquals(1, selected.getChildCount());
+                assertTrue(((Chip) selected.getChildAt(0)).getText().toString().contains("Translated label"));
                 TagLanguage.select(app, "");
                 await(() -> chip.getText().toString().equals("original name"));
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                assertTrue(((Chip) selected.getChildAt(0)).performCloseIconClick());
+                assertEquals(TagStatus.DEFAULT, chip.getTag().getStatus());
+                assertEquals(0, selected.getChildCount());
             }
         } finally {
             TagLanguage.select(app, "");

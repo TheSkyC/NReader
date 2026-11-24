@@ -16,6 +16,10 @@
     <string name="search_tag_exclude">排除</string>
     <string name="search_tag_remove">从此列表移除</string>
     <string name="search_tag_account_exclusion">账号自动排除</string>
+    <string name="search_selected_filter">%1$s：%2$s</string>
+    <string name="search_remove_filter">移除筛选条件：%1$s</string>
+    <string name="search_selected_show_all">显示全部 %1$d 项</string>
+    <string name="search_selected_show_less">收起</string>
     <string name="search_account_filter_notice">已应用账号排除条件：%1$d</string>
     <string name="search_range_any">不限</string>
     <string name="search_range_min_pages">最少页数</string>

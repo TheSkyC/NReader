@@ -27,8 +27,21 @@
             style="@style/TextAppearance.MaterialComponents.Body2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:text="@string/search_filters_none" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/search_selected_filters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_selected_more"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/search_account_filters"
