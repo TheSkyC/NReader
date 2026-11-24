@@ -589,6 +589,44 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void readerSettingsChoicesAndAdjustmentDialogCanBeReopened() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog sheet = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                sheet.findViewById(R.id.reader_scale_toggle).performClick();
+                AlertDialog choices = (AlertDialog) ShadowDialog.getLatestDialog();
+                choices.getListView().performItemClick(choices.getListView().getChildAt(2), 2,
+                    choices.getListView().getAdapter().getItemId(2));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(activity.getString(R.string.reader_scale_width),
+                    ((android.widget.TextView) sheet.findViewById(R.id.reader_scale_selected)).getText().toString());
+                assertEquals(ReaderScaleMode.FIT_WIDTH,
+                    application.getSharedPreferences("Settings", 0).getInt("reader_scale_mode", -1));
+
+                sheet.findViewById(R.id.reader_adjustments_toggle).performClick();
+                AlertDialog adjustments = (AlertDialog) ShadowDialog.getLatestDialog();
+                ((android.widget.SeekBar) adjustments.findViewById(R.id.reader_brightness)).setProgress(140);
+                adjustments.findViewById(R.id.reader_adjustments_reset).performClick();
+                assertEquals(0, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", -1));
+                adjustments.dismiss();
+                sheet.findViewById(R.id.reader_adjustments_toggle).performClick();
+                adjustments = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertEquals(100, ((android.widget.SeekBar) adjustments.findViewById(R.id.reader_brightness)).getProgress());
+                adjustments.dismiss();
+                sheet.dismiss();
+            }
+        }
+    }
+
+    @Test
     public void readerSettingsApplyImmediatelyAndPersistAcrossRecreation() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
@@ -611,7 +649,7 @@ public class ReaderReliabilityTest {
                 assertEquals(1, application.getSharedPreferences("Settings", 0)
                     .getInt("reader_orientation", -1));
                 dialog.findViewById(R.id.reader_tap_action_none).performClick();
-                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_none)).isChecked());
                 assertEquals(2, application.getSharedPreferences("Settings", 0)
                     .getInt("reader_tap_action", -1));
                 dialog.findViewById(R.id.reader_filter_grayscale).performClick();
@@ -629,7 +667,7 @@ public class ReaderReliabilityTest {
                 assertEquals(40, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", 0));
                 assertEquals(-30, application.getSharedPreferences("Settings", 0).getInt("reader_contrast", 0));
                 assertEquals(25, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
-                ((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).setChecked(false);
+                dialog.findViewById(R.id.reader_tap_action_controls).performClick();
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).setChecked(false);
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).setChecked(true);
                 assertFalse(Global.isButtonChangePage());
@@ -654,7 +692,7 @@ public class ReaderReliabilityTest {
                 assertEquals(140, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
                 assertEquals(70, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
                 assertEquals(125, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
-                assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_tap_turn)).isChecked());
+                assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_controls)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());
                 dialog.dismiss();
@@ -697,7 +735,7 @@ public class ReaderReliabilityTest {
     }
 
     @Test
-    public void tapActionControlsStayInSyncAndDoNotChangeOtherGalleries() throws Exception {
+    public void tapActionSelectionDoesNotChangeOtherGalleries() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File firstFolder = galleryFolder();
         File secondFolder = galleryFolder();
@@ -713,18 +751,18 @@ public class ReaderReliabilityTest {
                 ZoomActivity activity = first.get();
                 activity.findViewById(R.id.reader_settings).performClick();
                 BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
-                SwitchMaterial tap = dialog.findViewById(R.id.reader_tap_turn);
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_none)).isChecked());
-                tap.setChecked(true);
+                dialog.findViewById(R.id.reader_tap_action_toggle).performClick();
+                AlertDialog choices = (AlertDialog) ShadowDialog.getLatestDialog();
+                choices.getListView().performItemClick(choices.getListView().getChildAt(0), 0,
+                    choices.getListView().getAdapter().getItemId(0));
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_edge)).isChecked());
                 assertEquals(1, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action_82128", -1));
                 assertEquals(2, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action", -1));
                 assertFalse(Global.isButtonChangePage());
                 dialog.findViewById(R.id.reader_tap_action_none).performClick();
-                assertFalse(tap.isChecked());
                 assertEquals(2, application.getSharedPreferences("Settings", 0).getInt("reader_tap_action_82128", -1));
-                tap.setChecked(true);
-                tap.setChecked(false);
+                dialog.findViewById(R.id.reader_tap_action_controls).performClick();
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_controls)).isChecked());
                 dialog.dismiss();
             }

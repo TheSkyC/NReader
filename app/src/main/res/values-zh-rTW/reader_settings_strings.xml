@@ -17,7 +17,7 @@
     <string name="reader_background_black">黑色</string>
     <string name="reader_background_gray">灰色</string>
     <string name="reader_background_white">白色</string>
-    <string name="reader_scale_title">頁面顯示</string>
+    <string name="reader_scale_title">頁面縮放</string>
     <string name="reader_scale_smart">智慧</string>
     <string name="reader_scale_screen">適應螢幕</string>
     <string name="reader_scale_width">適應寬度</string>

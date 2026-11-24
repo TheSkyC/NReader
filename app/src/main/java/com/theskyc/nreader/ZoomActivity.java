@@ -23,8 +23,10 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.SeekBar;
+import android.widget.ScrollView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ImageButton;
@@ -1010,11 +1012,14 @@ public class ZoomActivity extends GeneralActivity {
             if (!updatingPresetControls[0]) setReaderAutoCrop(checked);
         });
 
-        bindAdjustment(dialog.findViewById(R.id.reader_brightness),
+        SeekBar brightness = Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness));
+        SeekBar contrast = Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast));
+        SeekBar saturation = Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation));
+        bindAdjustment(brightness,
             dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness, updatingPresetControls);
-        bindAdjustment(dialog.findViewById(R.id.reader_contrast),
+        bindAdjustment(contrast,
             dialog.findViewById(R.id.reader_contrast_value), readerContrast, this::setReaderContrast, updatingPresetControls);
-        bindAdjustment(dialog.findViewById(R.id.reader_saturation),
+        bindAdjustment(saturation,
             dialog.findViewById(R.id.reader_saturation_value), readerSaturation, this::setReaderSaturation, updatingPresetControls);
 
         MaterialRadioButton backgroundAuto = Objects.requireNonNull(dialog.findViewById(R.id.reader_background_auto));
@@ -1045,9 +1050,9 @@ public class ZoomActivity extends GeneralActivity {
                 filter.check(filterId(readerFilterMode));
                 background.check(backgroundId(getReaderBackground()));
                 autoCrop.setChecked(readerAutoCrop);
-                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness))).setProgress(readerBrightness + 100);
-                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast))).setProgress(readerContrast + 100);
-                ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation))).setProgress(readerSaturation + 100);
+                brightness.setProgress(readerBrightness + 100);
+                contrast.setProgress(readerContrast + 100);
+                saturation.setProgress(readerSaturation + 100);
             } finally {
                 updatingPresetControls[0] = false;
             }
@@ -1077,57 +1082,84 @@ public class ZoomActivity extends GeneralActivity {
         instant.setOnCheckedChangeListener((button, checked) ->
             preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
         dialog.findViewById(R.id.reader_adjustments_reset).setOnClickListener(view -> {
-            ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness))).setProgress(100);
-            ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast))).setProgress(100);
-            ((SeekBar) Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation))).setProgress(100);
+            brightness.setProgress(100);
+            contrast.setProgress(100);
+            saturation.setProgress(100);
         });
-        bindReaderSettingToggle(dialog, R.id.reader_direction_toggle, direction, R.string.change_scroll_type);
-        bindReaderSettingToggle(dialog, R.id.reader_spread_mode_toggle, spread, R.string.reader_spread_title);
-        bindReaderSettingToggle(dialog, R.id.reader_orientation_toggle, orientation, R.string.reader_orientation_title);
-        bindReaderSettingToggle(dialog, R.id.reader_scale_toggle, scale, R.string.reader_scale_title);
-        bindReaderSettingToggle(dialog, R.id.reader_background_toggle, background, R.string.reader_background_title);
-        bindReaderSettingToggle(dialog, R.id.reader_filter_toggle, filter, R.string.reader_filter_title);
-        bindReaderSettingToggle(dialog, R.id.reader_tap_action_toggle, tapAction, R.string.reader_tap_action_title);
-        bindReaderSectionToggle(dialog, R.id.reader_presets_toggle, R.id.reader_presets_content, R.string.reader_preset_title);
-        bindReaderSectionToggle(dialog, R.id.reader_adjustments_toggle, R.id.reader_adjustments_content,
+        bindReaderSettingChoice(dialog, R.id.reader_direction_toggle, R.id.reader_direction_selected, direction, R.string.change_scroll_type);
+        bindReaderSettingChoice(dialog, R.id.reader_spread_mode_toggle, R.id.reader_spread_mode_selected, spread, R.string.reader_spread_title);
+        bindReaderSettingChoice(dialog, R.id.reader_orientation_toggle, R.id.reader_orientation_selected, orientation, R.string.reader_orientation_title);
+        bindReaderSettingChoice(dialog, R.id.reader_scale_toggle, R.id.reader_scale_selected, scale, R.string.reader_scale_title);
+        bindReaderSettingChoice(dialog, R.id.reader_background_toggle, R.id.reader_background_selected, background, R.string.reader_background_title);
+        bindReaderSettingChoice(dialog, R.id.reader_filter_toggle, R.id.reader_filter_selected, filter, R.string.reader_filter_title);
+        bindReaderSettingChoice(dialog, R.id.reader_tap_action_toggle, R.id.reader_tap_action_selected, tapAction, R.string.reader_tap_action_title);
+        bindReaderSectionDialog(dialog, R.id.reader_presets_toggle, R.id.reader_presets_content, R.string.reader_preset_title);
+        bindReaderSectionDialog(dialog, R.id.reader_adjustments_toggle, R.id.reader_adjustments_content,
             R.string.reader_adjustments_title);
         dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
         dialog.show();
     }
 
-    private void bindReaderSettingToggle(@NonNull BottomSheetDialog dialog, int buttonId,
+    private void bindReaderSettingChoice(@NonNull BottomSheetDialog dialog, int rowId, int valueId,
                                          @NonNull RadioGroup group, int titleId) {
-        TextView button = Objects.requireNonNull(dialog.findViewById(buttonId));
+        View row = Objects.requireNonNull(dialog.findViewById(rowId));
+        TextView value = Objects.requireNonNull(dialog.findViewById(valueId));
         Runnable update = () -> {
             MaterialRadioButton selected = group.findViewById(group.getCheckedRadioButtonId());
             if (selected == null) return;
-            String label = getString(R.string.reader_setting_value, getString(titleId), selected.getText());
-            button.setText(getString(group.getVisibility() == View.VISIBLE
-                ? R.string.reader_setting_collapse : R.string.reader_setting_expand, label));
+            value.setText(selected.getText());
+            row.setContentDescription(getString(R.string.reader_setting_value, getString(titleId), selected.getText()));
         };
         for (int index = 0; index < group.getChildCount(); index++) {
             MaterialRadioButton option = (MaterialRadioButton) group.getChildAt(index);
             option.setOnCheckedChangeListener((ignored, checked) -> {
-                if (checked) button.post(update);
+                if (checked) row.post(update);
             });
         }
-        button.setOnClickListener(view -> {
-            group.setVisibility(group.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-            update.run();
+        row.setOnClickListener(view -> {
+            CharSequence[] options = new CharSequence[group.getChildCount()];
+            int selectedIndex = -1;
+            for (int index = 0; index < options.length; index++) {
+                MaterialRadioButton option = (MaterialRadioButton) group.getChildAt(index);
+                options[index] = option.getText();
+                if (option.getId() == group.getCheckedRadioButtonId()) selectedIndex = index;
+            }
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(titleId)
+                .setSingleChoiceItems(options, selectedIndex, (choice, index) -> {
+                    group.check(group.getChildAt(index).getId());
+                    choice.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
         });
         update.run();
     }
 
-    private void bindReaderSectionToggle(@NonNull BottomSheetDialog dialog, int buttonId, int contentId, int titleId) {
-        TextView button = Objects.requireNonNull(dialog.findViewById(buttonId));
+    private void bindReaderSectionDialog(@NonNull BottomSheetDialog dialog, int rowId, int contentId, int titleId) {
+        View row = Objects.requireNonNull(dialog.findViewById(rowId));
         View content = Objects.requireNonNull(dialog.findViewById(contentId));
-        Runnable update = () -> button.setText(getString(content.getVisibility() == View.VISIBLE
-            ? R.string.reader_setting_collapse : R.string.reader_setting_expand, getString(titleId)));
-        button.setOnClickListener(view -> {
-            content.setVisibility(content.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-            update.run();
+        row.setContentDescription(getString(titleId));
+        row.setOnClickListener(view -> {
+            ViewGroup parent = (ViewGroup) content.getParent();
+            parent.removeView(content);
+            content.setVisibility(View.VISIBLE);
+            ScrollView scroll = new ScrollView(this);
+            int padding = (int) (24 * getResources().getDisplayMetrics().density);
+            scroll.setPadding(padding, 0, padding, 0);
+            scroll.addView(content);
+            AlertDialog section = new MaterialAlertDialogBuilder(this)
+                .setTitle(titleId)
+                .setView(scroll)
+                .setPositiveButton(android.R.string.ok, null)
+                .create();
+            section.setOnDismissListener(ignored -> {
+                scroll.removeView(content);
+                content.setVisibility(View.GONE);
+                parent.addView(content);
+            });
+            section.show();
         });
-        update.run();
     }
 
     private int getReaderBackground() {

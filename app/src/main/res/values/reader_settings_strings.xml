@@ -17,7 +17,7 @@
     <string name="reader_background_black">Black</string>
     <string name="reader_background_gray">Gray</string>
     <string name="reader_background_white">White</string>
-    <string name="reader_scale_title">Page display</string>
+    <string name="reader_scale_title">Page scale</string>
     <string name="reader_scale_smart">Smart</string>
     <string name="reader_scale_screen">Fit screen</string>
     <string name="reader_scale_width">Fit width</string>

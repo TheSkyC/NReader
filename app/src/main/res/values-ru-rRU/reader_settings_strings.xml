@@ -8,7 +8,7 @@
     <string name="reader_background_black">Чёрный</string>
     <string name="reader_background_gray">Серый</string>
     <string name="reader_background_white">Белый</string>
-    <string name="reader_scale_title">Отображение страницы</string>
+    <string name="reader_scale_title">Масштаб страницы</string>
     <string name="reader_scale_smart">Умный режим</string>
     <string name="reader_scale_screen">По размеру экрана</string>
     <string name="reader_scale_width">По ширине</string>

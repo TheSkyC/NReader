@@ -8,7 +8,7 @@
     <string name="reader_background_black">أسود</string>
     <string name="reader_background_gray">رمادي</string>
     <string name="reader_background_white">أبيض</string>
-    <string name="reader_scale_title">عرض الصفحة</string>
+    <string name="reader_scale_title">تحجيم الصفحة</string>
     <string name="reader_scale_smart">ذكي</string>
     <string name="reader_scale_screen">ملاءمة للشاشة</string>
     <string name="reader_scale_width">ملاءمة للعرض</string>

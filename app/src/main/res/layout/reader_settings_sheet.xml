@@ -25,16 +25,44 @@
             android:textAppearance="?attr/textAppearanceSubtitle1"
             android:layout_marginTop="24dp"
             android:accessibilityHeading="true"
-            android:textColor="?attr/colorPrimary" />
-        <com.google.android.material.button.MaterialButton
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+        <LinearLayout
             android:id="@+id/reader_direction_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/change_scroll_type"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_direction_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_direction"
             android:layout_width="match_parent"
@@ -58,21 +86,42 @@
                 android:minHeight="48dp"
                 android:text="@string/reader_continuous_vertical" />
         </RadioGroup>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_continuous_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/reader_spread_mode_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_spread_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_spread_mode_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_spread_mode"
             android:layout_width="match_parent"
@@ -95,21 +144,42 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_spread_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/reader_orientation_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_orientation_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_orientation_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_orientation"
             android:layout_width="match_parent"
@@ -142,16 +212,44 @@
             android:textAppearance="?attr/textAppearanceSubtitle1"
             android:layout_marginTop="24dp"
             android:accessibilityHeading="true"
-            android:textColor="?attr/colorPrimary" />
-        <com.google.android.material.button.MaterialButton
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+        <LinearLayout
             android:id="@+id/reader_scale_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_scale_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_scale_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_scale"
             android:layout_width="match_parent"
@@ -189,15 +287,42 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/reader_background_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_background_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_background_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_background"
             android:layout_width="match_parent"
@@ -234,26 +359,39 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_auto_crop_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:text="@string/reader_section_image"
             android:textAppearance="?attr/textAppearanceSubtitle1"
             android:layout_marginTop="24dp"
             android:accessibilityHeading="true"
-            android:textColor="?attr/colorPrimary" />
-        <com.google.android.material.button.MaterialButton
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+        <LinearLayout
             android:id="@+id/reader_presets_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_preset_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_presets_content"
             android:layout_width="match_parent"
@@ -295,15 +433,42 @@
                     android:textAllCaps="false" />
             </LinearLayout>
         </LinearLayout>
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/reader_filter_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_filter_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_filter_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_filter"
             android:layout_width="match_parent"
@@ -331,15 +496,33 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/reader_adjustments_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_adjustments_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_adjustments_content"
             android:layout_width="match_parent"
@@ -437,16 +620,44 @@
             android:textAppearance="?attr/textAppearanceSubtitle1"
             android:layout_marginTop="24dp"
             android:accessibilityHeading="true"
-            android:textColor="?attr/colorPrimary" />
-        <com.google.android.material.button.MaterialButton
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+        <LinearLayout
             android:id="@+id/reader_tap_action_toggle"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start|center_vertical"
-            android:singleLine="false"
-            android:minHeight="48dp"
-            android:textAllCaps="false" />
+            android:minHeight="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reader_tap_action_title"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:importantForAccessibility="no" />
+            <TextView
+                android:id="@+id/reader_tap_action_selected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                android:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
         <RadioGroup
             android:id="@+id/reader_tap_action"
             android:layout_width="match_parent"
@@ -484,11 +695,5 @@
             android:layout_height="wrap_content"
             android:minHeight="56dp"
             android:text="@string/instant_page_turn" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/instant_page_turn_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

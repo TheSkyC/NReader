@@ -8,7 +8,7 @@
     <string name="reader_background_black">Чорний</string>
     <string name="reader_background_gray">Сірий</string>
     <string name="reader_background_white">Білий</string>
-    <string name="reader_scale_title">Відображення сторінки</string>
+    <string name="reader_scale_title">Масштаб сторінки</string>
     <string name="reader_scale_smart">Розумний</string>
     <string name="reader_scale_screen">За розміром екрана</string>
     <string name="reader_scale_width">За шириною</string>

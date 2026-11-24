@@ -8,7 +8,7 @@
     <string name="reader_background_black">Siyah</string>
     <string name="reader_background_gray">Gri</string>
     <string name="reader_background_white">Beyaz</string>
-    <string name="reader_scale_title">Sayfa görünümü</string>
+    <string name="reader_scale_title">Sayfa ölçeği</string>
     <string name="reader_scale_smart">Akıllı</string>
     <string name="reader_scale_screen">Ekrana sığdır</string>
     <string name="reader_scale_width">Genişliğe sığdır</string>
