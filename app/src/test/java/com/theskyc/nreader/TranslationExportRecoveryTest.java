@@ -108,6 +108,17 @@ public class TranslationExportRecoveryTest {
                 resume.countDown();
                 awaitResult(model);
                 assertNull(model.result().getValue().error);
+                AlertDialog completion = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(completion.isShowing());
+                assertEquals(context.getString(R.string.tag_translation_export_done_without_attribution),
+                    ((TextView) completion.findViewById(android.R.id.message)).getText().toString());
+                assertFalse(model.result().getValue().isConsumed());
+                controller.recreate();
+                completion = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(completion.isShowing());
+                completion.dismiss();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(model.result().getValue().isConsumed());
                 JSONObject output = new JSONObject(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
                 assertEquals("ja", output.getString("locale"));
                 assertEquals("z", output.getJSONArray("entries").getJSONObject(0).getJSONArray("aliases").getString(0));

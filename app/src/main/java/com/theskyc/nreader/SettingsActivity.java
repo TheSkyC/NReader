@@ -91,7 +91,7 @@ public class SettingsActivity extends GeneralActivity {
     private AlertDialog catalogCheckDialog;
     private AlertDialog translationImportErrorDialog;
     private AlertDialog translationExportProgress;
-    private AlertDialog translationExportErrorDialog;
+    private AlertDialog translationExportResultDialog;
     private CatalogRefreshViewModel catalogRefresh;
     private TranslationImportViewModel translationImport;
     private TranslationExportViewModel translationExport;
@@ -156,10 +156,10 @@ public class SettingsActivity extends GeneralActivity {
             translationExportProgress.dismiss();
             translationExportProgress = null;
         }
-        if (translationExportErrorDialog != null) {
-            translationExportErrorDialog.setOnDismissListener(null);
-            translationExportErrorDialog.dismiss();
-            translationExportErrorDialog = null;
+        if (translationExportResultDialog != null) {
+            translationExportResultDialog.setOnDismissListener(null);
+            translationExportResultDialog.dismiss();
+            translationExportResultDialog = null;
         }
         if (translationImportErrorDialog != null) {
             translationImportErrorDialog.setOnCancelListener(null);
@@ -513,13 +513,11 @@ public class SettingsActivity extends GeneralActivity {
 
     private void showTranslationExportResult(TranslationExportViewModel.Result result) {
         if (result == null || result.isConsumed() || isFinishing() || isDestroyed()) return;
-        if (result.error == null) {
-            if (result.consume()) showTranslationToast(R.string.tag_translation_export_done_without_attribution, Toast.LENGTH_LONG);
-            return;
-        }
-        if (translationExportErrorDialog != null && translationExportErrorDialog.isShowing()) return;
+        if (translationExportResultDialog != null && translationExportResultDialog.isShowing()) return;
         int message;
-        if (result.error instanceof TagTranslationCatalog.UnknownAliasOrderException) {
+        if (result.error == null) {
+            message = R.string.tag_translation_export_done_without_attribution;
+        } else if (result.error instanceof TagTranslationCatalog.UnknownAliasOrderException) {
             message = R.string.tag_translation_export_unknown_order;
         } else if (result.error instanceof TagTranslationCatalog.DuplicateExportAliasException) {
             message = R.string.tag_translation_export_duplicate_alias;
@@ -529,13 +527,13 @@ public class SettingsActivity extends GeneralActivity {
         } else {
             message = R.string.tag_translation_export_failed;
         }
-        translationExportErrorDialog = new MaterialAlertDialogBuilder(this)
+        translationExportResultDialog = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_translation_export)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
             .setOnDismissListener(dialog -> {
-                if (translationExportErrorDialog != dialog) return;
-                translationExportErrorDialog = null;
+                if (translationExportResultDialog != dialog) return;
+                translationExportResultDialog = null;
                 result.consume();
             })
             .show();
