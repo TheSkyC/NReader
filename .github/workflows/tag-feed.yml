@@ -1,5 +1,5 @@
 # Modified for NReader by TheSkyC (2026); see NOTICE.
-name: Publish Tag Catalog Feed
+name: Publish Signed Tag Feeds
 
 on:
   push:
@@ -14,7 +14,10 @@ on:
       - scripts/build_tag_translation_release.py
       - scripts/build_tag_translation_pack.py
       - scripts/verify_tag_feed.py
+      - scripts/sign_tag_feed.py
+      - scripts/publish_signed_tag_feeds.py
       - scripts/requirements.txt
+      - scripts/requirements-signing.txt
       - .github/workflows/tag-feed.yml
   workflow_dispatch:
 
@@ -35,6 +38,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -42,7 +46,7 @@ jobs:
           python-version: '3.14'
 
       - name: Install script dependencies
-        run: python -m pip install -r scripts/requirements.txt
+        run: python -m pip install -r scripts/requirements.txt -r scripts/requirements-signing.txt
 
       - name: Prepare feed directory
         id: feed
@@ -71,7 +75,15 @@ jobs:
             --translation-feed "${{ steps.feed.outputs.translation_root }}"
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
-      - name: Publish immutable payload and manifest pointer
+      - name: Sign verified feed manifests
+        env:
+          NREADER_FEED_SIGNING_KEY: ${{ secrets.NREADER_FEED_SIGNING_KEY }}
+        run: >-
+          python -m scripts.publish_signed_tag_feeds
+          --catalog-feed "${{ steps.feed.outputs.root }}"
+          --translation-feed "${{ steps.feed.outputs.translation_root }}"
+
+      - name: Publish immutable payloads and manifest pointers
         shell: bash
         env:
           FEED_ROOT: ${{ steps.feed.outputs.root }}
@@ -85,5 +97,19 @@ jobs:
             echo "Catalog revision $REVISION is already published"
             exit 0
           fi
+          base="$(git rev-parse HEAD)"
           git commit -m "data(tags): publish catalog revision $REVISION"
-          git push origin HEAD:main
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git fetch origin main
+            if ! git diff --quiet "$base" FETCH_HEAD -- data feed scripts .github/workflows/tag-feed.yml; then
+              echo 'Feed inputs changed concurrently; rerun publication against main' >&2
+              exit 1
+            fi
+            base="$(git rev-parse FETCH_HEAD)"
+            git rebase "$base"
+          done
+          echo 'Could not publish after three attempts; rerun the workflow' >&2
+          exit 1

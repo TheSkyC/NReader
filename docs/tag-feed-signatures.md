@@ -36,9 +36,19 @@ of the private key and restrict access to the publisher.
 
 ## Publishing procedure
 
-Before signing, run `python -m scripts.verify_tag_feed --catalog-feed
-feed/catalog --translation-feed feed/translations`. This validates each v1
-manifest and every referenced immutable payload. Then sign the exact v1 pointer
+The `Publish Signed Tag Feeds` GitHub Actions workflow builds the catalog,
+validates both feeds and their payloads, and signs changed manifests using the
+repository Actions secret `NREADER_FEED_SIGNING_KEY`. It verifies the key
+against the public key embedded in the app, verifies the resulting signatures,
+and publishes the immutable payloads and pointers in a single commit. Unchanged
+manifests keep their existing signatures. The workflow runs after relevant
+changes on `main`, and can also be started manually. If signing or validation
+fails, the workflow does not publish its changes. Concurrent unrelated pushes
+are retried; if feed inputs change concurrently or retries are exhausted, rerun
+the workflow against the current `main`.
+
+For manual recovery, first run `python -m scripts.verify_tag_feed --catalog-feed
+feed/catalog --translation-feed feed/translations`. Then sign the exact v1 pointer
 bytes with the local key:
 
 ```text
@@ -50,9 +60,6 @@ python -m scripts.sign_tag_feed sign --kind translation --key <private-key> \
 
 Verify both generated envelopes with the public key before publishing the
 immutable payloads and then the matching `manifest-v2.json` files. The release
-workflow now configures signed endpoints. The automatic catalog publication
-workflow still updates the unsigned v1 pointers because the private key is
-intentionally kept local; repeat this procedure after each feed update before
-building a release that should consume the new revision.
+workflow configures the signed endpoints.
 An installed unsigned payload at the same revision is not reinstalled or
 retroactively authenticated when the client changes to the signed endpoint.
