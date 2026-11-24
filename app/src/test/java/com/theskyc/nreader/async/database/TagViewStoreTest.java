@@ -56,6 +56,24 @@ public class TagViewStoreTest {
     }
 
     @Test
+    public void guardedManagementRejectsStaleSnapshots() {
+        TagViewStore.insert(view("Original", 3, 0));
+        ContentValues original = TagViewStore.list().get(0);
+        ContentValues pinned = new ContentValues(original);
+        pinned.remove("id");
+        pinned.put("pinned", 1);
+        assertTrue(TagViewStore.updateIfUnchanged(original, pinned));
+        assertFalse(TagViewStore.deleteIfUnchanged(original));
+        ContentValues renamed = new ContentValues(pinned);
+        renamed.put("name", "Renamed");
+        assertFalse(TagViewStore.updateIfUnchanged(original, renamed));
+        ContentValues current = TagViewStore.list().get(0);
+        assertEquals("Original", current.getAsString("name"));
+        assertTrue(TagViewStore.updateIfUnchanged(current, renamed));
+        assertTrue(TagViewStore.deleteIfUnchanged(TagViewStore.list().get(0)));
+    }
+
+    @Test
     public void validationRejectsUnknownTypeAndMissingFilters() {
         ContentValues unknownType = view("Valid", 3, 0);
         unknownType.put("tag_type", 7);

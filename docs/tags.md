@@ -238,8 +238,10 @@ dialog can clear this local history without changing any tag data.
 A tag manager view can save the current type, search text, minimum count, sort,
 rule-status, and translation-coverage filters. Views are local database rows,
 remain independent of the active catalog and selected translation language.
-Newly saved views are unpinned; the stored pin field controls their future
-management order. Loading a view restores only its stored filters; it does not
+Newly saved views are unpinned. **Saved tag views** offers a management mode
+to rename, pin, unpin, or delete a view; pinned views appear first. If the
+selected view changes before a management action commits, reopen the list and
+select it again. Loading a view restores only its stored filters; it does not
 change saved rules or account blacklist state.
 A rule with an incompatible catalog type keeps its own saved label and
 cannot match a translation for the catalog tag.

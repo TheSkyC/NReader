@@ -284,6 +284,14 @@
     <string name="tag_view_storage_error">Could not save the tag view.</string>
     <string name="no_saved_tag_views">No saved tag views.</string>
     <string name="tag_view_pinned_format" formatted="true">%1$s (Pinned)</string>
+    <string name="manage_tag_views">Manage saved views</string>
+    <string name="tag_view_load">Choose a view</string>
+    <string name="tag_view_rename">Rename</string>
+    <string name="tag_view_pin">Pin</string>
+    <string name="tag_view_unpin">Unpin</string>
+    <string name="tag_view_delete_title">Delete saved view?</string>
+    <string name="tag_view_delete_message">Delete “%1$s”?</string>
+    <string name="tag_view_changed">This view changed. Select it again.</string>
     <string name="reset_tag_view_filters">Reset tag view filters</string>
     <string name="check_for_update_on_startup">Check for update on startup</string>
     <string name="check_for_updates">Check for updates</string>

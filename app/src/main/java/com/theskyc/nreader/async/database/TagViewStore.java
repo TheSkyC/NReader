@@ -70,6 +70,30 @@ public final class TagViewStore {
         return id > 0 && database().delete(TABLE_NAME, "id=?", new String[]{Long.toString(id)}) == 1;
     }
 
+    public static boolean updateIfUnchanged(ContentValues expected, ContentValues replacement) {
+        if (!isValid(expected, true) || replacement.containsKey("id") || !isValid(replacement, false))
+            throw new IllegalArgumentException("Invalid tag view");
+        return database().update(TABLE_NAME, replacement, snapshotSelection(), snapshotArgs(expected)) == 1;
+    }
+
+    public static boolean deleteIfUnchanged(ContentValues expected) {
+        if (!isValid(expected, true)) throw new IllegalArgumentException("Invalid tag view");
+        return database().delete(TABLE_NAME, snapshotSelection(), snapshotArgs(expected)) == 1;
+    }
+
+    private static String snapshotSelection() {
+        return "id=? AND name=? AND query=? AND tag_type=? AND min_count=? AND sort_by_name=?"
+            + " AND status_filter=? AND translated_only=? AND pinned=?";
+    }
+
+    private static String[] snapshotArgs(ContentValues values) {
+        String[] columns = {"id", "name", "query", "tag_type", "min_count", "sort_by_name",
+            "status_filter", "translated_only", "pinned"};
+        String[] args = new String[columns.length];
+        for (int index = 0; index < columns.length; index++) args[index] = values.getAsString(columns[index]);
+        return args;
+    }
+
     public static List<ContentValues> list() {
         List<ContentValues> views = new ArrayList<>();
         try (Cursor cursor = database().query(TABLE_NAME, null, null, null, null, null,

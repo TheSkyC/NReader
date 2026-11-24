@@ -208,6 +208,14 @@
     <string name="tag_view_storage_error">無法儲存標籤檢視。</string>
     <string name="no_saved_tag_views">沒有已儲存的標籤檢視。</string>
     <string name="tag_view_pinned_format" formatted="true">%1$s（已置頂）</string>
+    <string name="manage_tag_views">管理已儲存的檢視</string>
+    <string name="tag_view_load">選擇檢視</string>
+    <string name="tag_view_rename">重新命名</string>
+    <string name="tag_view_pin">置頂</string>
+    <string name="tag_view_unpin">取消置頂</string>
+    <string name="tag_view_delete_title">刪除已儲存的檢視？</string>
+    <string name="tag_view_delete_message">要刪除「%1$s」嗎？</string>
+    <string name="tag_view_changed">此檢視已變更，請重新選擇。</string>
     <string name="reset_tag_view_filters">重設標籤瀏覽篩選</string>
     <string name="check_for_update_on_startup">啟動時檢查更新</string>
     <string name="check_for_updates">檢查更新</string>

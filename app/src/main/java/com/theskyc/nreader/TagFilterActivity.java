@@ -474,6 +474,10 @@ public class TagFilterActivity extends GeneralActivity {
     }
 
     private void showSavedTagViews() {
+        showSavedTagViews(false);
+    }
+
+    private void showSavedTagViews(boolean manage) {
         TagViewStore.execute(() -> {
             List<ContentValues> views;
             try {
@@ -502,11 +506,88 @@ public class TagFilterActivity extends GeneralActivity {
                         ? getString(R.string.tag_view_pinned_format, label) : label;
                 }
                 new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.saved_tag_views)
-                    .setItems(labels, (dialog, which) -> applyTagView(views.get(which)))
+                    .setTitle(manage ? R.string.manage_tag_views : R.string.saved_tag_views)
+                    .setItems(labels, (dialog, which) -> {
+                        if (manage) showTagViewActions(views.get(which));
+                        else applyTagView(views.get(which));
+                    })
+                    .setNeutralButton(manage ? R.string.tag_view_load : R.string.manage_tag_views,
+                        (dialog, which) -> showSavedTagViews(!manage))
                     .setNegativeButton(R.string.cancel, null)
                     .show();
             });
+        });
+    }
+
+    private void showTagViewActions(ContentValues view) {
+        boolean pinned = view.getAsInteger("pinned") == 1;
+        String[] actions = {getString(R.string.tag_view_rename),
+            getString(pinned ? R.string.tag_view_unpin : R.string.tag_view_pin), getString(R.string.delete)};
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(view.getAsString("name"))
+            .setItems(actions, (dialog, which) -> {
+                if (which == 0) renameTagView(view);
+                else if (which == 1) {
+                    ContentValues updated = new ContentValues(view);
+                    updated.remove("id");
+                    updated.put("pinned", pinned ? 0 : 1);
+                    changeTagView(view, updated);
+                } else {
+                    new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.tag_view_delete_title)
+                        .setMessage(getString(R.string.tag_view_delete_message, view.getAsString("name")))
+                        .setPositiveButton(R.string.delete, (confirmation, button) -> changeTagView(view, null))
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+                }
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void renameTagView(ContentValues view) {
+        EditText name = new EditText(this);
+        name.setId(android.R.id.edit);
+        name.setSingleLine(true);
+        name.setText(view.getAsString("name"));
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tag_view_rename)
+            .setView(name)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok, null)
+            .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            .setOnClickListener(button -> {
+                ContentValues updated = new ContentValues(view);
+                updated.remove("id");
+                updated.put("name", name.getText().toString().trim());
+                if (!TagViewStore.isValid(updated, false)) {
+                    name.setError(getString(R.string.tag_view_invalid_name));
+                    return;
+                }
+                dialog.dismiss();
+                changeTagView(view, updated);
+            }));
+        dialog.show();
+    }
+
+    private void changeTagView(ContentValues expected, @Nullable ContentValues replacement) {
+        TagViewStore.execute(() -> {
+            try {
+                boolean changed = replacement == null ? TagViewStore.deleteIfUnchanged(expected)
+                    : TagViewStore.updateIfUnchanged(expected, replacement);
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (!changed) Toast.makeText(this, R.string.tag_view_changed, Toast.LENGTH_LONG).show();
+                    showSavedTagViews(true);
+                });
+            } catch (RuntimeException exception) {
+                LogUtility.e("Unable to change tag view", exception);
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed())
+                        Toast.makeText(this, R.string.tag_view_storage_error, Toast.LENGTH_LONG).show();
+                });
+            }
         });
     }
 

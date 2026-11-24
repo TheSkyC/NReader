@@ -208,6 +208,69 @@ public class TagFilterWorkflowTest {
         }
     }
 
+    @Test public void managesSavedTagViews() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase db = helper.getWritableDatabase();
+            db.delete(TagViewStore.TABLE_NAME, null, null);
+            android.content.ContentValues values = new android.content.ContentValues();
+            values.put("name", "Original");
+            values.put("query", "fixture");
+            values.put("tag_type", 3);
+            values.put("min_count", 25);
+            values.put("sort_by_name", 0);
+            values.put("status_filter", -1);
+            values.put("translated_only", 0);
+            values.put("pinned", 0);
+            TagViewStore.insert(values);
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                Toolbar toolbar = activity.findViewById(R.id.toolbar);
+                activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.saved_tag_views));
+                await(activity, () -> ShadowDialog.getLatestDialog() instanceof AlertDialog
+                    && ((AlertDialog) ShadowDialog.getLatestDialog()).getListView() != null);
+                AlertDialog list = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(list.getButton(AlertDialog.BUTTON_NEUTRAL).performClick());
+                await(activity, () -> ShadowDialog.getLatestDialog() != list
+                    && ((AlertDialog) ShadowDialog.getLatestDialog()).getListView() != null);
+                AlertDialog manage = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(manage.getListView().performItemClick(null, 0, 0));
+                AlertDialog actions = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(actions.getListView().performItemClick(null, 1, 1));
+                await(activity, () -> TagViewStore.list().get(0).getAsInteger("pinned") == 1);
+                AlertDialog pinActions = actions;
+                await(activity, () -> ShadowDialog.getLatestDialog() != pinActions
+                    && ((AlertDialog) ShadowDialog.getLatestDialog()).getListView() != null);
+                manage = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(manage.getListView().getItemAtPosition(0).toString().contains("Pinned"));
+                assertTrue(manage.getListView().performItemClick(null, 0, 0));
+                actions = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(actions.getListView().performItemClick(null, 0, 0));
+                AlertDialog rename = (AlertDialog) ShadowDialog.getLatestDialog();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                ((EditText) rename.findViewById(android.R.id.edit)).setText("Renamed");
+                assertTrue(rename.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                assertTrue("Rename dialog should close after accepting a valid name", !rename.isShowing());
+                await(activity, () -> "Renamed".equals(TagViewStore.list().get(0).getAsString("name")));
+                await(activity, () -> ShadowDialog.getLatestDialog() != rename
+                    && ((AlertDialog) ShadowDialog.getLatestDialog()).getListView() != null);
+                manage = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(manage.getListView().performItemClick(null, 0, 0));
+                actions = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(actions.getListView().performItemClick(null, 2, 2));
+                AlertDialog confirm = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertTrue(confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                await(activity, () -> TagViewStore.list().isEmpty());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     private static RecyclerView list(TagFilterActivity activity, int page) {
         TagTypePage fragment = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f" + page);
         return fragment == null ? null : fragment.getRecyclerView();
