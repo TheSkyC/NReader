@@ -599,6 +599,7 @@
     <string name="tag_translation_export_cancelling">正在取消导出…</string>
     <string name="tag_translation_export_picker_failed">无法打开保存位置，请重试。</string>
     <string name="tag_translation_export_done">标签语言已导出。</string>
+    <string name="tag_translation_export_done_without_attribution">标签语言已导出。文件不包含署名或许可信息。</string>
     <string name="tag_translation_export_changed">语言包已发生变化，请重新打开列表后重试。所选文件可能为空。</string>
     <string name="tag_translation_export_unknown_order">此旧语言包的别名顺序未知，无法导出。请使用原始语言包，或先移除并重新安装。所选文件可能为空。</string>
     <string name="tag_translation_export_duplicate_alias">此语言包中的一些别名现在被视为相同，无法导出。请使用原始文件或安装修正后的语言包。所选文件可能为空。</string>
@@ -624,5 +625,6 @@
     <string name="tag_translation_online_failed">无法在线检查标签语言。</string>
     <string name="tag_translation_online_empty">没有新的标签语言或更新。</string>
     <string name="tag_translation_online_confirm">要下载并安装此语言包（%1$s）吗？</string>
+    <string name="tag_translation_online_confirm_zh_hans">要下载并安装此语言包（%1$s）吗？\n\n译文来自 EhTagTranslation 数据库及其贡献者，由 TheSkyC 整理。除另有说明外，源内容采用 CC BY-NC-SA 3.0 中国大陆许可。\n\n来源与署名：%2$s\n许可：%3$s</string>
     <string name="tag_translation_display_pair">%1$s（%2$s）</string>
 </resources>

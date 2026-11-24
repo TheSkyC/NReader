@@ -10,7 +10,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.format.Formatter;
+import android.text.util.Linkify;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -69,6 +71,8 @@ public class SettingsActivity extends GeneralActivity {
     private static final String EXPORT_LOCALE = "translation_export_locale";
     private static final String EXPORT_REVISION = "translation_export_revision";
     private static final String EXPORT_GENERATION = "translation_export_generation";
+    private static final String ZH_HANS_REVISION_1_SHA256 =
+        "49df957e214c4431f37b14444a52dc924777423f89bd2403005e2e2f4c8c1d64";
     private static final String[] TRANSLATION_PACK_MIME_TYPES = {
         "application/json", "application/octet-stream", "text/*"
     };
@@ -510,7 +514,7 @@ public class SettingsActivity extends GeneralActivity {
     private void showTranslationExportResult(TranslationExportViewModel.Result result) {
         if (result == null || result.isConsumed() || isFinishing() || isDestroyed()) return;
         if (result.error == null) {
-            if (result.consume()) showTranslationToast(R.string.tag_translation_export_done, Toast.LENGTH_LONG);
+            if (result.consume()) showTranslationToast(R.string.tag_translation_export_done_without_attribution, Toast.LENGTH_LONG);
             return;
         }
         if (translationExportErrorDialog != null && translationExportErrorDialog.isShowing()) return;
@@ -576,15 +580,27 @@ public class SettingsActivity extends GeneralActivity {
 
     private void confirmDownloadTranslationPack(TagTranslationFeed feed, TagTranslationManifest.Pack pack) {
         String label = translationPackLabel(pack);
-        new MaterialAlertDialogBuilder(this)
+        String size = Formatter.formatShortFileSize(this, pack.sizeBytes);
+        boolean knownPack = "zh-Hans".equals(pack.locale) && pack.revision == 1
+            && pack.hasPayloadDigest(ZH_HANS_REVISION_1_SHA256);
+        String message = knownPack
+            ? getString(R.string.tag_translation_online_confirm_zh_hans, size,
+                getString(R.string.tag_translation_zh_hans_source_url),
+                getString(R.string.tag_translation_zh_hans_license_url))
+            : getString(R.string.tag_translation_online_confirm, size);
+        AlertDialog confirmationDialog = new MaterialAlertDialogBuilder(this)
             .setTitle(label)
-            .setMessage(getString(R.string.tag_translation_online_confirm, Formatter.formatShortFileSize(this, pack.sizeBytes)))
+            .setMessage(message)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.install, (dialog, which) -> runTranslationFeedTask(feed,
                 getString(R.string.downloading_format, label), R.string.tag_translation_install_failed,
                 () -> feed.install(Database.getDatabase(), pack), applied -> Toast.makeText(this,
                     applied ? R.string.tag_translation_installed : R.string.tag_translation_not_newer, Toast.LENGTH_LONG).show()))
             .show();
+        if (knownPack) {
+            TextView text = confirmationDialog.findViewById(android.R.id.message);
+            if (text != null) Linkify.addLinks(text, Linkify.WEB_URLS);
+        }
     }
 
     private <T> void runTranslationFeedTask(TagTranslationFeed feed, CharSequence message, int failureMessage,

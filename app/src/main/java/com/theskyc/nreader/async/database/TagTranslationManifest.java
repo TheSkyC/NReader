@@ -119,6 +119,10 @@ public final class TagTranslationManifest {
             this.sha256 = sha256;
         }
 
+        public boolean hasPayloadDigest(String digest) {
+            return sha256.equals(digest);
+        }
+
         public HttpUrl payloadUrl(HttpUrl manifestUrl) throws IOException {
             return manifestUrl(manifestUrl.toString()).resolve("translation-" + sha256 + ".json");
         }

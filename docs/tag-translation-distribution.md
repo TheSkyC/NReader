@@ -152,6 +152,11 @@ English names; source attribution and reproduction details are recorded in
 The feed directory also contains an [attribution notice](../feed/translations/README.md)
 and a copy of the source license. These files are not included in the JSON
 payload downloaded by the client.
+For the exact published `zh-Hans` revision 1 payload, identified by its SHA-256,
+the online installation confirmation displays the source and license links. The
+notice is not inferred from a locale or revision alone, since another source can
+use the same values. An exported pack does not embed attribution or license
+information; the user must obtain the relevant information from its source.
 
 Catalog and translation manifests are independent. When a new translation
 references IDs added to a catalog, publish and verify the catalog first, then
