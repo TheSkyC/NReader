@@ -15,3 +15,5 @@ output.json
 /crowdin.properties
 /keystore.properties
 *.jks
+__pycache__/
+*.py[cod]
