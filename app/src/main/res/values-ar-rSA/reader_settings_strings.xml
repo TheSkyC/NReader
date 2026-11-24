@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">إظهار أو إخفاء عناصر التحكم</string>
     <string name="reader_tap_action_none">لا إجراء</string>
     <string name="reader_bookmark_delete_page">حذف إشارة الصفحة %1$d</string>
+    <string name="reader_section_reading">القراءة</string>
+    <string name="reader_section_display">عرض الصفحة</string>
+    <string name="reader_section_image">الصورة</string>
+    <string name="reader_section_controls">التحكم</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. إظهار الخيارات</string>
+    <string name="reader_setting_collapse">%1$s. إخفاء الخيارات</string>
+    <string name="reader_preset_summary">يغيّر تطبيق الإعداد المسبق المرشح وتعديلات الصورة والاقتصاص والخلفية.</string>
+    <string name="reader_adjustments_reset">إعادة ضبط تعديلات الصورة</string>
 </resources>

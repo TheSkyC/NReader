@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">閱讀設定</string>
+    <string name="reader_section_reading">閱讀方式</string>
+    <string name="reader_section_display">頁面顯示</string>
+    <string name="reader_section_image">影像</string>
+    <string name="reader_section_controls">操作</string>
+    <string name="reader_setting_value">%1$s：%2$s</string>
+    <string name="reader_setting_expand">%1$s。展開選項</string>
+    <string name="reader_setting_collapse">%1$s。收合選項</string>
+    <string name="reader_preset_summary">套用預設會變更濾鏡、影像調整、裁切和背景。</string>
+    <string name="reader_adjustments_reset">重設影像調整</string>
     <string name="reader_continuous_vertical">縱向連續捲動</string>
     <string name="reader_continuous_summary">連續閱讀會記錄頁內位置。以雙指縮放或點兩下即可調整大小。</string>
     <string name="reader_background_title">背景</string>

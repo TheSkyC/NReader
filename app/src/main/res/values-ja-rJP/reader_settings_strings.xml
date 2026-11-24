@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">コントロールを表示/非表示</string>
     <string name="reader_tap_action_none">操作なし</string>
     <string name="reader_bookmark_delete_page">%1$dページのブックマークを削除</string>
+    <string name="reader_section_reading">読書</string>
+    <string name="reader_section_display">ページ表示</string>
+    <string name="reader_section_image">画像</string>
+    <string name="reader_section_controls">操作</string>
+    <string name="reader_setting_value">%1$s：%2$s</string>
+    <string name="reader_setting_expand">%1$s。オプションを表示</string>
+    <string name="reader_setting_collapse">%1$s。オプションを非表示</string>
+    <string name="reader_preset_summary">プリセットを適用すると、フィルター、画像調整、余白の切り取り、背景が変更されます。</string>
+    <string name="reader_adjustments_reset">画像調整をリセット</string>
 </resources>

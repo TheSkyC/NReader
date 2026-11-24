@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">Reader settings</string>
+    <string name="reader_section_reading">Reading</string>
+    <string name="reader_section_display">Page display</string>
+    <string name="reader_section_image">Image</string>
+    <string name="reader_section_controls">Controls</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Show options</string>
+    <string name="reader_setting_collapse">%1$s. Hide options</string>
+    <string name="reader_preset_summary">Applying a preset changes the filter, adjustments, cropping, and background.</string>
+    <string name="reader_adjustments_reset">Reset image adjustments</string>
     <string name="reader_continuous_vertical">Continuous vertical</string>
     <string name="reader_continuous_summary">Continuous reading remembers your position. Pinch or double-tap to zoom.</string>
     <string name="reader_background_title">Background</string>

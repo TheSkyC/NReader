@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reader_settings_title">阅读设置</string>
+    <string name="reader_section_reading">阅读方式</string>
+    <string name="reader_section_display">页面显示</string>
+    <string name="reader_section_image">图像</string>
+    <string name="reader_section_controls">操作</string>
+    <string name="reader_setting_value">%1$s：%2$s</string>
+    <string name="reader_setting_expand">%1$s。展开选项</string>
+    <string name="reader_setting_collapse">%1$s。收起选项</string>
+    <string name="reader_preset_summary">应用预设会更改滤镜、图像调节、裁剪和背景。</string>
+    <string name="reader_adjustments_reset">重置图像调节</string>
     <string name="reader_continuous_vertical">纵向连续滚动</string>
     <string name="reader_continuous_summary">连续阅读会记录页内位置。双指缩放或双击即可调整大小。</string>
     <string name="reader_background_title">背景</string>

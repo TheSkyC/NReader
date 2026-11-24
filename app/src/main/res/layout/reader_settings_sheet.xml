@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:fillViewport="false">
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -12,39 +12,45 @@
         android:paddingTop="24dp"
         android:paddingEnd="24dp"
         android:paddingBottom="24dp">
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:accessibilityHeading="true"
             android:text="@string/reader_settings_title"
             android:textAppearance="?attr/textAppearanceHeadline6" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/change_scroll_type"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
+            android:text="@string/reader_section_reading"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:layout_marginTop="24dp"
+            android:accessibilityHeading="true"
+            android:textColor="?attr/colorPrimary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_direction_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
         <RadioGroup
             android:id="@+id/reader_direction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_continuous"
                 android:layout_width="match_parent"
@@ -52,34 +58,76 @@
                 android:minHeight="48dp"
                 android:text="@string/reader_continuous_vertical" />
         </RadioGroup>
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_orientation_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
+            android:layout_marginBottom="8dp"
+            android:text="@string/reader_continuous_summary"
+            android:textAppearance="?attr/textAppearanceBody2" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_spread_mode_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
+        <RadioGroup
+            android:id="@+id/reader_spread_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_single"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_double"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_spread_auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+        </RadioGroup>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/reader_spread_summary"
+            android:textAppearance="?attr/textAppearanceBody2" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_orientation_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
         <RadioGroup
             android:id="@+id/reader_orientation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_orientation_system"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:text="@string/reader_orientation_system" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_orientation_portrait"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:text="@string/reader_orientation_portrait" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_orientation_landscape"
                 android:layout_width="match_parent"
@@ -87,356 +135,336 @@
                 android:minHeight="48dp"
                 android:text="@string/reader_orientation_landscape" />
         </RadioGroup>
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/reader_auto_crop"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:text="@string/reader_auto_crop_title" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_auto_crop_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-
-        <TextView
+            android:text="@string/reader_section_display"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:layout_marginTop="24dp"
+            android:accessibilityHeading="true"
+            android:textColor="?attr/colorPrimary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_scale_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_filter_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_preset_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/reader_preset_default"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="48dp"
-                android:text="@string/reader_preset_default" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/reader_preset_night"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="48dp"
-                android:text="@string/reader_preset_night" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/reader_preset_scan"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="48dp"
-                android:text="@string/reader_preset_scan" />
-        </LinearLayout>
-
-        <RadioGroup
-            android:id="@+id/reader_filter"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_filter_none"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_filter_grayscale"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_filter_invert"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_filter_sepia"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_continuous_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_adjustments_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/reader_brightness" />
-
-            <TextView
-                android:id="@+id/reader_brightness_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <SeekBar
-            android:id="@+id/reader_brightness"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/reader_brightness"
-            android:max="200"
-            android:progress="100" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/reader_contrast" />
-
-            <TextView
-                android:id="@+id/reader_contrast_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <SeekBar
-            android:id="@+id/reader_contrast"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/reader_contrast"
-            android:max="200"
-            android:progress="100" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/reader_saturation" />
-
-            <TextView
-                android:id="@+id/reader_saturation_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <SeekBar
-            android:id="@+id/reader_saturation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/reader_saturation"
-            android:max="200"
-            android:progress="100" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_adjustments_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/reader_spread_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
-        <RadioGroup
-            android:id="@+id/reader_spread_mode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_spread_single"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_spread_double"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/reader_spread_auto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp" />
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/reader_spread_summary"
-            android:textAppearance="?attr/textAppearanceBody2" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_scale_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
         <RadioGroup
             android:id="@+id/reader_scale"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_smart"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_screen"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_width"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_height"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_fill"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_scale_original"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-
-        <TextView
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_background_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/reader_background_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
         <RadioGroup
             android:id="@+id/reader_background"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_background_auto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_background_black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_background_gray"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_background_white"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-
         <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/reader_tap_turn"
+            android:id="@+id/reader_auto_crop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="56dp"
-            android:text="@string/title_change_page_buttons" />
-
+            android:text="@string/reader_auto_crop_title" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/reader_tap_action_title"
-            android:textAppearance="?attr/textAppearanceSubtitle1" />
-
+            android:layout_marginBottom="8dp"
+            android:text="@string/reader_auto_crop_summary"
+            android:textAppearance="?attr/textAppearanceBody2" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reader_section_image"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:layout_marginTop="24dp"
+            android:accessibilityHeading="true"
+            android:textColor="?attr/colorPrimary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_presets_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
+        <LinearLayout
+            android:id="@+id/reader_presets_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/reader_preset_summary"
+                android:textAppearance="?attr/textAppearanceBody2" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/reader_preset_default"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/reader_preset_default"
+                    android:textAllCaps="false" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/reader_preset_night"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/reader_preset_night"
+                    android:textAllCaps="false" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/reader_preset_scan"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/reader_preset_scan"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+        </LinearLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_filter_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
+        <RadioGroup
+            android:id="@+id/reader_filter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_filter_none"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_filter_grayscale"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_filter_invert"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/reader_filter_sepia"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
+        </RadioGroup>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_adjustments_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
+        <LinearLayout
+            android:id="@+id/reader_adjustments_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/reader_adjustments_summary"
+                android:textAppearance="?attr/textAppearanceBody2" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/reader_brightness" />
+                <TextView
+                    android:id="@+id/reader_brightness_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/reader_brightness"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/reader_brightness"
+                android:max="200"
+                android:progress="100"
+                android:minHeight="48dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/reader_contrast" />
+                <TextView
+                    android:id="@+id/reader_contrast_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/reader_contrast"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/reader_contrast"
+                android:max="200"
+                android:progress="100"
+                android:minHeight="48dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/reader_saturation" />
+                <TextView
+                    android:id="@+id/reader_saturation_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/reader_saturation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/reader_saturation"
+                android:max="200"
+                android:progress="100"
+                android:minHeight="48dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/reader_adjustments_reset"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/reader_adjustments_reset"
+                android:textAllCaps="false" />
+        </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reader_section_controls"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:layout_marginTop="24dp"
+            android:accessibilityHeading="true"
+            android:textColor="?attr/colorPrimary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reader_tap_action_toggle"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:singleLine="false"
+            android:minHeight="48dp"
+            android:textAllCaps="false" />
         <RadioGroup
             android:id="@+id/reader_tap_action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_tap_action_edge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:text="@string/reader_tap_action_edge" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_tap_action_controls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:text="@string/reader_tap_action_controls" />
-
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_tap_action_none"
                 android:layout_width="match_parent"
@@ -444,21 +472,18 @@
                 android:minHeight="48dp"
                 android:text="@string/reader_tap_action_none" />
         </RadioGroup>
-
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/reader_volume_turn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="56dp"
             android:text="@string/volume_change_setting" />
-
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/reader_instant_turn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="56dp"
             android:text="@string/instant_page_turn" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

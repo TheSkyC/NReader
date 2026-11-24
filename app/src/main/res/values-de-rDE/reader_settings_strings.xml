@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">Steuerelemente ein- oder ausblenden</string>
     <string name="reader_tap_action_none">Keine Aktion</string>
     <string name="reader_bookmark_delete_page">Lesezeichen für Seite %1$d löschen</string>
+    <string name="reader_section_reading">Lesen</string>
+    <string name="reader_section_display">Seitenanzeige</string>
+    <string name="reader_section_image">Bild</string>
+    <string name="reader_section_controls">Steuerung</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Optionen anzeigen</string>
+    <string name="reader_setting_collapse">%1$s. Optionen ausblenden</string>
+    <string name="reader_preset_summary">Eine Vorgabe ändert Filter, Bildanpassungen, Zuschnitt und Hintergrund.</string>
+    <string name="reader_adjustments_reset">Bildanpassungen zurücksetzen</string>
 </resources>

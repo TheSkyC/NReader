@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">Denetimleri göster veya gizle</string>
     <string name="reader_tap_action_none">Eylem yok</string>
     <string name="reader_bookmark_delete_page">%1$d. sayfanın yer imini sil</string>
+    <string name="reader_section_reading">Okuma</string>
+    <string name="reader_section_display">Sayfa görünümü</string>
+    <string name="reader_section_image">Görüntü</string>
+    <string name="reader_section_controls">Kontroller</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Seçenekleri göster</string>
+    <string name="reader_setting_collapse">%1$s. Seçenekleri gizle</string>
+    <string name="reader_preset_summary">Ön ayar uygulamak filtreyi, görüntü ayarlarını, kırpmayı ve arka planı değiştirir.</string>
+    <string name="reader_adjustments_reset">Görüntü ayarlarını sıfırla</string>
 </resources>

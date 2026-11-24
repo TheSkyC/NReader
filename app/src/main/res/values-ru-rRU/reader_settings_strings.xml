@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">Показать или скрыть элементы</string>
     <string name="reader_tap_action_none">Нет действия</string>
     <string name="reader_bookmark_delete_page">Удалить закладку страницы %1$d</string>
+    <string name="reader_section_reading">Чтение</string>
+    <string name="reader_section_display">Отображение страницы</string>
+    <string name="reader_section_image">Изображение</string>
+    <string name="reader_section_controls">Управление</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Показать параметры</string>
+    <string name="reader_setting_collapse">%1$s. Скрыть параметры</string>
+    <string name="reader_preset_summary">Применение набора меняет фильтр, настройки изображения, обрезку и фон.</string>
+    <string name="reader_adjustments_reset">Сбросить настройки изображения</string>
 </resources>

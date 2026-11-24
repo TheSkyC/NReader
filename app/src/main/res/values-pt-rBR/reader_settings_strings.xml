@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">Mostrar ou ocultar controles</string>
     <string name="reader_tap_action_none">Nenhuma ação</string>
     <string name="reader_bookmark_delete_page">Excluir marcador da página %1$d</string>
+    <string name="reader_section_reading">Leitura</string>
+    <string name="reader_section_display">Exibição da página</string>
+    <string name="reader_section_image">Imagem</string>
+    <string name="reader_section_controls">Controles</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Mostrar opções</string>
+    <string name="reader_setting_collapse">%1$s. Ocultar opções</string>
+    <string name="reader_preset_summary">Aplicar uma predefinição altera o filtro, os ajustes, o corte e o fundo.</string>
+    <string name="reader_adjustments_reset">Redefinir ajustes da imagem</string>
 </resources>

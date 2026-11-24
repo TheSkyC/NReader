@@ -61,4 +61,13 @@
     <string name="reader_tap_action_controls">Показувати або приховувати елементи</string>
     <string name="reader_tap_action_none">Без дії</string>
     <string name="reader_bookmark_delete_page">Видалити закладку сторінки %1$d</string>
+    <string name="reader_section_reading">Читання</string>
+    <string name="reader_section_display">Відображення сторінки</string>
+    <string name="reader_section_image">Зображення</string>
+    <string name="reader_section_controls">Керування</string>
+    <string name="reader_setting_value">%1$s: %2$s</string>
+    <string name="reader_setting_expand">%1$s. Показати параметри</string>
+    <string name="reader_setting_collapse">%1$s. Приховати параметри</string>
+    <string name="reader_preset_summary">Застосування набору змінює фільтр, налаштування зображення, обрізання та тло.</string>
+    <string name="reader_adjustments_reset">Скинути налаштування зображення</string>
 </resources>
