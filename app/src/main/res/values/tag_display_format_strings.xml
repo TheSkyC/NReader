@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preference_key_tag_display_format" translatable="false">tag_display_format</string>
+    <string name="tag_display_format_title">Tag name display</string>
+    <string-array name="tag_display_formats">
+        <item>Translated</item>
+        <item>Bilingual</item>
+    </string-array>
+    <string-array name="tag_display_format_values" translatable="false">
+        <item>translated_only</item>
+        <item>bilingual</item>
+    </string-array>
+</resources>

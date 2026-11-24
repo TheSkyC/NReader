@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tag_display_format_title">Отображение названий тегов</string>
+    <string-array name="tag_display_formats">
+        <item>Перевод</item>
+        <item>Два языка</item>
+    </string-array>
+</resources>

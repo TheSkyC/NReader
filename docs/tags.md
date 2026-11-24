@@ -60,7 +60,7 @@ equal, or older pack leaves the installed locale unchanged. Removing a locale
 deletes only that locale's translation rows and revision. Translations are public
 replaceable data and are excluded from user backups. This local pack format
 does not specify a publishing authority, signature policy, contribution
-license, moderation workflow, or default display mode.
+license, moderation workflow, or display preference.
 
 Database version 25 records a durable change generation for each locale,
 including removed locales. Settings checks the displayed installation's revision
@@ -176,6 +176,10 @@ language. The selection is retained if that pack is removed, so reinstalling it
 restores the choice; until then, locale fallback may use a compatible installed
 pack or canonical names. The selection is a normal backed-up preference, not
 part of a translation pack. Invalid stored selections use the app locale.
+Tag names default to translated-only display when a translation is available;
+the tag name display setting can instead show both the translation and canonical
+name. Missing translations fall back to the canonical name. This preference
+changes presentation only and is included in normal settings backups.
 Variants and Unicode extensions are ignored when matching a pack. An exact installed locale wins;
 otherwise an explicitly specified script pack takes precedence over a generic
 language pack. Chinese locales without an explicit script infer `zh-Hans` or
@@ -184,7 +188,7 @@ Suggestions search canonical names,
 translated names, and aliases with a prefix query that returns at most 50
 results. The translation and alias indexes restrict lookups to the matching
 key range within the installed locale. A translated
-suggestion displays its canonical name alongside it; selecting any suggestion
+suggestion follows the tag name display setting; selecting any suggestion
 places the canonical site name in the query editor and keeps its site ID.
 Confirming a selection refreshes the tag by ID. Editing the text clears the
 selection. Typed names are looked up within their type in the background,
@@ -216,8 +220,8 @@ if neither is available, it cannot be opened.
 
 The tag manager keeps substring search for canonical names and also matches
 translated names and aliases in the active locale. It checks aliases by tag ID
-within the eligible type or rule list. It shows both names when
-a translation is available. The order, count threshold, applied-rule
+within the eligible type or rule list. Its labels follow the tag name display
+setting. The order, count threshold, applied-rule
 visibility, and account blocklist eligibility still use the canonical data.
 A shared alias can return each matching tag, and `%` and `_` in a search are
 matched literally rather than treated as SQL wildcards.
@@ -260,7 +264,7 @@ the app process ends.
 
 Gallery details show canonical labels immediately, then look up installed
 translations for that gallery's positive site IDs in the background. A
-translated tag button shows both names and can wrap onto multiple lines.
+translated tag button follows the tag name display setting and can wrap onto multiple lines.
 Tapping it still searches by the original site tag, and long-press still
 copies the canonical name.
 When showing both names together, the app ignores explicit text direction

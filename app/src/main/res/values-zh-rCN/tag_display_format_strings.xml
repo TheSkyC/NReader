@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tag_display_format_title">标签名称显示</string>
+    <string-array name="tag_display_formats">
+        <item>译文模式</item>
+        <item>双语模式</item>
+    </string-array>
+</resources>

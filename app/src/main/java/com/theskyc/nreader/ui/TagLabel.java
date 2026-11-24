@@ -6,6 +6,7 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.settings.TagDisplayMode;
 
 import java.util.regex.Pattern;
 
@@ -22,6 +23,7 @@ public final class TagLabel {
         String displayName = BIDI_CONTROLS.matcher(translation).replaceAll("").trim();
         String canonicalName = BIDI_CONTROLS.matcher(canonical).replaceAll("");
         if (displayName.isEmpty() || displayName.equals(canonicalName)) return canonicalName;
+        if (!TagDisplayMode.isBilingual(view.getContext())) return displayName;
         BidiFormatter bidi = BidiFormatter.getInstance(view.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
         return view.getContext().getString(R.string.tag_translation_display_pair,
             bidi.unicodeWrap(displayName), bidi.unicodeWrap(canonicalName));

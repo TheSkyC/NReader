@@ -49,6 +49,7 @@ import com.theskyc.nreader.components.activities.CrashApplication;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.MainGridSettings;
+import com.theskyc.nreader.settings.TagDisplayMode;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.DebugImageMask;
 import com.theskyc.nreader.utility.Utility;
@@ -189,6 +190,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
 
     @SuppressLint("ApplySharedPref")
     private void mainMenu() {
+        TagDisplayMode.normalizePreference(requireContext());
         addPreferencesFromResource(R.xml.settings);
 
         Preference tapTurn = Objects.requireNonNull(findPreference(getString(R.string.preference_key_change_page_buttons)));

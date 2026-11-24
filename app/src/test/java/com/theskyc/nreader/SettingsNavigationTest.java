@@ -10,6 +10,7 @@ import android.webkit.CookieManager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
+import androidx.preference.ListPreference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -98,12 +99,41 @@ public class SettingsNavigationTest {
                     if (section[0].equals("settings_screen_reader")) {
                         assertFalse(((SwitchPreferenceCompat) preference).isChecked());
                     }
+                    if (section[0].equals("settings_screen_search")) {
+                        ListPreference display = child.get().fragment.findPreference(
+                            application.getString(R.string.preference_key_tag_display_format));
+                        assertNotNull(display);
+                        assertEquals("translated_only", display.getValue());
+                        display.performClick();
+                        child.get().getSupportFragmentManager().executePendingTransactions();
+                        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                        ListView choices = dialog.getListView();
+                        assertNotNull(choices);
+                        assertEquals(2, choices.getCount());
+                        dialog.dismiss();
+                        display.setValue("translated_only");
+                    }
                     child.recreate();
                     assertEquals(section[0], child.get().fragment.getPreferenceScreen().getKey());
                     assertNotNull(child.get().fragment.findPreference(application.getString(resourceId)));
                 }
             }
             assertFalse(application.getSharedPreferences("Settings", 0).getBoolean("change_page_buttons", true));
+        }
+    }
+
+    @Test
+    public void invalidTagDisplayPreferenceDoesNotBreakSettings() {
+        Application application = RuntimeEnvironment.getApplication();
+        String key = application.getString(R.string.preference_key_tag_display_format);
+        application.getSharedPreferences("Settings", 0).edit().putInt(key, 1).commit();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_search");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            ListPreference display = controller.get().fragment.findPreference(key);
+            assertEquals("translated_only", display.getValue());
         }
     }
 

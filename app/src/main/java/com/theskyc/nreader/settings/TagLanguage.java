@@ -19,8 +19,10 @@ public final class TagLanguage {
         if (observedPreferences != preferences) {
             if (observedPreferences != null) observedPreferences.unregisterOnSharedPreferenceChangeListener(listener);
             String key = context.getString(R.string.preference_key_tag_display_language);
+            String formatKey = context.getString(R.string.preference_key_tag_display_format);
             listener = (shared, changedKey) -> {
-                if (changedKey == null || key.equals(changedKey)) TagTranslationCatalog.notifyDisplayLanguageChanged();
+                if (changedKey == null || key.equals(changedKey) || formatKey.equals(changedKey))
+                    TagTranslationCatalog.notifyDisplayLanguageChanged();
             };
             observedPreferences = preferences;
             preferences.registerOnSharedPreferenceChangeListener(listener);
