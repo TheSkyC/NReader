@@ -75,6 +75,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Nullable private Drawable initialCover;
     private final boolean[] expandedTags = new boolean[TagType.values.length];
     private Map<Integer, String> tagDisplayNames = Collections.emptyMap();
+    private boolean tagNamesLoading;
+    private boolean tagNamesResolved;
 
     public GalleryAdapter(GalleryActivity cont, GenericGallery gallery, int colCount) {
         this(cont, gallery, colCount, false);
@@ -107,9 +109,15 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         this.initialCover = initialCover;
     }
 
+    public void beginTagDisplayNames() {
+        if (details && !tagNamesResolved) tagNamesLoading = true;
+    }
+
     public void setTagDisplayNames(Map<Integer, String> names) {
-        if (!details || tagDisplayNames.equals(names)) return;
+        if (!details) return;
         tagDisplayNames = names;
+        tagNamesLoading = false;
+        tagNamesResolved = true;
         notifyItemChanged(1);
     }
 
@@ -264,6 +272,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         holder.master.findViewById(R.id.gallery_metadata).setVisibility(hasTags() || hasPageCount ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.favorite_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
         holder.master.findViewById(R.id.upload_stat).setVisibility(hasTags() ? View.VISIBLE : View.GONE);
+        holder.master.findViewById(R.id.gallery_tag_loading)
+            .setVisibility(hasTags() && tagNamesLoading ? View.VISIBLE : View.GONE);
+        vg.setVisibility(tagNamesLoading ? View.GONE : View.VISIBLE);
         if (hasPageCount) ((TextView) holder.master.findViewById(R.id.page_stat))
             .setText(context.getResources().getQuantityString(R.plurals.page_count_format,
                 gallery.getPageCount(), gallery.getPageCount()));
@@ -273,6 +284,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             vg.setLayoutParams(layoutParams);
             return;
         }
+        addInfoLayout(holder, gallery.getGalleryData());
+        if (tagNamesLoading) return;
         final LayoutInflater inflater = context.getLayoutInflater();
 
         int tagCount, idStringTagName;
@@ -317,7 +330,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 notifyItemChanged(1);
             });
         }
-        addInfoLayout(holder, gallery.getGalleryData());
     }
 
     private void initializeIdContainer(TextView idContainer) {

@@ -330,9 +330,9 @@ public class GalleryActivity extends BaseActivity {
         detailsAdapter = new GalleryAdapter(this, gallery, 1, true);
         detailsAdapter.setInitialCover(retainedCover);
         if (previousDetails != null) detailsAdapter.copyExpandedTagsFrom(previousDetails);
+        loadTagLabels();
         detailsList.setLayoutManager(new LinearLayoutManager(this));
         detailsList.setAdapter(detailsAdapter);
-        loadTagLabels();
         lookup();
         if (shellStartedAt >= 0) {
             LogUtility.d("Gallery shell ready in " + (SystemClock.elapsedRealtime() - shellStartedAt) + " ms");
@@ -362,6 +362,7 @@ public class GalleryActivity extends BaseActivity {
         }
         if (siteIds.isEmpty()) return;
         Locale locale = TagLanguage.current(this);
+        requestedAdapter.beginTagDisplayNames();
         tagLabelRequest = tagLabelLoader.submit(() -> {
             Map<Integer, String> names;
             try {

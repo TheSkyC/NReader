@@ -7,6 +7,15 @@
 
     <include layout="@layout/info_layout" />
 
+    <ProgressBar
+        android:id="@+id/gallery_tag_loading"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="8dp"
+        android:contentDescription="@string/gallery_loading_details"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/tag_master"
         android:layout_width="match_parent"

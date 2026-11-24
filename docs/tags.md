@@ -262,9 +262,12 @@ before restoring the previous statuses; if any tag changed, it refuses the
 whole undo. The snapshot is cleared after undo, after a stale check, or when
 the app process ends.
 
-Gallery details show canonical labels immediately, then look up installed
-translations for that gallery's positive site IDs in the background. A
-translated tag button follows the tag name display setting and can wrap onto multiple lines.
+Gallery details show their header and metadata while installed translations for
+positive site IDs are looked up in the background. The tag section waits for
+the first lookup so translated labels do not flash as canonical names. Missing
+translations and failed lookups use canonical names. Later translation changes
+keep the existing labels visible while refreshing. A translated tag button
+follows the tag name display setting and can wrap onto multiple lines.
 Tapping it still searches by the original site tag, and long-press still
 copies the canonical name.
 When showing both names together, the app ignores explicit text direction
