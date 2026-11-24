@@ -34,6 +34,7 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
+import com.theskyc.nreader.components.widgets.CollapsibleTagGroup;
 import com.theskyc.nreader.files.GalleryFolder;
 import com.theskyc.nreader.github.chrisbanes.photoview.PhotoView;
 import com.theskyc.nreader.settings.Global;
@@ -43,7 +44,6 @@ import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.LanguageFlag;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
@@ -290,7 +290,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         int tagCount, idStringTagName;
         ViewGroup lay;
-        ChipGroup cg;
+        CollapsibleTagGroup cg;
         TagList tagList = this.gallery.getGalleryData().getTags();
         for (TagType type : TagType.values) {
             idStringTagName = TAG_NAMES[type.getId()];
@@ -299,9 +299,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             cg = lay.findViewById(R.id.chip_group);
             lay.setVisibility(tagCount == 0 ? View.GONE : View.VISIBLE);
             ((TextView) lay.findViewById(R.id.title)).setText(idStringTagName);
+            while (cg.getChildCount() > tagCount) cg.removeViewAt(cg.getChildCount() - 1);
             for (int a = cg.getChildCount(); a < tagCount; a++) {
-                final Tag tag = tagList.getTag(type, a);
                 MaterialButton action = (MaterialButton) inflater.inflate(R.layout.gallery_tag_action, cg, false);
+                cg.addView(action);
+            }
+            for (int index = 0; index < cg.getChildCount(); index++) {
+                MaterialButton action = (MaterialButton) cg.getChildAt(index);
+                Tag tag = tagList.getTag(type, index);
                 action.setOnClickListener(v -> {
                     Intent intent = new Intent(context, MainActivity.class);
                     intent.putExtra(context.getPackageName() + ".TAG", tag);
@@ -313,17 +318,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                     Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
                     return true;
                 });
-                cg.addView(action);
-            }
-            for (int index = 0; index < cg.getChildCount(); index++) {
-                MaterialButton action = (MaterialButton) cg.getChildAt(index);
-                Tag tag = tagList.getTag(type, index);
                 action.setText(TagLabel.format(cg, tag.getName(), tagDisplayNames.get(tag.getId())));
                 boolean hasName = tag.getName() != null && !tag.getName().isEmpty();
-                action.setVisibility(hasName && (expandedTags[type.getId()] || index < 8) ? View.VISIBLE : View.GONE);
+                cg.setTagAvailable(action, hasName);
             }
             TextView expand = lay.findViewById(R.id.gallery_expand_category);
-            expand.setVisibility(tagCount > 8 ? View.VISIBLE : View.GONE);
+            cg.configure(expand, expandedTags[type.getId()]);
             expand.setText(expandedTags[type.getId()] ? R.string.gallery_collapse_tags : R.string.gallery_expand_tags);
             expand.setOnClickListener(v -> {
                 expandedTags[type.getId()] = !expandedTags[type.getId()];
