@@ -386,6 +386,29 @@ public class AdvancedSearchAccountTagsTest {
         }
     }
 
+    @Test public void clearFiltersRestoresAccountExclusionsWithoutChangingKeywords() throws Exception {
+        try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+            SearchActivity activity = controller.get();
+            awaitBlacklist(activity);
+            ViewGroup group = activity.findViewById(R.id.tag_group);
+            SearchUiTestSupport.selectStatus(chip(group, MANUAL_ID), 1);
+            SearchUiTestSupport.removeTag(chip(group, AUTOMATIC_ID));
+            ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", false);
+            com.theskyc.nreader.api.components.Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+            ranges.setFromPage(20);
+            activity.findViewById(R.id.search_clear_filters).performClick();
+            AlertDialog dialog = (AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            awaitBlacklist(activity);
+            assertEquals("fixture", ((SearchView) activity.findViewById(R.id.search)).getQuery().toString());
+            assertTrue(((com.theskyc.nreader.api.components.Ranges)
+                ReflectionHelpers.getField(activity, "ranges")).isDefault());
+            assertEquals(TagStatus.AVOIDED, chip(group, MANUAL_ID).getTag().getStatus());
+            assertEquals(TagStatus.AVOIDED, chip(group, AUTOMATIC_ID).getTag().getStatus());
+        }
+    }
+
     @Test public void blacklistRefreshDoesNotReapplyClearedOrRemovedSelections() throws Exception {
         try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
             SearchActivity activity = controller.get();

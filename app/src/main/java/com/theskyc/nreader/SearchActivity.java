@@ -139,6 +139,7 @@ public class SearchActivity extends GeneralActivity {
             searchView.setQuery(savedInstanceState.getString("search.query", ""), false);
         RecyclerView recyclerView = findViewById(R.id.recycler);
         findViewById(R.id.search_submit).setEnabled(false);
+        findViewById(R.id.search_clear_filters).setEnabled(false);
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
             submitSearch(searchView.getQuery().toString().trim(), false);
@@ -147,6 +148,13 @@ public class SearchActivity extends GeneralActivity {
             showAllSelected = !showAllSelected;
             updateFilterSummary();
         });
+        findViewById(R.id.search_clear_filters).setOnClickListener(view ->
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.search_clear_filters)
+                .setMessage(R.string.search_clear_filters_message)
+                .setPositiveButton(R.string.search_clear_filters, (dialog, which) -> clearSearchFilters())
+                .setNegativeButton(R.string.cancel, null)
+                .show());
 
         groups = new ChipGroup[]{
             null,
@@ -393,8 +401,12 @@ public class SearchActivity extends GeneralActivity {
         Button toPage = pageRangeLayout.findViewById(R.id.toButton);
         Button fromDate = uploadRangeLayout.findViewById(R.id.fromButton);
         Button toDate = uploadRangeLayout.findViewById(R.id.toButton);
-        if (ranges.getFromPage() != Ranges.UNDEFINED) fromPage.setText(String.valueOf(ranges.getFromPage()));
-        if (ranges.getToPage() != Ranges.UNDEFINED) toPage.setText(String.valueOf(ranges.getToPage()));
+        fromPage.setText(ranges.getFromPage() != Ranges.UNDEFINED
+            ? String.valueOf(ranges.getFromPage()) : getString(R.string.search_range_any));
+        toPage.setText(ranges.getToPage() != Ranges.UNDEFINED
+            ? String.valueOf(ranges.getToPage()) : getString(R.string.search_range_any));
+        fromDate.setText(R.string.search_range_any);
+        toDate.setText(R.string.search_range_any);
         if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
             fromDate.setText(getString(R.string.search_range_time_value, ranges.getFromDate(),
                 getString(ranges.getFromDateUnit().getString())));
@@ -523,6 +535,7 @@ public class SearchActivity extends GeneralActivity {
                 addTagButtons();
                 groupsPopulated = true;
                 findViewById(R.id.search_submit).setEnabled(true);
+                findViewById(R.id.search_clear_filters).setEnabled(true);
                 if (identity != null) addOnlineSearchTags(identity, revision, online);
                 synchronizeOnlineSearchTags();
                 if (restoredExpandedGroups != null && restoredExpandedGroups.length == groups.length) {
@@ -756,6 +769,25 @@ public class SearchActivity extends GeneralActivity {
         if (tagId > 0) manualTagDecisions.add(tagId);
         onlineChips.remove(chip);
         onlineMergedChips.remove(chip);
+    }
+
+    private void clearSearchFilters() {
+        for (ChipTag chip : onlineChips) {
+            getGroup(chip.getTag().getType()).removeView(chip);
+            tags.remove(chip);
+        }
+        onlineChips.clear();
+        onlineMergedChips.clear();
+        onlineChipsIdentity = null;
+        onlineChipsRevision = -1;
+        manualTagDecisions.clear();
+        for (ChipTag chip : tags) chip.changeStatus(TagStatus.DEFAULT);
+        ranges = new Ranges();
+        initRanges();
+        advanced = false;
+        showAllSelected = false;
+        updateFilterSummary();
+        synchronizeOnlineSearchTags();
     }
 
     private void removeStaleOnlineTags() {

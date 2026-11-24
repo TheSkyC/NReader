@@ -21,6 +21,8 @@
     <string name="search_remove_filter">Remove filter: %1$s</string>
     <string name="search_selected_show_all">Show all %1$d</string>
     <string name="search_selected_show_less">Show less</string>
+    <string name="search_clear_filters">Clear filters</string>
+    <string name="search_clear_filters_message">Clear page, time and tag selections? Your keywords and account exclusions will remain. Saved tag rules will not be changed.</string>
     <string name="search_account_filter_notice">Account exclusions applied: %1$d</string>
     <string name="search_range_any">Any</string>
     <string name="search_range_min_pages">Minimum pages</string>

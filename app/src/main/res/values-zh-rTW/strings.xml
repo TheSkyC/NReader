@@ -20,6 +20,8 @@
     <string name="search_remove_filter">移除篩選條件：%1$s</string>
     <string name="search_selected_show_all">顯示全部 %1$d 項</string>
     <string name="search_selected_show_less">收合</string>
+    <string name="search_clear_filters">清除篩選</string>
+    <string name="search_clear_filters_message">清除頁數、時間和標籤選擇？關鍵字和帳號排除條件會保留，已儲存的標籤規則不會改變。</string>
     <string name="search_account_filter_notice">已套用帳號排除條件：%1$d</string>
     <string name="search_range_any">不限</string>
     <string name="search_range_min_pages">最少頁數</string>
