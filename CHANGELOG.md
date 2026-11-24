@@ -5,6 +5,10 @@
 - Migrate the Java namespace to `com.theskyc.nreader`, preserving existing
   launcher settings and scheduled work. Older download notifications open the
   downloads list; older update notifications open the update screen.
+- Publish `zh-Hans` tag translation revision 2 with curated names: decorative
+  emoji and invisible formatting are removed from descriptive names, escaped
+  Markdown is fixed, `A | B` alternates become search aliases, and a few
+  ambiguous or mistranslated tags get corrected labels.
 
 ## 1.0.0-beta.3 — 2026-11-20
 

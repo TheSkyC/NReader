@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 public class TranslationAttributionTest {
     private static final String DIGEST = "49df957e214c4431f37b14444a52dc924777423f89bd2403005e2e2f4c8c1d64";
+    private static final String DIGEST_REVISION_2 = "26e1672781f481fc135dad920766441b7efd53c75295088991c403d3cb9df40f";
 
     @Test public void onlyKnownPayloadShowsAttributionAndLinks() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
@@ -38,15 +39,19 @@ public class TranslationAttributionTest {
         try (ActivityController<SettingsActivity> controller = Robolectric.buildActivity(SettingsActivity.class).setup()) {
             SettingsActivity activity = controller.get();
             TagTranslationFeed feed = new TagTranslationFeed(app, "https://example.org/manifest.json");
-            AlertDialog known = showConfirmation(activity, feed, descriptor("zh-Hans", 1, DIGEST));
-            CharSequence message = ((TextView) known.findViewById(android.R.id.message)).getText();
-            assertTrue(message.toString().contains("EhTagTranslation"));
-            assertTrue(message.toString().contains("CC BY-NC-SA"));
-            assertEquals(2, ((Spanned) message).getSpans(0, message.length(), URLSpan.class).length);
-            known.dismiss();
+            for (TagTranslationManifest.Pack known : new TagTranslationManifest.Pack[]{
+                descriptor("zh-Hans", 1, DIGEST), descriptor("zh-Hans", 2, DIGEST_REVISION_2)
+            }) {
+                AlertDialog dialog = showConfirmation(activity, feed, known);
+                CharSequence message = ((TextView) dialog.findViewById(android.R.id.message)).getText();
+                assertTrue(message.toString().contains("EhTagTranslation"));
+                assertTrue(message.toString().contains("CC BY-NC-SA"));
+                assertEquals(2, ((Spanned) message).getSpans(0, message.length(), URLSpan.class).length);
+                dialog.dismiss();
+            }
 
             for (TagTranslationManifest.Pack other : new TagTranslationManifest.Pack[]{
-                descriptor("zh-Hans", 1, "0".repeat(64)), descriptor("zh-Hans", 2, DIGEST),
+                descriptor("zh-Hans", 1, "0".repeat(64)), descriptor("zh-Hans", 3, "1".repeat(64)),
                 descriptor("ja", 1, DIGEST)
             }) {
                 AlertDialog dialog = showConfirmation(activity, feed, other);

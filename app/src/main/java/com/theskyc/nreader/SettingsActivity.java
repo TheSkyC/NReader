@@ -71,8 +71,10 @@ public class SettingsActivity extends GeneralActivity {
     private static final String EXPORT_LOCALE = "translation_export_locale";
     private static final String EXPORT_REVISION = "translation_export_revision";
     private static final String EXPORT_GENERATION = "translation_export_generation";
-    private static final String ZH_HANS_REVISION_1_SHA256 =
-        "49df957e214c4431f37b14444a52dc924777423f89bd2403005e2e2f4c8c1d64";
+    private static final String[] ZH_HANS_PUBLISHED_SHA256 = {
+        "49df957e214c4431f37b14444a52dc924777423f89bd2403005e2e2f4c8c1d64",
+        "26e1672781f481fc135dad920766441b7efd53c75295088991c403d3cb9df40f",
+    };
     private static final String[] TRANSLATION_PACK_MIME_TYPES = {
         "application/json", "application/octet-stream", "text/*"
     };
@@ -576,11 +578,17 @@ public class SettingsActivity extends GeneralActivity {
         return getString(R.string.tag_translation_pack_item, name, pack.revision);
     }
 
+    private static boolean isPublishedZhHansPayload(TagTranslationManifest.Pack pack) {
+        for (String digest : ZH_HANS_PUBLISHED_SHA256) {
+            if (pack.hasPayloadDigest(digest)) return true;
+        }
+        return false;
+    }
+
     private void confirmDownloadTranslationPack(TagTranslationFeed feed, TagTranslationManifest.Pack pack) {
         String label = translationPackLabel(pack);
         String size = Formatter.formatShortFileSize(this, pack.sizeBytes);
-        boolean knownPack = "zh-Hans".equals(pack.locale) && pack.revision == 1
-            && pack.hasPayloadDigest(ZH_HANS_REVISION_1_SHA256);
+        boolean knownPack = "zh-Hans".equals(pack.locale) && isPublishedZhHansPayload(pack);
         String message = knownPack
             ? getString(R.string.tag_translation_online_confirm_zh_hans, size,
                 getString(R.string.tag_translation_zh_hans_source_url),
