@@ -94,6 +94,14 @@ public class SearchTagEntryTest {
                 assertEquals("pages:>=20 uploaded:<=2w", restoredRanges.toQuery());
                 View pageRange = restored.findViewById(R.id.page_range);
                 assertEquals("20", ((android.widget.Button) pageRange.findViewById(R.id.fromButton)).getText().toString());
+                ViewGroup summary = restored.findViewById(R.id.search_selected_filters);
+                assertEquals(3, summary.getChildCount());
+                assertTrue(((Chip) summary.getChildAt(0)).getText().toString().contains("20"));
+                assertTrue(((Chip) summary.getChildAt(0)).performCloseIconClick());
+                assertEquals(Ranges.UNDEFINED, restoredRanges.getFromPage());
+                assertEquals("uploaded:<=2w", restoredRanges.toQuery());
+                assertEquals(restored.getString(R.string.search_range_any),
+                    ((android.widget.Button) pageRange.findViewById(R.id.fromButton)).getText().toString());
             }
         } finally {
             Queries.setDb(null);

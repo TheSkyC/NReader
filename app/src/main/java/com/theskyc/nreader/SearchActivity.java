@@ -418,12 +418,14 @@ public class SearchActivity extends GeneralActivity {
                     toPage.setText(R.string.search_range_any);
                 }
                 advanced = true;
+                updateFilterSummary();
             }
 
             @Override
             public void neutral() {
                 ranges.setFromPage(Ranges.UNDEFINED);
                 fromPage.setText(R.string.search_range_any);
+                updateFilterSummary();
             }
         }));
         toPage.setOnClickListener(v -> createPageBuilder(R.string.to_page, ranges.getFromPage(), 2000, ranges.getToPage(), new DefaultDialogs.CustomDialogResults() {
@@ -432,12 +434,14 @@ public class SearchActivity extends GeneralActivity {
                 ranges.setToPage(actual);
                 toPage.setText(String.format(Locale.US, "%d", actual));
                 advanced = true;
+                updateFilterSummary();
             }
 
             @Override
             public void neutral() {
                 ranges.setToPage(Ranges.UNDEFINED);
                 toPage.setText(R.string.search_range_any);
+                updateFilterSummary();
             }
         }));
         fromDate.setOnClickListener(v -> showUnitDialog(fromDate, true));
@@ -470,6 +474,7 @@ public class SearchActivity extends GeneralActivity {
                     }
                     button.setText(getString(R.string.search_range_time_value, actual, getString(temporaryUnit.getString())));
                     advanced = true;
+                    updateFilterSummary();
                 }
 
                 @Override
@@ -482,6 +487,7 @@ public class SearchActivity extends GeneralActivity {
                         ranges.setToDate(Ranges.UNDEFINED);
                     }
                     button.setText(R.string.search_range_any);
+                    updateFilterSummary();
                 }
             });
         });
@@ -494,6 +500,7 @@ public class SearchActivity extends GeneralActivity {
                 ranges.setToDate(Ranges.UNDEFINED);
             }
             button.setText(R.string.search_range_any);
+            updateFilterSummary();
         });
         builder.show();
     }
@@ -668,6 +675,26 @@ public class SearchActivity extends GeneralActivity {
         if (automatic != 0) account.setText(getString(R.string.search_account_filter_notice, automatic));
         ChipGroup selectedGroup = findViewById(R.id.search_selected_filters);
         selectedGroup.removeAllViews();
+        if (ranges.getFromPage() != Ranges.UNDEFINED)
+            addRangeSummary(selectedGroup, getString(R.string.search_range_min_pages),
+                String.valueOf(ranges.getFromPage()), () -> ranges.setFromPage(Ranges.UNDEFINED));
+        if (ranges.getToPage() != Ranges.UNDEFINED)
+            addRangeSummary(selectedGroup, getString(R.string.search_range_max_pages),
+                String.valueOf(ranges.getToPage()), () -> ranges.setToPage(Ranges.UNDEFINED));
+        if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
+            addRangeSummary(selectedGroup, getString(R.string.search_selected_filter, getString(R.string.upload_time),
+                getString(R.string.search_range_from_time)), getString(R.string.search_range_time_value,
+                ranges.getFromDate(), getString(ranges.getFromDateUnit().getString())), () -> {
+                    ranges.setFromDate(Ranges.UNDEFINED);
+                    ranges.setFromDateUnit(Ranges.UNDEFINED_DATE);
+                });
+        if (ranges.getToDate() != Ranges.UNDEFINED && ranges.getToDateUnit() != null)
+            addRangeSummary(selectedGroup, getString(R.string.search_selected_filter, getString(R.string.upload_time),
+                getString(R.string.search_range_to_time)), getString(R.string.search_range_time_value,
+                ranges.getToDate(), getString(ranges.getToDateUnit().getString())), () -> {
+                    ranges.setToDate(Ranges.UNDEFINED);
+                    ranges.setToDateUnit(Ranges.UNDEFINED_DATE);
+                });
         int limit = showAllSelected ? selected.size() : Math.min(selected.size(), 6);
         for (int i = 0; i < limit; i++) {
             ChipTag original = selected.get(i);
@@ -700,6 +727,22 @@ public class SearchActivity extends GeneralActivity {
         for (TagType type : TagType.values) {
             if (type != TagType.UNKNOWN) updateGroupHeader(type);
         }
+    }
+
+    private void addRangeSummary(ChipGroup group, String label, String value, Runnable clear) {
+        Chip chip = (Chip) getLayoutInflater().inflate(R.layout.chip_layout, group, false);
+        String text = getString(R.string.search_selected_filter, label, value);
+        chip.setText(text);
+        chip.setEnsureMinTouchTargetSize(true);
+        chip.setCloseIconVisible(true);
+        chip.setCloseIconContentDescription(getString(R.string.search_remove_filter, text));
+        chip.setOnCloseIconClickListener(view -> {
+            clear.run();
+            advanced = true;
+            initRanges();
+            updateFilterSummary();
+        });
+        group.addView(chip);
     }
 
     private void updateGroupHeader(TagType type) {
