@@ -462,7 +462,7 @@ public class SearchActivity extends GeneralActivity {
             Ranges.TimeUnit previousUnit = from ? ranges.getFromDateUnit() : ranges.getToDateUnit();
             int previousValue = from ? ranges.getFromDate() : ranges.getToDate();
             int actual = temporaryUnit == previousUnit ? previousValue : 1;
-            createPageBuilder(from ? R.string.from_time : R.string.to_time, 1, temporaryUnit == Ranges.TimeUnit.YEAR ? 10 : 100, actual, new DefaultDialogs.CustomDialogResults() {
+            createPageBuilder(from ? R.string.search_range_from_time : R.string.search_range_to_time, 1, temporaryUnit == Ranges.TimeUnit.YEAR ? 10 : 100, actual, new DefaultDialogs.CustomDialogResults() {
                 @Override
                 public void positive(int actual) {
                     if (from) {
