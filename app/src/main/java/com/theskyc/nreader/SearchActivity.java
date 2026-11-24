@@ -455,7 +455,10 @@ public class SearchActivity extends GeneralActivity {
         builder.setIcon(R.drawable.ic_search);
         builder.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, strings), (dialog, which) -> {
             temporaryUnit = Ranges.TimeUnit.values()[which];
-            createPageBuilder(from ? R.string.from_time : R.string.to_time, 1, temporaryUnit == Ranges.TimeUnit.YEAR ? 10 : 100, 1, new DefaultDialogs.CustomDialogResults() {
+            Ranges.TimeUnit previousUnit = from ? ranges.getFromDateUnit() : ranges.getToDateUnit();
+            int previousValue = from ? ranges.getFromDate() : ranges.getToDate();
+            int actual = temporaryUnit == previousUnit ? previousValue : 1;
+            createPageBuilder(from ? R.string.from_time : R.string.to_time, 1, temporaryUnit == Ranges.TimeUnit.YEAR ? 10 : 100, actual, new DefaultDialogs.CustomDialogResults() {
                 @Override
                 public void positive(int actual) {
                     if (from) {

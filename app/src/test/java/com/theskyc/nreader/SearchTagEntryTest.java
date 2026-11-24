@@ -133,6 +133,30 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void editingUploadTimePreservesExistingValue() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromDate(20);
+                ranges.setFromDateUnit(Ranges.TimeUnit.DAY);
+                activity.findViewById(R.id.upload_range).findViewById(R.id.fromButton).performClick();
+                AlertDialog units = (AlertDialog) ShadowDialog.getLatestDialog();
+                units.getListView().performItemClick(units.getListView().getChildAt(1), 1, 1);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                AlertDialog value = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertEquals("20", ((android.widget.EditText) value.findViewById(R.id.edit_page)).getText().toString());
+                value.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertEquals(20, ranges.getFromDate());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void keyboardSubmissionAppliesVisibleFilters() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
