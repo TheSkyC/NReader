@@ -53,7 +53,8 @@ val tagCatalogManifestUrl = configuredTagCatalogManifestUrl
     ?: "https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest-v2.json"
 val debugTagCatalogManifestUrl = configuredTagCatalogManifestUrl ?: ""
 val configuredTagTranslationManifestUrl = providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull
-val tagTranslationManifestUrl = configuredTagTranslationManifestUrl ?: ""
+val tagTranslationManifestUrl = configuredTagTranslationManifestUrl
+    ?: "https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest-v2.json"
 val debugTagTranslationManifestUrl = configuredTagTranslationManifestUrl
     ?: "https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest-v2.json"
 val allowUnsignedTagFeeds = when (providers.gradleProperty("nreaderEnableUnsignedTagFeeds").orNull?.lowercase()) {

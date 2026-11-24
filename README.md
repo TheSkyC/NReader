@@ -104,12 +104,11 @@ value to disable the NReader feed. See the
 [tag directory and rules](docs/tags.md) for refresh and storage behavior.
 The separate `nreaderTagTranslationManifestUrl` property enables optional
 [online tag language packs](docs/tag-translation-distribution.md) in Settings.
-Debug builds default to the signed `zh-Hans` translation feed used by the
-release workflow. Set the property explicitly to override it, or to an empty
-value to disable online translation downloads. Other build types default to an
-empty translation URL; the release workflow configures both signed feeds under
-`feed/` on the repository's `main` branch. Unsigned v1 feeds require
-`nreaderEnableUnsignedTagFeeds=true`. Without a translation feed, users can
+Debug and release builds default to the signed `zh-Hans` translation feed
+published under `feed/` on the repository's `main` branch. Set the property
+explicitly to override it, or to an empty value to disable online translation
+downloads. Other build types default to an empty translation URL. Unsigned v1
+feeds require `nreaderEnableUnsignedTagFeeds=true`. Without a translation feed, users can
 still install packs from local files.
 App interface translations remain in `app/src/main/res/values-*/strings.xml`; `crowdin.yml`
 is retained as a format mapping, without claiming ownership of the upstream

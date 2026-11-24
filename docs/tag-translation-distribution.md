@@ -57,11 +57,10 @@ cannot silently hand off the request to another origin or account context.
 
 ## Enabling the Settings action
 
-Debug builds default to the signed v2 `zh-Hans` feed configured by the release
-workflow. Other build types default to an empty URL; the release workflow
-configures its feed explicitly. Set the Gradle property
-`nreaderTagTranslationManifestUrl` to override the URL, or set it to an empty
-value to disable the feed, including in debug builds. An unsigned v1 manifest
+Debug and release builds default to the signed v2 `zh-Hans` feed published by
+the release workflow. Other build types default to an empty URL. Set the Gradle
+property `nreaderTagTranslationManifestUrl` to override the URL or set it to an empty
+value to disable the feed. An unsigned v1 manifest
 also requires `nreaderEnableUnsignedTagFeeds=true`. When configured, users can
 choose **Settings → Tag language packs → Browse online** to fetch the locale list.
 Only new languages and revisions newer than the installed pack appear. The
