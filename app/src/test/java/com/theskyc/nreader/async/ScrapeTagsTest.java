@@ -295,6 +295,31 @@ public class ScrapeTagsTest {
         assertPreservedData();
     }
 
+    @Test public void signedCatalogRejectsTamperingBeforePayloadAndIgnoresUnsignedCheckCache() throws Exception {
+        installState("nreader-catalog");
+        checks(true).edit().putInt("checked_revision", 10).putLong("checked_at", System.currentTimeMillis()).commit();
+        String envelope = SignedTagManifestTest.fixture("catalog");
+        List<String> requests = new ArrayList<>();
+        String url = "https://catalog.example/manifest-v2.json";
+        ScrapeTags bad = worker(url, 0, path -> {
+            requests.add(path);
+            return envelope.replace("\"schemaVersion\":2", "\"schemaVersion\":3");
+        });
+        assertEquals(Result.retry(), bad.refresh(database));
+        assertEquals(List.of("manifest-v2.json"), requests);
+        assertPreservedData();
+
+        requests.clear();
+        ScrapeTags valid = worker(url, 0, path -> {
+            requests.add(path);
+            return "manifest-v2.json".equals(path) ? envelope : "invalid payload";
+        });
+        assertEquals(Result.retry(), valid.refresh(database));
+        assertEquals(2, requests.size());
+        assertTrue(requests.get(1).startsWith("catalog-"));
+        assertPreservedData();
+    }
+
     private void installState(String source) {
         database.execSQL("INSERT INTO TagCatalogState (source, revision) VALUES (?, 10)", new Object[]{source});
     }

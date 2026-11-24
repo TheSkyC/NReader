@@ -97,8 +97,9 @@ public class ScrapeTags extends Worker {
             int publishedRevision = TagCatalog.installedPublishedRevision(database);
             if (!published && publishedRevision > 0) return success(NO_SOURCE);
             int installed = published ? publishedRevision : TagCatalog.installedRevision(database);
-            SharedPreferences checks = getApplicationContext().getSharedPreferences(
-                published ? "PublishedTagCatalogChecks" : "TagCatalogChecks", Context.MODE_PRIVATE);
+            String checksName = published && manifestUrl.endsWith("/manifest-v2.json")
+                ? "SignedTagCatalogChecks" : published ? "PublishedTagCatalogChecks" : "TagCatalogChecks";
+            SharedPreferences checks = getApplicationContext().getSharedPreferences(checksName, Context.MODE_PRIVATE);
             long elapsed = System.currentTimeMillis() - checks.getLong(CHECKED_AT, 0);
             if (!getInputData().getBoolean(FORCE_CHECK, false)
                 && installed > 0 && installed == checks.getInt(CHECKED_REVISION, 0)
@@ -134,8 +135,12 @@ public class ScrapeTags extends Worker {
     private int checkPublished(SQLiteDatabase database, int installed) throws IOException {
         HttpUrl url = TagCatalogManifest.manifestUrl(manifestUrl);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        download.copy(url, output, TagCatalogManifest.MAX_BYTES, true);
-        TagCatalogManifest manifest = TagCatalogManifest.parse(output.toByteArray());
+        boolean signed = SignedTagManifest.isSigned(url);
+        download.copy(url, output, signed ? SignedTagManifest.MAX_BYTES : TagCatalogManifest.MAX_BYTES, true);
+        byte[] bytes = output.toByteArray();
+        if (signed) bytes = SignedTagManifest.verify(bytes, "catalog", TagCatalogManifest.MAX_BYTES,
+            SignedTagManifest.publicKey());
+        TagCatalogManifest manifest = TagCatalogManifest.parse(bytes);
         if (manifest.revision < installed) throw new IOException("Published tag catalog revision is stale");
         if (manifest.revision == installed) return installed;
 

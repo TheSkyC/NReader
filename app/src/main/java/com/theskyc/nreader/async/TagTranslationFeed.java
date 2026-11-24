@@ -44,8 +44,12 @@ public final class TagTranslationFeed {
 
     public synchronized TagTranslationManifest readManifest() throws IOException {
         ByteArrayOutputStream staged = new ByteArrayOutputStream();
-        download.copy(manifestUrl, staged, TagTranslationManifest.MAX_BYTES, true);
-        return TagTranslationManifest.parse(staged.toByteArray());
+        boolean signed = SignedTagManifest.isSigned(manifestUrl);
+        download.copy(manifestUrl, staged, signed ? SignedTagManifest.MAX_BYTES : TagTranslationManifest.MAX_BYTES, true);
+        byte[] bytes = staged.toByteArray();
+        if (signed) bytes = SignedTagManifest.verify(bytes, "translation", TagTranslationManifest.MAX_BYTES,
+            SignedTagManifest.publicKey());
+        return TagTranslationManifest.parse(bytes);
     }
 
     public synchronized boolean install(SQLiteDatabase database, TagTranslationManifest.Pack pack) throws IOException {

@@ -99,6 +99,29 @@ public class TagTranslationFeedTest {
         assertEmptyStagingDirectory();
     }
 
+    @Test public void signedManifestIsVerifiedBeforeListingOrDownloading() throws Exception {
+        String envelope = SignedTagManifestTest.fixture("translation");
+        List<String> requests = new ArrayList<>();
+        String url = "https://feed.example:8443/tags/manifest-v2.json";
+        TagTranslationFeed valid = new TagTranslationFeed(files.getRoot(), url,
+            new OkHttpClient.Builder().addInterceptor(chain -> {
+                requests.add(chain.request().url().toString());
+                return response(chain, 200, body(envelope));
+            }).build());
+        assertTrue(valid.readManifest().getPacks().containsKey("zh-Hans"));
+        assertEquals(List.of(url), requests);
+        requests.clear();
+        TagTranslationFeed invalid = new TagTranslationFeed(files.getRoot(), url,
+            new OkHttpClient.Builder().addInterceptor(chain -> {
+                requests.add(chain.request().url().toString());
+                return response(chain, 200, body(envelope.replace("\"schemaVersion\":2", "\"schemaVersion\":3")));
+            }).build());
+        assertThrows(IOException.class, invalid::readManifest);
+        assertEquals(List.of(url), requests);
+        assertEquals(0, TagTranslationCatalog.installedRevision(database, "zh-Hans"));
+        assertFalse(stagingDirectory().exists());
+    }
+
     @Test public void installsReviewedReleaseFixtureAndSearchesAliasUsingCanonicalIdentity() throws Exception {
         String manifest = releaseFixture("manifest.json");
         String data = releaseFixture("pack.json");

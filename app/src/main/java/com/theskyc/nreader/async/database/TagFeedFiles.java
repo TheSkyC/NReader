@@ -19,7 +19,7 @@ final class TagFeedFiles {
         HttpUrl url = HttpUrl.parse(configured);
         if (url == null || !url.isHttps() || !url.username().isEmpty() || !url.password().isEmpty()
             || url.query() != null || url.fragment() != null
-            || !url.encodedPath().endsWith("/manifest.json")) {
+            || !(url.encodedPath().endsWith("/manifest.json") || url.encodedPath().endsWith("/manifest-v2.json"))) {
             throw new IOException("Invalid configured tag feed manifest URL");
         }
         return url;

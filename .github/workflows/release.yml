@@ -65,9 +65,8 @@ jobs:
       - name: Assemble release APKs and bundle
         run: >-
           ./gradlew
-          -PnreaderTagCatalogManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest.json
-          -PnreaderTagTranslationManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest.json
-          -PnreaderEnableUnsignedTagFeeds=true
+          -PnreaderTagCatalogManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/catalog/manifest-v2.json
+          -PnreaderTagTranslationManifestUrl=https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifest-v2.json
           assembleRelease bundleMinApi28Release
 
       - name: Name release bundle

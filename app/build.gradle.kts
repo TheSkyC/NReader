@@ -49,19 +49,20 @@ val updateEndpointConfig = updateEndpoint
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 val tagCatalogManifestUrl = providers.gradleProperty("nreaderTagCatalogManifestUrl").orNull ?: ""
+val tagTranslationManifestUrl = providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull ?: ""
 val allowUnsignedTagFeeds = when (providers.gradleProperty("nreaderEnableUnsignedTagFeeds").orNull?.lowercase()) {
     null, "", "false" -> false
     "true" -> true
     else -> error("nreaderEnableUnsignedTagFeeds must be true or false")
 }
-require(allowUnsignedTagFeeds || tagCatalogManifestUrl.isEmpty()
-    && (providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull ?: "").isEmpty()) {
-    "Tag manifest URLs use the unsigned v1 contract; set nreaderEnableUnsignedTagFeeds=true only for an explicit development build"
+require(allowUnsignedTagFeeds || listOf(tagCatalogManifestUrl, tagTranslationManifestUrl)
+    .all { it.isEmpty() || it.endsWith("/manifest-v2.json") }) {
+    "Unsigned tag manifest URLs require nreaderEnableUnsignedTagFeeds=true"
 }
 val tagCatalogManifestUrlConfig = tagCatalogManifestUrl
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
-val tagTranslationManifestUrlConfig = (providers.gradleProperty("nreaderTagTranslationManifestUrl").orNull ?: "")
+val tagTranslationManifestUrlConfig = tagTranslationManifestUrl
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 val nreaderVersion = providers.gradleProperty("nreaderVersion").orNull
