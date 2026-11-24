@@ -58,6 +58,39 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void visibleTagFollowsLanguageWithoutChangingSearchIdentity() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        TagLanguage.select(app, "");
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            SQLiteDatabase database = helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("original name", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            String pack = "{\"schemaVersion\":2,\"locale\":\"ja\",\"revision\":1,"
+                + "\"entries\":[{\"id\":501001,\"name\":\"Translated label\"}]}";
+            assertTrue(TagTranslationCatalog.apply(database,
+                new ByteArrayInputStream(pack.getBytes(StandardCharsets.UTF_8)), app.getCacheDir(), () -> false));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                ViewGroup group = controller.get().findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 1);
+                ChipTag chip = (ChipTag) group.getChildAt(0);
+                chip.performClick();
+                TagLanguage.select(app, "ja");
+                await(() -> chip.getText().toString().contains("Translated label"));
+                assertEquals("original name", chip.getTag().getName());
+                assertEquals(501001, chip.getTag().getId());
+                assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                TagLanguage.select(app, "");
+                await(() -> chip.getText().toString().equals("original name"));
+                assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+            }
+        } finally {
+            TagLanguage.select(app, "");
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void suggestionsFollowSelectedTagLanguageWhileDialogIsOpen() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
@@ -149,7 +182,8 @@ public class SearchTagEntryTest {
                 assertEquals(2, group.getChildCount());
                 assertEquals(501001, chip.getTag().getId());
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
-                assertEquals("Canonical Rename", chip.getText().toString());
+                assertEquals("Canonical Rename", chip.getTag().getName());
+                await(() -> chip.getText().toString().contains("Translated label"));
                 ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);

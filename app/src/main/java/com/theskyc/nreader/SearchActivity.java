@@ -56,9 +56,11 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -87,6 +89,7 @@ public class SearchActivity extends GeneralActivity {
     private InputMethodManager inputMethodManager;
     private TagEntryDialog tagEntry;
     private final ExecutorService tagLoader = Executors.newSingleThreadExecutor();
+    private long tagLabelGeneration;
 
     public void setQuery(String str, boolean submit) {
         runOnUiThread(() -> searchView.setQuery(str, submit));
@@ -147,6 +150,7 @@ public class SearchActivity extends GeneralActivity {
         populateGroup();
         TagTranslationCatalog.changes().observe(this, ignored -> {
             if (tagEntry != null) tagEntry.refreshSuggestions();
+            refreshTagLabels();
         });
         AuthStore.observeIdentityChanges(authObserver);
         Login.observeOnlineTags(authObserver);
@@ -265,6 +269,7 @@ public class SearchActivity extends GeneralActivity {
             onlineChips.add(addChipTag(tag, true, true));
             if (add != null) group.addView(add);
         }
+        refreshTagLabels();
     }
 
     private void createPageBuilder(int title, int min, int max, int actual, DefaultDialogs.DialogResults results) {
@@ -403,6 +408,7 @@ public class SearchActivity extends GeneralActivity {
                 }
                 if (identity != null) addOnlineSearchTags(identity, revision, online);
                 addTagButtons();
+                refreshTagLabels();
             });
         });
     }
@@ -471,6 +477,37 @@ public class SearchActivity extends GeneralActivity {
         cg.addView(c);
         tags.add(c);
         return c;
+    }
+
+    private void refreshTagLabels() {
+        long generation = ++tagLabelGeneration;
+        ArrayList<Integer> ids = new ArrayList<>();
+        for (ChipTag chip : tags) {
+            if (chip.getTag().getId() > 0) ids.add(chip.getTag().getId());
+        }
+        Locale locale = TagLanguage.current(this);
+        try {
+            tagLoader.execute(() -> {
+                Map<Integer, String> names;
+                try {
+                    names = Queries.TagTable.getDisplayNames(ids, locale);
+                } catch (RuntimeException error) {
+                    LogUtility.w("Could not load search tag translations", error);
+                    names = Collections.emptyMap();
+                }
+                Map<Integer, String> displayNames = names;
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed() || generation != tagLabelGeneration
+                        || !locale.equals(TagLanguage.current(this))) return;
+                    for (ChipTag chip : tags) {
+                        Tag tag = chip.getTag();
+                        chip.setText(TagLabel.format(chip, tag.getName(), displayNames.get(tag.getId())));
+                    }
+                });
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ignored) {
+            // The activity was destroyed before the refresh could be scheduled.
+        }
     }
 
     private void markManualTag(ChipTag chip) {
@@ -578,6 +615,7 @@ public class SearchActivity extends GeneralActivity {
         ChipTag existing = findTagChip(tag);
         if (existing != null) {
             if (tag.getId() > 0) existing.refreshTag(tag);
+            refreshTagLabels();
             return;
         }
         ChipGroup group = getGroup(tag.getType());
@@ -586,6 +624,7 @@ public class SearchActivity extends GeneralActivity {
         addChipTag(tag, true, true);
         group.addView(add);
         advanced = true;
+        refreshTagLabels();
     }
 
     private final class TagEntryDialog {
