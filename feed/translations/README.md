@@ -5,7 +5,7 @@ translation payloads; the Android client does not include the attribution files
 when downloading a payload. Keep this notice and the applicable license with a
 copy of the translation when sharing it separately.
 
-## Simplified Chinese (`zh-Hans`), revision 1
+## Simplified Chinese (`zh-Hans`), revision 2
 
 The translated names are derived from the collaborative
 [EhTagTranslation database](https://github.com/EhTagTranslation/Database) and
@@ -18,9 +18,16 @@ endorsement of NReader.
 
 NReader matched source entries to canonical tag names and types, removed
 Markdown presentation, retained conflicting names as search aliases, and added
-seven category labels. Unmatched tags use their canonical names. See the
+seven category labels. Revision 2 also removes decorative emoji and invisible
+formatting from descriptive names, unescapes Markdown, moves `A | B` alternates
+into search aliases, and applies a small curated table for a few ambiguous
+terms. Artist, group, and character names keep the source spelling. Unmatched
+tags use their canonical names. See the
 [source and reproduction note](../../docs/tag-translation-zh-Hans.md) for
 coverage, changes, and the payload digest.
+
+Revision 1 remains published as an immutable payload for clients that read the
+earlier manifest.
 
 The license above applies to the derived translation content. NReader's source
 code and other components have their own licenses; see the repository's

@@ -146,17 +146,19 @@ https://raw.githubusercontent.com/TheSkyC/NReader/main/feed/translations/manifes
 ```
 
 The initial `zh-Hans` pack is maintained by TheSkyC and targets catalog
-revision 43. Unmatched catalog tags intentionally fall back to canonical
-English names; source attribution and reproduction details are recorded in
-[the zh-Hans source note](tag-translation-zh-Hans.md).
+revision 43. Revision 2 curates the inherited translations without changing any
+canonical tag ID, type, or query text. Unmatched catalog tags intentionally fall
+back to canonical English names; source attribution and reproduction details are
+recorded in [the zh-Hans source note](tag-translation-zh-Hans.md).
 The feed directory also contains an [attribution notice](../feed/translations/README.md)
 and a copy of the source license. These files are not included in the JSON
 payload downloaded by the client.
-For the exact published `zh-Hans` revision 1 payload, identified by its SHA-256,
-the online installation confirmation displays the source and license links. The
-notice is not inferred from a locale or revision alone, since another source can
-use the same values. After export, a confirmation explains that the pack does not
-embed attribution or license information; the user must obtain the relevant
+For a published `zh-Hans` payload, identified by its SHA-256, the online
+installation confirmation displays the source and license links. The client
+recognizes both the revision 1 and revision 2 digests. The notice is not inferred
+from a locale or revision alone, since another source can use the same values.
+After export, a confirmation explains that the pack does not embed attribution
+or license information; the user must obtain the relevant
 information from its source.
 
 Catalog and translation manifests are independent. When a new translation
