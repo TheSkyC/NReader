@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.SearchView;
 
+import com.theskyc.nreader.api.components.Ranges;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
@@ -58,6 +59,47 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void recreationPreservesFiltersAndSearchInput() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("fixture", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 1);
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                activity.findViewById(R.id.tag_header).performClick();
+                SearchUiTestSupport.selectStatus((ChipTag) group.getChildAt(0), 2);
+                ((SearchView) activity.findViewById(R.id.search)).setQuery("keywords", false);
+                Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
+                ranges.setFromPage(20);
+                ranges.setToDate(2);
+                ranges.setToDateUnit(Ranges.TimeUnit.WEEK);
+
+                controller.recreate();
+                SearchActivity restored = controller.get();
+                ViewGroup restoredGroup = restored.findViewById(R.id.tag_group);
+                await(() -> restoredGroup.getChildCount() > 1);
+                assertEquals(View.VISIBLE, restored.findViewById(R.id.groups).getVisibility());
+                assertEquals(View.VISIBLE, restoredGroup.getVisibility());
+                assertEquals("keywords", ((SearchView) restored.findViewById(R.id.search)).getQuery().toString());
+                assertEquals(TagStatus.AVOIDED, ((ChipTag) restoredGroup.getChildAt(0)).getTag().getStatus());
+                Ranges restoredRanges = ReflectionHelpers.getField(restored, "ranges");
+                assertEquals("pages:>=20 uploaded:<=2w", restoredRanges.toQuery());
+                View pageRange = restored.findViewById(R.id.page_range);
+                assertEquals("20", ((android.widget.Button) pageRange.findViewById(R.id.fromButton)).getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void filterModeProvidesSearchForAnEmptyKeyword() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

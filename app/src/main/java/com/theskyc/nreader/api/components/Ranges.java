@@ -67,6 +67,22 @@ public class Ranges implements Parcelable {
         this.fromDate = fromDate;
     }
 
+    public int getFromDate() {
+        return fromDate;
+    }
+
+    public int getToDate() {
+        return toDate;
+    }
+
+    public TimeUnit getFromDateUnit() {
+        return fromDateUnit;
+    }
+
+    public TimeUnit getToDateUnit() {
+        return toDateUnit;
+    }
+
     public void setToDate(int toDate) {
         this.toDate = toDate;
     }

@@ -26,6 +26,7 @@ import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.ViewCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -74,7 +75,7 @@ public class SearchActivity extends GeneralActivity {
     static final String SEARCH_SUBMITTED_EXTRA = ".SEARCH_SUBMITTED";
     static final String ACCOUNT_TAGS_EXTRA = ".SEARCH_ACCOUNT_TAGS";
     static final String ACCOUNT_TAGS_EXPECTED_EXTRA = ".SEARCH_ACCOUNT_TAGS_EXPECTED";
-    private final Ranges ranges = new Ranges();
+    private Ranges ranges = new Ranges();
     private final ArrayList<ChipTag> tags = new ArrayList<>();
     private final ArrayList<ChipTag> onlineChips = new ArrayList<>();
     private final ArrayList<ChipTag> onlineMergedChips = new ArrayList<>();
@@ -94,6 +95,11 @@ public class SearchActivity extends GeneralActivity {
     private TagEntryDialog tagEntry;
     private final ExecutorService tagLoader = Executors.newSingleThreadExecutor();
     private long tagLabelGeneration;
+    private ArrayList<Tag> restoredTags;
+    private boolean[] restoredExpandedGroups;
+    private int restoredScrollY;
+    private boolean groupsPopulated;
+    private boolean filtersVisible;
 
     public void setQuery(String str, boolean submit) {
         runOnUiThread(() -> searchView.setQuery(str, submit));
@@ -104,6 +110,17 @@ public class SearchActivity extends GeneralActivity {
         super.onCreate(savedInstanceState);
         //Global.initActivity(this);
         setContentView(R.layout.activity_search);
+        if (savedInstanceState != null) {
+            Ranges savedRanges = savedInstanceState.getParcelable("search.ranges");
+            if (savedRanges != null) ranges = savedRanges;
+            restoredTags = savedInstanceState.getParcelableArrayList("search.tags");
+            restoredExpandedGroups = savedInstanceState.getBooleanArray("search.expanded");
+            restoredScrollY = savedInstanceState.getInt("search.scroll");
+            filtersVisible = savedInstanceState.getBoolean("search.filtersVisible");
+            advanced = savedInstanceState.getBoolean("search.advanced");
+            int[] manualIds = savedInstanceState.getIntArray("search.manualIds");
+            if (manualIds != null) for (int id : manualIds) manualTagDecisions.add(id);
+        }
         //init toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -116,7 +133,10 @@ public class SearchActivity extends GeneralActivity {
         //find IDs
         searchView = findViewById(R.id.search);
         searchView.setQueryHint(getString(R.string.search_keyword_hint));
+        if (savedInstanceState != null)
+            searchView.setQuery(savedInstanceState.getString("search.query", ""), false);
         RecyclerView recyclerView = findViewById(R.id.recycler);
+        findViewById(R.id.search_submit).setEnabled(false);
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
             submitSearch(searchView.getQuery().toString().trim(), false);
@@ -153,6 +173,7 @@ public class SearchActivity extends GeneralActivity {
             });
         }
         updateFilterSummary();
+        applyFilterVisibility();
         initRanges();
         adapter = new HistoryAdapter(this);
         //init recyclerview
@@ -186,7 +207,38 @@ public class SearchActivity extends GeneralActivity {
         Login.observeOnlineTags(authObserver);
         synchronizeOnlineSearchTags();
         if (Login.wantsAccountTag() && !Login.hasCurrentOnlineTags()) loadOnlineSearchTags();
-        searchView.requestFocus();
+        if (!filtersVisible) searchView.requestFocus();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("search.ranges", ranges);
+        outState.putBoolean("search.advanced", advanced);
+        outState.putBoolean("search.filtersVisible", filtersVisible);
+        outState.putString("search.query", searchView.getQuery().toString());
+        int[] manualIds = new int[manualTagDecisions.size()];
+        int index = 0;
+        for (int id : manualTagDecisions) manualIds[index++] = id;
+        outState.putIntArray("search.manualIds", manualIds);
+        if (groupsPopulated) {
+            ArrayList<Tag> savedTags = new ArrayList<>();
+            for (ChipTag chip : tags) {
+                if (onlineChips.contains(chip)) continue;
+                Tag tag = chip.getTag();
+                TagStatus status = onlineMergedChips.contains(chip) ? TagStatus.DEFAULT : tag.getStatus();
+                savedTags.add(new Tag(tag.getName(), tag.getCount(), tag.getId(), tag.getType(), status));
+            }
+            outState.putParcelableArrayList("search.tags", savedTags);
+            boolean[] expanded = new boolean[groups.length];
+            for (int i = 1; i < groups.length; i++) expanded[i] = groups[i].getVisibility() == View.VISIBLE;
+            outState.putBooleanArray("search.expanded", expanded);
+            outState.putInt("search.scroll", ((NestedScrollView) findViewById(R.id.groups)).getScrollY());
+        } else {
+            outState.putParcelableArrayList("search.tags", restoredTags);
+            outState.putBooleanArray("search.expanded", restoredExpandedGroups);
+            outState.putInt("search.scroll", restoredScrollY);
+        }
     }
 
     static boolean onlineTagsReady(String appliedIdentity, long appliedRevision,
@@ -196,7 +248,7 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void submitSearch(String query, boolean withoutOnlineTags) {
-        if (isResolvingTagEntry()) return;
+        if (isResolvingTagEntry() || (!groupsPopulated && (advanced || filtersVisible))) return;
         removeStaleOnlineTags();
         Login.OnlineTagScope scope = withoutOnlineTags ? null
             : Login.currentOnlineTagScope(onlineChipsIdentity, onlineChipsRevision);
@@ -259,7 +311,7 @@ public class SearchActivity extends GeneralActivity {
     }
 
     private void synchronizeOnlineSearchTags() {
-        if (isFinishing() || isDestroyed()) return;
+        if (isFinishing() || isDestroyed() || !groupsPopulated) return;
         removeStaleOnlineTags();
         String identity = Login.currentOnlineTagsIdentity();
         long revision = Login.currentOnlineTagsRevision();
@@ -334,6 +386,14 @@ public class SearchActivity extends GeneralActivity {
         Button toPage = pageRangeLayout.findViewById(R.id.toButton);
         Button fromDate = uploadRangeLayout.findViewById(R.id.fromButton);
         Button toDate = uploadRangeLayout.findViewById(R.id.toButton);
+        if (ranges.getFromPage() != Ranges.UNDEFINED) fromPage.setText(String.valueOf(ranges.getFromPage()));
+        if (ranges.getToPage() != Ranges.UNDEFINED) toPage.setText(String.valueOf(ranges.getToPage()));
+        if (ranges.getFromDate() != Ranges.UNDEFINED && ranges.getFromDateUnit() != null)
+            fromDate.setText(getString(R.string.search_range_time_value, ranges.getFromDate(),
+                getString(ranges.getFromDateUnit().getString())));
+        if (ranges.getToDate() != Ranges.UNDEFINED && ranges.getToDateUnit() != null)
+            toDate.setText(getString(R.string.search_range_time_value, ranges.getToDate(),
+                getString(ranges.getToDateUnit().getString())));
         fromPage.setOnClickListener(v -> createPageBuilder(R.string.from_page, 0, 2000, ranges.getFromPage(), new DefaultDialogs.CustomDialogResults() {
             @Override
             public void positive(int actual) {
@@ -434,24 +494,46 @@ public class SearchActivity extends GeneralActivity {
             ArrayList<Tag> online = identity != null
                 ? new ArrayList<>(Queries.TagTable.getAllOnlineBlacklisted()) : new ArrayList<>();
             runOnUiThread(() -> {
-                for (Tag t : top) addChipTag(t, true, true);
-                for (Tag t : filtered) if (!tagAlreadyExist(t)) addChipTag(t, true, true);
-                for (Tag t : categories) addChipTag(t, false, false);
-                for (Tag t : languages) {
-                    if ((t.getId() == SpecialTagIds.LANGUAGE_ENGLISH && Global.getOnlyLanguage() == Language.ENGLISH)
-                        || (t.getId() == SpecialTagIds.LANGUAGE_JAPANESE && Global.getOnlyLanguage() == Language.JAPANESE)
-                        || (t.getId() == SpecialTagIds.LANGUAGE_CHINESE && Global.getOnlyLanguage() == Language.CHINESE))
-                        t.setStatus(TagStatus.ACCEPTED);
-                    addChipTag(t, false, false);
+                if (isFinishing() || isDestroyed()) return;
+                if (restoredTags != null) {
+                    for (Tag tag : restoredTags) {
+                        boolean editable = !tag.getType().equals(TagType.LANGUAGE)
+                            && !tag.getType().equals(TagType.CATEGORY);
+                        addChipTag(tag, editable, editable);
+                    }
+                } else {
+                    for (Tag t : top) addChipTag(t, true, true);
+                    for (Tag t : filtered) if (!tagAlreadyExist(t)) addChipTag(t, true, true);
+                    for (Tag t : categories) addChipTag(t, false, false);
+                    for (Tag t : languages) {
+                        if ((t.getId() == SpecialTagIds.LANGUAGE_ENGLISH && Global.getOnlyLanguage() == Language.ENGLISH)
+                            || (t.getId() == SpecialTagIds.LANGUAGE_JAPANESE && Global.getOnlyLanguage() == Language.JAPANESE)
+                            || (t.getId() == SpecialTagIds.LANGUAGE_CHINESE && Global.getOnlyLanguage() == Language.CHINESE))
+                            t.setStatus(TagStatus.ACCEPTED);
+                        addChipTag(t, false, false);
+                    }
                 }
-                if (identity != null) addOnlineSearchTags(identity, revision, online);
                 addTagButtons();
-                for (ChipTag chip : tags) {
-                    if (chip.getTag().getStatus() != TagStatus.DEFAULT)
-                        getGroup(chip.getTag().getType()).setVisibility(View.VISIBLE);
+                groupsPopulated = true;
+                findViewById(R.id.search_submit).setEnabled(true);
+                if (identity != null) addOnlineSearchTags(identity, revision, online);
+                synchronizeOnlineSearchTags();
+                if (restoredExpandedGroups != null && restoredExpandedGroups.length == groups.length) {
+                    for (int i = 1; i < groups.length; i++)
+                        groups[i].setVisibility(restoredExpandedGroups[i] ? View.VISIBLE : View.GONE);
+                } else {
+                    for (ChipTag chip : tags) {
+                        if (chip.getTag().getStatus() != TagStatus.DEFAULT)
+                            getGroup(chip.getTag().getType()).setVisibility(View.VISIBLE);
+                    }
                 }
+                restoredTags = null;
                 updateFilterSummary();
                 refreshTagLabels();
+                if (restoredScrollY != 0) {
+                    NestedScrollView scroll = findViewById(R.id.groups);
+                    scroll.post(() -> scroll.scrollTo(0, restoredScrollY));
+                }
             });
         });
     }
@@ -859,6 +941,9 @@ public class SearchActivity extends GeneralActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search, menu);
+        MenuItem filterItem = menu.findItem(R.id.view_groups);
+        filterItem.setIcon(filtersVisible ? R.drawable.ic_close : R.drawable.ic_filter_list);
+        filterItem.setTitle(filtersVisible ? R.string.search_hide_filters : R.string.search_show_filters);
         Utility.tintMenu(this, menu);
         return super.onCreateOptionsMenu(menu);
 
@@ -870,21 +955,24 @@ public class SearchActivity extends GeneralActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.view_groups) {
-            View v = findViewById(R.id.groups);
-            boolean isVisible = v.getVisibility() == View.VISIBLE;
-            v.setVisibility(isVisible ? View.GONE : View.VISIBLE);
-            findViewById(R.id.search_actions).setVisibility(isVisible ? View.GONE : View.VISIBLE);
-            findViewById(R.id.recycler).setVisibility(isVisible ? View.VISIBLE : View.GONE);
-            item.setIcon(isVisible ? R.drawable.ic_filter_list : R.drawable.ic_close);
-            item.setTitle(isVisible ? R.string.search_show_filters : R.string.search_hide_filters);
+            filtersVisible = !filtersVisible;
+            applyFilterVisibility();
+            item.setIcon(filtersVisible ? R.drawable.ic_close : R.drawable.ic_filter_list);
+            item.setTitle(filtersVisible ? R.string.search_hide_filters : R.string.search_show_filters);
             Global.setTint(this, item.getIcon());
-            if (!isVisible) {
+            if (filtersVisible) {
                 searchView.clearFocus();
                 inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
             }
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void applyFilterVisibility() {
+        findViewById(R.id.groups).setVisibility(filtersVisible ? View.VISIBLE : View.GONE);
+        findViewById(R.id.search_actions).setVisibility(filtersVisible ? View.VISIBLE : View.GONE);
+        findViewById(R.id.recycler).setVisibility(filtersVisible ? View.GONE : View.VISIBLE);
     }
 
 

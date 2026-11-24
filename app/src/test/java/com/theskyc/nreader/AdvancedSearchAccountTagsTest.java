@@ -398,6 +398,14 @@ public class AdvancedSearchAccountTagsTest {
             SearchUiTestSupport.selectStatus(neutral, 0);
             assertEquals(TagStatus.DEFAULT, neutral.getTag().getStatus());
             SearchUiTestSupport.removeTag(removed);
+            controller.recreate();
+            activity = controller.get();
+            group = activity.findViewById(R.id.tag_group);
+            awaitBlacklist(activity);
+            neutral = chip(group, MANUAL_ID);
+            assertNotNull(neutral);
+            assertEquals(TagStatus.DEFAULT, neutral.getTag().getStatus());
+            assertTrue(chip(group, AUTOMATIC_ID) == null);
             replaceBlacklist(Arrays.asList(
                 new Tag("manual selection", 100000, MANUAL_ID, TagType.TAG, TagStatus.DEFAULT),
                 new Tag("automatic selection", 1, AUTOMATIC_ID, TagType.TAG, TagStatus.DEFAULT)));
