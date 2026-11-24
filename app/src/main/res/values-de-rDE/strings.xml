@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · %2$d ausgewählt</string>
     <string name="search_filter_expanded">Ausgeklappt</string>
     <string name="search_filter_collapsed">Eingeklappt</string>
-    <string name="search_tag_hint">Tippe ein Tag an, um zwischen beliebig, einschließen und ausschließen zu wechseln. Langes Drücken öffnet weitere Optionen.</string>
+    <string name="search_tag_hint">Tippe ein Tag an, um durch die verfügbaren Zustände zu wechseln. Langes Drücken öffnet weitere Optionen.</string>
     <string name="search_add_tag_type">%1$s hinzufügen</string>
     <string name="search_tag_any">Keine Einschränkung</string>
     <string name="search_tag_include">Einschließen</string>

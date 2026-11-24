@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · %2$d selezionati</string>
     <string name="search_filter_expanded">Espanso</string>
     <string name="search_filter_collapsed">Compresso</string>
-    <string name="search_tag_hint">Tocca un tag per alternare tra qualsiasi, includi ed escludi. Tieni premuto per la scelta diretta.</string>
+    <string name="search_tag_hint">Tocca un tag per scorrere gli stati disponibili. Tieni premuto per una scelta diretta.</string>
     <string name="search_add_tag_type">Aggiungi %1$s</string>
     <string name="search_tag_any">Nessuna limitazione</string>
     <string name="search_tag_include">Includi</string>

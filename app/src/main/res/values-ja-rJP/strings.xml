@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · %2$d件選択中</string>
     <string name="search_filter_expanded">展開中</string>
     <string name="search_filter_collapsed">折りたたみ中</string>
-    <string name="search_tag_hint">タグをタップすると、指定なし・含める・除外を切り替えます。長押しすると状態を直接選べます。</string>
+    <string name="search_tag_hint">タグをタップすると、利用可能な状態を切り替えます。長押しすると状態を直接選べます。</string>
     <string name="search_add_tag_type">%1$sを追加</string>
     <string name="search_tag_any">指定なし</string>
     <string name="search_tag_include">含める</string>

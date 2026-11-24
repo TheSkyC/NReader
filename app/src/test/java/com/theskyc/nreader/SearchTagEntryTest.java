@@ -181,6 +181,34 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void tappingCategoryTagCyclesOnlySupportedStatuses() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("Category cycle", 100, 501003,
+                TagType.CATEGORY, TagStatus.DEFAULT));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                ViewGroup group = activity.findViewById(R.id.category_group);
+                await(() -> group.getChildCount() > 0);
+                ChipTag chip = null;
+                for (int index = 0; index < group.getChildCount(); index++) {
+                    ChipTag candidate = (ChipTag) group.getChildAt(index);
+                    if (candidate.getTag().getId() == 501003) chip = candidate;
+                }
+                assertNotNull(chip);
+
+                assertTrue(chip.performClick());
+                assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
+                assertTrue(chip.performClick());
+                assertEquals(TagStatus.DEFAULT, chip.getTag().getStatus());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     private static int measureChipWidth(ChipTag chip) {
         chip.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));

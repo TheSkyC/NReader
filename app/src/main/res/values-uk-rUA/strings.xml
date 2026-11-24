@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · вибрано: %2$d</string>
     <string name="search_filter_expanded">Розгорнуто</string>
     <string name="search_filter_collapsed">Згорнуто</string>
-    <string name="search_tag_hint">Торкніться тега, щоб перемикати стани «будь-який», «включити» та «виключити». Натисніть і утримуйте, щоб вибрати стан.</string>
+    <string name="search_tag_hint">Торкніться тега, щоб перемикати доступні для нього стани. Натисніть і утримуйте, щоб вибрати стан.</string>
     <string name="search_add_tag_type">Додати: %1$s</string>
     <string name="search_tag_any">Без обмежень</string>
     <string name="search_tag_include">Включити</string>

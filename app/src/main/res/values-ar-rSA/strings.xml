@@ -10,7 +10,7 @@
     <string name="search_filter_section_count">%1$s · المحدد: %2$d</string>
     <string name="search_filter_expanded">موسّع</string>
     <string name="search_filter_collapsed">مطوي</string>
-    <string name="search_tag_hint">انقر على الوسم للتبديل بين الكل والتضمين والاستبعاد. اضغط مطولًا لاختيار الحالة أو الإزالة.</string>
+    <string name="search_tag_hint">انقر على الوسم للتبديل بين الحالات المتاحة له. اضغط مطولًا لاختيار الحالة أو الإزالة.</string>
     <string name="search_add_tag_type">إضافة %1$s</string>
     <string name="search_tag_any">بلا قيود</string>
     <string name="search_tag_include">تضمين</string>
