@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
 
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryVariant">@color/theme_primary_variant</item>
@@ -25,6 +26,10 @@
         <item name="navHeaderGradient">@drawable/side_nav_bar</item>
     </style>
 
+
+    <style name="NReaderOverflowMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="overlapAnchor">false</item>
+    </style>
 
     <style name="AppTheme.Black" parent="AppTheme">
         <item name="colorSurface">@color/theme_black_surface</item>
