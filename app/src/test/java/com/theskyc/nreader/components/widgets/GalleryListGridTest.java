@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.settings.MainGridSettings;
@@ -42,7 +43,7 @@ public class GalleryListGridTest {
     public void setUp() {
         activityController = Robolectric.buildActivity(AppCompatActivity.class);
         activity = activityController.get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         activityController.setup();
         activity.getSharedPreferences("Settings", 0).edit().clear().commit();
         recycler = new RecyclerView(activity);
@@ -115,6 +116,7 @@ public class GalleryListGridTest {
         }
         CircularProgressIndicator progress = restored.findViewById(R.id.gallery_download_progress);
         assertEquals(pixels(34), progress.getIndicatorSize());
+        assertTrue(restored.findViewById(R.id.gallery_cover) instanceof MaterialCardView);
         ImageView cover = restored.findViewById(R.id.image);
         assertEquals(cover.getWidth() * 1.5f, cover.getHeight(), 1);
         grid.cycle();

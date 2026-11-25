@@ -6,6 +6,7 @@ import android.view.View;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.theskyc.nreader.LocalActivity;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.components.classes.MultichoiceAdapter;
@@ -28,7 +29,7 @@ public class LocalAdapterGridTest {
     @Test
     public void localAndTaskRowsUseTheSameCoverCardForWidthFallback() {
         LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         Global.initFromShared(activity);
         LocalAdapter adapter = new LocalAdapter(activity, new ArrayList<>());
         try {
@@ -37,7 +38,7 @@ public class LocalAdapterGridTest {
             for (int type : new int[]{0, 1}) {
                 MultichoiceAdapter.MultichoiceViewHolder<LocalAdapter.ViewHolder> holder = adapter.onCreateViewHolder(parent, type);
                 View card = holder.itemView;
-                assertNotNull(card.findViewById(R.id.gallery_cover));
+                assertTrue(card.findViewById(R.id.gallery_cover) instanceof MaterialCardView);
                 assertNotNull(card.findViewById(R.id.gallery_favorite));
                 assertNotNull(card.findViewById(R.id.gallery_local_files));
                 assertNotNull(card.findViewById(R.id.gallery_download_progress));
