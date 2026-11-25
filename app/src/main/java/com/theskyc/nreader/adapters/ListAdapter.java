@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.GalleryActivity;
@@ -110,8 +109,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             holder.flag.setAlpha(1f);
         }
         if (context instanceof GalleryActivity) {
-            CardView card = (CardView) holder.layout.getParent();
-            ViewGroup.LayoutParams params = card.getLayoutParams();
+            ViewGroup.LayoutParams params = holder.layout.getLayoutParams();
             RecyclerView parent = attachedRecycler;
             if (parent != null) {
                 float density = parent.getResources().getDisplayMetrics().density;
@@ -120,7 +118,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
                 params.width = relatedCardWidth(availableWidth, density);
             }
             params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            card.setLayoutParams(params);
+            holder.layout.setLayoutParams(params);
         }
         holder.overlay.setVisibility((queryString != null && ent.hasIgnoredTags(queryString)) ? View.VISIBLE : View.GONE);
         loadGallery(holder, ent);

@@ -1,119 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- NReader modifications by TheSkyC (2026); see NOTICE. -->
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/master_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="6dp"
     android:layout_marginTop="8dp"
     android:layout_marginEnd="6dp"
     android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="0dp"
-    app:cardElevation="0dp"
-    app:cardPreventCornerOverlap="false">
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/master_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/gallery_cover"
+        style="@style/Widget.Material3.CardView.Filled"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:layout_constraintDimensionRatio="2:3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/gallery_cover"
-            style="@style/Widget.Material3.CardView.Filled"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:cardBackgroundColor="?attr/colorSurface"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="0dp"
-            app:cardPreventCornerOverlap="false"
-            app:layout_constraintDimensionRatio="2:3"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <ImageView
-                android:id="@+id/image"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@string/image"
-                android:scaleType="centerCrop" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="104dp"
-                android:layout_gravity="bottom"
-                android:background="@drawable/gallery_cover_gradient"
-                android:importantForAccessibility="no" />
-
-            <include layout="@layout/gallery_state_strip" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:ellipsize="end"
-            android:fallbackLineSpacing="false"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="top"
-            android:includeFontPadding="false"
-            android:lines="2"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="14sp"
-            app:lineHeight="20sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/gallery_cover" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/gallery_author"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="end"
-            android:fallbackLineSpacing="false"
-            android:includeFontPadding="false"
-            android:lines="1"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="12sp"
-            app:lineHeight="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/flag"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/flag"
-            android:layout_width="18dp"
-            android:layout_height="14dp"
-            android:layout_marginStart="4dp"
-            android:scaleType="fitCenter"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/gallery_author" />
-
-        <TextView
-            android:id="@+id/pages"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/image"
+            android:scaleType="centerCrop" />
 
         <View
-            android:id="@+id/overlay"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@color/color_overlay"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+            android:layout_width="match_parent"
+            android:layout_height="104dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/gallery_cover_gradient"
+            android:importantForAccessibility="no" />
+
+        <include layout="@layout/gallery_state_strip" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:fallbackLineSpacing="false"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="top"
+        android:includeFontPadding="false"
+        android:lines="2"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="14sp"
+        app:lineHeight="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/gallery_cover" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/gallery_author"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:fallbackLineSpacing="false"
+        android:includeFontPadding="false"
+        android:lines="1"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:lineHeight="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/flag"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/flag"
+        android:layout_width="18dp"
+        android:layout_height="14dp"
+        android:layout_marginStart="4dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/gallery_author" />
+
+    <TextView
+        android:id="@+id/pages"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/color_overlay"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
