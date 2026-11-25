@@ -18,7 +18,6 @@
     android:singleLine="false"
     android:textAllCaps="false"
     android:textColor="?attr/colorOnSurface"
-    android:textSize="14sp"
     app:backgroundTint="?attr/nreaderSurfaceVariant"
     app:cornerRadius="10dp"
     app:strokeColor="?attr/nreaderOutline" />

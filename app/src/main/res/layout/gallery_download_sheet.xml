@@ -11,17 +11,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:accessibilityHeading="true"
-        android:fontFamily="sans-serif-medium"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="18sp" />
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?android:attr/textColorPrimary" />
 
     <TextView
         android:id="@+id/sheet_detail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp" />
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?android:attr/textColorSecondary" />
 
     <LinearLayout
         android:id="@+id/sheet_actions"

@@ -21,7 +21,7 @@
         android:clickable="false"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textSize="24sp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/edit"
         app:layout_constraintStart_toStartOf="parent"
