@@ -29,6 +29,6 @@
             android:minHeight="48dp"
             android:gravity="center"
             android:padding="4dp"
-            android:textAppearance="?attr/textAppearanceBody2" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

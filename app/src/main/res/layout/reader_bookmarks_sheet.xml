@@ -12,7 +12,7 @@
         android:accessibilityHeading="true"
         android:paddingTop="24dp"
         android:text="@string/reader_bookmarks"
-        android:textAppearance="?attr/textAppearanceHeadline6" />
+        android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/reader_bookmark_add"

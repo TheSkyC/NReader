@@ -45,7 +45,7 @@
             android:accessibilityLiveRegion="polite"
             android:gravity="center"
             android:text="@string/reader_page_load_failed"
-            android:textAppearance="?attr/textAppearanceBody1" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/reader_retry"

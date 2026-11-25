@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:accessibilityHeading="true"
             android:text="@string/reader_settings_title"
-            android:textAppearance="?attr/textAppearanceHeadline6" />
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -38,7 +38,7 @@
                 android:layout_marginStart="10dp"
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_reading"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -59,7 +59,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/change_scroll_type"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_direction_selected"
@@ -67,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -118,7 +118,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_spread_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_spread_mode_selected"
@@ -126,7 +126,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -176,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_orientation_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_orientation_selected"
@@ -184,7 +184,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -240,7 +240,7 @@
                 android:layout_marginStart="10dp"
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_display"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -261,7 +261,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_scale_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_scale_selected"
@@ -269,7 +269,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -334,7 +334,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_background_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_background_selected"
@@ -342,7 +342,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -406,7 +406,7 @@
                 android:layout_marginStart="10dp"
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_image"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -427,7 +427,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_preset_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <ImageView
                 android:layout_width="24dp"
@@ -447,7 +447,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/reader_preset_summary"
-                android:textAppearance="?attr/textAppearanceBody2" />
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -495,7 +495,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_filter_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_filter_selected"
@@ -503,7 +503,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
@@ -558,7 +558,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_adjustments_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <ImageView
                 android:layout_width="24dp"
@@ -579,7 +579,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="@string/reader_adjustments_summary"
-                android:textAppearance="?attr/textAppearanceBody2" />
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -672,7 +672,7 @@
                 android:layout_marginStart="10dp"
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_controls"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -693,7 +693,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/reader_tap_action_title"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:importantForAccessibility="no" />
             <TextView
                 android:id="@+id/reader_tap_action_selected"
@@ -701,7 +701,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:textAppearance="?attr/textAppearanceBody2"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?android:attr/textColorSecondary"
                 android:importantForAccessibility="no" />
             <ImageView
