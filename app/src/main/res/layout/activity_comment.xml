@@ -14,10 +14,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/card"
+        style="@style/Widget.Material3.CardView.Filled"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:cardBackgroundColor="?attr/nreaderSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -25,29 +28,33 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="20">
+            android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/commentText"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/comment_input"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_weight="17"
-                android:ems="10"
-                android:hint="@string/send_comment"
-                android:importantForAutofill="no"
-                android:inputType="textMultiLine"
-                android:maxHeight="250dp"
-                android:maxLength="1000"
-                android:text="" />
+                android:layout_weight="1"
+                android:layout_margin="8dp"
+                android:hint="@string/send_comment">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/commentText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:importantForAutofill="no"
+                    android:inputType="textMultiLine"
+                    android:maxHeight="250dp"
+                    android:maxLength="1000" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
                 android:id="@+id/sendButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_gravity="center"
-                android:layout_weight="3"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="@string/send"
@@ -57,6 +64,6 @@
                 app:tint="?android:attr/colorForeground"
                 app:srcCompat="@android:drawable/ic_menu_send" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

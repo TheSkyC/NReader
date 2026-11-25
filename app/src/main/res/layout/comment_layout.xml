@@ -23,36 +23,42 @@
 
     <TextView
         android:id="@+id/username"
+        style="@style/TextAppearance.Material3.TitleSmall"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="8dp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/date"
+        android:textColor="?attr/colorOnSurface"
+        app:layout_constraintEnd_toStartOf="@+id/close"
         app:layout_constraintStart_toEndOf="@id/propic"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/date"
-        android:layout_width="wrap_content"
+        style="@style/TextAppearance.Material3.BodySmall"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceCaption"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="2dp"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        app:layout_constraintEnd_toEndOf="@id/username"
+        app:layout_constraintStart_toStartOf="@id/username"
+        app:layout_constraintTop_toBottomOf="@id/username" />
 
     <TextView
         android:id="@+id/body"
+        style="@style/TextAppearance.Material3.BodyMedium"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="7"
+        android:textColor="?attr/colorOnSurface"
         app:layout_constraintEnd_toStartOf="@+id/close"
         app:layout_constraintStart_toEndOf="@id/propic"
-        app:layout_constraintTop_toBottomOf="@id/username" />
+        app:layout_constraintTop_toBottomOf="@id/date" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/close"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -60,7 +66,7 @@
         android:contentDescription="@string/delete"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/date"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_close"
-        app:tint="?android:attr/colorForeground" />
+        app:tint="?attr/colorOnSurfaceVariant" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,6 +23,7 @@ import com.theskyc.nreader.components.activities.BaseActivity;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.utility.Utility;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,6 +39,11 @@ import okhttp3.Response;
 
 
 public class CommentActivity extends BaseActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private static final int MINIUM_MESSAGE_LENGHT = 10;
     private CommentAdapter adapter;
 
@@ -94,7 +100,7 @@ public class CommentActivity extends BaseActivity {
         findViewById(R.id.sendButton).setClickable(false);
         findViewById(R.id.sendButton).setEnabled(false);
         commentText.setEnabled(false);
-        commentText.setHint(R.string.comment_feature_unavailable);
+        ((TextInputLayout) findViewById(R.id.comment_input)).setHelperText(getString(R.string.comment_feature_unavailable));
         // TODO: end
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
