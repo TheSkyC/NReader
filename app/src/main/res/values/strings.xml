@@ -570,6 +570,9 @@
     <string name="view_statuses">View statuses</string>
     <string name="status_column_count">Select status column count</string>
     <string name="status_viewer">Status viewer</string>
+    <string name="status_viewer_no_statuses">No statuses yet. Add one in Settings.</string>
+    <string name="status_viewer_empty">No galleries in this status.</string>
+    <string name="status_viewer_no_matches">No galleries match your search.</string>
     <string name="title_hide_multitasking">Hide app content in multitasking</string>
     <string name="title">Title</string>
     <string name="download_date">Download date</string>

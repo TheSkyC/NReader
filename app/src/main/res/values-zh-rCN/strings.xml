@@ -477,6 +477,9 @@
     <string name="view_statuses">查看状态</string>
     <string name="status_column_count">状态列表列数</string>
     <string name="status_viewer">按状态浏览</string>
+    <string name="status_viewer_no_statuses">暂无状态。可在设置中添加。</string>
+    <string name="status_viewer_empty">此状态下暂无画廊。</string>
+    <string name="status_viewer_no_matches">没有符合搜索条件的画廊。</string>
     <string name="title_hide_multitasking">在多任务界面中隐藏该应用的内容预览</string>
     <string name="title">标题</string>
     <string name="download_date">下载日期</string>

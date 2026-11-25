@@ -87,6 +87,10 @@ public class StatusViewerAdapter extends RecyclerView.Adapter<GenericAdapter.Vie
         return galleries != null ? galleries.getCount() : 0;
     }
 
+    public boolean hasQuery() {
+        return !query.isEmpty();
+    }
+
     public void setGalleries(@Nullable Cursor galleries) {
         if (this.galleries != null) this.galleries.close();
         this.galleries = galleries;

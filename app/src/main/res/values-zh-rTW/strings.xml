@@ -477,6 +477,9 @@
     <string name="view_statuses">漫畫狀態</string>
     <string name="status_column_count">選擇狀態列數</string>
     <string name="status_viewer">漫畫狀態</string>
+    <string name="status_viewer_no_statuses">尚無狀態。可在設定中新增。</string>
+    <string name="status_viewer_empty">此狀態下尚無畫廊。</string>
+    <string name="status_viewer_no_matches">沒有符合搜尋條件的畫廊。</string>
     <string name="title_hide_multitasking">在多工介面中隱藏該應用的內容預覽</string>
     <string name="title">標題</string>
     <string name="download_date">下載日期</string>

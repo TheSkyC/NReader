@@ -3,6 +3,7 @@ package com.theskyc.nreader;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -60,6 +61,9 @@ public class StatusViewerActivity extends GeneralActivity {
         });
 
         TabLayout tabs = findViewById(R.id.tabs);
+        boolean noStatuses = sectionsPagerAdapter.getItemCount() == 0;
+        tabs.setVisibility(noStatuses ? View.GONE : View.VISIBLE);
+        findViewById(R.id.no_statuses).setVisibility(noStatuses ? View.VISIBLE : View.GONE);
         new TabLayoutMediator(tabs, viewPager, true, (tab, position) -> tab.setText(sectionsPagerAdapter.getPageTitle(position))).attach();
         loadStatusCounts();
     }
@@ -121,6 +125,10 @@ public class StatusViewerActivity extends GeneralActivity {
         PlaceholderFragment f = (PlaceholderFragment) getSupportFragmentManager().findFragmentByTag("f" + position);
         LogUtility.d(f);
         return f;
+    }
+
+    public void syncFragment(PlaceholderFragment fragment) {
+        fragment.reload(query, sortByTitle);
     }
 
     @Override
