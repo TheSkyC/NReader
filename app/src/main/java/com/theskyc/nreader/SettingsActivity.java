@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
     @Override protected int getBlackThemeStyle() {
-        return R.style.AppTheme_Material3_Black;
+        return R.style.AppTheme_Material3_Settings_Black;
     }
 
     private static final String SETTINGS_SCREEN = "settings_screen";

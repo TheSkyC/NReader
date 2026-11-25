@@ -33,6 +33,38 @@ import static org.junit.Assert.*;
 @Config(sdk = 28, application = Application.class)
 public class SettingsNavigationTest {
     @Test
+    public void listPreferenceDialogPreservesSelectionAndCancellation() {
+        Application application = RuntimeEnvironment.getApplication();
+        String key = application.getString(R.string.preference_key_title_type);
+        application.getSharedPreferences("Settings", 0).edit().putString(key, "pretty").commit();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_galleries");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            ListPreference preference = controller.get().fragment.findPreference(key);
+            preference.performClick();
+            controller.get().getSupportFragmentManager().executePendingTransactions();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            assertEquals(2, dialog.getListView().getCheckedItemPosition());
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals("pretty", preference.getValue());
+
+            preference.performClick();
+            controller.get().getSupportFragmentManager().executePendingTransactions();
+            dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            ListView choices = dialog.getListView();
+            choices.performItemClick(choices.getChildAt(0), 0, choices.getItemIdAtPosition(0));
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(preference.getEntryValues()[0].toString(), preference.getValue());
+            controller.recreate();
+            preference = controller.get().fragment.findPreference(key);
+            assertEquals(preference.getEntryValues()[0].toString(), preference.getValue());
+        }
+    }
+
+    @Test
     public void successfulRestoreClosesSettingsStackButCancellationDoesNot() {
         Application application = RuntimeEnvironment.getApplication();
         Global.initFromShared(application);

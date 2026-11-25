@@ -202,7 +202,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.theskyc.nreader.MainActivity" />
         </activity>
-        <activity android:name=".SettingsActivity" android:theme="@style/AppTheme.Material3" />
+        <activity android:name=".SettingsActivity" android:theme="@style/AppTheme.Material3.Settings" />
         <activity android:name=".AccountLoginActivity" android:exported="false"
             android:theme="@style/AppTheme.Material3" />
         <activity

@@ -83,6 +83,14 @@
         <item name="colorOutline">?attr/colorOnSurfaceVariant</item>
     </style>
 
+    <style name="AppTheme.Material3.Settings" parent="AppTheme.Material3">
+        <item name="alertDialogTheme">@style/NReaderSettingsDialogTheme</item>
+    </style>
+
+    <style name="NReaderSettingsDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/settings_dialog_background</item>
+    </style>
+
     <style name="AppTheme.Material3.Black" parent="AppTheme.Material3">
         <item name="colorPrimary">@color/m3_black_primary</item>
         <item name="colorOnPrimary">@color/m3_black_on_primary</item>
@@ -113,6 +121,10 @@
         <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>
         <item name="nreaderOutline">@color/theme_black_outline</item>
         <item name="elevationOverlayEnabled">false</item>
+    </style>
+
+    <style name="AppTheme.Material3.Settings.Black" parent="AppTheme.Material3.Black">
+        <item name="alertDialogTheme">@style/NReaderSettingsDialogTheme</item>
     </style>
 
     <style name="AppTheme.Black" parent="AppTheme">
