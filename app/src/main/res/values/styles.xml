@@ -40,6 +40,8 @@
 
     <style name="NReaderPreferenceThemeOverlay" parent="PreferenceThemeOverlay.v14.Material">
         <item name="switchPreferenceCompatStyle">@style/NReaderSwitchPreference</item>
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Material3.TitleSmall</item>
+        <item name="preferenceCategoryTitleTextColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="NReaderSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
