@@ -22,14 +22,14 @@
             android:orientation="vertical">
 
             <TextView
-                style="@style/TextAppearance.MaterialComponents.Headline6"
+                style="@style/TextAppearance.Material3.TitleLarge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/search_filters_title" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/search_clear_filters"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
@@ -40,7 +40,7 @@
 
         <TextView
             android:id="@+id/search_filter_summary"
-            style="@style/TextAppearance.MaterialComponents.Body2"
+            style="@style/TextAppearance.Material3.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -53,7 +53,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/search_selected_more"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="?attr/colorOnSurface"
@@ -61,14 +61,14 @@
 
         <TextView
             android:id="@+id/search_account_filters"
-            style="@style/TextAppearance.MaterialComponents.Body2"
+            style="@style/TextAppearance.Material3.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
         <TextView
-            style="@style/TextAppearance.MaterialComponents.Body2"
+            style="@style/TextAppearance.Material3.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -83,7 +83,7 @@
 
             <TextView
                 android:id="@+id/tag_header"
-                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -96,7 +96,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tag_add"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
@@ -137,7 +137,7 @@
 
             <TextView
                 android:id="@+id/parody_header"
-                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -150,7 +150,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/parody_add"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
@@ -179,7 +179,7 @@
 
             <TextView
                 android:id="@+id/character_header"
-                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -192,7 +192,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/character_add"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
@@ -221,7 +221,7 @@
 
             <TextView
                 android:id="@+id/artist_header"
-                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -234,7 +234,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/artist_add"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
@@ -263,7 +263,7 @@
 
             <TextView
                 android:id="@+id/group_header"
-                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -276,7 +276,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/group_add"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
@@ -299,7 +299,7 @@
 
         <TextView
             android:id="@+id/category_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+            style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
@@ -321,7 +321,7 @@
 
         <TextView
             android:id="@+id/language_header"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+            style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"

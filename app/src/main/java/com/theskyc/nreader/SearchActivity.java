@@ -78,6 +78,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class SearchActivity extends GeneralActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     static final String SEARCH_SUBMITTED_EXTRA = ".SEARCH_SUBMITTED";
     static final String ACCOUNT_TAGS_EXTRA = ".SEARCH_ACCOUNT_TAGS";
     static final String ACCOUNT_TAGS_EXPECTED_EXTRA = ".SEARCH_ACCOUNT_TAGS_EXPECTED";

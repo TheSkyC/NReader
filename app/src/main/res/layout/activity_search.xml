@@ -15,7 +15,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize">
@@ -25,12 +25,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:iconifiedByDefault="false" />
-        </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/search_active_filters"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="start|center_vertical"
