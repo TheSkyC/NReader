@@ -32,12 +32,14 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.os.BundleCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -58,7 +60,13 @@ import com.theskyc.nreader.api.enums.SpecialTagIds;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.async.ScrapeTags;
+import com.theskyc.nreader.async.UpdateNotification;
+import com.theskyc.nreader.async.UpdateReminderStore;
+import com.theskyc.nreader.async.UpdateMetadataStore;
 import com.theskyc.nreader.async.VersionChecker;
+import com.theskyc.nreader.async.update.UpdatePhase;
+import com.theskyc.nreader.async.update.UpdateState;
+import com.theskyc.nreader.async.update.UpdateStateStore;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagRuleEdits;
@@ -103,6 +111,17 @@ public class MainActivity extends BaseActivity
     private static final String FALLBACK_BROWSED_TAG_STATE = "fallbackBrowsedTag";
     private static final Executor TAG_RULE_READER = Executors.newSingleThreadExecutor();
     private static boolean firstTime = true;//true only when app starting
+    private static boolean startupUpdatePending;
+    @Nullable private static String restoringUpdatePrompt;
+    @Nullable private String visibleUpdatePrompt;
+    @Nullable private AlertDialog updatePromptDialog;
+    private UpdateStateStore startupUpdateStore;
+    private final Handler startupUpdateHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshStartupUpdate = this::restoreStartupUpdate;
+    private final SharedPreferences.OnSharedPreferenceChangeListener startupUpdateListener = (preferences, key) -> {
+        startupUpdateHandler.removeCallbacks(refreshStartupUpdate);
+        startupUpdateHandler.post(refreshStartupUpdate);
+    };
     private final InspectorV3.InspectorResponse startGallery = new MainInspectorResponse() {
         @Override
         public void onSuccess(List<GenericGallery> galleries) {
@@ -181,6 +200,8 @@ public class MainActivity extends BaseActivity
         super.onCreate(savedInstanceState);
         TagRuleEdits.changes().observe(this, ignored -> refreshTagRules());
         setContentView(R.layout.activity_main);
+        startupUpdateStore = new UpdateStateStore(this);
+        startupUpdateStore.registerListener(startupUpdateListener);
         //load inspector
         if (!restoreAccountTagFallback(savedInstanceState)) selectStartMode(getIntent(), getPackageName());
         LogUtility.d("Main started with mode " + modeType);
@@ -520,6 +541,13 @@ public class MainActivity extends BaseActivity
 
     @Override
     protected void onDestroy() {
+        if (isChangingConfigurations() && visibleUpdatePrompt != null) {
+            restoringUpdatePrompt = visibleUpdatePrompt;
+            startupUpdatePending = true;
+        }
+        if (updatePromptDialog != null) updatePromptDialog.dismiss();
+        startupUpdateStore.unregisterListener(startupUpdateListener);
+        startupUpdateHandler.removeCallbacks(refreshStartupUpdate);
         if (listGrid != null) listGrid.close();
         if (adapter != null) adapter.close();
         super.onDestroy();
@@ -615,10 +643,86 @@ public class MainActivity extends BaseActivity
     }
 
     private void checkUpdate() {
-        if (Global.shouldCheckForUpdates(this))
-            new VersionChecker(this, true);
+        if (Global.shouldCheckForUpdates(this)) {
+            startupUpdatePending = true;
+            new VersionChecker(this, this::showStartupUpdate);
+        }
         ScrapeTags.startWork(this);
         firstTime = false;
+    }
+
+    private boolean showStartupUpdate(@NonNull VersionChecker.GitHubRelease release) {
+        return showStartupUpdate(release.getVersionCode(), release.getBody());
+    }
+
+    private void restoreStartupUpdate() {
+        if (!startupUpdatePending || !Global.shouldCheckForUpdates(this)) return;
+        long revision = startupUpdateStore.revision();
+        startupUpdateStore.runIfUnchanged(revision, () -> {
+            UpdateState state = startupUpdateStore.load();
+            if (state.getPhase() != UpdatePhase.AVAILABLE) {
+                if (state.getPhase() != UpdatePhase.CHECKING) {
+                    startupUpdatePending = false;
+                    restoringUpdatePrompt = null;
+                }
+                return;
+            }
+            UpdateMetadataStore metadata = new UpdateMetadataStore(this);
+            if (restoringUpdatePrompt != null && !restoringUpdatePrompt.equals(state.getVersion())) {
+                restoringUpdatePrompt = null;
+            }
+            if (Objects.equals(state.getVersion(), metadata.getSelectedVersion())) {
+                showStartupUpdate(state.getVersion(), metadata.getSelectedBody());
+            }
+        });
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && startupUpdateStore != null) startupUpdateHandler.post(refreshStartupUpdate);
+    }
+
+    private boolean showStartupUpdate(@Nullable String version, @Nullable String body) {
+        if (version == null || isFinishing() || isDestroyed() || !hasWindowFocus()
+            || !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) return false;
+        Runnable show = () -> {
+            View content = getLayoutInflater().inflate(R.layout.dialog_update_available, null);
+            TextView target = content.findViewById(R.id.update_prompt_version);
+            TextView current = content.findViewById(R.id.update_prompt_current_version);
+            TextView notes = content.findViewById(R.id.update_prompt_notes);
+            target.setText(getString(R.string.update_notification_version, version));
+            current.setText(getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME));
+            notes.setText(body == null || body.trim().isEmpty()
+                ? getString(R.string.update_no_release_notes) : body.trim());
+            AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setBackground(getDrawable(R.drawable.update_prompt_background))
+                .setView(content)
+                .create();
+            updatePromptDialog = dialog;
+            Runnable remindLater = () -> {
+                visibleUpdatePrompt = null;
+                new UpdateReminderStore(this).remindLater(System.currentTimeMillis());
+            };
+            dialog.setOnCancelListener(ignored -> remindLater.run());
+            content.findViewById(R.id.update_prompt_later).setOnClickListener(view -> {
+                remindLater.run();
+                dialog.dismiss();
+            });
+            content.findViewById(R.id.update_prompt_view).setOnClickListener(view -> {
+                visibleUpdatePrompt = null;
+                dialog.dismiss();
+                startActivity(new Intent(this, UpdateCenterActivity.class));
+            });
+            dialog.show();
+            visibleUpdatePrompt = version;
+        };
+        if (version.equals(restoringUpdatePrompt)
+            && !new UpdateReminderStore(this).suppresses(version, System.currentTimeMillis())) show.run();
+        else UpdateNotification.showAvailablePrompt(this, version, show);
+        restoringUpdatePrompt = null;
+        startupUpdatePending = false;
+        return true;
     }
 
     private void selectStartMode(Intent intent, String packageName) {
@@ -881,6 +985,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+        startupUpdateHandler.post(refreshStartupUpdate);
         Login.initLogin(this);
         refreshAccountHeader();
         showExpiredAccountNoticeIfNeeded();

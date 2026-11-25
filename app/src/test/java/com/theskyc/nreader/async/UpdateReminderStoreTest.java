@@ -1,6 +1,7 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.async;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -77,6 +78,24 @@ public class UpdateReminderStoreTest {
 
         assertFalse(shouldNotify("1.1.0", Long.MAX_VALUE));
         assertTrue(shouldNotify("1.2.0", Long.MAX_VALUE));
+    }
+
+    @Test
+    public void promptAndNotificationShareReminderEligibility() {
+        int[] shown = {0};
+        UpdateNotification.showAvailablePrompt(context, "1.1.0", () -> shown[0]++);
+        UpdateNotification.showAvailablePrompt(context, "1.1.0", () -> shown[0]++);
+        assertEquals(1, shown[0]);
+        assertFalse(shouldNotify("1.1.0", System.currentTimeMillis()));
+
+        new UpdateReminderStore(context).skip("1.2.0");
+        UpdateNotification.showAvailablePrompt(context, "1.2.0", () -> shown[0]++);
+        assertEquals(1, shown[0]);
+        UpdateNotification.showAvailablePrompt(context, "1.3.0", () -> shown[0]++);
+        assertEquals(2, shown[0]);
+        new UpdateReminderStore(context).remindLater(System.currentTimeMillis());
+        UpdateNotification.showAvailablePrompt(context, "1.4.0", () -> shown[0]++);
+        assertEquals(2, shown[0]);
     }
 
     private boolean shouldNotify(String version, long now) {

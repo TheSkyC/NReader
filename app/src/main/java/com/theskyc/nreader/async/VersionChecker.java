@@ -63,6 +63,9 @@ public class VersionChecker {
         void onUpdateState(@NonNull UpdateState state);
         void onReleaseAvailable(@NonNull GitHubRelease release);
     }
+    public interface AvailablePrompt {
+        boolean show(@NonNull GitHubRelease release);
+    }
 
     private static final String RELEASE_API_URL = "https://api.github.com/repos/" + BuildConfig.UPDATE_REPOSITORY + "/releases";
     private final AppCompatActivity context;
@@ -75,6 +78,7 @@ public class VersionChecker {
         .callTimeout(15L, TimeUnit.MINUTES)
         .build();
     @Nullable private final Listener listener;
+    @Nullable private final AvailablePrompt availablePrompt;
     @Nullable private InstallLauncher installLauncher;
     @Nullable private GitHubRelease latestRelease;
     private String downloadUrl;
@@ -85,11 +89,15 @@ public class VersionChecker {
     private volatile long checkGeneration = -1L;
 
     public VersionChecker(AppCompatActivity context, final boolean silent) {
-        this(context, silent, null, true);
+        this(context, silent, null, true, null);
+    }
+
+    public VersionChecker(AppCompatActivity context, @NonNull AvailablePrompt availablePrompt) {
+        this(context, true, null, true, availablePrompt);
     }
 
     public VersionChecker(AppCompatActivity context, final boolean silent, @Nullable Listener listener) {
-        this(context, silent, listener, true);
+        this(context, silent, listener, true, null);
     }
 
     public VersionChecker(
@@ -98,11 +106,17 @@ public class VersionChecker {
         @Nullable Listener listener,
         boolean startCheck
     ) {
+        this(context, silent, listener, startCheck, null);
+    }
+
+    private VersionChecker(AppCompatActivity context, boolean silent, @Nullable Listener listener,
+                           boolean startCheck, @Nullable AvailablePrompt availablePrompt) {
         boolean withPrerelease = Global.isEnableBeta();
         this.context = context;
         this.stateStore = new UpdateStateStore(context);
         this.metadataStore = new UpdateMetadataStore(context);
         this.listener = listener;
+        this.availablePrompt = availablePrompt;
         if (BuildConfig.UPDATE_REPOSITORY.isEmpty() && BuildConfig.UPDATE_ENDPOINT.isEmpty()) return;
         restoreSelectedRelease();
         if (!startCheck) {
@@ -338,7 +352,12 @@ public class VersionChecker {
                     release.sha256,
                     release.sizeBytes
                 );
-                saveState(UpdateState.available(release.versionCode, System.currentTimeMillis()));
+                UpdateState available = UpdateState.available(release.versionCode, System.currentTimeMillis());
+                stateStore.save(available);
+                if (availablePrompt == null || !availablePrompt.show(release)) {
+                    UpdateNotification.publish(context, available);
+                }
+                if (listener != null) listener.onUpdateState(stateStore.load());
                 if (listener != null) listener.onReleaseAvailable(release);
             }
         }));

@@ -99,6 +99,12 @@ publication failure. A stale CDN response can delay discovery of a new release.
 The debug-only `nreaderUpdateEndpoint` override continues to use the API-shaped
 fixture directly.
 
+When a startup check finds an update while the main screen is in the foreground,
+NReader shows an update prompt with release notes. If the main screen is not in
+the foreground, it uses the update notification instead. Both respect the same
+reminder and skipped-version settings; choosing to view the update opens the
+update center. Download and installation notifications remain independent.
+
 The relevant fields in [app/build.gradle.kts](app/build.gradle.kts) are:
 
 - `UPDATE_REPOSITORY`: the GitHub `owner/repository` for NReader releases; it is

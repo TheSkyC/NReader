@@ -114,6 +114,15 @@ public final class UpdateNotification {
         }
     }
 
+    public static synchronized void showAvailablePrompt(@NonNull Context context, @NonNull String version,
+                                                        @NonNull Runnable show) {
+        long remindAfter = new UpdateReminderStore(context).getRemindAfter();
+        if (!shouldNotifyAvailable(context, version, System.currentTimeMillis(), remindAfter)) return;
+        show.run();
+        clear(context);
+        markAvailable(context, version, remindAfter);
+    }
+
     public static void clear(@NonNull Context context) {
         NotificationSettings.cancel(NOTIFICATION_ID);
     }

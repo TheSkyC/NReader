@@ -394,6 +394,8 @@
     <string name="update_checking">Checking for updates…</string>
     <string name="update_up_to_date">You are up to date</string>
     <string name="update_available">Update available</string>
+    <string name="update_release_notes_title">What’s new</string>
+    <string name="update_view">View update</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_ready_to_install">Update is ready to install</string>
     <string name="update_installing">Opening system installer…</string>
