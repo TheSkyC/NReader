@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.0-beta.5 — 2026-11-25
+
+- Prefer a static update feed and fall back to the GitHub Releases API when the
+  feed is unavailable, reducing the impact of API rate limits.
+- Show an update prompt on startup when the app is in the foreground, with a
+  notification fallback when it is not; simplify the update center.
+- Position toolbar overflow menus below their buttons when screen space permits.
+
 ## 1.0.0-beta.4 — 2026-11-25
 
 - Bundle an offline tag catalog and support signed catalog updates, independent
