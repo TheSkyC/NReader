@@ -171,6 +171,7 @@
         <activity
             android:name=".LocalActivity"
             android:configChanges="orientation|screenSize"
+            android:theme="@style/AppTheme.Material3"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".TagFilterActivity"

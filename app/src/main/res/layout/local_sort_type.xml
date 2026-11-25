@@ -15,48 +15,48 @@
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip1"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/title" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip2"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/download_date" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip3"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/page_count" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip5"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/artist" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip6"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/group" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip4"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/random" />
     </com.google.android.material.chip.ChipGroup>
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
+    <com.google.android.material.materialswitch.MaterialSwitch
         android:id="@+id/ascending"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -30,13 +30,17 @@ import com.theskyc.nreader.settings.MainGridSettings;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
 public class LocalActivity extends BaseActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private Menu optionMenu;
     private LocalAdapter adapter;
     private final MultichoiceAdapter.MultichoiceListener listener = new MultichoiceAdapter.DefaultMultichoiceListener() {
@@ -278,7 +282,7 @@ public class LocalActivity extends BaseActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         LinearLayout view = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.local_sort_type, toolbar, false);
         ChipGroup group = view.findViewById(R.id.chip_group);
-        SwitchMaterial switchMaterial = view.findViewById(R.id.ascending);
+        MaterialSwitch switchMaterial = view.findViewById(R.id.ascending);
         group.check(group.getChildAt(sortType.type.ordinal()).getId());
         switchMaterial.setChecked(sortType.descending);
         builder.setView(view);
