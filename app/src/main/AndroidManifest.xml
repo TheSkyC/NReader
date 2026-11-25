@@ -178,6 +178,7 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:label="@string/title_activity_tag_filter"
+            android:theme="@style/AppTheme.Material3"
             android:parentActivityName=".MainActivity">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

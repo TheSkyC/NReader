@@ -44,6 +44,11 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class TagFilterActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
@@ -177,6 +182,7 @@ public class TagFilterActivity extends GeneralActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
+        Global.setTint(this, menu.findItem(R.id.search).getIcon());
         sortFilterItem = menu.findItem(R.id.sort_by_name);
         updateSortItem(sortFilterItem);
         minCountFilterItem = menu.findItem(R.id.set_min_count);

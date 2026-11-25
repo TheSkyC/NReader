@@ -5,9 +5,12 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
+
+import com.google.android.material.card.MaterialCardView;
 
 import org.junit.After;
 import org.junit.Test;
@@ -103,6 +106,37 @@ public class UpdateCenterThemeTest {
     @Config(qualifiers = "notnight")
     public void searchKeepsBlackMaterial3ThemeInLightMode() {
         assertSearchTheme(true);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void tagManagerUsesMaterial3InLightMode() {
+        assertTagManagerTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void tagManagerUsesMaterial3InDarkMode() {
+        assertTagManagerTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void tagManagerKeepsBlackMaterial3ThemeInLightMode() {
+        assertTagManagerTheme(true);
+    }
+
+    private void assertTagManagerTheme(boolean black) {
+        Application app = RuntimeEnvironment.getApplication();
+        preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
+        TagFilterActivity activity = Robolectric.buildActivity(TagFilterActivity.class).get();
+        assertColors(activity, black);
+        MaterialCardView card = (MaterialCardView) LayoutInflater.from(activity)
+            .inflate(R.layout.entry_tag_layout, null, false);
+        int background = card.getCardBackgroundColor().getDefaultColor();
+        assertEquals(color(activity, R.attr.nreaderSurfaceVariant), background);
+        assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurface), background) >= 4.5);
+        assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurfaceVariant), background) >= 4.5);
     }
 
     private void assertSearchTheme(boolean black) {
