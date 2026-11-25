@@ -3,7 +3,9 @@ package com.theskyc.nreader.components.views;
 
 import android.app.Activity;
 import android.app.Application;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -20,10 +22,28 @@ import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class RangeSelectorTest {
+    @Test
+    public void rangeContentCanScrollInAShortWindow() {
+        Activity activity = Robolectric.buildActivity(Activity.class).get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        float density = activity.getResources().getDisplayMetrics().density;
+        int width = Math.round(264 * density);
+        int height = Math.round(200 * density);
+        ScrollView content = (ScrollView) LayoutInflater.from(activity)
+            .inflate(R.layout.range_selector, null, false);
+        content.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        content.layout(0, 0, width, height);
+        assertTrue(content.getChildAt(0).getHeight() > content.getHeight());
+        content.scrollTo(0, content.getChildAt(0).getHeight());
+        assertTrue(content.getScrollY() > 0);
+    }
+
     @Test
     public void downloadRangeShowsOnlyRangeControlsAndKeepsBothSelectorsFunctional() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).get();
