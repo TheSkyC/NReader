@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "stable": null,
+  "beta": {
+    "schemaVersion": 1,
+    "versionName": "1.0.0-beta.5",
+    "versionCode": 1000205,
+    "channel": "beta",
+    "notes": "\n- Prefer a static update feed and fall back to the GitHub Releases API when the\n  feed is unavailable, reducing the impact of API rate limits.\n- Show an update prompt on startup when the app is in the foreground, with a\n  notification fallback when it is not; simplify the update center.\n- Position toolbar overflow menus below their buttons when screen space permits.",
+    "publishedAt": "2026-11-25T07:52:54.215699Z",
+    "assets": [
+      {
+        "id": "minApi26",
+        "flavor": "minApi26",
+        "packageName": "com.theskyc.nreader",
+        "minSdk": 26,
+        "sizeBytes": 10280189,
+        "sha256": "aa38e3d5e3c33833b4f6c2df566c5f43adf0e13a1ab5062c0dc90374aba5a28e",
+        "url": "https://github.com/TheSkyC/NReader/releases/download/1.0.0-beta.5/NReader-1.0.0-beta.5-minApi26-release.apk"
+      },
+      {
+        "id": "minApi28",
+        "flavor": "minApi28",
+        "packageName": "com.theskyc.nreader",
+        "minSdk": 28,
+        "sizeBytes": 19959164,
+        "sha256": "16412f5da2b2be1d8b6a2cc12826575e2abdbba2314938f14e1c73c77ab3e998",
+        "url": "https://github.com/TheSkyC/NReader/releases/download/1.0.0-beta.5/NReader-1.0.0-beta.5-minApi28-release.apk"
+      }
+    ]
+  }
+}
