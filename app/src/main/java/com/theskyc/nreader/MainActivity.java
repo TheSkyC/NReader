@@ -587,8 +587,9 @@ public class MainActivity extends BaseActivity
         if (images != null) {
             images.clear(avatar);
             String url = account == null ? null : NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
-            if (url == null) avatar.setImageResource(R.drawable.ic_person);
-            else images.load(url).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);
+            if (url == null) avatar.setImageResource(R.drawable.nav_account_placeholder);
+            else images.load(url).placeholder(R.drawable.nav_account_placeholder)
+                .error(R.drawable.nav_account_placeholder).circleCrop().into(avatar);
         }
         onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
         String identity = AuthStore.activeIdentity(this);

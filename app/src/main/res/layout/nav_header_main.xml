@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="112dp"
-    android:background="?attr/navHeaderGradient"
+    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
     android:gravity="center_vertical"
@@ -20,7 +20,7 @@
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:contentDescription="@null"
-        app:srcCompat="@drawable/ic_person" />
+        app:srcCompat="@drawable/nav_account_placeholder" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -36,7 +36,8 @@
             android:ellipsize="end"
             android:maxLines="2"
             android:text="@string/accounts_guest"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/nav_account_action"
@@ -44,7 +45,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/accounts_add"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="?android:attr/textColorSecondary" />
     </LinearLayout>
 
     <ImageView
