@@ -94,6 +94,11 @@ import java.util.concurrent.Future;
 import java.util.function.IntConsumer;
 
 public class ZoomActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private final static int hideFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -2022,9 +2027,9 @@ public class ZoomActivity extends GeneralActivity {
         view.setVisibility(View.VISIBLE);
         cornerPageViewer.setVisibility(View.GONE);
 
-        pageSwitcher.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).start();
-        view.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).start();
-        toolbar.animate().alpha(isHidden ? 0f : 0.75f).setDuration(150).setListener(adapter).start();
+        pageSwitcher.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
+        view.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
+        toolbar.animate().alpha(isHidden ? 0f : 1f).setDuration(150).setListener(adapter).start();
     }
 
     private void applyVisibilityFlag() {

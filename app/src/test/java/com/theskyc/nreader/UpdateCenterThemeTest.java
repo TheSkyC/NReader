@@ -206,6 +206,7 @@ public class UpdateCenterThemeTest {
         assertColors(Robolectric.buildActivity(HistoryActivity.class).get(), black);
         assertColors(Robolectric.buildActivity(BookmarkActivity.class).get(), black);
         assertColors(Robolectric.buildActivity(CommentActivity.class).get(), black);
+        assertColors(Robolectric.buildActivity(ZoomActivity.class).get(), black);
         MaterialCardView card = (MaterialCardView) LayoutInflater.from(manager)
             .inflate(R.layout.entry_status, null, false);
         int background = card.getCardBackgroundColor().getDefaultColor();

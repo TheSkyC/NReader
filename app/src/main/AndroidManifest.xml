@@ -167,6 +167,7 @@
             android:name=".ZoomActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_zoom"
+            android:theme="@style/AppTheme.Material3"
             android:parentActivityName=".GalleryActivity" />
         <activity
             android:name=".LocalActivity"
