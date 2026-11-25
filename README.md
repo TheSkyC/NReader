@@ -87,6 +87,18 @@ checks and the update settings entry are enabled in release builds when this
 repository contains a compatible signed release. The issue-report destination
 remains independent and is still disabled until configured.
 
+Release builds check `feed/app-updates.json` on the repository's main branch
+first, then fall back to the GitHub Releases API if the feed is unavailable or
+invalid. A failed check retains the previous result and its last successful
+check time; it does not establish that the installed version is current. The
+feed contains separate stable and prerelease manifests, with the existing APK
+identity, size and SHA-256 checks. Android verifies the APK signer before install.
+The release workflow publishes the feed only after uploading the release, and
+fails if it cannot update main. Re-run the release workflow after resolving a
+publication failure. A stale CDN response can delay discovery of a new release.
+The debug-only `nreaderUpdateEndpoint` override continues to use the API-shaped
+fixture directly.
+
 The relevant fields in [app/build.gradle.kts](app/build.gradle.kts) are:
 
 - `UPDATE_REPOSITORY`: the GitHub `owner/repository` for NReader releases; it is

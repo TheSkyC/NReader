@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: application-release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -143,6 +147,7 @@ jobs:
             digest="$(sha256sum "$asset" | awk '{ print $1 }')"
             printf '%s  %s\n' "$digest" "$(basename "$asset")" >> SHA256SUMS.txt
           done
+          notes='Built and signed by the NReader GitHub Actions release workflow.'
           python scripts/build_update_manifest.py \
             --output nreader-update.json \
             --repository "${GITHUB_REPOSITORY}" \
@@ -150,10 +155,10 @@ jobs:
             --version-name "$version_name" \
             --version-code "$version_code" \
             --package-name "$application_id" \
+            --notes "$notes" \
             --apk minApi26 26 "$apk_min_api26" \
             --apk minApi28 28 "$apk_min_api28"
           assets+=(SHA256SUMS.txt nreader-update.json)
-          notes='Built and signed by the NReader GitHub Actions release workflow.'
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
             gh release edit "$RELEASE_TAG" \
@@ -169,3 +174,39 @@ jobs:
               --title "NReader $RELEASE_TAG" \
               --notes "$notes"
           fi
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease > "$RUNNER_TEMP/release-state.json"
+          python -c 'import json, os; state = json.load(open(os.environ["RUNNER_TEMP"] + "/release-state.json")); expected = "-" in os.environ["RELEASE_TAG"]; assert not state["isDraft"] and state["isPrerelease"] == expected, "Release must be published in the expected channel"'
+
+      - name: Checkout feed branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: .release-feed
+          fetch-depth: 0
+
+      - name: Publish update feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          feed="$GITHUB_WORKSPACE/.release-feed"
+          python scripts/publish_update_feed.py \
+            --feed "$feed/feed/app-updates.json" \
+            --manifest nreader-update.json \
+            --repository "$GITHUB_REPOSITORY"
+          git -C "$feed" config user.name "github-actions[bot]"
+          git -C "$feed" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$feed" add feed/app-updates.json
+          if git -C "$feed" diff --cached --quiet; then
+            exit 0
+          fi
+          git -C "$feed" commit -m "data(release): publish update feed"
+          for attempt in 1 2 3; do
+            if git -C "$feed" push origin HEAD:main; then
+              exit 0
+            fi
+            git -C "$feed" fetch origin main
+            git -C "$feed" rebase FETCH_HEAD
+          done
+          echo 'Unable to publish update feed; rerun the release workflow' >&2
+          exit 1

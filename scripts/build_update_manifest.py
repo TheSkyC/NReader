@@ -26,6 +26,7 @@ def main() -> None:
     parser.add_argument("--version-name", required=True)
     parser.add_argument("--version-code", required=True, type=int)
     parser.add_argument("--package-name", required=True)
+    parser.add_argument("--notes", default="")
     parser.add_argument("--apk", action="append", nargs=3, metavar=("FLAVOR", "MIN_SDK", "PATH"), required=True)
     args = parser.parse_args()
 
@@ -50,6 +51,7 @@ def main() -> None:
         "versionName": args.version_name,
         "versionCode": args.version_code,
         "channel": channel,
+        "notes": args.notes,
         "publishedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "assets": assets,
     }
