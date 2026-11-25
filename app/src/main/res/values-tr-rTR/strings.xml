@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">Dikkate alınmayan etiket içeren galeriler bulanıklaştırılacak</string>
     <string name="remove_ignored_galleries">Yok sayılan galerileri gizle</string>
     <string name="clear_tag_preferences">Etiket tercihlerini temizle</string>
+    <string name="recent_tags">Son kullanılan etiketler</string>
+    <string name="no_recent_tags">Son kullanılan etiket yok.</string>
+    <string name="clear_recent_tags">Etiket geçmişini temizle</string>
+    <string name="save_tag_view">Etiket görünümünü kaydet</string>
+    <string name="saved_tag_views">Kaydedilmiş etiket görünümleri</string>
+    <string name="tag_view_name_hint">Etiket görünümünün adı</string>
+    <string name="tag_view_invalid_name">Bu etiket görünümü için bir ad girin.</string>
+    <string name="tag_view_saved">Etiket görünümü kaydedildi.</string>
+    <string name="tag_view_storage_error">Kaydedilmiş etiket görünümleri yüklenemedi veya değiştirilemedi.</string>
+    <string name="no_saved_tag_views">Kaydedilmiş etiket görünümü yok.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (sabitlenmiş)</string>
+    <string name="manage_tag_views">Kaydedilmiş görünümleri yönet</string>
+    <string name="tag_view_load">Bir görünüm seç</string>
+    <string name="tag_view_rename">Yeniden adlandır</string>
+    <string name="tag_view_pin">Sabitle</string>
+    <string name="tag_view_unpin">Sabitlemeyi kaldır</string>
+    <string name="tag_view_delete_title">Kaydedilmiş görünüm silinsin mi?</string>
+    <string name="tag_view_delete_message">“%1$s” silinsin mi?</string>
+    <string name="tag_view_changed">Bu görünüm değişti. Yeniden seçin.</string>
+    <string name="reset_tag_view_filters">Etiket görünümü filtrelerini sıfırla</string>
     <string name="check_for_update_on_startup">Açılışta güncellemeleri denetle</string>
     <string name="check_for_updates">Güncellemeleri denetle</string>
     <string name="no_updates_found">Zaten en son sürümü kullanıyorsunuz!</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">%1$s sürümünden %2$s sürümüne güncellensin mi?\n\nDeğişiklikler:\n%3$s</string>
     <string name="clear_this_list">Bu listeyi temizle?</string>
     <string name="set_minimum_count">Minimum sayıyı ayarla</string>
+    <string name="set_minimum_count_format" formatted="true">Etiket başına en az galeri sayısı (%1$d)</string>
     <string name="sort_by_title">Başlığa göre sırala</string>
     <string name="sort_by_popular">Popülerliğe göre sırala</string>
+    <string name="filter_by_status">Etiket kuralına göre filtrele</string>
+    <string name="filter_status_all">Tüm etiketler</string>
+    <string name="filter_status_default">Kural yok</string>
+    <string name="filter_status_accepted">Yalnızca kabul edilen etiketler</string>
+    <string name="filter_status_avoided">Yalnızca yok sayılan etiketler</string>
+    <string name="bulk_edit_rules">Eşleşen etiketleri toplu düzenle</string>
+    <string name="bulk_edit_count_format">%1$d etiket etkilenecek (en fazla %2$d). Yeni durumu seçin.</string>
+    <string name="bulk_set_accepted">Kabul et</string>
+    <string name="bulk_set_avoided">Yok say</string>
+    <string name="bulk_clear_rules">Kuralları kaldır</string>
+    <string name="bulk_edit_saved_format">%1$d etiketin kuralı güncellendi.</string>
+    <string name="bulk_edit_no_matches">Eşleşen etiket yok.</string>
+    <string name="bulk_edit_too_many">Aramayla eşleşen etiket sayısı %1$d sınırını aşıyor. Aramayı daraltın.</string>
+    <string name="undo_bulk_edit">Son toplu düzenlemeyi geri al</string>
+    <string name="bulk_undo_saved_format">%1$d etiket önceki kural durumuna döndürüldü.</string>
+    <string name="bulk_undo_stale">Etiket kuralları değiştiği için toplu düzenleme geri alınamadı.</string>
+    <string name="bulk_undo_unavailable">Geri alınacak toplu düzenleme yok.</string>
+    <string name="filter_translated_all">Çevrilmiş ve çevrilmemiş etiketler</string>
+    <string name="filter_translated_only">Yalnızca çevrilmiş etiketler</string>
     <string name="next_page_volume_up">Ses arttırma tuşuyla sıradaki sayfaya geç</string>
     <string name="next_page_volume_down">Ses azaltma tuşuyla sıradaki sayfaya geç</string>
     <string name="change_title_type">Başlık dilini değiştir</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Etiket dilleri</string>
+    <string name="tag_display_language_title">Etiket görüntüleme dili</string>
+    <string name="tag_display_language_summary">Etiket dilini uygulama dilinden bağımsız olarak seçin.</string>
+    <string name="tag_display_language_follow_app">Uygulamanın dilini kullan</string>
+    <string name="tag_display_language_uninstalled">%1$s (yüklü değil)</string>
+    <string name="tag_translation_rebuild_title">Etiket çevirileri güncelleniyor</string>
+    <string name="tag_translation_rebuild_message">Güncelleme sırasında etiketler geçici olarak özgün adlarıyla gösterilir ve aranır. Güncelleme otomatik olarak sürdürülür. Uzun sürerse cihazda yeterli boş alan olup olmadığını kontrol edin ve uygulamayı yeniden açın.</string>
+    <string name="tag_translation_rebuild_manage">Dil paketlerini yönet</string>
     <string name="tag_translation_packs_summary">Çevrimdışı etiket çevirilerini yükleyin, güncelleyin veya kaldırın.</string>
+    <string name="tag_rule_transfer_title">Etiket kuralları</string>
+    <string name="tag_rule_transfer_summary">Bu cihazdaki etiket kabul etme ve yok sayma kurallarını içe veya dışa aktarın.</string>
+    <string name="tag_rule_export">Kuralları dışa aktar</string>
+    <string name="tag_rule_import">Kuralları içe aktar</string>
+    <string name="tag_rule_export_done">Etiket kuralları dışa aktarıldı.</string>
+    <string name="tag_rule_transfer_failed">Etiket kuralları içe ya da dışa aktarılamadı.</string>
+    <string name="tag_rule_import_preview" formatted="true">Toplam kural: %1$d. Yeni: %2$d. Güncellenen: %3$d. Değişmeyen: %4$d. Çakışan: %5$d.</string>
+    <string name="tag_rule_import_merge">Birleştir</string>
+    <string name="tag_rule_import_replace">Tümünü değiştir</string>
+    <string name="tag_rule_import_conflict">İçe aktarmadan önce etiket türü çakışmalarını giderin.</string>
+    <string name="tag_rule_import_done" formatted="true">%1$d etiket kuralı içe aktarıldı.</string>
     <string name="tag_translation_packs_empty">Yüklü etiket dili yok.</string>
     <string name="tag_translation_pack_item">%1$s (sürüm %2$d)</string>
     <string name="tag_translation_install">Yükle veya güncelle</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">%1$s için yüklü çeviriler kaldırılsın mı?</string>
     <string name="tag_translation_remove">Kaldır</string>
     <string name="tag_translation_removed">%1$s kaldırıldı.</string>
+    <string name="tag_translation_remove_changed">Dil paketi değişti. Paketi kaldırmak için paket listesini yeniden açın.</string>
+    <string name="tag_translation_export">Dışa aktar</string>
+    <string name="tag_translation_exporting">Etiket dili paketi dışa aktarılıyor…</string>
+    <string name="tag_translation_export_cancelling">Dışa aktarma iptal ediliyor…</string>
+    <string name="tag_translation_export_picker_failed">Dosya kaydetme penceresi açılamadı. Tekrar deneyin.</string>
+    <string name="tag_translation_export_done">Etiket dili paketi dışa aktarıldı.</string>
+    <string name="tag_translation_export_done_without_attribution">Etiket dili paketi dışa aktarıldı. Dosya atıf ve lisans bilgilerini içermiyor.</string>
+    <string name="tag_translation_export_changed">Dil paketi değişti. Paket listesini yeniden açıp tekrar deneyin. Seçilen dosya boş olabilir.</string>
+    <string name="tag_translation_export_unknown_order">Bu eski paket, alternatif adların sırası bilinmediği için dışa aktarılamıyor. Özgün paketi kullanın veya yüklü paketi kaldırıp yeniden yükleyin. Seçilen dosya boş olabilir.</string>
+    <string name="tag_translation_export_duplicate_alias">Bu paket dışa aktarılamıyor çünkü bazı alternatif adlar aramada artık aynı kabul ediliyor. Özgün dosyayı kullanın veya düzeltilmiş bir paket yükleyin. Seçilen dosya boş olabilir.</string>
+    <string name="tag_translation_export_failed">Dışa aktarma tamamlanmadı. Seçilen dosya boş veya eksik olabilir. Tekrar deneyin.</string>
+    <string name="tag_translation_import_changed">İçe aktarma sırasında dil paketi değişti. Paketi hâlâ yüklemek istiyorsanız tekrar deneyin.</string>
     <string name="tag_translation_installed">Etiket dili yüklendi veya güncellendi.</string>
     <string name="tag_translation_not_newer">Bu paket aynı veya daha yeni bir sürümle zaten yüklü.</string>
     <string name="tag_translation_install_failed">Etiket dili paketi yüklenemedi.</string>
+    <string name="tag_translation_import_in_progress">Bir dil paketi zaten yükleniyor.</string>
+    <string name="tag_translation_unknown_tags">Bu paketteki bazı etiketler etiket kataloğunuzda yok. Kataloğu veya uygulamayı güncelleyip tekrar deneyin. Hâlâ başarısız olursa paket uyumsuz olabilir.</string>
+    <string name="tag_translation_unknown_tags_no_source">Bu paketteki bazı etiketler etiket kataloğunuzda yok. Yapılandırılmış bir katalog güncelleme kaynağı yok. Uygulamayı güncelleyin veya uyumlu bir dil paketi seçin.</string>
+    <string name="tag_catalog_check_updates">Etiket kataloğu güncellemelerini denetle</string>
+    <string name="tag_catalog_check_close">Kapat</string>
+    <string name="tag_catalog_check_queued">Katalog denetimi beklemede. Ağ bağlantısı gerekiyor. Yeniden deneme planlanmış olabilir. Bu pencereyi kapatsanız da denetim arka planda sürer.</string>
+    <string name="tag_catalog_check_running">Etiket kataloğu denetleniyor…</string>
+    <string name="tag_catalog_check_complete">Etiket kataloğu güncel. Etiketleri çevrimdışı kullanmaya devam edebilirsiniz.</string>
+    <string name="tag_catalog_check_updated">Etiket kataloğu güncellendi. Etiketleri çevrimdışı kullanabilirsiniz.</string>
+    <string name="tag_catalog_check_summary">Çevrimdışı kullanılabilen etiket kataloğunun yeni bir sürümü olup olmadığını denetleyin.</string>
+    <string name="tag_catalog_check_retry">Tekrar dene</string>
+    <string name="tag_catalog_check_no_source">Yüklü katalog için yapılandırılmış bir güncelleme kaynağı yok. Uygulamayı güncellemeyi deneyin veya uyumlu bir dil paketi edinin.</string>
+    <string name="tag_catalog_check_failed">Katalog denetimi tamamlanamadı. Daha sonra tekrar deneyin.</string>
+    <string name="tag_catalog_check_cancelled">Katalog denetimi iptal edildi veya yerine başka bir denetim başlatıldı. Gerekirse tekrar deneyin.</string>
     <string name="tag_translation_browse_online">Çevrimiçi göz at</string>
     <string name="tag_translation_online_loading">Kullanılabilir etiket dilleri denetleniyor…</string>
     <string name="tag_translation_online_failed">Çevrimiçi etiket dilleri denetlenemedi.</string>
     <string name="tag_translation_online_empty">Yeni etiket dili veya güncelleme yok.</string>
     <string name="tag_translation_online_confirm">Bu dil paketi indirilsin ve yüklensin mi (%1$s)?</string>
+    <string name="tag_translation_online_confirm_zh_hans">Bu dil paketi indirilsin ve yüklensin mi (%1$s)?\n\nTheSkyC, EhTagTranslation veri tabanını ve projeye katkıda bulunanların çalışmalarını temel alarak çevirileri derledi. Aksi belirtilmedikçe kaynak, CC BY-NC-SA 3.0 China Mainland lisansı kapsamındadır.\n\nKaynak ve atıf: %2$s\nLisans: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">Yerel etiket kuralları kaydedilemedi. Tekrar deneyin.</string>
 </resources>

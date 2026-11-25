@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">Галереи с игнорируемыми тэгами будут размыты</string>
     <string name="remove_ignored_galleries">Скрывать игнорируемые галереи</string>
     <string name="clear_tag_preferences">Очистить предпочтения тэгов</string>
+    <string name="recent_tags">Недавно использованные теги</string>
+    <string name="no_recent_tags">Нет недавно использованных тегов.</string>
+    <string name="clear_recent_tags">Очистить историю тегов</string>
+    <string name="save_tag_view">Сохранить представление тегов</string>
+    <string name="saved_tag_views">Сохранённые представления тегов</string>
+    <string name="tag_view_name_hint">Название представления тегов</string>
+    <string name="tag_view_invalid_name">Введите название для этого представления тегов.</string>
+    <string name="tag_view_saved">Представление тегов сохранено.</string>
+    <string name="tag_view_storage_error">Не удалось загрузить или изменить сохранённые представления.</string>
+    <string name="no_saved_tag_views">Нет сохранённых представлений тегов.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (закреплено)</string>
+    <string name="manage_tag_views">Управлять сохранёнными представлениями</string>
+    <string name="tag_view_load">Выбрать представление</string>
+    <string name="tag_view_rename">Переименовать</string>
+    <string name="tag_view_pin">Закрепить</string>
+    <string name="tag_view_unpin">Открепить</string>
+    <string name="tag_view_delete_title">Удалить сохранённое представление?</string>
+    <string name="tag_view_delete_message">Удалить «%1$s»?</string>
+    <string name="tag_view_changed">Это представление изменилось. Выберите его снова.</string>
+    <string name="reset_tag_view_filters">Сбросить фильтры представления</string>
     <string name="check_for_update_on_startup">Проверять наличие обновлений при запуске</string>
     <string name="check_for_updates">Проверить наличие обновлений</string>
     <string name="no_updates_found">Не было найдено обновлений</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">Обновлено с версии %1$s до версии %2$s?\n\nChangelog:\n%3$s</string>
     <string name="clear_this_list">Очистить этот список?</string>
     <string name="set_minimum_count">Установить минимальный счёт</string>
+    <string name="set_minimum_count_format" formatted="true">Минимальное число галерей на тег (%1$d)</string>
     <string name="sort_by_title">Сортировать по названию</string>
     <string name="sort_by_popular">Сортировать по популярности</string>
+    <string name="filter_by_status">Фильтр по правилу для тега</string>
+    <string name="filter_status_all">Все теги</string>
+    <string name="filter_status_default">Без правила</string>
+    <string name="filter_status_accepted">Только принятые теги</string>
+    <string name="filter_status_avoided">Только игнорируемые теги</string>
+    <string name="bulk_edit_rules">Изменить правила для найденных тегов разом</string>
+    <string name="bulk_edit_count_format">Количество затронутых тегов: %1$d (не более %2$d). Выберите новое состояние.</string>
+    <string name="bulk_set_accepted">Принять</string>
+    <string name="bulk_set_avoided">Игнорировать</string>
+    <string name="bulk_clear_rules">Удалить правила</string>
+    <string name="bulk_edit_saved_format">Изменение правил применено. Тегов: %1$d.</string>
+    <string name="bulk_edit_no_matches">Нет подходящих тегов.</string>
+    <string name="bulk_edit_too_many">Поиск нашёл больше %1$d тегов. Уточните запрос.</string>
+    <string name="undo_bulk_edit">Отменить последнее массовое изменение</string>
+    <string name="bulk_undo_saved_format">Теги возвращены к прежнему состоянию. Количество: %1$d.</string>
+    <string name="bulk_undo_stale">Правила для тегов изменились. Не удалось отменить массовое изменение.</string>
+    <string name="bulk_undo_unavailable">Нет массовых изменений, которые можно отменить.</string>
+    <string name="filter_translated_all">С переводом и без перевода</string>
+    <string name="filter_translated_only">Только переведённые теги</string>
     <string name="next_page_volume_up">Переходить к следующей странице по нажатии кнопки повышения громкости</string>
     <string name="next_page_volume_down">Переходить к следующей странице по нажатии кнопки понижения громкости</string>
     <string name="change_title_type">Сменить тип заголовка</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Языки тегов</string>
+    <string name="tag_display_language_title">Язык отображения тегов</string>
+    <string name="tag_display_language_summary">Выберите язык тегов независимо от языка интерфейса.</string>
+    <string name="tag_display_language_follow_app">Использовать язык приложения</string>
+    <string name="tag_display_language_uninstalled">%1$s (не установлено)</string>
+    <string name="tag_translation_rebuild_title">Обновление переводов тегов</string>
+    <string name="tag_translation_rebuild_message">Пока идёт обновление, исходные названия тегов используются для отображения и поиска. Обновление возобновляется автоматически. Если оно затянулось, проверьте свободное место на устройстве и откройте приложение заново.</string>
+    <string name="tag_translation_rebuild_manage">Управлять языковыми пакетами</string>
     <string name="tag_translation_packs_summary">Устанавливайте, обновляйте или удаляйте офлайн-переводы тегов.</string>
+    <string name="tag_rule_transfer_title">Правила для тегов</string>
+    <string name="tag_rule_transfer_summary">Экспортируйте или импортируйте локальные правила для принятых и игнорируемых тегов.</string>
+    <string name="tag_rule_export">Экспорт правил</string>
+    <string name="tag_rule_import">Импорт правил</string>
+    <string name="tag_rule_export_done">Правила для тегов экспортированы.</string>
+    <string name="tag_rule_transfer_failed">Не удалось импортировать или экспортировать правила для тегов.</string>
+    <string name="tag_rule_import_preview" formatted="true">Всего правил: %1$d. Новых: %2$d. Обновлено: %3$d. Без изменений: %4$d. Конфликтов: %5$d.</string>
+    <string name="tag_rule_import_merge">Объединить</string>
+    <string name="tag_rule_import_replace">Заменить все</string>
+    <string name="tag_rule_import_conflict">Перед импортом устраните конфликты типов тегов.</string>
+    <string name="tag_rule_import_done" formatted="true">Импортировано правил для тегов: %1$d.</string>
     <string name="tag_translation_packs_empty">Нет установленных языков тегов.</string>
     <string name="tag_translation_pack_item">%1$s (ревизия %2$d)</string>
     <string name="tag_translation_install">Установить или обновить</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">Удалить установленные переводы для %1$s?</string>
     <string name="tag_translation_remove">Удалить</string>
     <string name="tag_translation_removed">Язык %1$s удалён.</string>
+    <string name="tag_translation_remove_changed">Языковой пакет изменился. Откройте список пакетов заново, чтобы удалить его.</string>
+    <string name="tag_translation_export">Экспорт</string>
+    <string name="tag_translation_exporting">Экспорт языкового пакета для тегов…</string>
+    <string name="tag_translation_export_cancelling">Отмена экспорта…</string>
+    <string name="tag_translation_export_picker_failed">Не удалось открыть окно сохранения файла. Попробуйте ещё раз.</string>
+    <string name="tag_translation_export_done">Языковой пакет для тегов экспортирован.</string>
+    <string name="tag_translation_export_done_without_attribution">Языковой пакет для тегов экспортирован. В файле нет сведений об авторстве и лицензии.</string>
+    <string name="tag_translation_export_changed">Языковой пакет изменился. Откройте список пакетов заново и повторите попытку. Выбранный файл может быть пустым.</string>
+    <string name="tag_translation_export_unknown_order">Этот старый пакет нельзя экспортировать, поскольку порядок альтернативных названий неизвестен. Используйте исходный пакет или удалите установленный пакет и установите его заново. Выбранный файл может быть пустым.</string>
+    <string name="tag_translation_export_duplicate_alias">Невозможно экспортировать пакет: некоторые альтернативные названия теперь совпадают при поиске. Используйте исходный файл или установите исправленный пакет. Выбранный файл может быть пустым.</string>
+    <string name="tag_translation_export_failed">Экспорт не завершён. Выбранный файл может быть пустым или неполным. Попробуйте ещё раз.</string>
+    <string name="tag_translation_import_changed">Языковой пакет изменился во время импорта. Повторите попытку, если всё ещё хотите его установить.</string>
     <string name="tag_translation_installed">Язык тегов установлен или обновлён.</string>
     <string name="tag_translation_not_newer">Этот пакет уже установлен с такой же или более новой ревизией.</string>
     <string name="tag_translation_install_failed">Не удалось установить пакет языка тегов.</string>
+    <string name="tag_translation_import_in_progress">Языковой пакет уже устанавливается.</string>
+    <string name="tag_translation_unknown_tags">Некоторые теги из этого пакета отсутствуют в вашем каталоге тегов. Обновите каталог или приложение и повторите попытку. Если это не поможет, пакет может быть несовместим.</string>
+    <string name="tag_translation_unknown_tags_no_source">Некоторые теги из этого пакета отсутствуют в вашем каталоге тегов. Источник обновления каталога не настроен. Обновите приложение или выберите совместимый языковой пакет.</string>
+    <string name="tag_catalog_check_updates">Проверить обновления каталога тегов</string>
+    <string name="tag_catalog_check_close">Закрыть</string>
+    <string name="tag_catalog_check_queued">Проверка каталога отложена. Нужно подключение к сети. Возможно, запланирована повторная попытка. Это окно можно закрыть: проверка продолжится в фоновом режиме.</string>
+    <string name="tag_catalog_check_running">Проверка каталога тегов…</string>
+    <string name="tag_catalog_check_complete">Каталог тегов актуален. Тегами по-прежнему можно пользоваться без интернета.</string>
+    <string name="tag_catalog_check_updated">Каталог тегов обновлён. Тегами можно пользоваться без интернета.</string>
+    <string name="tag_catalog_check_summary">Проверить, есть ли новая версия каталога тегов для работы без интернета</string>
+    <string name="tag_catalog_check_retry">Повторить</string>
+    <string name="tag_catalog_check_no_source">Для установленного каталога не настроен источник обновлений. Попробуйте обновить приложение или получить совместимый языковой пакет.</string>
+    <string name="tag_catalog_check_failed">Не удалось завершить проверку каталога. Повторите попытку позже.</string>
+    <string name="tag_catalog_check_cancelled">Проверка каталога отменена или заменена другой проверкой. Повторите попытку при необходимости.</string>
     <string name="tag_translation_browse_online">Обзор в сети</string>
     <string name="tag_translation_online_loading">Проверяем доступные языки тегов…</string>
     <string name="tag_translation_online_failed">Не удалось проверить языки тегов в сети.</string>
     <string name="tag_translation_online_empty">Новых языков тегов и обновлений нет.</string>
     <string name="tag_translation_online_confirm">Скачать и установить этот языковой пакет (%1$s)?</string>
+    <string name="tag_translation_online_confirm_zh_hans">Скачать и установить этот языковой пакет (%1$s)?\n\nTheSkyC собрал переводы на основе базы данных EhTagTranslation и работы её участников. Если не указано иное, исходные материалы распространяются по лицензии CC BY-NC-SA 3.0 China Mainland.\n\nИсточник и авторство: %2$s\nЛицензия: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">Не удалось сохранить локальные правила тегов. Попробуйте ещё раз.</string>
 </resources>

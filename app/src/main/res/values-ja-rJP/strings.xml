@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">タグが無視されたギャラリーはぼやけます</string>
     <string name="remove_ignored_galleries">無視するタグのあるギャラリーを非表示</string>
     <string name="clear_tag_preferences">タグ設定をクリア</string>
+    <string name="recent_tags">最近使ったタグ</string>
+    <string name="no_recent_tags">最近使ったタグはありません。</string>
+    <string name="clear_recent_tags">タグの履歴を消去</string>
+    <string name="save_tag_view">タグビューを保存</string>
+    <string name="saved_tag_views">保存したタグビュー</string>
+    <string name="tag_view_name_hint">タグビューの名前</string>
+    <string name="tag_view_invalid_name">このタグビューの名前を入力してください。</string>
+    <string name="tag_view_saved">タグビューを保存しました。</string>
+    <string name="tag_view_storage_error">タグビューの読み込みまたは変更ができませんでした。</string>
+    <string name="no_saved_tag_views">保存したタグビューはありません。</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s（ピン留め済み）</string>
+    <string name="manage_tag_views">保存したビューを管理</string>
+    <string name="tag_view_load">ビューを選択</string>
+    <string name="tag_view_rename">名前を変更</string>
+    <string name="tag_view_pin">ピン留め</string>
+    <string name="tag_view_unpin">ピン留めを解除</string>
+    <string name="tag_view_delete_title">保存したビューを削除しますか？</string>
+    <string name="tag_view_delete_message">「%1$s」を削除しますか？</string>
+    <string name="tag_view_changed">このビューは変更されました。もう一度選択してください。</string>
+    <string name="reset_tag_view_filters">タグビューの絞り込み条件をリセット</string>
     <string name="check_for_update_on_startup">起動時にアップデートを確認</string>
     <string name="check_for_updates">アップデートをチェックしますか？</string>
     <string name="no_updates_found">お使いのバージョンは最新です。</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">バージョン%1$sからバージョン%2$sに更新しますか？\n\n変更履歴：\n%3$s</string>
     <string name="clear_this_list">このリストを空にしますか？</string>
     <string name="set_minimum_count">最小カウントを設定</string>
+    <string name="set_minimum_count_format" formatted="true">タグごとの最小ギャラリー数（%1$d）</string>
     <string name="sort_by_title">タイトルで並べ替え</string>
     <string name="sort_by_popular">人気順に並べ替え</string>
+    <string name="filter_by_status">タグのルールで絞り込む</string>
+    <string name="filter_status_all">すべてのタグ</string>
+    <string name="filter_status_default">ルールなし</string>
+    <string name="filter_status_accepted">許可したタグのみ</string>
+    <string name="filter_status_avoided">無視したタグのみ</string>
+    <string name="bulk_edit_rules">一致するタグを一括編集</string>
+    <string name="bulk_edit_count_format">該当するタグ：%1$d個（上限：%2$d個）。変更後の状態を選んでください。</string>
+    <string name="bulk_set_accepted">許可</string>
+    <string name="bulk_set_avoided">無視</string>
+    <string name="bulk_clear_rules">ルールをクリア</string>
+    <string name="bulk_edit_saved_format">%1$d個のタグのルールを更新しました。</string>
+    <string name="bulk_edit_no_matches">一致するタグはありません。</string>
+    <string name="bulk_edit_too_many">一致するタグが%1$d個を超えています。検索条件を絞り込んでください。</string>
+    <string name="undo_bulk_edit">前回の一括編集を元に戻す</string>
+    <string name="bulk_undo_saved_format">%1$d個のタグを以前のルールの状態に戻しました。</string>
+    <string name="bulk_undo_stale">タグのルールが変更されたため、一括編集を取り消せませんでした。</string>
+    <string name="bulk_undo_unavailable">元に戻せる一括編集はありません。</string>
+    <string name="filter_translated_all">翻訳の有無を問わない</string>
+    <string name="filter_translated_only">翻訳済みのタグのみ</string>
     <string name="next_page_volume_up">音量を上げて次のページに移動</string>
     <string name="next_page_volume_down">音量を下げて次のページに移動</string>
     <string name="change_title_type">タイトルタイプを変更</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">タグの言語</string>
+    <string name="tag_display_language_title">タグの表示言語</string>
+    <string name="tag_display_language_summary">アプリの表示言語とは別に、タグの表示言語を設定できます。</string>
+    <string name="tag_display_language_follow_app">アプリと同じ言語</string>
+    <string name="tag_display_language_uninstalled">%1$s（未インストール）</string>
+    <string name="tag_translation_rebuild_title">タグの翻訳を更新中</string>
+    <string name="tag_translation_rebuild_message">更新中は一時的に、タグの表示と検索に元の名前が使われます。更新は自動で再開します。時間がかかる場合は、端末の空き容量を確認し、アプリを開き直してください。</string>
+    <string name="tag_translation_rebuild_manage">言語パックを管理</string>
     <string name="tag_translation_packs_summary">オフラインのタグ翻訳をインストール、更新、削除します。</string>
+    <string name="tag_rule_transfer_title">タグのルール</string>
+    <string name="tag_rule_transfer_summary">端末に保存されたタグの許可・無視ルールをエクスポートまたはインポートします。</string>
+    <string name="tag_rule_export">ルールをエクスポート</string>
+    <string name="tag_rule_import">ルールをインポート</string>
+    <string name="tag_rule_export_done">タグのルールをエクスポートしました。</string>
+    <string name="tag_rule_transfer_failed">タグのルールをインポートまたはエクスポートできませんでした。</string>
+    <string name="tag_rule_import_preview" formatted="true">ルール：%1$d件（追加：%2$d件、更新：%3$d件、変更なし：%4$d件、競合：%5$d件）</string>
+    <string name="tag_rule_import_merge">マージ</string>
+    <string name="tag_rule_import_replace">すべて置き換え</string>
+    <string name="tag_rule_import_conflict">タグの種類の競合を解消してからインポートしてください。</string>
+    <string name="tag_rule_import_done" formatted="true">タグのルールを%1$d件インポートしました。</string>
     <string name="tag_translation_packs_empty">インストール済みのタグ言語はありません。</string>
     <string name="tag_translation_pack_item">%1$s（リビジョン %2$d）</string>
     <string name="tag_translation_install">インストールまたは更新</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">%1$s のインストール済み翻訳を削除しますか？</string>
     <string name="tag_translation_remove">削除</string>
     <string name="tag_translation_removed">%1$s を削除しました。</string>
+    <string name="tag_translation_remove_changed">言語パックが変更されました。パックの一覧を開き直してから削除してください。</string>
+    <string name="tag_translation_export">エクスポート</string>
+    <string name="tag_translation_exporting">タグの言語パックをエクスポートしています…</string>
+    <string name="tag_translation_export_cancelling">エクスポートをキャンセルしています…</string>
+    <string name="tag_translation_export_picker_failed">保存先を開けませんでした。もう一度お試しください。</string>
+    <string name="tag_translation_export_done">タグの言語パックをエクスポートしました。</string>
+    <string name="tag_translation_export_done_without_attribution">タグの言語パックをエクスポートしました。ファイルにはクレジットやライセンスの情報が含まれていません。</string>
+    <string name="tag_translation_export_changed">言語パックが変更されました。パックの一覧を開き直して、もう一度お試しください。選択したファイルは空の可能性があります。</string>
+    <string name="tag_translation_export_unknown_order">この古いパックは、別名の順序が不明なためエクスポートできません。元のパックを使うか、インストール済みのパックを削除して再インストールしてください。選択したファイルは空の可能性があります。</string>
+    <string name="tag_translation_export_duplicate_alias">検索時に同じものとして扱われる別名があるため、このパックはエクスポートできません。元のファイルを使うか、修正済みのパックをインストールしてください。選択したファイルは空の可能性があります。</string>
+    <string name="tag_translation_export_failed">エクスポートが完了しませんでした。選択したファイルは空または不完全な可能性があります。もう一度お試しください。</string>
+    <string name="tag_translation_import_changed">インポート中に言語パックが変更されました。インストールするには、もう一度お試しください。</string>
     <string name="tag_translation_installed">タグ言語をインストールまたは更新しました。</string>
     <string name="tag_translation_not_newer">このパックと同じか新しいリビジョンがすでにインストールされています。</string>
     <string name="tag_translation_install_failed">タグ言語パックをインストールできませんでした。</string>
+    <string name="tag_translation_import_in_progress">言語パックのインストールがすでに進行中です。</string>
+    <string name="tag_translation_unknown_tags">このパックに含まれる一部のタグが、現在のタグカタログにありません。カタログまたはアプリを更新して、もう一度お試しください。それでもインストールできない場合、このパックは対応していない可能性があります。</string>
+    <string name="tag_translation_unknown_tags_no_source">このパックの一部のタグがタグカタログにありません。カタログの更新元が設定されていません。アプリを更新するか、互換性のある言語パックを選択してください。</string>
+    <string name="tag_catalog_check_updates">タグカタログの更新を確認</string>
+    <string name="tag_catalog_check_close">閉じる</string>
+    <string name="tag_catalog_check_queued">タグカタログの更新確認は待機中です。ネットワーク接続が必要です。再試行を待っている場合もあります。この画面を閉じても、確認はバックグラウンドで続きます。</string>
+    <string name="tag_catalog_check_running">タグカタログの更新を確認しています…</string>
+    <string name="tag_catalog_check_complete">タグカタログは最新です。引き続きオフラインでタグを使えます。</string>
+    <string name="tag_catalog_check_updated">タグカタログを更新しました。オフラインでタグを使えます。</string>
+    <string name="tag_catalog_check_summary">オフラインで使えるタグカタログの新版を確認します。</string>
+    <string name="tag_catalog_check_retry">リトライ</string>
+    <string name="tag_catalog_check_no_source">インストールされているカタログに更新元が設定されていません。アプリを更新するか、互換性のある言語パックを入手してください。</string>
+    <string name="tag_catalog_check_failed">カタログの確認を完了できませんでした。後でもう一度お試しください。</string>
+    <string name="tag_catalog_check_cancelled">カタログの更新確認がキャンセルされたか、別の確認に切り替わりました。必要に応じて、もう一度お試しください。</string>
     <string name="tag_translation_browse_online">オンラインで探す</string>
     <string name="tag_translation_online_loading">利用可能なタグの言語を確認しています…</string>
     <string name="tag_translation_online_failed">オンラインのタグ言語を確認できませんでした。</string>
     <string name="tag_translation_online_empty">タグ言語の追加や更新はありません。</string>
     <string name="tag_translation_online_confirm">この言語パック（%1$s）をダウンロードしてインストールしますか？</string>
+    <string name="tag_translation_online_confirm_zh_hans">この言語パック（%1$s）をダウンロードしてインストールしますか？\n\n翻訳は EhTagTranslation のデータベースとその貢献者による成果をもとに、TheSkyC がまとめたものです。特記がない限り、原資料には CC BY-NC-SA 3.0 China Mainland が適用されます。\n\n出典とクレジット：%2$s\nライセンス：%3$s</string>
     <string name="tag_translation_display_pair">%1$s（%2$s）</string>
     <string name="local_tag_rule_save_error">ローカルのタグルールを保存できませんでした。もう一度お試しください。</string>
 </resources>

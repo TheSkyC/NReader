@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة ستُضبَّب</string>
     <string name="remove_ignored_galleries">إخفاء الأعمال المتجاهلة</string>
     <string name="clear_tag_preferences">أَزِل إعدادات الوسم</string>
+    <string name="recent_tags">الوسوم المستخدمة مؤخرًا</string>
+    <string name="no_recent_tags">لا توجد وسوم استُخدمت مؤخرًا.</string>
+    <string name="clear_recent_tags">مسح سجل الوسوم</string>
+    <string name="save_tag_view">حفظ عرض الوسوم</string>
+    <string name="saved_tag_views">عروض الوسوم المحفوظة</string>
+    <string name="tag_view_name_hint">اسم عرض الوسوم</string>
+    <string name="tag_view_invalid_name">أدخل اسمًا لعرض الوسوم.</string>
+    <string name="tag_view_saved">تم حفظ عرض الوسوم.</string>
+    <string name="tag_view_storage_error">تعذّر الوصول إلى عروض الوسوم المحفوظة أو تعديلها.</string>
+    <string name="no_saved_tag_views">لا توجد عروض وسوم محفوظة.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (مثبّت)</string>
+    <string name="manage_tag_views">إدارة العروض المحفوظة</string>
+    <string name="tag_view_load">اختيار عرض</string>
+    <string name="tag_view_rename">إعادة التسمية</string>
+    <string name="tag_view_pin">تثبيت</string>
+    <string name="tag_view_unpin">إلغاء التثبيت</string>
+    <string name="tag_view_delete_title">حذف العرض المحفوظ؟</string>
+    <string name="tag_view_delete_message">هل تريد حذف «%1$s»؟</string>
+    <string name="tag_view_changed">تغيّر هذا العرض. اختره مرة أخرى.</string>
+    <string name="reset_tag_view_filters">إعادة ضبط فلاتر عرض الوسوم</string>
     <string name="check_for_update_on_startup">اِلتمس التحديثات عند تشغيل التطبيق</string>
     <string name="check_for_updates">اِلتمس التحديثات</string>
     <string name="no_updates_found">لا يوجد تحديث مُتوفِّر</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">أتود التحديث من الإصدار %1$s إلى الإصدار %2$s ؟\n\n سِجل التغييرات: \n%3$s</string>
     <string name="clear_this_list">أتود محو هذه القائمة؟</string>
     <string name="set_minimum_count">عيِّن حدًّا أدنى للعدِّ</string>
+    <string name="set_minimum_count_format" formatted="true">الحد الأدنى لعدد الأعمال لكل وسم (%1$d)</string>
     <string name="sort_by_title">ِاِفرِز حسب العنوان</string>
     <string name="sort_by_popular">اِفرِز حسب الرَّواج</string>
+    <string name="filter_by_status">التصفية حسب قاعدة الوسم</string>
+    <string name="filter_status_all">كل الوسوم</string>
+    <string name="filter_status_default">بلا قاعدة</string>
+    <string name="filter_status_accepted">الوسوم المقبولة فقط</string>
+    <string name="filter_status_avoided">الوسوم المُتجاهَلة فقط</string>
+    <string name="bulk_edit_rules">تعديل الوسوم المطابقة دفعة واحدة</string>
+    <string name="bulk_edit_count_format">عدد الوسوم التي سيشملها التعديل: %1$d (الحد الأقصى: %2$d). اختر الحالة الجديدة.</string>
+    <string name="bulk_set_accepted">قبول</string>
+    <string name="bulk_set_avoided">تجاهل</string>
+    <string name="bulk_clear_rules">مسح القواعد</string>
+    <string name="bulk_edit_saved_format">عدد الوسوم التي طُبّق عليها التعديل: %1$d.</string>
+    <string name="bulk_edit_no_matches">لا توجد وسوم مطابقة.</string>
+    <string name="bulk_edit_too_many">عدد الوسوم المطابقة أكبر من %1$d. ضيّق البحث أولًا.</string>
+    <string name="undo_bulk_edit">التراجع عن آخر تعديل جماعي</string>
+    <string name="bulk_undo_saved_format">عدد الوسوم التي عادت إلى حالتها السابقة: %1$d.</string>
+    <string name="bulk_undo_stale">تغيّرت قواعد الوسوم، لذا تعذّر التراجع عن التعديل الجماعي.</string>
+    <string name="bulk_undo_unavailable">لا يوجد تعديل جماعي للتراجع عنه.</string>
+    <string name="filter_translated_all">الوسوم المترجمة وغير المترجمة</string>
+    <string name="filter_translated_only">الوسوم المترجمة فقط</string>
     <string name="next_page_volume_up">اِذهب للصفحة التالية بِزِر زيادة الصوت</string>
     <string name="next_page_volume_down">اِذهب للصفحة التالية بِزِر نقصان الصوت</string>
     <string name="change_title_type">غيِّر نَسَق العنوان</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">لغات الوسوم</string>
+    <string name="tag_display_language_title">لغة عرض الوسوم</string>
+    <string name="tag_display_language_summary">اختر لغة الوسوم بشكل مستقل عن لغة التطبيق.</string>
+    <string name="tag_display_language_follow_app">استخدام لغة التطبيق</string>
+    <string name="tag_display_language_uninstalled">%1$s (غير مثبّتة)</string>
+    <string name="tag_translation_rebuild_title">جارٍ تحديث ترجمات الوسوم</string>
+    <string name="tag_translation_rebuild_message">أثناء التحديث، تُعرض الوسوم بأسمائها الأصلية ويُستخدم الاسم الأصلي في البحث. يُستأنف التحديث تلقائيًا. إذا طال التحديث، فتحقّق من توفّر مساحة تخزين وأعد فتح التطبيق.</string>
+    <string name="tag_translation_rebuild_manage">إدارة حزم اللغات</string>
     <string name="tag_translation_packs_summary">ثبّت ترجمات الوسوم بلا اتصال أو حدّثها أو أزلها.</string>
+    <string name="tag_rule_transfer_title">قواعد الوسوم</string>
+    <string name="tag_rule_transfer_summary">استيراد قواعد قبول الوسوم وتجاهلها على هذا الجهاز أو تصديرها.</string>
+    <string name="tag_rule_export">تصدير القواعد</string>
+    <string name="tag_rule_import">استيراد القواعد</string>
+    <string name="tag_rule_export_done">تم تصدير قواعد الوسوم.</string>
+    <string name="tag_rule_transfer_failed">تعذّر استيراد قواعد الوسوم أو تصديرها.</string>
+    <string name="tag_rule_import_preview" formatted="true">عدد القواعد: %1$d، الإضافات: %2$d، التحديثات: %3$d، دون تغيير: %4$d، التعارضات: %5$d.</string>
+    <string name="tag_rule_import_merge">دمج</string>
+    <string name="tag_rule_import_replace">استبدال الكل</string>
+    <string name="tag_rule_import_conflict">عالج تعارض أنواع الوسوم قبل الاستيراد.</string>
+    <string name="tag_rule_import_done" formatted="true">عدد قواعد الوسوم المستوردة: %1$d.</string>
     <string name="tag_translation_packs_empty">لا توجد لغات وسوم مثبّتة.</string>
     <string name="tag_translation_pack_item">%1$s (الإصدار %2$d)</string>
     <string name="tag_translation_install">تثبيت أو تحديث</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">هل تريد إزالة الترجمات المثبّتة للغة %1$s؟</string>
     <string name="tag_translation_remove">إزالة</string>
     <string name="tag_translation_removed">تمت إزالة %1$s.</string>
+    <string name="tag_translation_remove_changed">تغيّرت حزمة اللغة. أعد فتح قائمة الحزم لإزالتها.</string>
+    <string name="tag_translation_export">تصدير</string>
+    <string name="tag_translation_exporting">جارٍ تصدير حزمة لغة الوسوم…</string>
+    <string name="tag_translation_export_cancelling">جارٍ إلغاء التصدير…</string>
+    <string name="tag_translation_export_picker_failed">تعذّر فتح موقع الحفظ. حاول مرة أخرى.</string>
+    <string name="tag_translation_export_done">تم تصدير حزمة لغة الوسوم.</string>
+    <string name="tag_translation_export_done_without_attribution">تم تصدير حزمة لغة الوسوم. لا يتضمّن الملف معلومات الإسناد أو الترخيص.</string>
+    <string name="tag_translation_export_changed">تغيّرت حزمة اللغة. أعد فتح قائمة الحزم وحاول مجددًا. قد يكون الملف المحدد فارغًا.</string>
+    <string name="tag_translation_export_unknown_order">يتعذّر تصدير هذه الحزمة القديمة لأن ترتيب الأسماء البديلة فيها غير معروف. استخدم الحزمة الأصلية أو أزل الحزمة المثبّتة وأعد تثبيتها. قد يكون الملف المحدد فارغًا.</string>
+    <string name="tag_translation_export_duplicate_alias">تعذّر التصدير لأن بعض الأسماء البديلة في الحزمة أصبحت متطابقة عند البحث. استخدم الملف الأصلي أو ثبّت حزمة مصححة. قد يكون الملف المحدد فارغًا.</string>
+    <string name="tag_translation_export_failed">لم يكتمل التصدير. قد يكون الملف المحدد فارغًا أو غير مكتمل. حاول مرة أخرى.</string>
+    <string name="tag_translation_import_changed">تغيّرت حزمة اللغة أثناء الاستيراد. حاول مرة أخرى إذا كنت لا تزال ترغب في تثبيتها.</string>
     <string name="tag_translation_installed">تم تثبيت لغة الوسوم أو تحديثها.</string>
     <string name="tag_translation_not_newer">هذا الإصدار مثبت بالفعل أو يوجد إصدار أحدث.</string>
     <string name="tag_translation_install_failed">تعذر تثبيت حزمة لغة الوسوم.</string>
+    <string name="tag_translation_import_in_progress">يجري تثبيت حزمة لغة بالفعل.</string>
+    <string name="tag_translation_unknown_tags">بعض الوسوم في هذه الحزمة مفقودة من فهرس الوسوم لديك. حدّث الفهرس أو التطبيق وحاول مرة أخرى. إذا استمر الفشل، فقد تكون الحزمة غير متوافقة.</string>
+    <string name="tag_translation_unknown_tags_no_source">بعض الوسوم في هذه الحزمة مفقودة من فهرس الوسوم لديك. لم يُهيأ مصدر لتحديث الفهرس. حدّث التطبيق أو اختر حزمة لغة متوافقة.</string>
+    <string name="tag_catalog_check_updates">التحقق من تحديثات فهرس الوسوم</string>
+    <string name="tag_catalog_check_close">إغلاق</string>
+    <string name="tag_catalog_check_queued">التحقق من الفهرس قيد الانتظار. يلزم اتصال بالشبكة، وقد تكون هناك محاولة أخرى مجدولة. يمكنك إغلاق النافذة وسيستمر التحقق في الخلفية.</string>
+    <string name="tag_catalog_check_running">جارٍ التحقق من فهرس الوسوم…</string>
+    <string name="tag_catalog_check_complete">فهرس الوسوم محدّث. لا تزال الوسوم متاحة دون اتصال.</string>
+    <string name="tag_catalog_check_updated">تم تحديث فهرس الوسوم. يمكنك استخدام الوسوم دون اتصال.</string>
+    <string name="tag_catalog_check_summary">التحقق من توفّر إصدار أحدث من فهرس الوسوم المتاح دون اتصال.</string>
+    <string name="tag_catalog_check_retry">إعادة المحاولة</string>
+    <string name="tag_catalog_check_no_source">لا يوجد مصدر تحديث مُهيأ للفهرس المثبّت. جرّب تحديث التطبيق أو الحصول على حزمة لغة متوافقة.</string>
+    <string name="tag_catalog_check_failed">تعذّر إكمال التحقق من الفهرس. حاول مرة أخرى لاحقًا.</string>
+    <string name="tag_catalog_check_cancelled">أُلغي التحقق من الفهرس أو حلّ محلّه تحقق آخر. حاول مجددًا عند الحاجة.</string>
     <string name="tag_translation_browse_online">تصفح عبر الإنترنت</string>
     <string name="tag_translation_online_loading">جارٍ البحث عن لغات الوسوم المتاحة…</string>
     <string name="tag_translation_online_failed">تعذر التحقق من لغات الوسوم عبر الإنترنت.</string>
     <string name="tag_translation_online_empty">لا تتوفر لغات وسوم جديدة أو تحديثات.</string>
     <string name="tag_translation_online_confirm">هل تريد تنزيل حزمة اللغة هذه وتثبيتها (%1$s)؟</string>
+    <string name="tag_translation_online_confirm_zh_hans">هل تريد تنزيل حزمة اللغة هذه وتثبيتها (%1$s)؟\n\nتستند الترجمات إلى قاعدة بيانات EhTagTranslation ومساهمات المشاركين فيها، وقد جمعها TheSkyC ونظّمها. يخضع المصدر لترخيص CC BY-NC-SA 3.0 China Mainland ما لم يُذكر خلاف ذلك.\n\nالمصدر ونسب العمل إلى أصحابه: %2$s\nالترخيص: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">تعذّر حفظ قواعد الوسوم المحلية. حاول مرة أخرى.</string>
 </resources>

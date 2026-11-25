@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">Les galeries avec des tags ignorés seront floutées</string>
     <string name="remove_ignored_galleries">Masquer les galeries ignorées</string>
     <string name="clear_tag_preferences">Effacer les préférences de tag</string>
+    <string name="recent_tags">Tags récents</string>
+    <string name="no_recent_tags">Aucun tag utilisé récemment.</string>
+    <string name="clear_recent_tags">Effacer l’historique des tags</string>
+    <string name="save_tag_view">Enregistrer la vue de tags</string>
+    <string name="saved_tag_views">Vues de tags enregistrées</string>
+    <string name="tag_view_name_hint">Nom de la vue de tags</string>
+    <string name="tag_view_invalid_name">Saisissez un nom pour cette vue de tags.</string>
+    <string name="tag_view_saved">Vue de tags enregistrée.</string>
+    <string name="tag_view_storage_error">Impossible de charger ou de modifier les vues enregistrées.</string>
+    <string name="no_saved_tag_views">Aucune vue de tags enregistrée.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (épinglée)</string>
+    <string name="manage_tag_views">Gérer les vues enregistrées</string>
+    <string name="tag_view_load">Choisir une vue</string>
+    <string name="tag_view_rename">Renommer</string>
+    <string name="tag_view_pin">Épingler</string>
+    <string name="tag_view_unpin">Désépingler</string>
+    <string name="tag_view_delete_title">Supprimer la vue enregistrée ?</string>
+    <string name="tag_view_delete_message">Supprimer « %1$s » ?</string>
+    <string name="tag_view_changed">Cette vue a changé. Sélectionnez-la à nouveau.</string>
+    <string name="reset_tag_view_filters">Réinitialiser les filtres de la vue</string>
     <string name="check_for_update_on_startup">Vérifier la présence de mises à jour au démarrage</string>
     <string name="check_for_updates">Vérifier la présence de mises à jour</string>
     <string name="no_updates_found">Pas de mise à jour trouvée</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">Mettre à jour depuis la version %1$s vers la version %2$s ?\n\nJournal des modifications :\n%3$s</string>
     <string name="clear_this_list">Effacer cette liste ?</string>
     <string name="set_minimum_count">Définir le nombre minimum</string>
+    <string name="set_minimum_count_format" formatted="true">Nombre minimal de galeries par tag (%1$d)</string>
     <string name="sort_by_title">Trier par titre</string>
     <string name="sort_by_popular">Trier par popularité</string>
+    <string name="filter_by_status">Filtrer selon la règle du tag</string>
+    <string name="filter_status_all">Tous les tags</string>
+    <string name="filter_status_default">Sans règle</string>
+    <string name="filter_status_accepted">Tags acceptés uniquement</string>
+    <string name="filter_status_avoided">Tags ignorés uniquement</string>
+    <string name="bulk_edit_rules">Modifier les tags correspondants en lot</string>
+    <string name="bulk_edit_count_format">Nombre de tags concernés : %1$d (%2$d au maximum). Choisissez le nouvel état.</string>
+    <string name="bulk_set_accepted">Accepter</string>
+    <string name="bulk_set_avoided">Ignorer</string>
+    <string name="bulk_clear_rules">Supprimer les règles</string>
+    <string name="bulk_edit_saved_format">Tags dont la règle a été modifiée : %1$d.</string>
+    <string name="bulk_edit_no_matches">Aucun tag correspondant.</string>
+    <string name="bulk_edit_too_many">Plus de %1$d tags correspondent à la recherche. Affinez-la d’abord.</string>
+    <string name="undo_bulk_edit">Annuler la dernière modification en lot</string>
+    <string name="bulk_undo_saved_format">Tags rétablis dans leur état précédent : %1$d.</string>
+    <string name="bulk_undo_stale">Les règles des tags ont changé. Impossible d’annuler la modification en lot.</string>
+    <string name="bulk_undo_unavailable">Aucune modification en lot à annuler.</string>
+    <string name="filter_translated_all">Avec ou sans traduction</string>
+    <string name="filter_translated_only">Tags traduits uniquement</string>
     <string name="next_page_volume_up">Aller à la page suivante avec le volume haut</string>
     <string name="next_page_volume_down">Aller à la page suivante avec le volume bas</string>
     <string name="change_title_type">Changer le type de titre</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Langues des tags</string>
+    <string name="tag_display_language_title">Langue d’affichage des tags</string>
+    <string name="tag_display_language_summary">Choisissez une langue pour les tags, indépendamment de celle de l’application.</string>
+    <string name="tag_display_language_follow_app">Utiliser la langue de l’application</string>
+    <string name="tag_display_language_uninstalled">%1$s (non installée)</string>
+    <string name="tag_translation_rebuild_title">Mise à jour des traductions des tags</string>
+    <string name="tag_translation_rebuild_message">Pendant la mise à jour, les tags s’affichent sous leur nom d’origine et sont recherchés sous ce nom. La mise à jour reprend automatiquement. Si elle dure longtemps, vérifiez l’espace disponible et rouvrez l’application.</string>
+    <string name="tag_translation_rebuild_manage">Gérer les packs de langue</string>
     <string name="tag_translation_packs_summary">Installez, mettez à jour ou supprimez les traductions hors ligne des tags.</string>
+    <string name="tag_rule_transfer_title">Règles des tags</string>
+    <string name="tag_rule_transfer_summary">Exportez ou importez les règles locales qui définissent quels tags sont acceptés ou ignorés.</string>
+    <string name="tag_rule_export">Exporter les règles</string>
+    <string name="tag_rule_import">Importer les règles</string>
+    <string name="tag_rule_export_done">Règles des tags exportées.</string>
+    <string name="tag_rule_transfer_failed">Impossible d’importer ou d’exporter les règles des tags.</string>
+    <string name="tag_rule_import_preview" formatted="true">Règles : %1$d. Ajouts : %2$d. Mises à jour : %3$d. Sans changement : %4$d. Conflits : %5$d.</string>
+    <string name="tag_rule_import_merge">Fusionner</string>
+    <string name="tag_rule_import_replace">Tout remplacer</string>
+    <string name="tag_rule_import_conflict">Résolvez les conflits de type avant l’importation.</string>
+    <string name="tag_rule_import_done" formatted="true">Règles de tags importées : %1$d.</string>
     <string name="tag_translation_packs_empty">Aucune langue de tags n’est installée.</string>
     <string name="tag_translation_pack_item">%1$s (révision %2$d)</string>
     <string name="tag_translation_install">Installer ou mettre à jour</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">Supprimer les traductions installées pour %1$s ?</string>
     <string name="tag_translation_remove">Supprimer</string>
     <string name="tag_translation_removed">%1$s a été supprimé.</string>
+    <string name="tag_translation_remove_changed">Le pack de langue a changé. Rouvrez la liste des packs pour le supprimer.</string>
+    <string name="tag_translation_export">Exporter</string>
+    <string name="tag_translation_exporting">Exportation du pack de langue des tags…</string>
+    <string name="tag_translation_export_cancelling">Annulation de l’exportation…</string>
+    <string name="tag_translation_export_picker_failed">Impossible d’ouvrir la fenêtre d’enregistrement. Réessayez.</string>
+    <string name="tag_translation_export_done">Pack de langue des tags exporté.</string>
+    <string name="tag_translation_export_done_without_attribution">Pack de langue des tags exporté. Le fichier ne contient aucune information sur l’attribution ou la licence.</string>
+    <string name="tag_translation_export_changed">Le pack de langue a changé. Rouvrez la liste des packs et réessayez. Le fichier sélectionné peut être vide.</string>
+    <string name="tag_translation_export_unknown_order">Impossible d’exporter cet ancien pack, car l’ordre de ses alias est inconnu. Utilisez le pack d’origine ou supprimez le pack installé, puis réinstallez-le. Le fichier sélectionné peut être vide.</string>
+    <string name="tag_translation_export_duplicate_alias">Impossible d’exporter ce pack, car certains alias sont désormais considérés comme identiques lors de la recherche. Utilisez le fichier d’origine ou installez un pack corrigé. Le fichier sélectionné peut être vide.</string>
+    <string name="tag_translation_export_failed">L’exportation ne s’est pas terminée. Le fichier sélectionné peut être vide ou incomplet. Réessayez.</string>
+    <string name="tag_translation_import_changed">Le pack de langue a changé pendant l’importation. Réessayez si vous souhaitez toujours l’installer.</string>
     <string name="tag_translation_installed">Langue de tags installée ou mise à jour.</string>
     <string name="tag_translation_not_newer">Ce paquet est déjà installé à la même révision ou à une révision supérieure.</string>
     <string name="tag_translation_install_failed">Impossible d’installer ce paquet de langue des tags.</string>
+    <string name="tag_translation_import_in_progress">Un pack de langue est déjà en cours d’installation.</string>
+    <string name="tag_translation_unknown_tags">Certains tags de ce pack sont absents de votre catalogue de tags. Mettez à jour le catalogue ou l’application et réessayez. Si cela échoue encore, le pack est peut-être incompatible.</string>
+    <string name="tag_translation_unknown_tags_no_source">Certains tags de ce pack sont absents de votre catalogue de tags. Aucune source de mise à jour du catalogue n’est configurée. Mettez à jour l’application ou choisissez un pack de langue compatible.</string>
+    <string name="tag_catalog_check_updates">Rechercher des mises à jour du catalogue de tags</string>
+    <string name="tag_catalog_check_close">Fermer</string>
+    <string name="tag_catalog_check_queued">La vérification du catalogue est en attente. Elle nécessite une connexion au réseau et une nouvelle tentative peut être prévue. Vous pouvez fermer cette fenêtre. La vérification se poursuit en arrière-plan.</string>
+    <string name="tag_catalog_check_running">Vérification du catalogue de tags…</string>
+    <string name="tag_catalog_check_complete">Le catalogue de tags est à jour. Vous pouvez toujours utiliser les tags hors ligne.</string>
+    <string name="tag_catalog_check_updated">Le catalogue de tags a été mis à jour. Vous pouvez utiliser les tags hors ligne.</string>
+    <string name="tag_catalog_check_summary">Rechercher une version plus récente du catalogue de tags hors ligne</string>
+    <string name="tag_catalog_check_retry">Réessayer</string>
+    <string name="tag_catalog_check_no_source">Aucune source de mise à jour n’est configurée pour le catalogue installé. Essayez de mettre à jour l’application ou obtenez un pack de langue compatible.</string>
+    <string name="tag_catalog_check_failed">La vérification du catalogue n’a pas pu être terminée. Réessayez plus tard.</string>
+    <string name="tag_catalog_check_cancelled">La vérification du catalogue a été annulée ou remplacée par une autre. Réessayez si nécessaire.</string>
     <string name="tag_translation_browse_online">Parcourir en ligne</string>
     <string name="tag_translation_online_loading">Recherche des langues disponibles pour les tags…</string>
     <string name="tag_translation_online_failed">Impossible de consulter les langues des tags en ligne.</string>
     <string name="tag_translation_online_empty">Aucune nouvelle langue ni mise à jour disponible pour les tags.</string>
     <string name="tag_translation_online_confirm">Télécharger et installer ce pack de langue (%1$s) ?</string>
+    <string name="tag_translation_online_confirm_zh_hans">Télécharger et installer ce pack de langue (%1$s) ?\n\nTheSkyC a rassemblé les traductions issues de la base de données EhTagTranslation et du travail de ses contributeurs. Sauf mention contraire, la source est sous licence CC BY-NC-SA 3.0 China Mainland.\n\nSource et attribution : %2$s\nLicence : %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">Impossible d’enregistrer les règles locales des tags. Réessayez.</string>
 </resources>

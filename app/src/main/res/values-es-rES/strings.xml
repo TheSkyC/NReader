@@ -134,6 +134,26 @@
     <string name="setting_off_remove_ignored">Las galerías con etiquetas ignoradas se pondrán borrosas</string>
     <string name="remove_ignored_galleries">Ocultar galerías ignoradas</string>
     <string name="clear_tag_preferences">Limpiar preferencias de etiquetas</string>
+    <string name="recent_tags">Etiquetas recientes</string>
+    <string name="no_recent_tags">No hay etiquetas recientes.</string>
+    <string name="clear_recent_tags">Borrar historial de etiquetas</string>
+    <string name="save_tag_view">Guardar vista de etiquetas</string>
+    <string name="saved_tag_views">Vistas de etiquetas guardadas</string>
+    <string name="tag_view_name_hint">Nombre de la vista</string>
+    <string name="tag_view_invalid_name">Escribe un nombre para esta vista de etiquetas.</string>
+    <string name="tag_view_saved">Vista de etiquetas guardada.</string>
+    <string name="tag_view_storage_error">No se pudieron cargar o modificar las vistas guardadas.</string>
+    <string name="no_saved_tag_views">No hay vistas de etiquetas guardadas.</string>
+    <string name="tag_view_pinned_format" formatted="true">%1$s (fijada)</string>
+    <string name="manage_tag_views">Gestionar vistas guardadas</string>
+    <string name="tag_view_load">Elegir una vista</string>
+    <string name="tag_view_rename">Cambiar nombre</string>
+    <string name="tag_view_pin">Fijar</string>
+    <string name="tag_view_unpin">Dejar de fijar</string>
+    <string name="tag_view_delete_title">¿Eliminar la vista guardada?</string>
+    <string name="tag_view_delete_message">¿Eliminar «%1$s»?</string>
+    <string name="tag_view_changed">Esta vista ha cambiado. Vuelve a seleccionarla.</string>
+    <string name="reset_tag_view_filters">Restablecer los filtros de la vista</string>
     <string name="check_for_update_on_startup">Comprobar actualizaciones al inicio</string>
     <string name="check_for_updates">Comprobar actualizaciones</string>
     <string name="no_updates_found">No se han encontrado actualizaciones</string>
@@ -142,8 +162,28 @@
     <string name="update_version_format" formatted="true">¿Actualizar de la versión %1$s a la %2$s?\n\nRegistro de cambios:\n%3$s</string>
     <string name="clear_this_list">¿Limpiar esta lista?</string>
     <string name="set_minimum_count">Establecer número mínimo</string>
+    <string name="set_minimum_count_format" formatted="true">Número mínimo de galerías por etiqueta (%1$d)</string>
     <string name="sort_by_title">Ordenar por título</string>
     <string name="sort_by_popular">Ordenar por popularidad</string>
+    <string name="filter_by_status">Filtrar por estado de la etiqueta</string>
+    <string name="filter_status_all">Todas las etiquetas</string>
+    <string name="filter_status_default">Sin regla</string>
+    <string name="filter_status_accepted">Solo etiquetas aceptadas</string>
+    <string name="filter_status_avoided">Solo etiquetas ignoradas</string>
+    <string name="bulk_edit_rules">Editar en bloque las etiquetas que coinciden</string>
+    <string name="bulk_edit_count_format">Etiquetas que se van a modificar: %1$d (máximo: %2$d). Elige el nuevo estado.</string>
+    <string name="bulk_set_accepted">Aceptar</string>
+    <string name="bulk_set_avoided">Ignorar</string>
+    <string name="bulk_clear_rules">Borrar reglas</string>
+    <string name="bulk_edit_saved_format">Etiquetas afectadas por el cambio de regla: %1$d.</string>
+    <string name="bulk_edit_no_matches">No hay etiquetas coincidentes.</string>
+    <string name="bulk_edit_too_many">Hay más de %1$d etiquetas que coinciden. Acota la búsqueda.</string>
+    <string name="undo_bulk_edit">Deshacer la última edición en bloque</string>
+    <string name="bulk_undo_saved_format">Etiquetas devueltas a su estado anterior: %1$d.</string>
+    <string name="bulk_undo_stale">Las reglas han cambiado. No se pudo deshacer la edición en bloque.</string>
+    <string name="bulk_undo_unavailable">No hay ninguna edición en bloque que deshacer.</string>
+    <string name="filter_translated_all">Con y sin traducción</string>
+    <string name="filter_translated_only">Solo etiquetas traducidas</string>
     <string name="next_page_volume_up">Ir a la siguiente página con el botón de aumentar volumen</string>
     <string name="next_page_volume_down">Ir a la siguiente página con el botón de disminuir volumen</string>
     <string name="change_title_type">Cambiar el tipo de título</string>
@@ -530,7 +570,25 @@
         <item>@string/reader_auto_scroll_fast</item>
     </string-array>
     <string name="tag_translation_packs_title">Idiomas de etiquetas</string>
+    <string name="tag_display_language_title">Idioma de las etiquetas</string>
+    <string name="tag_display_language_summary">Permite elegir un idioma para las etiquetas distinto del de la aplicación.</string>
+    <string name="tag_display_language_follow_app">Usar el idioma de la aplicación</string>
+    <string name="tag_display_language_uninstalled">%1$s (sin instalar)</string>
+    <string name="tag_translation_rebuild_title">Actualizando las traducciones de las etiquetas</string>
+    <string name="tag_translation_rebuild_message">Durante la actualización, las etiquetas se muestran con sus nombres originales y la búsqueda usa esos nombres. La actualización se reanuda automáticamente. Si tarda mucho, comprueba que haya espacio libre y vuelve a abrir la aplicación.</string>
+    <string name="tag_translation_rebuild_manage">Gestionar paquetes de idioma</string>
     <string name="tag_translation_packs_summary">Instala, actualiza o elimina traducciones de etiquetas sin conexión.</string>
+    <string name="tag_rule_transfer_title">Reglas de etiquetas</string>
+    <string name="tag_rule_transfer_summary">Exporta o importa las reglas locales para aceptar e ignorar etiquetas.</string>
+    <string name="tag_rule_export">Exportar reglas</string>
+    <string name="tag_rule_import">Importar reglas</string>
+    <string name="tag_rule_export_done">Reglas de etiquetas exportadas.</string>
+    <string name="tag_rule_transfer_failed">No se pudieron importar o exportar las reglas de etiquetas.</string>
+    <string name="tag_rule_import_preview" formatted="true">Reglas: %1$d. Nuevas: %2$d. Actualizadas: %3$d. Sin cambios: %4$d. Conflictos: %5$d.</string>
+    <string name="tag_rule_import_merge">Combinar</string>
+    <string name="tag_rule_import_replace">Reemplazar todo</string>
+    <string name="tag_rule_import_conflict">Resuelve los conflictos de tipo antes de importar.</string>
+    <string name="tag_rule_import_done" formatted="true">Reglas de etiquetas importadas: %1$d.</string>
     <string name="tag_translation_packs_empty">No hay idiomas de etiquetas instalados.</string>
     <string name="tag_translation_pack_item">%1$s (revisión %2$d)</string>
     <string name="tag_translation_install">Instalar o actualizar</string>
@@ -538,14 +596,41 @@
     <string name="tag_translation_remove_message">¿Eliminar las traducciones instaladas de %1$s?</string>
     <string name="tag_translation_remove">Eliminar</string>
     <string name="tag_translation_removed">Se eliminó %1$s.</string>
+    <string name="tag_translation_remove_changed">El paquete de idioma ha cambiado. Vuelve a abrir la lista de paquetes para eliminarlo.</string>
+    <string name="tag_translation_export">Exportar</string>
+    <string name="tag_translation_exporting">Exportando el paquete de idioma de etiquetas…</string>
+    <string name="tag_translation_export_cancelling">Cancelando la exportación…</string>
+    <string name="tag_translation_export_picker_failed">No se pudo abrir el selector de destino. Inténtalo de nuevo.</string>
+    <string name="tag_translation_export_done">Paquete de idioma de etiquetas exportado.</string>
+    <string name="tag_translation_export_done_without_attribution">Paquete de idioma de etiquetas exportado. El archivo no incluye información de atribución ni de licencia.</string>
+    <string name="tag_translation_export_changed">El paquete de idioma ha cambiado. Vuelve a abrir la lista de paquetes e inténtalo de nuevo. El archivo seleccionado puede estar vacío.</string>
+    <string name="tag_translation_export_unknown_order">No se puede exportar este paquete antiguo porque se desconoce el orden de sus alias. Usa el paquete original o desinstala el paquete y vuelve a instalarlo. El archivo seleccionado puede estar vacío.</string>
+    <string name="tag_translation_export_duplicate_alias">No se puede exportar el paquete porque algunos alias ahora se consideran iguales al buscar. Usa el archivo original o instala un paquete corregido. El archivo seleccionado puede estar vacío.</string>
+    <string name="tag_translation_export_failed">La exportación no finalizó. El archivo seleccionado puede estar vacío o incompleto. Inténtalo de nuevo.</string>
+    <string name="tag_translation_import_changed">El paquete de idioma cambió durante la importación. Inténtalo de nuevo si aún quieres instalarlo.</string>
     <string name="tag_translation_installed">Idioma de etiquetas instalado o actualizado.</string>
     <string name="tag_translation_not_newer">Este paquete ya está instalado con la misma revisión o una más reciente.</string>
     <string name="tag_translation_install_failed">No se pudo instalar el paquete de idioma de etiquetas.</string>
+    <string name="tag_translation_import_in_progress">Ya se está instalando un paquete de idioma.</string>
+    <string name="tag_translation_unknown_tags">Faltan algunas etiquetas de este paquete en tu catálogo de etiquetas. Actualiza el catálogo o la aplicación e inténtalo de nuevo. Si sigue fallando, puede que el paquete sea incompatible.</string>
+    <string name="tag_translation_unknown_tags_no_source">Faltan algunas etiquetas de este paquete en tu catálogo de etiquetas. No hay ninguna fuente de actualización del catálogo configurada. Actualiza la aplicación o elige un paquete de idioma compatible.</string>
+    <string name="tag_catalog_check_updates">Buscar actualizaciones del catálogo de etiquetas</string>
+    <string name="tag_catalog_check_close">Cerrar</string>
+    <string name="tag_catalog_check_queued">La comprobación del catálogo está pendiente. Se necesita conexión de red y puede haber un reintento pendiente. Puedes cerrar este cuadro de diálogo mientras la comprobación continúa en segundo plano.</string>
+    <string name="tag_catalog_check_running">Comprobando el catálogo de etiquetas…</string>
+    <string name="tag_catalog_check_complete">El catálogo de etiquetas está al día. Puedes seguir usando las etiquetas sin conexión.</string>
+    <string name="tag_catalog_check_updated">Se ha actualizado el catálogo de etiquetas. Ya puedes usar las etiquetas sin conexión.</string>
+    <string name="tag_catalog_check_summary">Busca una versión más reciente del catálogo de etiquetas disponible sin conexión.</string>
+    <string name="tag_catalog_check_retry">Reintentar</string>
+    <string name="tag_catalog_check_no_source">No hay ninguna fuente de actualización configurada para el catálogo instalado. Intenta actualizar la aplicación u obtener un paquete de idioma compatible.</string>
+    <string name="tag_catalog_check_failed">No se pudo completar la comprobación del catálogo. Inténtalo más tarde.</string>
+    <string name="tag_catalog_check_cancelled">La comprobación del catálogo se ha cancelado o se ha sustituido por otra. Inténtalo de nuevo si es necesario.</string>
     <string name="tag_translation_browse_online">Explorar en línea</string>
     <string name="tag_translation_online_loading">Buscando idiomas disponibles para las etiquetas…</string>
     <string name="tag_translation_online_failed">No se pudieron consultar los idiomas de las etiquetas.</string>
     <string name="tag_translation_online_empty">No hay idiomas nuevos ni actualizaciones para las etiquetas.</string>
     <string name="tag_translation_online_confirm">¿Descargar e instalar este paquete de idioma (%1$s)?</string>
+    <string name="tag_translation_online_confirm_zh_hans">¿Descargar e instalar este paquete de idioma (%1$s)?\n\nLas traducciones se basan en la base de datos EhTagTranslation y en las aportaciones de sus colaboradores. TheSkyC las ha recopilado. Salvo que se indique lo contrario, la fuente está sujeta a la licencia CC BY-NC-SA 3.0 China Mainland.\n\nFuente y atribución: %2$s\nLicencia: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">No se pudieron guardar las reglas locales de etiquetas. Inténtalo de nuevo.</string>
 </resources>
