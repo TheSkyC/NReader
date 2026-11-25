@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Looper;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -72,6 +73,33 @@ public class SettingsNavigationTest {
                 assertEquals(0, title.getLayout().getEllipsisCount(title.getLayout().getLineCount() - 1));
                 assertTrue(title.getLeft() >= 0 && title.getRight() <= toolbar.getWidth());
             }
+        }
+    }
+
+    @Test
+    public void listPreferenceDialogCancelsWhenTouchingInset() {
+        Application application = RuntimeEnvironment.getApplication();
+        String key = application.getString(R.string.preference_key_title_type);
+        application.getSharedPreferences("Settings", 0).edit().putString(key, "pretty").commit();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_galleries");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            ListPreference preference = controller.get().fragment.findPreference(key);
+            preference.performClick();
+            controller.get().getSupportFragmentManager().executePendingTransactions();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            View decor = dialog.getWindow().getDecorView();
+            MotionEvent down = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, 0, 0);
+            MotionEvent up = MotionEvent.obtain(0, 1, MotionEvent.ACTION_UP, 0, 0, 0);
+            decor.dispatchTouchEvent(down);
+            decor.dispatchTouchEvent(up);
+            down.recycle();
+            up.recycle();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertFalse(dialog.isShowing());
+            assertEquals("pretty", preference.getValue());
         }
     }
 
