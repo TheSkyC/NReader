@@ -930,6 +930,7 @@ public class Queries {
         public static final String TITLE = "title";
         public static final String THUMB = "thumbType";
         public static final String TIME = "time";
+        public static final String TAGS = "tags";
         public static final String TABLE_NAME = "History";
         /**
          * @noinspection unused
@@ -940,7 +941,8 @@ public class Queries {
             "`mediaId` INT NOT NULL," +
             "`title` TEXT NOT NULL," +
             "`thumbType` TINYINT(1) NOT NULL," +
-            "`time` INT NOT NULL" +
+            "`time` INT NOT NULL," +
+            "`tags` TEXT" +
             ");";
 
         public static void addGallery(SimpleGallery gallery) {
@@ -951,8 +953,20 @@ public class Queries {
             values.put(TITLE, gallery.getTitle());
             values.put(THUMB, gallery.getThumbnail().toString());
             values.put(TIME, new Date().getTime());
-            db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+            String metadata = gallery.historyTagsJson();
+            if (db.update(TABLE_NAME, values, ID + "=?", new String[]{String.valueOf(gallery.getId())}) == 0) {
+                if (metadata != null) values.put(TAGS, metadata);
+                db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            }
             cleanHistory();
+        }
+
+        public static void updateMetadata(SimpleGallery gallery) {
+            String metadata = gallery.historyTagsJson();
+            if (metadata == null) return;
+            ContentValues values = new ContentValues(1);
+            values.put(TAGS, metadata);
+            db.update(TABLE_NAME, values, ID + "=?", new String[]{String.valueOf(gallery.getId())});
         }
 
         public static List<SimpleGallery> getHistory() {

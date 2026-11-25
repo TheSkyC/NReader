@@ -12,6 +12,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.GalleryActivity;
+import com.theskyc.nreader.HistoryActivity;
 import com.theskyc.nreader.MainActivity;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.InspectorV3;
@@ -99,6 +100,8 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         if (holderPos < 0 || holderPos >= mDataset.size()) return;
         final SimpleGallery ent = mDataset.get(holderPos);
         if (ent == null) return;
+        if (context instanceof HistoryActivity && ent.getTags() == null)
+            ((HistoryActivity) context).resolveMetadata(ent);
         if (!Global.showTitles()) {
             holder.title.setAlpha(0f);
             holder.flag.setAlpha(0f);
@@ -124,7 +127,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         holder.pages.setVisibility(View.GONE);
         holder.title.setText(ent.getTitle());
         holder.flag.setVisibility(View.VISIBLE);
-        if (Global.getOnlyLanguage() == Language.ALL || context instanceof GalleryActivity) {
+        if (Global.getOnlyLanguage() == Language.ALL || context instanceof GalleryActivity || context instanceof HistoryActivity) {
             LanguageFlag.bind(holder.flag, ent.getLanguage());
         } else holder.flag.setVisibility(View.GONE);
         holder.title.setOnClickListener(v -> {

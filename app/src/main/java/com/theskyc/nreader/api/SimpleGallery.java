@@ -75,6 +75,48 @@ public class SimpleGallery extends GenericGallery {
         id = c.getInt(c.getColumnIndex(Queries.HistoryTable.ID));
         mediaId = c.getInt(c.getColumnIndex(Queries.HistoryTable.MEDIAID));
         thumbnail = Uri.parse(c.getString(c.getColumnIndex(Queries.HistoryTable.THUMB)));
+        String metadata = c.getString(c.getColumnIndex(Queries.HistoryTable.TAGS));
+        if (metadata != null) {
+            try {
+                JSONArray array = new JSONArray(metadata);
+                tags = new TagList();
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject value = array.getJSONObject(i);
+                    TagType type = TagType.typeByName(value.getString("type"));
+                    if (type == TagType.ARTIST || type == TagType.GROUP || type == TagType.LANGUAGE)
+                        tags.addTag(new Tag(value.getString("name"), 0, value.getInt("id"), type, TagStatus.DEFAULT));
+                }
+                language = Gallery.loadLanguage(tags);
+            } catch (JSONException e) {
+                tags = null;
+                LogUtility.w("Invalid history tag metadata", e);
+            }
+        }
+    }
+
+    public String historyTagsJson() {
+        if (tags == null || tags.getAllTagsList().isEmpty()) return null;
+        JSONArray array = new JSONArray();
+        for (Tag tag : tags.getAllTagsList()) {
+            TagType type = tag.getType();
+            if (type != TagType.ARTIST && type != TagType.GROUP && type != TagType.LANGUAGE) continue;
+            try {
+                JSONObject value = new JSONObject();
+                value.put("id", tag.getId());
+                value.put("type", type.getSingle());
+                value.put("name", tag.getName());
+                array.put(value);
+            } catch (JSONException e) {
+                LogUtility.w("Failed to save history tag metadata", e);
+                return null;
+            }
+        }
+        return array.length() == 0 ? null : array.toString();
+    }
+
+    public void applyHistoryMetadata(SimpleGallery source) {
+        tags = source.tags;
+        language = source.language;
     }
 
     private SimpleGallery(String title, int id, int mediaId, Uri thumbnail, Language language, TagList tags) {

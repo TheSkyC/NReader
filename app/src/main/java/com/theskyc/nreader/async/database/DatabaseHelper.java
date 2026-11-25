@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 30;
+    private static final int DATABASE_VERSION = 31;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -109,6 +109,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 5) updateGalleryWithSizes(db);
         if (oldVersion <= 6) db.execSQL(Queries.DownloadTable.CREATE_TABLE);
         if (oldVersion <= 7) db.execSQL(Queries.HistoryTable.CREATE_TABLE);
+        else if (oldVersion < 31 && newVersion >= 31 && !hasColumn(db, Queries.HistoryTable.TABLE_NAME, Queries.HistoryTable.TAGS))
+            db.execSQL("ALTER TABLE History ADD COLUMN tags TEXT");
         if (oldVersion <= 8) insertFavorite(context, db);
         if (oldVersion <= 9) addRangeColumn(db);
         if (oldVersion <= 10) db.execSQL(Queries.ResumeTable.CREATE_TABLE);

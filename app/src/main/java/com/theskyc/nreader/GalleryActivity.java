@@ -318,6 +318,8 @@ public class GalleryActivity extends BaseActivity {
     }
 
     private void loadGallery(GenericGallery gall, int zoom) {
+        if (!isLocal && gall instanceof Gallery)
+            Queries.HistoryTable.updateMetadata(((Gallery) gall).toSimpleGallery());
         Drawable retainedCover = currentDetailCover();
         this.gallery = gall;
         detailReady = gall instanceof Gallery || gall.isLocal();
