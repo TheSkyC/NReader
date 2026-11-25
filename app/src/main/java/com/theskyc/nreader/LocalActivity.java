@@ -2,10 +2,12 @@
 package com.theskyc.nreader;
 
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
@@ -160,6 +162,16 @@ public class LocalActivity extends BaseActivity {
     protected void changeLayout(boolean landscape) {
         if (listGrid == null) listGrid = new GalleryListGrid(recycler, MainGridSettings.forDownloads(this));
         else listGrid.refresh();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN && searchView != null && searchView.hasFocus()) {
+            Rect bounds = new Rect();
+            if (searchView.getGlobalVisibleRect(bounds)
+                && !bounds.contains((int) event.getRawX(), (int) event.getRawY())) searchView.clearFocus();
+        }
+        return super.dispatchTouchEvent(event);
     }
 
     @Override
