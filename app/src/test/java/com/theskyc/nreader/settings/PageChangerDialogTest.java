@@ -1,6 +1,7 @@
 package com.theskyc.nreader.settings;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.android.material.slider.Slider;
 import com.theskyc.nreader.R;
 
 import org.junit.Test;
@@ -70,7 +72,8 @@ public class PageChangerDialogTest {
             AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
             EditText value = dialog.findViewById(R.id.edit_page);
             assertEquals(activity.getText(title), value.getHint());
-            assertEquals(activity.getText(title), dialog.findViewById(R.id.seekBar).getContentDescription());
+            Slider slider = dialog.findViewById(R.id.page_slider);
+            assertEquals(activity.getText(title), slider.getContentDescription());
             dialog.dismiss();
         }
     }
@@ -90,13 +93,39 @@ public class PageChangerDialogTest {
             }));
         AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
         EditText page = dialog.findViewById(R.id.edit_page);
+        Slider slider = dialog.findViewById(R.id.page_slider);
         dialog.findViewById(R.id.next).performClick();
         assertEquals("5", page.getText().toString());
         dialog.findViewById(R.id.prev).performClick();
         assertEquals("4", page.getText().toString());
         page.setText("17");
+        assertEquals(16f, slider.getValue(), 0f);
+        page.setText("99");
+        assertEquals(19f, slider.getValue(), 0f);
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        assertEquals(17, selected.get());
+        assertEquals(20, selected.get());
+    }
+
+    @Test
+    public void singlePageRangeKeepsSliderDisabledAndSelectionValid() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        AtomicInteger selected = new AtomicInteger();
+        DefaultDialogs.pageChangerDialog(new DefaultDialogs.Builder(activity)
+            .setMin(1).setMax(1).setActual(1)
+            .setDialogs(new DefaultDialogs.CustomDialogResults() {
+                @Override
+                public void positive(int page) {
+                    selected.set(page);
+                }
+            }));
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        Slider slider = dialog.findViewById(R.id.page_slider);
+        assertFalse(slider.isEnabled());
+        dialog.findViewById(R.id.next).performClick();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(1, selected.get());
     }
 }

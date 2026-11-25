@@ -7,7 +7,6 @@ import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.DrawableRes;
@@ -16,8 +15,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.theskyc.nreader.R;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.slider.Slider;
 
 import java.util.Locale;
 
@@ -37,42 +37,37 @@ public class DefaultDialogs {
         }
         View v = View.inflate(builder.context, R.layout.page_changer, null);
         build.setView(v);
-        final SeekBar seekBar = v.findViewById(R.id.seekBar);
-        if (Global.useRtl()) seekBar.setRotationY(180);
+        final Slider slider = v.findViewById(R.id.page_slider);
+        int maxProgress = Math.max(0, builder.max - builder.min);
+        slider.setValueTo(Math.max(1, maxProgress));
+        slider.setLabelFormatter(value -> Integer.toString(Math.round(value) + builder.min));
+        slider.setEnabled(maxProgress > 0);
+        if (Global.useRtl()) slider.setRotationY(180);
         final TextView totalPage = v.findViewById(R.id.page);
         final EditText actualPage = v.findViewById(R.id.edit_page);
         if (builder.title != 0) {
             CharSequence label = builder.context.getText(builder.title);
-            seekBar.setContentDescription(label);
+            slider.setContentDescription(label);
             actualPage.setHint(label);
         }
         v.findViewById(R.id.prev).setOnClickListener(v12 -> {
-            seekBar.setProgress(seekBar.getProgress() - 1);
-            actualPage.setText(String.format(Locale.US, "%d", seekBar.getProgress() + builder.min));
+            int progress = Math.max(0, Math.round(slider.getValue()) - 1);
+            slider.setValue(progress);
+            actualPage.setText(String.format(Locale.US, "%d", progress + builder.min));
 
         });
         v.findViewById(R.id.next).setOnClickListener(v1 -> {
-            seekBar.setProgress(seekBar.getProgress() + 1);
-            actualPage.setText(String.format(Locale.US, "%d", seekBar.getProgress() + builder.min));
+            int progress = Math.min(maxProgress, Math.round(slider.getValue()) + 1);
+            slider.setValue(progress);
+            actualPage.setText(String.format(Locale.US, "%d", progress + builder.min));
         });
-        seekBar.setMax(builder.max - builder.min);
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser)
-                    actualPage.setText(String.format(Locale.US, "%d", progress + builder.min));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+        slider.addOnChangeListener((view, value, fromUser) -> {
+            if (fromUser)
+                actualPage.setText(String.format(Locale.US, "%d", Math.round(value) + builder.min));
         });
         actualPage.setText(String.format(Locale.US, "%d", builder.actual));
-        seekBar.setProgress(builder.actual - builder.min);
+        int actualProgress = Math.max(0, Math.min(maxProgress, builder.actual - builder.min));
+        slider.setValue(actualProgress);
         totalPage.setText(String.format(Locale.US, "%d", builder.max));
         InputFilter[] filterArray = new InputFilter[1];
         filterArray[0] = new InputFilter.LengthFilter(Integer.toString(builder.max).length());
@@ -94,13 +89,13 @@ public class DefaultDialogs {
                 } catch (NumberFormatException e) {
                     x = -1;
                 }
-                if (x < builder.min) seekBar.setProgress(0);
-                else seekBar.setProgress(x - builder.min);
+                int progress = Math.max(0, Math.min(maxProgress, x - builder.min));
+                slider.setValue(progress);
             }
         });
         if (builder.dialogs != null)
             build
-                .setPositiveButton(builder.context.getString(builder.yesbtn), (dialog, id) -> builder.dialogs.positive(seekBar.getProgress() + builder.min))
+                .setPositiveButton(builder.context.getString(builder.yesbtn), (dialog, id) -> builder.dialogs.positive(Math.round(slider.getValue()) + builder.min))
                 .setNegativeButton(builder.context.getString(builder.nobtn), (dialog, which) -> builder.dialogs.negative());
         if (builder.maybebtn != 0)
             build.setNeutralButton(builder.context.getString(builder.maybebtn), (dialog, which) -> builder.dialogs.neutral());

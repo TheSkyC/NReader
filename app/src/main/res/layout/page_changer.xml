@@ -8,8 +8,8 @@
     android:paddingStart="16dp"
     android:paddingEnd="16dp">
 
-    <SeekBar
-        android:id="@+id/seekBar"
+    <com.google.android.material.slider.Slider
+        android:id="@+id/page_slider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
