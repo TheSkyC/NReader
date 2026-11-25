@@ -833,8 +833,8 @@ public class GalleryActivity extends BaseActivity {
         tabs.addTab(tabs.newTab().setText(R.string.comments));
         commentsList.setLayoutManager(new LinearLayoutManager(this));
         View composer = findViewById(R.id.comment_composer);
-        composer.setVisibility(!isLocal && gallery.isValid() ? View.VISIBLE : View.GONE);
-        if (!isLocal && gallery.isValid()) {
+        composer.setVisibility(gallery.getId() > 0 ? View.VISIBLE : View.GONE);
+        if (gallery.getId() > 0) {
             commentComposer = new CommentComposer(this, gallery.getId(), state, () -> {
                 if (commentsRequest != null) commentsRequest.cancel();
                 commentsRequest = null;
@@ -939,7 +939,7 @@ public class GalleryActivity extends BaseActivity {
         if (commentsLoading) return;
         TextView message = findViewById(R.id.comments_message);
         View retry = findViewById(R.id.comments_retry);
-        if (isLocal || !gallery.isValid()) {
+        if (gallery.getId() <= 0) {
             message.setText(R.string.gallery_comments_unavailable);
             message.setVisibility(View.VISIBLE);
             retry.setVisibility(View.GONE);
