@@ -15,11 +15,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.components.status.Status;
 import com.theskyc.nreader.components.status.StatusManager;
+import com.theskyc.nreader.components.status.StatusNameInput;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -95,11 +97,19 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         EditText name = layout.findViewById(R.id.name);
         Button btnColor = layout.findViewById(R.id.color);
         View colorSwatch = layout.findViewById(R.id.color_swatch);
-        int color = status == null ? Utility.RANDOM.nextInt() | 0xff000000 : status.opaqueColor();
+        int color;
+        if (status == null) {
+            do {
+                color = Utility.RANDOM.nextInt() | 0xff000000;
+            } while (color == Color.BLACK || color == Color.WHITE);
+        } else {
+            color = status.opaqueColor();
+        }
         newColor = color;
         colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
         name.setText(status == null ? "" : status.name);
-        btnColor.setOnClickListener(v -> new AmbilWarnaDialog(activity, color, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
+        StatusNameInput.clearErrorOnEdit(layout.findViewById(R.id.name_input));
+        btnColor.setOnClickListener(v -> new AmbilWarnaDialog(activity, newColor, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
             @Override
             public void onCancel(AmbilWarnaDialog dialog) {
             }
@@ -116,16 +126,11 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         }).show());
         builder.setView(layout);
         builder.setTitle(status == null ? R.string.create_new_status : R.string.update_status);
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            String newName = name.getText().toString();
-            if (newName.length() < 2) {
-                Toast.makeText(activity, R.string.name_too_short, Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (StatusManager.getByName(newName) != null && status != null &&  !newName.equals(status.name)) {
-                Toast.makeText(activity, R.string.duplicated_name, Toast.LENGTH_SHORT).show();
-                return;
-            }
+        builder.setPositiveButton(R.string.ok, null);
+        builder.setNegativeButton(R.string.cancel, null);
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (!StatusNameInput.validate(layout.findViewById(R.id.name_input), status)) return;
             Status newStatus = StatusManager.updateStatus(status, name.getText().toString(), newColor);
             if (status == null) {
                 statusList.add(newStatus);
@@ -140,10 +145,8 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
                 notifyItemMoved(oldIndex, newIndex);
                 notifyItemChanged(newIndex);
             }
-
+            dialog.dismiss();
         });
-        builder.setNegativeButton(R.string.cancel, null);
-        builder.show();
     }
 
 

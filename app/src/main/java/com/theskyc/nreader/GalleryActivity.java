@@ -37,6 +37,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate;
@@ -66,6 +67,7 @@ import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.activities.BaseActivity;
 import com.theskyc.nreader.components.status.Status;
 import com.theskyc.nreader.components.status.StatusManager;
+import com.theskyc.nreader.components.status.StatusNameInput;
 import com.theskyc.nreader.components.views.RangeSelector;
 import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.components.widgets.GalleryTabSwipeLayout;
@@ -1178,6 +1180,7 @@ public class GalleryActivity extends BaseActivity {
         EditText name = layout.findViewById(R.id.name);
         Button btnColor = layout.findViewById(R.id.color);
         View colorSwatch = layout.findViewById(R.id.color_swatch);
+        StatusNameInput.clearErrorOnEdit(layout.findViewById(R.id.name_input));
         do {
             newStatusColor = Utility.RANDOM.nextInt() | 0xff000000;
         } while (newStatusColor == Color.BLACK || newStatusColor == Color.WHITE);
@@ -1199,22 +1202,16 @@ public class GalleryActivity extends BaseActivity {
         }).show());
         builder.setView(layout);
         builder.setTitle(R.string.create_new_status);
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            String newName = name.getText().toString();
-            if (newName.length() < 2) {
-                Toast.makeText(this, R.string.name_too_short, Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (StatusManager.getByName(newName) != null) {
-                Toast.makeText(this, R.string.duplicated_name, Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Status status = StatusManager.add(name.getText().toString(), newStatusColor);
-            Queries.StatusMangaTable.insert(gallery, status);
-        });
+        builder.setPositiveButton(R.string.ok, null);
         builder.setNegativeButton(R.string.cancel, (dialog, which) -> updateStatus());
         builder.setOnCancelListener(dialog -> updateStatus());
-        builder.show();
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (!StatusNameInput.validate(layout.findViewById(R.id.name_input), null)) return;
+            Status status = StatusManager.add(name.getText().toString(), newStatusColor);
+            Queries.StatusMangaTable.insert(gallery, status);
+            dialog.dismiss();
+        });
     }
 
     private void updateIcon() {
