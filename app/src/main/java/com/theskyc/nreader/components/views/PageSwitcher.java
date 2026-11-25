@@ -5,20 +5,20 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.cardview.widget.CardView;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.settings.DefaultDialogs;
 
 import java.util.Locale;
 
-public class PageSwitcher extends CardView {
+public class PageSwitcher extends FrameLayout {
 
     private AppCompatImageButton prev, next;
     private AppCompatEditText text;
