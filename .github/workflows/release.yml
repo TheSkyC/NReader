@@ -147,7 +147,15 @@ jobs:
             digest="$(sha256sum "$asset" | awk '{ print $1 }')"
             printf '%s  %s\n' "$digest" "$(basename "$asset")" >> SHA256SUMS.txt
           done
-          notes='Built and signed by the NReader GitHub Actions release workflow.'
+          notes="$(awk -v version="$RELEASE_TAG" '
+            index($0, "## " version " — ") == 1 { found=1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md)"
+          if [ -z "${notes//[[:space:]]/}" ]; then
+            echo "Missing changelog notes for $RELEASE_TAG" >&2
+            exit 1
+          fi
           python scripts/build_update_manifest.py \
             --output nreader-update.json \
             --repository "${GITHUB_REPOSITORY}" \
