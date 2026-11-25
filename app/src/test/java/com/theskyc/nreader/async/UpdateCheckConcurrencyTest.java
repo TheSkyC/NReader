@@ -58,6 +58,172 @@ import kotlin.coroutines.EmptyCoroutineContext;
 @Config(application = Application.class)
 public class UpdateCheckConcurrencyTest {
     @Test
+    public void failedForegroundCheckKeepsPreviousCandidateAndSuccessTime() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+        metadata.saveSelectedRelease("99.0.0", Integer.MAX_VALUE, "https://example.invalid/a.apk", "Previous notes", false,
+            "0000000000000000000000000000000000000000000000000000000000000000", 100);
+        metadata.markSuccessfulCheck(123L);
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ActivityController<AppCompatActivity> activity = Robolectric.buildActivity(AppCompatActivity.class).setup();
+        VersionChecker checker = new VersionChecker(activity.get(), true, null, false);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = server()) {
+            Future<?> replies = executor.submit(() -> {
+                for (int index = 0; index < 2; index++) {
+                    try (Socket socket = server.accept()) {
+                        readRequest(socket);
+                        writeResponse(socket, "{broken", "invalid");
+                    }
+                }
+                return null;
+            });
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            state.save(UpdateState.checking(1L));
+            Field revision = VersionChecker.class.getDeclaredField("checkRevision");
+            revision.setAccessible(true);
+            revision.setLong(checker, state.revision());
+            checker.requestFeed(base + "/feed", base + "/releases", false, true, true);
+            replies.get(10, TimeUnit.SECONDS);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (state.load().getPhase() == UpdatePhase.CHECKING && System.nanoTime() < deadline) Thread.sleep(10L);
+            assertEquals(UpdatePhase.ERROR, state.load().getPhase());
+            assertEquals("99.0.0", state.load().getVersion());
+            assertEquals(123L, metadata.getLastSuccessfulCheck());
+            assertEquals("Previous notes", metadata.getSelectedBody());
+        } finally {
+            checker.cancel();
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+            activity.pause().stop().destroy();
+        }
+    }
+    @Test
+    public void workerUsesValidFeedWithoutRequestingApi() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = server()) {
+            Future<?> reply = executor.submit(() -> {
+                try (Socket socket = server.accept()) {
+                    assertTrue(readRequest(socket).contains("/feed"));
+                    String manifest = "{\"schemaVersion\":1,\"versionName\":\"99.0.0\",\"versionCode\":2147483647,"
+                        + "\"channel\":\"stable\",\"assets\":[{\"id\":\"apk\",\"flavor\":\"" + BuildConfig.FLAVOR
+                        + "\",\"packageName\":\"" + context.getPackageName() + "\",\"minSdk\":26,\"sizeBytes\":100,"
+                        + "\"url\":\"https://example.invalid/a.apk\",\"sha256\":\""
+                        + "0000000000000000000000000000000000000000000000000000000000000000\"}]}";
+                    writeResponse(socket, "{\"schemaVersion\":1,\"stable\":" + manifest + ",\"beta\":null}", "feed-tag");
+                }
+                return null;
+            });
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            Executor direct = Runnable::run;
+            WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+                new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
+                new WorkManagerTaskExecutor(direct), new WorkerFactory() {
+                    @Override public ListenableWorker createWorker(Context app, String name, WorkerParameters params) { return null; }
+                }, (app, id, data) -> Futures.immediateFuture(null), (app, id, info) -> Futures.immediateFuture(null));
+            UpdateCheckWorker worker = new UpdateCheckWorker(context, parameters, () -> true, () -> true,
+                () -> true, () -> "http://127.0.0.1:1/api", base + "/feed");
+            assertEquals(ListenableWorker.Result.success(), worker.doWork());
+            reply.get(5, TimeUnit.SECONDS);
+            assertEquals(UpdatePhase.AVAILABLE, state.load().getPhase());
+            assertEquals("feed-tag", new UpdateMetadataStore(context).feedSnapshot(base + "/feed").etag);
+        } finally {
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+    @Test
+    public void foregroundFallsBackToApiWhenFeedFails() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ActivityController<AppCompatActivity> activity = Robolectric.buildActivity(AppCompatActivity.class).setup();
+        VersionChecker checker = new VersionChecker(activity.get(), true, null, false);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = server()) {
+            Future<?> replies = executor.submit(() -> {
+                try (Socket feed = server.accept()) {
+                    assertTrue(readRequest(feed).contains("/feed"));
+                    writeResponse(feed, "{broken", "feed-tag");
+                }
+                try (Socket api = server.accept()) {
+                    assertTrue(readRequest(api).contains("/releases"));
+                    writeResponse(api, "[]", "api-tag");
+                }
+                return null;
+            });
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            state.save(UpdateState.checking(1L));
+            Field revision = VersionChecker.class.getDeclaredField("checkRevision");
+            revision.setAccessible(true);
+            revision.setLong(checker, state.revision());
+            checker.requestFeed(base + "/feed", base + "/releases", false, true, true);
+            replies.get(10, TimeUnit.SECONDS);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (state.load().getPhase() == UpdatePhase.CHECKING && System.nanoTime() < deadline) {
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                Thread.sleep(10L);
+            }
+            assertEquals(UpdatePhase.IDLE, state.load().getPhase());
+            assertEquals("api-tag", new UpdateMetadataStore(context).getEtag());
+        } finally {
+            checker.cancel();
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+            activity.pause().stop().destroy();
+        }
+    }
+    @Test
+    public void workerFallsBackToApiWhenFeedIsInvalid() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        UpdateStateStore state = new UpdateStateStore(context);
+        state.clear();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = server()) {
+            Future<?> replies = executor.submit(() -> {
+                try (Socket feed = server.accept()) {
+                    assertTrue(readRequest(feed).contains("/feed"));
+                    writeResponse(feed, "{broken", "feed-tag");
+                }
+                try (Socket api = server.accept()) {
+                    assertTrue(readRequest(api).contains("/releases"));
+                    writeResponse(api, "[]", "api-tag");
+                }
+                return null;
+            });
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            Executor direct = Runnable::run;
+            WorkerParameters parameters = new WorkerParameters(UUID.randomUUID(), Data.EMPTY, Collections.emptyList(),
+                new WorkerParameters.RuntimeExtras(), 0, 0, direct, EmptyCoroutineContext.INSTANCE,
+                new WorkManagerTaskExecutor(direct), new WorkerFactory() {
+                    @Override public ListenableWorker createWorker(Context app, String name, WorkerParameters params) { return null; }
+                }, (app, id, data) -> Futures.immediateFuture(null), (app, id, info) -> Futures.immediateFuture(null));
+            UpdateCheckWorker worker = new UpdateCheckWorker(context, parameters, () -> true, () -> true,
+                () -> true, () -> base + "/releases", base + "/feed");
+            assertEquals(ListenableWorker.Result.success(), worker.doWork());
+            replies.get(5, TimeUnit.SECONDS);
+            UpdateMetadataStore metadata = new UpdateMetadataStore(context);
+            assertEquals("api-tag", metadata.getEtag());
+            assertTrue(metadata.getLastSuccessfulCheck() > 0L);
+            assertEquals(null, metadata.feedSnapshot(base + "/feed").body);
+        } finally {
+            executor.shutdownNow();
+            state.clear();
+            context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
+        }
+    }
+    @Test
     public void laterForegroundCheckWinsOverDelayedBackgroundResponse() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         context.getSharedPreferences("UpdateMetadata", Context.MODE_PRIVATE).edit().clear().commit();
@@ -355,11 +521,13 @@ public class UpdateCheckConcurrencyTest {
         }
     }
 
-    private static void readRequest(Socket socket) throws IOException {
+    private static String readRequest(Socket socket) throws IOException {
         socket.setSoTimeout(10000);
         BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
+        String first = input.readLine();
         String line;
         while ((line = input.readLine()) != null && !line.isEmpty()) { }
+        return first;
     }
 
     private static void writeResponse(Socket socket, String body, String etag) throws IOException {

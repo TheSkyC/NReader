@@ -124,6 +124,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
             if (currentState != null && currentState.getPhase() == UpdatePhase.READY_TO_INSTALL) {
                 if (checker.installReadyUpdate()) action.setEnabled(false);
             } else if (release != null && currentState != null
+                && currentState.getPhase() == UpdatePhase.AVAILABLE
                 && release.getVersionCode().equals(currentState.getVersion())) checker.startDownload();
             else startCheck();
         });

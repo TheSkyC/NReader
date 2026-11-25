@@ -122,7 +122,57 @@ public class VersionChecker {
         });
         if (!started[0]) return;
         LogUtility.d("ACTUAL VERSION: " + BuildConfig.VERSION_NAME);
-        requestReleases(withPrerelease, silent, true);
+        String feedUrl = UpdateFeed.url();
+        if (feedUrl == null) requestReleases(withPrerelease, silent, true);
+        else requestFeed(feedUrl, releaseApiUrl(), withPrerelease, silent, true);
+    }
+
+    void requestFeed(String url, String fallbackUrl, boolean withPrerelease, boolean silent, boolean conditional) {
+        if (checkGeneration < 0L) checkGeneration = UpdateCheckCoordinator.begin();
+        UpdateMetadataStore.CacheSnapshot cache = metadataStore.feedSnapshot(url);
+        Request.Builder request = new Request.Builder().url(url)
+            .header("Accept", "application/json")
+            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
+        if (conditional && cache.etag != null) request.header("If-None-Match", cache.etag);
+        metadataCall = UpdateRequestClient.newCall(updateClient, request.build());
+        metadataCall.enqueue(new Callback() {
+            @Override public void onFailure(@NonNull Call call, @NonNull IOException exception) {
+                if (call.isCanceled() || call != metadataCall || cancelled || !UpdateCheckCoordinator.isCurrent(checkGeneration)) return;
+                requestReleases(withPrerelease, silent, true, fallbackUrl);
+            }
+
+            @Override public void onResponse(@NonNull Call call, @NonNull Response response) {
+                if (call != metadataCall) { response.close(); return; }
+                try (Response ignored = response) {
+                    boolean cached = response.code() == 304 && conditional && cache.etag != null;
+                    String json = cached ? cache.body : response.isSuccessful() && response.body() != null
+                        ? UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT) : null;
+                    if (json == null) {
+                        if (response.code() == 304 && conditional) { requestFeed(url, fallbackUrl, withPrerelease, silent, false); return; }
+                        throw new IOException("Unable to retrieve update feed: HTTP " + response.code());
+                    }
+                    GitHubRelease release;
+                    try {
+                        release = UpdateFeed.parse(json, withPrerelease, BuildConfig.FLAVOR, context.getPackageName());
+                    } catch (IOException | RuntimeException exception) {
+                        if (cached) { requestFeed(url, fallbackUrl, withPrerelease, silent, false); return; }
+                        throw exception;
+                    }
+                    if (!UpdateCheckCoordinator.isCurrent(checkGeneration) || cancelled) return;
+                    if (!cached && !UpdateCheckCoordinator.runIfCurrent(checkGeneration,
+                        () -> { if (!cancelled) metadataStore.saveFeed(url, json, response.header("ETag")); })) return;
+                    if (release == null) {
+                        release = new GitHubRelease();
+                        release.versionCode = BuildConfig.VERSION_NAME;
+                    }
+                    publishRelease(release, silent);
+                } catch (IOException | RuntimeException exception) {
+                    if (!call.isCanceled() && call == metadataCall && !cancelled && UpdateCheckCoordinator.isCurrent(checkGeneration)) {
+                        requestReleases(withPrerelease, silent, true, fallbackUrl);
+                    }
+                }
+            }
+        });
     }
 
     private void requestReleases(boolean withPrerelease, boolean silent, boolean useConditionalRequest) {
@@ -296,7 +346,20 @@ public class VersionChecker {
 
     private void notifyRetrievalFailure(Exception exception, boolean silent) {
         runIfCurrentCheck(() -> {
-            saveState(UpdateState.error(null, null, "metadata", System.currentTimeMillis()));
+            String version = metadataStore.getSelectedVersion();
+            String url = metadataStore.getSelectedUrl();
+            String sha256 = metadataStore.getSelectedSha256();
+            GitHubRelease previous = new GitHubRelease();
+            previous.versionCode = version;
+            previous.releaseVersionCode = metadataStore.getSelectedVersionCode();
+            try {
+                if (version == null || url == null || !isAllowedUpdateUrl(url) || !isValidSha256(sha256)
+                    || (metadataStore.isSelectedBeta() && !Global.isEnableBeta())
+                    || !previous.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) version = null;
+            } catch (IllegalArgumentException ignored) {
+                version = null;
+            }
+            saveState(UpdateState.error(version, null, "metadata", System.currentTimeMillis()));
             context.runOnUiThread(() -> UpdateCheckCoordinator.runIfCurrent(checkGeneration, () -> {
                 if (!cancelled) {
                     LogUtility.e("Update metadata request failed: " + exception.getClass().getSimpleName());

@@ -14,6 +14,9 @@ public final class UpdateMetadataStore {
     private static final String PREFERENCES = "UpdateMetadata";
     private static final String BODY = "body";
     private static final String ETAG = "etag";
+    private static final String FEED_BODY = "feed_body";
+    private static final String FEED_ETAG = "feed_etag";
+    private static final String FEED_URL = "feed_url";
     private static final String SELECTED_SHA256 = "selected_sha256";
     private static final String SELECTED_SIZE = "selected_size";
     private static final String LAST_ATTEMPT = "last_attempt";
@@ -47,6 +50,21 @@ public final class UpdateMetadataStore {
             this.body = body;
             this.etag = etag;
         }
+    }
+
+    @NonNull CacheSnapshot feedSnapshot(@NonNull String url) {
+        Map<String, ?> values = preferences.getAll();
+        if (!url.equals(values.get(FEED_URL))) return new CacheSnapshot(null, null);
+        Object body = values.get(FEED_BODY);
+        Object etag = values.get(FEED_ETAG);
+        return new CacheSnapshot(body instanceof String ? (String) body : null, etag instanceof String ? (String) etag : null);
+    }
+
+    void saveFeed(@NonNull String url, @NonNull String body, @Nullable String etag) {
+        SharedPreferences.Editor editor = preferences.edit().putString(FEED_URL, url).putString(FEED_BODY, body);
+        if (etag == null) editor.remove(FEED_ETAG);
+        else editor.putString(FEED_ETAG, etag);
+        if (!editor.commit()) throw new IllegalStateException("Unable to persist update feed");
     }
     @Nullable public String getSelectedSha256() { return preferences.getString(SELECTED_SHA256, null); }
     @Nullable public String getSelectedVersion() { return preferences.getString(SELECTED_VERSION, null); }

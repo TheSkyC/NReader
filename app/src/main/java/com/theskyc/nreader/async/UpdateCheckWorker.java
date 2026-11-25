@@ -42,6 +42,7 @@ public final class UpdateCheckWorker extends Worker {
     private final BooleanSupplier reconcileDownload;
     private final BooleanSupplier shouldCheck;
     private final Supplier<String> releaseUrl;
+    @Nullable private final String feedUrl;
     private final Object lifecycleLock = new Object();
     @Nullable private volatile Call activeCall;
     private final OkHttpClient client = new OkHttpClient.Builder()
@@ -59,17 +60,24 @@ public final class UpdateCheckWorker extends Worker {
     UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
                       @NonNull BooleanSupplier reconcileDownload) {
         this(context, parameters, sourceEnabled, reconcileDownload,
-            () -> Global.shouldCheckForUpdates(context), UpdateCheckWorker::releaseApiUrl);
+            () -> Global.shouldCheckForUpdates(context), UpdateCheckWorker::releaseApiUrl, UpdateFeed.url());
     }
 
     UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
                       @NonNull BooleanSupplier reconcileDownload, @NonNull BooleanSupplier shouldCheck,
                       @NonNull Supplier<String> releaseUrl) {
+        this(context, parameters, sourceEnabled, reconcileDownload, shouldCheck, releaseUrl, null);
+    }
+
+    UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters, @NonNull BooleanSupplier sourceEnabled,
+                      @NonNull BooleanSupplier reconcileDownload, @NonNull BooleanSupplier shouldCheck,
+                      @NonNull Supplier<String> releaseUrl, @Nullable String feedUrl) {
         super(context, parameters);
         this.sourceEnabled = sourceEnabled;
         this.reconcileDownload = reconcileDownload;
         this.shouldCheck = shouldCheck;
         this.releaseUrl = releaseUrl;
+        this.feedUrl = feedUrl;
     }
 
     public static void schedule(@NonNull Context context) {
@@ -129,6 +137,22 @@ public final class UpdateCheckWorker extends Worker {
         })) return Result.success();
         if (generation[0] < 0L) return Result.retry();
         try {
+            if (feedUrl != null) {
+                try {
+                    VersionChecker.GitHubRelease feedRelease = fetchFeed(metadataStore, feedUrl, generation[0], false);
+                    if (feedRelease != null && feedRelease.isNewerThanInstalled(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)) {
+                        completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], feedRelease, this::runIfActive);
+                    } else {
+                        completeCheckIfUnchanged(context, stateStore, metadataStore, revision, generation[0], null, this::runIfActive);
+                    }
+                    return Result.success();
+                } catch (SupersededCheckException exception) {
+                    throw exception;
+                } catch (IOException | RuntimeException exception) {
+                    if (isStopped()) return Result.retry();
+                    if (!UpdateCheckCoordinator.isCurrent(generation[0])) return Result.success();
+                }
+            }
             String json = fetchReleaseJson(metadataStore, false, releaseUrl.get(), generation[0]);
             VersionChecker.GitHubRelease release;
             try (JsonReader reader = new JsonReader(new StringReader(json))) {
@@ -260,6 +284,47 @@ public final class UpdateCheckWorker extends Worker {
     @NonNull
     String fetchReleaseJson(@NonNull UpdateMetadataStore metadataStore, boolean unconditional, @NonNull String url) throws IOException {
         return fetchReleaseJson(metadataStore, unconditional, url, UpdateCheckCoordinator.begin());
+    }
+
+    @Nullable
+    private VersionChecker.GitHubRelease fetchFeed(UpdateMetadataStore store, String url, long generation, boolean unconditional)
+        throws IOException {
+        UpdateMetadataStore.CacheSnapshot cache = store.feedSnapshot(url);
+        Request.Builder builder = new Request.Builder().url(url).header("Accept", "application/json")
+            .header("User-Agent", "NReader/" + BuildConfig.VERSION_NAME);
+        if (!unconditional && cache.etag != null) builder.header("If-None-Match", cache.etag);
+        Call call = UpdateRequestClient.newCall(client, builder.build());
+        activeCall = call;
+        if (isStopped()) call.cancel();
+        try (Response response = call.execute()) {
+            if (isStopped()) throw new IOException("Update check stopped");
+            if (!UpdateCheckCoordinator.isCurrent(generation)) throw new SupersededCheckException();
+            boolean cached = response.code() == 304 && !unconditional && cache.etag != null;
+            String body = cached ? cache.body : response.isSuccessful() && response.body() != null
+                ? UpdateResponseReader.read(response.body(), UpdateResponseReader.RELEASE_LIMIT) : null;
+            if (body == null) {
+                if (response.code() == 304 && !unconditional) return fetchFeed(store, url, generation, true);
+                throw new IOException("Unable to retrieve update feed: HTTP " + response.code());
+            }
+            VersionChecker.GitHubRelease release;
+            try {
+                release = UpdateFeed.parse(body, Global.isEnableBeta(), BuildConfig.FLAVOR, getApplicationContext().getPackageName());
+            } catch (IOException | RuntimeException exception) {
+                if (cached) return fetchFeed(store, url, generation, true);
+                throw exception;
+            }
+            if (!cached) {
+                boolean[] saved = {false};
+                if (!UpdateCheckCoordinator.runIfCurrent(generation,
+                    () -> saved[0] = runIfActive(() -> store.saveFeed(url, body, response.header("ETag"))))) {
+                    throw new SupersededCheckException();
+                }
+                if (!saved[0]) throw new IOException("Update check stopped");
+            }
+            return release;
+        } finally {
+            if (activeCall == call) activeCall = null;
+        }
     }
 
     @NonNull
