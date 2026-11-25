@@ -16,11 +16,12 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.color.MaterialColors;
 
 import com.theskyc.nreader.async.VersionChecker;
@@ -96,7 +97,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update_center);
-        Toolbar toolbar = findViewById(R.id.update_toolbar);
+        MaterialToolbar toolbar = findViewById(R.id.update_toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setTitle(R.string.application_update);
