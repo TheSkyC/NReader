@@ -39,8 +39,7 @@
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_reading"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_direction_toggle"
@@ -241,8 +240,7 @@
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_display"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_scale_toggle"
@@ -407,8 +405,7 @@
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_image"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_presets_toggle"
@@ -673,8 +670,7 @@
                 android:accessibilityHeading="true"
                 android:text="@string/reader_section_controls"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/reader_tap_action_toggle"

@@ -32,8 +32,7 @@
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/update_available"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
     </LinearLayout>
 
     <TextView
@@ -41,8 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-        android:textStyle="bold" />
+        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
     <TextView
         android:id="@+id/update_prompt_current_version"

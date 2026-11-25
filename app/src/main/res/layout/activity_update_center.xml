@@ -70,8 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
             </LinearLayout>
 
             <LinearLayout
@@ -85,8 +84,7 @@
                     android:id="@+id/update_version"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
                 <TextView
                     android:id="@+id/update_version_from"
