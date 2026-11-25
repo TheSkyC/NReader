@@ -81,6 +81,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.radiobutton.MaterialRadioButton;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
@@ -1017,9 +1018,9 @@ public class ZoomActivity extends GeneralActivity {
             if (!updatingPresetControls[0]) setReaderAutoCrop(checked);
         });
 
-        SeekBar brightness = Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness));
-        SeekBar contrast = Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast));
-        SeekBar saturation = Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation));
+        Slider brightness = Objects.requireNonNull(dialog.findViewById(R.id.reader_brightness));
+        Slider contrast = Objects.requireNonNull(dialog.findViewById(R.id.reader_contrast));
+        Slider saturation = Objects.requireNonNull(dialog.findViewById(R.id.reader_saturation));
         bindAdjustment(brightness,
             dialog.findViewById(R.id.reader_brightness_value), readerBrightness, this::setReaderBrightness, updatingPresetControls);
         bindAdjustment(contrast,
@@ -1055,9 +1056,9 @@ public class ZoomActivity extends GeneralActivity {
                 filter.check(filterId(readerFilterMode));
                 background.check(backgroundId(getReaderBackground()));
                 autoCrop.setChecked(readerAutoCrop);
-                brightness.setProgress(readerBrightness + 100);
-                contrast.setProgress(readerContrast + 100);
-                saturation.setProgress(readerSaturation + 100);
+                brightness.setValue(readerBrightness + 100);
+                contrast.setValue(readerContrast + 100);
+                saturation.setValue(readerSaturation + 100);
             } finally {
                 updatingPresetControls[0] = false;
             }
@@ -1087,9 +1088,9 @@ public class ZoomActivity extends GeneralActivity {
         instant.setOnCheckedChangeListener((button, checked) ->
             preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
         dialog.findViewById(R.id.reader_adjustments_reset).setOnClickListener(view -> {
-            brightness.setProgress(100);
-            contrast.setProgress(100);
-            saturation.setProgress(100);
+            brightness.setValue(100f);
+            contrast.setValue(100f);
+            saturation.setValue(100f);
         });
         bindReaderSettingChoice(dialog, R.id.reader_direction_toggle, R.id.reader_direction_selected, direction, R.string.change_scroll_type);
         bindReaderSettingChoice(dialog, R.id.reader_spread_mode_toggle, R.id.reader_spread_mode_selected, spread, R.string.reader_spread_title);
@@ -1367,27 +1368,17 @@ public class ZoomActivity extends GeneralActivity {
             .putFloat(READER_ZOOM_SCALE_KEY_PREFIX + gallery.getId(), scale).apply();
     }
 
-    private void bindAdjustment(@NonNull SeekBar bar, @NonNull TextView valueView, int value,
+    private void bindAdjustment(@NonNull Slider slider, @NonNull TextView valueView, int value,
                                 @NonNull IntConsumer setter, @NonNull boolean[] updatingPresetControls) {
         int safeValue = ReaderImageFilter.sanitizeAdjustment(value);
-        bar.setMax(200);
-        bar.setProgress(safeValue + 100);
+        slider.setValueTo(200f);
+        slider.setValue(safeValue + 100);
+        slider.setLabelFormatter(progress -> Integer.toString(Math.round(progress) - 100));
         updateAdjustmentLabel(valueView, safeValue);
-        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int current = ReaderImageFilter.sanitizeAdjustment(progress - 100);
-                updateAdjustmentLabel(valueView, current);
-                if (!updatingPresetControls[0]) setter.accept(current);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+        slider.addOnChangeListener((changedSlider, progress, fromUser) -> {
+            int current = ReaderImageFilter.sanitizeAdjustment(Math.round(progress) - 100);
+            updateAdjustmentLabel(valueView, current);
+            if (!updatingPresetControls[0]) setter.accept(current);
         });
     }
 

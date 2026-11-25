@@ -595,13 +595,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
-            <SeekBar
+            <com.google.android.material.slider.Slider
                 android:id="@+id/reader_brightness"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_brightness"
-                android:max="200"
-                android:progress="100"
                 android:minHeight="48dp" />
             <LinearLayout
                 android:layout_width="match_parent"
@@ -618,13 +616,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
-            <SeekBar
+            <com.google.android.material.slider.Slider
                 android:id="@+id/reader_contrast"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_contrast"
-                android:max="200"
-                android:progress="100"
                 android:minHeight="48dp" />
             <LinearLayout
                 android:layout_width="match_parent"
@@ -641,13 +637,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
-            <SeekBar
+            <com.google.android.material.slider.Slider
                 android:id="@+id/reader_saturation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_saturation"
-                android:max="200"
-                android:progress="100"
                 android:minHeight="48dp" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/reader_adjustments_reset"

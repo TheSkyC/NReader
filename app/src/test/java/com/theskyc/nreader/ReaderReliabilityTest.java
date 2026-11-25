@@ -29,6 +29,7 @@ import com.bumptech.glide.request.target.ImageViewTarget;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.slider.Slider;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.async.database.DatabaseHelper;
@@ -618,13 +619,13 @@ public class ReaderReliabilityTest {
 
                 sheet.findViewById(R.id.reader_adjustments_toggle).performClick();
                 AlertDialog adjustments = (AlertDialog) ShadowDialog.getLatestDialog();
-                ((android.widget.SeekBar) adjustments.findViewById(R.id.reader_brightness)).setProgress(140);
+                ((Slider) adjustments.findViewById(R.id.reader_brightness)).setValue(140);
                 adjustments.findViewById(R.id.reader_adjustments_reset).performClick();
                 assertEquals(0, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", -1));
                 adjustments.dismiss();
                 sheet.findViewById(R.id.reader_adjustments_toggle).performClick();
                 adjustments = (AlertDialog) ShadowDialog.getLatestDialog();
-                assertEquals(100, ((android.widget.SeekBar) adjustments.findViewById(R.id.reader_brightness)).getProgress());
+                assertEquals(100f, ((Slider) adjustments.findViewById(R.id.reader_brightness)).getValue(), 0f);
                 adjustments.dismiss();
                 sheet.dismiss();
             }
@@ -666,9 +667,9 @@ public class ReaderReliabilityTest {
                 ((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).setChecked(true);
                 assertTrue(application.getSharedPreferences("Settings", 0)
                     .getBoolean("reader_auto_crop", false));
-                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).setProgress(140);
-                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).setProgress(70);
-                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).setProgress(125);
+                ((Slider) dialog.findViewById(R.id.reader_brightness)).setValue(140);
+                ((Slider) dialog.findViewById(R.id.reader_contrast)).setValue(70);
+                ((Slider) dialog.findViewById(R.id.reader_saturation)).setValue(125);
                 assertEquals(40, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", 0));
                 assertEquals(-30, application.getSharedPreferences("Settings", 0).getInt("reader_contrast", 0));
                 assertEquals(25, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
@@ -694,9 +695,9 @@ public class ReaderReliabilityTest {
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_scale_width)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
-                assertEquals(140, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
-                assertEquals(70, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
-                assertEquals(125, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                assertEquals(140f, ((Slider) dialog.findViewById(R.id.reader_brightness)).getValue(), 0f);
+                assertEquals(70f, ((Slider) dialog.findViewById(R.id.reader_contrast)).getValue(), 0f);
+                assertEquals(125f, ((Slider) dialog.findViewById(R.id.reader_saturation)).getValue(), 0f);
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_tap_action_controls)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_volume_turn)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_instant_turn)).isChecked());
@@ -899,9 +900,9 @@ public class ReaderReliabilityTest {
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_grayscale)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_white)).isChecked());
                 assertTrue(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
-                assertEquals(104, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
-                assertEquals(118, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
-                assertEquals(0, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                assertEquals(104f, ((Slider) dialog.findViewById(R.id.reader_brightness)).getValue(), 0f);
+                assertEquals(118f, ((Slider) dialog.findViewById(R.id.reader_contrast)).getValue(), 0f);
+                assertEquals(0f, ((Slider) dialog.findViewById(R.id.reader_saturation)).getValue(), 0f);
                 assertEquals("-100", ((android.widget.TextView) dialog.findViewById(R.id.reader_saturation_value)).getText().toString());
                 assertEquals(-100, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
 
@@ -909,15 +910,15 @@ public class ReaderReliabilityTest {
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_filter_none)).isChecked());
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_black)).isChecked());
                 assertFalse(((SwitchMaterial) dialog.findViewById(R.id.reader_auto_crop)).isChecked());
-                assertEquals(88, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_brightness)).getProgress());
-                assertEquals(108, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_contrast)).getProgress());
-                assertEquals(92, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
-                ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).setProgress(120);
+                assertEquals(88f, ((Slider) dialog.findViewById(R.id.reader_brightness)).getValue(), 0f);
+                assertEquals(108f, ((Slider) dialog.findViewById(R.id.reader_contrast)).getValue(), 0f);
+                assertEquals(92f, ((Slider) dialog.findViewById(R.id.reader_saturation)).getValue(), 0f);
+                ((Slider) dialog.findViewById(R.id.reader_saturation)).setValue(120);
                 assertEquals(20, application.getSharedPreferences("Settings", 0).getInt("reader_saturation", 0));
                 dialog.dismiss();
                 activity.findViewById(R.id.reader_settings).performClick();
                 dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
-                assertEquals(120, ((android.widget.SeekBar) dialog.findViewById(R.id.reader_saturation)).getProgress());
+                assertEquals(120f, ((Slider) dialog.findViewById(R.id.reader_saturation)).getValue(), 0f);
                 assertTrue(((android.widget.RadioButton) dialog.findViewById(R.id.reader_background_black)).isChecked());
                 dialog.dismiss();
             }
