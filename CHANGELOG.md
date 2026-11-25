@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.0.0-beta.4 — 2026-11-25
+
+- Bundle an offline tag catalog and support signed catalog updates, independent
+  tag display languages, and online or local translation packs.
+- Add tag rule import and export, bulk editing with undo, saved views, recent
+  history, and filters for rule status and translation coverage.
+- Improve translated tag suggestions, gallery tag display, and advanced search
+  filters, including clearer range controls and account-tag handling.
+- Organize app and reader settings, and improve catalog update feedback.
+- Load comments for downloaded galleries, retain language and credit information
+  in reading history, and improve download search focus handling.
 - Migrate the Java namespace to `com.theskyc.nreader`, preserving existing
   launcher settings and scheduled work. Older download notifications open the
   downloads list; older update notifications open the update screen.
