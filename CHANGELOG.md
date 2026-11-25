@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.0-beta.6 — 2026-11-25
+
+- Introduce a Material 3 theme for the update center, with light, dark, and
+  pure black color schemes as the first step in the UI migration.
+
 ## 1.0.0-beta.5 — 2026-11-25
 
 - Prefer a static update feed and fall back to the GitHub Releases API when the
