@@ -32,7 +32,7 @@
     </style>
 
     <style name="AppTheme.Material3" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="preferenceTheme">@style/NReaderPreferenceThemeOverlay</item>
         <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
         <item name="colorPrimary">@color/m3_primary</item>
         <item name="colorOnPrimary">@color/m3_on_primary</item>
@@ -64,6 +64,22 @@
         <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
         <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
         <item name="nreaderOutline">@color/theme_outline</item>
+    </style>
+
+    <style name="NReaderPreferenceThemeOverlay" parent="PreferenceThemeOverlay.v14.Material">
+        <item name="switchPreferenceCompatStyle">@style/NReaderSwitchPreference</item>
+    </style>
+
+    <style name="NReaderSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
+        <item name="android:widgetLayout">@layout/preference_material_switch</item>
+    </style>
+
+    <style name="NReaderPreferenceSwitch" parent="Widget.Material3.Switch.ListItem">
+        <item name="materialThemeOverlay">@style/NReaderPreferenceSwitchOverlay</item>
+    </style>
+
+    <style name="NReaderPreferenceSwitchOverlay" parent="ThemeOverlay.Material3.MaterialSwitch">
+        <item name="colorOutline">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="AppTheme.Material3.Black" parent="AppTheme.Material3">
