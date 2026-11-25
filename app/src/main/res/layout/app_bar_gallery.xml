@@ -62,11 +62,13 @@
                 android:padding="16dp"
                 android:visibility="gone" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/comments_retry"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:minHeight="48dp"
                 android:text="@string/retry"
                 android:visibility="gone" />
 
