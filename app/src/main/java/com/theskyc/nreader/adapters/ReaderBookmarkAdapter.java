@@ -1,13 +1,18 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.adapters;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.components.classes.ReaderBookmark;
@@ -35,10 +40,11 @@ public final class ReaderBookmarkAdapter extends RecyclerView.Adapter<ReaderBook
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setLayoutParams(new RecyclerView.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        Button open = new Button(parent.getContext());
+        MaterialButton open = textButton(parent);
         open.setAllCaps(false);
+        open.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         row.addView(open, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        Button remove = new Button(parent.getContext());
+        MaterialButton remove = textButton(parent);
         remove.setText(R.string.reader_bookmark_delete);
         row.addView(remove);
         return new Holder(row, open, remove);
@@ -63,13 +69,22 @@ public final class ReaderBookmarkAdapter extends RecyclerView.Adapter<ReaderBook
     }
 
     static final class Holder extends RecyclerView.ViewHolder {
-        final Button open;
-        final Button remove;
+        final MaterialButton open;
+        final MaterialButton remove;
 
-        Holder(@NonNull View row, @NonNull Button open, @NonNull Button remove) {
+        Holder(@NonNull View row, @NonNull MaterialButton open, @NonNull MaterialButton remove) {
             super(row);
             this.open = open;
             this.remove = remove;
         }
+    }
+
+    @NonNull
+    private static MaterialButton textButton(@NonNull ViewGroup parent) {
+        MaterialButton button = new MaterialButton(parent.getContext());
+        button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+        button.setTextColor(MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary));
+        button.setMinHeight(Math.round(48 * parent.getResources().getDisplayMetrics().density));
+        return button;
     }
 }
