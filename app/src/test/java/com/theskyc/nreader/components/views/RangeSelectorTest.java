@@ -6,11 +6,11 @@ import android.app.Application;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ScrollView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.android.material.slider.Slider;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.components.Gallery;
 
@@ -21,6 +21,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -65,16 +66,39 @@ public class RangeSelectorTest {
         }
         View first = dialog.findViewById(R.id.layout1);
         View last = dialog.findViewById(R.id.layout2);
-        SeekBar firstSeek = first.findViewById(R.id.seekBar);
-        SeekBar lastSeek = last.findViewById(R.id.seekBar);
-        assertEquals(0, firstSeek.getProgress());
-        assertEquals(2, lastSeek.getProgress());
+        Slider firstSlider = first.findViewById(R.id.page_slider);
+        Slider lastSlider = last.findViewById(R.id.page_slider);
+        assertEquals(0f, firstSlider.getValue(), 0f);
+        assertEquals(2f, lastSlider.getValue(), 0f);
         first.findViewById(R.id.next).performClick();
         last.findViewById(R.id.prev).performClick();
-        assertEquals(1, firstSeek.getProgress());
-        assertEquals(1, lastSeek.getProgress());
+        assertEquals(1f, firstSlider.getValue(), 0f);
+        assertEquals(1f, lastSlider.getValue(), 0f);
         assertEquals(activity.getString(R.string.page_format, 2, 3),
             ((TextView) first.findViewById(R.id.pages)).getText().toString());
+        first.findViewById(R.id.prev).performClick();
+        last.findViewById(R.id.next).performClick();
+        assertEquals(0f, firstSlider.getValue(), 0f);
+        assertEquals(2f, lastSlider.getValue(), 0f);
+        dialog.dismiss();
+    }
+
+    @Test
+    public void singlePageGalleryDisablesBothRangeSliders() throws Exception {
+        Activity activity = Robolectric.buildActivity(Activity.class).get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        Gallery gallery = new Gallery(activity, "{\"id\":125,\"num_pages\":1,"
+            + "\"title\":{\"pretty\":\"Single page range test\"},\"cover\":{\"path\":\"galleries/1/cover.png\"},"
+            + "\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}", null, false);
+        AlertDialog dialog = new RangeSelector(activity, gallery).create();
+        dialog.show();
+        Slider start = dialog.findViewById(R.id.layout1).findViewById(R.id.page_slider);
+        Slider end = dialog.findViewById(R.id.layout2).findViewById(R.id.page_slider);
+        assertFalse(start.isEnabled());
+        assertFalse(end.isEnabled());
+        assertEquals(0f, start.getValue(), 0f);
+        assertEquals(0f, end.getValue(), 0f);
         dialog.dismiss();
     }
 }

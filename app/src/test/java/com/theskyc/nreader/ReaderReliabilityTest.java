@@ -1582,6 +1582,7 @@ public class ReaderReliabilityTest {
                     ReflectionHelpers.ClassParameter.from(int.class, 2));
                 assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
                 assertEquals(2, navigation.currentPage());
+                assertEquals(2f, ((Slider) activity.findViewById(R.id.page_slider)).getValue(), 0f);
                 assertEquals(activity.getString(R.string.reader_auto_scroll_start),
                     activity.findViewById(R.id.reader_auto_scroll).getContentDescription());
 
@@ -1592,10 +1593,11 @@ public class ReaderReliabilityTest {
                 ShadowDialog.getLatestDialog().dismiss();
 
                 ReflectionHelpers.setField(activity, "autoScrolling", true);
-                android.widget.SeekBar seek = activity.findViewById(R.id.seekBar);
-                android.widget.SeekBar.OnSeekBarChangeListener listener =
-                    ReflectionHelpers.getField(seek, "mOnSeekBarChangeListener");
-                listener.onStartTrackingTouch(seek);
+                Slider slider = activity.findViewById(R.id.page_slider);
+                @SuppressWarnings("unchecked")
+                java.util.List<Slider.OnSliderTouchListener> listeners =
+                    ReflectionHelpers.getField(slider, "touchListeners");
+                listeners.get(0).onStartTrackingTouch(slider);
                 assertFalse((boolean) ReflectionHelpers.getField(activity, "autoScrolling"));
             }
         }

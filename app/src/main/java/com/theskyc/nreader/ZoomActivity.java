@@ -25,7 +25,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -177,7 +176,7 @@ public class ZoomActivity extends GeneralActivity {
     private TextView pageManagerLabel, cornerPageViewer;
     private View pageSwitcher;
     private int controlsAnimationGeneration;
-    private SeekBar seekBar;
+    private Slider pageSlider;
     private Toolbar toolbar;
     private View view;
     private ImageButton autoScrollButton;
@@ -324,7 +323,7 @@ public class ZoomActivity extends GeneralActivity {
         pageSwitcher = findViewById(R.id.page_switcher);
         pageManagerLabel = findViewById(R.id.pages);
         cornerPageViewer = findViewById(R.id.page_text);
-        seekBar = findViewById(R.id.seekBar);
+        pageSlider = findViewById(R.id.page_slider);
         view = findViewById(R.id.view);
         autoScrollButton = findViewById(R.id.reader_auto_scroll);
         try {
@@ -354,9 +353,11 @@ public class ZoomActivity extends GeneralActivity {
         View settingsButton = findViewById(R.id.reader_settings);
         settingsButton.setVisibility(View.VISIBLE);
         settingsButton.setOnClickListener(v -> showReaderSettings());
-        seekBar.setMax(gallery.getPageCount() - 1);
+        pageSlider.setValueTo(Math.max(1, gallery.getPageCount() - 1));
+        pageSlider.setEnabled(gallery.getPageCount() > 1);
+        pageSlider.setLabelFormatter(value -> Integer.toString(Math.round(value) + 1));
         if (Global.useRtl()) {
-            seekBar.setRotationY(180);
+            pageSlider.setRotationY(180);
             mViewPager.setLayoutDirection(ViewPager2.LAYOUT_DIRECTION_RTL);
         }
 
@@ -372,7 +373,7 @@ public class ZoomActivity extends GeneralActivity {
                 }
                 LogUtility.d("Page selected: " + actualPage + " from page " + oldPage);
                 setPageText(actualPage + 1);
-                seekBar.setProgress(actualPage);
+                pageSlider.setValue(actualPage);
                 invalidateOptionsMenu();
                 clearFarRequests(oldPage, actualPage);
                 makeNearRequests(actualPage);
@@ -394,22 +395,18 @@ public class ZoomActivity extends GeneralActivity {
                     }
                 }));
         });
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        pageSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) setPageText(Math.round(value) + 1);
+        });
+        pageSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    setPageText(progress + 1);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
+            public void onStartTrackingTouch(@NonNull Slider slider) {
                 stopAutoScroll();
             }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                changePage(seekBar.getProgress());
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                changePage(Math.round(slider.getValue()));
             }
         });
 
@@ -417,7 +414,7 @@ public class ZoomActivity extends GeneralActivity {
         readerNavigation.goToPage(page, false);
         initializingPager = false;
         setPageText(page + 1);
-        seekBar.setProgress(page);
+        pageSlider.setValue(page);
         boolean continuous = isContinuousModeEnabled(preferences);
         if (continuous) setContinuousMode(true, page);
     }
@@ -477,7 +474,7 @@ public class ZoomActivity extends GeneralActivity {
         }
         actualPage = page;
         setPageText(page + 1);
-        seekBar.setProgress(page);
+        pageSlider.setValue(page);
         switchingReaderMode = false;
         getSharedPreferences("Settings", 0).edit().putBoolean(readerModePreferenceKey(), enabled).apply();
     }
@@ -510,7 +507,7 @@ public class ZoomActivity extends GeneralActivity {
         initialPosition = new ReadingPosition(actualPage + 1, 0f);
         mViewPager.setVisibility(View.VISIBLE);
         setPageText(actualPage + 1);
-        seekBar.setProgress(actualPage);
+        pageSlider.setValue(actualPage);
         switchingReaderMode = false;
     }
 
@@ -579,7 +576,7 @@ public class ZoomActivity extends GeneralActivity {
         if (!continuousMode) return;
         actualPage = page;
         setPageText(page + 1);
-        seekBar.setProgress(page);
+        pageSlider.setValue(page);
         invalidateOptionsMenu();
         if (!switchingReaderMode) savePosition();
     }
@@ -591,7 +588,7 @@ public class ZoomActivity extends GeneralActivity {
             spread.selectPage(source.getPageIndex());
             actualPage = readerNavigation.currentPage();
             setPageText(actualPage + 1);
-            seekBar.setProgress(actualPage);
+            pageSlider.setValue(actualPage);
             invalidateOptionsMenu();
         }
         handleReaderPageTap(horizontalPosition);
@@ -864,7 +861,7 @@ public class ZoomActivity extends GeneralActivity {
         if (doublePageMode && !continuousMode) {
             actualPage = readerNavigation.currentPage();
             setPageText(actualPage + 1);
-            seekBar.setProgress(actualPage);
+            pageSlider.setValue(actualPage);
             invalidateOptionsMenu();
             if (!switchingReaderMode) savePosition();
         }
