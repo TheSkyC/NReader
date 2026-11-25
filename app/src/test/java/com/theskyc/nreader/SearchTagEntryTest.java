@@ -181,6 +181,48 @@ public class SearchTagEntryTest {
         }
     }
 
+    @Test public void changingTagStatusKeepsItsScreenPositionWhenSummaryChanges() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        app.getSharedPreferences("Settings", 0).edit()
+            .putInt(app.getString(R.string.preference_key_favorite_limit), 1).commit();
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            Queries.TagTable.insert(new Tag("Position fixture", 100, 501001, TagType.TAG, TagStatus.DEFAULT));
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                ViewGroup group = activity.findViewById(R.id.tag_group);
+                await(() -> group.getChildCount() > 0);
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                ChipTag chip = (ChipTag) group.getChildAt(0);
+                View decor = activity.getWindow().getDecorView();
+                layoutSearch(decor);
+                int[] position = new int[2];
+                chip.getLocationOnScreen(position);
+                int originalY = position[1];
+                TagStatus[] states = {TagStatus.ACCEPTED, TagStatus.AVOIDED, TagStatus.DEFAULT};
+                for (TagStatus state : states) {
+                    assertTrue(chip.performClick());
+                    layoutSearch(decor);
+                    decor.getViewTreeObserver().dispatchOnPreDraw();
+                    chip.getLocationOnScreen(position);
+                    assertEquals(state, chip.getTag().getStatus());
+                    assertEquals(originalY, position[1]);
+                }
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    private static void layoutSearch(View decor) {
+        decor.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
+        decor.layout(0, 0, 1080, 500);
+    }
+
     @Test public void tappingCategoryTagCyclesOnlySupportedStatuses() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

@@ -634,7 +634,7 @@ public class SearchActivity extends GeneralActivity {
             markManualTag(c);
             c.updateStatus();
             advanced = true;
-            updateFilterSummary();
+            updateFilterSummaryKeepingTagPosition(c);
         });
         c.setOnLongClickListener(v -> {
             showTagStatusDialog(c, close, canBeAvoided);
@@ -659,7 +659,7 @@ public class SearchActivity extends GeneralActivity {
                 chip.changeStatus(which == 1 ? TagStatus.ACCEPTED
                     : which == 2 ? TagStatus.AVOIDED : TagStatus.DEFAULT);
                 advanced = true;
-                updateFilterSummary();
+                updateFilterSummaryKeepingTagPosition(chip);
                 dialog.dismiss();
             })
             .setNegativeButton(R.string.cancel, null);
@@ -690,6 +690,24 @@ public class SearchActivity extends GeneralActivity {
         chip.setChipIconTint(ColorStateList.valueOf(iconColor));
         chip.setChipBackgroundColor(ColorStateList.valueOf(MaterialColors.layer(surface, accent,
             status == TagStatus.DEFAULT ? 0.04f : 0.16f)));
+    }
+
+    private void updateFilterSummaryKeepingTagPosition(ChipTag chip) {
+        NestedScrollView scroll = findViewById(R.id.groups);
+        if (!chip.isShown()) {
+            updateFilterSummary();
+            return;
+        }
+        int[] position = new int[2];
+        chip.getLocationOnScreen(position);
+        int originalY = position[1];
+        updateFilterSummary();
+        androidx.core.view.OneShotPreDrawListener.add(scroll, () -> {
+            if (!chip.isShown()) return;
+            int[] updatedPosition = new int[2];
+            chip.getLocationOnScreen(updatedPosition);
+            scroll.scrollBy(0, updatedPosition[1] - originalY);
+        });
     }
 
     private void updateFilterSummary() {
