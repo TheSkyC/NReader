@@ -4,11 +4,15 @@ package com.theskyc.nreader;
 import android.app.Application;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Looper;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.webkit.CookieManager;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.preference.Preference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceScreen;
@@ -32,6 +36,45 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class SettingsNavigationTest {
+    @Test
+    @Config(qualifiers = "w320dp-h640dp")
+    public void sectionTitleAllowsMultipleLinesAtLargeTextSize() {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_appearance");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            SettingsActivity activity = controller.get();
+            Configuration configuration = new Configuration(activity.getResources().getConfiguration());
+            configuration.fontScale = 1.5f;
+            activity.getResources().updateConfiguration(configuration, activity.getResources().getDisplayMetrics());
+            Toolbar toolbar = activity.findViewById(R.id.toolbar);
+            TextView title = null;
+            for (int index = 0; index < toolbar.getChildCount(); index++) {
+                View child = toolbar.getChildAt(index);
+                if (child instanceof TextView && activity.getSupportActionBar().getTitle().equals(((TextView) child).getText())) {
+                    title = (TextView) child;
+                }
+            }
+            assertNotNull(title);
+            assertNull(title.getEllipsize());
+            assertTrue(title.getMaxLines() > 1);
+            title.setTextSize(22);
+            title.setText("Appearance and language\nsettings");
+            int width = Math.round(320 * activity.getResources().getDisplayMetrics().density);
+            for (int direction : new int[]{View.LAYOUT_DIRECTION_LTR, View.LAYOUT_DIRECTION_RTL}) {
+                toolbar.setLayoutDirection(direction);
+                toolbar.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                toolbar.layout(0, 0, width, toolbar.getMeasuredHeight());
+                assertTrue(title.getLayout().getLineCount() > 1);
+                assertEquals(0, title.getLayout().getEllipsisCount(title.getLayout().getLineCount() - 1));
+                assertTrue(title.getLeft() >= 0 && title.getRight() <= toolbar.getWidth());
+            }
+        }
+    }
+
     @Test
     public void listPreferenceDialogPreservesSelectionAndCancellation() {
         Application application = RuntimeEnvironment.getApplication();
