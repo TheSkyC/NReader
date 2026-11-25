@@ -157,7 +157,7 @@ public class ImageDownloadUtilityTest {
     public void pageLayoutsUseTheLoadingLogoBeforeRequestsStart() {
         try (ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
             AppCompatActivity activity = controller.get();
-            activity.setTheme(R.style.AppTheme);
+            activity.setTheme(R.style.AppTheme_Material3);
             controller.setup();
             for (int layout : new int[]{R.layout.image_void_full, R.layout.image_void_static}) {
                 ImageView image = LayoutInflater.from(activity).inflate(layout, null).findViewById(R.id.image);
@@ -209,7 +209,7 @@ public class ImageDownloadUtilityTest {
 
     private ActivityController<AppCompatActivity> imageActivity() {
         ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class);
-        controller.get().setTheme(R.style.AppTheme);
+        controller.get().setTheme(R.style.AppTheme_Material3);
         Global.initFromShared(controller.get());
             NetworkUtil.setType(NetworkUtil.ConnectionType.WIFI);
         return controller.setup();

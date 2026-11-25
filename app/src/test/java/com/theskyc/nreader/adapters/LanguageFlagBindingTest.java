@@ -33,7 +33,7 @@ import static org.robolectric.Shadows.shadowOf;
 @Config(sdk = 28, application = Application.class)
 public class LanguageFlagBindingTest {
     private Context context() {
-        return new ContextThemeWrapper(RuntimeEnvironment.getApplication(), R.style.AppTheme);
+        return new ContextThemeWrapper(RuntimeEnvironment.getApplication(), R.style.AppTheme_Material3);
     }
 
     @Test
@@ -103,7 +103,7 @@ public class LanguageFlagBindingTest {
         for (float fontScale : new float[]{1f, 2f}) {
             Configuration configuration = new Configuration(context().getResources().getConfiguration());
             configuration.fontScale = fontScale;
-            Context enlarged = new ContextThemeWrapper(context().createConfigurationContext(configuration), R.style.AppTheme);
+            Context enlarged = new ContextThemeWrapper(context().createConfigurationContext(configuration), R.style.AppTheme_Material3);
             View screen = LayoutInflater.from(enlarged).inflate(R.layout.activity_random, null);
             TextView title = screen.findViewById(R.id.title);
             title.setText("Synthetic gallery title long enough to wrap across all four available lines");

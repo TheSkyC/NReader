@@ -64,7 +64,7 @@ public class GalleryStateBadgeTest {
     public void setUp() throws Exception {
         controller = Robolectric.buildActivity(Activity.class);
         activity = controller.get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         controller.setup();
         activity.deleteDatabase("Entries.db");
         database = new DatabaseHelper(activity);

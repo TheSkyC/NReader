@@ -35,7 +35,7 @@ public class GalleryTagLoadingTest {
         Application application = RuntimeEnvironment.getApplication();
         Global.initFromShared(application);
         GalleryActivity activity = Robolectric.buildActivity(GalleryActivity.class).get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         Gallery gallery = new Gallery(application,
             "{\"id\":117,\"media_id\":1,\"num_pages\":1,"
                 + "\"title\":{\"pretty\":\"Test\"},\"pages\":[]}", null, false);

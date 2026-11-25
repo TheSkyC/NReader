@@ -24,7 +24,7 @@ public class CollapsibleTagGroupTest {
     private View control;
 
     @Before public void setUp() {
-        ContextThemeWrapper context = new ContextThemeWrapper(RuntimeEnvironment.getApplication(), R.style.AppTheme);
+        ContextThemeWrapper context = new ContextThemeWrapper(RuntimeEnvironment.getApplication(), R.style.AppTheme_Material3);
         group = new CollapsibleTagGroup(context, null);
         group.setChipSpacingHorizontal(0);
         group.setChipSpacingVertical(0);

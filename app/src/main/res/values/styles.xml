@@ -1,32 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-        <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
-
-        <item name="colorPrimary">@color/theme_primary</item>
-        <item name="colorPrimaryVariant">@color/theme_primary_variant</item>
-        <item name="colorSecondary">@color/theme_secondary</item>
-        <item name="colorSecondaryVariant">@color/theme_secondary</item>
-        <item name="colorAccent">@color/theme_secondary</item>
-        <item name="colorOnPrimary">@color/theme_on_primary</item>
-        <item name="colorOnSecondary">@color/theme_on_secondary</item>
-        <item name="colorSurface">@color/theme_surface</item>
-        <item name="colorOnSurface">@color/theme_on_surface</item>
-        <item name="colorError">@color/theme_error</item>
-        <item name="colorOnError">@color/theme_on_error</item>
-        <item name="colorControlNormal">@color/theme_on_surface_variant</item>
-        <item name="colorControlActivated">@color/theme_primary</item>
-        <item name="android:colorBackground">@color/theme_background</item>
-        <item name="android:windowBackground">@color/theme_background</item>
-        <item name="android:textColorPrimary">@color/theme_on_surface</item>
-        <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/theme_splash_background</item>
-        <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
-        <item name="nreaderOutline">@color/theme_outline</item>
-        <item name="navHeaderGradient">@drawable/side_nav_bar</item>
-    </style>
-
-
+<resources>
     <style name="NReaderOverflowMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
         <item name="overlapAnchor">false</item>
     </style>
@@ -125,26 +97,6 @@
 
     <style name="AppTheme.Material3.Settings.Black" parent="AppTheme.Material3.Black">
         <item name="alertDialogTheme">@style/NReaderSettingsDialogTheme</item>
-    </style>
-
-    <style name="AppTheme.Black" parent="AppTheme">
-        <item name="colorSurface">@color/theme_black_surface</item>
-        <item name="colorOnSurface">@color/theme_black_on_surface</item>
-        <item name="colorControlNormal">@color/theme_black_on_surface</item>
-        <item name="android:windowBackground">@color/theme_black_background</item>
-        <item name="android:colorBackground">@color/theme_black_background</item>
-        <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
-        <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
-        <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>
-        <item name="nreaderOutline">@color/theme_black_outline</item>
-        <item name="elevationOverlayEnabled">false</item>
-        <item name="navHeaderGradient">@color/theme_black_background</item>
-        <item name="colorPrimaryVariant">@color/theme_black_background</item>
-        <item name="cardViewStyle">@style/BlackCardView</item>
-    </style>
-
-    <style name="BlackCardView" parent="CardView">
-        <item name="cardBackgroundColor">@color/theme_black_surface</item>
     </style>
 
 </resources>

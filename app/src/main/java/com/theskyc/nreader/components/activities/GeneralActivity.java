@@ -87,6 +87,6 @@ public abstract class GeneralActivity extends AppCompatActivity {
     }
 
     protected int getBlackThemeStyle() {
-        return R.style.AppTheme_Black;
+        return R.style.AppTheme_Material3_Black;
     }
 }

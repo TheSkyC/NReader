@@ -47,7 +47,7 @@ public class RangeSelectorTest {
     @Test
     public void downloadRangeShowsOnlyRangeControlsAndKeepsBothSelectorsFunctional() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         Gallery gallery = new Gallery(activity, "{\"id\":124,\"num_pages\":3,"
             + "\"title\":{\"pretty\":\"Range test\"},\"cover\":{\"path\":\"galleries/1/cover.png\"},"
             + "\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"

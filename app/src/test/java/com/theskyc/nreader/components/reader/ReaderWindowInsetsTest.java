@@ -104,7 +104,7 @@ public class ReaderWindowInsetsTest {
 
     private Activity createActivity() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
-        activity.setTheme(R.style.AppTheme);
+        activity.setTheme(R.style.AppTheme_Material3);
         activity.setContentView(R.layout.activity_zoom);
         return activity;
     }
