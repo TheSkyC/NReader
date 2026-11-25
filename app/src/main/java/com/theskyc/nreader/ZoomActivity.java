@@ -30,7 +30,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -1704,20 +1703,10 @@ public class ZoomActivity extends GeneralActivity {
 
     private void showAddReaderBookmarkDialog(@NonNull BottomSheetDialog parent) {
         if (gallery == null || gallery.getId() <= 0) return;
-        LinearLayout fields = new LinearLayout(this);
-        fields.setOrientation(LinearLayout.VERTICAL);
-        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
-        fields.setPadding(padding, padding, padding, 0);
-        EditText title = new EditText(this);
-        title.setHint(R.string.reader_bookmark_title_hint);
-        title.setSingleLine(true);
+        View fields = getLayoutInflater().inflate(R.layout.dialog_reader_bookmark, null);
+        android.widget.EditText title = fields.findViewById(R.id.reader_bookmark_title);
         title.setText(getString(R.string.reader_bookmark_default_title, readerNavigation.currentPage() + 1));
-        fields.addView(title);
-        EditText note = new EditText(this);
-        note.setHint(R.string.reader_bookmark_note_hint);
-        note.setMinLines(2);
-        note.setGravity(android.view.Gravity.TOP);
-        fields.addView(note);
+        android.widget.EditText note = fields.findViewById(R.id.reader_bookmark_note);
         new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.reader_bookmark_add)
             .setView(fields)

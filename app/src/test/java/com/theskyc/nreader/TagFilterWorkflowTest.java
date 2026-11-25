@@ -30,6 +30,7 @@ import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.TagV2;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,8 +185,15 @@ public class TagFilterWorkflowTest {
                 await(activity, () -> ShadowDialog.getLatestDialog() instanceof AlertDialog);
                 AlertDialog save = (AlertDialog) ShadowDialog.getLatestDialog();
                 EditText name = save.findViewById(android.R.id.edit);
+                TextInputLayout nameInput = save.findViewById(R.id.name_input);
                 assertNotNull(name);
+                assertNotNull(nameInput);
+                name.setText("");
+                assertTrue(save.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                assertTrue("Save dialog should remain open after rejecting an empty name", save.isShowing());
+                assertEquals(activity.getString(R.string.tag_view_invalid_name), nameInput.getError().toString());
                 name.setText("Review view");
+                assertEquals(null, nameInput.getError());
                 assertTrue(save.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
                 await(activity, () -> TagViewStore.list().size() == 1);
 
@@ -252,7 +260,14 @@ public class TagFilterWorkflowTest {
                 assertTrue(actions.getListView().performItemClick(null, 0, 0));
                 AlertDialog rename = (AlertDialog) ShadowDialog.getLatestDialog();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
-                ((EditText) rename.findViewById(android.R.id.edit)).setText("Renamed");
+                EditText renameName = rename.findViewById(android.R.id.edit);
+                TextInputLayout renameInput = rename.findViewById(R.id.name_input);
+                renameName.setText("");
+                assertTrue(rename.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+                assertTrue("Rename dialog should remain open after rejecting an empty name", rename.isShowing());
+                assertEquals(activity.getString(R.string.tag_view_invalid_name), renameInput.getError().toString());
+                renameName.setText("Renamed");
+                assertEquals(null, renameInput.getError());
                 assertTrue(rename.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
                 assertTrue("Rename dialog should close after accepting a valid name", !rename.isShowing());
                 await(activity, () -> "Renamed".equals(TagViewStore.list().get(0).getAsString("name")));

@@ -5,8 +5,11 @@ import android.content.res.Configuration;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -38,6 +41,7 @@ import com.theskyc.nreader.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.List;
 import java.util.Locale;
@@ -426,13 +430,13 @@ public class TagFilterActivity extends GeneralActivity {
             updateTagViewItems();
             return;
         }
-        EditText name = new EditText(this);
-        name.setId(android.R.id.edit);
-        name.setSingleLine(true);
-        name.setHint(R.string.tag_view_name_hint);
+        View fields = getLayoutInflater().inflate(R.layout.dialog_tag_view_name, null);
+        EditText name = fields.findViewById(android.R.id.edit);
+        TextInputLayout nameInput = fields.findViewById(R.id.name_input);
+        clearInputErrorOnTextChange(name, nameInput);
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.save_tag_view)
-            .setView(name)
+            .setView(fields)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, null)
             .create();
@@ -440,7 +444,7 @@ public class TagFilterActivity extends GeneralActivity {
             .setOnClickListener(button -> {
                 ContentValues values = buildTagView(name.getText().toString().trim(), type);
                 if (!TagViewStore.isValid(values, false)) {
-                    name.setError(getString(R.string.tag_view_invalid_name));
+                    nameInput.setError(getString(R.string.tag_view_invalid_name));
                     return;
                 }
                 button.setEnabled(false);
@@ -477,6 +481,25 @@ public class TagFilterActivity extends GeneralActivity {
         values.put("translated_only", TagV2.isTranslatedOnly() ? 1 : 0);
         values.put("pinned", 0);
         return values;
+    }
+
+    private static void clearInputErrorOnTextChange(@NonNull EditText editText,
+            @NonNull TextInputLayout inputLayout) {
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence text, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(Editable text) {
+                if (inputLayout.getError() != null) {
+                    inputLayout.setError(null);
+                    inputLayout.setErrorEnabled(false);
+                }
+            }
+        });
     }
 
     private void showSavedTagViews() {
@@ -552,13 +575,14 @@ public class TagFilterActivity extends GeneralActivity {
     }
 
     private void renameTagView(ContentValues view) {
-        EditText name = new EditText(this);
-        name.setId(android.R.id.edit);
-        name.setSingleLine(true);
+        View fields = getLayoutInflater().inflate(R.layout.dialog_tag_view_name, null);
+        EditText name = fields.findViewById(android.R.id.edit);
+        TextInputLayout nameInput = fields.findViewById(R.id.name_input);
         name.setText(view.getAsString("name"));
+        clearInputErrorOnTextChange(name, nameInput);
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.tag_view_rename)
-            .setView(name)
+            .setView(fields)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.ok, null)
             .create();
@@ -568,7 +592,7 @@ public class TagFilterActivity extends GeneralActivity {
                 updated.remove("id");
                 updated.put("name", name.getText().toString().trim());
                 if (!TagViewStore.isValid(updated, false)) {
-                    name.setError(getString(R.string.tag_view_invalid_name));
+                    nameInput.setError(getString(R.string.tag_view_invalid_name));
                     return;
                 }
                 dialog.dismiss();
