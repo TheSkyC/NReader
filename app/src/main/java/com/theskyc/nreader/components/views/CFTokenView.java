@@ -9,10 +9,11 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.google.android.material.button.MaterialButton;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.components.CookieInterceptor;
@@ -25,7 +26,7 @@ public class CFTokenView {
     public CFTokenView(ViewGroup masterLayout) {
         this.masterLayout = masterLayout;
         webView=masterLayout.findViewById(R.id.webView);
-        Button button = masterLayout.findViewById(R.id.hideWebView);
+        MaterialButton button = masterLayout.findViewById(R.id.hideWebView);
         button.setOnClickListener(v -> CookieInterceptor.hideWebView());
     }
 
