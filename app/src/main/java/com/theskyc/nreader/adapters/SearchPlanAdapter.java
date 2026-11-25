@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,6 +17,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.BookmarkActivity;
 import com.theskyc.nreader.MainActivity;
 import com.theskyc.nreader.R;
@@ -126,12 +127,17 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
         EditText name = form.findViewById(R.id.plan_name);
         EditText query = form.findViewById(R.id.plan_query);
         EditText page = form.findViewById(R.id.plan_page);
-        Spinner sort = form.findViewById(R.id.plan_sort);
+        TextInputLayout nameInput = form.findViewById(R.id.plan_name_input);
+        TextInputLayout pageInput = form.findViewById(R.id.plan_page_input);
+        MaterialAutoCompleteTextView sort = form.findViewById(R.id.plan_sort);
         SortType[] types = SortType.values();
         List<String> labels = new ArrayList<>();
         for (SortType type : types) labels.add(activity.getString(type.getNameId()));
         sort.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, labels));
-        sort.setSelection(SortType.findFromAddition(plan.getAsString("sort")).ordinal());
+        int selectedSort = SortType.findFromAddition(plan.getAsString("sort")).ordinal();
+        sort.setText(labels.get(selectedSort), false);
+        sort.setTag(types[selectedSort]);
+        sort.setOnItemClickListener((parent, itemView, position, id) -> sort.setTag(types[position]));
         name.setText(plan.getAsString("name"));
         query.setText(plan.getAsString("query"));
         page.setText(plan.getAsString("page"));
@@ -144,7 +150,7 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
                 pageNumber = Integer.parseInt(page.getText().toString());
                 if (pageNumber < 1) throw new NumberFormatException();
             } catch (NumberFormatException exception) {
-                page.setError(activity.getString(R.string.search_plan_invalid_page));
+                pageInput.setError(activity.getString(R.string.search_plan_invalid_page));
                 return;
             }
             ContentValues changed = new ContentValues(plan);
@@ -152,11 +158,11 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
             changed.remove("id");
             changed.put("name", name.getText().toString().trim());
             changed.put("query", query.getText().toString());
-            String addition = types[sort.getSelectedItemPosition()].getUrlAddition();
+            String addition = ((SortType) sort.getTag()).getUrlAddition();
             changed.put("sort", addition == null ? "" : addition);
             changed.put("page", pageNumber);
             if (!SearchPlanStore.isValid(changed, false)) {
-                name.setError(activity.getString(R.string.search_plan_invalid));
+                nameInput.setError(activity.getString(R.string.search_plan_invalid));
                 return;
             }
             view.setEnabled(false);

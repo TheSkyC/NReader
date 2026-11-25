@@ -48,6 +48,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.bumptech.glide.RequestManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.ListAdapter;
 import com.theskyc.nreader.api.AccountSearchTags;
 import com.theskyc.nreader.api.InspectorV3;
@@ -1203,17 +1204,17 @@ public class MainActivity extends BaseActivity
         values.put("sort", sort == null ? "" : sort);
         values.put("page", portable.getPage());
         values.put("pinned", 0);
-        EditText name = new EditText(this);
-        name.setSingleLine(true);
-        name.setHint(R.string.search_plan_name);
+        View nameInput = LayoutInflater.from(this).inflate(R.layout.search_plan_name_input, null, false);
+        EditText name = nameInput.findViewById(R.id.plan_name);
+        TextInputLayout nameField = nameInput.findViewById(R.id.plan_name_input);
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.save_search_plan).setView(name)
+            .setTitle(R.string.save_search_plan).setView(nameInput)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(android.R.string.ok, null).create();
         dialog.setOnShowListener(ignored -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
             values.put("name", name.getText().toString().trim());
             if (!SearchPlanStore.isValid(values, false)) {
-                name.setError(getString(R.string.search_plan_invalid));
+                nameField.setError(getString(R.string.search_plan_invalid));
                 return;
             }
             view.setEnabled(false);

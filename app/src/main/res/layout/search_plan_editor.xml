@@ -8,10 +8,55 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="24dp">
-        <EditText android:id="@+id/plan_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_name" android:inputType="textCapSentences" android:maxLength="200" />
-        <EditText android:id="@+id/plan_query" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_query" android:inputType="textMultiLine" android:maxLength="8192" />
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@id/plan_sort" android:text="@string/search_plan_sort" />
-        <Spinner android:id="@+id/plan_sort" android:layout_width="match_parent" android:layout_height="48dp" />
-        <EditText android:id="@+id/plan_page" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/search_plan_page" android:inputType="number" />
+        <include
+            layout="@layout/search_plan_name_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/plan_query_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="@string/search_plan_query">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/plan_query"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:maxLength="8192"
+                android:minLines="2" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="@string/search_plan_sort">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/plan_sort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/plan_page_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/search_plan_page">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/plan_page"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 </ScrollView>

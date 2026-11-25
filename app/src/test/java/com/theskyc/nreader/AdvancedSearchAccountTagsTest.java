@@ -374,7 +374,7 @@ public class AdvancedSearchAccountTagsTest {
             AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
             assertNotNull(dialog);
             ViewGroup custom = dialog.findViewById(androidx.appcompat.R.id.custom);
-            ((EditText) custom.getChildAt(0)).setText("Fixture plan");
+            ((EditText) custom.findViewById(R.id.plan_name)).setText("Fixture plan");
             View confirm = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             assertTrue(confirm.performClick());
             assertFalse(confirm.isEnabled());
