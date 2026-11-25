@@ -33,6 +33,8 @@ import java.util.List;
 public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Holder> {
     private final BookmarkActivity activity;
     private final List<ContentValues> plans = new ArrayList<>();
+    private boolean loadFinished;
+    private boolean loadFailed;
 
     public SearchPlanAdapter(BookmarkActivity activity) {
         this.activity = activity;
@@ -47,9 +49,17 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
                     if (!active()) return;
                     plans.clear();
                     plans.addAll(loaded);
+                    loadFinished = true;
+                    loadFailed = false;
                     notifyDataSetChanged();
                 });
             } catch (RuntimeException exception) {
+                activity.runOnUiThread(() -> {
+                    if (!active()) return;
+                    loadFinished = true;
+                    loadFailed = true;
+                    notifyDataSetChanged();
+                });
                 reportError(exception);
             }
         });
@@ -69,7 +79,7 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
             ? activity.getString(R.string.search_plan_pinned_format, name) : name);
         holder.page.setText(activity.getString(R.string.bookmark_page_format, plan.getAsInteger("page")));
         holder.actions.setOnClickListener(view -> showActions(plan));
-        holder.itemView.setOnClickListener(view -> open(plan));
+        holder.itemView.findViewById(R.id.master_layout).setOnClickListener(view -> open(plan));
     }
 
     private void open(ContentValues plan) {
@@ -206,6 +216,10 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
 
     @Override
     public int getItemCount() { return plans.size(); }
+
+    public boolean isLoadFinished() { return loadFinished; }
+
+    public boolean hasLoadFailed() { return loadFailed; }
 
     static class Holder extends RecyclerView.ViewHolder {
         final TextView title;

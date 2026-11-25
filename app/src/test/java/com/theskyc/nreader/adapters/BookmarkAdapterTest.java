@@ -65,6 +65,31 @@ public class BookmarkAdapterTest {
     }
 
     @Test
+    public void emptyMessageWaitsForSavedSearchLoad() throws Exception {
+        helper.getWritableDatabase().delete("Bookmark", null, null);
+        CountDownLatch blocked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        SearchPlanStore.execute(() -> {
+            blocked.countDown();
+            try {
+                release.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(blocked.await(10, TimeUnit.SECONDS));
+        BookmarkActivity activity;
+        try {
+            activity = Robolectric.buildActivity(BookmarkActivity.class).setup().get();
+            assertEquals(View.GONE, activity.findViewById(R.id.bookmarks_empty).getVisibility());
+        } finally {
+            release.countDown();
+        }
+        awaitPlans();
+        assertEquals(View.VISIBLE, activity.findViewById(R.id.bookmarks_empty).getVisibility());
+    }
+
+    @Test
     public void removingAdjacentRowsUsesTheirCurrentPositions() {
         BookmarkActivity activity = Robolectric.buildActivity(BookmarkActivity.class).setup().get();
         RecyclerView list = activity.findViewById(R.id.recycler);

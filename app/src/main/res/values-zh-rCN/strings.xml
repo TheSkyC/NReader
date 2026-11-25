@@ -354,6 +354,8 @@
     <string name="copyURL">复制链接</string>
     <string name="add_bookmark">添加书签</string>
     <string name="manage_bookmarks">管理书签</string>
+    <string name="bookmarks_empty">暂无书签或已保存的搜索。</string>
+    <string name="saved_searches_load_failed">无法加载已保存的搜索。</string>
     <string name="bookmark_page_format">第 %d 页</string>
     <string name="search_bookmark_unavailable">此书签没有可用的标签或已保存的搜索。</string>
     <string name="bookmark_description">书签描述</string>

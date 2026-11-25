@@ -428,6 +428,8 @@
     <string name="copyURL">Copy URL</string>
     <string name="add_bookmark">Add bookmark</string>
     <string name="manage_bookmarks">Manage bookmarks</string>
+    <string name="bookmarks_empty">No bookmarks or saved searches yet.</string>
+    <string name="saved_searches_load_failed">Could not load saved searches.</string>
     <string name="save_search_plan">Save search plan</string>
     <string name="search_plan_name">Plan name</string>
     <string name="search_plan_invalid">Enter a name of at most 200 characters and a valid search.</string>

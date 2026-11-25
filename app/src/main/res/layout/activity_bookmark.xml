@@ -32,5 +32,16 @@
             android:text="@string/history_empty"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/bookmarks_empty"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="24dp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>
