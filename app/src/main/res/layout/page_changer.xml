@@ -32,17 +32,26 @@
             app:tint="?attr/colorOnSurface"
             app:srcCompat="@drawable/ic_keyboard_arrow_left" />
 
-        <EditText
-            android:id="@+id/edit_page"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:hint="@string/hashtag"
-            android:inputType="number"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            android:textColor="?attr/colorOnSurface"
-            tools:ignore="Autofill" />
+            android:layout_gravity="center_vertical"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_page"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:hint="@string/hashtag"
+                android:inputType="number"
+                android:minHeight="48dp"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textColor="?attr/colorOnSurface"
+                tools:ignore="Autofill" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             android:layout_width="wrap_content"
