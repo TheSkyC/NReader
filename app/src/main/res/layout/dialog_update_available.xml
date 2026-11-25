@@ -32,7 +32,7 @@
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/update_available"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -41,14 +41,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/update_prompt_current_version"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textColor="?android:attr/textColorSecondary" />
 
     <TextView
@@ -56,7 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="@string/update_release_notes_title"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
+        android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
 
     <TextView
         android:id="@+id/update_prompt_notes"
@@ -64,7 +64,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:lineSpacingExtra="3dp"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textColor="?android:attr/textColorSecondary" />
 
     <com.google.android.material.button.MaterialButton
@@ -79,7 +79,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/update_prompt_later"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="48dp"

@@ -15,6 +15,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -687,7 +689,11 @@ public class MainActivity extends BaseActivity
         if (version == null || isFinishing() || isDestroyed() || !hasWindowFocus()
             || !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) return false;
         Runnable show = () -> {
-            View content = getLayoutInflater().inflate(R.layout.dialog_update_available, null);
+            boolean blackTheme = getSharedPreferences("Settings", 0)
+                .getBoolean(getString(R.string.preference_key_black_theme), false);
+            Context dialogContext = new ContextThemeWrapper(this,
+                blackTheme ? R.style.AppTheme_Material3_Black : R.style.AppTheme_Material3);
+            View content = LayoutInflater.from(dialogContext).inflate(R.layout.dialog_update_available, null);
             TextView target = content.findViewById(R.id.update_prompt_version);
             TextView current = content.findViewById(R.id.update_prompt_current_version);
             TextView notes = content.findViewById(R.id.update_prompt_notes);
@@ -695,8 +701,8 @@ public class MainActivity extends BaseActivity
             current.setText(getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME));
             notes.setText(body == null || body.trim().isEmpty()
                 ? getString(R.string.update_no_release_notes) : body.trim());
-            AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setBackground(getDrawable(R.drawable.update_prompt_background))
+            AlertDialog dialog = new MaterialAlertDialogBuilder(dialogContext)
+                .setBackground(dialogContext.getDrawable(R.drawable.update_prompt_background))
                 .setView(content)
                 .create();
             updatePromptDialog = dialog;
