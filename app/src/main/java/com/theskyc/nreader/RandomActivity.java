@@ -21,6 +21,7 @@ import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.utility.ImageDownloadUtility;
 import com.theskyc.nreader.utility.LanguageFlag;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Objects;
 
@@ -37,6 +38,9 @@ public class RandomActivity extends GeneralActivity {
     private TextView title;
     private TextView page;
     private View censor;
+    private TextView randomState;
+    private FloatingActionButton shuffle;
+    private ImageButton share;
     private RandomLoader loader = null;
     private boolean isFavorite;
 
@@ -45,13 +49,11 @@ public class RandomActivity extends GeneralActivity {
         super.onCreate(savedInstanceState);
         //Global.initActivity(this);
         setContentView(R.layout.activity_random);
-        loader = new RandomLoader(this);
-
-
         //init components id
         Toolbar toolbar = findViewById(R.id.toolbar);
-        FloatingActionButton shuffle = findViewById(R.id.shuffle);
-        ImageButton share = findViewById(R.id.share);
+        shuffle = findViewById(R.id.shuffle);
+        share = findViewById(R.id.share);
+        randomState = findViewById(R.id.random_state);
         censor = findViewById(R.id.censor);
         language = findViewById(R.id.language);
         thumbnail = findViewById(R.id.thumbnail);
@@ -68,6 +70,10 @@ public class RandomActivity extends GeneralActivity {
 
 
         if (loadedGallery != null) loadGallery(loadedGallery);
+        else setGalleryActionsEnabled(false);
+
+        loader = new RandomLoader(this);
+        loader.start(loadedGallery == null);
 
         shuffle.setOnClickListener(v -> loader.requestGallery());
 
@@ -118,8 +124,11 @@ public class RandomActivity extends GeneralActivity {
 
 
     public void loadGallery(Gallery gallery) {
-        loadedGallery = gallery;
         if (Global.isDestroyed(this)) return;
+        loadedGallery = gallery;
+        randomState.setVisibility(View.GONE);
+        shuffle.setEnabled(true);
+        setGalleryActionsEnabled(true);
         ImageDownloadUtility.loadImage(this, gallery.getCover(), thumbnail);
         LanguageFlag.bind(language, gallery.getLanguage());
         isFavorite = Favorites.isFavorite(loadedGallery);
@@ -128,6 +137,39 @@ public class RandomActivity extends GeneralActivity {
         page.setText(getResources().getQuantityString(R.plurals.page_count_format,
             gallery.getPageCount(), gallery.getPageCount()));
         censor.setVisibility(gallery.hasIgnoredTags() ? View.VISIBLE : View.GONE);
+    }
+
+    public void showRandomLoading() {
+        shuffle.setEnabled(false);
+        if (loadedGallery == null) {
+            randomState.setText(R.string.random_gallery_loading);
+            randomState.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void showRandomLoadFailure() {
+        shuffle.setEnabled(true);
+        if (loadedGallery == null) {
+            randomState.setText(R.string.random_gallery_load_failed);
+            randomState.setVisibility(View.VISIBLE);
+        } else {
+            Snackbar.make(shuffle, R.string.random_gallery_retry, Snackbar.LENGTH_LONG)
+                .setAction(R.string.retry, view -> loader.requestGallery()).show();
+        }
+    }
+
+    private void setGalleryActionsEnabled(boolean enabled) {
+        thumbnail.setEnabled(enabled);
+        favorite.setEnabled(enabled);
+        share.setEnabled(enabled);
+        favorite.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
+        share.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (loader != null) loader.close();
+        super.onDestroy();
     }
 
     private void favoriteUpdateButton() {

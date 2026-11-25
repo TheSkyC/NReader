@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="random_gallery_loading">正在載入隨機畫廊…</string>
+    <string name="random_gallery_load_failed">無法載入畫廊。點按隨機按鈕重試。</string>
+    <string name="random_gallery_retry">無法載入另一個畫廊。</string>
     <string name="search_keyword_hint">搜尋關鍵字</string>
     <string name="search_show_filters">進階篩選</string>
     <string name="search_hide_filters">關閉進階篩選</string>
