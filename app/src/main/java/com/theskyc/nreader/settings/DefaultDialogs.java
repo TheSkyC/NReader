@@ -1,6 +1,7 @@
 package com.theskyc.nreader.settings;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
@@ -11,9 +12,12 @@ import android.widget.TextView;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.theskyc.nreader.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.color.MaterialColors;
 
 import java.util.Locale;
 
@@ -21,7 +25,16 @@ public class DefaultDialogs {
     public static void pageChangerDialog(final Builder builder) {
         MaterialAlertDialogBuilder build = new MaterialAlertDialogBuilder(builder.context);
         if (builder.title != 0) build.setTitle(builder.context.getString(builder.title));
-        if (builder.drawable != 0) build.setIcon(builder.drawable);
+        if (builder.drawable != 0) {
+            Drawable icon = ContextCompat.getDrawable(builder.context, builder.drawable);
+            if (icon != null) {
+                icon = DrawableCompat.wrap(icon.mutate());
+                DrawableCompat.setTint(icon, MaterialColors.getColor(builder.context,
+                    com.google.android.material.R.attr.colorOnSurfaceVariant,
+                    ContextCompat.getColor(builder.context, R.color.theme_on_surface_variant)));
+                build.setIcon(icon);
+            }
+        }
         View v = View.inflate(builder.context, R.layout.page_changer, null);
         build.setView(v);
         final SeekBar seekBar = v.findViewById(R.id.seekBar);
