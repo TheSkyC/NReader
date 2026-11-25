@@ -8,7 +8,7 @@
 
     <Button
         android:id="@+id/gallery_jump_page"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
@@ -32,7 +32,7 @@
 
         <TextView
             android:id="@+id/gallery_pages_message"
-            style="@style/TextAppearance.MaterialComponents.Body1"
+            style="@style/TextAppearance.Material3.BodyLarge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -42,7 +42,7 @@
 
         <Button
             android:id="@+id/gallery_pages_retry"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -50,7 +50,7 @@
             android:visibility="gone" />
         <Button
             android:id="@+id/gallery_pages_local"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/gallery_open_local_copy"

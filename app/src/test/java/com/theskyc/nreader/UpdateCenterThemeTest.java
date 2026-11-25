@@ -111,6 +111,30 @@ public class UpdateCenterThemeTest {
         assertColors(Robolectric.buildActivity(SearchActivity.class).get(), black);
     }
 
+    @Test
+    @Config(qualifiers = "notnight")
+    public void galleryUsesMaterial3InLightMode() {
+        assertGalleryTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void galleryUsesMaterial3InDarkMode() {
+        assertGalleryTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void galleryKeepsBlackMaterial3ThemeInLightMode() {
+        assertGalleryTheme(true);
+    }
+
+    private void assertGalleryTheme(boolean black) {
+        Application app = RuntimeEnvironment.getApplication();
+        preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
+        assertColors(Robolectric.buildActivity(GalleryActivity.class).get(), black);
+    }
+
     private void assertAccountsTheme(boolean black) {
         Application app = RuntimeEnvironment.getApplication();
         preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();

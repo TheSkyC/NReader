@@ -97,6 +97,10 @@ import okhttp3.Response;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class GalleryActivity extends BaseActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     @NonNull
     private GenericGallery gallery = Gallery.emptyGallery();
     @Nullable private String entryTitle;

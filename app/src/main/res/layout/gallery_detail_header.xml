@@ -27,7 +27,7 @@
 
             <TextView
                 android:id="@+id/gallery_title"
-                style="@style/TextAppearance.MaterialComponents.Headline6"
+                style="@style/TextAppearance.Material3.TitleLarge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
@@ -50,7 +50,7 @@
 
                 <TextView
                     android:id="@+id/id_num"
-                    style="@style/TextAppearance.MaterialComponents.Body2"
+                    style="@style/TextAppearance.Material3.BodyMedium"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -83,13 +83,13 @@
 
         <Button
             android:id="@+id/gallery_load_retry"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/retry" />
         <Button
             android:id="@+id/gallery_load_local"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/gallery_open_local_copy"
@@ -126,7 +126,7 @@
                 android:layout_height="20dp" />
 
             <TextView
-                style="@style/TextAppearance.MaterialComponents.Button"
+                style="@style/TextAppearance.Material3.LabelLarge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -139,7 +139,7 @@
 
     <Button
         android:id="@+id/gallery_read_from_start"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/gallery_read_from_start"
