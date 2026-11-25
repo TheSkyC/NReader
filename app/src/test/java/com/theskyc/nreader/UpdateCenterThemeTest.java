@@ -164,6 +164,8 @@ public class UpdateCenterThemeTest {
         StatusManagerActivity manager = Robolectric.buildActivity(StatusManagerActivity.class).get();
         assertColors(viewer, black);
         assertColors(manager, black);
+        assertColors(Robolectric.buildActivity(HistoryActivity.class).get(), black);
+        assertColors(Robolectric.buildActivity(BookmarkActivity.class).get(), black);
         MaterialCardView card = (MaterialCardView) LayoutInflater.from(manager)
             .inflate(R.layout.entry_status, null, false);
         int background = card.getCardBackgroundColor().getDefaultColor();

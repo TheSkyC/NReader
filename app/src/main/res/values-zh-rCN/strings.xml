@@ -399,6 +399,7 @@
     <string name="history_size_summary">设置最多保留的阅读历史条数</string>
     <string name="view_history">阅读历史</string>
     <string name="history">阅读历史</string>
+    <string name="history_empty">暂无阅读历史。</string>
     <string name="clear_history">清除阅读历史</string>
     <string name="cancelled_format">已取消：%s</string>
     <string name="completed_format">已完成：%s</string>

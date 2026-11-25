@@ -4,9 +4,11 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.adapters.ListAdapter;
 import com.theskyc.nreader.api.GalleryDetailRequests;
@@ -26,6 +28,11 @@ import java.util.Objects;
 import java.util.Set;
 
 public class HistoryActivity extends BaseActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     ListAdapter adapter;
     private final ArrayDeque<SimpleGallery> pendingMetadata = new ArrayDeque<>();
     private final Set<Integer> requestedMetadata = new HashSet<>();
@@ -48,8 +55,19 @@ public class HistoryActivity extends BaseActivity {
         masterLayout = findViewById(R.id.master_layout);
         adapter = new ListAdapter(this);
         adapter.addGalleries(new ArrayList<>(Queries.HistoryTable.getHistory()));
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                updateEmptyState();
+            }
+        });
+        updateEmptyState();
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.setAdapter(adapter);
+    }
+
+    private void updateEmptyState() {
+        findViewById(R.id.history_empty).setVisibility(adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Override

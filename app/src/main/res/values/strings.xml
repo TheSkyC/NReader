@@ -490,6 +490,7 @@
     <string name="history_size_summary">Maximum number of reading history entries to keep</string>
     <string name="view_history">Reading history</string>
     <string name="history">Reading history</string>
+    <string name="history_empty">No reading history yet.</string>
     <string name="clear_history">Clear reading history</string>
     <string name="cancelled_format">Cancelled: %s</string>
     <string name="completed_format">Completed: %s</string>

@@ -16,6 +16,11 @@ import com.theskyc.nreader.components.widgets.CustomLinearLayoutManager;
 import java.util.Objects;
 
 public class BookmarkActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     BookmarkAdapter adapter;
     RecyclerView recycler;
 
