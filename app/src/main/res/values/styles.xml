@@ -31,6 +31,54 @@
         <item name="overlapAnchor">false</item>
     </style>
 
+    <style name="AppTheme.Material3" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
+        <item name="colorPrimary">@color/m3_primary</item>
+        <item name="colorOnPrimary">@color/m3_on_primary</item>
+        <item name="colorPrimaryContainer">@color/m3_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/m3_on_primary_container</item>
+        <item name="colorSecondary">@color/m3_primary</item>
+        <item name="colorOnSecondary">@color/m3_on_primary</item>
+        <item name="colorSecondaryContainer">@color/m3_primary_container</item>
+        <item name="colorOnSecondaryContainer">@color/m3_on_primary_container</item>
+        <item name="colorSurface">@color/theme_surface</item>
+        <item name="colorOnSurface">@color/theme_on_surface</item>
+        <item name="colorSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/theme_on_surface_variant</item>
+        <item name="colorOutline">@color/theme_outline</item>
+        <item name="colorError">@color/theme_error</item>
+        <item name="colorOnError">@color/theme_on_error</item>
+        <item name="android:colorBackground">@color/theme_background</item>
+        <item name="android:windowBackground">@color/theme_background</item>
+        <item name="android:textColorPrimary">@color/theme_on_surface</item>
+        <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
+        <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="nreaderOutline">@color/theme_outline</item>
+    </style>
+
+    <style name="AppTheme.Material3.Black" parent="AppTheme.Material3">
+        <item name="colorPrimary">@color/m3_black_primary</item>
+        <item name="colorOnPrimary">@color/m3_black_on_primary</item>
+        <item name="colorSecondary">@color/m3_black_primary</item>
+        <item name="colorOnSecondary">@color/m3_black_on_primary</item>
+        <item name="colorPrimaryContainer">@color/m3_black_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/m3_black_on_primary_container</item>
+        <item name="colorSecondaryContainer">@color/m3_black_primary_container</item>
+        <item name="colorOnSecondaryContainer">@color/m3_black_on_primary_container</item>
+        <item name="colorSurface">@color/theme_black_surface</item>
+        <item name="colorOnSurface">@color/theme_black_on_surface</item>
+        <item name="colorSurfaceVariant">@color/theme_black_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/theme_black_on_surface</item>
+        <item name="colorOutline">@color/theme_black_outline</item>
+        <item name="android:windowBackground">@color/theme_black_background</item>
+        <item name="android:colorBackground">@color/theme_black_background</item>
+        <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
+        <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
+        <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>
+        <item name="nreaderOutline">@color/theme_black_outline</item>
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+
     <style name="AppTheme.Black" parent="AppTheme">
         <item name="colorSurface">@color/theme_black_surface</item>
         <item name="colorOnSurface">@color/theme_black_on_surface</item>

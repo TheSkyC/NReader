@@ -81,8 +81,12 @@ public abstract class GeneralActivity extends AppCompatActivity {
         Resources.Theme theme = super.getTheme();
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
         if (preferences.getBoolean(getString(R.string.preference_key_black_theme), false)) {
-            theme.applyStyle(R.style.AppTheme_Black, true);
+            theme.applyStyle(getBlackThemeStyle(), true);
         }
         return theme;
+    }
+
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Black;
     }
 }

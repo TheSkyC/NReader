@@ -15,6 +15,14 @@
     <color name="theme_outline">#D7DCE2</color>
     <color name="theme_error">#B3261E</color>
     <color name="theme_on_error">@android:color/white</color>
+    <color name="m3_primary">#00677D</color>
+    <color name="m3_on_primary">#FFFFFF</color>
+    <color name="m3_primary_container">#B6EBFB</color>
+    <color name="m3_on_primary_container">#001F28</color>
+    <color name="m3_black_primary">#80D0E7</color>
+    <color name="m3_black_on_primary">#003641</color>
+    <color name="m3_black_primary_container">#004E60</color>
+    <color name="m3_black_on_primary_container">#B6EBFB</color>
     <color name="theme_image_overlay">#8F000000</color>
     <color name="theme_badge_overlay">#80000000</color>
     <color name="theme_image_scrim_strong">#D9000000</color>

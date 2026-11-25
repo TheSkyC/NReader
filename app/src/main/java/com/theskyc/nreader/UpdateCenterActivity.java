@@ -21,7 +21,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.core.content.ContextCompat;
+import com.google.android.material.color.MaterialColors;
 
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.UpdateMetadataStore;
@@ -38,6 +38,11 @@ import java.text.DateFormat;
 import java.util.Date;
 
 public class UpdateCenterActivity extends GeneralActivity implements VersionChecker.Listener {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private TextView status;
     private TextView versionFrom;
     private TextView version;
@@ -335,40 +340,40 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         switch (phase) {
             case CHECKING:
                 drawable = R.drawable.ic_refresh;
-                tint = R.color.theme_primary;
+                tint = R.attr.colorPrimary;
                 break;
             case QUEUED:
                 drawable = R.drawable.ic_cover_clock;
-                tint = R.color.theme_primary;
+                tint = R.attr.colorPrimary;
                 break;
             case DOWNLOADING:
                 drawable = R.drawable.ic_cover_download;
-                tint = R.color.theme_primary;
+                tint = R.attr.colorPrimary;
                 break;
             case READY_TO_INSTALL:
                 drawable = R.drawable.ic_cover_check_circle;
-                tint = R.color.state_complete;
+                tint = R.attr.colorPrimary;
                 break;
             case INSTALLING:
                 drawable = R.drawable.ic_cover_check_circle;
-                tint = R.color.theme_primary;
+                tint = R.attr.colorPrimary;
                 break;
             case ERROR:
                 drawable = R.drawable.ic_cover_exclamation_circle;
-                tint = R.color.state_damaged;
+                tint = R.attr.colorError;
                 break;
             case AVAILABLE:
                 drawable = R.drawable.ic_cover_download;
-                tint = R.color.theme_primary;
+                tint = R.attr.colorPrimary;
                 break;
             case IDLE:
             default:
                 drawable = R.drawable.ic_check_circle;
-                tint = R.color.state_complete;
+                tint = R.attr.colorPrimary;
                 break;
         }
         statusIcon.setImageResource(drawable);
-        statusIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, tint)));
+        statusIcon.setImageTintList(ColorStateList.valueOf(MaterialColors.getColor(statusIcon, tint)));
     }
 
     private String errorMessage(String errorCode) {

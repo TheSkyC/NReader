@@ -13,6 +13,10 @@
     <color name="theme_outline">#4B4F56</color>
     <color name="theme_error">#FFB4AB</color>
     <color name="theme_on_error">#690005</color>
+    <color name="m3_primary">#80D0E7</color>
+    <color name="m3_on_primary">#003641</color>
+    <color name="m3_primary_container">#004E60</color>
+    <color name="m3_on_primary_container">#B6EBFB</color>
     <color name="theme_image_overlay">#8F000000</color>
     <color name="theme_badge_overlay">#80000000</color>
     <color name="theme_image_scrim_strong">#D9000000</color>
