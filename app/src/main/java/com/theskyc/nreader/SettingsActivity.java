@@ -70,6 +70,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SettingsActivity extends GeneralActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private static final String SETTINGS_SCREEN = "settings_screen";
     private static final String CATALOG_CHECK_ID = "catalog_check_id";
     private static final String EXPORT_LOCALE = "translation_export_locale";

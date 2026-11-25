@@ -32,6 +32,7 @@
     </style>
 
     <style name="AppTheme.Material3" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
         <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
         <item name="colorPrimary">@color/m3_primary</item>
         <item name="colorOnPrimary">@color/m3_on_primary</item>
@@ -52,6 +53,7 @@
         <item name="colorOutline">@color/theme_outline</item>
         <item name="colorError">@color/theme_error</item>
         <item name="colorOnError">@color/theme_on_error</item>
+        <item name="colorControlActivated">@color/m3_primary</item>
         <item name="android:colorBackground">@color/theme_background</item>
         <item name="android:windowBackground">@color/theme_background</item>
         <item name="android:statusBarColor">@color/theme_background</item>
@@ -69,6 +71,7 @@
         <item name="colorOnPrimary">@color/m3_black_on_primary</item>
         <item name="colorSecondary">@color/m3_black_primary</item>
         <item name="colorOnSecondary">@color/m3_black_on_primary</item>
+        <item name="colorControlActivated">@color/m3_black_primary</item>
         <item name="colorPrimaryContainer">@color/m3_black_primary_container</item>
         <item name="colorOnPrimaryContainer">@color/m3_black_on_primary_container</item>
         <item name="colorPrimaryInverse">@color/m3_black_inverse_primary</item>
