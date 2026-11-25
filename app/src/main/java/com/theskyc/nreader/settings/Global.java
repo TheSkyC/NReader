@@ -39,6 +39,7 @@ import com.theskyc.nreader.utility.Utility;
 import com.theskyc.nreader.utility.network.NetworkUtil;
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache;
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
+import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
 import java.io.IOException;
@@ -595,7 +596,8 @@ public class Global {
 
     public static void setTint(Context context, Drawable drawable) {
         if (drawable == null) return;
-        DrawableCompat.setTint(drawable, context.getColor(R.color.tint_dark));
+        DrawableCompat.setTint(drawable, MaterialColors.getColor(context, R.attr.colorOnSurface,
+            context.getColor(R.color.tint_dark)));
     }
 
     private static void loadNotificationChannel(@NonNull Context context) {
