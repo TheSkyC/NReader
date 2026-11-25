@@ -313,7 +313,6 @@ dependencies {
     // To parse HTML
     implementation("org.jsoup:jsoup:1.22.2")
     // color picker
-    implementation("com.github.yukuku:ambilwarna:2.0.1")
     // fast scroll
     implementation("me.zhanghai.android.fastscroll:library:1.3.0")
 }

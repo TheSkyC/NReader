@@ -66,6 +66,7 @@ import com.theskyc.nreader.components.GalleryOpenGate;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.components.activities.BaseActivity;
 import com.theskyc.nreader.components.status.Status;
+import com.theskyc.nreader.components.status.StatusColorPickerDialog;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.components.status.StatusNameInput;
 import com.theskyc.nreader.components.views.RangeSelector;
@@ -97,8 +98,6 @@ import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import yuku.ambilwarna.AmbilWarnaDialog;
-
 public class GalleryActivity extends BaseActivity {
     @Override protected int getBlackThemeStyle() {
         return R.style.AppTheme_Material3_Black;
@@ -1185,21 +1184,14 @@ public class GalleryActivity extends BaseActivity {
             newStatusColor = Utility.RANDOM.nextInt() | 0xff000000;
         } while (newStatusColor == Color.BLACK || newStatusColor == Color.WHITE);
         colorSwatch.setBackgroundTintList(ColorStateList.valueOf(newStatusColor));
-        btnColor.setOnClickListener(v -> new AmbilWarnaDialog(GalleryActivity.this, newStatusColor, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
-            @Override
-            public void onCancel(AmbilWarnaDialog dialog) {
+        btnColor.setOnClickListener(v -> StatusColorPickerDialog.show(GalleryActivity.this, newStatusColor, selectedColor -> {
+            if (selectedColor == Color.WHITE || selectedColor == Color.BLACK) {
+                Toast.makeText(GalleryActivity.this, R.string.invalid_color_selected, Toast.LENGTH_SHORT).show();
+                return;
             }
-
-            @Override
-            public void onOk(AmbilWarnaDialog dialog, int color) {
-                if (color == Color.WHITE || color == Color.BLACK) {
-                    Toast.makeText(GalleryActivity.this, R.string.invalid_color_selected, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                newStatusColor = color;
-                colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
-            }
-        }).show());
+            newStatusColor = selectedColor;
+            colorSwatch.setBackgroundTintList(ColorStateList.valueOf(selectedColor));
+        }));
         builder.setView(layout);
         builder.setTitle(R.string.create_new_status);
         builder.setPositiveButton(R.string.ok, null);

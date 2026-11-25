@@ -566,6 +566,10 @@
     <string name="create_new_status">Create new status:</string>
     <string name="status_name">Status name</string>
     <string name="status_choose_color">Choose color</string>
+    <string name="status_color_hue">Hue</string>
+    <string name="status_color_saturation">Saturation</string>
+    <string name="status_color_brightness">Brightness</string>
+    <string name="status_color_value">Selected color: %1$s</string>
     <string name="invalid_color_selected">Choose a color other than black or white.</string>
     <string name="change_status_title">Select new status:</string>
     <string name="remove_status">None</string>

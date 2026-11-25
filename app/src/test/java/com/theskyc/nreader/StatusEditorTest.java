@@ -13,9 +13,11 @@ import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.slider.Slider;
 import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.StatusManagerAdapter;
 import com.theskyc.nreader.components.status.Status;
+import com.theskyc.nreader.components.status.StatusColorPickerDialog;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.components.status.StatusNameInput;
 
@@ -86,6 +88,30 @@ public class StatusEditorTest {
             input.getEditText().setText("Reading");
             assertTrue(StatusNameInput.validate(input, reading));
             assertNull(input.getError());
+        }
+    }
+
+    @Test
+    public void materialColorPickerPreservesInitialColorAndOnlyCommitsOnConfirm() {
+        try (ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
+            AppCompatActivity activity = controller.get();
+            activity.setTheme(R.style.AppTheme_Material3);
+            controller.setup();
+            int[] selected = {Color.BLUE};
+
+            StatusColorPickerDialog.show(activity, Color.BLUE, color -> selected[0] = color);
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            assertEquals(240f, ((Slider) dialog.findViewById(R.id.color_hue)).getValue(), 1f);
+            assertEquals(100f, ((Slider) dialog.findViewById(R.id.color_saturation)).getValue(), 1f);
+            dialog.getButton(DialogInterface.BUTTON_NEGATIVE).performClick();
+            assertEquals(Color.BLUE, selected[0]);
+
+            StatusColorPickerDialog.show(activity, Color.BLUE, color -> selected[0] = color);
+            dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            ((Slider) dialog.findViewById(R.id.color_hue)).setValue(0f);
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).callOnClick();
+            assertFalse(dialog.isShowing());
+            assertEquals(Color.RED, selected[0]);
         }
     }
 }

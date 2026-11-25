@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.components.status.Status;
+import com.theskyc.nreader.components.status.StatusColorPickerDialog;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.components.status.StatusNameInput;
 import com.theskyc.nreader.settings.Global;
@@ -27,8 +28,6 @@ import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
-
-import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdapter.ViewHolder> {
     private final List<Status> statusList;
@@ -109,21 +108,14 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
         name.setText(status == null ? "" : status.name);
         StatusNameInput.clearErrorOnEdit(layout.findViewById(R.id.name_input));
-        btnColor.setOnClickListener(v -> new AmbilWarnaDialog(activity, newColor, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
-            @Override
-            public void onCancel(AmbilWarnaDialog dialog) {
+        btnColor.setOnClickListener(v -> StatusColorPickerDialog.show(activity, newColor, selectedColor -> {
+            if (selectedColor == Color.WHITE || selectedColor == Color.BLACK) {
+                Toast.makeText(activity, R.string.invalid_color_selected, Toast.LENGTH_SHORT).show();
+                return;
             }
-
-            @Override
-            public void onOk(AmbilWarnaDialog dialog, int color) {
-                if (color == Color.WHITE || color == Color.BLACK) {
-                    Toast.makeText(activity, R.string.invalid_color_selected, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                newColor = color;
-                colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
-            }
-        }).show());
+            newColor = selectedColor;
+            colorSwatch.setBackgroundTintList(ColorStateList.valueOf(selectedColor));
+        }));
         builder.setView(layout);
         builder.setTitle(status == null ? R.string.create_new_status : R.string.update_status);
         builder.setPositiveButton(R.string.ok, null);

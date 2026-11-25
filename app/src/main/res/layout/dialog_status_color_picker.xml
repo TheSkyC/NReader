@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+
+            <View
+                android:id="@+id/color_preview"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/status_color_swatch"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/color_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:labelFor="@id/color_hue"
+            android:text="@string/status_color_hue"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/color_hue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/status_color_hue"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:labelFor="@id/color_saturation"
+            android:text="@string/status_color_saturation"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/color_saturation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/status_color_saturation"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:labelFor="@id/color_brightness"
+            android:text="@string/status_color_brightness"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/color_brightness"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/status_color_brightness"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+</ScrollView>

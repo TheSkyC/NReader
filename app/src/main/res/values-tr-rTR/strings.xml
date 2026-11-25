@@ -633,4 +633,8 @@
     <string name="tag_translation_online_confirm_zh_hans">Bu dil paketi indirilsin ve yüklensin mi (%1$s)?\n\nTheSkyC, EhTagTranslation veri tabanını ve projeye katkıda bulunanların çalışmalarını temel alarak çevirileri derledi. Aksi belirtilmedikçe kaynak, CC BY-NC-SA 3.0 China Mainland lisansı kapsamındadır.\n\nKaynak ve atıf: %2$s\nLisans: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">Yerel etiket kuralları kaydedilemedi. Tekrar deneyin.</string>
+    <string name="status_color_hue">Ton</string>
+    <string name="status_color_saturation">Doygunluk</string>
+    <string name="status_color_brightness">Parlaklık</string>
+    <string name="status_color_value">Seçili renk: %1$s</string>
 </resources>

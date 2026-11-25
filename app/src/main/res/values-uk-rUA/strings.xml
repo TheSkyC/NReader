@@ -633,4 +633,8 @@
     <string name="tag_translation_online_confirm_zh_hans">Завантажити й установити цей мовний пакет (%1$s)?\n\nTheSkyC зібрав переклади на основі бази даних EhTagTranslation і роботи її учасників. Якщо не зазначено інше, вихідні матеріали поширюються за ліцензією CC BY-NC-SA 3.0 China Mainland.\n\nДжерело й авторство: %2$s\nЛіцензія: %3$s</string>
     <string name="tag_translation_display_pair">%1$s (%2$s)</string>
     <string name="local_tag_rule_save_error">Не вдалося зберегти локальні правила тегів. Спробуйте ще раз.</string>
+    <string name="status_color_hue">Відтінок</string>
+    <string name="status_color_saturation">Насиченість</string>
+    <string name="status_color_brightness">Яскравість</string>
+    <string name="status_color_value">Вибраний колір: %1$s</string>
 </resources>

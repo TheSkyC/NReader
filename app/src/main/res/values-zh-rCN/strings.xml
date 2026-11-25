@@ -473,6 +473,10 @@
     <string name="create_new_status">创建新状态：</string>
     <string name="status_name">状态名称</string>
     <string name="status_choose_color">选择颜色</string>
+    <string name="status_color_hue">色相</string>
+    <string name="status_color_saturation">饱和度</string>
+    <string name="status_color_brightness">明度</string>
+    <string name="status_color_value">当前颜色：%1$s</string>
     <string name="invalid_color_selected">不能使用黑色或白色</string>
     <string name="change_status_title">选择新状态：</string>
     <string name="remove_status">无</string>
