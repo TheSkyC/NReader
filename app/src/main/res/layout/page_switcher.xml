@@ -9,42 +9,44 @@
     android:layout_alignParentStart="true"
     android:layout_alignParentLeft="true"
     android:layout_alignParentBottom="true"
-    android:alpha="0.75"
-    android:background="?android:attr/colorBackground"
+    android:background="?attr/colorSurface"
     android:gravity="center"
-    android:orientation="horizontal"
-    android:weightSum="9">
+    android:minHeight="56dp"
+    android:orientation="horizontal">
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/prev"
-        android:layout_width="0dp"
+        android:layout_width="56dp"
         android:layout_height="match_parent"
-        android:layout_weight="2"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/prev_page"
-        android:tint="?android:attr/colorForeground"
+        app:tint="?attr/colorOnSurface"
         app:srcCompat="@drawable/ic_arrow_back" />
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/page_index"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="5"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
         android:focusable="false"
         android:gravity="center"
         android:hint="@string/hashtag"
         android:inputType="none"
+        android:minHeight="48dp"
         android:text="@string/page_switcher_placeholder"
         android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+        android:textColor="?attr/colorOnSurface"
+        android:textDirection="ltr"
         tools:ignore="Autofill" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/next"
-        android:layout_width="0dp"
+        android:layout_width="56dp"
         android:layout_height="match_parent"
-        android:layout_weight="2"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/next_page"
-        android:tint="?android:attr/colorForeground"
+        app:tint="?attr/colorOnSurface"
         app:srcCompat="@drawable/ic_arrow_forward" />
 </LinearLayout>
