@@ -27,6 +27,10 @@ import java.util.Objects;
 
 
 public class FavoriteActivity extends BaseActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private static final int ENTRY_PER_PAGE = 24;
     private FavoriteAdapter adapter = null;
     private boolean sortByTitle = false;

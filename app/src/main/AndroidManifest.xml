@@ -220,6 +220,7 @@
         <activity
             android:name=".FavoriteActivity"
             android:configChanges="orientation|screenSize"
+            android:theme="@style/AppTheme.Material3"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".CopyToClipboardActivity"
