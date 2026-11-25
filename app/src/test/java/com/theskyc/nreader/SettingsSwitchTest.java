@@ -12,6 +12,7 @@ import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 import androidx.preference.PreferenceGroupAdapter;
@@ -89,6 +90,8 @@ public class SettingsSwitchTest {
                 int position = ((PreferenceGroupAdapter) list.getAdapter()).getPreferenceAdapterPosition(key);
                 RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(position);
                 assertNotNull(holder);
+                TextView title = holder.itemView.findViewById(android.R.id.title);
+                assertTrue(title.getMaxLines() > 1);
                 MaterialSwitch switchView = holder.itemView.findViewById(androidx.preference.R.id.switchWidget);
                 assertNotNull(switchView);
                 assertFalse(switchView.isClickable());

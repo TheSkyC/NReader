@@ -72,6 +72,7 @@
 
     <style name="NReaderSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
         <item name="android:widgetLayout">@layout/preference_material_switch</item>
+        <item name="singleLineTitle">false</item>
     </style>
 
     <style name="NReaderPreferenceSwitch" parent="Widget.Material3.Switch.ListItem">
