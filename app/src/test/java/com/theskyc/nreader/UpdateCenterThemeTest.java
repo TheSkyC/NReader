@@ -69,6 +69,30 @@ public class UpdateCenterThemeTest {
         assertMainTheme(true);
     }
 
+    @Test
+    @Config(qualifiers = "notnight")
+    public void accountsUsesMaterial3InLightMode() {
+        assertAccountsTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void accountsUsesMaterial3InDarkMode() {
+        assertAccountsTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void accountsKeepsBlackMaterial3ThemeInLightMode() {
+        assertAccountsTheme(true);
+    }
+
+    private void assertAccountsTheme(boolean black) {
+        Application app = RuntimeEnvironment.getApplication();
+        preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
+        assertColors(Robolectric.buildActivity(AccountsActivity.class).get(), black);
+    }
+
     private void assertMainTheme(boolean black) {
         Application app = RuntimeEnvironment.getApplication();
         preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();

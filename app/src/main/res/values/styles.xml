@@ -47,6 +47,7 @@
         <item name="colorSurface">@color/theme_surface</item>
         <item name="colorOnSurface">@color/theme_on_surface</item>
         <item name="colorSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorSurfaceContainerHigh">@color/theme_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_on_surface_variant</item>
         <item name="colorOutline">@color/theme_outline</item>
         <item name="colorError">@color/theme_error</item>
@@ -78,6 +79,7 @@
         <item name="colorSurface">@color/theme_black_surface</item>
         <item name="colorOnSurface">@color/theme_black_on_surface</item>
         <item name="colorSurfaceVariant">@color/theme_black_surface_variant</item>
+        <item name="colorSurfaceContainerHigh">@color/theme_black_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_black_on_surface</item>
         <item name="colorOutline">@color/theme_black_outline</item>
         <item name="android:windowBackground">@color/theme_black_background</item>

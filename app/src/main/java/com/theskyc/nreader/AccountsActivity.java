@@ -35,6 +35,10 @@ public final class AccountsActivity extends GeneralActivity {
     private boolean busy;
     private final Runnable observer = this::render;
 
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_accounts);
@@ -99,7 +103,8 @@ public final class AccountsActivity extends GeneralActivity {
         String avatarUrl = NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
         RequestManager images = GlideX.with(avatar);
         if (images != null && avatarUrl != null)
-            images.load(avatarUrl).placeholder(R.drawable.ic_person).error(R.drawable.ic_person).circleCrop().into(avatar);
+            images.load(avatarUrl).placeholder(R.drawable.nav_account_placeholder)
+                .error(R.drawable.nav_account_placeholder).circleCrop().into(avatar);
         View select = row.findViewById(R.id.account_select);
         select.setEnabled(!busy);
         String description = getString(R.string.accounts_detail_format, displayName, detail.getText());

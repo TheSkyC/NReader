@@ -64,7 +64,8 @@
             android:name="com.maxwai.nclientv3.GalleryActivity"
             android:exported="false"
             android:targetActivity=".components.activities.LegacyDownloadNotificationActivity" />
-        <activity android:name=".AccountsActivity" android:exported="false" />
+        <activity android:name=".AccountsActivity" android:exported="false"
+            android:theme="@style/AppTheme.Material3" />
         <activity
             android:name=".PINActivity"
             android:configChanges="orientation|screenSize"
