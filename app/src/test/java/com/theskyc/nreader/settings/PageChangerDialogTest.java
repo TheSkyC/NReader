@@ -62,6 +62,20 @@ public class PageChangerDialogTest {
     }
 
     @Test
+    public void controlsUseTheDialogTitleAsTheirAccessibleLabel() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        for (int title : new int[]{R.string.change_page, R.string.set_minimum_count}) {
+            DefaultDialogs.pageChangerDialog(new DefaultDialogs.Builder(activity).setTitle(title));
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            EditText value = dialog.findViewById(R.id.edit_page);
+            assertEquals(activity.getText(title), value.getHint());
+            assertEquals(activity.getText(title), dialog.findViewById(R.id.seekBar).getContentDescription());
+            dialog.dismiss();
+        }
+    }
+
+    @Test
     public void buttonsAndTypedPageStillSelectTheRequestedPage() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         activity.setTheme(R.style.AppTheme_Material3);

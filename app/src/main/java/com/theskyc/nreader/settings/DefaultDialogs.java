@@ -41,6 +41,11 @@ public class DefaultDialogs {
         if (Global.useRtl()) seekBar.setRotationY(180);
         final TextView totalPage = v.findViewById(R.id.page);
         final EditText actualPage = v.findViewById(R.id.edit_page);
+        if (builder.title != 0) {
+            CharSequence label = builder.context.getText(builder.title);
+            seekBar.setContentDescription(label);
+            actualPage.setHint(label);
+        }
         v.findViewById(R.id.prev).setOnClickListener(v12 -> {
             seekBar.setProgress(seekBar.getProgress() - 1);
             actualPage.setText(String.format(Locale.US, "%d", seekBar.getProgress() + builder.min));
