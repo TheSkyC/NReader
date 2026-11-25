@@ -106,6 +106,7 @@ public class LocalActivity extends BaseActivity {
         Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                searchView.clearFocus();
                 return true;
             }
 
@@ -159,6 +160,12 @@ public class LocalActivity extends BaseActivity {
     protected void changeLayout(boolean landscape) {
         if (listGrid == null) listGrid = new GalleryListGrid(recycler, MainGridSettings.forDownloads(this));
         else listGrid.refresh();
+    }
+
+    @Override
+    protected void onPause() {
+        if (searchView != null) searchView.clearFocus();
+        super.onPause();
     }
 
     @Override
