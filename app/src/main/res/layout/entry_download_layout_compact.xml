@@ -61,9 +61,9 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@+id/title">
 
-                <ProgressBar
+                <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/progressBar"
-                    style="?android:attr/progressBarStyleHorizontal"
+                    style="@style/Widget.Material3.LinearProgressIndicator"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"

@@ -181,9 +181,9 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <ProgressBar
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/update_progress"
-                        style="?android:attr/progressBarStyleHorizontal"
+                        style="@style/Widget.Material3.LinearProgressIndicator"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 

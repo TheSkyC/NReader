@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/master"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,13 +8,14 @@
 
     <include layout="@layout/info_layout" />
 
-    <ProgressBar
+    <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/gallery_tag_loading"
-        style="?android:attr/progressBarStyleSmall"
+        style="@style/Widget.Material3.CircularProgressIndicator.Small"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_margin="8dp"
         android:contentDescription="@string/gallery_loading_details"
+        app:indicatorSize="24dp"
         android:visibility="gone" />
 
     <LinearLayout
