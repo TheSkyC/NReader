@@ -465,6 +465,8 @@
     <string name="choose_unit">選擇時間單位：</string>
     <string name="change_status">變更狀態</string>
     <string name="create_new_status">建立新狀態：</string>
+    <string name="status_name">狀態名稱</string>
+    <string name="status_choose_color">選擇顏色</string>
     <string name="invalid_color_selected">請選擇黑色和白色以外的顏色。</string>
     <string name="change_status_title">選擇新狀態：</string>
     <string name="remove_status">無</string>

@@ -5,6 +5,7 @@ import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -1176,10 +1177,11 @@ public class GalleryActivity extends BaseActivity {
         LinearLayout layout = (LinearLayout) View.inflate(this, R.layout.dialog_add_status, null);
         EditText name = layout.findViewById(R.id.name);
         Button btnColor = layout.findViewById(R.id.color);
+        View colorSwatch = layout.findViewById(R.id.color_swatch);
         do {
             newStatusColor = Utility.RANDOM.nextInt() | 0xff000000;
         } while (newStatusColor == Color.BLACK || newStatusColor == Color.WHITE);
-        btnColor.setBackgroundColor(newStatusColor);
+        colorSwatch.setBackgroundTintList(ColorStateList.valueOf(newStatusColor));
         btnColor.setOnClickListener(v -> new AmbilWarnaDialog(GalleryActivity.this, newStatusColor, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
             @Override
             public void onCancel(AmbilWarnaDialog dialog) {
@@ -1192,7 +1194,7 @@ public class GalleryActivity extends BaseActivity {
                     return;
                 }
                 newStatusColor = color;
-                btnColor.setBackgroundColor(color);
+                colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
             }
         }).show());
         builder.setView(layout);

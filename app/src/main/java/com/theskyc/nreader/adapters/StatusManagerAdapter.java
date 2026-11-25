@@ -94,9 +94,10 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         LinearLayout layout = (LinearLayout) View.inflate(activity, R.layout.dialog_add_status, null);
         EditText name = layout.findViewById(R.id.name);
         Button btnColor = layout.findViewById(R.id.color);
+        View colorSwatch = layout.findViewById(R.id.color_swatch);
         int color = status == null ? Utility.RANDOM.nextInt() | 0xff000000 : status.opaqueColor();
         newColor = color;
-        btnColor.setBackgroundColor(color);
+        colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
         name.setText(status == null ? "" : status.name);
         btnColor.setOnClickListener(v -> new AmbilWarnaDialog(activity, color, false, new AmbilWarnaDialog.OnAmbilWarnaListener() {
             @Override
@@ -110,7 +111,7 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
                     return;
                 }
                 newColor = color;
-                btnColor.setBackgroundColor(color);
+                colorSwatch.setBackgroundTintList(ColorStateList.valueOf(color));
             }
         }).show());
         builder.setView(layout);
