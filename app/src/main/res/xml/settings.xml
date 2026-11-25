@@ -44,15 +44,14 @@
                 android:summary="@string/setting_zoom_one_column"
                 android:title="@string/zoom_one_column"
                 app:iconSpaceReserved="false" />
-            <SeekBarPreference
+            <com.theskyc.nreader.components.views.MaterialSliderPreference
                 android:defaultValue="100"
                 android:key="@string/preference_key_default_zoom"
                 android:max="400"
                 android:title="@string/default_zoom"
                 app:iconSpaceReserved="false"
                 app:min="100"
-                app:seekBarIncrement="10"
-                app:showSeekBarValue="true" />
+                app:seekBarIncrement="10" />
         </PreferenceCategory>
         <PreferenceCategory
             android:title="@string/settings_reading_experience"
@@ -62,15 +61,14 @@
                 android:key="@string/preference_key_disable_lock"
                 android:title="@string/disable_lock_title"
                 app:iconSpaceReserved="false" />
-            <SeekBarPreference
+            <com.theskyc.nreader.components.views.MaterialSliderPreference
                 android:defaultValue="5"
                 android:key="@string/preference_key_offscreen_limit"
                 android:max="20"
                 android:summary="@string/summary_offscreen_limit"
                 android:title="@string/title_offscreen_limit"
                 app:iconSpaceReserved="false"
-                app:min="1"
-                app:showSeekBarValue="true" />
+                app:min="1" />
         </PreferenceCategory>
     </PreferenceScreen>
 
@@ -115,14 +113,13 @@
         <PreferenceCategory
             android:title="@string/settings_history_status"
             app:iconSpaceReserved="false">
-            <SeekBarPreference
+            <com.theskyc.nreader.components.views.MaterialSliderPreference
                 android:defaultValue="25"
                 android:key="@string/preference_key_max_history_size"
                 android:max="100"
                 android:summary="@string/history_size_summary"
                 android:title="@string/history_size"
-                app:iconSpaceReserved="false"
-                app:showSeekBarValue="true" />
+                app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_status_screen"
                 android:title="@string/manage_statuses"
@@ -156,14 +153,13 @@
                 android:summaryOn="@string/setting_on_ignore_tags"
                 android:title="@string/ignore_tags"
                 app:iconSpaceReserved="false" />
-            <SeekBarPreference
+            <com.theskyc.nreader.components.views.MaterialSliderPreference
                 android:defaultValue="10"
                 android:key="@string/preference_key_favorite_limit"
                 android:max="20"
                 android:summary="@string/popular_tag_count"
                 android:title="@string/settings_popular_tags"
-                app:iconSpaceReserved="false"
-                app:showSeekBarValue="true" />
+                app:iconSpaceReserved="false" />
         </PreferenceCategory>
         <PreferenceCategory
             android:title="@string/settings_content_filter"
@@ -260,13 +256,12 @@
                 android:title="@string/notification_permission_title"
                 android:summary="@string/notification_permission_summary"
                 app:iconSpaceReserved="false" />
-            <SeekBarPreference
+            <com.theskyc.nreader.components.views.MaterialSliderPreference
                 android:defaultValue="25"
                 android:key="@string/preference_key_maximum_notification"
                 android:max="50"
                 android:title="@string/maximum_notification_count"
-                app:iconSpaceReserved="false"
-                app:showSeekBarValue="true" />
+                app:iconSpaceReserved="false" />
         </PreferenceCategory>
     </PreferenceScreen>
 

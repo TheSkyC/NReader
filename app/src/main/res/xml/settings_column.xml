@@ -6,24 +6,22 @@
     <PreferenceCategory
         android:title="@string/main_column_count"
         app:iconSpaceReserved="false">
-        <SeekBarPreference
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_main_grid_compact_columns"
             android:max="3"
             android:title="@string/list_compact_columns"
             android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="2"
-            app:showSeekBarValue="true" />
-        <SeekBarPreference
+            app:min="2" />
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_main_grid_wide_columns"
             android:max="4"
             android:title="@string/list_wide_columns"
             android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="2"
-            app:showSeekBarValue="true" />
+            app:min="2" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="@string/key_infinite_scroll_main"
@@ -34,45 +32,41 @@
     <PreferenceCategory
         android:title="@string/download_column_count"
         app:iconSpaceReserved="false">
-        <SeekBarPreference
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_download_grid_compact_columns"
             android:max="3"
             android:title="@string/list_compact_columns"
             android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="2"
-            app:showSeekBarValue="true" />
-        <SeekBarPreference
+            app:min="2" />
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_download_grid_wide_columns"
             android:max="4"
             android:title="@string/list_wide_columns"
             android:summary="@string/list_columns_summary"
             app:iconSpaceReserved="false"
-            app:min="2"
-            app:showSeekBarValue="true" />
+            app:min="2" />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/favorite_column_count"
         app:iconSpaceReserved="false">
-        <SeekBarPreference
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_column_port_favo"
             android:max="4"
             android:title="@string/use_column_port"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
-        <SeekBarPreference
+            app:min="1" />
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="4"
             android:key="@string/key_column_land_favo"
             android:max="4"
             android:title="@string/use_column_land"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
+            app:min="1" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="@string/key_infinite_scroll_favo"
@@ -83,42 +77,38 @@
     <PreferenceCategory
         android:title="@string/history_column_count"
         app:iconSpaceReserved="false">
-        <SeekBarPreference
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_column_port_hist"
             android:max="4"
             android:title="@string/use_column_port"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
-        <SeekBarPreference
+            app:min="1" />
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="4"
             android:key="@string/key_column_land_hist"
             android:max="4"
             android:title="@string/use_column_land"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
+            app:min="1" />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/status_column_count"
         app:iconSpaceReserved="false">
-        <SeekBarPreference
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="2"
             android:key="@string/key_column_port_stat"
             android:max="4"
             android:title="@string/use_column_port"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
-        <SeekBarPreference
+            app:min="1" />
+        <com.theskyc.nreader.components.views.MaterialSliderPreference
             android:defaultValue="4"
             android:key="@string/key_column_land_stat"
             android:max="4"
             android:title="@string/use_column_land"
             app:iconSpaceReserved="false"
-            app:min="1"
-            app:showSeekBarValue="true" />
+            app:min="1" />
     </PreferenceCategory>
 </PreferenceScreen>
