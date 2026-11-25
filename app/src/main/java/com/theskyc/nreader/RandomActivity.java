@@ -2,7 +2,6 @@
 package com.theskyc.nreader;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,7 +12,6 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.widget.ImageViewCompat;
 
 import com.theskyc.nreader.api.RandomLoader;
 import com.theskyc.nreader.api.components.Gallery;
@@ -27,6 +25,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.Objects;
 
 public class RandomActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     public static Gallery loadedGallery = null;
     private ImageView language;
     private ImageButton thumbnail;
@@ -93,16 +96,6 @@ public class RandomActivity extends GeneralActivity {
             favoriteUpdateButton();
         });
 
-        ColorStateList colorStateList = ColorStateList.valueOf(getColor(R.color.tint_light));
-
-        ImageViewCompat.setImageTintList(shuffle, colorStateList);
-        ImageViewCompat.setImageTintList(share, colorStateList);
-        ImageViewCompat.setImageTintList(favorite, colorStateList);
-
-        Global.setTint(this, shuffle.getContentBackground());
-        Global.setTint(this, share.getDrawable());
-        Global.setTint(this, favorite.getDrawable());
-
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -140,7 +133,6 @@ public class RandomActivity extends GeneralActivity {
     private void favoriteUpdateButton() {
         runOnUiThread(() -> {
             ImageDownloadUtility.loadImage(isFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border, favorite);
-            Global.setTint(this, favorite.getDrawable());
         });
     }
 }

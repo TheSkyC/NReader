@@ -6,11 +6,15 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.junit.After;
 import org.junit.Test;
@@ -137,6 +141,41 @@ public class UpdateCenterThemeTest {
         assertEquals(color(activity, R.attr.nreaderSurfaceVariant), background);
         assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurface), background) >= 4.5);
         assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurfaceVariant), background) >= 4.5);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void randomScreenUsesReadableColorsInLightMode() {
+        assertRandomTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void randomScreenUsesReadableColorsInDarkMode() {
+        assertRandomTheme(false);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void randomScreenKeepsReadableColorsInBlackMode() {
+        assertRandomTheme(true);
+    }
+
+    private void assertRandomTheme(boolean black) {
+        Application app = RuntimeEnvironment.getApplication();
+        preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
+        RandomActivity activity = Robolectric.buildActivity(RandomActivity.class).get();
+        assertColors(activity, black);
+        View layout = LayoutInflater.from(activity).inflate(R.layout.activity_random, null, false);
+        FloatingActionButton shuffle = layout.findViewById(R.id.shuffle);
+        int background = shuffle.getBackgroundTintList().getDefaultColor();
+        int foreground = ImageViewCompat.getImageTintList(shuffle).getDefaultColor();
+        assertEquals(color(activity, R.attr.colorPrimaryContainer), background);
+        assertEquals(color(activity, R.attr.colorOnPrimaryContainer), foreground);
+        assertTrue(ColorUtils.calculateContrast(foreground, background) >= 3.0);
+        ImageView favorite = layout.findViewById(R.id.favorite);
+        assertEquals(color(activity, R.attr.colorOnSurfaceVariant),
+            ImageViewCompat.getImageTintList(favorite).getDefaultColor());
     }
 
     @Test

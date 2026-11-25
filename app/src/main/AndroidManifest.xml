@@ -205,6 +205,7 @@
             android:theme="@style/AppTheme.Material3" />
         <activity
             android:name=".RandomActivity"
+            android:theme="@style/AppTheme.Material3"
             android:exported="true">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
