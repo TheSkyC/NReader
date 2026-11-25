@@ -47,6 +47,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.theskyc.nreader.adapters.GalleryAdapter;
 import com.theskyc.nreader.adapters.CommentAdapter;
 import com.theskyc.nreader.api.OnlineFavoriteClient;
@@ -796,8 +797,8 @@ public class GalleryActivity extends BaseActivity {
     }
 
     public void bindReadingActions(View header, boolean loading) {
-        Button read = header.findViewById(R.id.gallery_read);
-        Button start = header.findViewById(R.id.gallery_read_from_start);
+        MaterialButton read = header.findViewById(R.id.gallery_read);
+        MaterialButton start = header.findViewById(R.id.gallery_read_from_start);
         boolean showLoading = (!detailReady && loading) || (detailReady && !positionReady);
         read.setEnabled(detailReady && positionReady && gallery.getPageCount() > 0);
         String readLabel = automaticPosition == null ? getString(R.string.gallery_start_reading)

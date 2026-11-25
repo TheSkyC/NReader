@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:visibility="gone">
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/gallery_jump_page"
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
@@ -40,7 +40,7 @@
             android:gravity="center"
             android:text="@string/gallery_loading_details" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_pages_retry"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
@@ -48,7 +48,7 @@
             android:layout_marginTop="8dp"
             android:text="@string/retry"
             android:visibility="gone" />
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_pages_local"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"

@@ -81,13 +81,13 @@
             android:accessibilityLiveRegion="polite"
             android:text="@string/unable_to_connect_to_the_site" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_load_retry"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/retry" />
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_load_local"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
@@ -101,8 +101,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_read"
+            style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:accessibilityLiveRegion="polite"
@@ -137,7 +138,7 @@
         </LinearLayout>
     </FrameLayout>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/gallery_read_from_start"
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
