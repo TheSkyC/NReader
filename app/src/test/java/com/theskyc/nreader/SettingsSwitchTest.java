@@ -6,9 +6,14 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Looper;
+import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.View;
 
+import androidx.core.graphics.ColorUtils;
 import androidx.preference.PreferenceGroupAdapter;
 import androidx.preference.PreferenceScreen;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +33,41 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w320dp-h640dp")
 public class SettingsSwitchTest {
+    @Test
+    @Config(qualifiers = "notnight")
+    public void switchStatesRemainDistinctInLightTheme() {
+        assertSwitchContrast(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void switchStatesRemainDistinctInDarkTheme() {
+        assertSwitchContrast(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void switchStatesRemainDistinctInBlackTheme() {
+        assertSwitchContrast(R.style.AppTheme_Material3_Black);
+    }
+
+    private void assertSwitchContrast(int theme) {
+        ContextThemeWrapper context = new ContextThemeWrapper(RuntimeEnvironment.getApplication(), theme);
+        MaterialSwitch switchView = (MaterialSwitch) LayoutInflater.from(context)
+            .inflate(R.layout.preference_material_switch, null, false);
+        ColorStateList outline = switchView.getTrackDecorationTintList();
+        assertNotNull(outline);
+        int enabled = outline.getColorForState(new int[]{android.R.attr.state_enabled}, 0);
+        int disabled = outline.getColorForState(new int[]{-android.R.attr.state_enabled}, 0);
+        TypedValue background = new TypedValue();
+        assertTrue(context.getTheme().resolveAttribute(android.R.attr.colorBackground, background, true));
+        int backgroundColor = background.data;
+        assertTrue(ColorUtils.calculateContrast(enabled, backgroundColor) >= 3.0);
+        int disabledOnBackground = ColorUtils.compositeColors(disabled, backgroundColor);
+        assertTrue(ColorUtils.calculateContrast(disabledOnBackground, backgroundColor)
+            < ColorUtils.calculateContrast(enabled, backgroundColor));
+    }
+
     @Test
     public void readerSwitchFollowsRowAndPersistsItsValue() {
         Application application = RuntimeEnvironment.getApplication();
