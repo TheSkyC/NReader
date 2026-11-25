@@ -9,12 +9,11 @@
 
     <TextView
         android:id="@+id/title"
-        style="@style/TextAppearance.MaterialComponents.Body2"
+        style="@style/TextAppearance.Material3.LabelLarge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textStyle="bold" />
+        android:textColor="?attr/colorOnSurfaceVariant" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,13 +28,13 @@
             app:chipSpacingHorizontal="0dp"
             app:chipSpacingVertical="0dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/gallery_expand_category"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="-8dp"
-            android:minHeight="0dp"
+            android:minHeight="48dp"
             android:minWidth="0dp"
             android:paddingStart="8dp"
             android:paddingTop="2dp"

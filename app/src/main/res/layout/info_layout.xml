@@ -15,10 +15,10 @@
         android:layout_height="wrap_content"
         android:drawablePadding="5dp"
         android:drawableStart="@drawable/mdi_book_open"
-        android:drawableTint="?android:attr/textColorSecondary"
+        android:drawableTint="?attr/colorOnSurfaceVariant"
         android:gravity="center_vertical"
-        android:textColor="?android:attr/textColorSecondary"
-        style="@style/TextAppearance.MaterialComponents.Body2" />
+        android:textColor="?attr/colorOnSurfaceVariant"
+        style="@style/TextAppearance.Material3.BodyMedium" />
 
     <TextView
         android:id="@+id/favorite_stat"
@@ -26,10 +26,10 @@
         android:layout_height="wrap_content"
         android:drawablePadding="5dp"
         android:drawableStart="@drawable/mdi_heart"
-        android:drawableTint="?android:attr/textColorSecondary"
+        android:drawableTint="?attr/colorOnSurfaceVariant"
         android:gravity="center_vertical"
-        android:textColor="?android:attr/textColorSecondary"
-        style="@style/TextAppearance.MaterialComponents.Body2" />
+        android:textColor="?attr/colorOnSurfaceVariant"
+        style="@style/TextAppearance.Material3.BodyMedium" />
 
     <TextView
         android:id="@+id/upload_stat"
@@ -37,10 +37,10 @@
         android:layout_height="wrap_content"
         android:drawablePadding="5dp"
         android:drawableStart="@drawable/mdi_calendar_clock"
-        android:drawableTint="?android:attr/textColorSecondary"
+        android:drawableTint="?attr/colorOnSurfaceVariant"
         android:gravity="center_vertical"
-        android:textColor="?android:attr/textColorSecondary"
-        style="@style/TextAppearance.MaterialComponents.Body2" />
+        android:textColor="?attr/colorOnSurfaceVariant"
+        style="@style/TextAppearance.Material3.BodyMedium" />
 
     <androidx.constraintlayout.helper.widget.Flow
         android:layout_width="0dp"

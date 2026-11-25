@@ -8,6 +8,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
@@ -241,7 +242,15 @@ public class UpdateCenterThemeTest {
     private void assertGalleryTheme(boolean black) {
         Application app = RuntimeEnvironment.getApplication();
         preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
-        assertColors(Robolectric.buildActivity(GalleryActivity.class).get(), black);
+        GalleryActivity activity = Robolectric.buildActivity(GalleryActivity.class).get();
+        assertColors(activity, black);
+        for (int layout : new int[]{R.layout.image_void_full, R.layout.image_void_static}) {
+            MaterialCardView card = (MaterialCardView) LayoutInflater.from(activity).inflate(layout, null, false);
+            int background = card.getCardBackgroundColor().getDefaultColor();
+            TextView page = card.findViewById(R.id.page_number);
+            assertEquals(color(activity, R.attr.nreaderSurfaceVariant), background);
+            assertTrue(ColorUtils.calculateContrast(page.getCurrentTextColor(), background) >= 4.5);
+        }
     }
 
     @Test
