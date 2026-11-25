@@ -14,6 +14,10 @@ import com.theskyc.nreader.components.widgets.CustomLinearLayoutManager;
 import java.util.Objects;
 
 public class StatusManagerActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
 
     StatusManagerAdapter adapter;
     RecyclerView recycler;
@@ -22,7 +26,7 @@ public class StatusManagerActivity extends GeneralActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //Global.initActivity(this);
-        setContentView(R.layout.activity_bookmark);
+        setContentView(R.layout.activity_status_manager);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());

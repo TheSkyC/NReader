@@ -49,7 +49,7 @@
                 tools:node="remove" />
         </provider>
 
-        <activity android:name=".StatusManagerActivity" />
+        <activity android:name=".StatusManagerActivity" android:theme="@style/AppTheme.Material3" />
         <activity android:name=".UpdateCenterActivity" android:exported="false"
             android:theme="@style/AppTheme.Material3" />
         <activity-alias
@@ -107,7 +107,7 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".StatusViewerActivity" />
+        <activity android:name=".StatusViewerActivity" android:theme="@style/AppTheme.Material3" />
         <activity android:name=".HistoryActivity" />
         <activity android:name=".BookmarkActivity" />
         <activity android:name=".CommentActivity" />

@@ -139,6 +139,38 @@ public class UpdateCenterThemeTest {
         assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurfaceVariant), background) >= 4.5);
     }
 
+    @Test
+    @Config(qualifiers = "notnight")
+    public void statusScreensUseMaterial3InLightMode() {
+        assertStatusThemes(false);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void statusScreensUseMaterial3InDarkMode() {
+        assertStatusThemes(false);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void statusScreensKeepBlackMaterial3ThemeInLightMode() {
+        assertStatusThemes(true);
+    }
+
+    private void assertStatusThemes(boolean black) {
+        Application app = RuntimeEnvironment.getApplication();
+        preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
+        StatusViewerActivity viewer = Robolectric.buildActivity(StatusViewerActivity.class).get();
+        StatusManagerActivity manager = Robolectric.buildActivity(StatusManagerActivity.class).get();
+        assertColors(viewer, black);
+        assertColors(manager, black);
+        MaterialCardView card = (MaterialCardView) LayoutInflater.from(manager)
+            .inflate(R.layout.entry_status, null, false);
+        int background = card.getCardBackgroundColor().getDefaultColor();
+        assertEquals(color(manager, R.attr.nreaderSurfaceVariant), background);
+        assertTrue(ColorUtils.calculateContrast(color(manager, R.attr.colorOnSurface), background) >= 4.5);
+    }
+
     private void assertSearchTheme(boolean black) {
         Application app = RuntimeEnvironment.getApplication();
         preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();

@@ -24,6 +24,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class StatusViewerActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private boolean sortByTitle = false;
     private String query;
     private ViewPager2 viewPager;
@@ -39,7 +44,7 @@ public class StatusViewerActivity extends GeneralActivity {
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(R.string.manage_statuses);
+        actionBar.setTitle(R.string.view_statuses);
         viewPager = findViewById(R.id.view_pager);
         sectionsPagerAdapter = new SectionsPagerAdapter(this);
 

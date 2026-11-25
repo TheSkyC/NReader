@@ -1,6 +1,7 @@
 package com.theskyc.nreader.adapters;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,19 +51,26 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         if (holder.getBindingAdapterPosition() == statusList.size()) {
             holder.name.setText(R.string.add);
             holder.color.setVisibility(View.INVISIBLE);
-            holder.color.setBackgroundColor(Color.TRANSPARENT);
             holder.cancel.setImageResource(R.drawable.ic_add);
             Global.setTint(activity, holder.cancel.getDrawable());
             holder.cancel.setOnClickListener(null);
+            holder.cancel.setClickable(false);
+            holder.cancel.setFocusable(false);
+            holder.cancel.setContentDescription(null);
+            holder.cancel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             holder.master.setOnClickListener(v -> updateStatus(null));
             return;
         }
         Status status = statusList.get(holder.getBindingAdapterPosition());
         holder.name.setText(status.name);
         holder.color.setVisibility(View.VISIBLE);
-        holder.color.setBackgroundColor(status.opaqueColor());
+        holder.color.setBackgroundTintList(ColorStateList.valueOf(status.opaqueColor()));
 
         holder.cancel.setImageResource(R.drawable.ic_close);
+        Global.setTint(activity, holder.cancel.getDrawable());
+        holder.cancel.setFocusable(true);
+        holder.cancel.setContentDescription(activity.getString(R.string.delete));
+        holder.cancel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
         holder.master.setOnClickListener(v -> updateStatus(status));
         holder.cancel.setOnClickListener(v -> {
             StatusManager.remove(status);
@@ -140,7 +148,7 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         final LinearLayout master;
-        final Button color;
+        final View color;
         final ImageButton cancel;
         final TextView name;
 
