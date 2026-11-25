@@ -18,6 +18,11 @@ import com.theskyc.nreader.components.activities.GeneralActivity;
 import java.util.concurrent.Executor;
 
 public class PINActivity extends GeneralActivity {
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private static final int FORWARDED_URI_GRANT_FLAGS = Intent.FLAG_GRANT_READ_URI_PERMISSION
         | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
