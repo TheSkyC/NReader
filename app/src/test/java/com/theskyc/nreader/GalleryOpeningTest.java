@@ -61,6 +61,48 @@ public class GalleryOpeningTest {
         + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}";
 
     @Test
+    public void downloadedGalleryLoadsCommentsUsingItsId() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        OkHttpClient previous = Global.client;
+        CountDownLatch requested = new CountDownLatch(1);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+                if (chain.request().url().encodedPath().endsWith("/galleries/117/comments")) requested.countDown();
+                return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body(ResponseBody.create("{\"result\":[],\"num_pages\":0}", null)).build();
+            }).build();
+            File folder = new File(application.getCacheDir(), "local-comments-test");
+            assertTrue(folder.isDirectory() || folder.mkdirs());
+            File page = new File(folder, "1.jpg");
+            File id = new File(folder, ".117");
+            assertTrue(page.isFile() || page.createNewFile());
+            assertTrue(id.isFile() || id.createNewFile());
+            LocalGallery gallery = new LocalGallery(folder, true);
+            Intent intent = new Intent(application, GalleryActivity.class);
+            intent.putExtra(application.getPackageName() + ".GALLERY", gallery);
+            intent.putExtra(application.getPackageName() + ".ISLOCAL", true);
+            try (ActivityController<GalleryActivity> controller = Robolectric.buildActivity(GalleryActivity.class, intent).setup()) {
+                GalleryActivity activity = controller.get();
+                TabLayout tabs = activity.findViewById(R.id.gallery_tabs);
+                tabs.getTabAt(2).select();
+                assertTrue(requested.await(5, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Boolean.TRUE.equals(ReflectionHelpers.getField(activity, "commentsLoaded"))
+                    && System.nanoTime() < deadline) {
+                    Shadows.shadowOf(Looper.getMainLooper()).idle();
+                    Thread.sleep(10);
+                }
+                assertTrue(ReflectionHelpers.getField(activity, "commentsLoaded"));
+            }
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test
     public void incompleteFavoriteOpensOneShellWithKnownMetadata() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         application.deleteDatabase("Entries.db");
