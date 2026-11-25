@@ -39,6 +39,10 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiKeyActivity extends GeneralActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private static final String KEY_EDITED = "api_key_edited";
     public static final String EXTRA_ADD_ACCOUNT = "add_account";
     public static final String EXTRA_ACCOUNT_ID = "account_id";

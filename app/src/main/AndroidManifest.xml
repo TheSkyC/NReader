@@ -198,7 +198,8 @@
                 android:value="com.theskyc.nreader.MainActivity" />
         </activity>
         <activity android:name=".SettingsActivity" />
-        <activity android:name=".AccountLoginActivity" android:exported="false" />
+        <activity android:name=".AccountLoginActivity" android:exported="false"
+            android:theme="@style/AppTheme.Material3" />
         <activity
             android:name=".RandomActivity"
             android:exported="true">
@@ -224,6 +225,7 @@
             android:label="@string/copyURL" />
         <activity
             android:name=".ApiKeyActivity"
+            android:theme="@style/AppTheme.Material3"
             android:label="@string/title_activity_api_key">
         </activity>
 

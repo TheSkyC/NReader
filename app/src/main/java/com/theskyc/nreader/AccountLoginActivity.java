@@ -38,6 +38,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class AccountLoginActivity extends GeneralActivity {
+    @Override protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     public static final String EXTRA_ACCOUNT_ID = "account_id";
     public static final String EXTRA_AUTO_REAUTH = "auto_reauthenticate";
     public static final String EXTRA_AUTO_REAUTH_GENERATION = "auto_reauthenticate_generation";
