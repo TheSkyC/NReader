@@ -49,7 +49,6 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private TextView progressLabel;
     private ProgressBar progress;
     private ImageView statusIcon;
-    private ImageView versionArrow;
     private View progressCard;
     private View errorCard;
     private View releaseCard;
@@ -109,7 +108,6 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         progressLabel = findViewById(R.id.update_progress_label);
         progress = findViewById(R.id.update_progress);
         statusIcon = findViewById(R.id.update_status_icon);
-        versionArrow = findViewById(R.id.update_version_arrow);
         progressCard = findViewById(R.id.update_progress_card);
         errorCard = findViewById(R.id.update_error_card);
         releaseCard = findViewById(R.id.update_release_card);
@@ -271,7 +269,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_error);
                 action.setText(R.string.update_retry);
                 action.setEnabled(true);
-                secondary.setText(R.string.check_for_updates);
+                secondary.setVisibility(View.GONE);
                 errorCard.setVisibility(View.VISIBLE);
                 errorDetail.setVisibility(View.VISIBLE);
                 errorDetail.setText(errorMessage(state.getErrorCode()));
@@ -297,10 +295,9 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         }
         boolean hasTargetVersion = state.getVersion() != null;
         versionFrom.setVisibility(hasTargetVersion ? View.VISIBLE : View.GONE);
-        versionArrow.setVisibility(hasTargetVersion ? View.VISIBLE : View.GONE);
         if (hasTargetVersion) {
-            versionFrom.setText(BuildConfig.VERSION_NAME);
-            version.setText(state.getVersion());
+            versionFrom.setText(getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME));
+            version.setText(getString(R.string.update_notification_version, state.getVersion()));
         } else {
             version.setText(getString(R.string.update_current_version_format, BuildConfig.VERSION_NAME));
         }
