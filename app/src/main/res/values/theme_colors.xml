@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <bool name="m3_light_system_bars">true</bool>
     <!-- Semantic theme roles. Keep UI code and layouts pointed at these roles
          instead of duplicating literal colors. -->
     <color name="theme_primary">@android:color/holo_blue_bright</color>
@@ -19,10 +20,16 @@
     <color name="m3_on_primary">#FFFFFF</color>
     <color name="m3_primary_container">#B6EBFB</color>
     <color name="m3_on_primary_container">#001F28</color>
+    <color name="m3_inverse_primary">#80D0E7</color>
+    <color name="m3_inverse_surface">#303136</color>
+    <color name="m3_inverse_on_surface">#F2F0F4</color>
     <color name="m3_black_primary">#80D0E7</color>
     <color name="m3_black_on_primary">#003641</color>
     <color name="m3_black_primary_container">#004E60</color>
     <color name="m3_black_on_primary_container">#B6EBFB</color>
+    <color name="m3_black_inverse_primary">#00677D</color>
+    <color name="m3_black_inverse_surface">#E4E2E6</color>
+    <color name="m3_black_inverse_on_surface">#303136</color>
     <color name="theme_image_overlay">#8F000000</color>
     <color name="theme_badge_overlay">#80000000</color>
     <color name="theme_image_scrim_strong">#D9000000</color>

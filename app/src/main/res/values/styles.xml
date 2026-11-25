@@ -37,6 +37,9 @@
         <item name="colorOnPrimary">@color/m3_on_primary</item>
         <item name="colorPrimaryContainer">@color/m3_primary_container</item>
         <item name="colorOnPrimaryContainer">@color/m3_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/m3_inverse_primary</item>
+        <item name="colorSurfaceInverse">@color/m3_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/m3_inverse_on_surface</item>
         <item name="colorSecondary">@color/m3_primary</item>
         <item name="colorOnSecondary">@color/m3_on_primary</item>
         <item name="colorSecondaryContainer">@color/m3_primary_container</item>
@@ -50,6 +53,10 @@
         <item name="colorOnError">@color/theme_on_error</item>
         <item name="android:colorBackground">@color/theme_background</item>
         <item name="android:windowBackground">@color/theme_background</item>
+        <item name="android:statusBarColor">@color/theme_background</item>
+        <item name="android:navigationBarColor">@color/theme_background</item>
+        <item name="android:windowLightStatusBar">@bool/m3_light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/m3_light_system_bars</item>
         <item name="android:textColorPrimary">@color/theme_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
         <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
@@ -63,6 +70,9 @@
         <item name="colorOnSecondary">@color/m3_black_on_primary</item>
         <item name="colorPrimaryContainer">@color/m3_black_primary_container</item>
         <item name="colorOnPrimaryContainer">@color/m3_black_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/m3_black_inverse_primary</item>
+        <item name="colorSurfaceInverse">@color/m3_black_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/m3_black_inverse_on_surface</item>
         <item name="colorSecondaryContainer">@color/m3_black_primary_container</item>
         <item name="colorOnSecondaryContainer">@color/m3_black_on_primary_container</item>
         <item name="colorSurface">@color/theme_black_surface</item>
@@ -72,6 +82,10 @@
         <item name="colorOutline">@color/theme_black_outline</item>
         <item name="android:windowBackground">@color/theme_black_background</item>
         <item name="android:colorBackground">@color/theme_black_background</item>
+        <item name="android:statusBarColor">@color/theme_black_background</item>
+        <item name="android:navigationBarColor">@color/theme_black_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
         <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>

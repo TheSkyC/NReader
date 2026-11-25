@@ -487,6 +487,11 @@ public class MainActivity extends BaseActivity
         bar.setTitle(R.string.app_name);
     }
 
+    @Override
+    protected int getBlackThemeStyle() {
+        return R.style.AppTheme_Material3_Black;
+    }
+
     private void initializePageSwitcherActions() {
         pageSwitcher.setChanger(new PageSwitcher.DefaultPageChanger() {
             @Override

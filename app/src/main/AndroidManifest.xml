@@ -116,7 +116,8 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:parentActivityName=".PINActivity">
+            android:parentActivityName=".PINActivity"
+            android:theme="@style/AppTheme.Material3">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
