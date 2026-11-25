@@ -1,5 +1,5 @@
 <resources>
-    <style name="NReaderOverflowMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
+    <style name="NReaderOverflowMenu" parent="Widget.Material3.PopupMenu.Overflow">
         <item name="overlapAnchor">false</item>
     </style>
 
