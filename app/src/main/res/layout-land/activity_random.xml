@@ -7,16 +7,19 @@
     android:layout_height="match_parent"
     tools:context=".RandomActivity">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
+        style="@style/Widget.Material3.Toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
         android:minHeight="?attr/actionBarSize"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/shuffle"
+        style="@style/Widget.Material3.FloatingActionButton.Primary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -26,13 +29,16 @@
         android:contentDescription="@string/shuffle_contentDescription"
         android:focusable="true"
         app:fabSize="normal"
+        app:backgroundTint="?attr/colorPrimaryContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/thumbnail"
+        app:tint="?attr/colorOnPrimaryContainer"
         app:srcCompat="@drawable/ic_shuffle" />
 
     <TextView
         android:id="@+id/title"
+        style="@style/TextAppearance.Material3.TitleMedium"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -87,17 +93,35 @@
         app:layout_constraintTop_toTopOf="@+id/thumbnail" />
 
     <TextView
+        android:id="@+id/random_state"
+        style="@style/TextAppearance.Material3.BodyLarge"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:accessibilityLiveRegion="polite"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/shuffle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+    <TextView
         android:id="@+id/pages"
+        style="@style/TextAppearance.Material3.BodyMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="@+id/language"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/language"
         app:layout_constraintTop_toTopOf="@+id/language" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/favorite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -108,13 +132,14 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/favorite_manga"
         android:padding="16dp"
+        app:tint="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="@+id/shuffle"
         app:layout_constraintEnd_toStartOf="@+id/shuffle"
         app:layout_constraintStart_toEndOf="@+id/thumbnail"
         app:layout_constraintTop_toTopOf="@+id/shuffle"
         app:srcCompat="@drawable/ic_favorite_border" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/share"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -125,6 +150,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/share"
         android:padding="16dp"
+        app:tint="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="@+id/shuffle"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintEnd_toEndOf="parent"

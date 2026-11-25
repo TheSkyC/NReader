@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 
@@ -30,12 +31,33 @@ import okhttp3.ResponseBody;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 @LooperMode(LooperMode.Mode.PAUSED)
 public class RandomActivityLoadingTest {
+    @Test
+    @Config(qualifiers = "land")
+    public void landscapeLayoutStartsWithMaterialToolbarAndLoadingState() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        OkHttpClient previous = Global.client;
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            throw new IOException("fixture failure");
+        }).build();
+        RandomActivity.loadedGallery = null;
+        try (ActivityController<RandomActivity> controller = Robolectric.buildActivity(RandomActivity.class).setup()) {
+            RandomActivity activity = controller.get();
+            assertTrue(activity.findViewById(R.id.toolbar) instanceof MaterialToolbar);
+            assertNotNull(activity.findViewById(R.id.random_state));
+        } finally {
+            Global.client = previous;
+            RandomActivity.loadedGallery = null;
+        }
+    }
+
     @Test
     public void destroyingActivityIgnoresLateFailure() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
