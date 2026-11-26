@@ -30,6 +30,7 @@ import com.theskyc.nreader.components.widgets.ResultsSearchView;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.MainGridSettings;
 import com.theskyc.nreader.utility.Utility;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
@@ -55,6 +56,12 @@ public class LocalActivity extends BaseActivity {
         @Override
         public void choiceChanged() {
             setMenuVisibility(optionMenu);
+        }
+
+        @Override
+        public void firstChoice() {
+            if (searchView.isShowing()) searchView.hide();
+            ((AppBarLayout) findViewById(R.id.local_app_bar)).setExpanded(true, true);
         }
     };
     private SearchBar searchBar;
