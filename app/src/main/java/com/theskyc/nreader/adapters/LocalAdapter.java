@@ -136,8 +136,12 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         }
 
         @Override
+        @SuppressLint("NotifyDataSetChanged")
         public void triggerStartDownload(GalleryDownloaderV2 downloader) {
-            updatePosition(downloader);
+            context.runOnUiThread(() -> {
+                sortElements();
+                notifyDataSetChanged();
+            });
         }
 
         @Override

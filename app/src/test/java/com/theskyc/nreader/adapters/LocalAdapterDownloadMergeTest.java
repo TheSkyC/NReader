@@ -11,6 +11,7 @@ import com.theskyc.nreader.api.local.LocalSortType;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.downloader.GalleryDownloaderV2;
+import com.theskyc.nreader.async.downloader.DownloadObserver;
 import com.theskyc.nreader.settings.Global;
 
 import org.junit.Rule;
@@ -85,6 +86,29 @@ public class LocalAdapterDownloadMergeTest {
                 ReflectionHelpers.ClassParameter.from(List.class, Collections.singletonList(gallery)));
 
             assertEquals(Collections.singletonList(task), items);
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void startingTaskMergesFolderAssignedAfterListWasBuilt() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("pending-target");
+        LocalGallery gallery = new LocalGallery(target, true);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Collections.singletonList(gallery)));
+        try {
+            GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "pending-target", null, 104);
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Collections.singletonList(task)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            assertEquals(2, adapter.getItemCount());
+
+            ReflectionHelpers.setField(task, "folder", target);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerStartDownload(task);
+
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(task, adapter.getItemAt(0));
         } finally {
             adapter.removeObserver();
         }
