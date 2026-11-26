@@ -9,11 +9,13 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
 
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.snackbar.Snackbar;
 import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.api.components.Tag;
@@ -301,6 +303,44 @@ public class AdvancedSearchAccountTagsTest {
         }
     }
 
+    @Test public void searchBarShowsSearchViewAndRestoresExpandedState() throws Exception {
+        Bundle state = new Bundle();
+        try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+            SearchActivity activity = controller.get();
+            awaitBlacklist(activity);
+            SearchBar searchBar = activity.findViewById(R.id.toolbar);
+            SearchView searchView = activity.findViewById(R.id.search_view);
+            assertEquals(SearchView.TransitionState.HIDDEN, searchView.getCurrentTransitionState());
+
+            searchBar.performClick();
+
+            assertTrue(searchView.isShowing());
+            controller.saveInstanceState(state);
+            assertTrue(state.getBoolean("search.viewExpanded"));
+            assertNotNull(state.getBooleanArray("search.expandedGroups"));
+        }
+
+        try (ActivityController<SearchActivity> controller =
+                 Robolectric.buildActivity(SearchActivity.class).setup(parcelState(state))) {
+            assertTrue(((SearchView) controller.get().findViewById(R.id.search_view)).isShowing());
+        }
+    }
+
+    @Test public void materialSearchEditorSubmitsCurrentQuery() {
+        settings.edit().putBoolean(setting, false).commit();
+        try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+            SearchActivity activity = controller.get();
+            SearchView searchView = activity.findViewById(R.id.search_view);
+            searchView.setText(" fixture ");
+
+            searchView.getEditText().onEditorAction(EditorInfo.IME_ACTION_SEARCH);
+
+            Intent intent = Shadows.shadowOf(activity).getNextStartedActivity();
+            assertNotNull(intent);
+            assertEquals("fixture", intent.getStringExtra(app.getPackageName() + ".QUERY"));
+        }
+    }
+
     @Test public void emptyPortableSearchDoesNotBecomeAHomeBookmark() throws Exception {
         Intent intent = submitEmptySearch();
         try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
@@ -341,6 +381,8 @@ public class AdvancedSearchAccountTagsTest {
     private Intent submitEmptySearch() throws InterruptedException {
         try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
             SearchActivity activity = controller.get();
+            assertEquals(SearchView.TransitionState.HIDDEN,
+                ((SearchView) activity.findViewById(R.id.search_view)).getCurrentTransitionState());
             awaitBlacklist(activity);
             ViewGroup group = activity.findViewById(R.id.tag_group);
             SearchUiTestSupport.selectStatus(chip(group, MANUAL_ID), 0);
@@ -393,7 +435,7 @@ public class AdvancedSearchAccountTagsTest {
             ViewGroup group = activity.findViewById(R.id.tag_group);
             SearchUiTestSupport.selectStatus(chip(group, MANUAL_ID), 1);
             SearchUiTestSupport.removeTag(chip(group, AUTOMATIC_ID));
-            ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", false);
+            activity.setQuery("fixture", false);
             com.theskyc.nreader.api.components.Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
             ranges.setFromPage(20);
             activity.findViewById(R.id.search_clear_filters).performClick();
@@ -401,7 +443,10 @@ public class AdvancedSearchAccountTagsTest {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             awaitBlacklist(activity);
-            assertEquals("fixture", ((SearchView) activity.findViewById(R.id.search)).getQuery().toString());
+            assertEquals("fixture", ((com.google.android.material.search.SearchBar)
+                activity.findViewById(R.id.toolbar)).getText().toString());
+            assertEquals("fixture", ((com.google.android.material.search.SearchView)
+                activity.findViewById(R.id.search_view)).getEditText().getText().toString());
             assertTrue(((com.theskyc.nreader.api.components.Ranges)
                 ReflectionHelpers.getField(activity, "ranges")).isDefault());
             assertEquals(TagStatus.AVOIDED, chip(group, MANUAL_ID).getTag().getStatus());
@@ -467,7 +512,7 @@ public class AdvancedSearchAccountTagsTest {
             assertEquals(TagStatus.AVOIDED, manual.getTag().getStatus());
             SearchUiTestSupport.selectStatus(manual, 1);
             assertEquals(TagStatus.ACCEPTED, manual.getTag().getStatus());
-            ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+            activity.setQuery("fixture", true);
             Intent intent = Shadows.shadowOf(activity).getNextStartedActivity();
             assertNotNull(intent);
             ArrayList<Tag> portable = intent.getParcelableArrayListExtra(app.getPackageName() + ".TAGS");

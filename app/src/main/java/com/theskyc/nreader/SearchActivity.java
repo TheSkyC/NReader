@@ -26,8 +26,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.widget.NestedScrollView;
@@ -64,6 +62,8 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,6 +85,8 @@ public class SearchActivity extends GeneralActivity {
     static final String SEARCH_SUBMITTED_EXTRA = ".SEARCH_SUBMITTED";
     static final String ACCOUNT_TAGS_EXTRA = ".SEARCH_ACCOUNT_TAGS";
     static final String ACCOUNT_TAGS_EXPECTED_EXTRA = ".SEARCH_ACCOUNT_TAGS_EXPECTED";
+    private static final String STATE_SEARCH_VIEW_EXPANDED = "search.viewExpanded";
+    private static final String STATE_EXPANDED_GROUPS = "search.expandedGroups";
     private Ranges ranges = new Ranges();
     private final ArrayList<ChipTag> tags = new ArrayList<>();
     private final ArrayList<ChipTag> onlineChips = new ArrayList<>();
@@ -96,6 +98,7 @@ public class SearchActivity extends GeneralActivity {
     private final Runnable authObserver = () -> runOnUiThread(this::synchronizeOnlineSearchTags);
     private ChipGroup[] groups;
     private TextView[] groupHeaders;
+    private SearchBar searchBar;
     private SearchView searchView;
     private HistoryAdapter adapter;
     private boolean advanced = false;
@@ -112,7 +115,17 @@ public class SearchActivity extends GeneralActivity {
     private boolean showAllSelected;
 
     public void setQuery(String str, boolean submit) {
-        runOnUiThread(() -> searchView.setQuery(str, submit));
+        runOnUiThread(() -> {
+            setSearchText(str);
+            if (submit) {
+                submitSearchFromQuery(str);
+            } else {
+                searchView.show();
+                searchView.getEditText().requestFocus();
+                searchView.getEditText().setSelection(searchView.getEditText().length());
+                inputMethodManager.showSoftInput(searchView.getEditText(), InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
     }
 
     @Override
@@ -120,11 +133,13 @@ public class SearchActivity extends GeneralActivity {
         super.onCreate(savedInstanceState);
         //Global.initActivity(this);
         setContentView(R.layout.activity_search);
+        boolean restoreSearchExpanded = savedInstanceState != null
+            && savedInstanceState.getBoolean(STATE_SEARCH_VIEW_EXPANDED, false);
         if (savedInstanceState != null) {
             Ranges savedRanges = savedInstanceState.getParcelable("search.ranges");
             if (savedRanges != null) ranges = savedRanges;
             restoredTags = savedInstanceState.getParcelableArrayList("search.tags");
-            restoredExpandedGroups = savedInstanceState.getBooleanArray("search.expanded");
+            restoredExpandedGroups = savedInstanceState.getBooleanArray(STATE_EXPANDED_GROUPS);
             restoredScrollY = savedInstanceState.getInt("search.scroll");
             filtersVisible = savedInstanceState.getBoolean("search.filtersVisible");
             showAllSelected = savedInstanceState.getBoolean("search.showAllSelected");
@@ -133,8 +148,8 @@ public class SearchActivity extends GeneralActivity {
             if (manualIds != null) for (int id : manualIds) manualTagDecisions.add(id);
         }
         //init toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        searchBar = findViewById(R.id.toolbar);
+        setSupportActionBar(searchBar);
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -142,16 +157,18 @@ public class SearchActivity extends GeneralActivity {
         inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
         //find IDs
-        searchView = findViewById(R.id.search);
-        searchView.setQueryHint(getString(R.string.search_keyword_hint));
+        searchView = findViewById(R.id.search_view);
+        searchView.setupWithSearchBar(searchBar);
+        searchView.getEditText().setHint(getString(R.string.search_keyword_hint));
+        searchView.getEditText().setImeOptions(EditorInfo.IME_ACTION_SEARCH);
         if (savedInstanceState != null)
-            searchView.setQuery(savedInstanceState.getString("search.query", ""), false);
+            setSearchText(savedInstanceState.getString("search.query", ""));
         RecyclerView recyclerView = findViewById(R.id.recycler);
         findViewById(R.id.search_submit).setEnabled(false);
         findViewById(R.id.search_clear_filters).setEnabled(false);
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
-            submitSearch(searchView.getQuery().toString().trim(), false);
+            submitSearch(searchBar.getText().toString().trim(), false);
         });
         findViewById(R.id.search_selected_more).setOnClickListener(view -> {
             showAllSelected = !showAllSelected;
@@ -206,20 +223,12 @@ public class SearchActivity extends GeneralActivity {
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
 
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                if (isResolvingTagEntry()) return true;
-                query = query.trim();
-                if (query.isEmpty() && !advanced && !filtersVisible) return true;
-                submitSearch(query, false);
+        searchView.getEditText().setOnEditorActionListener((textView, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                submitSearchFromQuery(textView.getText());
                 return true;
             }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
+            return false;
         });
 
         populateGroup();
@@ -231,7 +240,19 @@ public class SearchActivity extends GeneralActivity {
         Login.observeOnlineTags(authObserver);
         synchronizeOnlineSearchTags();
         if (Login.wantsAccountTag() && !Login.hasCurrentOnlineTags()) loadOnlineSearchTags();
-        if (!filtersVisible) searchView.requestFocus();
+        if (restoreSearchExpanded) searchView.show();
+    }
+
+    private void setSearchText(String query) {
+        searchBar.setText(query);
+        searchView.setText(query);
+    }
+
+    private void submitSearchFromQuery(CharSequence query) {
+        if (isResolvingTagEntry()) return;
+        String normalized = query.toString().trim();
+        if (normalized.isEmpty() && !advanced && !filtersVisible) return;
+        submitSearch(normalized, false);
     }
 
     @Override
@@ -240,8 +261,9 @@ public class SearchActivity extends GeneralActivity {
         outState.putParcelable("search.ranges", ranges);
         outState.putBoolean("search.advanced", advanced);
         outState.putBoolean("search.filtersVisible", filtersVisible);
+        outState.putBoolean(STATE_SEARCH_VIEW_EXPANDED, searchView.isShowing());
         outState.putBoolean("search.showAllSelected", showAllSelected);
-        outState.putString("search.query", searchView.getQuery().toString());
+        outState.putString("search.query", searchView.getEditText().getText().toString());
         int[] manualIds = new int[manualTagDecisions.size()];
         int index = 0;
         for (int id : manualTagDecisions) manualIds[index++] = id;
@@ -257,11 +279,11 @@ public class SearchActivity extends GeneralActivity {
             outState.putParcelableArrayList("search.tags", savedTags);
             boolean[] expanded = new boolean[groups.length];
             for (int i = 1; i < groups.length; i++) expanded[i] = groups[i].getVisibility() == View.VISIBLE;
-            outState.putBooleanArray("search.expanded", expanded);
+            outState.putBooleanArray(STATE_EXPANDED_GROUPS, expanded);
             outState.putInt("search.scroll", ((NestedScrollView) findViewById(R.id.groups)).getScrollY());
         } else {
             outState.putParcelableArrayList("search.tags", restoredTags);
-            outState.putBooleanArray("search.expanded", restoredExpandedGroups);
+            outState.putBooleanArray(STATE_EXPANDED_GROUPS, restoredExpandedGroups);
             outState.putInt("search.scroll", restoredScrollY);
         }
     }
@@ -1166,8 +1188,9 @@ public class SearchActivity extends GeneralActivity {
         updateFilterSummary();
         invalidateOptionsMenu();
         if (visible) {
-            searchView.clearFocus();
-            inputMethodManager.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+            searchView.getEditText().clearFocus();
+            inputMethodManager.hideSoftInputFromWindow(searchView.getEditText().getWindowToken(), 0);
+            searchView.hide();
         }
     }
 
