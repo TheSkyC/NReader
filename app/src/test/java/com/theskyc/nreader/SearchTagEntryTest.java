@@ -11,7 +11,6 @@ import android.widget.Filterable;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
-import androidx.appcompat.widget.SearchView;
 
 import com.theskyc.nreader.api.components.Ranges;
 import com.theskyc.nreader.api.components.Tag;
@@ -26,6 +25,7 @@ import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
@@ -77,7 +77,7 @@ public class SearchTagEntryTest {
                 activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
                 assertEquals(View.VISIBLE, group.getVisibility());
                 SearchUiTestSupport.selectStatus((ChipTag) group.getChildAt(0), 2);
-                ((SearchView) activity.findViewById(R.id.search)).setQuery("keywords", false);
+                setSearchQuery(activity, "keywords", false);
                 Ranges ranges = ReflectionHelpers.getField(activity, "ranges");
                 ranges.setFromPage(20);
                 ranges.setToDate(2);
@@ -89,7 +89,7 @@ public class SearchTagEntryTest {
                 await(() -> restoredGroup.getChildCount() > 0);
                 assertEquals(View.VISIBLE, restored.findViewById(R.id.groups).getVisibility());
                 assertEquals(View.VISIBLE, restoredGroup.getVisibility());
-                assertEquals("keywords", ((SearchView) restored.findViewById(R.id.search)).getQuery().toString());
+                assertEquals("keywords", ((SearchView) restored.findViewById(R.id.search_view)).getText().toString());
                 assertEquals(TagStatus.AVOIDED, ((ChipTag) restoredGroup.getChildAt(0)).getTag().getStatus());
                 Ranges restoredRanges = ReflectionHelpers.getField(restored, "ranges");
                 assertEquals("pages:>=20 uploaded:<=2w", restoredRanges.toQuery());
@@ -479,7 +479,7 @@ public class SearchTagEntryTest {
                 android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
                 activity.onCreateOptionsMenu(popup.getMenu());
                 activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
-                ((SearchView) activity.findViewById(R.id.search)).setQuery("keywords", true);
+                setSearchQuery(activity, "keywords", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
                 assertTrue(sent.getBooleanExtra(activity.getPackageName() + ".ADVANCED", false));
@@ -624,7 +624,7 @@ public class SearchTagEntryTest {
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
                 assertEquals("Canonical Rename", chip.getTag().getName());
                 await(() -> chip.getText().toString().contains("Translated label"));
-                ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                setSearchQuery(activity, "fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
                 ArrayList<Tag> tags = sent.getParcelableArrayListExtra(activity.getPackageName() + ".TAGS");
@@ -673,7 +673,7 @@ public class SearchTagEntryTest {
                 assertEquals(501002, second.getTag().getId());
                 assertEquals(TagStatus.ACCEPTED, second.getTag().getStatus());
                 SearchUiTestSupport.selectStatus(second, 1);
-                ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                setSearchQuery(activity, "fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
                 ArrayList<Tag> tags = sent.getParcelableArrayListExtra(activity.getPackageName() + ".TAGS");
@@ -709,7 +709,7 @@ public class SearchTagEntryTest {
                     entry.onEditorAction(EditorInfo.IME_ACTION_SEND);
                     assertTrue(dialog.isShowing());
                     assertFalse(dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled());
-                    ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                    setSearchQuery(activity, "fixture", true);
                     assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
                 } finally {
                     releaseLoader.countDown();
@@ -723,7 +723,7 @@ public class SearchTagEntryTest {
                 assertEquals(TagStatus.ACCEPTED, chip.getTag().getStatus());
                 SearchUiTestSupport.selectStatus(chip, 2);
                 assertEquals(TagStatus.AVOIDED, chip.getTag().getStatus());
-                ((SearchView) activity.findViewById(R.id.search)).setQuery("fixture", true);
+                setSearchQuery(activity, "fixture", true);
                 Intent sent = Shadows.shadowOf(activity).getNextStartedActivity();
                 assertNotNull(sent);
                 ArrayList<Tag> tags = sent.getParcelableArrayListExtra(activity.getPackageName() + ".TAGS");
@@ -855,6 +855,12 @@ public class SearchTagEntryTest {
         } finally {
             Queries.setDb(null);
         }
+    }
+
+    private static void setSearchQuery(SearchActivity activity, String query, boolean submit) {
+        SearchView search = activity.findViewById(R.id.search_view);
+        search.getEditText().setText(query);
+        if (submit) search.getEditText().onEditorAction(EditorInfo.IME_ACTION_SEARCH);
     }
 
     private static void initializeSearch(Application app) {
