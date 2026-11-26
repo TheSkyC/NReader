@@ -73,6 +73,7 @@ public class GalleryListGridTest {
         int width = pixels(widthDp);
         int height = pixels(700);
         for (int pass = 0; pass < 4; pass++) {
+            recycler.requestLayout();
             recycler.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
             recycler.layout(0, 0, width, height);
@@ -197,6 +198,40 @@ public class GalleryListGridTest {
     }
 
     @Test
+    public void singleColumnShowsTextBesideCoverAndRestoresGridOnResize() {
+        RecyclerView.Adapter<?> adapter = recycler.getAdapter();
+        CustomGridLayoutManager manager = (CustomGridLayoutManager) recycler.getLayoutManager();
+        for (int direction : new int[]{View.LAYOUT_DIRECTION_LTR, View.LAYOUT_DIRECTION_RTL}) {
+            recycler.setLayoutDirection(direction);
+            layout(220);
+            assertEquals(1, manager.getSpanCount());
+            View card = recycler.getChildAt(0);
+            View cover = card.findViewById(R.id.gallery_cover);
+            View title = card.findViewById(R.id.title);
+            assertTrue("cover params width=" + cover.getLayoutParams().width, cover.getLayoutParams().width > 0);
+            assertTrue(title.getWidth() > 0);
+            assertTrue(title.getBottom() <= card.getHeight());
+            assertTrue("card=" + card.getHeight() + " cover=" + cover.getWidth() + "x" + cover.getHeight()
+                + " title=" + title.getLeft() + "," + title.getTop(), card.getHeight() < pixels(300));
+            assertEquals(cover.getWidth() * 1.5f, cover.getHeight(), 1);
+            if (direction == View.LAYOUT_DIRECTION_LTR) assertTrue(cover.getRight() <= title.getLeft());
+            else assertTrue(title.getRight() <= cover.getLeft());
+            View favorite = card.findViewById(R.id.gallery_favorite);
+            View download = card.findViewById(R.id.gallery_local_files);
+            assertTrue(favorite.getRight() <= download.getLeft() || download.getRight() <= favorite.getLeft());
+
+            layout(412);
+            assertEquals(2, manager.getSpanCount());
+            assertSame(adapter, recycler.getAdapter());
+            card = recycler.getChildAt(0);
+            cover = card.findViewById(R.id.gallery_cover);
+            title = card.findViewById(R.id.title);
+            assertTrue(title.getTop() >= cover.getBottom());
+            assertEquals(cover.getWidth() * 1.5f, cover.getHeight(), 1);
+        }
+    }
+
+    @Test
     public void resizingRestoresWideChoiceAndKeepsMenuInSync() {
         grid.cycle();
         layout(412);
@@ -227,6 +262,7 @@ public class GalleryListGridTest {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View card = LayoutInflater.from(parent.getContext()).inflate(R.layout.entry_layout, parent, false);
+            LayoutInflater.from(parent.getContext()).inflate(R.layout.multichoice_adapter, (ViewGroup) card, true);
             return new RecyclerView.ViewHolder(card) {};
         }
 

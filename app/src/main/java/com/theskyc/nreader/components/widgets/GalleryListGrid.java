@@ -5,6 +5,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.progressindicator.CircularProgressIndicator;
@@ -63,7 +64,9 @@ public final class GalleryListGrid implements View.OnLayoutChangeListener, Recyc
             View anchor = manager.findViewByPosition(position);
             int offset = anchor == null ? 0 : manager.getDecoratedTop(anchor)
                 - ((RecyclerView.LayoutParams) anchor.getLayoutParams()).topMargin - recycler.getPaddingTop();
-            if (anchor != null) {
+            if (columns == 1 || requestedColumns == 1) {
+                offset = Math.max(0, offset);
+            } else if (anchor != null) {
                 View cover = anchor.findViewById(R.id.gallery_cover);
                 if (cover != null) {
                     RecyclerView.LayoutParams margins = (RecyclerView.LayoutParams) anchor.getLayoutParams();
@@ -81,7 +84,7 @@ public final class GalleryListGrid implements View.OnLayoutChangeListener, Recyc
             if (position != RecyclerView.NO_POSITION) manager.scrollToPositionWithOffset(position, offset);
         }
         for (int index = 0; index < recycler.getChildCount(); index++) {
-            resizeControls(recycler.getChildAt(index));
+            updateCard(recycler.getChildAt(index));
         }
         if (menuItem != null) {
             int icon = columns >= 4 ? R.drawable.ic_view_4
@@ -103,6 +106,40 @@ public final class GalleryListGrid implements View.OnLayoutChangeListener, Recyc
         settings.cycle(widthDp(), fontScale());
         refresh();
         if (menuItem != null) recycler.announceForAccessibility(menuItem.getTitle());
+    }
+
+    private void updateCard(View card) {
+        if (!(card instanceof ConstraintLayout)) return;
+        View cover = card.findViewById(R.id.gallery_cover);
+        View title = card.findViewById(R.id.title);
+        View author = card.findViewById(R.id.gallery_author);
+        if (cover == null || title == null || author == null) return;
+
+        float density = recycler.getResources().getDisplayMetrics().density;
+        int available = recycler.getWidth() - recycler.getPaddingLeft() - recycler.getPaddingRight()
+            - Math.round(12 * density);
+        int singleCoverWidth = Math.min(Math.max(0, available), Math.round(Math.min(128 * density,
+            Math.max(96 * density, available * 0.4f))));
+        ConstraintLayout.LayoutParams coverParams = (ConstraintLayout.LayoutParams) cover.getLayoutParams();
+        int desiredWidth = requestedColumns == 1 ? singleCoverWidth : 0;
+        if (coverParams.width != desiredWidth) {
+            boolean single = requestedColumns == 1;
+            ConstraintLayout.LayoutParams titleParams = (ConstraintLayout.LayoutParams) title.getLayoutParams();
+            ConstraintLayout.LayoutParams authorParams = (ConstraintLayout.LayoutParams) author.getLayoutParams();
+            coverParams.width = desiredWidth;
+            coverParams.endToEnd = single ? ConstraintLayout.LayoutParams.UNSET : ConstraintLayout.LayoutParams.PARENT_ID;
+            titleParams.startToStart = single ? ConstraintLayout.LayoutParams.UNSET : ConstraintLayout.LayoutParams.PARENT_ID;
+            titleParams.startToEnd = single ? R.id.gallery_cover : ConstraintLayout.LayoutParams.UNSET;
+            titleParams.topToTop = single ? ConstraintLayout.LayoutParams.PARENT_ID : ConstraintLayout.LayoutParams.UNSET;
+            titleParams.topToBottom = single ? ConstraintLayout.LayoutParams.UNSET : R.id.gallery_cover;
+            titleParams.setMarginStart(Math.round((single ? 12 : 0) * density));
+            titleParams.topMargin = Math.round((single ? 4 : 8) * density);
+            authorParams.bottomToBottom = single ? ConstraintLayout.LayoutParams.UNSET : ConstraintLayout.LayoutParams.PARENT_ID;
+            cover.setLayoutParams(coverParams);
+            title.setLayoutParams(titleParams);
+            author.setLayoutParams(authorParams);
+        }
+        resizeControls(card);
     }
 
     private void resizeControls(View card) {
@@ -146,7 +183,7 @@ public final class GalleryListGrid implements View.OnLayoutChangeListener, Recyc
 
     @Override
     public void onChildViewAttachedToWindow(View view) {
-        resizeControls(view);
+        updateCard(view);
     }
 
     @Override
