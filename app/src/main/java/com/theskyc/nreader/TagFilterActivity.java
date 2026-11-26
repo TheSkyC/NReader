@@ -1,7 +1,6 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader;
 
-import android.content.res.Configuration;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,7 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -26,7 +24,6 @@ import com.theskyc.nreader.adapters.TagsAdapter;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.components.activities.GeneralActivity;
-import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.components.widgets.LiveSearchResults;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.DefaultDialogs;
@@ -777,31 +774,6 @@ public class TagFilterActivity extends GeneralActivity {
                     android.widget.Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            changeLayout(true);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            changeLayout(false);
-        }
-    }
-
-    private void changeLayout(boolean landscape) {
-        final int count = landscape ? 4 : 2;
-        TagTypePage page = getActualFragment();
-        if (page != null) {
-            RecyclerView recycler = page.getRecyclerView();
-            if (recycler != null) {
-                RecyclerView.Adapter<?> adapter = recycler.getAdapter();
-                CustomGridLayoutManager gridLayoutManager = new CustomGridLayoutManager(this, count);
-                recycler.setLayoutManager(gridLayoutManager);
-                recycler.setAdapter(adapter);
-            }
-        }
     }
 
 

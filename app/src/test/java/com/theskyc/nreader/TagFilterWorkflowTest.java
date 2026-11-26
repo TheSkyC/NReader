@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Looper;
@@ -27,6 +28,7 @@ import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.async.database.TagViewStore;
+import com.theskyc.nreader.components.widgets.CustomGridLayoutManager;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
@@ -99,6 +101,46 @@ public class TagFilterWorkflowTest {
                 assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO,
                     restored.findViewById(R.id.search_results).getImportantForAccessibility());
                 assertEquals("fixture", restoredBar.getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    @Test public void tagGridAdaptsToWidthAndFontScaleWithoutReplacingAdapter() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            Database.setDatabase(helper.getWritableDatabase());
+            Queries.TagTable.insert(new Tag("readable fixture", 60, 500_099, TagType.TAG, TagStatus.DEFAULT));
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller =
+                     Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                await(activity, () -> count(activity, 1) == 1);
+                TagTypePage page = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                RecyclerView list = page.getRecyclerView();
+                RecyclerView.Adapter<?> adapter = list.getAdapter();
+                CustomGridLayoutManager layout = (CustomGridLayoutManager) list.getLayoutManager();
+                Configuration config = new Configuration(activity.getResources().getConfiguration());
+                config.orientation = Configuration.ORIENTATION_PORTRAIT;
+                config.fontScale = 1f;
+                page.onConfigurationChanged(config);
+                layoutRecycler(list, 360, 800);
+                assertEquals(2, layout.getSpanCount());
+
+                config.fontScale = 1.5f;
+                page.onConfigurationChanged(config);
+                layoutRecycler(list, 360, 800);
+                assertEquals(1, layout.getSpanCount());
+
+                config.orientation = Configuration.ORIENTATION_LANDSCAPE;
+                page.onConfigurationChanged(config);
+                layoutRecycler(list, 720, 480);
+                assertEquals(2, layout.getSpanCount());
+                assertTrue(adapter == list.getAdapter());
             }
         } finally {
             Queries.setDb(null);
@@ -385,5 +427,16 @@ public class TagFilterWorkflowTest {
             Thread.yield();
         } while (System.nanoTime() < deadline);
         assertTrue("Timed out waiting for the tag editor", condition.getAsBoolean());
+    }
+
+    private static void layoutRecycler(RecyclerView recycler, int widthDp, int heightDp) {
+        float density = recycler.getResources().getDisplayMetrics().density;
+        int width = Math.round(widthDp * density);
+        int height = Math.round(heightDp * density);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        recycler.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        recycler.layout(0, 0, width, height);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
     }
 }

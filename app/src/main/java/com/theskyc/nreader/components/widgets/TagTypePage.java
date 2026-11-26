@@ -202,7 +202,12 @@ public class TagTypePage extends Fragment {
         if (adapter != null) adapter.close();
         query = activity.getSearchQuery();
         if (type.equals(TagType.CATEGORY)) adapterIdentity = AuthStore.activeIdentity(activity);
-        recyclerView.setLayoutManager(new CustomGridLayoutManager(activity, getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2));
+        Configuration configuration = getResources().getConfiguration();
+        CustomGridLayoutManager layout = new CustomGridLayoutManager(activity,
+            configuration.orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2);
+        layout.setMinimumColumnWidth(Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
+            * Math.max(1f, configuration.fontScale)));
+        recyclerView.setLayoutManager(layout);
         if (type.equals(TagType.UNKNOWN)) adapter = new TagsAdapter(activity, query, false);
         else if (type.equals(TagType.CATEGORY)) adapter = new TagsAdapter(activity, query, true);
         else adapter = new TagsAdapter(activity, query, type);
@@ -212,6 +217,17 @@ public class TagTypePage extends Fragment {
     public void refilter(String newText) {
         query = newText;
         if (activity != null && adapter != null) adapter.filter(query);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (recyclerView != null && recyclerView.getLayoutManager() instanceof CustomGridLayoutManager) {
+            CustomGridLayoutManager layout = (CustomGridLayoutManager) recyclerView.getLayoutManager();
+            layout.setRequestedColumnCount(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2);
+            layout.setMinimumColumnWidth(Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
+                * Math.max(1f, newConfig.fontScale)));
+        }
     }
 
     @Override
