@@ -15,7 +15,7 @@
     <View
         android:layout_width="1dp"
         android:layout_height="match_parent"
-        android:background="?android:attr/colorBackground" />
+        android:background="?attr/colorSurface" />
 
     <FrameLayout
         android:id="@+id/double_page_second"
