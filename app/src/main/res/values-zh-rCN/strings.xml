@@ -276,6 +276,10 @@
     <string name="bulk_clear_rules">清除规则</string>
     <string name="bulk_edit_saved_format">已更新 %1$d 个标签。</string>
     <string name="bulk_edit_no_matches">没有匹配的标签。</string>
+    <string name="tag_rule_unset">未设置</string>
+    <string name="tag_rule_accepted">接受</string>
+    <string name="tag_rule_avoided">避开</string>
+    <string name="tag_rule_online_blocked">在线屏蔽名单中</string>
     <string name="tag_rules_empty">还没有标签规则。可在其他标签页选择标签并设置规则。</string>
     <string name="tag_rules_no_matches">没有匹配的标签规则。</string>
     <string name="bulk_edit_too_many">匹配标签超过 %1$d 个，请先缩小搜索范围。</string>

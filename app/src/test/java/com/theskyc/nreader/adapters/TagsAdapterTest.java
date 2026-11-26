@@ -7,6 +7,9 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.core.view.ViewCompat;
+
+import com.theskyc.nreader.R;
 import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.api.components.Tag;
 import com.theskyc.nreader.api.enums.TagStatus;
@@ -46,6 +49,40 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagsAdapterTest {
+    @Test public void tagCardsExposeTheirCurrentRuleWithoutASeparateIconFocus() throws Exception {
+        try (SQLiteDatabase db = SQLiteDatabase.create(null);
+             ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
+            Queries.setDb(db);
+            TagDatabaseFixture.createTables(db);
+            for (TagStatus status : TagStatus.values()) {
+                Tag tag = new Tag("fixture-" + status, 10, status.ordinal() + 1, TagType.TAG, status);
+                Queries.TagTable.insert(tag);
+                assertEquals(1, Queries.TagTable.updateTag(tag));
+            }
+            ArrayDeque<Runnable> work = new ArrayDeque<>();
+            TagsAdapter adapter = new TagsAdapter(controller.get(), "", TagType.TAG, new TagRowPages(work::add));
+            try {
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                TagsAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(controller.get()), 0);
+                for (int index = 0; index < adapter.getItemCount(); index++) {
+                    adapter.onBindViewHolder(holder, index);
+                    String title = holder.title.getText().toString();
+                    int expected = title.contains("ACCEPTED") ? R.string.tag_rule_accepted
+                        : title.contains("AVOIDED") ? R.string.tag_rule_avoided : R.string.tag_rule_unset;
+                    assertEquals(controller.get().getString(expected), ViewCompat.getStateDescription(holder.master));
+                    assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, holder.imgView.getImportantForAccessibility());
+                }
+                assertEquals(3, adapter.getItemCount());
+            } finally {
+                adapter.close();
+                while (!work.isEmpty()) work.remove().run();
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void emptyResultsArePublishedOnlyAfterTheLatestQueryFinishes() throws Exception {
         try (SQLiteDatabase db = SQLiteDatabase.create(null);
              ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
@@ -112,13 +149,14 @@ public class TagsAdapterTest {
                 org.junit.Assert.assertFalse(holder.master.isClickable());
                 assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS,
                     holder.master.getImportantForAccessibility());
+                assertEquals(null, ViewCompat.getStateDescription(holder.master));
 
                 work.remove().run();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 adapter.onBindViewHolder(holder, 70);
                 org.junit.Assert.assertTrue(holder.master.isClickable());
                 org.junit.Assert.assertNotEquals(former, holder.title.getText().toString());
-                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO, holder.master.getImportantForAccessibility());
+                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_YES, holder.master.getImportantForAccessibility());
             } finally {
                 adapter.close();
                 while (!work.isEmpty()) work.remove().run();
@@ -174,6 +212,10 @@ public class TagsAdapterTest {
                 work.remove().run();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(1, adapter.getItemCount());
+                TagsAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(controller.get()), 0);
+                adapter.onBindViewHolder(holder, 0);
+                assertEquals(controller.get().getString(R.string.tag_rule_online_blocked),
+                    ViewCompat.getStateDescription(holder.master));
             } finally {
                 adapter.close();
             }

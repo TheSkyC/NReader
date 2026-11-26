@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -81,8 +82,12 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     }
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, TagType type) {
+        this(cont, query, type, new TagRowPages());
+    }
+
+    TagsAdapter(@NonNull TagFilterActivity cont, String query, TagType type, TagRowPages rows) {
         this.context = cont;
-        this.rows = new TagRowPages();
+        this.rows = rows;
         this.identity = AuthStore.activeIdentity(cont);
         this.authObserver = createAuthObserver();
         this.type = type;
@@ -172,6 +177,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
             holder.master.setClickable(false);
             holder.master.setLongClickable(false);
             holder.master.setFocusable(false);
+            ViewCompat.setStateDescription(holder.master, null);
             holder.master.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
             return;
         }
@@ -210,7 +216,12 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
                 Toast.makeText(context, R.string.tag_already_in_blacklist, Toast.LENGTH_SHORT).show();
             return true;
         });
-        updateLogo(holder.imgView, tagMode == TagMode.ONLINE ? TagStatus.AVOIDED : ent.getStatus());
+        TagStatus status = tagMode == TagMode.ONLINE ? TagStatus.AVOIDED : ent.getStatus();
+        int statusLabel = tagMode == TagMode.ONLINE ? R.string.tag_rule_online_blocked
+            : status == TagStatus.ACCEPTED ? R.string.tag_rule_accepted
+            : status == TagStatus.AVOIDED ? R.string.tag_rule_avoided : R.string.tag_rule_unset;
+        ViewCompat.setStateDescription(holder.master, context.getString(statusLabel));
+        updateLogo(holder.imgView, status);
     }
 
     @Override

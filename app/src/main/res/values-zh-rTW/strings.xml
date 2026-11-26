@@ -276,6 +276,10 @@
     <string name="bulk_clear_rules">清除規則</string>
     <string name="bulk_edit_saved_format">已更新 %1$d 個標籤。</string>
     <string name="bulk_edit_no_matches">沒有符合的標籤。</string>
+    <string name="tag_rule_unset">未設定</string>
+    <string name="tag_rule_accepted">接受</string>
+    <string name="tag_rule_avoided">避開</string>
+    <string name="tag_rule_online_blocked">線上封鎖名單中</string>
     <string name="tag_rules_empty">尚無標籤規則。可在其他分頁選擇標籤並設定規則。</string>
     <string name="tag_rules_no_matches">沒有符合的標籤規則。</string>
     <string name="bulk_edit_too_many">符合的標籤超過 %1$d 個，請先縮小搜尋範圍。</string>

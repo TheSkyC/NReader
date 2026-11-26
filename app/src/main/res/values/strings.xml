@@ -299,6 +299,10 @@
     <string name="update_tag_status">Update tag status</string>
     <string name="change_view">Change view</string>
     <string name="tag_preference">Tag preference</string>
+    <string name="tag_rule_unset">Not configured</string>
+    <string name="tag_rule_accepted">Accepted</string>
+    <string name="tag_rule_avoided">Avoided</string>
+    <string name="tag_rule_online_blocked">On online blocklist</string>
     <string name="manage_tags">Manage tags</string>
     <string name="applied_filters">Applied filters</string>
     <string name="show_related">Show related galleries</string>
