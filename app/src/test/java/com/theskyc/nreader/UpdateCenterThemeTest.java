@@ -61,6 +61,18 @@ public class UpdateCenterThemeTest {
 
     @Test
     @Config(qualifiers = "notnight")
+    public void lightCompatibilityColorsUseMaterial3Roles() {
+        assertCompatibilityColors();
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void darkCompatibilityColorsUseMaterial3Roles() {
+        assertCompatibilityColors();
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
     public void mainScreenUsesMaterial3InLightMode() {
         assertMainTheme(false);
     }
@@ -317,6 +329,21 @@ public class UpdateCenterThemeTest {
         Application app = RuntimeEnvironment.getApplication();
         preferences().edit().putBoolean(app.getString(R.string.preference_key_black_theme), black).commit();
         assertColors(Robolectric.buildActivity(UpdateCenterActivity.class).get(), black);
+    }
+
+    private void assertCompatibilityColors() {
+        Application app = RuntimeEnvironment.getApplication();
+        int primary = app.getColor(R.color.m3_primary);
+        int onPrimary = app.getColor(R.color.m3_on_primary);
+        int primaryContainer = app.getColor(R.color.m3_primary_container);
+        assertEquals(primary, app.getColor(R.color.theme_primary));
+        assertEquals(primary, app.getColor(R.color.theme_secondary));
+        assertEquals(primary, app.getColor(R.color.colorPrimary));
+        assertEquals(primary, app.getColor(R.color.colorAccent));
+        assertEquals(onPrimary, app.getColor(R.color.theme_on_primary));
+        assertEquals(onPrimary, app.getColor(R.color.theme_on_secondary));
+        assertEquals(primaryContainer, app.getColor(R.color.theme_primary_variant));
+        assertEquals(primaryContainer, app.getColor(R.color.primaryColorVariant));
     }
 
     private void assertColors(AppCompatActivity activity, boolean black) {
