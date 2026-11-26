@@ -44,9 +44,11 @@
 
         <com.google.android.material.slider.Slider
             android:id="@+id/color_hue"
+            style="@style/NReaderSlider.Value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/status_color_hue"
+            android:minHeight="48dp"
             android:layout_marginBottom="8dp" />
 
         <TextView
@@ -58,9 +60,11 @@
 
         <com.google.android.material.slider.Slider
             android:id="@+id/color_saturation"
+            style="@style/NReaderSlider.Value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/status_color_saturation"
+            android:minHeight="48dp"
             android:layout_marginBottom="8dp" />
 
         <TextView
@@ -72,9 +76,11 @@
 
         <com.google.android.material.slider.Slider
             android:id="@+id/color_brightness"
+            style="@style/NReaderSlider.Value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/status_color_brightness"
+            android:minHeight="48dp"
             android:layout_marginBottom="8dp" />
     </LinearLayout>
 </ScrollView>

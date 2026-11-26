@@ -595,6 +595,7 @@
             </LinearLayout>
             <com.google.android.material.slider.Slider
                 android:id="@+id/reader_brightness"
+                style="@style/NReaderSlider.Adjustment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_brightness"
@@ -616,6 +617,7 @@
             </LinearLayout>
             <com.google.android.material.slider.Slider
                 android:id="@+id/reader_contrast"
+                style="@style/NReaderSlider.Adjustment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_contrast"
@@ -637,6 +639,7 @@
             </LinearLayout>
             <com.google.android.material.slider.Slider
                 android:id="@+id/reader_saturation"
+                style="@style/NReaderSlider.Adjustment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/reader_saturation"

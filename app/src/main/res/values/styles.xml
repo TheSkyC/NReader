@@ -7,6 +7,25 @@
         <item name="buttonGravity">center_vertical</item>
     </style>
 
+    <style name="NReaderSlider.Page" parent="Widget.Material3.Slider.Legacy">
+        <item name="trackHeight">4dp</item>
+        <item name="thumbRadius">8dp</item>
+        <item name="haloRadius">20dp</item>
+        <item name="tickVisible">false</item>
+    </style>
+
+    <style name="NReaderSlider.Value" parent="Widget.Material3.Slider.Legacy">
+        <item name="trackHeight">6dp</item>
+        <item name="thumbRadius">9dp</item>
+        <item name="haloRadius">20dp</item>
+        <item name="tickVisible">false</item>
+    </style>
+
+    <style name="NReaderSlider.Adjustment" parent="NReaderSlider.Value">
+        <item name="centered">true</item>
+        <item name="labelBehavior">gone</item>
+    </style>
+
     <style name="AppTheme.Material3" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="preferenceTheme">@style/NReaderPreferenceThemeOverlay</item>
         <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
