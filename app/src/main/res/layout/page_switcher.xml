@@ -2,7 +2,6 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/master_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -22,23 +21,21 @@
         app:tint="?attr/colorOnSurface"
         app:srcCompat="@drawable/ic_arrow_back" />
 
-    <androidx.appcompat.widget.AppCompatEditText
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/page_index"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:focusable="false"
         android:gravity="center"
-        android:hint="@string/hashtag"
-        android:inputType="none"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:minHeight="48dp"
         android:text="@string/page_switcher_placeholder"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
         android:textColor="?attr/colorOnSurface"
-        android:textDirection="ltr"
-        tools:ignore="Autofill" />
+        android:textDirection="ltr" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/next"

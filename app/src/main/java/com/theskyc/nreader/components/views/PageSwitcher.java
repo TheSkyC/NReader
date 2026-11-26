@@ -10,9 +10,11 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
+import com.google.android.material.button.MaterialButton;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.settings.DefaultDialogs;
 
@@ -21,7 +23,7 @@ import java.util.Locale;
 public class PageSwitcher extends FrameLayout {
 
     private AppCompatImageButton prev, next;
-    private AppCompatEditText text;
+    private MaterialButton text;
     @Nullable
     private PageChanger changer;
     private int totalPage;
@@ -98,6 +100,9 @@ public class PageSwitcher extends FrameLayout {
             if (changer != null) changer.onPrevClicked(this);
         });
         text.setOnClickListener(v -> loadDialog());
+        ViewCompat.replaceAccessibilityAction(text,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+            getContext().getString(R.string.change_page), null);
     }
 
     public int getActualPage() {
