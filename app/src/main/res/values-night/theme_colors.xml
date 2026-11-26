@@ -9,6 +9,11 @@
     <color name="theme_background">#1F2023</color>
     <color name="theme_surface">#1F2023</color>
     <color name="theme_on_surface">@android:color/white</color>
+    <color name="theme_surface_container_lowest">#191A1D</color>
+    <color name="theme_surface_container_low">#222428</color>
+    <color name="theme_surface_container">#282A2E</color>
+    <color name="theme_surface_container_high">#2E3034</color>
+    <color name="theme_surface_container_highest">#35373B</color>
     <color name="theme_surface_variant">#2A2D32</color>
     <color name="theme_on_surface_variant">#C4C7CE</color>
     <color name="theme_outline">#4B4F56</color>
