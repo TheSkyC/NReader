@@ -7,6 +7,20 @@
         <item name="buttonGravity">center_vertical</item>
     </style>
 
+    <style name="NReaderTagSearchView" parent="Widget.Material3.SearchView">
+        <item name="materialThemeOverlay">@style/NReaderTagSearchOverlay</item>
+    </style>
+
+    <style name="NReaderTagSearchOverlay" parent="ThemeOverlay.Material3.Search">
+        <item name="materialSearchViewToolbarHeight">@dimen/tag_search_toolbar_height</item>
+        <item name="materialSearchViewToolbarStyle">@style/NReaderTagSearchToolbar</item>
+    </style>
+
+    <style name="NReaderTagSearchToolbar" parent="Widget.Material3.SearchView.Toolbar">
+        <item name="android:minHeight">@dimen/tag_search_toolbar_height</item>
+        <item name="maxButtonHeight">@dimen/tag_search_toolbar_height</item>
+    </style>
+
     <style name="NReaderSlider.Page" parent="Widget.Material3.Slider.Legacy">
         <item name="trackHeight">4dp</item>
         <item name="thumbRadius">8dp</item>

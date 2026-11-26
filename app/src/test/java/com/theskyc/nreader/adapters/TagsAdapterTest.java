@@ -76,6 +76,17 @@ public class TagsAdapterTest {
                     assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, holder.imgView.getImportantForAccessibility());
                 }
                 assertEquals(3, adapter.getItemCount());
+
+                adapter.setCompactRows(true);
+                TagsAdapter.ViewHolder compactHolder = adapter.onCreateViewHolder(new FrameLayout(controller.get()),
+                    adapter.getItemViewType(0));
+                assertEquals(1, adapter.getItemViewType(0));
+                assertEquals(1, compactHolder.title.getMaxLines());
+                adapter.setCompactRows(false);
+                TagsAdapter.ViewHolder standardHolder = adapter.onCreateViewHolder(new FrameLayout(controller.get()),
+                    adapter.getItemViewType(0));
+                assertEquals(0, adapter.getItemViewType(0));
+                assertEquals(2, standardHolder.title.getMinLines());
             } finally {
                 adapter.close();
                 while (!work.isEmpty()) work.remove().run();

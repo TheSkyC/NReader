@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -90,6 +91,7 @@ public class TagFilterActivity extends GeneralActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         searchView = findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+        configureSearchToolbar();
         LiveSearchResults.attach((ResultsSearchView) searchView, findViewById(R.id.search_results));
         searchView.getEditText().setHint(getString(R.string.search));
         searchView.getEditText().addTextChangedListener(new TextWatcher() {
@@ -156,6 +158,23 @@ public class TagFilterActivity extends GeneralActivity {
             tab.setText(id);
         }).attach();
         mViewPager.setCurrentItem(getPage());
+    }
+
+    private void configureSearchToolbar() {
+        int height = getResources().getDimensionPixelSize(R.dimen.tag_search_toolbar_height);
+        View toolbar = searchView.getToolbar();
+        toolbar.setMinimumHeight(height);
+        ViewGroup.LayoutParams layoutParams = toolbar.getLayoutParams();
+        if (layoutParams != null && layoutParams.height != height) {
+            layoutParams.height = height;
+            toolbar.setLayoutParams(layoutParams);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (searchView != null) configureSearchToolbar();
     }
 
     public String getSearchQuery() {

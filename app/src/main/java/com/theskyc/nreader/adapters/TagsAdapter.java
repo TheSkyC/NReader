@@ -52,6 +52,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
+    private static final int VIEW_TYPE_STANDARD = 0;
+    private static final int VIEW_TYPE_COMPACT = 1;
     @NonNull
     private final TagFilterActivity context;
     private final boolean logged = Login.isLogged();
@@ -64,6 +66,7 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     private final TagRowPages rows;
     private long displayedOnlineRevision = -1;
     private boolean resultsReady;
+    private boolean compactRows;
     @Nullable private Runnable resultsChangedListener;
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online) {
@@ -131,6 +134,12 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
         notifyResultsChanged();
     }
 
+    public void setCompactRows(boolean compactRows) {
+        if (this.compactRows == compactRows) return;
+        this.compactRows = compactRows;
+        notifyDataSetChanged();
+    }
+
     private void notifyResultsChanged() {
         if (resultsChangedListener != null) resultsChangedListener.run();
     }
@@ -162,7 +171,13 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     @NonNull
     @Override
     public TagsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new TagsAdapter.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.entry_tag_layout, parent, false));
+        int layout = viewType == VIEW_TYPE_COMPACT ? R.layout.entry_tag_compact_layout : R.layout.entry_tag_layout;
+        return new TagsAdapter.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(layout, parent, false));
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return compactRows ? VIEW_TYPE_COMPACT : VIEW_TYPE_STANDARD;
     }
 
     @Override

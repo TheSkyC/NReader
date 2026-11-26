@@ -10,6 +10,8 @@ import org.robolectric.annotation.Config;
 import android.app.Application;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
+import android.content.res.Configuration;
+import android.view.View;
 import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.async.database.Queries;
@@ -18,6 +20,7 @@ import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagV2;
 import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 import androidx.recyclerview.widget.RecyclerView;
 import org.junit.Rule;
@@ -318,5 +321,54 @@ public class TagTypePageTest {
         assertTrue(TagTypePage.refreshHasCurrentData(false, 4, 5));
         assertTrue(TagTypePage.refreshHasCurrentData(true, 4, 5));
         assertFalse(TagTypePage.refreshHasCurrentData(true, 4, -1));
+    }
+
+    @Test
+    @Config(sdk = 28, application = Application.class, qualifiers = "w800dp-h400dp-land")
+    public void compactLandscapeUsesSingleColumnAndRestoresTheGridWhenHeightReturns() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        try (SQLiteDatabase db = SQLiteDatabase.create(null);
+             org.robolectric.android.controller.ActivityController<TagFilterActivity> controller =
+                 Robolectric.buildActivity(TagFilterActivity.class).setup()) {
+            Queries.setDb(db);
+            TagDatabaseFixture.createTables(db);
+            TagTypePage page = TagTypePage.newInstance(1);
+            controller.get().getSupportFragmentManager().beginTransaction().add(android.R.id.content, page).commitNow();
+            View root = page.requireView();
+            Configuration configuration = new Configuration(root.getResources().getConfiguration());
+            configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
+            page.onConfigurationChanged(configuration);
+            int width = Math.round(800 * root.getResources().getDisplayMetrics().density);
+            int compactHeight = Math.round(80 * root.getResources().getDisplayMetrics().density);
+            int normalHeight = Math.round(180 * root.getResources().getDisplayMetrics().density);
+
+            layout(root, width, compactHeight);
+            page.updateResponsiveGrid(root);
+            int compactColumns = ((androidx.recyclerview.widget.GridLayoutManager) page.getRecyclerView().getLayoutManager())
+                .getSpanCount();
+            assertTrue("height=" + root.getHeight() + ", threshold="
+                + root.getResources().getDimensionPixelSize(R.dimen.tag_search_compact_height)
+                + ", columns=" + compactColumns, compactColumns == 1);
+            assertTrue(((com.theskyc.nreader.adapters.TagsAdapter) page.getRecyclerView().getAdapter())
+                .getItemViewType(0) == 1);
+
+            layout(root, width, normalHeight);
+            page.updateResponsiveGrid(root);
+            assertTrue(((androidx.recyclerview.widget.GridLayoutManager) page.getRecyclerView().getLayoutManager())
+                .getSpanCount() == 4);
+            assertTrue(((com.theskyc.nreader.adapters.TagsAdapter) page.getRecyclerView().getAdapter())
+                .getItemViewType(0) == 0);
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    private static void layout(View view, int width, int height) {
+        view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        view.layout(0, 0, width, height);
     }
 }

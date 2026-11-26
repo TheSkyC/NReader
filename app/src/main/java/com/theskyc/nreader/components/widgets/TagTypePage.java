@@ -38,6 +38,10 @@ public class TagTypePage extends Fragment {
     private String query;
     private TagsAdapter adapter;
     private String adapterIdentity;
+    private int requestedColumns;
+    private int minimumColumnWidth;
+    private int layoutOrientation;
+    private float layoutFontScale;
     private long refreshSequence;
     private long observedRestoreGeneration;
     private boolean waitingForOnlineTags;
@@ -144,6 +148,8 @@ public class TagTypePage extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        view.addOnLayoutChangeListener((changedView, left, top, right, bottom,
+                oldLeft, oldTop, oldRight, oldBottom) -> updateResponsiveGrid(changedView));
         TagCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
         TagTranslationCatalog.changes().observe(getViewLifecycleOwner(), ignored -> refilter(query));
         if (type != TagType.CATEGORY) {
@@ -205,10 +211,14 @@ public class TagTypePage extends Fragment {
         query = activity.getSearchQuery();
         if (type.equals(TagType.CATEGORY)) adapterIdentity = AuthStore.activeIdentity(activity);
         Configuration configuration = getResources().getConfiguration();
+        layoutOrientation = configuration.orientation;
+        layoutFontScale = configuration.fontScale;
         CustomGridLayoutManager layout = new CustomGridLayoutManager(activity,
             configuration.orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2);
-        layout.setMinimumColumnWidth(Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
-            * Math.max(1f, configuration.fontScale)));
+        requestedColumns = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2;
+        minimumColumnWidth = Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
+            * Math.max(1f, configuration.fontScale));
+        layout.setMinimumColumnWidth(minimumColumnWidth);
         recyclerView.setLayoutManager(layout);
         if (type.equals(TagType.UNKNOWN)) adapter = new TagsAdapter(activity, query, false);
         else if (type.equals(TagType.CATEGORY)) adapter = new TagsAdapter(activity, query, true);
@@ -236,12 +246,30 @@ public class TagTypePage extends Fragment {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if (recyclerView != null && recyclerView.getLayoutManager() instanceof CustomGridLayoutManager) {
-            CustomGridLayoutManager layout = (CustomGridLayoutManager) recyclerView.getLayoutManager();
-            layout.setRequestedColumnCount(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2);
-            layout.setMinimumColumnWidth(Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
-                * Math.max(1f, newConfig.fontScale)));
+        layoutOrientation = newConfig.orientation;
+        layoutFontScale = newConfig.fontScale;
+        View root = getView();
+        if (root != null) updateResponsiveGrid(root);
+    }
+
+    void updateResponsiveGrid(@NonNull View root) {
+        if (recyclerView == null || !(recyclerView.getLayoutManager() instanceof CustomGridLayoutManager)) return;
+        boolean landscape = layoutOrientation == Configuration.ORIENTATION_LANDSCAPE;
+        boolean compact = landscape && root.getHeight() > 0
+            && root.getHeight() < getResources().getDimensionPixelSize(R.dimen.tag_search_compact_height);
+        CustomGridLayoutManager layout = (CustomGridLayoutManager) recyclerView.getLayoutManager();
+        int columns = compact ? 1 : landscape ? 4 : 2;
+        if (requestedColumns != columns) {
+            requestedColumns = columns;
+            layout.setRequestedColumnCount(columns);
         }
+        int minWidth = Math.round(getResources().getDimension(R.dimen.tag_min_column_width)
+            * Math.max(1f, layoutFontScale));
+        if (minimumColumnWidth != minWidth) {
+            minimumColumnWidth = minWidth;
+            layout.setMinimumColumnWidth(minWidth);
+        }
+        if (adapter != null) adapter.setCompactRows(compact);
     }
 
     @Override

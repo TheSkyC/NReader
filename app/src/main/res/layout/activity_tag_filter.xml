@@ -28,7 +28,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
+    <com.theskyc.nreader.components.widgets.TagSearchResultsLayout
         android:id="@+id/search_results"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -49,10 +49,11 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
-    </LinearLayout>
+    </com.theskyc.nreader.components.widgets.TagSearchResultsLayout>
 
     <com.theskyc.nreader.components.widgets.ResultsSearchView
         android:id="@+id/search_view"
+        style="@style/NReaderTagSearchView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_anchor="@id/toolbar" />
