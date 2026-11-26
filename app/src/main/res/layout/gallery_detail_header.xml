@@ -123,9 +123,11 @@
             android:visibility="gone">
 
             <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/gallery_read_progress"
                 style="@style/Widget.Material3.CircularProgressIndicator.Small"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:indeterminate="true"
                 app:indicatorSize="20dp" />
 
             <TextView

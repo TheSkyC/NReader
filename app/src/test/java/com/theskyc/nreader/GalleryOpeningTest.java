@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 
 import com.theskyc.nreader.api.SimpleGallery;
@@ -192,6 +193,7 @@ public class GalleryOpeningTest {
                 assertEquals("Test", activity.getTitle().toString());
                 assertFalse(activity.findViewById(R.id.gallery_read).isEnabled());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_read_loading).getVisibility());
+                assertTrue(((CircularProgressIndicator) activity.findViewById(R.id.gallery_read_progress)).isIndeterminate());
                 assertEquals(activity.getString(R.string.gallery_loading_details),
                     activity.findViewById(R.id.gallery_read).getContentDescription());
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_shell_language).getVisibility());
@@ -206,6 +208,7 @@ public class GalleryOpeningTest {
                 assertEquals(View.GONE, activity.findViewById(R.id.favorite_stat).getVisibility());
                 ((TabLayout) activity.findViewById(R.id.gallery_tabs)).getTabAt(1).select();
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.gallery_pages_status).getVisibility());
+                assertTrue(((CircularProgressIndicator) activity.findViewById(R.id.gallery_pages_loading)).isIndeterminate());
                 assertEquals(View.GONE, activity.findViewById(R.id.refresher).getVisibility());
                 activity.onCreateOptionsMenu(menu);
                 assertFalse(menu.findItem(R.id.change_view).isVisible());
