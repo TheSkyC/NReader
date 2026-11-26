@@ -107,6 +107,41 @@ public class TagFilterWorkflowTest {
         }
     }
 
+    @Test public void categorySearchShowsNoMatchesOnlyAfterResultsAndClearsItOnRecovery() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            Database.setDatabase(helper.getWritableDatabase());
+            Queries.TagTable.insert(new Tag("visible fixture", 60, 500_098, TagType.TAG, TagStatus.DEFAULT));
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller =
+                     Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                await(activity, () -> count(activity, 1) == 1);
+                TagTypePage page = (TagTypePage) activity.getSupportFragmentManager().findFragmentByTag("f1");
+                TextView empty = page.requireView().findViewById(R.id.tag_rules_empty);
+                assertEquals(View.GONE, empty.getVisibility());
+
+                page.refilter("no matching fixture");
+                assertEquals(View.GONE, empty.getVisibility());
+                await(activity, () -> empty.getVisibility() == View.VISIBLE);
+                assertEquals(activity.getString(R.string.bulk_edit_no_matches), empty.getText().toString());
+
+                page.refilter("visible fixture");
+                assertEquals(View.GONE, empty.getVisibility());
+                await(activity, () -> count(activity, 1) == 1);
+                assertEquals(View.GONE, empty.getVisibility());
+                page.refilter("");
+                await(activity, () -> count(activity, 1) == 1);
+                assertEquals(View.GONE, empty.getVisibility());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void tagGridAdaptsToWidthAndFontScaleWithoutReplacingAdapter() {
         Application app = RuntimeEnvironment.getApplication();
         Global.initFromShared(app);

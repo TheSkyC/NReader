@@ -214,14 +214,17 @@ public class TagTypePage extends Fragment {
         else if (type.equals(TagType.CATEGORY)) adapter = new TagsAdapter(activity, query, true);
         else adapter = new TagsAdapter(activity, query, type);
         recyclerView.setAdapter(adapter);
-        if (type == TagType.UNKNOWN) adapter.setResultsChangedListener(this::updateRulesEmpty);
+        if (type != TagType.CATEGORY) adapter.setResultsChangedListener(this::updateEmptyMessage);
     }
 
-    private void updateRulesEmpty() {
+    private void updateEmptyMessage() {
         if (rulesEmpty == null || adapter == null) return;
-        boolean empty = adapter.areResultsReady() && adapter.getItemCount() == 0;
-        rulesEmpty.setText(query == null || query.trim().isEmpty()
-            ? R.string.tag_rules_empty : R.string.tag_rules_no_matches);
+        boolean searching = query != null && !query.trim().isEmpty();
+        boolean empty = adapter.areResultsReady() && adapter.getItemCount() == 0
+            && (type == TagType.UNKNOWN || searching);
+        rulesEmpty.setText(type == TagType.UNKNOWN
+            ? searching ? R.string.tag_rules_no_matches : R.string.tag_rules_empty
+            : R.string.bulk_edit_no_matches);
         rulesEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
