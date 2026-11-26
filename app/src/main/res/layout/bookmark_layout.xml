@@ -47,6 +47,7 @@
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/remove_button"
+            style="@style/NReaderIconButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"

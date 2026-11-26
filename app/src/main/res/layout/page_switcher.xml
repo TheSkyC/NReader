@@ -14,6 +14,7 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/prev"
+        style="@style/NReaderIconButton"
         android:layout_width="56dp"
         android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless"
@@ -39,6 +40,7 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/next"
+        style="@style/NReaderIconButton"
         android:layout_width="56dp"
         android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless"

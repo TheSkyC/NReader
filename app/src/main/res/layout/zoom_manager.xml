@@ -22,6 +22,7 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/prev"
+                style="@style/NReaderIconButton"
                 android:layout_width="48dp"
                 android:layout_height="match_parent"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -55,6 +56,7 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/next"
+                style="@style/NReaderIconButton"
                 android:layout_width="48dp"
                 android:layout_height="match_parent"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -73,6 +75,7 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/reader_page_preview"
+                style="@style/NReaderIconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:minHeight="48dp"
@@ -84,6 +87,7 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/reader_auto_scroll"
+                style="@style/NReaderIconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:minHeight="48dp"
@@ -95,6 +99,7 @@
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/reader_settings"
+                style="@style/NReaderIconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:minHeight="48dp"
