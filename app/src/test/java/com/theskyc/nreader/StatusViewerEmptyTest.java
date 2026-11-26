@@ -3,7 +3,9 @@ package com.theskyc.nreader;
 import static org.junit.Assert.assertEquals;
 
 import android.app.Application;
+import android.content.Intent;
 import android.database.MatrixCursor;
+import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 
@@ -11,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.theskyc.nreader.adapters.StatusViewerAdapter;
 import com.theskyc.nreader.async.database.DatabaseHelper;
+import com.theskyc.nreader.components.status.Status;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.Global;
@@ -21,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
@@ -41,9 +45,23 @@ public class StatusViewerEmptyTest {
                      Robolectric.buildActivity(StatusViewerActivity.class).setup()) {
                 StatusViewerActivity activity = controller.get();
                 assertEquals(View.GONE, activity.findViewById(R.id.tabs).getVisibility());
-                TextView message = activity.findViewById(R.id.no_statuses);
-                assertEquals(View.VISIBLE, message.getVisibility());
+                View emptyState = activity.findViewById(R.id.no_statuses);
+                assertEquals(View.VISIBLE, emptyState.getVisibility());
+                TextView message = activity.findViewById(R.id.no_statuses_message);
                 assertEquals(activity.getString(R.string.status_viewer_no_statuses), message.getText().toString());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.manage_statuses_action).getVisibility());
+
+                activity.findViewById(R.id.manage_statuses_action).performClick();
+                Intent intent = Shadows.shadowOf(activity).getNextStartedActivity();
+                assertEquals(StatusManagerActivity.class.getName(), intent.getComponent().getClassName());
+
+                controller.pause().stop();
+                StatusManager.replaceAll(Collections.singletonList(new Status(0xff336699, "Reading")));
+                controller.restart().resume();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                StatusViewerActivity resumed = controller.get();
+                assertEquals(View.GONE, resumed.findViewById(R.id.no_statuses).getVisibility());
+                assertEquals(View.VISIBLE, resumed.findViewById(R.id.tabs).getVisibility());
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.theskyc.nreader;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +13,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.components.activities.GeneralActivity;
+import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.ui.main.PlaceholderFragment;
 import com.theskyc.nreader.ui.main.SectionsPagerAdapter;
@@ -20,6 +22,7 @@ import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,6 +37,7 @@ public class StatusViewerActivity extends GeneralActivity {
     private String query;
     private ViewPager2 viewPager;
     private SectionsPagerAdapter sectionsPagerAdapter;
+    private List<String> displayedStatuses;
     private final ExecutorService countLoader = Executors.newSingleThreadExecutor();
 
     @Override
@@ -48,6 +52,7 @@ public class StatusViewerActivity extends GeneralActivity {
         actionBar.setTitle(R.string.view_statuses);
         viewPager = findViewById(R.id.view_pager);
         sectionsPagerAdapter = new SectionsPagerAdapter(this);
+        displayedStatuses = StatusManager.getNames();
 
         viewPager.setAdapter(sectionsPagerAdapter);
 
@@ -64,6 +69,8 @@ public class StatusViewerActivity extends GeneralActivity {
         boolean noStatuses = sectionsPagerAdapter.getItemCount() == 0;
         tabs.setVisibility(noStatuses ? View.GONE : View.VISIBLE);
         findViewById(R.id.no_statuses).setVisibility(noStatuses ? View.VISIBLE : View.GONE);
+        findViewById(R.id.manage_statuses_action).setOnClickListener(view ->
+            startActivity(new Intent(this, StatusManagerActivity.class)));
         new TabLayoutMediator(tabs, viewPager, true, (tab, position) -> tab.setText(sectionsPagerAdapter.getPageTitle(position))).attach();
         loadStatusCounts();
     }
@@ -71,6 +78,10 @@ public class StatusViewerActivity extends GeneralActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (!displayedStatuses.equals(StatusManager.getNames())) {
+            recreate();
+            return;
+        }
         loadStatusCounts();
         PlaceholderFragment fragment = getActualFragment();
         if (fragment != null) fragment.reload(query, sortByTitle);
