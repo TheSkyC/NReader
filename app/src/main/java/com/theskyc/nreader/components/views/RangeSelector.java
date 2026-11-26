@@ -68,6 +68,8 @@ public class RangeSelector extends MaterialAlertDialogBuilder {
         prev.setOnClickListener(getPrevListener(slider));
         next.setOnClickListener(getNextListener(slider));
         slider.setValue(start ? 0 : maxProgress);
+        pages.setText(getContext().getString(R.string.page_format,
+            Math.round(slider.getValue()) + 1, gallery.getPageCount()));
         if (start) startSlider = slider;
         else endSlider = slider;
     }

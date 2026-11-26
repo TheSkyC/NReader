@@ -72,6 +72,10 @@ public class RangeSelectorTest {
         Slider lastSlider = last.findViewById(R.id.page_slider);
         assertEquals(0f, firstSlider.getValue(), 0f);
         assertEquals(2f, lastSlider.getValue(), 0f);
+        assertEquals(activity.getString(R.string.page_format, 1, 3),
+            ((TextView) first.findViewById(R.id.pages)).getText().toString());
+        assertEquals(activity.getString(R.string.page_format, 3, 3),
+            ((TextView) last.findViewById(R.id.pages)).getText().toString());
         first.findViewById(R.id.next).performClick();
         last.findViewById(R.id.prev).performClick();
         assertEquals(1f, firstSlider.getValue(), 0f);
@@ -101,6 +105,10 @@ public class RangeSelectorTest {
         assertFalse(end.isEnabled());
         assertEquals(0f, start.getValue(), 0f);
         assertEquals(0f, end.getValue(), 0f);
+        for (int id : new int[]{R.id.layout1, R.id.layout2}) {
+            TextView pages = dialog.findViewById(id).findViewById(R.id.pages);
+            assertEquals(activity.getString(R.string.page_format, 1, 1), pages.getText().toString());
+        }
         dialog.dismiss();
     }
 }
