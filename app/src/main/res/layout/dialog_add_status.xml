@@ -35,6 +35,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="@drawable/status_color_swatch"
+            android:foreground="@drawable/status_color_swatch_outline"
             android:importantForAccessibility="no" />
 
         <com.google.android.material.button.MaterialButton

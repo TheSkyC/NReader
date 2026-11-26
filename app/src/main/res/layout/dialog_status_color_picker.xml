@@ -25,6 +25,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/status_color_swatch"
+                android:foreground="@drawable/status_color_swatch_outline"
                 android:importantForAccessibility="no" />
 
             <TextView

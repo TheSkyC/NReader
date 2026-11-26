@@ -8,7 +8,11 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.DialogInterface;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.view.View;
 import android.widget.EditText;
@@ -42,6 +46,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.util.ReflectionHelpers;
 
@@ -192,6 +197,60 @@ public class StatusEditorTest {
     @Config(qualifiers = "night")
     public void colorPickerTracksRemainVisibleInDarkTheme() {
         assertColorPickerTracksRemainVisible();
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void statusSwatchOutlinesRemainVisibleInLightTheme() {
+        assertSwatchOutlines(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void statusSwatchOutlinesRemainVisibleInDarkTheme() {
+        assertSwatchOutlines(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void statusSwatchOutlinesRemainVisibleInBlackTheme() {
+        assertSwatchOutlines(R.style.AppTheme_Material3_Black);
+    }
+
+    private void assertSwatchOutlines(int theme) {
+        try (ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
+            AppCompatActivity activity = controller.get();
+            activity.setTheme(theme);
+            controller.setup();
+            int[][] swatches = {
+                {R.layout.entry_status, R.id.color},
+                {R.layout.dialog_add_status, R.id.color_swatch},
+                {R.layout.dialog_status_color_picker, R.id.color_preview}
+            };
+            for (int[] swatch : swatches) {
+                View view = activity.getLayoutInflater().inflate(swatch[0], null).findViewById(swatch[1]);
+                Drawable outline = view.getForeground();
+                assertNotNull(outline);
+                outline.setBounds(0, 0, 100, 100);
+                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+                outline.draw(new Canvas(bitmap));
+                int stroke = bitmap.getPixel(50, 0);
+                int surface = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface);
+                int variant = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurfaceVariant);
+                assertTrue(ColorUtils.calculateContrast(stroke, surface) >= 3.0);
+                assertTrue(ColorUtils.calculateContrast(stroke, variant) >= 3.0);
+                for (int selected : new int[]{surface, variant}) {
+                    view.setBackgroundTintList(ColorStateList.valueOf(selected));
+                    assertEquals(selected, view.getBackgroundTintList().getDefaultColor());
+                    bitmap.eraseColor(Color.TRANSPARENT);
+                    view.getForeground().draw(new Canvas(bitmap));
+                    assertEquals(stroke, bitmap.getPixel(50, 0));
+                    assertEquals(Color.TRANSPARENT, bitmap.getPixel(50, 50));
+                }
+            }
+        }
     }
 
     private void assertColorPickerTracksRemainVisible() {
