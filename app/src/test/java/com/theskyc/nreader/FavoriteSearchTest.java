@@ -7,12 +7,11 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
-
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.theskyc.nreader.settings.Global;
 
 import org.junit.Test;
@@ -40,34 +39,38 @@ public class FavoriteSearchTest {
             Bundle state = new Bundle();
             try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).setup()) {
                 FavoriteActivity activity = controller.get();
-                Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
+                SearchBar searchBar = activity.findViewById(R.id.favorite_search_bar);
+                Menu menu = searchBar.getMenu();
                 activity.onCreateOptionsMenu(menu);
                 MenuItem item = menu.findItem(R.id.search);
-                assertTrue(item.expandActionView());
+                assertFalse(item.isVisible());
+                SearchView search = activity.findViewById(R.id.favorite_search_view);
+                search.show();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
-                SearchView search = (SearchView) item.getActionView();
-                search.setQuery("Synthetic", false);
+                search.getEditText().setText("Synthetic");
                 awaitCount(activity, 1);
-                search.setQuery("No matching fixture", false);
+                search.getEditText().setText("No matching fixture");
                 awaitCount(activity, 0);
-                search.setQuery("Synthetic", false);
+                search.getEditText().setText("Synthetic");
                 awaitCount(activity, 1);
-                item.collapseActionView();
+                activity.getOnBackPressedDispatcher().onBackPressed();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(activity.isFinishing());
                 activity.onSaveInstanceState(state);
                 assertEquals("Synthetic", state.getString("favorite_query"));
                 assertFalse(state.getBoolean("favorite_search_expanded"));
             }
             try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).create(state).start().resume().visible()) {
                 FavoriteActivity activity = controller.get();
-                Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
+                SearchBar searchBar = activity.findViewById(R.id.favorite_search_bar);
+                Menu menu = searchBar.getMenu();
                 activity.onCreateOptionsMenu(menu);
-                MenuItem item = menu.findItem(R.id.search);
-                assertFalse(item.isActionViewExpanded());
-                item.expandActionView();
+                SearchView search = activity.findViewById(R.id.favorite_search_view);
+                assertFalse(search.isShowing());
+                search.show();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
-                SearchView search = (SearchView) item.getActionView();
-                assertEquals("Synthetic", search.getQuery().toString());
-                search.setQuery("", false);
+                assertEquals("Synthetic", search.getEditText().getText().toString());
+                search.getEditText().setText("");
                 Bundle cleared = new Bundle();
                 activity.onSaveInstanceState(cleared);
                 assertEquals("", cleared.getString("favorite_query"));
@@ -93,13 +96,14 @@ public class FavoriteSearchTest {
             state.putBoolean("favorite_search_expanded", true);
             try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).create(state).start().resume().visible()) {
                 FavoriteActivity activity = controller.get();
-                Menu menu = ((Toolbar) activity.findViewById(R.id.toolbar)).getMenu();
+                SearchBar searchBar = activity.findViewById(R.id.favorite_search_bar);
+                Menu menu = searchBar.getMenu();
                 activity.onCreateOptionsMenu(menu);
                 awaitCount(activity, 1);
                 assertEquals(2, activity.getActualPage());
                 androidx.recyclerview.widget.RecyclerView recycler = activity.findViewById(R.id.recycler);
                 assertEquals(1024, recycler.getAdapter().getItemId(0));
-                assertTrue(menu.findItem(R.id.search).isActionViewExpanded());
+                assertTrue(((SearchView) activity.findViewById(R.id.favorite_search_view)).isShowing());
             }
             Thread.sleep(100);
             Shadows.shadowOf(Looper.getMainLooper()).idle();

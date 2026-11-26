@@ -15,11 +15,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -35,7 +38,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.os.BundleCompat;
 import androidx.core.os.LocaleListCompat;
@@ -47,6 +49,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.bumptech.glide.RequestManager;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.ListAdapter;
@@ -109,6 +113,10 @@ public class MainActivity extends BaseActivity
     implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int CHANGE_LANGUAGE_DELAY = 1000;
+    private static final String FAVORITE_SEARCH_QUERY_STATE = "main.favorite.search.query";
+    private static final String FAVORITE_SEARCH_EXPANDED_STATE = "main.favorite.search.expanded";
+    private static final String FAVORITE_SEARCH_ACTIVE_STATE = "main.favorite.search.active";
+    private static final String FAVORITE_SEARCH_PAGE_STATE = "main.favorite.search.page";
     private static final String ACCOUNT_TAG_FALLBACK_STATE = "accountTagFallback";
     private static final String ACCOUNT_TAG_FALLBACK_ACCEPTED_STATE = "accountTagFallbackAccepted";
     private static final String FALLBACK_BROWSED_TAG_STATE = "fallbackBrowsedTag";
@@ -152,6 +160,13 @@ public class MainActivity extends BaseActivity
     public MenuItem onlineFavoriteManager;
     private InspectorV3 inspector = null;
     private NavigationView navigationView;
+    private SearchBar favoriteSearchBar;
+    private SearchView favoriteSearchView;
+    private String favoriteQuery = "";
+    @Nullable private String activeFavoriteQuery;
+    private boolean favoriteSearchExpanded;
+    private boolean restoreFavoriteSearch;
+    private int favoriteSearchPage = 1;
     private ModeType modeType = ModeType.UNKNOWN;
     private int idOpenedGallery = -1;//Position in the recycler of the opened gallery
     private boolean inspecting = false;
@@ -203,6 +218,13 @@ public class MainActivity extends BaseActivity
         super.onCreate(savedInstanceState);
         TagRuleEdits.changes().observe(this, ignored -> refreshTagRules());
         setContentView(R.layout.activity_main);
+        if (savedInstanceState != null) {
+            favoriteQuery = savedInstanceState.getString(FAVORITE_SEARCH_QUERY_STATE, "");
+            favoriteSearchExpanded = savedInstanceState.getBoolean(FAVORITE_SEARCH_EXPANDED_STATE, false);
+            restoreFavoriteSearch = savedInstanceState.containsKey(FAVORITE_SEARCH_ACTIVE_STATE);
+            activeFavoriteQuery = savedInstanceState.getString(FAVORITE_SEARCH_ACTIVE_STATE);
+            favoriteSearchPage = savedInstanceState.getInt(FAVORITE_SEARCH_PAGE_STATE, 1);
+        }
         startupUpdateStore = new UpdateStateStore(this);
         startupUpdateStore.registerListener(startupUpdateListener);
         //load inspector
@@ -247,7 +269,9 @@ public class MainActivity extends BaseActivity
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (drawerLayout.isDrawerOpen(GravityCompat.START))
+                if (modeType == ModeType.FAVORITE && favoriteSearchView.isShowing())
+                    favoriteSearchView.hide();
+                else if (drawerLayout.isDrawerOpen(GravityCompat.START))
                     drawerLayout.closeDrawer(GravityCompat.START);
                 else {
                     setEnabled(false);
@@ -261,6 +285,13 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString(FAVORITE_SEARCH_QUERY_STATE, favoriteQuery);
+        outState.putBoolean(FAVORITE_SEARCH_EXPANDED_STATE,
+            favoriteSearchView != null && favoriteSearchView.isShowing());
+        if (modeType == ModeType.FAVORITE && inspector != null) {
+            outState.putString(FAVORITE_SEARCH_ACTIVE_STATE, activeFavoriteQuery);
+            outState.putInt(FAVORITE_SEARCH_PAGE_STATE, inspector.getPage());
+        }
         if ((modeType == ModeType.SEARCH || modeType == ModeType.TAG)
             && (acceptedAccountTagFallback || !inspector.isAccountTagScopeCurrent())) {
             // Cloning keeps the request conditions but drops its loaded results.
@@ -481,11 +512,64 @@ public class MainActivity extends BaseActivity
     }
 
     private void initializeToolbar() {
-        setSupportActionBar(toolbar);
+        if (modeType == ModeType.FAVORITE) {
+            toolbar.setVisibility(View.GONE);
+            favoriteSearchBar.setVisibility(View.VISIBLE);
+            favoriteSearchBar.setHint(R.string.favorite_online_manga);
+            setSupportActionBar(favoriteSearchBar);
+            favoriteSearchView.setupWithSearchBar(favoriteSearchBar);
+            favoriteSearchView.getEditText().setHint(R.string.search);
+            favoriteSearchView.getEditText().setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+            favoriteSearchView.getEditText().addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    favoriteQuery = s.toString();
+                    favoriteSearchBar.setText(favoriteQuery);
+                }
+                @Override public void afterTextChanged(Editable s) { }
+            });
+            favoriteSearchView.getEditText().setOnEditorActionListener((view, actionId, event) -> {
+                if (actionId != EditorInfo.IME_ACTION_SEARCH) return false;
+                submitFavoriteSearch();
+                return true;
+            });
+            favoriteSearchView.addTransitionListener((view, previousState, newState) -> {
+                if (newState == SearchView.TransitionState.HIDDEN) {
+                    favoriteQuery = activeFavoriteQuery == null ? "" : activeFavoriteQuery;
+                    favoriteSearchView.setText(favoriteQuery);
+                    favoriteSearchBar.setText(favoriteQuery);
+                }
+            });
+            if (restoreFavoriteSearch) {
+                inspector = InspectorV3.favoriteInspector(this, activeFavoriteQuery,
+                    Math.max(1, favoriteSearchPage), resetDataset);
+            } else if (inspector.getRequestType() == ApiRequestType.FAVORITE) {
+                activeFavoriteQuery = Uri.parse(inspector.getUrl()).getQueryParameter("q");
+                favoriteQuery = activeFavoriteQuery == null ? "" : activeFavoriteQuery;
+            }
+            favoriteSearchView.setText(favoriteQuery);
+            favoriteSearchBar.setText(favoriteQuery);
+            if (favoriteSearchExpanded) favoriteSearchView.show();
+        } else {
+            favoriteSearchView.setVisibility(View.GONE);
+            favoriteSearchBar.setVisibility(View.GONE);
+            toolbar.setVisibility(View.VISIBLE);
+            setSupportActionBar(toolbar);
+        }
         ActionBar bar = getSupportActionBar();
         assert bar != null;
-        bar.setDisplayShowTitleEnabled(true);
+        bar.setDisplayShowTitleEnabled(modeType != ModeType.FAVORITE);
         bar.setTitle(R.string.app_name);
+    }
+
+    private void submitFavoriteSearch() {
+        String query = favoriteQuery.trim();
+        String normalizedQuery = query.isEmpty() ? null : query;
+        activeFavoriteQuery = normalizedQuery;
+        inspector = InspectorV3.favoriteInspector(this, normalizedQuery, 1, resetDataset);
+        startInspector();
+        favoriteSearchBar.setText(favoriteQuery);
+        favoriteSearchView.hide();
     }
 
     @Override
@@ -562,8 +646,9 @@ public class MainActivity extends BaseActivity
     }
 
     private void initializeNavigationView() {
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        Toolbar activeToolbar = modeType == ModeType.FAVORITE ? favoriteSearchBar : toolbar;
+        activeToolbar.setNavigationIcon(R.drawable.ic_arrow_back);
+        activeToolbar.setNavigationOnClickListener(v -> finish());
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.getHeaderView(0).setOnClickListener(view -> startActivity(new Intent(this, AccountsActivity.class)));
         onlineFavoriteManager.setVisible(AuthStore.hasOnlineIdentity(this));
@@ -615,6 +700,8 @@ public class MainActivity extends BaseActivity
     private void findUsefulViews() {
         masterLayout = findViewById(R.id.master_layout);
         toolbar = findViewById(R.id.toolbar);
+        favoriteSearchBar = findViewById(R.id.favorite_search_bar);
+        favoriteSearchView = findViewById(R.id.favorite_search_view);
         navigationView = findViewById(R.id.nav_view);
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
@@ -1065,8 +1152,7 @@ public class MainActivity extends BaseActivity
         menu.findItem(R.id.filter_loaded_results).setVisible(modeType != ModeType.ID);
         menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
         menu.findItem(R.id.save_search_plan).setVisible(canSaveSearchPlan());
-
-        initializeSearchItem(menu.findItem(R.id.search));
+        menu.findItem(R.id.search).setVisible(modeType != ModeType.FAVORITE);
 
 
         if (modeType == ModeType.TAG) {
@@ -1077,27 +1163,6 @@ public class MainActivity extends BaseActivity
         }
         Utility.tintMenu(this, menu);
         return true;
-    }
-
-    private void initializeSearchItem(MenuItem item) {
-        if (modeType != ModeType.FAVORITE)
-            item.setActionView(null);
-        else {
-            ((SearchView) Objects.requireNonNull(item.getActionView())).setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override
-                public boolean onQueryTextSubmit(String query) {
-                    inspector = InspectorV3.favoriteInspector(MainActivity.this, query, 1, resetDataset);
-                    inspector.start();
-                    Objects.requireNonNull(getSupportActionBar()).setTitle(query);
-                    return true;
-                }
-
-                @Override
-                public boolean onQueryTextChange(String newText) {
-                    return false;
-                }
-            });
-        }
     }
 
     private void popularItemDispay(MenuItem item) {
@@ -1154,10 +1219,9 @@ public class MainActivity extends BaseActivity
         } else if (item.getItemId() == R.id.only_language) {
             updateLanguageAndIcon(item);
         } else if (item.getItemId() == R.id.search) {
-            if (modeType != ModeType.FAVORITE) {//show textbox or start search activity
-                i = new Intent(this, SearchActivity.class);
-                startActivity(i);
-            }
+            i = new Intent(this, SearchActivity.class);
+            startActivity(i);
+            return true;
         } else if (item.getItemId() == R.id.open_browser) {
             if (inspector != null) {
                 i = new Intent(Intent.ACTION_VIEW, Uri.parse(inspector.withoutAccountTags().getUrl()));
