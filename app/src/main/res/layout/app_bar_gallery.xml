@@ -20,7 +20,7 @@
         app:tabIndicatorColor="?attr/colorPrimary"
         app:tabSelectedTextColor="?attr/colorOnSurface"
         app:tabTextColor="?attr/colorOnSurfaceVariant"
-        app:tabMode="fixed" />
+        app:tabMode="auto" />
 
     <com.theskyc.nreader.components.widgets.GalleryTabSwipeLayout
         android:id="@+id/gallery_tab_content"
