@@ -7,6 +7,7 @@ import android.app.Application;
 
 import com.theskyc.nreader.LocalActivity;
 import com.theskyc.nreader.api.local.LocalGallery;
+import com.theskyc.nreader.api.local.LocalSortType;
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.downloader.GalleryDownloaderV2;
@@ -87,5 +88,35 @@ public class LocalAdapterDownloadMergeTest {
         } finally {
             adapter.removeObserver();
         }
+    }
+
+    @Test public void taskPinningRespectsTheSelectedSortWithinEachGroup() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        LocalSortType original = Global.getLocalSortType();
+        boolean originalPin = Global.isLocalPinDownloads();
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            LocalGallery gallery = new LocalGallery(temporaryFolder.newFolder("alpha"), true);
+            GalleryDownloaderV2 later = new GalleryDownloaderV2(activity, "zeta", null, 102);
+            GalleryDownloaderV2 earlier = new GalleryDownloaderV2(activity, "beta", null, 103);
+            Global.setLocalSortType(activity, new LocalSortType(LocalSortType.Type.TITLE, false));
+            Global.setLocalPinDownloads(activity, false);
+            assertEquals(Arrays.asList(gallery, earlier, later), merge(adapter, gallery, later, earlier));
+            Global.setLocalPinDownloads(activity, true);
+            assertEquals(Arrays.asList(earlier, later, gallery), merge(adapter, gallery, later, earlier));
+            Global.setLocalSortType(activity, new LocalSortType(LocalSortType.Type.TITLE, true));
+            assertEquals(Arrays.asList(later, earlier, gallery), merge(adapter, gallery, later, earlier));
+        } finally {
+            adapter.removeObserver();
+            Global.setLocalSortType(activity, original);
+            Global.setLocalPinDownloads(activity, originalPin);
+        }
+    }
+
+    private List<Object> merge(LocalAdapter adapter, LocalGallery gallery, GalleryDownloaderV2... tasks) {
+        return ReflectionHelpers.callInstanceMethod(adapter, "createHash",
+            ReflectionHelpers.ClassParameter.from(List.class, Arrays.asList(tasks)),
+            ReflectionHelpers.ClassParameter.from(List.class, Collections.singletonList(gallery)));
     }
 }

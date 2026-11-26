@@ -502,6 +502,7 @@
     <string name="artist">画师</string>
     <string name="group">社团</string>
     <string name="descending_order">降序</string>
+    <string name="download_tasks_first">下载任务置顶</string>
     <string name="change_scroll_type">切换滚动方向</string>
     <string name="export_data">导出数据</string>
     <string name="import_data">导入数据</string>

@@ -315,16 +315,20 @@ public class LocalActivity extends BaseActivity {
         View view = LayoutInflater.from(this).inflate(R.layout.local_sort_type, searchBar, false);
         ChipGroup group = view.findViewById(R.id.chip_group);
         MaterialSwitch switchMaterial = view.findViewById(R.id.ascending);
+        MaterialSwitch pinDownloads = view.findViewById(R.id.pin_downloads);
         group.check(group.getChildAt(sortType.type.ordinal()).getId());
         switchMaterial.setChecked(sortType.descending);
+        pinDownloads.setChecked(Global.isLocalPinDownloads());
         builder.setView(view);
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
             int typeSelectedIndex = group.indexOfChild(group.findViewById(group.getCheckedChipId()));
             LocalSortType.Type typeSelected = LocalSortType.Type.values()[typeSelectedIndex];
             boolean descending = switchMaterial.isChecked();
             LocalSortType newSortType = new LocalSortType(typeSelected, descending);
-            if (sortType.equals(newSortType)) return;
+            boolean pin = pinDownloads.isChecked();
+            if (sortType.equals(newSortType) && pin == Global.isLocalPinDownloads()) return;
             Global.setLocalSortType(LocalActivity.this, newSortType);
+            Global.setLocalPinDownloads(LocalActivity.this, pin);
             if (adapter != null) adapter.sortChanged();
         })
             .setNeutralButton(R.string.cancel, null)

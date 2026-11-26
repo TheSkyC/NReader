@@ -305,6 +305,9 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             }
             if (type.descending) Collections.reverse(arr);
         }
+        if (Global.isLocalPinDownloads())
+            arr.sort((left, right) -> Boolean.compare(right instanceof GalleryDownloaderV2,
+                left instanceof GalleryDownloaderV2));
     }
 
     private Comparator<Object> getComparator(LocalSortType.Type type) {

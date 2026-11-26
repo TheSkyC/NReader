@@ -169,6 +169,7 @@
     <string name="preference_key_favorite_action_mode" translatable="false">favorite_action_mode</string>
     <string name="key_default_value" translatable="false">default_value</string>
     <string name="key_local_sort" translatable="false">local_sort_type</string>
+    <string name="key_local_pin_downloads" translatable="false">local_pin_downloads</string>
     <string name="key_by_popular" translatable="false">is_by_popular</string>
     <string name="key_column_count" translatable="false">column_count</string>
     <string name="key_only_language" translatable="false">only_language</string>
@@ -595,6 +596,7 @@
     <string name="artist">Artist</string>
     <string name="group">Group</string>
     <string name="descending_order">Descending order</string>
+    <string name="download_tasks_first">Show download tasks first</string>
     <string name="change_scroll_type">Change scroll type</string>
     <string name="export_data">Export data</string>
     <string name="import_data">Import data</string>

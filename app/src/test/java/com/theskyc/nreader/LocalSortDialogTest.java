@@ -34,6 +34,7 @@ public class LocalSortDialogTest {
         Application app = RuntimeEnvironment.getApplication();
         Global.initFromShared(app);
         LocalSortType original = Global.getLocalSortType();
+        boolean originalPin = Global.isLocalPinDownloads();
         try (ActivityController<LocalActivity> controller = Robolectric.buildActivity(LocalActivity.class).setup()) {
             LocalActivity activity = controller.get();
             Configuration configuration = new Configuration(activity.getResources().getConfiguration());
@@ -41,6 +42,7 @@ public class LocalSortDialogTest {
             activity.getResources().updateConfiguration(configuration, activity.getResources().getDisplayMetrics());
             LocalSortType initial = new LocalSortType(LocalSortType.Type.TITLE, false);
             Global.setLocalSortType(activity, initial);
+            Global.setLocalPinDownloads(activity, false);
 
             AlertDialog dialog = showSortDialog(activity);
             ScrollView scroll = dialog.findViewById(R.id.sort_options_scroll);
@@ -62,18 +64,25 @@ public class LocalSortDialogTest {
             }
             ((ChipGroup) dialog.findViewById(R.id.chip_group)).check(R.id.chip6);
             descending.setChecked(true);
+            ((MaterialSwitch) dialog.findViewById(R.id.pin_downloads)).setChecked(true);
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).performClick();
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertEquals(initial, Global.getLocalSortType());
+            assertEquals(false, Global.isLocalPinDownloads());
 
             dialog = showSortDialog(activity);
             ((ChipGroup) dialog.findViewById(R.id.chip_group)).check(R.id.chip6);
             ((MaterialSwitch) dialog.findViewById(R.id.ascending)).setChecked(true);
+            ((MaterialSwitch) dialog.findViewById(R.id.pin_downloads)).setChecked(true);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertEquals(new LocalSortType(LocalSortType.Type.GROUP, true), Global.getLocalSortType());
+            assertTrue(Global.isLocalPinDownloads());
+            Global.initFromShared(activity);
+            assertTrue(Global.isLocalPinDownloads());
         } finally {
             Global.setLocalSortType(app, original);
+            Global.setLocalPinDownloads(app, originalPin);
         }
     }
 

@@ -76,6 +76,7 @@ public class Global {
     private static TitleType titleType;
     private static SortType sortType;
     private static LocalSortType localSortType;
+    private static volatile boolean localPinDownloads;
     private static boolean buttonChangePage, hideMultitask, enableBeta, volumeOverride, zoomOneColumn, keepHistory, lockScreen, onlyTag, showTitles, removeAvoidedGalleries, useRtl;
     private static DataUsageType usageMobile, usageWifi;
     private static String lastVersion;
@@ -261,6 +262,7 @@ public class Global {
         SharedPreferences shared = context.getSharedPreferences("Settings", 0);
         shared.edit().remove("local_sort").apply();
         localSortType = new LocalSortType(getIntPreference(shared, context.getString(R.string.key_local_sort), 0));
+        localPinDownloads = getBooleanPreference(shared, context.getString(R.string.key_local_pin_downloads), false);
         useRtl = getBooleanPreference(shared, context.getString(R.string.preference_key_use_rtl), false);
         String selectedMirror;
         try {
@@ -369,6 +371,16 @@ public class Global {
         context.getSharedPreferences("Settings", 0).edit().putInt(context.getString(R.string.key_local_sort), localSortType.hashCode()).apply();
         Global.localSortType = localSortType;
         LogUtility.d("Assigning: " + localSortType);
+    }
+
+    public static boolean isLocalPinDownloads() {
+        return localPinDownloads;
+    }
+
+    public static void setLocalPinDownloads(Context context, boolean enabled) {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(context.getString(R.string.key_local_pin_downloads), enabled).apply();
+        localPinDownloads = enabled;
     }
 
     public static String getMirror() {
