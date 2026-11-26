@@ -23,6 +23,7 @@ import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.TagV2;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,12 +51,13 @@ import static org.junit.Assert.assertTrue;
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagsAdapterTest {
     @Test public void tagCardsExposeTheirCurrentRuleWithoutASeparateIconFocus() throws Exception {
+        TagV2.resetFilterPreferences(RuntimeEnvironment.getApplication());
         try (SQLiteDatabase db = SQLiteDatabase.create(null);
              ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
             Queries.setDb(db);
             TagDatabaseFixture.createTables(db);
             for (TagStatus status : TagStatus.values()) {
-                Tag tag = new Tag("fixture-" + status, 10, status.ordinal() + 1, TagType.TAG, status);
+                Tag tag = new Tag("fixture-" + status, 60, status.ordinal() + 1, TagType.TAG, status);
                 Queries.TagTable.insert(tag);
                 assertEquals(1, Queries.TagTable.updateTag(tag));
             }
