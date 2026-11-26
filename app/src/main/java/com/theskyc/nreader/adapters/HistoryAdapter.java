@@ -39,7 +39,9 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        ImageDownloadUtility.loadImage(remove == holder.getBindingAdapterPosition() ? R.drawable.ic_close : R.drawable.ic_mode_edit, holder.imageButton);
+        boolean deleting = remove == holder.getBindingAdapterPosition();
+        ImageDownloadUtility.loadImage(deleting ? R.drawable.ic_close : R.drawable.ic_mode_edit, holder.imageButton);
+        holder.imageButton.setContentDescription(context.getString(deleting ? R.string.delete : R.string.edit));
         String entry = history.get(holder.getBindingAdapterPosition()).getValue();
         holder.text.setText(entry);
         holder.master.setOnClickListener(v -> context.setQuery(entry, true));
