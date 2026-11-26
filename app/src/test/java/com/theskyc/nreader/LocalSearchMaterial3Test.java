@@ -6,8 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.os.Looper;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewParent;
+import android.widget.ImageButton;
+
+import androidx.appcompat.widget.ActionMenuView;
 
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
@@ -24,6 +28,35 @@ import org.robolectric.Shadows;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class LocalSearchMaterial3Test {
+    @Test
+    public void searchBarCentersNavigationAndActionsWhenTallerThanItsMinimum() {
+        Application app = org.robolectric.RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        try (ActivityController<LocalActivity> controller =
+                 Robolectric.buildActivity(LocalActivity.class).setup()) {
+            SearchBar bar = controller.get().findViewById(R.id.toolbar);
+            bar.setNavigationIcon(R.drawable.ic_arrow_back);
+            bar.getMenu().add("Action").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            int height = bar.getMinimumHeight() + 40;
+            bar.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+            bar.layout(0, 0, 1000, height);
+
+            boolean foundNavigation = false;
+            boolean foundMenu = false;
+            for (int i = 0; i < bar.getChildCount(); i++) {
+                View child = bar.getChildAt(i);
+                if (child instanceof ImageButton || child instanceof ActionMenuView) {
+                    assertTrue(Math.abs(2 * child.getTop() + child.getHeight() - height) <= 1);
+                    foundNavigation |= child instanceof ImageButton;
+                    foundMenu |= child instanceof ActionMenuView;
+                }
+            }
+            assertTrue(foundNavigation);
+            assertTrue(foundMenu);
+        }
+    }
+
     @Test
     public void searchRestoresExpandedQueryAndRetainsCollapsedLabel() {
         Application app = org.robolectric.RuntimeEnvironment.getApplication();

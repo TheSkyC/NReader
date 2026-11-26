@@ -3,9 +3,14 @@
         <item name="overlapAnchor">false</item>
     </style>
 
+    <style name="NReaderSearchBar" parent="Widget.Material3.SearchBar">
+        <item name="buttonGravity">center_vertical</item>
+    </style>
+
     <style name="AppTheme.Material3" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="preferenceTheme">@style/NReaderPreferenceThemeOverlay</item>
         <item name="actionOverflowMenuStyle">@style/NReaderOverflowMenu</item>
+        <item name="materialSearchBarStyle">@style/NReaderSearchBar</item>
         <item name="colorPrimary">@color/m3_primary</item>
         <item name="colorOnPrimary">@color/m3_on_primary</item>
         <item name="colorPrimaryContainer">@color/m3_primary_container</item>
