@@ -39,7 +39,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
+import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -394,6 +396,18 @@ public class ZoomActivity extends GeneralActivity {
                     }
                 }));
         });
+        pageManagerLabel.setFocusable(true);
+        ViewCompat.setAccessibilityDelegate(pageManagerLabel, new AccessibilityDelegateCompat() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(@NonNull View host,
+                                                           @NonNull AccessibilityNodeInfoCompat info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(Button.class.getName());
+            }
+        });
+        ViewCompat.replaceAccessibilityAction(pageManagerLabel,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+            getString(R.string.change_page), null);
         pageSlider.addOnChangeListener((slider, value, fromUser) -> {
             if (fromUser) setPageText(Math.round(value) + 1);
         });

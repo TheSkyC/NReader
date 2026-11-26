@@ -16,9 +16,13 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.menu.MenuBuilder;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -87,6 +91,36 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class ReaderReliabilityTest {
     @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void pageLabelIsAnAccessiblePageSelector() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                TextView pages = activity.findViewById(R.id.pages);
+                assertTrue(pages.isFocusable());
+                assertTrue(pages.isClickable());
+                AccessibilityNodeInfoCompat node = AccessibilityNodeInfoCompat.wrap(pages.createAccessibilityNodeInfo());
+                assertEquals("android.widget.Button", node.getClassName());
+                assertTrue(node.getActionList().stream().anyMatch(action ->
+                    action.getId() == AccessibilityNodeInfo.ACTION_CLICK
+                        && activity.getString(R.string.change_page).contentEquals(action.getLabel())));
+
+                assertTrue(pages.performAccessibilityAction(AccessibilityNodeInfo.ACTION_CLICK, null));
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                ((EditText) dialog.findViewById(R.id.edit_page)).setText("2");
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(1, ((ViewPager2) activity.findViewById(R.id.container)).getCurrentItem());
+            }
+        }
+    }
 
     @Test
     public void repeatedPageRequestsKeepTheActiveLoadButRotationReplacesIt() throws Exception {

@@ -63,6 +63,8 @@ public class RangeSelectorTest {
             assertEquals(View.GONE, selector.findViewById(R.id.reader_auto_scroll).getVisibility());
             assertEquals(View.VISIBLE, selector.findViewById(R.id.prev).getVisibility());
             assertEquals(View.VISIBLE, selector.findViewById(R.id.next).getVisibility());
+            assertFalse(selector.findViewById(R.id.pages).isFocusable());
+            assertFalse(selector.findViewById(R.id.pages).isClickable());
         }
         View first = dialog.findViewById(R.id.layout1);
         View last = dialog.findViewById(R.id.layout2);
