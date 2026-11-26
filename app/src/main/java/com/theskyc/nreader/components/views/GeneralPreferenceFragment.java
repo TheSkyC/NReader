@@ -34,6 +34,7 @@ import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.CopyToClipboardActivity;
 import com.theskyc.nreader.AccountLoginActivity;
@@ -595,9 +596,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         final String key = getString(R.string.preference_key_save_path);
         Preference savePathPreference = Objects.requireNonNull(findPreference(key));
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(act);
-        AppCompatAutoCompleteTextView edit = (AppCompatAutoCompleteTextView) View.inflate(act, R.layout.autocomplete_entry, null);
-        edit.setHint(R.string.insert_path);
-        builder.setView(edit);
+        View content = View.inflate(act, R.layout.autocomplete_entry, null);
+        AppCompatAutoCompleteTextView edit = content.findViewById(R.id.edit);
+        TextInputLayout input = content.findViewById(R.id.autocomplete_input);
+        input.setHint(R.string.insert_path);
+        builder.setView(content);
         builder.setTitle(R.string.insert_path);
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
             act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit().putString(key, edit.getText().toString()).apply();

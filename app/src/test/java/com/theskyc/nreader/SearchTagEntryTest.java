@@ -26,6 +26,7 @@ import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.TagLanguage;
 import com.theskyc.nreader.settings.TagV2;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -814,10 +815,11 @@ public class SearchTagEntryTest {
                 SearchActivity activity = controller.get();
                 AlertDialog dialog = openTagDialog(activity);
                 AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                TextInputLayout input = dialog.findViewById(R.id.autocomplete_input);
                 entry.setText("CAF\u00c9", false);
                 Queries.setDb(unavailable);
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
-                await(() -> entry.getError() != null);
+                await(() -> input.getError() != null);
                 assertTrue(dialog.isShowing());
                 assertTrue(dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled());
                 assertEquals("CAF\u00c9", entry.getText().toString());
@@ -828,6 +830,27 @@ public class SearchTagEntryTest {
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
                 await(() -> !dialog.isShowing());
                 assertEquals(501001, ((ChipTag) group.getChildAt(0)).getTag().getId());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
+    @Test public void invalidNameShowsInlineErrorAndClearsOnEdit() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                AlertDialog dialog = openTagDialog(controller.get());
+                AppCompatAutoCompleteTextView entry = dialog.findViewById(R.id.edit);
+                TextInputLayout input = dialog.findViewById(R.id.autocomplete_input);
+                entry.setText("   ", false);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                assertTrue(dialog.isShowing());
+                assertEquals(app.getString(R.string.search_tag_invalid_name), input.getError().toString());
+                entry.setText("valid tag", false);
+                assertNull(input.getError());
             }
         } finally {
             Queries.setDb(null);

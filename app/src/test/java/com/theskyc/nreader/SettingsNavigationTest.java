@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.webkit.CookieManager;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.Preference;
 import androidx.preference.ListPreference;
@@ -21,6 +22,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.settings.Global;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -282,6 +284,28 @@ public class SettingsNavigationTest {
             Preference path = controller.get().fragment.findPreference(
                 application.getString(R.string.preference_key_save_path));
             assertEquals(path.isVisible(), category.isVisible());
+        }
+    }
+
+    @Test
+    public void customStoragePathDialogSavesEnteredPath() {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_downloads");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            controller.get().fragment.manageCustomPath();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            TextInputLayout input = dialog.findViewById(R.id.autocomplete_input);
+            AppCompatAutoCompleteTextView edit = dialog.findViewById(R.id.edit);
+            assertEquals(application.getString(R.string.insert_path), input.getHint().toString());
+            edit.setText("/example/path", false);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            String key = application.getString(R.string.preference_key_save_path);
+            assertEquals("/example/path", application.getSharedPreferences("Settings", 0).getString(key, null));
+            assertEquals("/example/path", controller.get().fragment.findPreference(key).getSummary());
         }
     }
 

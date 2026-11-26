@@ -64,6 +64,7 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1040,6 +1041,7 @@ public class SearchActivity extends GeneralActivity {
     private final class TagEntryDialog {
         private final TagType type;
         private final AppCompatAutoCompleteTextView entry;
+        private final TextInputLayout input;
         private final TagSuggestionAdapter suggestions;
         private final AlertDialog dialog;
         private Tag selected;
@@ -1047,14 +1049,17 @@ public class SearchActivity extends GeneralActivity {
 
         TagEntryDialog(TagType type) {
             this.type = type;
-            entry = (AppCompatAutoCompleteTextView) getLayoutInflater().inflate(
+            View content = getLayoutInflater().inflate(
                 R.layout.autocomplete_entry, findViewById(R.id.appbar), false);
+            entry = content.findViewById(R.id.edit);
+            input = content.findViewById(R.id.autocomplete_input);
             suggestions = new TagSuggestionAdapter(type, entry);
             entry.setAdapter(suggestions);
             entry.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
                     selected = null;
+                    input.setError(null);
                 }
                 @Override public void afterTextChanged(Editable text) {}
             });
@@ -1068,7 +1073,7 @@ public class SearchActivity extends GeneralActivity {
                 return true;
             });
             dialog = new MaterialAlertDialogBuilder(SearchActivity.this)
-                .setView(entry)
+                .setView(content)
                 .setTitle(R.string.insert_tag_name)
                 .setPositiveButton(R.string.ok, null)
                 .setNegativeButton(R.string.cancel, null)
@@ -1096,9 +1101,10 @@ public class SearchActivity extends GeneralActivity {
             int selectedId = selected != null && selected.getName().equals(entered) ? selected.getId() : 0;
             String name = entered.trim();
             if (!TagCatalog.isCanonicalName(name)) {
-                entry.setError(getString(R.string.search_tag_invalid_name));
+                input.setError(getString(R.string.search_tag_invalid_name));
                 return;
             }
+            input.setError(null);
             entry.dismissDropDown();
             entry.setEnabled(false);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
@@ -1127,7 +1133,7 @@ public class SearchActivity extends GeneralActivity {
                 entry.setEnabled(true);
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                 entry.requestFocus();
-                entry.setError(getString(R.string.search_tag_resolve_failed));
+                input.setError(getString(R.string.search_tag_resolve_failed));
                 return;
             }
             addSearchTag(tag != null ? tag
