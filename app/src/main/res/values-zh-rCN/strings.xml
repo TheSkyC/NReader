@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="comment_show_more">展开</string>
+    <string name="comment_show_less">收起</string>
     <string name="random_gallery_loading">正在加载随机画廊…</string>
     <string name="random_gallery_load_failed">无法加载画廊。点按随机按钮重试。</string>
     <string name="random_gallery_retry">无法加载另一个画廊。</string>

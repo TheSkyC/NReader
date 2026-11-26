@@ -58,6 +58,17 @@
         app:layout_constraintStart_toEndOf="@id/propic"
         app:layout_constraintTop_toBottomOf="@id/comment_header_bottom" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/comment_expand"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/comment_show_more"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/body"
+        app:layout_constraintTop_toBottomOf="@id/body" />
+
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/comment_header_bottom"
         android:layout_width="wrap_content"

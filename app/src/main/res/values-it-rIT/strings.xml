@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified for NReader by TheSkyC (2026); see NOTICE. -->
 <resources>
+    <string name="comment_show_more">Mostra di più</string>
+    <string name="comment_show_less">Mostra meno</string>
     <string name="search_keyword_hint">Parole di ricerca</string>
     <string name="search_show_filters">Filtri avanzati</string>
     <string name="search_hide_filters">Chiudi filtri avanzati</string>

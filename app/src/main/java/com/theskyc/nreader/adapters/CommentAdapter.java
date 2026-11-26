@@ -1,11 +1,12 @@
 // Modified for NReader by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.adapters;
 
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,8 +24,10 @@ import com.theskyc.nreader.utility.Utility;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -39,6 +42,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private final int userId;
     private final AppCompatActivity context;
     private final boolean readOnly;
+    private final Set<Integer> expandedComments = new HashSet<>();
     private java.util.function.LongSupplier commentOwner;
     private java.util.function.Consumer<Comment> deleteComment;
     private boolean hasMore;
@@ -77,13 +81,21 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         }
         int position = holder.getBindingAdapterPosition();
         Comment c = comments.get(position);
-        holder.body.setMaxLines(7);
-        holder.layout.setOnClickListener(v1 -> context.runOnUiThread(() -> holder.body.setMaxLines(holder.body.getMaxLines() == 7 ? 999 : 7)));
+        View.OnClickListener toggle = view -> {
+            if (holder.expand.getVisibility() != View.VISIBLE) return;
+            boolean expanded = !expandedComments.contains(c.getId());
+            if (expanded) expandedComments.add(c.getId());
+            else expandedComments.remove(c.getId());
+            holder.bindExpansion(expanded);
+        };
+        holder.layout.setOnClickListener(toggle);
+        holder.expand.setOnClickListener(toggle);
         long currentOwner = commentOwner == null ? userId : commentOwner.getAsLong();
         holder.close.setVisibility((readOnly && deleteComment == null) || c.getPosterId() != currentOwner
             ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());
         holder.body.setText(c.getComment());
+        holder.bindExpansion(expandedComments.contains(c.getId()));
         holder.date.setText(format.format(c.getPostDate()));
         holder.close.setOnClickListener(v -> {
             if (deleteComment != null) {
@@ -160,6 +172,18 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    @Override
+    public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        if (holder.body != null) holder.scheduleExpansionCheck();
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        if (holder.body != null) holder.body.removeCallbacks(holder.checkExpansion);
+        super.onViewRecycled(holder);
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageButton userImage;
         final ImageButton close;
@@ -168,6 +192,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         final TextView date;
         final ConstraintLayout layout;
         final Button loadMore;
+        final Button expand;
+        boolean expanded;
+        final Runnable checkExpansion = this::updateExpansionControl;
 
         public ViewHolder(@NonNull View v) {
             super(v);
@@ -178,6 +205,34 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             body = v.findViewById(R.id.body);
             date = v.findViewById(R.id.date);
             loadMore = v.findViewById(R.id.comments_more);
+            expand = v.findViewById(R.id.comment_expand);
+            if (body != null) body.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                              oldLeft, oldTop, oldRight, oldBottom) -> scheduleExpansionCheck());
+        }
+
+        void bindExpansion(boolean isExpanded) {
+            expanded = isExpanded;
+            body.setMaxLines(expanded ? Integer.MAX_VALUE : 7);
+            expand.setText(expanded ? R.string.comment_show_less : R.string.comment_show_more);
+            expand.setVisibility(expanded ? View.VISIBLE : View.GONE);
+            layout.setClickable(expanded);
+            layout.setFocusable(expanded);
+            scheduleExpansionCheck();
+        }
+
+        void scheduleExpansionCheck() {
+            body.removeCallbacks(checkExpansion);
+            body.post(checkExpansion);
+        }
+
+        void updateExpansionControl() {
+            Layout textLayout = body.getLayout();
+            if (textLayout == null || textLayout.getLineCount() == 0) return;
+            boolean truncated = !expanded && textLayout.getEllipsisCount(textLayout.getLineCount() - 1) > 0;
+            int visibility = expanded || truncated ? View.VISIBLE : View.GONE;
+            if (expand.getVisibility() != visibility) expand.setVisibility(visibility);
+            layout.setClickable(visibility == View.VISIBLE);
+            layout.setFocusable(visibility == View.VISIBLE);
         }
     }
 }
