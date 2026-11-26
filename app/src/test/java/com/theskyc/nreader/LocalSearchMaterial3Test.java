@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.os.Looper;
+import android.view.View;
+import android.view.ViewParent;
 
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
@@ -36,6 +38,7 @@ public class LocalSearchMaterial3Test {
             searchBar.performClick();
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertTrue(searchView.isShowing());
+            assertTrue(isInside(activity.findViewById(R.id.recycler), searchView));
             searchView.setText("local fixture");
 
             controller.recreate();
@@ -43,13 +46,22 @@ public class LocalSearchMaterial3Test {
             SearchBar restoredBar = restored.findViewById(R.id.toolbar);
             SearchView restoredView = restored.findViewById(R.id.search_view);
             assertTrue(restoredView.isShowing());
+            assertTrue(isInside(restored.findViewById(R.id.recycler), restoredView));
             assertEquals("local fixture", restored.getQuery());
             assertEquals("local fixture", restoredView.getEditText().getText().toString());
 
-            restoredView.hide();
+            restored.getOnBackPressedDispatcher().onBackPressed();
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertFalse(restoredView.isShowing());
+            assertFalse(restored.isFinishing());
+            assertFalse(isInside(restored.findViewById(R.id.recycler), restoredView));
             assertEquals("local fixture", restoredBar.getText().toString());
         }
+    }
+
+    private boolean isInside(View view, View ancestor) {
+        for (ViewParent parent = view.getParent(); parent instanceof View; parent = parent.getParent())
+            if (parent == ancestor) return true;
+        return false;
     }
 }

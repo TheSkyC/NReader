@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewParent;
 
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.async.database.DatabaseHelper;
@@ -47,6 +49,7 @@ public class FavoriteSearchTest {
                 SearchView search = activity.findViewById(R.id.favorite_search_view);
                 search.show();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(isInside(activity.findViewById(R.id.recycler), search));
                 search.getEditText().setText("Synthetic");
                 awaitCount(activity, 1);
                 search.getEditText().setText("No matching fixture");
@@ -56,6 +59,7 @@ public class FavoriteSearchTest {
                 activity.getOnBackPressedDispatcher().onBackPressed();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(activity.isFinishing());
+                assertFalse(isInside(activity.findViewById(R.id.recycler), search));
                 activity.onSaveInstanceState(state);
                 assertEquals("Synthetic", state.getString("favorite_query"));
                 assertFalse(state.getBoolean("favorite_search_expanded"));
@@ -113,6 +117,12 @@ public class FavoriteSearchTest {
     private Gallery gallery(int id, String title) throws Exception {
         return new Gallery(null, "{\"id\":" + id + ",\"num_pages\":1,\"title\":{\"pretty\":\"" + title
             + "\"},\"cover\":{\"path\":\"cover.png\"},\"thumbnail\":{\"path\":\"thumb.png\"},\"pages\":[{\"path\":\"1.png\"}]}", null, false);
+    }
+
+    private boolean isInside(View view, View ancestor) {
+        for (ViewParent parent = view.getParent(); parent instanceof View; parent = parent.getParent())
+            if (parent == ancestor) return true;
+        return false;
     }
 
     private void awaitCount(FavoriteActivity activity, int count) throws Exception {

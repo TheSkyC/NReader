@@ -26,6 +26,7 @@ import com.theskyc.nreader.async.downloader.GalleryDownloaderV2;
 import com.theskyc.nreader.components.activities.BaseActivity;
 import com.theskyc.nreader.components.classes.MultichoiceAdapter;
 import com.theskyc.nreader.components.widgets.GalleryListGrid;
+import com.theskyc.nreader.components.widgets.LiveSearchResults;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.MainGridSettings;
 import com.theskyc.nreader.utility.Utility;
@@ -80,6 +81,7 @@ public class LocalActivity extends BaseActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         searchView = findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+        LiveSearchResults.attach(searchView, findViewById(R.id.master_layout));
         searchView.getEditText().setHint(R.string.search);
         searchView.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
@@ -109,7 +111,9 @@ public class LocalActivity extends BaseActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (adapter != null && adapter.getMode() == MultichoiceAdapter.Mode.SELECTING)
+                if (searchView.isShowing())
+                    searchView.hide();
+                else if (adapter != null && adapter.getMode() == MultichoiceAdapter.Mode.SELECTING)
                     adapter.deselectAll();
                 else {
                     setEnabled(false);
