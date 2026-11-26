@@ -19,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.work.Configuration;
 
+import com.google.android.material.color.DynamicColors;
 import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.TagFilterActivity;
@@ -62,6 +63,10 @@ public class CrashApplication extends Application implements Configuration.Provi
         super.onCreate();
         AccountRuntime.initialize(this);
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            DynamicColors.applyToActivitiesIfAvailable(this,
+                (activity, themeOverlay) -> shouldApplyDynamicColors(activity));
+        }
         Global.initStorage(this);
         //noinspection resource
         Database.setDatabase(new DatabaseHelper(getApplicationContext()).getWritableDatabase());
@@ -86,6 +91,12 @@ public class CrashApplication extends Application implements Configuration.Provi
             String theme = preferences.getString(getString(R.string.preference_key_theme_select), "");
             setDarkLightTheme(theme, this);
         }
+    }
+
+    static boolean shouldApplyDynamicColors(@NonNull Context context) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            && !context.getSharedPreferences("Settings", 0)
+                .getBoolean(context.getString(R.string.preference_key_black_theme), false);
     }
 
     private void afterUpdateChecks(SharedPreferences preferences, String oldVersion) {
