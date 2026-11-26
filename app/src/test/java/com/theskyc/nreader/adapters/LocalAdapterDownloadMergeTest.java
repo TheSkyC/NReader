@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
+import android.os.Looper;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.LocalActivity;
 import com.theskyc.nreader.api.local.LocalGallery;
@@ -23,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
 
@@ -134,6 +138,45 @@ public class LocalAdapterDownloadMergeTest {
             assertEquals(2, adapter.getSelected().size());
 
             adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(task, adapter.getItemAt(0));
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void deselectingLastItemCompletesBeforeDeferredMerge() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("last-selection");
+        LocalGallery gallery = new LocalGallery(target, true);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Collections.singletonList(gallery)));
+        try {
+            GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "last-selection", null, 106);
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Collections.singletonList(task)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            adapter.selectAll();
+            ReflectionHelpers.setField(task, "folder", target);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerStartDownload(task);
+
+            adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+                @Override public void onItemRangeChanged(int positionStart, int itemCount) {
+                    assertTrue(positionStart + itemCount <= adapter.getItemCount());
+                }
+            });
+            ReflectionHelpers.callInstanceMethod(adapter, "toggleSelection",
+                ReflectionHelpers.ClassParameter.from(int.class, 0));
+            ReflectionHelpers.callInstanceMethod(adapter, "toggleSelection",
+                ReflectionHelpers.ClassParameter.from(int.class, 1));
+            assertEquals(2, adapter.getItemCount());
+            adapter.selectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(2, adapter.getItemCount());
+            assertEquals(2, adapter.getSelected().size());
+            adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertEquals(1, adapter.getItemCount());
             assertEquals(task, adapter.getItemAt(0));
         } finally {

@@ -4,6 +4,8 @@ package com.theskyc.nreader.adapters;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -203,9 +205,12 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             @SuppressLint("NotifyDataSetChanged")
             public void noMoreChoices() {
                 if (!refreshAfterSelection) return;
-                refreshAfterSelection = false;
-                sortElements();
-                notifyDataSetChanged();
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (!refreshAfterSelection || getMode() == Mode.SELECTING) return;
+                    refreshAfterSelection = false;
+                    sortElements();
+                    notifyDataSetChanged();
+                });
             }
         });
         sortElements();
@@ -493,7 +498,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     @Override
     public long getItemId(int position) {
         if (position == -1) return -1;
-        return Objects.hash(filter.get(position).hashCode(), position);
+        Object item = filter.get(position);
+        int identity = item instanceof GalleryDownloaderV2
+            ? System.identityHashCode(item) : item.hashCode();
+        return Objects.hash(identity, position);
     }
 
     @Override
