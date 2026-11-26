@@ -1457,7 +1457,7 @@ public class ReaderReliabilityTest {
     }
 
     @Test
-    public void continuousViewportStaysClearOfVisibleControls() throws Exception {
+    public void continuousViewportStaysFixedWhenControlsAreToggled() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
         application.getSharedPreferences("Settings", 0).edit().clear()
@@ -1475,26 +1475,27 @@ public class ReaderReliabilityTest {
                 View toolbar = activity.findViewById(R.id.toolbar);
                 View controls = activity.findViewById(R.id.master_layout);
                 View pageSwitcher = activity.findViewById(R.id.page_switcher);
-                assertTrue(viewport.getTop() >= toolbar.getBottom());
-                assertTrue(viewport.getBottom() <= controls.getTop());
+                assertEquals(0, viewport.getTop());
+                assertEquals(1920, viewport.getBottom());
                 int visibleHeight = viewport.getHeight();
                 assertTrue(visibleHeight > 0);
                 toolbar.setVisibility(View.GONE);
+                controls.setVisibility(View.GONE);
                 pageSwitcher.setVisibility(View.GONE);
                 content.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
                 content.layout(0, 0, 1080, 1920);
-                assertTrue("hidden=" + viewport.getHeight() + ", visible=" + visibleHeight,
-                    viewport.getHeight() > visibleHeight);
+                assertEquals(visibleHeight, viewport.getHeight());
+                assertEquals(0, viewport.getTop());
                 toolbar.setVisibility(View.VISIBLE);
+                controls.setVisibility(View.VISIBLE);
                 pageSwitcher.setVisibility(View.VISIBLE);
                 content.requestLayout();
                 content.measure(View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY));
                 content.layout(0, 0, 1920, 1080);
-                assertTrue(viewport.getTop() >= toolbar.getBottom());
-                assertTrue(viewport.getBottom() <= controls.getTop());
-                assertTrue(viewport.getHeight() > 0);
+                assertEquals(0, viewport.getTop());
+                assertEquals(1080, viewport.getBottom());
             }
         }
     }

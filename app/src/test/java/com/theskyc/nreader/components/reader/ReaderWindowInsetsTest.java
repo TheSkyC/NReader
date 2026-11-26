@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.graphics.Rect;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.WindowInsetsCompat;
@@ -35,15 +36,18 @@ public class ReaderWindowInsetsTest {
         layout(root, 1080, 1920);
         Rect pagerBounds = bounds(pager);
         Rect continuousBounds = bounds(continuous);
+        View toolbar = activity.findViewById(R.id.toolbar);
+        View controls = activity.findViewById(R.id.master_layout);
         for (boolean visible : new boolean[]{false, true, false}) {
+            toolbar.setVisibility(visible ? View.VISIBLE : View.GONE);
+            controls.setVisibility(visible ? View.VISIBLE : View.GONE);
             ReaderWindowInsets.apply(root, insets(Insets.of(0, 24, 0, 48), visible));
             layout(root, 1080, 1920);
             assertEquals(pagerBounds, bounds(pager));
             assertEquals(continuousBounds, bounds(continuous));
         }
         assertEquals(new Rect(0, 0, 1080, 1920), pagerBounds);
-        assertTrue(continuousBounds.top >= activity.findViewById(R.id.toolbar).getBottom());
-        assertTrue(continuousBounds.bottom <= activity.findViewById(R.id.master_layout).getTop());
+        assertEquals(pagerBounds, continuousBounds);
     }
 
     @Test
@@ -97,9 +101,21 @@ public class ReaderWindowInsetsTest {
         layout(root, 1920, 1080);
         assertEquals(32, toolbar.getLeft());
         assertEquals(1920 - 48, toolbar.getRight());
-        assertTrue(continuous.getTop() >= toolbar.getBottom());
-        assertTrue(continuous.getBottom() <= controls.getTop());
+        assertEquals(new Rect(0, 0, 1920, 1080), bounds(continuous));
         assertEquals(new Rect(0, 0, 1920, 1080), bounds(activity.findViewById(R.id.container)));
+    }
+
+    @Test
+    public void controlsAndPageIndicatorAreDrawnAboveBothReaderModes() {
+        Activity activity = createActivity();
+        View pager = activity.findViewById(R.id.container);
+        View continuous = activity.findViewById(R.id.continuous_reader);
+        ViewGroup parent = (ViewGroup) pager.getParent();
+        for (int id : new int[]{R.id.toolbar, R.id.master_layout, R.id.page_text}) {
+            View overlay = activity.findViewById(id);
+            assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(pager));
+            assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(continuous));
+        }
     }
 
     private Activity createActivity() {
