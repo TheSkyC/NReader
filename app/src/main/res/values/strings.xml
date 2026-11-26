@@ -568,6 +568,9 @@
     <string name="create_new_status">Create new status:</string>
     <string name="status_name">Status name</string>
     <string name="status_choose_color">Choose color</string>
+    <string name="status_delete_action">Delete status: %1$s</string>
+    <string name="status_delete_title">Delete status?</string>
+    <string name="status_delete_message">Delete “%1$s”? This also removes the status from all associated galleries.</string>
     <string name="status_color_hue">Hue</string>
     <string name="status_color_saturation">Saturation</string>
     <string name="status_color_brightness">Brightness</string>

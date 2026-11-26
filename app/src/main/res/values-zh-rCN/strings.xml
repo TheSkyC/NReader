@@ -475,6 +475,9 @@
     <string name="create_new_status">创建新状态：</string>
     <string name="status_name">状态名称</string>
     <string name="status_choose_color">选择颜色</string>
+    <string name="status_delete_action">删除状态：%1$s</string>
+    <string name="status_delete_title">删除状态？</string>
+    <string name="status_delete_message">删除“%1$s”？此操作也会移除所有关联作品的该状态。</string>
     <string name="status_color_hue">色相</string>
     <string name="status_color_saturation">饱和度</string>
     <string name="status_color_brightness">明度</string>

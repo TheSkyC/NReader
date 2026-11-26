@@ -67,17 +67,24 @@ public class StatusManagerAdapter extends RecyclerView.Adapter<StatusManagerAdap
         holder.color.setVisibility(View.VISIBLE);
         holder.color.setBackgroundTintList(ColorStateList.valueOf(status.opaqueColor()));
 
-        holder.cancel.setImageResource(R.drawable.ic_close);
+        holder.cancel.setImageResource(R.drawable.ic_delete);
         Global.setTint(activity, holder.cancel.getDrawable());
         holder.cancel.setFocusable(true);
-        holder.cancel.setContentDescription(activity.getString(R.string.delete));
+        holder.cancel.setContentDescription(activity.getString(R.string.status_delete_action, status.name));
         holder.cancel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
         holder.master.setOnClickListener(v -> updateStatus(status));
-        holder.cancel.setOnClickListener(v -> {
-            StatusManager.remove(status);
-            notifyItemRemoved(statusList.indexOf(status));
-            statusList.remove(status);
-        });
+        holder.cancel.setOnClickListener(v -> new MaterialAlertDialogBuilder(activity)
+            .setTitle(R.string.status_delete_title)
+            .setMessage(activity.getString(R.string.status_delete_message, status.name))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete, (dialog, which) -> {
+                int index = statusList.indexOf(status);
+                if (index < 0) return;
+                StatusManager.remove(status);
+                statusList.remove(index);
+                notifyItemRemoved(index);
+            })
+            .show());
     }
 
     @Override

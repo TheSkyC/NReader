@@ -2,33 +2,44 @@ package com.theskyc.nreader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Looper;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.StatusManagerAdapter;
+import com.theskyc.nreader.api.components.Gallery;
+import com.theskyc.nreader.async.database.DatabaseHelper;
+import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.components.status.Status;
 import com.theskyc.nreader.components.status.StatusColorPickerDialog;
 import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.components.status.StatusNameInput;
+import com.theskyc.nreader.settings.Global;
 
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowDialog;
@@ -115,6 +126,59 @@ public class StatusEditorTest {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).callOnClick();
             assertFalse(dialog.isShowing());
             assertEquals(Color.RED, selected[0]);
+        }
+    }
+
+    @Test
+    public void deletingStatusRequiresConfirmationAndRemovesOnlyItsAssociation() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        application.deleteDatabase("Entries.db");
+        String detail = "{\"id\":117,\"media_id\":1,\"num_pages\":1,"
+            + "\"title\":{\"pretty\":\"Test\"},\"cover\":{\"path\":\"galleries/1/cover.png\"},"
+            + "\"thumbnail\":{\"path\":\"galleries/1/thumb.png\"},"
+            + "\"pages\":[{\"path\":\"galleries/1/1.png\",\"width\":1,\"height\":1}]}";
+        try (DatabaseHelper database = new DatabaseHelper(application);
+             ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
+            database.getWritableDatabase();
+            Global.initFromShared(application);
+            Status status = StatusManager.add("Test status", Color.BLUE);
+            Queries.StatusMangaTable.insert(new Gallery(application, detail, null, false), status);
+            StatusManager.replaceAll(Collections.singletonList(status));
+            AppCompatActivity activity = controller.get();
+            activity.setTheme(R.style.AppTheme_Material3);
+            controller.setup();
+            RecyclerView list = new RecyclerView(activity);
+            list.setLayoutManager(new LinearLayoutManager(activity));
+            StatusManagerAdapter adapter = new StatusManagerAdapter(activity);
+            list.setAdapter(adapter);
+            activity.setContentView(list);
+            list.measure(View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY));
+            list.layout(0, 0, 800, 1000);
+            RecyclerView.ViewHolder row = list.findViewHolderForAdapterPosition(0);
+            assertNotNull(row);
+            View delete = row.itemView.findViewById(R.id.cancelButton);
+            assertEquals(activity.getString(R.string.status_delete_action, status.name), delete.getContentDescription());
+
+            delete.performClick();
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            assertTrue(dialog.isShowing());
+            assertEquals(activity.getString(R.string.status_delete_message, status.name),
+                ((TextView) dialog.findViewById(android.R.id.message)).getText().toString());
+            assertEquals(status.name, Queries.StatusMangaTable.getStatus(117).name);
+            dialog.getButton(DialogInterface.BUTTON_NEGATIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(status.name, Queries.StatusMangaTable.getStatus(117).name);
+            assertEquals(2, adapter.getItemCount());
+
+            delete.performClick();
+            dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNull(StatusManager.getByName(status.name));
+            assertEquals(StatusManager.DEFAULT_STATUS, Queries.StatusMangaTable.getStatus(117).name);
+            assertEquals(1, adapter.getItemCount());
+            assertTrue(Queries.GalleryTable.galleryFromId(application, 117) != null);
         }
     }
 
