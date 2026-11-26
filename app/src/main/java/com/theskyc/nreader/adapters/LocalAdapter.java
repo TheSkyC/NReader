@@ -125,6 +125,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     private boolean favoriteOnly;
     private int readingFilter;
     private boolean customStatusOnly;
+    private boolean refreshAfterSelection;
     @NonNull
     private String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
@@ -139,6 +140,11 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         @SuppressLint("NotifyDataSetChanged")
         public void triggerStartDownload(GalleryDownloaderV2 downloader) {
             context.runOnUiThread(() -> {
+                if (getMode() == Mode.SELECTING) {
+                    refreshAfterSelection = true;
+                    updatePosition(downloader);
+                    return;
+                }
                 sortElements();
                 notifyDataSetChanged();
             });
@@ -192,6 +198,16 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         filter.addAll(galleryDownloaders);
 
         DownloadQueue.addObserver(observer);
+        addListener(new DefaultMultichoiceListener() {
+            @Override
+            @SuppressLint("NotifyDataSetChanged")
+            public void noMoreChoices() {
+                if (!refreshAfterSelection) return;
+                refreshAfterSelection = false;
+                sortElements();
+                notifyDataSetChanged();
+            }
+        });
         sortElements();
     }
 

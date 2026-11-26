@@ -114,6 +114,33 @@ public class LocalAdapterDownloadMergeTest {
         }
     }
 
+    @Test public void startingTaskDefersMergeUntilSelectionEnds() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("selected-target");
+        LocalGallery gallery = new LocalGallery(target, true);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Collections.singletonList(gallery)));
+        try {
+            GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "selected-target", null, 105);
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Collections.singletonList(task)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            adapter.selectAll();
+            assertEquals(2, adapter.getSelected().size());
+
+            ReflectionHelpers.setField(task, "folder", target);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerStartDownload(task);
+            assertEquals(2, adapter.getItemCount());
+            assertEquals(2, adapter.getSelected().size());
+
+            adapter.deselectAll();
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(task, adapter.getItemAt(0));
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
     @Test public void taskPinningRespectsTheSelectedSortWithinEachGroup() throws Exception {
         LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
         Global.initFromShared(activity);
