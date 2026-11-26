@@ -1,6 +1,9 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.components.reader;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -20,7 +23,10 @@ import com.theskyc.nreader.R;
 /** Viewport for resizing the continuous page list around a selected image point. */
 public final class ContinuousZoomViewport extends ContinuousReaderView {
     private static final float MAX_SCALE = 3f;
+    private static final long DOUBLE_TAP_ZOOM_DURATION_MS = 250L;
     private float scale = 1f;
+    @Nullable private ValueAnimator zoomAnimator;
+    private float zoomTargetScale;
     @Nullable private ContinuousZoomAnchor anchor;
     private int anchorImageWidth;
     private int anchorImageHeight;
@@ -56,6 +62,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     public boolean dispatchTouchEvent(@NonNull MotionEvent event) {
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN) {
+            cancelZoomAnimation();
             if (onUserInteraction != null) onUserInteraction.run();
             pinchActive = false;
             horizontalPan = false;
@@ -65,6 +72,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
             downOffset = contentOffset;
             endScale();
         } else if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
+            cancelZoomAnimation();
             float focusX = (event.getX(0) + event.getX(1)) / 2f;
             float focusY = (event.getY(0) + event.getY(1)) / 2f;
             pinchActive = beginScale(focusX, focusY);
@@ -93,7 +101,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
             pinchActive = false;
             horizontalPan = false;
-            endScale();
+            if (zoomAnimator == null) endScale();
         }
         return handled;
     }
@@ -130,6 +138,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
+        if (width != oldWidth || height != oldHeight) cancelZoomAnimation();
         if (width <= 0) return;
         if (scale == 1f || viewportWidth <= 0) {
             viewportWidth = width;
@@ -198,6 +207,7 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     }
 
     public void resetZoom() {
+        cancelZoomAnimation();
         scale = 1f;
         pinchActive = false;
         horizontalPan = false;
@@ -219,13 +229,45 @@ public final class ContinuousZoomViewport extends ContinuousReaderView {
     }
 
     public void toggleDoubleTapZoom(float focusX, float focusY) {
-        if (scale > 1f) {
-            if (!beginScale(focusX, focusY) || !scaleTo(1f, focusX, focusY)) resetZoom();
-            endScale();
+        float targetScale = zoomAnimator != null
+            ? (zoomTargetScale > 1f ? 1f : 2f)
+            : (scale > 1f ? 1f : 2f);
+        cancelZoomAnimation();
+        if (!beginScale(focusX, focusY)) {
+            if (targetScale == 1f) resetZoom();
             return;
         }
-        if (beginScale(focusX, focusY)) scaleTo(2f, focusX, focusY);
+        stopScroll();
+        ValueAnimator animator = ValueAnimator.ofFloat(scale, targetScale);
+        zoomAnimator = animator;
+        zoomTargetScale = targetScale;
+        animator.setDuration(DOUBLE_TAP_ZOOM_DURATION_MS);
+        animator.addUpdateListener(valueAnimator -> {
+            if (!scaleTo((float) valueAnimator.getAnimatedValue(), focusX, focusY)) cancelZoomAnimation();
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(Animator animation) {
+                if (zoomAnimator == animation) {
+                    zoomAnimator = null;
+                    endScale();
+                }
+            }
+        });
+        animator.start();
+    }
+
+    private void cancelZoomAnimation() {
+        if (zoomAnimator == null) return;
+        ValueAnimator animator = zoomAnimator;
+        zoomAnimator = null;
+        animator.cancel();
         endScale();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cancelZoomAnimation();
+        super.onDetachedFromWindow();
     }
 
     private void panTo(float requestedOffset) {

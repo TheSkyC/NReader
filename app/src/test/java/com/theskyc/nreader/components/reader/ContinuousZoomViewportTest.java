@@ -143,6 +143,13 @@ public class ContinuousZoomViewportTest {
         ImageView initialImage = initialPage.findViewById(R.id.continuous_page_image);
         float initialPoint = (200f - initialPage.getTop() - initialImage.getTop()) / initialImage.getHeight();
         viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.advance(viewport, 120);
+        layoutOffsetViewport(viewport);
+        assertTrue("scale=" + viewport.currentScale(), viewport.currentScale() > 1f && viewport.currentScale() < 2f);
+        initialPage = layout.findViewByPosition(0);
+        initialImage = initialPage.findViewById(R.id.continuous_page_image);
+        assertEquals(initialPoint, (200f - initialPage.getTop() - initialImage.getTop()) / initialImage.getHeight(), 0.002f);
+        ReaderZoomTestSupport.finish(viewport);
         layoutOffsetViewport(viewport);
         initialPage = layout.findViewByPosition(0);
         assertNotNull(initialPage);
@@ -155,6 +162,12 @@ public class ContinuousZoomViewportTest {
         ImageView image = page.findViewById(R.id.continuous_page_image);
         float before = (200f - page.getTop() - image.getTop()) / image.getHeight();
         viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.advance(viewport, 120);
+        layoutOffsetViewport(viewport);
+        page = layout.findViewByPosition(1);
+        image = page.findViewById(R.id.continuous_page_image);
+        assertEquals(before, (200f - page.getTop() - image.getTop()) / image.getHeight(), 0.002f);
+        ReaderZoomTestSupport.finish(viewport);
         layoutOffsetViewport(viewport);
         page = layout.findViewByPosition(1);
         assertNotNull(page);
@@ -194,8 +207,29 @@ public class ContinuousZoomViewportTest {
         assertTrue(viewport.beginScale(300, 200));
         viewport.endScale();
         viewport.toggleDoubleTapZoom(300, 200);
-        assertEquals(2f, viewport.currentScale(), 0.001f);
+        ReaderZoomTestSupport.advance(viewport, 120);
+        assertTrue("scale=" + viewport.currentScale(), viewport.currentScale() > 1f && viewport.currentScale() < 2f);
+        layoutViewport(viewport);
         viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.finish(viewport);
+        assertEquals(1f, viewport.currentScale(), 0.001f);
+        layoutViewport(viewport);
+        viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.advance(viewport, 120);
+        float interruptedScale = viewport.currentScale();
+        dispatchPointers(viewport, 300, MotionEvent.ACTION_DOWN, 300, 200, 0, 0, 1);
+        assertFalse(ReaderZoomTestSupport.isRunning(viewport));
+        assertEquals(interruptedScale, viewport.currentScale(), 0.001f);
+        dispatchPointers(viewport, 320, MotionEvent.ACTION_UP, 300, 200, 0, 0, 1);
+        viewport.resetZoom();
+        assertEquals(1f, viewport.currentScale(), 0.001f);
+        layoutViewport(viewport);
+        viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.finish(viewport);
+        assertEquals(2f, viewport.currentScale(), 0.001f);
+        layoutViewport(viewport);
+        viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.finish(viewport);
         assertEquals(1f, viewport.currentScale(), 0.001f);
     }
 

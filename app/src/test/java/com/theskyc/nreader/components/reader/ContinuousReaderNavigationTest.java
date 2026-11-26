@@ -75,6 +75,7 @@ public class ContinuousReaderNavigationTest {
         layoutRecycler(recycler);
         ContinuousReaderNavigation navigation = new ContinuousReaderNavigation(recycler, layout, 0, ignored -> {});
         recycler.toggleDoubleTapZoom(300, 250);
+        ReaderZoomTestSupport.finish(recycler);
         layoutRecycler(recycler);
         recycler.scrollBy(0, 4000);
         float offset = recycler.currentContentOffset();

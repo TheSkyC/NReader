@@ -400,6 +400,7 @@ public class ContinuousPageAdapterTest {
             View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
         viewport.layout(0, 0, 600, 500);
         viewport.toggleDoubleTapZoom(300, 200);
+        ReaderZoomTestSupport.finish(viewport);
         viewport.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(500, View.MeasureSpec.EXACTLY));
         viewport.layout(0, 0, 600, 500);
