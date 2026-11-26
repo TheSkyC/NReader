@@ -151,7 +151,7 @@ public class UpdateCenterThemeTest {
         MaterialCardView card = (MaterialCardView) LayoutInflater.from(activity)
             .inflate(R.layout.entry_tag_layout, null, false);
         int background = card.getCardBackgroundColor().getDefaultColor();
-        assertEquals(color(activity, R.attr.nreaderSurfaceVariant), background);
+        assertEquals(color(activity, R.attr.colorSurfaceContainerLow), background);
         assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurface), background) >= 4.5);
         assertTrue(ColorUtils.calculateContrast(color(activity, R.attr.colorOnSurfaceVariant), background) >= 4.5);
     }
@@ -223,7 +223,7 @@ public class UpdateCenterThemeTest {
         MaterialCardView card = (MaterialCardView) LayoutInflater.from(manager)
             .inflate(R.layout.entry_status, null, false);
         int background = card.getCardBackgroundColor().getDefaultColor();
-        assertEquals(color(manager, R.attr.nreaderSurfaceVariant), background);
+        assertEquals(color(manager, R.attr.colorSurfaceContainerLow), background);
         assertTrue(ColorUtils.calculateContrast(color(manager, R.attr.colorOnSurface), background) >= 4.5);
     }
 
@@ -260,7 +260,7 @@ public class UpdateCenterThemeTest {
             MaterialCardView card = (MaterialCardView) LayoutInflater.from(activity).inflate(layout, null, false);
             int background = card.getCardBackgroundColor().getDefaultColor();
             TextView page = card.findViewById(R.id.page_number);
-            assertEquals(color(activity, R.attr.nreaderSurfaceVariant), background);
+            assertEquals(color(activity, R.attr.colorSurfaceContainerLow), background);
             assertTrue(ColorUtils.calculateContrast(page.getCurrentTextColor(), background) >= 4.5);
         }
     }

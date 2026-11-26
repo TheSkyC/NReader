@@ -123,7 +123,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    app:cardBackgroundColor="?attr/nreaderSurfaceVariant"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                     app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
                     app:strokeColor="?attr/nreaderOutline"

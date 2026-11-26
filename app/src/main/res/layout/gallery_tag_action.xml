@@ -18,6 +18,6 @@
     android:singleLine="false"
     android:textAllCaps="false"
     android:textColor="?attr/colorOnSurface"
-    app:backgroundTint="?attr/nreaderSurfaceVariant"
+    app:backgroundTint="?attr/colorSurfaceContainerLow"
     app:cornerRadius="10dp"
     app:strokeColor="?attr/nreaderOutline" />

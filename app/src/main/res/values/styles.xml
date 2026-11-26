@@ -66,6 +66,8 @@
         <item name="colorSurface">@color/theme_surface</item>
         <item name="colorOnSurface">@color/theme_on_surface</item>
         <item name="colorSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorSurfaceContainerLow">@color/theme_surface_variant</item>
+        <item name="colorSurfaceContainer">@color/theme_surface_variant</item>
         <item name="colorSurfaceContainerHigh">@color/theme_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_on_surface_variant</item>
         <item name="colorOutline">@color/theme_outline</item>
@@ -80,7 +82,6 @@
         <item name="android:windowLightNavigationBar">@bool/m3_light_system_bars</item>
         <item name="android:textColorPrimary">@color/theme_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
-        <item name="nreaderSurfaceVariant">@color/theme_surface_variant</item>
         <item name="nreaderOutline">@color/theme_outline</item>
     </style>
 
@@ -134,6 +135,8 @@
         <item name="colorSurface">@color/theme_black_surface</item>
         <item name="colorOnSurface">@color/theme_black_on_surface</item>
         <item name="colorSurfaceVariant">@color/theme_black_surface_variant</item>
+        <item name="colorSurfaceContainerLow">@color/theme_black_surface_variant</item>
+        <item name="colorSurfaceContainer">@color/theme_black_surface_variant</item>
         <item name="colorSurfaceContainerHigh">@color/theme_black_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_black_on_surface</item>
         <item name="colorOutline">@color/theme_black_outline</item>
@@ -145,7 +148,6 @@
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
-        <item name="nreaderSurfaceVariant">@color/theme_black_surface_variant</item>
         <item name="nreaderOutline">@color/theme_black_outline</item>
         <item name="elevationOverlayEnabled">false</item>
     </style>

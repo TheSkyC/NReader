@@ -8,7 +8,7 @@
     android:layout_marginTop="4dp"
     android:layout_marginEnd="4dp"
     android:layout_marginBottom="4dp"
-    app:cardBackgroundColor="?attr/nreaderSurfaceVariant">
+    app:cardBackgroundColor="?attr/colorSurfaceContainerLow">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/master"
@@ -23,7 +23,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:adjustViewBounds="true"
-            android:background="?attr/nreaderSurfaceVariant"
+            android:background="?attr/colorSurfaceContainerLow"
             android:contentDescription="@string/image"
             android:scaleType="fitCenter"
             app:layout_constraintDimensionRatio="3:4"
