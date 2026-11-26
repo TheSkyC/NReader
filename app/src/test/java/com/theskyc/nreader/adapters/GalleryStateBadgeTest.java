@@ -8,6 +8,7 @@ import android.os.Parcel;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -45,6 +46,7 @@ import org.robolectric.shadows.ShadowDialog;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,6 +57,8 @@ import static org.robolectric.Shadows.shadowOf;
 @Config(sdk = 28, application = Application.class)
 public class GalleryStateBadgeTest {
     @Rule public final AccountRuntimeTestScope accountRuntimeScope = new AccountRuntimeTestScope();
+    private static final byte[] PNG = Base64.getDecoder().decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9ZkAAAAASUVORK5CYII=");
     private ActivityController<Activity> controller;
     private Activity activity;
     private DatabaseHelper database;
@@ -206,6 +210,36 @@ public class GalleryStateBadgeTest {
             awaitProgress(card, null);
             assertEquals(View.GONE, card.findViewById(R.id.gallery_reading_progress).getVisibility());
         }
+    }
+
+    @Test
+    public void completeLocalDownloadHidesCoverIconButKeepsFileActions() throws Exception {
+        File directory = new File(root, "120");
+        assertTrue(directory.mkdir());
+        assertTrue(new File(directory, ".120").createNewFile());
+        File metadata = new File(directory, ".nomedia");
+        Files.write(metadata.toPath(), "{\"num_pages\":1}".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(directory, "001.png").toPath(), PNG);
+        GalleryStateRepository.invalidateLocalFiles();
+
+        View card = LayoutInflater.from(activity).inflate(R.layout.entry_layout, null);
+        activity.setContentView(card);
+        new GalleryStateBadge(card).bind(new LocalGallery(directory));
+
+        ImageButton localFiles = card.findViewById(R.id.gallery_local_files);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle();
+            if (activity.getString(R.string.state_download_complete)
+                .contentEquals(localFiles.getContentDescription())) break;
+            Thread.sleep(10);
+        }
+        assertEquals(activity.getString(R.string.state_download_complete),
+            localFiles.getContentDescription());
+        assertNull(localFiles.getDrawable());
+        assertTrue(localFiles.isEnabled());
+        assertTrue(localFiles.performClick());
+        assertNotNull(ShadowDialog.getLatestDialog());
     }
 
     private LocalGallery gallery(int id, String metadata) throws Exception {

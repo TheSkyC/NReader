@@ -467,7 +467,7 @@ final class GalleryStateBadge implements View.OnAttachStateChangeListener {
         switch (state.local) {
             case COMPLETE:
                 label = R.string.state_download_complete;
-                icon = R.drawable.ic_cover_check_circle;
+                icon = 0;
                 color = R.color.cover_complete;
                 break;
             case PARTIAL:
