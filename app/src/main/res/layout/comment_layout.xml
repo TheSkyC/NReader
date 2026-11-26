@@ -54,9 +54,17 @@
         android:ellipsize="end"
         android:maxLines="7"
         android:textColor="?attr/colorOnSurface"
-        app:layout_constraintEnd_toStartOf="@+id/close"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/propic"
-        app:layout_constraintTop_toBottomOf="@id/date" />
+        app:layout_constraintTop_toBottomOf="@id/comment_header_bottom" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/comment_header_bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierAllowsGoneWidgets="false"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="date,close" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/close"
