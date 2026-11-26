@@ -69,7 +69,7 @@ public class GalleryDownloaderV2 {
     private Uri thumbnail;
     private int start = -1, end = -1;
     private Gallery gallery;
-    private File folder;
+    private volatile File folder;
     private boolean initialized = false;
     private final long taskGeneration = DownloadTaskStore.generation();
     private boolean persistenceEnabled;

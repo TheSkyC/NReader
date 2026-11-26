@@ -1,0 +1,91 @@
+package com.theskyc.nreader.adapters;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Application;
+
+import com.theskyc.nreader.LocalActivity;
+import com.theskyc.nreader.api.local.LocalGallery;
+import com.theskyc.nreader.async.database.DatabaseHelper;
+import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.downloader.GalleryDownloaderV2;
+import com.theskyc.nreader.settings.Global;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
+import org.robolectric.util.ReflectionHelpers;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 28, application = Application.class)
+public class LocalAdapterDownloadMergeTest {
+    @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private DatabaseHelper database;
+
+    @Before public void openDatabase() {
+        database = new DatabaseHelper(RuntimeEnvironment.getApplication());
+        database.getWritableDatabase();
+    }
+
+    @After public void closeDatabase() {
+        database.close();
+        Queries.setDb(null);
+    }
+
+    @Test public void downloadReplacesOnlyTheGalleryInItsActualTargetFolder() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            File target = temporaryFolder.newFolder("sanitized.DUP1");
+            File unrelated = temporaryFolder.newFolder("original title");
+            LocalGallery downloading = new LocalGallery(target, true);
+            LocalGallery sameTitle = new LocalGallery(unrelated, true);
+            GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "original title", null, 100);
+            ReflectionHelpers.setField(task, "folder", target);
+
+            List<Object> items = ReflectionHelpers.callInstanceMethod(adapter, "createHash",
+                ReflectionHelpers.ClassParameter.from(List.class, Collections.singletonList(task)),
+                ReflectionHelpers.ClassParameter.from(List.class, Arrays.asList(downloading, sameTitle)));
+
+            assertEquals(2, items.size());
+            assertTrue(items.contains(task));
+            assertTrue(items.contains(sameTitle));
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void repairTaskUsesItsTargetBeforeDownloadStarts() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            File target = temporaryFolder.newFolder("repair-target");
+            LocalGallery gallery = new LocalGallery(target, true);
+            GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "renamed", null, 101);
+            task.configureRepair(target, Collections.singletonList(1));
+
+            List<Object> items = ReflectionHelpers.callInstanceMethod(adapter, "createHash",
+                ReflectionHelpers.ClassParameter.from(List.class, Collections.singletonList(task)),
+                ReflectionHelpers.ClassParameter.from(List.class, Collections.singletonList(gallery)));
+
+            assertEquals(Collections.singletonList(task), items);
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+}

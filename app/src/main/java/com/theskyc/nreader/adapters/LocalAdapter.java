@@ -229,15 +229,18 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private CopyOnWriteArrayList<Object> createHash(List<GalleryDownloaderV2> galleryDownloaders, List<LocalGallery> dataset) {
-        HashMap<String, Object> hashMap = new HashMap<>(dataset.size() + galleryDownloaders.size());
+        HashMap<Object, Object> hashMap = new HashMap<>(dataset.size() + galleryDownloaders.size());
         for (LocalGallery gall : dataset) {
             if (gall != null && matchesQuery(gall))
-                hashMap.put(gall.getTrueTitle(), gall);
+                hashMap.put(gall.getDirectory().getAbsoluteFile(), gall);
         }
 
         for (GalleryDownloaderV2 gall : galleryDownloaders) {
-            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(lastQuery))
-                hashMap.put(gall.getTruePathTitle(), gall);
+            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(lastQuery)) {
+                File target = gall.getFolder();
+                if (target == null) target = gall.getRepairFolder();
+                hashMap.put(target == null ? gall : target.getAbsoluteFile(), gall);
+            }
         }
 
         ArrayList<Object> arr = new ArrayList<>(hashMap.values());
