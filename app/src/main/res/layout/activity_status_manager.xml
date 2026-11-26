@@ -5,11 +5,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <com.theskyc.nreader.components.widgets.MultilineMaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
+        android:minHeight="?attr/actionBarSize"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        app:titleMarginTop="0dp"
+        app:titleMarginBottom="0dp"
         app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
     <androidx.recyclerview.widget.RecyclerView

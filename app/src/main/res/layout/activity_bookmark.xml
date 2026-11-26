@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/master_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <com.theskyc.nreader.components.widgets.MultilineMaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface" />
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        android:minHeight="?attr/actionBarSize"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        app:titleMarginTop="0dp"
+        app:titleMarginBottom="0dp"
+        app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
     <FrameLayout
         android:layout_width="match_parent"
