@@ -12,7 +12,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
@@ -312,7 +311,7 @@ public class LocalActivity extends BaseActivity {
     private void dialogSortType() {
         LocalSortType sortType = Global.getLocalSortType();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        LinearLayout view = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.local_sort_type, searchBar, false);
+        View view = LayoutInflater.from(this).inflate(R.layout.local_sort_type, searchBar, false);
         ChipGroup group = view.findViewById(R.id.chip_group);
         MaterialSwitch switchMaterial = view.findViewById(R.id.ascending);
         group.check(group.getChildAt(sortType.type.ordinal()).getId());
