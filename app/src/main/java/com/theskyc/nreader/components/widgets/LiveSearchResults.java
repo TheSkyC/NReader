@@ -13,11 +13,21 @@ public final class LiveSearchResults {
         ViewGroup originalParent = (ViewGroup) content.getParent();
         int originalIndex = originalParent.indexOfChild(content);
         ViewGroup.LayoutParams originalLayout = content.getLayoutParams();
-        searchView.addTransitionListener((view, previousState, newState) -> {
-            if (newState == SearchView.TransitionState.SHOWING && content.getParent() == originalParent) {
+        int originalAccessibility = content.getImportantForAccessibility();
+        Runnable showContent = () -> {
+            if (searchView.isShowing() && content.getParent() == originalParent) {
                 originalParent.removeView(content);
+                content.setImportantForAccessibility(originalAccessibility);
                 searchView.addView(content, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+        };
+        searchView.addTransitionListener((view, previousState, newState) -> {
+            if (newState == SearchView.TransitionState.SHOWING) {
+                showContent.run();
+            } else if (newState == SearchView.TransitionState.SHOWN && content.getParent() == originalParent) {
+                // Restoring a SearchView can enter SHOWN during hierarchy state restoration.
+                searchView.post(showContent);
             } else if (newState == SearchView.TransitionState.HIDDEN && content.getParent() != originalParent) {
                 ((ViewGroup) content.getParent()).removeView(content);
                 originalParent.addView(content, originalIndex, originalLayout);

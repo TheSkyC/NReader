@@ -9,9 +9,11 @@ import android.content.Intent;
 import android.database.MatrixCursor;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.adapters.StatusViewerAdapter;
 import com.theskyc.nreader.async.database.DatabaseHelper;
@@ -22,6 +24,7 @@ import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.ui.main.PlaceholderFragment;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.tabs.TabLayout;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -119,6 +122,7 @@ public class StatusViewerEmptyTest {
                 searchBar.performClick();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertTrue(searchView.isShowing());
+                assertTrue(isInside(activity.findViewById(R.id.no_statuses), searchView));
 
                 searchView.getEditText().setText("reading");
                 assertEquals("reading", searchBar.getText().toString());
@@ -127,13 +131,49 @@ public class StatusViewerEmptyTest {
                 SearchBar restoredBar = controller.get().findViewById(R.id.toolbar);
                 SearchView restoredView = controller.get().findViewById(R.id.search_view);
                 assertTrue(restoredView.isShowing());
+                assertTrue(isInside(controller.get().findViewById(R.id.no_statuses), restoredView));
                 assertEquals("reading", restoredBar.getText().toString());
                 assertEquals("reading", restoredView.getEditText().getText().toString());
                 restoredView.hide();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(restoredView.isShowing());
+                assertFalse(isInside(controller.get().findViewById(R.id.no_statuses), restoredView));
                 assertEquals("reading", restoredBar.getText().toString());
             }
         }
+    }
+
+    @Test
+    public void searchKeepsStatusTabsAndPagerUsable() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            Database.setDatabase(database.getWritableDatabase());
+            StatusManager.replaceAll(java.util.Arrays.asList(
+                new Status(0xff336699, "Reading"), new Status(0xff993366, "Finished")));
+            try (ActivityController<StatusViewerActivity> controller =
+                     Robolectric.buildActivity(StatusViewerActivity.class).setup()) {
+                StatusViewerActivity activity = controller.get();
+                SearchView search = activity.findViewById(R.id.search_view);
+                TabLayout tabs = activity.findViewById(R.id.tabs);
+                ViewPager2 pager = activity.findViewById(R.id.view_pager);
+                search.show();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(isInside(tabs, search));
+                assertTrue(isInside(pager, search));
+                tabs.getTabAt(1).select();
+                assertEquals(1, pager.getCurrentItem());
+                search.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(isInside(pager, search));
+                assertEquals(1, pager.getCurrentItem());
+            }
+        }
+    }
+
+    private static boolean isInside(View view, View ancestor) {
+        for (ViewParent parent = view.getParent(); parent instanceof View; parent = parent.getParent())
+            if (parent == ancestor) return true;
+        return false;
     }
 }

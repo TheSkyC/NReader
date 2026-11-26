@@ -16,6 +16,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.status.StatusManager;
+import com.theskyc.nreader.components.widgets.LiveSearchResults;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.ui.main.PlaceholderFragment;
 import com.theskyc.nreader.ui.main.SectionsPagerAdapter;
@@ -61,6 +62,7 @@ public class StatusViewerActivity extends GeneralActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         searchView = findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+        LiveSearchResults.attach(searchView, findViewById(R.id.search_results));
         searchView.getEditText().setHint(getString(R.string.search));
         searchView.getEditText().setImeOptions(EditorInfo.IME_ACTION_SEARCH);
         boolean restoreSearchExpanded = false;

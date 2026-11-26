@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -33,6 +34,7 @@ import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.TagV2;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
@@ -73,20 +75,29 @@ public class TagFilterWorkflowTest {
                 searchBar.performClick();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertTrue(searchView.isShowing());
+                assertTrue(isInside(activity.findViewById(R.id.tabs), searchView));
+                assertTrue(isInside(activity.findViewById(R.id.container), searchView));
                 searchView.setText("fixture");
                 assertEquals("fixture", searchBar.getText().toString());
 
                 controller.recreate();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
                 TagFilterActivity restored = controller.get();
                 SearchBar restoredBar = restored.findViewById(R.id.toolbar);
                 SearchView restoredView = restored.findViewById(R.id.search_view);
                 assertTrue(restoredView.isShowing());
+                assertTrue(isInside(restored.findViewById(R.id.container), restoredView));
+                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO,
+                    restored.findViewById(R.id.search_results).getImportantForAccessibility());
                 assertEquals("fixture", restored.getSearchQuery());
                 assertEquals("fixture", restoredView.getEditText().getText().toString());
 
                 restoredView.hide();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(restoredView.isShowing());
+                assertFalse(isInside(restored.findViewById(R.id.container), restoredView));
+                assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO,
+                    restored.findViewById(R.id.search_results).getImportantForAccessibility());
                 assertEquals("fixture", restoredBar.getText().toString());
             }
         } finally {
@@ -121,11 +132,21 @@ public class TagFilterWorkflowTest {
                     toolbar.getMenu().findItem(R.id.set_min_count).getTitle().toString());
                 await(activity, () -> count(activity, 1) == 2);
                 SearchView search = activity.findViewById(R.id.search_view);
+                search.show();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
                 search.setText("lookup phrase");
                 await(activity, () -> count(activity, 1) == 1 && firstRow(activity, 1) != null);
+                TabLayout tabs = activity.findViewById(R.id.tabs);
+                tabs.getTabAt(2).select();
+                assertEquals(2, pager.getCurrentItem());
+                tabs.getTabAt(1).select();
+                await(activity, () -> pager.getCurrentItem() == 1 && count(activity, 1) == 1
+                    && firstRow(activity, 1) != null);
                 View found = firstRow(activity, 1);
                 assertTrue(((TextView) found.findViewById(R.id.title)).getText().toString().contains("Localized fixture"));
                 assertTrue(found.findViewById(R.id.master_layout).performClick());
+                search.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
                 activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.recent_tags));
                 AlertDialog recent = (AlertDialog) ShadowDialog.getLatestDialog();
                 assertNotNull(recent);
@@ -326,6 +347,12 @@ public class TagFilterWorkflowTest {
         } finally {
             Queries.setDb(null);
         }
+    }
+
+    private static boolean isInside(View view, View ancestor) {
+        for (ViewParent parent = view.getParent(); parent instanceof View; parent = parent.getParent())
+            if (parent == ancestor) return true;
+        return false;
     }
 
     private static RecyclerView list(TagFilterActivity activity, int page) {
