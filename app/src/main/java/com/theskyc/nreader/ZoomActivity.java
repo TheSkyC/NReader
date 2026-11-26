@@ -296,11 +296,7 @@ public class ZoomActivity extends GeneralActivity {
         actionBar.setDisplayShowTitleEnabled(true);
         setTitle(gallery.getTitle());
 
-        getWindow().setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        applyVisibilityFlag();
         if (Global.isLockScreen())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 

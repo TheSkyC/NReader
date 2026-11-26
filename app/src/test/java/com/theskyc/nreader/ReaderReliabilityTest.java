@@ -1495,6 +1495,10 @@ public class ReaderReliabilityTest {
             database.getWritableDatabase();
             try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(ZoomActivity.class, readerIntent(application, folder)).setup()) {
                 ZoomActivity activity = controller.get();
+                assertEquals(0, activity.getWindow().getAttributes().flags
+                    & android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+                int layoutFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+                assertEquals(layoutFlags, activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags);
                 View content = activity.findViewById(android.R.id.content);
                 content.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
