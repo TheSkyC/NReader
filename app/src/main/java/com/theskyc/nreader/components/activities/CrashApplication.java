@@ -21,6 +21,7 @@ import androidx.work.Configuration;
 
 import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.TagFilterActivity;
 import com.theskyc.nreader.ZoomActivity;
 import com.theskyc.nreader.components.reader.ReaderWindowInsets;
 import com.theskyc.nreader.async.database.DatabaseHelper;
@@ -96,29 +97,26 @@ public class CrashApplication extends Application implements Configuration.Provi
     }
 
 
+    static WindowInsetsCompat applyWindowInsets(Activity activity, View view, WindowInsetsCompat insets) {
+        if (activity instanceof ZoomActivity) {
+            ReaderWindowInsets.apply(view, insets);
+            return WindowInsetsCompat.CONSUMED;
+        }
+        Insets barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        int bottom = barsInsets.bottom;
+        if (activity instanceof com.theskyc.nreader.GalleryActivity || activity instanceof TagFilterActivity) {
+            bottom = Math.max(bottom, insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
+        }
+        view.setPadding(barsInsets.left, barsInsets.top, barsInsets.right, bottom);
+        return WindowInsetsCompat.CONSUMED;
+    }
+
     private static class CustomActivityLifecycleCallback implements ActivityLifecycleCallbacks {
 
         @Override
         public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
             View rootView = activity.getWindow().getDecorView().getRootView();
-            ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-                if (activity instanceof ZoomActivity) {
-                    ReaderWindowInsets.apply(v, insets);
-                    return WindowInsetsCompat.CONSUMED;
-                }
-                Insets barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                int bottom = barsInsets.bottom;
-                if (activity instanceof com.theskyc.nreader.GalleryActivity) {
-                    bottom = Math.max(bottom, insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
-                }
-                v.setPadding(
-                    barsInsets.left,
-                    barsInsets.top,
-                    barsInsets.right,
-                    bottom
-                );
-                return WindowInsetsCompat.CONSUMED;
-            });
+            ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> applyWindowInsets(activity, v, insets));
         }
 
         @Override
