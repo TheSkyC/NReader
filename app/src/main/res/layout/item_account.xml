@@ -63,14 +63,13 @@
             app:tint="?android:attr/textColorPrimary" />
     </LinearLayout>
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/account_manage"
+        style="@style/NReaderIconButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginStart="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/accounts_manage"
-        android:padding="12dp"
         app:srcCompat="@drawable/ic_account_more"
-        app:tint="?android:attr/textColorSecondary" />
+        app:tint="?attr/colorOnSurfaceVariant" />
 </LinearLayout>

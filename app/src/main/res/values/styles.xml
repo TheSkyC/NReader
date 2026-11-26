@@ -21,6 +21,14 @@
         <item name="maxButtonHeight">@dimen/tag_search_toolbar_height</item>
     </style>
 
+    <style name="NReaderIconButton">
+        <item name="android:minWidth">48dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+    </style>
+
     <style name="NReaderSlider.Page" parent="Widget.Material3.Slider.Legacy">
         <item name="trackHeight">4dp</item>
         <item name="thumbRadius">8dp</item>
