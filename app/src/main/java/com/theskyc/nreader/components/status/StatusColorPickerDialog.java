@@ -47,11 +47,6 @@ public final class StatusColorPickerDialog {
             String hexColor = String.format(java.util.Locale.ROOT, "#%06X", color & 0xFFFFFF);
             value.setText(hexColor);
             value.setContentDescription(context.getString(R.string.status_color_value, hexColor));
-            ColorStateList selectedColor = ColorStateList.valueOf(color);
-            saturation.setTrackActiveTintList(selectedColor);
-            brightness.setTrackActiveTintList(selectedColor);
-            float[] hueColor = {hsv[0], 1f, 1f};
-            hue.setTrackActiveTintList(ColorStateList.valueOf(Color.HSVToColor(hueColor)));
         };
         Slider.OnChangeListener onChange = (slider, sliderValue, fromUser) -> updatePreview.run();
         hue.addOnChangeListener(onChange);

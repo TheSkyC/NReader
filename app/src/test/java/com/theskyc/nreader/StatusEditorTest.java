@@ -9,10 +9,13 @@ import android.app.Application;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.ColorUtils;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.StatusManagerAdapter;
@@ -112,6 +115,47 @@ public class StatusEditorTest {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).callOnClick();
             assertFalse(dialog.isShowing());
             assertEquals(Color.RED, selected[0]);
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void colorPickerTracksRemainVisibleInLightTheme() {
+        assertColorPickerTracksRemainVisible();
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void colorPickerTracksRemainVisibleInDarkTheme() {
+        assertColorPickerTracksRemainVisible();
+    }
+
+    private void assertColorPickerTracksRemainVisible() {
+        try (ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
+            AppCompatActivity activity = controller.get();
+            activity.setTheme(R.style.AppTheme_Material3);
+            controller.setup();
+            StatusColorPickerDialog.show(activity, Color.BLUE, color -> { });
+            AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+            Slider hue = dialog.findViewById(R.id.color_hue);
+            Slider saturation = dialog.findViewById(R.id.color_saturation);
+            Slider brightness = dialog.findViewById(R.id.color_brightness);
+            TextView value = dialog.findViewById(R.id.color_value);
+            int surface = MaterialColors.getColor(hue, com.google.android.material.R.attr.colorSurface);
+
+            saturation.setValue(0f);
+            for (float level : new float[]{5f, 95f}) {
+                brightness.setValue(level);
+                assertEquals(level == 5f ? "#0D0D0D" : "#F2F2F2", value.getText().toString());
+                for (Slider slider : new Slider[]{hue, saturation, brightness}) {
+                    int track = slider.getTrackActiveTintList().getColorForState(
+                        new int[]{android.R.attr.state_enabled}, Color.TRANSPARENT);
+                    double contrast = ColorUtils.calculateContrast(track, surface);
+                    assertTrue(String.format("Track #%08X on surface #%08X: %.2f", track, surface, contrast),
+                        contrast >= 3.0);
+                }
+            }
+            dialog.dismiss();
         }
     }
 }
