@@ -230,6 +230,9 @@
                 android:minHeight="52dp"
                 android:text="@string/check_for_updates"
                 android:textAllCaps="false"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="20dp"
                 app:cornerRadius="14dp" />
 
             <com.google.android.material.button.MaterialButton

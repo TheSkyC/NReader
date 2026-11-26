@@ -3,15 +3,18 @@ package com.theskyc.nreader.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.button.MaterialButton;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.UpdateCenterActivity;
 import com.theskyc.nreader.async.update.UpdatePhase;
@@ -263,12 +266,19 @@ public class UpdateCheckWorkerPublicationTest {
         ActivityController<UpdateCenterActivity> controller = Robolectric.buildActivity(UpdateCenterActivity.class).setup();
         try {
             View secondary = controller.get().findViewById(R.id.update_secondary);
+            View progressCard = controller.get().findViewById(R.id.update_progress_card);
+            MaterialButton action = controller.get().findViewById(R.id.update_action);
             controller.get().onUpdateState(UpdateState.checking(1L));
             assertEquals(View.GONE, secondary.getVisibility());
-            assertFalse(controller.get().findViewById(R.id.update_action).isEnabled());
+            assertEquals(View.GONE, progressCard.getVisibility());
+            assertFalse(action.isEnabled());
+            assertTrue(action.getIcon() instanceof AnimatedVectorDrawable);
             controller.get().onUpdateState(UpdateState.idle(2L));
             assertEquals(View.GONE, secondary.getVisibility());
-            assertTrue(controller.get().findViewById(R.id.update_action).isEnabled());
+            assertTrue(action.isEnabled());
+            assertNull(action.getIcon());
+            controller.get().onUpdateState(UpdateState.downloading("2.0.0", "/tmp/update.apk", 0L, 100L, 3L));
+            assertEquals(View.VISIBLE, progressCard.getVisibility());
         } finally {
             controller.pause().stop().destroy();
         }

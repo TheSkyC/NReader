@@ -4,13 +4,14 @@ package com.theskyc.nreader;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.Formatter;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -20,8 +21,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 
 import com.theskyc.nreader.async.VersionChecker;
@@ -59,9 +62,12 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     private View errorCard;
     private View releaseCard;
     private LinearLayout metaRow;
-    private Button action;
-    private Button secondary;
-    private Button skip;
+    private MaterialButton action;
+    private MaterialButton secondary;
+    private MaterialButton skip;
+    private Animatable actionLoadingAnimation;
+    private boolean actionLoading;
+    private boolean actionLoadingAnimationRunning;
     private VersionChecker checker;
     private VersionChecker.GitHubRelease release;
     private UpdateState currentState;
@@ -163,6 +169,18 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (actionLoading) startActionLoadingAnimation();
+    }
+
+    @Override
+    protected void onStop() {
+        stopActionLoadingAnimation();
+        super.onStop();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         currentState = UpdateStateRecovery.reconcileStored(this);
@@ -190,6 +208,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
 
     @Override
     protected void onDestroy() {
+        stopActionLoadingAnimation();
         if (checker != null) checker.cancel();
         stateStore.unregisterListener(stateListener);
         stateHandler.removeCallbacks(refreshState);
@@ -213,6 +232,7 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
     }
 
     private void render(@NonNull UpdateState state) {
+        setActionLoading(state.getPhase() == UpdatePhase.CHECKING);
         renderStatusIcon(state.getPhase());
         progress.setVisibility(View.GONE);
         progressLabel.setVisibility(View.GONE);
@@ -228,8 +248,6 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
                 status.setText(R.string.update_checking);
                 action.setText(R.string.update_checking);
                 action.setEnabled(false);
-                progressCard.setVisibility(View.VISIBLE);
-                progress.setIndeterminate(true);
                 secondary.setVisibility(View.GONE);
                 break;
             case QUEUED:
@@ -333,6 +351,36 @@ public class UpdateCenterActivity extends GeneralActivity implements VersionChec
         size.setVisibility(size.getText().length() == 0 ? View.GONE : View.VISIBLE);
         metaRow.setVisibility(channel.getVisibility() == View.VISIBLE || size.getVisibility() == View.VISIBLE
             ? View.VISIBLE : View.GONE);
+    }
+
+    private void setActionLoading(boolean loading) {
+        if (actionLoading == loading) return;
+        actionLoading = loading;
+        if (loading) {
+            Drawable icon = AppCompatResources.getDrawable(this, R.drawable.ic_refresh_animated);
+            action.setIcon(icon);
+            action.setIconTint(action.getTextColors());
+            actionLoadingAnimation = icon instanceof Animatable ? (Animatable) icon : null;
+            startActionLoadingAnimation();
+            return;
+        }
+        stopActionLoadingAnimation();
+        actionLoadingAnimation = null;
+        action.setIcon(null);
+    }
+
+    private void startActionLoadingAnimation() {
+        if (actionLoadingAnimation != null && !actionLoadingAnimationRunning) {
+            actionLoadingAnimation.start();
+            actionLoadingAnimationRunning = true;
+        }
+    }
+
+    private void stopActionLoadingAnimation() {
+        if (actionLoadingAnimation != null && actionLoadingAnimationRunning) {
+            actionLoadingAnimation.stop();
+            actionLoadingAnimationRunning = false;
+        }
     }
 
     private void renderStatusIcon(@NonNull UpdatePhase phase) {
