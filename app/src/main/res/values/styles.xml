@@ -71,6 +71,7 @@
         <item name="colorSurfaceContainerHigh">@color/theme_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_on_surface_variant</item>
         <item name="colorOutline">@color/theme_outline</item>
+        <item name="colorOutlineVariant">@color/theme_outline</item>
         <item name="colorError">@color/theme_error</item>
         <item name="colorOnError">@color/theme_on_error</item>
         <item name="colorControlActivated">@color/m3_primary</item>
@@ -82,7 +83,6 @@
         <item name="android:windowLightNavigationBar">@bool/m3_light_system_bars</item>
         <item name="android:textColorPrimary">@color/theme_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_on_surface_variant</item>
-        <item name="nreaderOutline">@color/theme_outline</item>
     </style>
 
     <style name="NReaderPreferenceThemeOverlay" parent="PreferenceThemeOverlay.v14.Material">
@@ -140,6 +140,7 @@
         <item name="colorSurfaceContainerHigh">@color/theme_black_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/theme_black_on_surface</item>
         <item name="colorOutline">@color/theme_black_outline</item>
+        <item name="colorOutlineVariant">@color/theme_black_outline</item>
         <item name="android:windowBackground">@color/theme_black_background</item>
         <item name="android:colorBackground">@color/theme_black_background</item>
         <item name="android:statusBarColor">@color/theme_black_background</item>
@@ -148,7 +149,6 @@
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:textColorPrimary">@color/theme_black_on_surface</item>
         <item name="android:textColorSecondary">@color/theme_black_on_surface</item>
-        <item name="nreaderOutline">@color/theme_black_outline</item>
         <item name="elevationOverlayEnabled">false</item>
     </style>
 

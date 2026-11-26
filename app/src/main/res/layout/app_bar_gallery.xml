@@ -126,7 +126,7 @@
                     app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                     app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="?attr/nreaderOutline"
+                    app:strokeColor="?attr/colorOutline"
                     app:strokeWidth="1dp">
 
                   <FrameLayout
