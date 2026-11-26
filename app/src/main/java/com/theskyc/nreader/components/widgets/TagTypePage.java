@@ -33,6 +33,7 @@ import java.util.Objects;
 public class TagTypePage extends Fragment {
     private TagType type;
     private RecyclerView recyclerView;
+    private TextView rulesEmpty;
     private TagFilterActivity activity;
     private String query;
     private TagsAdapter adapter;
@@ -126,6 +127,7 @@ public class TagTypePage extends Fragment {
         type = TagType.values[requireArguments().getInt("TAGTYPE")];
         View rootView = inflater.inflate(R.layout.fragment_tag_filter, container, false);
         recyclerView = rootView.findViewById(R.id.recycler);
+        rulesEmpty = rootView.findViewById(R.id.tag_rules_empty);
         Global.applyFastScroller(recyclerView);
         loadTags();
         if (type.equals(TagType.CATEGORY)) {
@@ -212,6 +214,15 @@ public class TagTypePage extends Fragment {
         else if (type.equals(TagType.CATEGORY)) adapter = new TagsAdapter(activity, query, true);
         else adapter = new TagsAdapter(activity, query, type);
         recyclerView.setAdapter(adapter);
+        if (type == TagType.UNKNOWN) adapter.setResultsChangedListener(this::updateRulesEmpty);
+    }
+
+    private void updateRulesEmpty() {
+        if (rulesEmpty == null || adapter == null) return;
+        boolean empty = adapter.areResultsReady() && adapter.getItemCount() == 0;
+        rulesEmpty.setText(query == null || query.trim().isEmpty()
+            ? R.string.tag_rules_empty : R.string.tag_rules_no_matches);
+        rulesEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
     public void refilter(String newText) {
@@ -240,6 +251,7 @@ public class TagTypePage extends Fragment {
         if (recyclerView != null) recyclerView.setAdapter(null);
         adapter = null;
         recyclerView = null;
+        rulesEmpty = null;
         super.onDestroyView();
     }
 

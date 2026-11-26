@@ -35,7 +35,9 @@ import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -44,6 +46,47 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagsAdapterTest {
+    @Test public void emptyResultsArePublishedOnlyAfterTheLatestQueryFinishes() throws Exception {
+        try (SQLiteDatabase db = SQLiteDatabase.create(null);
+             ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {
+            Queries.setDb(db);
+            TagDatabaseFixture.createTables(db);
+            Tag tag = new Tag("example", 10, 42, TagType.TAG, TagStatus.ACCEPTED);
+            Queries.TagTable.insert(tag);
+            assertEquals(1, Queries.TagTable.updateTag(tag));
+            ArrayDeque<Runnable> work = new ArrayDeque<>();
+            TagsAdapter adapter = new TagsAdapter(controller.get(), "", false, new TagRowPages(work::add));
+            List<String> states = new ArrayList<>();
+            try {
+                adapter.setResultsChangedListener(() -> states.add(adapter.areResultsReady() + ":" + adapter.getItemCount()));
+                assertEquals(Collections.singletonList("false:0"), states);
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("true:1", states.get(states.size() - 1));
+
+                adapter.filter("no match");
+                adapter.filter("example");
+                assertEquals("false:1", states.get(states.size() - 1));
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("false:1", states.get(states.size() - 1));
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("true:1", states.get(states.size() - 1));
+
+                adapter.filter("no match");
+                work.remove().run();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("true:0", states.get(states.size() - 1));
+            } finally {
+                adapter.close();
+                while (!work.isEmpty()) work.remove().run();
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void recycledHolderCannotActOnTheOldRowWhileItsPageLoads() throws Exception {
         try (SQLiteDatabase db = SQLiteDatabase.create(null);
              ActivityController<TagFilterActivity> controller = Robolectric.buildActivity(TagFilterActivity.class).create()) {

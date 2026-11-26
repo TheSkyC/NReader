@@ -276,6 +276,8 @@
     <string name="bulk_clear_rules">清除規則</string>
     <string name="bulk_edit_saved_format">已更新 %1$d 個標籤。</string>
     <string name="bulk_edit_no_matches">沒有符合的標籤。</string>
+    <string name="tag_rules_empty">尚無標籤規則。可在其他分頁選擇標籤並設定規則。</string>
+    <string name="tag_rules_no_matches">沒有符合的標籤規則。</string>
     <string name="bulk_edit_too_many">符合的標籤超過 %1$d 個，請先縮小搜尋範圍。</string>
     <string name="undo_bulk_edit">復原上次批次編輯</string>
     <string name="bulk_undo_saved_format">已復原 %1$d 個標籤。</string>

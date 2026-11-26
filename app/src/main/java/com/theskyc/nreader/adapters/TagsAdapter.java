@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -61,6 +62,8 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
     private String lastQuery = null;
     private final TagRowPages rows;
     private long displayedOnlineRevision = -1;
+    private boolean resultsReady;
+    @Nullable private Runnable resultsChangedListener;
 
     public TagsAdapter(@NonNull TagFilterActivity cont, String query, boolean online) {
         this(cont, query, online, new TagRowPages());
@@ -90,6 +93,8 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
 
     public void filter(String query) {
         lastQuery = query == null ? "" : query;
+        resultsReady = false;
+        notifyResultsChanged();
         String requestedQuery = lastQuery;
         boolean sortedByName = TagV2.isSortedByName();
         TagStatus statusFilter = tagMode == TagMode.TYPE ? TagV2.getStatusFilter() : null;
@@ -107,11 +112,27 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> {
             if (newCount > oldCount) notifyItemRangeInserted(oldCount, newCount - oldCount);
             else if (oldCount > newCount) notifyItemRangeRemoved(newCount, oldCount - newCount);
             notifyItemRangeChanged(0, Math.min(newCount, oldCount));
+            resultsReady = true;
+            notifyResultsChanged();
         }, this::notifyItemRangeChanged);
+    }
+
+    public boolean areResultsReady() {
+        return resultsReady;
+    }
+
+    public void setResultsChangedListener(@Nullable Runnable listener) {
+        resultsChangedListener = listener;
+        notifyResultsChanged();
+    }
+
+    private void notifyResultsChanged() {
+        if (resultsChangedListener != null) resultsChangedListener.run();
     }
 
     public void close() {
         closed = true;
+        resultsChangedListener = null;
         AuthStore.removeIdentityObserver(authObserver);
         rows.close();
     }
