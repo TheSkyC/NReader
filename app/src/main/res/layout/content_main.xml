@@ -24,6 +24,57 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <FrameLayout
+        android:id="@+id/content_state"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?attr/colorSurface"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/page_switcher"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="32dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="32dp"
+            android:paddingBottom="24dp">
+
+            <ImageView
+                android:id="@+id/content_state_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:importantForAccessibility="no"
+                android:tint="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/content_state_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:maxWidth="320dp"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_state_action"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:minHeight="48dp"
+                android:text="@string/retry"
+                android:visibility="gone" />
+        </LinearLayout>
+    </FrameLayout>
+
     <com.theskyc.nreader.components.views.PageSwitcher
         android:id="@+id/page_switcher"
         android:layout_width="0dp"

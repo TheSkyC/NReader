@@ -33,6 +33,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -47,6 +48,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.bumptech.glide.RequestManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.search.SearchBar;
@@ -172,6 +174,10 @@ public class MainActivity extends BaseActivity
     private boolean inspecting = false;
     private SortType temporaryType;
     private Snackbar snackbar = null;
+    private View contentState;
+    private ImageView contentStateIcon;
+    private TextView contentStateMessage;
+    private MaterialButton contentStateAction;
     private long normalInspectorRuleRevision = -1;
     private boolean readingTagRules;
     private Tag browsedTag;
@@ -198,6 +204,10 @@ public class MainActivity extends BaseActivity
             super.onSuccess(galleries);
             adapter.restartDataset(galleries);
             updatePageSwitcher(galleries.isEmpty());
+            if (galleries.isEmpty())
+                showContentState(R.string.no_entry_found, R.drawable.ic_search, null);
+            else
+                runOnUiThread(MainActivity.this::hideContentState);
             runOnUiThread(() -> recycler.smoothScrollToPosition(0));
         }
     };
@@ -706,17 +716,42 @@ public class MainActivity extends BaseActivity
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
         pageSwitcher = findViewById(R.id.page_switcher);
+        contentState = findViewById(R.id.content_state);
+        contentStateIcon = findViewById(R.id.content_state_icon);
+        contentStateMessage = findViewById(R.id.content_state_message);
+        contentStateAction = findViewById(R.id.content_state_action);
         drawerLayout = findViewById(R.id.drawer_layout);
         onlineFavoriteManager = navigationView.getMenu().findItem(R.id.online_favorite_manager);
     }
 
     private void hideError() {
-        //errorText.setVisibility(View.GONE);
         runOnUiThread(() -> {
             if (snackbar != null && snackbar.isShown()) {
                 snackbar.dismiss();
                 snackbar = null;
             }
+            hideContentState();
+        });
+    }
+
+    private void hideContentState() {
+        if (contentState == null) return;
+        contentStateAction.setVisibility(View.GONE);
+        contentState.setVisibility(View.GONE);
+    }
+
+    private void showContentState(@StringRes int message, @DrawableRes int icon,
+                                  @Nullable View.OnClickListener action) {
+        runOnUiThread(() -> {
+            if (snackbar != null && snackbar.isShown()) {
+                snackbar.dismiss();
+                snackbar = null;
+            }
+            contentStateIcon.setImageResource(icon);
+            contentStateMessage.setText(message);
+            contentStateAction.setVisibility(action == null ? View.GONE : View.VISIBLE);
+            contentStateAction.setOnClickListener(action);
+            contentState.setVisibility(View.VISIBLE);
         });
     }
 
@@ -725,6 +760,7 @@ public class MainActivity extends BaseActivity
             hideError();
             return;
         }
+        runOnUiThread(this::hideContentState);
         if (listener == null) {
             snackbar = Snackbar.make(masterLayout, text, Snackbar.LENGTH_SHORT);
         } else {
@@ -1537,8 +1573,10 @@ public class MainActivity extends BaseActivity
         public void onSuccess(List<GenericGallery> galleries) {
             super.onSuccess(galleries);
             if (adapter != null) adapter.resetStatuses();
-            if (galleries.isEmpty())
-                showError(R.string.no_entry_found, null);
+            if (galleries.isEmpty() && (adapter == null || adapter.getItemCount() == 0))
+                showContentState(R.string.no_entry_found, R.drawable.ic_search, null);
+            else
+                runOnUiThread(MainActivity.this::hideContentState);
         }
 
         @Override
@@ -1559,10 +1597,14 @@ public class MainActivity extends BaseActivity
         @Override
         public void onFailure(Exception e) {
             super.onFailure(e);
-            showError(R.string.unable_to_connect_to_the_site, v -> {
+            View.OnClickListener retry = v -> {
                 inspector = inspector.cloneInspector(MainActivity.this, inspector.getResponse());
                 startInspector();
-            });
+            };
+            if (adapter == null || adapter.getItemCount() == 0)
+                showContentState(R.string.unable_to_connect_to_the_site, R.drawable.ic_refresh, retry);
+            else
+                showError(R.string.unable_to_connect_to_the_site, retry);
         }
 
         @Override
