@@ -7,87 +7,104 @@
     android:orientation="vertical"
     android:paddingTop="8dp">
 
-    <LinearLayout
+    <com.theskyc.nreader.components.views.ReaderControlRow
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
         android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/prev"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/prev"
-            app:tint="?attr/colorOnSurface"
-            app:srcCompat="@drawable/ic_arrow_back" />
-
-        <TextView
-            android:id="@+id/pages"
-            style="@style/TextAppearance.Material3.LabelLarge"
+        <LinearLayout
+            android:id="@+id/reader_navigation_group"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:focusable="false"
-            android:gravity="center"
-            android:inputType="none"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:text="@string/page_placeholder"
-            android:textAlignment="center"
-            android:textColor="?attr/colorOnSurface"
-            android:textDirection="ltr" />
+            android:minHeight="48dp"
+            android:orientation="horizontal">
 
-        <TextView
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/prev"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/prev"
+                app:tint="?attr/colorOnSurface"
+                app:srcCompat="@drawable/ic_arrow_back" />
+
+            <TextView
+                android:id="@+id/pages"
+                style="@style/TextAppearance.Material3.LabelLarge"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:focusable="false"
+                android:gravity="center"
+                android:inputType="none"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="@string/page_placeholder"
+                android:textAlignment="center"
+                android:textColor="?attr/colorOnSurface"
+                android:textDirection="ltr" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/app_name"
+                android:labelFor="@+id/pages"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/next"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/next"
+                app:tint="?attr/colorOnSurface"
+                app:srcCompat="@drawable/ic_arrow_forward" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/reader_tool_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/app_name"
-            android:labelFor="@+id/pages"
-            android:visibility="gone" />
+            android:layout_gravity="end"
+            android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/next"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/next"
-            app:tint="?attr/colorOnSurface"
-            app:srcCompat="@drawable/ic_arrow_forward" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/reader_page_preview"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/reader_page_preview"
+                android:visibility="gone"
+                app:tint="?attr/colorOnSurface"
+                app:srcCompat="@drawable/ic_reader_grid" />
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/reader_page_preview"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:minHeight="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/reader_page_preview"
-            android:visibility="gone"
-            app:tint="?attr/colorOnSurface"
-            app:srcCompat="@drawable/ic_reader_grid" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/reader_auto_scroll"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/reader_auto_scroll_start"
+                android:visibility="gone"
+                app:tint="?attr/colorOnSurface"
+                app:srcCompat="@drawable/ic_play" />
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/reader_auto_scroll"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:minHeight="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/reader_auto_scroll_start"
-            android:visibility="gone"
-            app:tint="?attr/colorOnSurface"
-            app:srcCompat="@drawable/ic_play" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/reader_settings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:minHeight="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/reader_settings_title"
+                android:visibility="gone"
+                app:tint="?attr/colorOnSurface"
+                app:srcCompat="@drawable/ic_reader_sliders" />
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/reader_settings"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:minHeight="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/reader_settings_title"
-            android:visibility="gone"
-            app:tint="?attr/colorOnSurface"
-            app:srcCompat="@drawable/ic_reader_sliders" />
-
-    </LinearLayout>
+        </LinearLayout>
+    </com.theskyc.nreader.components.views.ReaderControlRow>
 
     <com.google.android.material.slider.Slider
         android:id="@+id/page_slider"
