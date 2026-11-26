@@ -50,19 +50,22 @@
                     android:maxLength="1000" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <ImageButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/sendButton"
+                style="@style/Widget.Material3.Button.Icon"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
                 android:contentDescription="@string/send"
-                android:focusable="true"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp"
-                app:tint="?android:attr/colorForeground"
-                app:srcCompat="@android:drawable/ic_menu_send" />
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="48dp"
+                android:padding="12dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/ic_comment_send"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="22dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
