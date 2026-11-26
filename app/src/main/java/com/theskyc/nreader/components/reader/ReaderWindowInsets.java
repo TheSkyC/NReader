@@ -2,7 +2,6 @@
 package com.theskyc.nreader.components.reader;
 
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
@@ -26,15 +25,9 @@ public final class ReaderWindowInsets {
         if (controls != null) {
             controls.setPadding(safe.left, 0, safe.right, safe.bottom);
         }
-        setMargins(root.findViewById(R.id.page_text), safe.left, safe.top, safe.right, 0);
-    }
-
-    private static void setMargins(View view, int left, int top, int right, int bottom) {
-        if (view == null || !(view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return;
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-        if (params.leftMargin == left && params.topMargin == top
-            && params.rightMargin == right && params.bottomMargin == bottom) return;
-        params.setMargins(left, top, right, bottom);
-        view.setLayoutParams(params);
+        View statusOverlay = root.findViewById(R.id.reader_status_overlay);
+        if (statusOverlay instanceof ReaderStatusOverlayView) {
+            ((ReaderStatusOverlayView) statusOverlay).setSafeInsets(safe);
+        }
     }
 }

@@ -203,6 +203,11 @@
     <string name="app_version_format" formatted="true" translatable="false">NReader %s</string>
     <string name="hashtag" translatable="false">#</string>
     <string name="page_format" formatted="true" translatable="false">%d/%d</string>
+    <string name="reader_status_time_description">Time, %1$s</string>
+    <string name="reader_status_battery_description">Battery %1$d percent</string>
+    <string name="reader_status_battery_charging_description">Charging, battery %1$d percent</string>
+    <string name="reader_status_progress_count_description">Page %1$d of %2$d</string>
+    <string name="reader_status_progress_percent_description">Reading progress %1$d percent</string>
     <string name="percentage_format" formatted="true" translatable="false">%d%%</string>
     <string name="page_switcher_placeholder" translatable="false">0/0</string>
     <string name="page_placeholder" translatable="false">999/999</string>

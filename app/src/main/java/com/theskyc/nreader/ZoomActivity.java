@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -66,6 +68,8 @@ import com.theskyc.nreader.components.reader.ContinuousReaderNavigation;
 import com.theskyc.nreader.components.reader.ContinuousZoomViewport;
 import com.theskyc.nreader.components.reader.ReaderPageExport;
 import com.theskyc.nreader.components.reader.ReaderPageRotations;
+import com.theskyc.nreader.components.reader.ReaderStatusOverlayController;
+import com.theskyc.nreader.components.reader.ReaderStatusOverlayView;
 import com.theskyc.nreader.components.reader.ReaderScaleMode;
 import com.theskyc.nreader.components.reader.ReaderImageFilter;
 import com.theskyc.nreader.components.reader.SpreadReaderNavigation;
@@ -175,7 +179,8 @@ public class ZoomActivity extends GeneralActivity {
     private boolean switchingReaderMode;
     private ReaderNavigation readerNavigation;
     private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
-    private TextView pageManagerLabel, cornerPageViewer;
+    private TextView pageManagerLabel;
+    @Nullable private ReaderStatusOverlayController readerStatusOverlay;
     private int controlsAnimationGeneration;
     private Slider pageSlider;
     private Toolbar toolbar;
@@ -318,7 +323,8 @@ public class ZoomActivity extends GeneralActivity {
         updateReaderDirection();
         mViewPager.setOffscreenPageLimit(Global.getOffscreenLimit());
         pageManagerLabel = findViewById(R.id.pages);
-        cornerPageViewer = findViewById(R.id.page_text);
+        readerStatusOverlay = new ReaderStatusOverlayController(this,
+            (ReaderStatusOverlayView) findViewById(R.id.reader_status_overlay));
         pageSlider = findViewById(R.id.page_slider);
         view = findViewById(R.id.view);
         autoScrollButton = findViewById(R.id.reader_auto_scroll);
@@ -404,7 +410,7 @@ public class ZoomActivity extends GeneralActivity {
             AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
             getString(R.string.change_page), null);
         pageSlider.addOnChangeListener((slider, value, fromUser) -> {
-            if (fromUser) setPageText(Math.round(value) + 1);
+            if (fromUser) setPagePreviewText(Math.round(value) + 1);
         });
         pageSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
@@ -460,6 +466,20 @@ public class ZoomActivity extends GeneralActivity {
             adapter.setOnAccessibilityToggleControls(this::toggleReaderControls);
             continuousReader.setAdapter(adapter);
             readerNavigation = new ContinuousReaderNavigation(continuousReader, layout, page, this::onContinuousPageChanged);
+            continuousReader.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                    if (readerStatusOverlay == null) return;
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE)
+                        readerStatusOverlay.onInteractionEnded();
+                    else readerStatusOverlay.onInteractionStarted();
+                }
+
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (readerStatusOverlay != null) readerStatusOverlay.onReaderActivity();
+                }
+            });
             adapter.setImageTransition(((ContinuousReaderNavigation) readerNavigation)::changeImageKeepingPosition,
                 ((ContinuousReaderNavigation) readerNavigation)::cancelImageTransition);
             mViewPager.setVisibility(View.GONE);
@@ -707,7 +727,14 @@ public class ZoomActivity extends GeneralActivity {
     protected void onPause() {
         stopAutoScroll();
         savePosition();
+        if (readerStatusOverlay != null) readerStatusOverlay.onPause();
         super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (readerStatusOverlay != null) readerStatusOverlay.onResume();
     }
 
     @Override
@@ -731,12 +758,60 @@ public class ZoomActivity extends GeneralActivity {
         stopAutoScroll();
         continuousZoomViewport.setOnUserInteractionListener(null);
         if (pageExportTask != null) pageExportTask.cancel(true);
+        if (readerStatusOverlay != null) readerStatusOverlay.close();
         super.onDestroy();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (readerStatusOverlay != null) readerStatusOverlay.setModalVisible(!hasFocus);
     }
 
     private void setPageText(int page) {
         pageManagerLabel.setText(getString(R.string.page_format, page, gallery.getPageCount()));
-        cornerPageViewer.setText(getString(R.string.page_format, page, gallery.getPageCount()));
+        if (readerStatusOverlay != null) readerStatusOverlay.setProgress(page, gallery.getPageCount());
+    }
+
+    private void setPagePreviewText(int page) {
+        pageManagerLabel.setText(getString(R.string.page_format, page, gallery.getPageCount()));
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (readerStatusOverlay != null && isReaderViewportTouch(event)) {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN
+                || event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
+                readerStatusOverlay.onInteractionStarted();
+            } else if (event.getActionMasked() == MotionEvent.ACTION_UP
+                || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                readerStatusOverlay.onInteractionEnded();
+            }
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    private boolean isReaderViewportTouch(@NonNull MotionEvent event) {
+        View viewport = continuousMode ? continuousReader : mViewPager;
+        if (viewport == null || viewport.getVisibility() != View.VISIBLE) return false;
+        int[] location = new int[2];
+        viewport.getLocationOnScreen(location);
+        int x = Math.round(event.getRawX());
+        int y = Math.round(event.getRawY());
+        if (!new Rect(location[0], location[1], location[0] + viewport.getWidth(),
+            location[1] + viewport.getHeight()).contains(x, y)) return false;
+        if (!isHidden && (isPointInside(R.id.reader_toolbar_container, x, y)
+            || isPointInside(R.id.master_layout, x, y))) return false;
+        return true;
+    }
+
+    private boolean isPointInside(int viewId, int x, int y) {
+        View target = findViewById(viewId);
+        if (target == null || target.getVisibility() != View.VISIBLE) return false;
+        int[] location = new int[2];
+        target.getLocationOnScreen(location);
+        return new Rect(location[0], location[1], location[0] + target.getWidth(),
+            location[1] + target.getHeight()).contains(x, y);
     }
 
 
@@ -2006,6 +2081,7 @@ public class ZoomActivity extends GeneralActivity {
         int generation = ++controlsAnimationGeneration;
         View toolbarContainer = findViewById(R.id.reader_toolbar_container);
         View controls = findViewById(R.id.master_layout);
+        if (!isHidden && readerStatusOverlay != null) readerStatusOverlay.setControlsVisible(true);
         controls.animate().setListener(null).cancel();
         toolbarContainer.animate().setListener(null).cancel();
         view.animate().setListener(null).cancel();
@@ -2016,7 +2092,7 @@ public class ZoomActivity extends GeneralActivity {
                     controls.setVisibility(View.GONE);
                     toolbarContainer.setVisibility(View.GONE);
                     view.setVisibility(View.GONE);
-                    cornerPageViewer.setVisibility(View.VISIBLE);
+                    if (readerStatusOverlay != null) readerStatusOverlay.setControlsVisible(false);
                 }
             }
         };
@@ -2024,7 +2100,6 @@ public class ZoomActivity extends GeneralActivity {
         controls.setVisibility(View.VISIBLE);
         toolbarContainer.setVisibility(View.VISIBLE);
         view.setVisibility(View.VISIBLE);
-        cornerPageViewer.setVisibility(View.GONE);
 
         controls.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
         view.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();

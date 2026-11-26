@@ -127,7 +127,7 @@ public class ReaderWindowInsetsTest {
         View pager = activity.findViewById(R.id.container);
         View continuous = activity.findViewById(R.id.continuous_reader);
         ViewGroup parent = (ViewGroup) pager.getParent();
-        for (int id : new int[]{R.id.reader_toolbar_container, R.id.master_layout, R.id.page_text}) {
+        for (int id : new int[]{R.id.reader_toolbar_container, R.id.master_layout, R.id.reader_status_overlay}) {
             View overlay = activity.findViewById(id);
             assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(pager));
             assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(continuous));

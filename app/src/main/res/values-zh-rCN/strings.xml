@@ -690,4 +690,9 @@
     <string name="tag_translation_online_confirm">要下载并安装此语言包（%1$s）吗？</string>
     <string name="tag_translation_online_confirm_zh_hans">要下载并安装此语言包（%1$s）吗？\n\n译文来自 EhTagTranslation 数据库及其贡献者，由 TheSkyC 整理。除另有说明外，源内容采用 CC BY-NC-SA 3.0 中国大陆许可。\n\n来源与署名：%2$s\n许可：%3$s</string>
     <string name="tag_translation_display_pair">%1$s（%2$s）</string>
+    <string name="reader_status_time_description">时间，%1$s</string>
+    <string name="reader_status_battery_description">电量 %1$d%%</string>
+    <string name="reader_status_battery_charging_description">正在充电，电量 %1$d%%</string>
+    <string name="reader_status_progress_count_description">第 %1$d/%2$d 页</string>
+    <string name="reader_status_progress_percent_description">阅读进度 %1$d%%</string>
 </resources>
