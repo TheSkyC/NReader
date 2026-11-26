@@ -17,11 +17,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class MultichoiceAdapter<D, T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<MultichoiceAdapter.MultichoiceViewHolder<T>> {
     private final List<MultichoiceListener> listeners = new ArrayList<>(3);
     private Mode mode = Mode.NORMAL;
-    private final HashMap<Long, D> map = new HashMap<>() {
+    private final SelectionMap map = new SelectionMap();
+
+    private final class SelectionMap extends HashMap<Long, D> {
         @Nullable
         @Override
         public D put(Long key, D value) {
@@ -46,7 +49,16 @@ public abstract class MultichoiceAdapter<D, T extends RecyclerView.ViewHolder> e
             endSelecting();
             changeSelecting();
         }
-    };
+
+        void replaceSelection(Map<Long, D> selection) {
+            boolean hadSelection = !isEmpty();
+            super.clear();
+            super.putAll(selection);
+            if (hadSelection && isEmpty()) endSelecting();
+            else if (!hadSelection && !isEmpty()) startSelecting();
+            changeSelecting();
+        }
+    }
 
     public MultichoiceAdapter() {
         setHasStableIds(true);
@@ -171,6 +183,10 @@ public abstract class MultichoiceAdapter<D, T extends RecyclerView.ViewHolder> e
 
     public Collection<D> getSelected() {
         return map.values();
+    }
+
+    protected void replaceSelection(Map<Long, D> selection) {
+        map.replaceSelection(selection);
     }
 
     public void deselectAll() {

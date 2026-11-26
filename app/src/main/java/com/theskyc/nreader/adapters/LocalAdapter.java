@@ -48,9 +48,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHolder> implements Filterable {
@@ -166,22 +169,26 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                     dataset.remove(l);
                     dataset.add(l);
                 }
-                sortElements();
-                notifyDataSetChanged();
+                refreshAfterTaskEnded(downloader, l);
             });
         }
 
         @Override
         public void triggerCancelDownload(GalleryDownloaderV2 downloader) {
-            LocalGallery retained = downloader.localGallery();
+            LocalGallery local = downloader.localGallery();
+            LocalGallery retained = local != null && local.getPageCount() > 0 ? local : null;
+            File target = downloader.getFolder();
+            boolean targetDeleted = target != null && !target.isDirectory();
             context.runOnUiThread(() -> {
                 galleryDownloaders.remove(downloader);
-                if (retained != null && retained.getPageCount() > 0) {
+                if (retained != null) {
                     dataset.remove(retained);
                     dataset.add(retained);
+                } else if (targetDeleted) {
+                    File deletedFolder = target.getAbsoluteFile();
+                    dataset.removeIf(gallery -> deletedFolder.equals(gallery.getDirectory().getAbsoluteFile()));
                 }
-                sortElements();
-                notifyDataSetChanged();
+                refreshAfterTaskEnded(downloader, retained);
             });
         }
 
@@ -356,6 +363,31 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         filter = createHash(galleryDownloaders, dataset);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    private void refreshAfterTaskEnded(GalleryDownloaderV2 task, @Nullable LocalGallery retained) {
+        List<Object> selected = new ArrayList<>(getSelected());
+        sortElements();
+        if (!selected.isEmpty()) {
+            Set<LocalGallery> selectedGalleries = new HashSet<>();
+            Set<GalleryDownloaderV2> selectedTasks = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (Object previous : selected) {
+                Object target = previous == task ? retained : previous;
+                if (target instanceof LocalGallery) selectedGalleries.add((LocalGallery) target);
+                else if (target instanceof GalleryDownloaderV2) selectedTasks.add((GalleryDownloaderV2) target);
+            }
+            HashMap<Long, Object> selection = new HashMap<>();
+            for (int position = 0; position < filter.size(); position++) {
+                Object candidate = filter.get(position);
+                if (candidate instanceof LocalGallery && selectedGalleries.contains(candidate)
+                    || candidate instanceof GalleryDownloaderV2 && selectedTasks.contains(candidate))
+                    selection.put(getItemId(position), candidate);
+            }
+            refreshAfterSelection = false;
+            replaceSelection(selection);
+        }
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     protected ViewHolder onCreateMultichoiceViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -517,6 +549,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         builder.setTitle(R.string.delete_galleries).setMessage(getAllGalleries());
         builder.setPositiveButton(R.string.yes, (dialog, which) -> {
             ArrayList<Object> coll = new ArrayList<>(getSelected());
+            deselectAll();
             for (Object o : coll) {
                 filter.remove(o);
                 if (o instanceof LocalGallery) {
