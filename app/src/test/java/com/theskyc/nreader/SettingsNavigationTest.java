@@ -18,7 +18,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.preference.Preference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.PreferenceGroupAdapter;
 import androidx.preference.SwitchPreferenceCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.async.database.DatabaseHelper;
 import com.theskyc.nreader.settings.Global;
@@ -39,6 +41,43 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class SettingsNavigationTest {
+    @Test
+    @Config(qualifiers = "w320dp-h640dp")
+    public void settingsSectionRowsWrapLongTitlesAtLargeTextSize() {
+        Application application = RuntimeEnvironment.getApplication();
+        Global.initFromShared(application);
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class).setup()) {
+            SettingsActivity activity = controller.get();
+            RecyclerView list = activity.fragment.getListView();
+            int width = Math.round(320 * activity.getResources().getDisplayMetrics().density);
+            int height = Math.round(640 * activity.getResources().getDisplayMetrics().density);
+            for (int direction : new int[]{View.LAYOUT_DIRECTION_LTR, View.LAYOUT_DIRECTION_RTL}) {
+                list.setLayoutDirection(direction);
+                list.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+                list.layout(0, 0, width, height);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                int position = ((PreferenceGroupAdapter) list.getAdapter())
+                    .getPreferenceAdapterPosition("settings_screen_reader");
+                RecyclerView.ViewHolder holder = list.findViewHolderForAdapterPosition(position);
+                assertNotNull(holder);
+                TextView title = holder.itemView.findViewById(android.R.id.title);
+                TextView summary = holder.itemView.findViewById(android.R.id.summary);
+                assertTrue("Section titles must allow wrapping", title.getMaxLines() > 1);
+                title.setTextSize(24);
+                title.setText("Search, tags and\ncontent filter settings");
+                holder.itemView.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                holder.itemView.layout(0, 0, width, holder.itemView.getMeasuredHeight());
+                assertTrue(title.getLayout().getLineCount() > 1);
+                assertEquals(0, title.getLayout().getEllipsisCount(title.getLayout().getLineCount() - 1));
+                assertTrue(title.getBottom() <= summary.getTop());
+                assertTrue(summary.getBottom() <= holder.itemView.getHeight());
+            }
+        }
+    }
+
     @Test
     @Config(qualifiers = "w320dp-h640dp")
     public void sectionTitleAllowsMultipleLinesAtLargeTextSize() {
