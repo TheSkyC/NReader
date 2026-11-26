@@ -4,6 +4,8 @@ package com.theskyc.nreader;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,7 +16,6 @@ import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
 
 import com.theskyc.nreader.adapters.LocalAdapter;
 import com.theskyc.nreader.api.local.FakeInspector;
@@ -29,6 +30,8 @@ import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.MainGridSettings;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
@@ -37,6 +40,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class LocalActivity extends BaseActivity {
+    private static final String STATE_SEARCH_QUERY = "local_search_query";
+    private static final String STATE_SEARCH_EXPANDED = "local_search_expanded";
+
     @Override protected int getBlackThemeStyle() {
         return R.style.AppTheme_Material3_Black;
     }
@@ -50,23 +56,50 @@ public class LocalActivity extends BaseActivity {
             setMenuVisibility(optionMenu);
         }
     };
-    private Toolbar toolbar;
+    private SearchBar searchBar;
+    private SearchView searchView;
     private GalleryListGrid listGrid;
     private int idGalleryPosition = -1;
     private File folder = Global.MAINFOLDER;
-    private androidx.appcompat.widget.SearchView searchView;
+    private String query = "";
+    private boolean restoreSearchExpanded;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            query = savedInstanceState.getString(STATE_SEARCH_QUERY, "");
+            restoreSearchExpanded = savedInstanceState.getBoolean(STATE_SEARCH_EXPANDED, false);
+        }
         //Global.initActivity(this);
-        setContentView(R.layout.app_bar_main);
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setContentView(R.layout.activity_local);
+        searchBar = findViewById(R.id.toolbar);
+        setSupportActionBar(searchBar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(R.string.downloaded_manga);
+        actionBar.setDisplayShowTitleEnabled(false);
+        searchView = findViewById(R.id.search_view);
+        searchView.setupWithSearchBar(searchBar);
+        searchView.getEditText().setHint(R.string.search);
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applySearchQuery(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+        setSearchQuery(query);
+        if (restoreSearchExpanded) {
+            searchView.show();
+            restoreSearchExpanded = false;
+        }
         findViewById(R.id.page_switcher).setVisibility(View.GONE);
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
@@ -92,6 +125,7 @@ public class LocalActivity extends BaseActivity {
         this.adapter.addListener(listener);
         runOnUiThread(() -> {
             recycler.setAdapter(adapter);
+            adapter.getFilter().filter(query);
             listGrid.refresh();
         });
     }
@@ -108,22 +142,6 @@ public class LocalActivity extends BaseActivity {
         this.optionMenu = menu;
         listGrid.bindMenu(menu.findItem(R.id.list_columns));
         setMenuVisibility(menu);
-        searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
-        Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                searchView.clearFocus();
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                if (recycler.getAdapter() != null)
-                    ((LocalAdapter) recycler.getAdapter()).getFilter().filter(newText);
-                return true;
-            }
-        });
-
         Utility.tintMenu(this, menu);
 
         return true;
@@ -132,6 +150,9 @@ public class LocalActivity extends BaseActivity {
     private void setMenuVisibility(Menu menu) {
         if (menu == null) return;
         MultichoiceAdapter.Mode mode = adapter == null ? MultichoiceAdapter.Mode.NORMAL : adapter.getMode();
+        boolean normalMode = mode == MultichoiceAdapter.Mode.NORMAL;
+        searchBar.setEnabled(normalMode);
+        if (!normalMode && searchView.isShowing()) searchView.hide();
         boolean hasGallery = false;
         boolean hasDownloads = false;
         if (mode == MultichoiceAdapter.Mode.SELECTING) {
@@ -139,13 +160,12 @@ public class LocalActivity extends BaseActivity {
             hasDownloads = adapter.hasSelectedClass(GalleryDownloaderV2.class);
         }
 
-        menu.findItem(R.id.search).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
-        menu.findItem(R.id.list_columns).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
-        menu.findItem(R.id.sort_by_name).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
-        menu.findItem(R.id.filter_download_state).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
-        menu.findItem(R.id.filter_personal_state).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
-        menu.findItem(R.id.folder_choose).setVisible(mode == MultichoiceAdapter.Mode.NORMAL && Global.getUsableFolders(this).size() > 1);
-        menu.findItem(R.id.random_favorite).setVisible(mode == MultichoiceAdapter.Mode.NORMAL);
+        menu.findItem(R.id.list_columns).setVisible(normalMode);
+        menu.findItem(R.id.sort_by_name).setVisible(normalMode);
+        menu.findItem(R.id.filter_download_state).setVisible(normalMode);
+        menu.findItem(R.id.filter_personal_state).setVisible(normalMode);
+        menu.findItem(R.id.folder_choose).setVisible(normalMode && Global.getUsableFolders(this).size() > 1);
+        menu.findItem(R.id.random_favorite).setVisible(normalMode);
 
         menu.findItem(R.id.delete_all).setVisible(mode == MultichoiceAdapter.Mode.SELECTING);
         menu.findItem(R.id.select_all).setVisible(mode == MultichoiceAdapter.Mode.SELECTING);
@@ -163,6 +183,13 @@ public class LocalActivity extends BaseActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString(STATE_SEARCH_QUERY, query);
+        state.putBoolean(STATE_SEARCH_EXPANDED, searchView != null && searchView.isShowing());
+    }
+
+    @Override
     protected void changeLayout(boolean landscape) {
         if (listGrid == null) listGrid = new GalleryListGrid(recycler, MainGridSettings.forDownloads(this));
         else listGrid.refresh();
@@ -170,9 +197,10 @@ public class LocalActivity extends BaseActivity {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN && searchView != null && searchView.hasFocus()) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN && searchView != null
+            && searchView.getEditText().hasFocus()) {
             Rect bounds = new Rect();
-            if (searchView.getGlobalVisibleRect(bounds)
+            if (searchView.getEditText().getGlobalVisibleRect(bounds)
                 && !bounds.contains((int) event.getRawX(), (int) event.getRawY())) searchView.clearFocus();
         }
         return super.dispatchTouchEvent(event);
@@ -180,7 +208,7 @@ public class LocalActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (searchView != null) searchView.clearFocus();
+        if (searchView != null) searchView.getEditText().clearFocus();
         super.onPause();
     }
 
@@ -280,7 +308,7 @@ public class LocalActivity extends BaseActivity {
     private void dialogSortType() {
         LocalSortType sortType = Global.getLocalSortType();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        LinearLayout view = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.local_sort_type, toolbar, false);
+        LinearLayout view = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.local_sort_type, searchBar, false);
         ChipGroup group = view.findViewById(R.id.chip_group);
         MaterialSwitch switchMaterial = view.findViewById(R.id.ascending);
         group.check(group.getChildAt(sortType.type.ordinal()).getId());
@@ -317,8 +345,22 @@ public class LocalActivity extends BaseActivity {
     }
 
     public String getQuery() {
-        if (searchView == null) return "";
-        CharSequence query = searchView.getQuery();
-        return query == null ? "" : query.toString();
+        return query;
+    }
+
+    private void setSearchQuery(String value) {
+        String newQuery = value == null ? "" : value;
+        searchBar.setText(newQuery);
+        if (newQuery.equals(searchView.getEditText().getText().toString())) {
+            applySearchQuery(newQuery);
+        } else {
+            searchView.setText(newQuery);
+        }
+    }
+
+    private void applySearchQuery(String value) {
+        query = value;
+        searchBar.setText(query);
+        if (adapter != null) adapter.getFilter().filter(query);
     }
 }
