@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -325,6 +326,7 @@ final class GalleryCardActions {
     private static BottomSheetDialog sheet(Context context, String title, String detail) {
         BottomSheetDialog dialog = new BottomSheetDialog(context);
         dialog.setContentView(R.layout.gallery_download_sheet);
+        dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
         ((TextView) dialog.findViewById(R.id.sheet_title)).setText(title);
         ((TextView) dialog.findViewById(R.id.sheet_detail)).setText(detail);
         return dialog;

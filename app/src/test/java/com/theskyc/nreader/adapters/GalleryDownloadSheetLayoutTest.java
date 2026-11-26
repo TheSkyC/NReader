@@ -1,5 +1,6 @@
 package com.theskyc.nreader.adapters;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.widget.NestedScrollView;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.theskyc.nreader.R;
 
@@ -51,6 +53,7 @@ public class GalleryDownloadSheetLayoutTest {
                 ReflectionHelpers.ClassParameter.from(int.class, R.string.download_repair_start),
                 ReflectionHelpers.ClassParameter.from(Runnable.class, (Runnable) () -> clicked[0] = true));
             dialog.show();
+            assertEquals(BottomSheetBehavior.STATE_EXPANDED, dialog.getBehavior().getState());
 
             NestedScrollView scroll = dialog.findViewById(R.id.sheet_scroll);
             LinearLayout actions = dialog.findViewById(R.id.sheet_actions);
