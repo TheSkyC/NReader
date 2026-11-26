@@ -15,17 +15,16 @@
         app:elevation="0dp"
         android:paddingTop="@dimen/appbar_padding_top">
 
-        <com.google.android.material.appbar.MaterialToolbar
+        <com.google.android.material.search.SearchBar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorSurface"
             android:layout_weight="1"
             app:layout_scrollFlags="scroll|enterAlways"
-            app:title="@string/title_activity_tag_filter"
-            app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge">
+            android:hint="@string/search">
 
-        </com.google.android.material.appbar.MaterialToolbar>
+        </com.google.android.material.search.SearchBar>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabs"
@@ -44,5 +43,10 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <com.google.android.material.search.SearchView
+        android:id="@+id/search_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_anchor="@id/toolbar" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

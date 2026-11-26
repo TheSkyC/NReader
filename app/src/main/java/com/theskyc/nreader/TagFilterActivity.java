@@ -17,8 +17,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -39,6 +37,8 @@ import com.theskyc.nreader.async.database.TagRuleEdits;
 import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.utility.LogUtility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputLayout;
@@ -48,6 +48,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class TagFilterActivity extends GeneralActivity {
+    private static final String STATE_SEARCH_EXPANDED = "tag_search_expanded";
+
     @Override
     protected int getBlackThemeStyle() {
         return R.style.AppTheme_Material3_Black;
@@ -58,8 +60,10 @@ public class TagFilterActivity extends GeneralActivity {
     }
 
     private SearchView searchView;
+    private SearchBar searchBar;
     private ViewPager2 mViewPager;
     private String query = "";
+    private boolean restoreSearchExpanded;
     private MenuItem sortFilterItem;
     private MenuItem minCountFilterItem;
     private MenuItem statusFilterItem;
@@ -72,15 +76,36 @@ public class TagFilterActivity extends GeneralActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) query = savedInstanceState.getString("tag_query", "");
+        if (savedInstanceState != null) {
+            query = savedInstanceState.getString("tag_query", "");
+            restoreSearchExpanded = savedInstanceState.getBoolean(STATE_SEARCH_EXPANDED, false);
+        }
         //Global.initActivity(this);
         setContentView(R.layout.activity_tag_filter);
 
         //init toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        searchBar = findViewById(R.id.toolbar);
+        setSupportActionBar(searchBar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        searchView = findViewById(R.id.search_view);
+        searchView.setupWithSearchBar(searchBar);
+        searchView.getEditText().setHint(getString(R.string.search));
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applySearchQuery(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -137,10 +162,30 @@ public class TagFilterActivity extends GeneralActivity {
         return query;
     }
 
+    private void setSearchQuery(String value) {
+        String newQuery = value == null ? "" : value;
+        searchBar.setText(newQuery);
+        if (newQuery.equals(searchView.getEditText().getText().toString())) {
+            applySearchQuery(newQuery);
+        } else {
+            searchView.setText(newQuery);
+        }
+    }
+
+    private void applySearchQuery(String value) {
+        query = value;
+        searchBar.setText(query);
+        TagTypePage page = getActualFragment();
+        if (page != null) page.refilter(query);
+        updateBulkEditItem();
+        updateTagViewItems();
+    }
+
     @Override
     protected void onSaveInstanceState(@NonNull Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("tag_query", query);
+        state.putBoolean(STATE_SEARCH_EXPANDED, searchView != null && searchView.isShowing());
     }
 
     @Nullable
@@ -186,7 +231,6 @@ public class TagFilterActivity extends GeneralActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_tag_filter, menu);
-        Global.setTint(this, menu.findItem(R.id.search).getIcon());
         sortFilterItem = menu.findItem(R.id.sort_by_name);
         updateSortItem(sortFilterItem);
         minCountFilterItem = menu.findItem(R.id.set_min_count);
@@ -202,26 +246,11 @@ public class TagFilterActivity extends GeneralActivity {
         saveTagViewItem = menu.findItem(R.id.save_tag_view);
         savedTagViewsItem = menu.findItem(R.id.saved_tag_views);
         updateTagViewItems();
-        searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
-        Objects.requireNonNull(searchView).setQuery(query, false);
-        Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                query = newText;
-                TagTypePage page = getActualFragment();
-                if (page != null) {
-                    page.refilter(newText);
-                }
-                updateBulkEditItem();
-                updateTagViewItems();
-                return true;
-            }
-        });
+        setSearchQuery(query);
+        if (restoreSearchExpanded) {
+            searchView.show();
+            restoreSearchExpanded = false;
+        }
         return true;
     }
 
@@ -357,7 +386,7 @@ public class TagFilterActivity extends GeneralActivity {
                 TagV2.RecentTag selected = recent.get(which);
                 Integer page = pageForType(selected.type);
                 if (page != null) mViewPager.setCurrentItem(page, false);
-                if (searchView != null) searchView.setQuery(selected.name, false);
+                if (searchView != null) setSearchQuery(selected.name);
                 dialog.dismiss();
             })
             .setNeutralButton(R.string.clear_recent_tags, (dialog, which) -> {
@@ -638,7 +667,7 @@ public class TagFilterActivity extends GeneralActivity {
         query = view.getAsString("query");
         if (query == null) query = "";
         mViewPager.setCurrentItem(page, false);
-        if (searchView != null) searchView.setQuery(query, false);
+        if (searchView != null) setSearchQuery(query);
         updateSortItem(sortFilterItem);
         updateMinCountItem(minCountFilterItem);
         updateStatusFilterItem(statusFilterItem);

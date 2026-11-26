@@ -1,6 +1,7 @@
 package com.theskyc.nreader;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -14,7 +15,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -29,7 +29,10 @@ import com.theskyc.nreader.async.database.TagViewStore;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
+import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.TagV2;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.junit.Test;
@@ -52,6 +55,45 @@ import java.util.function.BooleanSupplier;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class TagFilterWorkflowTest {
+    @Test public void materialSearchRestoresExpandedQueryAndCollapsedLabel() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        Login.initLogin(app);
+        TagV2.resetFilterPreferences(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            Database.setDatabase(helper.getWritableDatabase());
+            Intent launch = new Intent(app, TagFilterActivity.class).setData(Uri.parse("https://nhentai.net/tags/"));
+            try (ActivityController<TagFilterActivity> controller =
+                     Robolectric.buildActivity(TagFilterActivity.class, launch).setup()) {
+                TagFilterActivity activity = controller.get();
+                SearchBar searchBar = activity.findViewById(R.id.toolbar);
+                SearchView searchView = activity.findViewById(R.id.search_view);
+                assertFalse(searchView.isShowing());
+
+                searchBar.performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(searchView.isShowing());
+                searchView.setText("fixture");
+                assertEquals("fixture", searchBar.getText().toString());
+
+                controller.recreate();
+                TagFilterActivity restored = controller.get();
+                SearchBar restoredBar = restored.findViewById(R.id.toolbar);
+                SearchView restoredView = restored.findViewById(R.id.search_view);
+                assertTrue(restoredView.isShowing());
+                assertEquals("fixture", restored.getSearchQuery());
+                assertEquals("fixture", restoredView.getEditText().getText().toString());
+
+                restoredView.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(restoredView.isShowing());
+                assertEquals("fixture", restoredBar.getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void aliasSearchEditAppliedRuleClearAndRecreate() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         Global.initFromShared(app);
@@ -78,8 +120,8 @@ public class TagFilterWorkflowTest {
                 assertEquals("Minimum gallery count per tag (25)",
                     toolbar.getMenu().findItem(R.id.set_min_count).getTitle().toString());
                 await(activity, () -> count(activity, 1) == 2);
-                SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
-                search.setQuery("lookup phrase", false);
+                SearchView search = activity.findViewById(R.id.search_view);
+                search.setText("lookup phrase");
                 await(activity, () -> count(activity, 1) == 1 && firstRow(activity, 1) != null);
                 View found = firstRow(activity, 1);
                 assertTrue(((TextView) found.findViewById(R.id.title)).getText().toString().contains("Localized fixture"));
@@ -134,8 +176,8 @@ public class TagFilterWorkflowTest {
                 pager.setCurrentItem(1, false);
                 await(activity, () -> count(activity, 1) == 2);
                 Toolbar toolbar = activity.findViewById(R.id.toolbar);
-                SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
-                search.setQuery("bulk fixture", false);
+                SearchView search = activity.findViewById(R.id.search_view);
+                search.setText("bulk fixture");
                 await(activity, () -> toolbar.getMenu().findItem(R.id.bulk_edit_rules).isVisible());
 
                 activity.onOptionsItemSelected(toolbar.getMenu().findItem(R.id.bulk_edit_rules));
@@ -175,8 +217,8 @@ public class TagFilterWorkflowTest {
                 pager.setCurrentItem(1, false);
                 await(activity, () -> count(activity, 1) == 1);
                 Toolbar toolbar = activity.findViewById(R.id.toolbar);
-                SearchView search = (SearchView) toolbar.getMenu().findItem(R.id.search).getActionView();
-                search.setQuery("saved view", false);
+                SearchView search = activity.findViewById(R.id.search_view);
+                search.setText("saved view");
                 TagV2.updateMinCount(app, 77);
                 TagV2.setSortByName(app, true);
                 TagV2.updateStatusFilter(app, TagStatus.ACCEPTED);
@@ -197,7 +239,7 @@ public class TagFilterWorkflowTest {
                 assertTrue(save.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
                 await(activity, () -> TagViewStore.list().size() == 1);
 
-                search.setQuery("changed", false);
+                search.setText("changed");
                 TagV2.updateMinCount(app, 25);
                 TagV2.setSortByName(app, false);
                 TagV2.updateStatusFilter(app, null);
