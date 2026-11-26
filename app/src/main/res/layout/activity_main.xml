@@ -20,6 +20,7 @@
         android:layout_gravity="start"
         android:background="?attr/colorSurface"
         android:fitsSystemWindows="true"
+        app:itemMaxLines="2"
         app:itemTextAppearance="@style/TextAppearance.Material3.LabelLarge"
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer" />
