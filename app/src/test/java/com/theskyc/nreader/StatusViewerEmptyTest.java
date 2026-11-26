@@ -1,6 +1,8 @@
 package com.theskyc.nreader;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
@@ -18,6 +20,8 @@ import com.theskyc.nreader.components.status.StatusManager;
 import com.theskyc.nreader.settings.Database;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.ui.main.PlaceholderFragment;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,6 +98,41 @@ public class StatusViewerEmptyTest {
                 fragment.changeQuery("");
                 assertEquals(View.VISIBLE, message.getVisibility());
                 assertEquals(activity.getString(R.string.status_viewer_empty), message.getText().toString());
+            }
+        }
+    }
+
+    @Test
+    public void materialSearchRestoresQueryAndExpandedState() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            Database.setDatabase(database.getWritableDatabase());
+            StatusManager.replaceAll(Collections.emptyList());
+            try (ActivityController<StatusViewerActivity> controller =
+                     Robolectric.buildActivity(StatusViewerActivity.class).setup()) {
+                StatusViewerActivity activity = controller.get();
+                SearchBar searchBar = activity.findViewById(R.id.toolbar);
+                SearchView searchView = activity.findViewById(R.id.search_view);
+                assertFalse(searchView.isShowing());
+
+                searchBar.performClick();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(searchView.isShowing());
+
+                searchView.getEditText().setText("reading");
+                assertEquals("reading", searchBar.getText().toString());
+                controller.recreate();
+
+                SearchBar restoredBar = controller.get().findViewById(R.id.toolbar);
+                SearchView restoredView = controller.get().findViewById(R.id.search_view);
+                assertTrue(restoredView.isShowing());
+                assertEquals("reading", restoredBar.getText().toString());
+                assertEquals("reading", restoredView.getEditText().getText().toString());
+                restoredView.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(restoredView.isShowing());
+                assertEquals("reading", restoredBar.getText().toString());
             }
         }
     }

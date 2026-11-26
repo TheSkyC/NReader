@@ -2,14 +2,16 @@ package com.theskyc.nreader;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.theskyc.nreader.components.activities.GeneralActivity;
@@ -19,6 +21,8 @@ import com.theskyc.nreader.ui.main.PlaceholderFragment;
 import com.theskyc.nreader.ui.main.SectionsPagerAdapter;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.Utility;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -28,6 +32,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class StatusViewerActivity extends GeneralActivity {
+    private static final String STATE_QUERY = "status.search.query";
+    private static final String STATE_SEARCH_EXPANDED = "status.search.expanded";
+    private static final String STATE_SORT_BY_TITLE = "status.sort_by_title";
+
     @Override
     protected int getBlackThemeStyle() {
         return R.style.AppTheme_Material3_Black;
@@ -38,18 +46,47 @@ public class StatusViewerActivity extends GeneralActivity {
     private ViewPager2 viewPager;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private List<String> displayedStatuses;
+    private SearchBar searchBar;
+    private SearchView searchView;
     private final ExecutorService countLoader = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status_viewer);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        searchBar = findViewById(R.id.toolbar);
+        setSupportActionBar(searchBar);
         ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(R.string.view_statuses);
+        actionBar.setDisplayShowTitleEnabled(false);
+        searchView = findViewById(R.id.search_view);
+        searchView.setupWithSearchBar(searchBar);
+        searchView.getEditText().setHint(getString(R.string.search));
+        searchView.getEditText().setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        boolean restoreSearchExpanded = false;
+        if (savedInstanceState != null) {
+            query = savedInstanceState.getString(STATE_QUERY);
+            sortByTitle = savedInstanceState.getBoolean(STATE_SORT_BY_TITLE, false);
+            restoreSearchExpanded = savedInstanceState.getBoolean(STATE_SEARCH_EXPANDED, false);
+            if (query != null) setSearchText(query);
+        }
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                query = s.toString();
+                searchBar.setText(query);
+                PlaceholderFragment fragment = getActualFragment();
+                if (fragment != null) fragment.changeQuery(query);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
         viewPager = findViewById(R.id.view_pager);
         sectionsPagerAdapter = new SectionsPagerAdapter(this);
         displayedStatuses = StatusManager.getNames();
@@ -73,6 +110,7 @@ public class StatusViewerActivity extends GeneralActivity {
             startActivity(new Intent(this, StatusManagerActivity.class)));
         new TabLayoutMediator(tabs, viewPager, true, (tab, position) -> tab.setText(sectionsPagerAdapter.getPageTitle(position))).attach();
         loadStatusCounts();
+        if (restoreSearchExpanded) searchView.show();
     }
 
     @Override
@@ -110,6 +148,19 @@ public class StatusViewerActivity extends GeneralActivity {
         super.onDestroy();
     }
 
+    private void setSearchText(String query) {
+        searchBar.setText(query);
+        searchView.setText(query);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_QUERY, searchView.getEditText().getText().toString());
+        outState.putBoolean(STATE_SEARCH_EXPANDED, searchView.isShowing());
+        outState.putBoolean(STATE_SORT_BY_TITLE, sortByTitle);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -145,21 +196,9 @@ public class StatusViewerActivity extends GeneralActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.status_viewer, menu);
-        final SearchView searchView = (androidx.appcompat.widget.SearchView) menu.findItem(R.id.search).getActionView();
-        Objects.requireNonNull(searchView).setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                query = newText;
-                PlaceholderFragment fragment = getActualFragment();
-                if (fragment != null) fragment.changeQuery(query);
-                return true;
-            }
-        });
+        MenuItem sortItem = menu.findItem(R.id.sort_by_name);
+        sortItem.setTitle(sortByTitle ? R.string.sort_by_latest : R.string.sort_by_title);
+        sortItem.setIcon(sortByTitle ? R.drawable.ic_sort_by_alpha : R.drawable.ic_access_time);
         Utility.tintMenu(this, menu);
         return super.onCreateOptionsMenu(menu);
     }
