@@ -69,6 +69,7 @@ import com.theskyc.nreader.components.reader.ContinuousZoomViewport;
 import com.theskyc.nreader.components.reader.ReaderPageExport;
 import com.theskyc.nreader.components.reader.ReaderPageRotations;
 import com.theskyc.nreader.components.reader.ReaderStatusOverlayController;
+import com.theskyc.nreader.components.reader.ReaderStatusSettings;
 import com.theskyc.nreader.components.reader.ReaderStatusOverlayView;
 import com.theskyc.nreader.components.reader.ReaderScaleMode;
 import com.theskyc.nreader.components.reader.ReaderImageFilter;
@@ -84,6 +85,7 @@ import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -1182,6 +1184,12 @@ public class ZoomActivity extends GeneralActivity {
         bindReaderSectionDialog(dialog, R.id.reader_presets_toggle, R.id.reader_presets_content, R.string.reader_preset_title);
         bindReaderSectionDialog(dialog, R.id.reader_adjustments_toggle, R.id.reader_adjustments_content,
             R.string.reader_adjustments_title);
+        View readerStatusRow = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_toggle));
+        readerStatusRow.setContentDescription(getString(R.string.reader_status_title));
+        readerStatusRow.setOnClickListener(ignored -> {
+            dialog.dismiss();
+            showReaderStatusSettings();
+        });
         BottomSheetBehavior<?> behavior = dialog.getBehavior();
         behavior.setFitToContents(false);
         behavior.setHalfExpandedRatio(0.5f);
@@ -1200,6 +1208,320 @@ public class ZoomActivity extends GeneralActivity {
             });
         });
         dialog.show();
+    }
+
+    private void showReaderStatusSettings() {
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        ReaderStatusSettings settings = ReaderStatusSettings.load(preferences);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.reader_status_settings_sheet);
+
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_enabled,
+            ReaderStatusSettings.KEY_ENABLED, settings.enabled);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_time_enabled,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "enabled"), settings.timeEnabled);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_battery_enabled,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_BATTERY, "enabled"), settings.batteryEnabled);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_progress_enabled,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "enabled"), settings.progressEnabled);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_time_idle,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "visibility"),
+            settings.timeVisibility == ReaderStatusSettings.VISIBILITY_IDLE);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_battery_idle,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_BATTERY, "visibility"),
+            settings.batteryVisibility == ReaderStatusSettings.VISIBILITY_IDLE);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_progress_idle,
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "visibility"),
+            settings.progressVisibility == ReaderStatusSettings.VISIBILITY_IDLE);
+
+        RadioGroup batteryFormat = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_battery_format));
+        batteryFormat.check(settings.batteryFormat == ReaderStatusSettings.BATTERY_ICON_ONLY
+            ? R.id.reader_status_battery_icon_only
+            : settings.batteryFormat == ReaderStatusSettings.BATTERY_PERCENT_ONLY
+                ? R.id.reader_status_battery_percent_only : R.id.reader_status_battery_both);
+        batteryFormat.setOnCheckedChangeListener((group, checkedId) -> {
+            int value = checkedId == R.id.reader_status_battery_icon_only
+                ? ReaderStatusSettings.BATTERY_ICON_ONLY
+                : checkedId == R.id.reader_status_battery_percent_only
+                    ? ReaderStatusSettings.BATTERY_PERCENT_ONLY : ReaderStatusSettings.BATTERY_ICON_AND_PERCENT;
+            preferences.edit().putInt(ReaderStatusSettings.KEY_BATTERY_FORMAT, value).apply();
+            refreshReaderStatusSettings();
+        });
+
+        RadioGroup progressFormat = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_progress_format));
+        progressFormat.check(settings.progressFormat == ReaderStatusSettings.PROGRESS_PERCENT
+            ? R.id.reader_status_progress_percent : R.id.reader_status_progress_pages);
+        progressFormat.setOnCheckedChangeListener((group, checkedId) -> {
+            int value = checkedId == R.id.reader_status_progress_percent
+                ? ReaderStatusSettings.PROGRESS_PERCENT : ReaderStatusSettings.PROGRESS_COUNT;
+            preferences.edit().putInt(ReaderStatusSettings.KEY_PROGRESS_FORMAT, value).apply();
+            refreshReaderStatusSettings();
+        });
+
+        MaterialButtonToggleGroup delay = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_idle_delay));
+        delay.check(settings.idleDelaySeconds == 2 ? R.id.reader_status_delay_2
+            : settings.idleDelaySeconds == 5 ? R.id.reader_status_delay_5
+            : settings.idleDelaySeconds == 10 ? R.id.reader_status_delay_10 : R.id.reader_status_delay_3);
+        delay.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            int seconds = checkedId == R.id.reader_status_delay_2 ? 2
+                : checkedId == R.id.reader_status_delay_5 ? 5
+                : checkedId == R.id.reader_status_delay_10 ? 10 : 3;
+            preferences.edit().putInt(ReaderStatusSettings.KEY_IDLE_DELAY, seconds).apply();
+            refreshReaderStatusSettings();
+        });
+
+        MaterialButtonToggleGroup style = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_style));
+        style.check(settings.style == ReaderStatusSettings.STYLE_MINIMAL
+            ? R.id.reader_status_style_minimal : R.id.reader_status_style_backed);
+        style.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            int value = checkedId == R.id.reader_status_style_minimal
+                ? ReaderStatusSettings.STYLE_MINIMAL : ReaderStatusSettings.STYLE_BACKED;
+            preferences.edit().putInt(ReaderStatusSettings.KEY_STYLE, value).apply();
+            refreshReaderStatusSettings();
+        });
+
+        TextView textSizeLabel = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_text_size_value));
+        Slider textSize = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_text_size));
+        textSize.setValueFrom(10f);
+        textSize.setValueTo(18f);
+        textSize.setStepSize(1f);
+        textSize.setValue(settings.textSizeSp);
+        updateReaderStatusSliderLabel(textSizeLabel, R.string.reader_status_text_size_value, settings.textSizeSp);
+        textSize.addOnChangeListener((slider, value, fromUser) -> {
+            updateReaderStatusSliderLabel(textSizeLabel, R.string.reader_status_text_size_value, value);
+            if (fromUser) {
+                preferences.edit().putFloat(ReaderStatusSettings.KEY_TEXT_SIZE, value).apply();
+                refreshReaderStatusSettings();
+            }
+        });
+
+        TextView opacityLabel = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_opacity_value));
+        Slider opacity = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_opacity));
+        opacity.setValueFrom(30f);
+        opacity.setValueTo(90f);
+        opacity.setStepSize(1f);
+        opacity.setValue(settings.backgroundOpacity);
+        updateReaderStatusSliderLabel(opacityLabel, R.string.reader_status_opacity_value,
+            settings.backgroundOpacity);
+        opacity.addOnChangeListener((slider, value, fromUser) -> {
+            updateReaderStatusSliderLabel(opacityLabel, R.string.reader_status_opacity_value, value);
+            if (fromUser) {
+                preferences.edit().putInt(ReaderStatusSettings.KEY_BACKGROUND_OPACITY, Math.round(value)).apply();
+                refreshReaderStatusSettings();
+            }
+        });
+
+        dialog.findViewById(R.id.reader_status_positions).setOnClickListener(ignored -> {
+            dialog.dismiss();
+            showReaderStatusPositionEditor();
+        });
+        dialog.findViewById(R.id.reader_status_reset).setOnClickListener(ignored -> {
+            clearReaderStatusPreferences(preferences);
+            refreshReaderStatusSettings();
+            dialog.dismiss();
+            showReaderStatusSettings();
+        });
+        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        dialog.show();
+    }
+
+    private void bindReaderStatusSwitch(@NonNull BottomSheetDialog dialog,
+                                       @NonNull SharedPreferences preferences, int viewId,
+                                       @NonNull String key, boolean checked) {
+        SwitchMaterial control = Objects.requireNonNull(dialog.findViewById(viewId));
+        control.setChecked(checked);
+        control.setOnCheckedChangeListener((button, value) -> {
+            SharedPreferences.Editor editor = preferences.edit();
+            if (key.endsWith("_visibility")) editor.putInt(key, value
+                ? ReaderStatusSettings.VISIBILITY_IDLE : ReaderStatusSettings.VISIBILITY_ALWAYS);
+            else editor.putBoolean(key, value);
+            editor.apply();
+            refreshReaderStatusSettings();
+        });
+    }
+
+    private void updateReaderStatusSliderLabel(@NonNull TextView label, int format, float value) {
+        label.setText(getString(format, Math.round(value)));
+    }
+
+    private void refreshReaderStatusSettings() {
+        if (readerStatusOverlay != null) readerStatusOverlay.refreshSettings();
+    }
+
+    private void clearReaderStatusPreferences(@NonNull SharedPreferences preferences) {
+        SharedPreferences.Editor editor = preferences.edit()
+            .remove(ReaderStatusSettings.KEY_ENABLED)
+            .remove(ReaderStatusSettings.KEY_IDLE_DELAY)
+            .remove(ReaderStatusSettings.KEY_BATTERY_FORMAT)
+            .remove(ReaderStatusSettings.KEY_PROGRESS_FORMAT)
+            .remove(ReaderStatusSettings.KEY_STYLE)
+            .remove(ReaderStatusSettings.KEY_TEXT_SIZE)
+            .remove(ReaderStatusSettings.KEY_BACKGROUND_OPACITY);
+        for (int item = ReaderStatusSettings.ITEM_TIME; item <= ReaderStatusSettings.ITEM_PROGRESS; item++) {
+            editor.remove(ReaderStatusSettings.preferenceKey(item, "enabled"))
+                .remove(ReaderStatusSettings.preferenceKey(item, "visibility"))
+                .remove(ReaderStatusSettings.preferenceKey(item, "position_custom"))
+                .remove(ReaderStatusSettings.preferenceKey(item, "position_x"))
+                .remove(ReaderStatusSettings.preferenceKey(item, "position_y"));
+        }
+        editor.apply();
+    }
+
+    private void showReaderStatusPositionEditor() {
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.reader_status_position_sheet);
+        ReaderStatusOverlayView preview = Objects.requireNonNull(
+            dialog.findViewById(R.id.reader_status_position_preview));
+        RadioGroup itemGroup = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_position_item_group));
+        Slider horizontal = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_position_horizontal));
+        Slider vertical = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_position_vertical));
+        TextView horizontalLabel = Objects.requireNonNull(
+            dialog.findViewById(R.id.reader_status_position_horizontal_value));
+        TextView verticalLabel = Objects.requireNonNull(
+            dialog.findViewById(R.id.reader_status_position_vertical_value));
+        TextView overlap = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_overlap));
+        horizontal.setValueFrom(0f);
+        horizontal.setValueTo(100f);
+        horizontal.setStepSize(1f);
+        vertical.setValueFrom(0f);
+        vertical.setValueTo(100f);
+        vertical.setStepSize(1f);
+        horizontal.setContentDescription(getString(R.string.reader_status_position_horizontal));
+        vertical.setContentDescription(getString(R.string.reader_status_position_vertical));
+        int[] selectedItem = {ReaderStatusSettings.ITEM_TIME};
+        boolean[] updatingControls = {false};
+
+        Runnable updatePositionControls = () -> {
+            float[] position = preview.normalizedPositionFor(selectedItem[0]);
+            int x = Math.max(0, Math.min(100, Math.round(position[0] * 100)));
+            int y = Math.max(0, Math.min(100, Math.round(position[1] * 100)));
+            updatingControls[0] = true;
+            horizontal.setValue(x);
+            vertical.setValue(y);
+            horizontalLabel.setText(getString(R.string.reader_status_position_horizontal_value, x));
+            verticalLabel.setText(getString(R.string.reader_status_position_vertical_value, y));
+            updatingControls[0] = false;
+            overlap.setVisibility(preview.hasOverlappingItems() ? View.VISIBLE : View.GONE);
+        };
+
+        itemGroup.check(R.id.reader_status_position_time);
+        itemGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            selectedItem[0] = checkedId == R.id.reader_status_position_battery
+                ? ReaderStatusSettings.ITEM_BATTERY
+                : checkedId == R.id.reader_status_position_progress
+                    ? ReaderStatusSettings.ITEM_PROGRESS : ReaderStatusSettings.ITEM_TIME;
+            preview.setSelectedItem(selectedItem[0]);
+            updatePositionControls.run();
+        });
+
+        ReaderStatusOverlayView.PositionListener positionListener = new ReaderStatusOverlayView.PositionListener() {
+            @Override public void onSelected(int item) {
+                itemGroup.check(item == ReaderStatusSettings.ITEM_BATTERY
+                    ? R.id.reader_status_position_battery
+                    : item == ReaderStatusSettings.ITEM_PROGRESS
+                        ? R.id.reader_status_position_progress : R.id.reader_status_position_time);
+            }
+
+            @Override public void onMoved(int item, float x, float y) {
+                persistReaderStatusPosition(preferences, item, x, y);
+                selectedItem[0] = item;
+                updatePositionControls.run();
+            }
+        };
+        if (readerStatusOverlay != null) readerStatusOverlay.copyPreviewStateTo(preview, positionListener);
+        else {
+            ReaderStatusSettings settings = ReaderStatusSettings.load(preferences);
+            preview.setSettings(settings);
+            preview.setTimeValue(android.text.format.DateFormat.getTimeFormat(this).format(new java.util.Date()));
+            preview.setBatteryValue(76, false);
+            preview.setProgressValue(12, 48);
+            preview.setEditorMode(true, positionListener);
+        }
+        preview.setSelectedItem(selectedItem[0]);
+        preview.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                           oldLeft, oldTop, oldRight, oldBottom) ->
+            preview.post(updatePositionControls));
+
+        horizontal.addOnChangeListener((slider, value, fromUser) -> {
+            int x = Math.round(value);
+            horizontalLabel.setText(getString(R.string.reader_status_position_horizontal_value, x));
+            if (fromUser && !updatingControls[0]) {
+                float[] current = preview.normalizedPositionFor(selectedItem[0]);
+                applyReaderStatusPosition(preferences, preview, selectedItem[0], x / 100f, current[1]);
+                updatePositionControls.run();
+            }
+        });
+        vertical.addOnChangeListener((slider, value, fromUser) -> {
+            int y = Math.round(value);
+            verticalLabel.setText(getString(R.string.reader_status_position_vertical_value, y));
+            if (fromUser && !updatingControls[0]) {
+                float[] current = preview.normalizedPositionFor(selectedItem[0]);
+                applyReaderStatusPosition(preferences, preview, selectedItem[0], current[0], y / 100f);
+                updatePositionControls.run();
+            }
+        });
+
+        dialog.findViewById(R.id.reader_status_corner_top_left).setOnClickListener(ignored -> {
+            applyReaderStatusPosition(preferences, preview, selectedItem[0], 0f, 0f);
+            updatePositionControls.run();
+        });
+        dialog.findViewById(R.id.reader_status_corner_top_right).setOnClickListener(ignored -> {
+            applyReaderStatusPosition(preferences, preview, selectedItem[0], 1f, 0f);
+            updatePositionControls.run();
+        });
+        dialog.findViewById(R.id.reader_status_corner_bottom_left).setOnClickListener(ignored -> {
+            applyReaderStatusPosition(preferences, preview, selectedItem[0], 0f, 1f);
+            updatePositionControls.run();
+        });
+        dialog.findViewById(R.id.reader_status_corner_bottom_right).setOnClickListener(ignored -> {
+            applyReaderStatusPosition(preferences, preview, selectedItem[0], 1f, 1f);
+            updatePositionControls.run();
+        });
+        dialog.findViewById(R.id.reader_status_reset_selected).setOnClickListener(ignored -> {
+            removeReaderStatusPosition(preferences, selectedItem[0]);
+            preview.clearEditorPosition(selectedItem[0]);
+            preview.setSettings(ReaderStatusSettings.load(preferences));
+            preview.post(updatePositionControls);
+        });
+        dialog.findViewById(R.id.reader_status_reset_all_positions).setOnClickListener(ignored -> {
+            for (int item = ReaderStatusSettings.ITEM_TIME; item <= ReaderStatusSettings.ITEM_PROGRESS; item++) {
+                removeReaderStatusPosition(preferences, item);
+                preview.clearEditorPosition(item);
+            }
+            preview.setSettings(ReaderStatusSettings.load(preferences));
+            preview.post(updatePositionControls);
+        });
+        dialog.setOnDismissListener(ignored -> refreshReaderStatusSettings());
+        dialog.setOnShowListener(ignored -> dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED));
+        dialog.show();
+    }
+
+    private void applyReaderStatusPosition(@NonNull SharedPreferences preferences,
+                                           @NonNull ReaderStatusOverlayView preview, int item,
+                                           float x, float y) {
+        persistReaderStatusPosition(preferences, item, x, y);
+        preview.setPosition(item, x, y);
+        preview.setSelectedItem(item);
+    }
+
+    private void persistReaderStatusPosition(@NonNull SharedPreferences preferences, int item,
+                                             float x, float y) {
+        preferences.edit()
+            .putBoolean(ReaderStatusSettings.preferenceKey(item, "position_custom"), true)
+            .putFloat(ReaderStatusSettings.preferenceKey(item, "position_x"), x)
+            .putFloat(ReaderStatusSettings.preferenceKey(item, "position_y"), y)
+            .apply();
+    }
+
+    private void removeReaderStatusPosition(@NonNull SharedPreferences preferences, int item) {
+        preferences.edit()
+            .remove(ReaderStatusSettings.preferenceKey(item, "position_custom"))
+            .remove(ReaderStatusSettings.preferenceKey(item, "position_x"))
+            .remove(ReaderStatusSettings.preferenceKey(item, "position_y"))
+            .apply();
     }
 
     private void bindReaderSettingChoice(@NonNull BottomSheetDialog dialog, int rowId, int valueId,

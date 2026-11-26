@@ -253,6 +253,46 @@
                 android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
         <LinearLayout
+            android:id="@+id/reader_status_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reader_status_title"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:importantForAccessibility="no" />
+                <TextView
+                    android:id="@+id/reader_status_selected"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reader_status_summary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:importantForAccessibility="no" />
+            </LinearLayout>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_keyboard_arrow_right"
+                app:tint="?android:attr/textColorSecondary"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/reader_scale_toggle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

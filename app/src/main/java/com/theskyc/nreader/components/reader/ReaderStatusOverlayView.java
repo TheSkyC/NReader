@@ -59,6 +59,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     private boolean interactionActive;
     private boolean editorMode;
     private int selectedItem = ReaderStatusSettings.ITEM_TIME;
+    private final float[][] editorPositions = new float[3][];
     private float downX;
     private float downY;
     private float itemDownX;
@@ -137,6 +138,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     public void setTimeValue(@NonNull CharSequence value) {
         timeValue = value;
         refreshContent();
+        updateVisibility(false);
     }
 
     public void setBatteryValue(int level, boolean isCharging) {
@@ -154,6 +156,9 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     }
 
     public void setEditorMode(boolean enabled, @Nullable PositionListener listener) {
+        if (!enabled || !editorMode) {
+            for (int item : ITEMS) editorPositions[item] = null;
+        }
         editorMode = enabled;
         positionListener = listener;
         selectedItem = ReaderStatusSettings.ITEM_TIME;
@@ -177,9 +182,35 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     public void setPosition(int item, float x, float y) {
         if (item < ReaderStatusSettings.ITEM_TIME || item > ReaderStatusSettings.ITEM_PROGRESS) return;
         ReaderStatusSettings.Position position = ReaderStatusSettings.Position.custom(x, y);
+        editorPositions[item] = new float[]{position.x, position.y};
         float[] coordinates = normalizedCoordinates(position, itemViews[item]);
         itemViews[item].setX(coordinates[0]);
         itemViews[item].setY(coordinates[1]);
+    }
+
+    public void clearEditorPosition(int item) {
+        if (item < ReaderStatusSettings.ITEM_TIME || item > ReaderStatusSettings.ITEM_PROGRESS) return;
+        editorPositions[item] = null;
+        requestLayout();
+    }
+
+    @NonNull
+    public float[] normalizedPositionFor(int item) {
+        if (item < ReaderStatusSettings.ITEM_TIME || item > ReaderStatusSettings.ITEM_PROGRESS)
+            throw new IllegalArgumentException("Unknown reader status item");
+        return normalizedPosition(itemViews[item]);
+    }
+
+    public void copyPreviewStateTo(@NonNull ReaderStatusOverlayView target,
+                                   @Nullable PositionListener listener) {
+        target.setSettings(settings);
+        target.setTimeValue(timeValue.length() == 0
+            ? android.text.format.DateFormat.getTimeFormat(getContext()).format(new java.util.Date())
+            : timeValue);
+        target.setBatteryValue(batteryLevel < 0 ? 76 : batteryLevel, batteryLevel >= 0 && charging);
+        boolean validProgress = currentPage > 0 && totalPages > 0 && currentPage <= totalPages;
+        target.setProgressValue(validProgress ? currentPage : 12, validProgress ? totalPages : 48);
+        target.setEditorMode(true, listener);
     }
 
     public boolean hasOverlappingItems() {
@@ -252,7 +283,10 @@ public final class ReaderStatusOverlayView extends FrameLayout {
 
     private void placeItem(int item, int defaultX, int defaultY, int minX, int minY, int maxX, int maxY) {
         ReaderStatusSettings.Position position = settings.positionFor(item);
-        if (!editorMode && position.custom) {
+        if (editorMode && editorPositions[item] != null) {
+            position = ReaderStatusSettings.Position.custom(editorPositions[item][0], editorPositions[item][1]);
+        }
+        if (position.custom) {
             float[] coordinates = normalizedCoordinates(position, itemViews[item]);
             itemViews[item].setX(coordinates[0]);
             itemViews[item].setY(coordinates[1]);
@@ -357,7 +391,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
                 : currentPage > 0 && totalPages > 0 && currentPage <= totalPages;
             boolean hideForIdle = !editorMode && idleExpired && !interactionActive
                 && settings.visibilityFor(item) == ReaderStatusSettings.VISIBILITY_IDLE;
-            boolean visible = hostAllows && settings.itemEnabled(item) && valueValid && !hideForIdle;
+            boolean visible = editorMode || (hostAllows && settings.itemEnabled(item) && valueValid && !hideForIdle);
             setItemVisible(itemViews[item], item, visible, animate);
         }
         if (editorMode) setSelectedItem(selectedItem);
@@ -414,6 +448,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
                     view.setX(position[0]);
                     view.setY(position[1]);
                     float[] normalized = normalizedPosition(view);
+                    editorPositions[item] = normalized;
                     if (positionListener != null)
                         positionListener.onMoved(item, normalized[0], normalized[1]);
                     return true;

@@ -66,6 +66,42 @@ public class ReaderStatusOverlayViewTest {
     }
 
     @Test
+    public void savedCustomPositionIsUsedInTheEditorPreview() {
+        Activity activity = themedActivity();
+        activity.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "position_custom"), true)
+            .putFloat(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "position_x"), 0.25f)
+            .putFloat(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "position_y"), 0.75f)
+            .apply();
+        ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
+        activity.setContentView(view, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        view.setTimeValue("21:38");
+        view.setBatteryValue(76, false);
+        view.setProgressValue(12, 48);
+        view.setEditorMode(true, null);
+        layout(view, 1080, 1920);
+
+        float[] position = view.normalizedPositionFor(ReaderStatusSettings.ITEM_TIME);
+
+        assertEquals(0.25f, position[0], 0.02f);
+        assertEquals(0.75f, position[1], 0.02f);
+    }
+
+    @Test
+    public void timeValueRefreshMakesTheEnabledItemVisible() {
+        Activity activity = themedActivity();
+        ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
+        view.setHostState(true, false, false, false, false, false);
+
+        assertEquals(View.INVISIBLE, view.getChildAt(ReaderStatusSettings.ITEM_TIME).getVisibility());
+
+        view.setTimeValue("21:38");
+
+        assertEquals(View.VISIBLE, view.getChildAt(ReaderStatusSettings.ITEM_TIME).getVisibility());
+    }
+
+    @Test
     public void controlsAndModalSurfacesSuppressEveryItem() {
         Activity activity = themedActivity();
         ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);

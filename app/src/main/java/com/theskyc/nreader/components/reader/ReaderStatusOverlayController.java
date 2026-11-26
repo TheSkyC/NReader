@@ -155,6 +155,11 @@ public final class ReaderStatusOverlayController {
         return settings;
     }
 
+    public void copyPreviewStateTo(@NonNull ReaderStatusOverlayView preview,
+                                   @NonNull ReaderStatusOverlayView.PositionListener listener) {
+        view.copyPreviewStateTo(preview, listener);
+    }
+
     private void registerReceivers() {
         if (receiversRegistered) return;
         IntentFilter clockFilter = new IntentFilter();
