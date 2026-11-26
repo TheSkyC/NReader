@@ -1,6 +1,7 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.components.reader;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -193,6 +194,7 @@ public final class ReaderStatusOverlayController {
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             return ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
