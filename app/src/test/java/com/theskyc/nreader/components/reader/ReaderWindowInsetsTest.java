@@ -63,12 +63,15 @@ public class ReaderWindowInsetsTest {
         View toolbar = activity.findViewById(R.id.toolbar);
         View toolbarContainer = activity.findViewById(R.id.reader_toolbar_container);
         View controls = activity.findViewById(R.id.master_layout);
+        View controlsContent = activity.findViewById(R.id.page_switcher);
         assertEquals(0, toolbarContainer.getLeft());
         assertEquals(1920, toolbarContainer.getRight());
         assertEquals(72, toolbar.getLeft());
         assertEquals(1920 - 48, toolbar.getRight());
-        assertEquals(72, controls.getLeft());
-        assertEquals(1920 - 48, controls.getRight());
+        assertEquals(0, controls.getLeft());
+        assertEquals(1920, controls.getRight());
+        assertEquals(72, controlsContent.getLeft());
+        assertEquals(1920 - 48, controlsContent.getRight());
         assertEquals(new Rect(0, 0, 1920, 1080), bounds(activity.findViewById(R.id.container)));
 
         ReaderWindowInsets.apply(root, insets(Insets.of(0, 24, 0, 48), false));
@@ -80,7 +83,11 @@ public class ReaderWindowInsetsTest {
         assertEquals(1080, toolbarContainer.getWidth());
         assertTrue(toolbarContainer.getBackground().getOpacity() == android.graphics.PixelFormat.OPAQUE);
         assertEquals(toolbar.getBottom(), toolbarContainer.getBottom());
-        assertEquals(1920 - 48, controls.getBottom());
+        assertEquals(1920, controls.getBottom());
+        assertEquals(1920 - 48, controls.getTop() + controlsContent.getBottom());
+        assertEquals(0, controls.getLeft());
+        assertEquals(1080, controls.getRight());
+        assertTrue(controls.getBackground().getOpacity() == android.graphics.PixelFormat.OPAQUE);
     }
 
     @Test

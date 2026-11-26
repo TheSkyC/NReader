@@ -22,7 +22,10 @@ public final class ReaderWindowInsets {
         if (toolbarContainer != null) {
             toolbarContainer.setPadding(safe.left, safe.top, safe.right, 0);
         }
-        setMargins(root.findViewById(R.id.master_layout), safe.left, 0, safe.right, safe.bottom);
+        View controls = root.findViewById(R.id.master_layout);
+        if (controls != null) {
+            controls.setPadding(safe.left, 0, safe.right, safe.bottom);
+        }
         setMargins(root.findViewById(R.id.page_text), safe.left, safe.top, safe.right, 0);
     }
 

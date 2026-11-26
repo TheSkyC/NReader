@@ -176,7 +176,6 @@ public class ZoomActivity extends GeneralActivity {
     private ReaderNavigation readerNavigation;
     private final ReaderPageRotations continuousRotations = new ReaderPageRotations();
     private TextView pageManagerLabel, cornerPageViewer;
-    private View pageSwitcher;
     private int controlsAnimationGeneration;
     private Slider pageSlider;
     private Toolbar toolbar;
@@ -322,7 +321,6 @@ public class ZoomActivity extends GeneralActivity {
             ? ViewPager2.ORIENTATION_VERTICAL : ViewPager2.ORIENTATION_HORIZONTAL);
         updateReaderDirection();
         mViewPager.setOffscreenPageLimit(Global.getOffscreenLimit());
-        pageSwitcher = findViewById(R.id.page_switcher);
         pageManagerLabel = findViewById(R.id.pages);
         cornerPageViewer = findViewById(R.id.page_text);
         pageSlider = findViewById(R.id.page_slider);
@@ -2011,15 +2009,15 @@ public class ZoomActivity extends GeneralActivity {
     private void animateLayout() {
         int generation = ++controlsAnimationGeneration;
         View toolbarContainer = findViewById(R.id.reader_toolbar_container);
-        pageSwitcher.animate().setListener(null).cancel();
+        View controls = findViewById(R.id.master_layout);
+        controls.animate().setListener(null).cancel();
         toolbarContainer.animate().setListener(null).cancel();
         view.animate().setListener(null).cancel();
         AnimatorListenerAdapter adapter = new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (generation == controlsAnimationGeneration && isHidden) {
-                    pageSwitcher.setVisibility(View.GONE);
-                    findViewById(R.id.master_layout).setVisibility(View.GONE);
+                    controls.setVisibility(View.GONE);
                     toolbarContainer.setVisibility(View.GONE);
                     view.setVisibility(View.GONE);
                     cornerPageViewer.setVisibility(View.VISIBLE);
@@ -2027,13 +2025,12 @@ public class ZoomActivity extends GeneralActivity {
             }
         };
 
-        pageSwitcher.setVisibility(View.VISIBLE);
-        findViewById(R.id.master_layout).setVisibility(View.VISIBLE);
+        controls.setVisibility(View.VISIBLE);
         toolbarContainer.setVisibility(View.VISIBLE);
         view.setVisibility(View.VISIBLE);
         cornerPageViewer.setVisibility(View.GONE);
 
-        pageSwitcher.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
+        controls.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
         view.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
         toolbarContainer.animate().alpha(isHidden ? 0f : 1f).setDuration(150).setListener(adapter).start();
     }
