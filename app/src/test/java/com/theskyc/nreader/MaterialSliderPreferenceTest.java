@@ -30,6 +30,8 @@ import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
+import java.text.NumberFormat;
+
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w320dp-h640dp")
 public class MaterialSliderPreferenceTest {
@@ -68,6 +70,10 @@ public class MaterialSliderPreferenceTest {
                 assertEquals(400f, slider.getValueTo(), 0f);
                 assertEquals(10f, slider.getStepSize(), 0f);
                 assertEquals(100f, slider.getValue(), 0f);
+                TextView value = holder.itemView.findViewById(R.id.preference_slider_value);
+                NumberFormat percent = NumberFormat.getPercentInstance(
+                    child.get().getResources().getConfiguration().getLocales().get(0));
+                assertEquals(percent.format(1), value.getText().toString());
 
                 long downTime = SystemClock.uptimeMillis();
                 float centerY = slider.getHeight() / 2f;
@@ -79,8 +85,18 @@ public class MaterialSliderPreferenceTest {
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertEquals(270f, slider.getValue(), 0f);
                 assertEquals(270, preferences.getInt(key, -1));
-                TextView value = holder.itemView.findViewById(R.id.preference_slider_value);
-                assertEquals("270", value.getText().toString());
+                assertEquals(percent.format(2.7), value.getText().toString());
+
+                String countKey = application.getString(R.string.preference_key_offscreen_limit);
+                int countPosition = ((PreferenceGroupAdapter) list.getAdapter()).getPreferenceAdapterPosition(countKey);
+                list.scrollToPosition(countPosition);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                list.layout(0, 0, width, height);
+                RecyclerView.ViewHolder countHolder = list.findViewHolderForAdapterPosition(countPosition);
+                assertNotNull(countHolder);
+                Slider countSlider = countHolder.itemView.findViewById(R.id.preference_slider);
+                TextView countValue = countHolder.itemView.findViewById(R.id.preference_slider_value);
+                assertEquals(Integer.toString(Math.round(countSlider.getValue())), countValue.getText().toString());
             }
         } finally {
             SharedPreferences.Editor editor = preferences.edit();

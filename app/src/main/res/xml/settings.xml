@@ -49,6 +49,7 @@
                 android:key="@string/preference_key_default_zoom"
                 android:max="400"
                 android:title="@string/default_zoom"
+                app:sliderValueIsPercent="true"
                 app:iconSpaceReserved="false"
                 app:min="100"
                 app:seekBarIncrement="10" />

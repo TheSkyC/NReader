@@ -13,10 +13,13 @@ import androidx.preference.PreferenceViewHolder;
 import com.google.android.material.slider.Slider;
 import com.theskyc.nreader.R;
 
+import java.text.NumberFormat;
+
 public final class MaterialSliderPreference extends Preference {
     private final int minValue;
     private final int maxValue;
     private final int stepSize;
+    private final boolean valueIsPercent;
     private int value;
     private boolean trackingTouch;
     private Slider boundSlider;
@@ -42,6 +45,10 @@ public final class MaterialSliderPreference extends Preference {
             1
         ));
         attributes.recycle();
+
+        TypedArray displayAttributes = context.obtainStyledAttributes(attrs, R.styleable.MaterialSliderPreference);
+        valueIsPercent = displayAttributes.getBoolean(R.styleable.MaterialSliderPreference_sliderValueIsPercent, false);
+        displayAttributes.recycle();
 
         if (minValue >= maxValue || (maxValue - minValue) % stepSize != 0) {
             throw new IllegalArgumentException("Invalid Material slider range");
@@ -79,11 +86,12 @@ public final class MaterialSliderPreference extends Preference {
         slider.setStepSize(stepSize);
         slider.setValue(value);
         slider.setContentDescription(getTitle());
-        valueView.setText(Integer.toString(value));
+        slider.setLabelFormatter(number -> formatValue(Math.round(number)));
+        valueView.setText(formatValue(value));
 
         boundChangeListener = (changedSlider, newValue, fromUser) -> {
             value = Math.round(newValue);
-            valueView.setText(Integer.toString(value));
+            valueView.setText(formatValue(value));
             if (fromUser && !trackingTouch) persistInt(value);
         };
         boundTouchListener = new Slider.OnSliderTouchListener() {
@@ -105,5 +113,11 @@ public final class MaterialSliderPreference extends Preference {
 
     private void setValue(int newValue) {
         value = Math.max(minValue, Math.min(maxValue, newValue));
+    }
+
+    private String formatValue(int number) {
+        if (!valueIsPercent) return Integer.toString(number);
+        NumberFormat format = NumberFormat.getPercentInstance(getContext().getResources().getConfiguration().getLocales().get(0));
+        return format.format(number / 100.0);
     }
 }
