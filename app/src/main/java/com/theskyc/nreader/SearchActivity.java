@@ -48,6 +48,8 @@ import com.theskyc.nreader.async.database.TagTranslationCatalog;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.ChipTag;
 import com.theskyc.nreader.components.widgets.CustomLinearLayoutManager;
+import com.theskyc.nreader.components.widgets.LiveSearchResults;
+import com.theskyc.nreader.components.widgets.ResultsSearchView;
 import com.theskyc.nreader.loginapi.LoadTags;
 import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.AuthStore;
@@ -121,7 +123,7 @@ public class SearchActivity extends GeneralActivity {
             if (submit) {
                 submitSearchFromQuery(str);
             } else {
-                searchView.show();
+                if (!searchView.isShowing()) searchBar.performClick();
                 searchView.getEditText().requestFocus();
                 searchView.getEditText().setSelection(searchView.getEditText().length());
                 inputMethodManager.showSoftInput(searchView.getEditText(), InputMethodManager.SHOW_IMPLICIT);
@@ -160,8 +162,16 @@ public class SearchActivity extends GeneralActivity {
         //find IDs
         searchView = findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+        LiveSearchResults.attach((ResultsSearchView) searchView, findViewById(R.id.search_content));
         searchView.getEditText().setHint(getString(R.string.search_keyword_hint));
         searchView.getEditText().setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                searchBar.setText(text);
+            }
+            @Override public void afterTextChanged(Editable text) { }
+        });
         if (savedInstanceState != null)
             setSearchText(savedInstanceState.getString("search.query", ""));
         RecyclerView recyclerView = findViewById(R.id.recycler);
@@ -169,7 +179,7 @@ public class SearchActivity extends GeneralActivity {
         findViewById(R.id.search_clear_filters).setEnabled(false);
         findViewById(R.id.search_submit).setOnClickListener(view -> {
             advanced = true;
-            submitSearch(searchBar.getText().toString().trim(), false);
+            submitSearch(searchView.getText().toString().trim(), false);
         });
         findViewById(R.id.search_selected_more).setOnClickListener(view -> {
             showAllSelected = !showAllSelected;

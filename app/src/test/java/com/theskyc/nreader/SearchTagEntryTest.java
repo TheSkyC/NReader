@@ -60,6 +60,40 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void expandedSearchKeepsHistoryAndFiltersAvailable() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                View content = activity.findViewById(R.id.search_content);
+                SearchView search = activity.findViewById(R.id.search_view);
+                assertTrue(activity.findViewById(R.id.toolbar).performClick());
+                assertTrue(search.isShowing());
+                assertEquals(1f, ((View) content.getParent()).getAlpha(), 0f);
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.recycler).getVisibility());
+                activity.setQuery("fixture", false);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals("fixture", search.getText().toString());
+                controller.recreate();
+                activity = controller.get();
+                search = activity.findViewById(R.id.search_view);
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(search.isShowing());
+                assertEquals("fixture", search.getText().toString());
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.groups).getVisibility());
+                assertEquals("fixture", ((SearchView) activity.findViewById(R.id.search_view)).getText().toString());
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void recreationPreservesFiltersAndSearchInput() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);

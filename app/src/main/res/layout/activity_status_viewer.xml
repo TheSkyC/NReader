@@ -82,7 +82,7 @@
         </FrameLayout>
     </LinearLayout>
 
-    <com.google.android.material.search.SearchView
+    <com.theskyc.nreader.components.widgets.ResultsSearchView
         android:id="@+id/search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

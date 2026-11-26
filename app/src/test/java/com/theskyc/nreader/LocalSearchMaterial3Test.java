@@ -69,6 +69,10 @@ public class LocalSearchMaterial3Test {
             assertFalse(searchView.isShowing());
 
             searchBar.performClick();
+            assertTrue(searchView.isShowing());
+            View content = activity.findViewById(R.id.master_layout);
+            assertTrue(isInside(content, searchView));
+            assertEquals(1f, ((View) content.getParent()).getAlpha(), 0f);
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertTrue(searchView.isShowing());
             assertTrue(isInside(activity.findViewById(R.id.recycler), searchView));
@@ -89,6 +93,10 @@ public class LocalSearchMaterial3Test {
             assertFalse(restored.isFinishing());
             assertFalse(isInside(restored.findViewById(R.id.recycler), restoredView));
             assertEquals("local fixture", restoredBar.getText().toString());
+            restoredBar.performClick();
+            assertTrue(isInside(restored.findViewById(R.id.recycler), restoredView));
+            assertEquals(1f, ((View) restored.findViewById(R.id.master_layout).getParent()).getAlpha(), 0f);
+            assertEquals("local fixture", restoredView.getText().toString());
         }
     }
 

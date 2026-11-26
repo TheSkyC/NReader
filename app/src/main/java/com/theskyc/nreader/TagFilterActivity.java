@@ -25,6 +25,7 @@ import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.components.widgets.LiveSearchResults;
+import com.theskyc.nreader.components.widgets.ResultsSearchView;
 import com.theskyc.nreader.components.widgets.TagTypePage;
 import com.theskyc.nreader.settings.DefaultDialogs;
 import com.theskyc.nreader.settings.Global;
@@ -89,7 +90,7 @@ public class TagFilterActivity extends GeneralActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         searchView = findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
-        LiveSearchResults.attach(searchView, findViewById(R.id.search_results));
+        LiveSearchResults.attach((ResultsSearchView) searchView, findViewById(R.id.search_results));
         searchView.getEditText().setHint(getString(R.string.search));
         searchView.getEditText().addTextChangedListener(new TextWatcher() {
             @Override

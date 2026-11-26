@@ -27,7 +27,7 @@
             android:visibility="gone" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.google.android.material.search.SearchView
+    <com.theskyc.nreader.components.widgets.ResultsSearchView
         android:id="@+id/favorite_search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

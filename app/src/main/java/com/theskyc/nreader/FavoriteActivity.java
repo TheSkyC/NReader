@@ -23,6 +23,7 @@ import com.theskyc.nreader.async.downloader.DownloadGalleryV2;
 import com.theskyc.nreader.components.activities.BaseActivity;
 import com.theskyc.nreader.components.views.PageSwitcher;
 import com.theskyc.nreader.components.widgets.LiveSearchResults;
+import com.theskyc.nreader.components.widgets.ResultsSearchView;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -77,7 +78,7 @@ public class FavoriteActivity extends BaseActivity {
         searchBar.setNavigationOnClickListener(view -> finish());
         searchView = findViewById(R.id.favorite_search_view);
         searchView.setupWithSearchBar(searchBar);
-        LiveSearchResults.attach(searchView, findViewById(R.id.master_layout));
+        LiveSearchResults.attach((ResultsSearchView) searchView, findViewById(R.id.master_layout));
         searchView.getEditText().setHint(R.string.search);
         pageSwitcher = findViewById(R.id.page_switcher);
         recycler = findViewById(R.id.recycler);
