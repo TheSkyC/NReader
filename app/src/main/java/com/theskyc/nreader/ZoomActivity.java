@@ -111,6 +111,7 @@ public class ZoomActivity extends GeneralActivity {
     private static final String VOLUME_SIDE_KEY = "volumeSide";
     private static final String SCROLL_TYPE_KEY = "zoomScrollType";
     private static final String INSTANT_PAGE_TURN_KEY = "instant_page_turn";
+    private static final int READER_SETTINGS_COMPACT_HEIGHT_DP = 480;
     private static final String READER_OFFSET_STATE = "readerOffset";
     private static final String CONTINUOUS_MODE_KEY = "reader_continuous_vertical";
     private static final String READER_MODE_KEY_PREFIX = "reader_mode_";
@@ -1115,7 +1116,20 @@ public class ZoomActivity extends GeneralActivity {
         BottomSheetBehavior<?> behavior = dialog.getBehavior();
         behavior.setFitToContents(false);
         behavior.setHalfExpandedRatio(0.5f);
-        dialog.setOnShowListener(ignored -> behavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED));
+        dialog.setOnShowListener(ignored -> {
+            behavior.setState(getResources().getConfiguration().screenHeightDp < READER_SETTINGS_COMPACT_HEIGHT_DP
+                ? BottomSheetBehavior.STATE_EXPANDED : BottomSheetBehavior.STATE_HALF_EXPANDED);
+            View decor = Objects.requireNonNull(dialog.getWindow()).getDecorView();
+            decor.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                int height = bottom - top;
+                if (height == oldBottom - oldTop || height <= 0
+                    || height / getResources().getDisplayMetrics().density >= READER_SETTINGS_COMPACT_HEIGHT_DP) return;
+                view.post(() -> {
+                    if (dialog.isShowing() && behavior.getState() == BottomSheetBehavior.STATE_HALF_EXPANDED)
+                        behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                });
+            });
+        });
         dialog.show();
     }
 

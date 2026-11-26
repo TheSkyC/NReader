@@ -625,6 +625,7 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
     public void readerSettingsChoicesAndAdjustmentDialogCanBeReopened() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
@@ -657,10 +658,37 @@ public class ReaderReliabilityTest {
                 adjustments.findViewById(R.id.reader_adjustments_reset).performClick();
                 assertEquals(0, application.getSharedPreferences("Settings", 0).getInt("reader_brightness", -1));
                 adjustments.dismiss();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
                 sheet.findViewById(R.id.reader_adjustments_toggle).performClick();
                 adjustments = (AlertDialog) ShadowDialog.getLatestDialog();
                 assertEquals(100f, ((Slider) adjustments.findViewById(R.id.reader_brightness)).getValue(), 0f);
                 adjustments.dismiss();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                View decor = sheet.getWindow().getDecorView();
+                float density = activity.getResources().getDisplayMetrics().density;
+                decor.layout(0, 0, Math.round(360 * density), Math.round(640 * density));
+                decor.layout(0, 0, Math.round(640 * density), Math.round(320 * density));
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(BottomSheetBehavior.STATE_EXPANDED, sheet.getBehavior().getState());
+                sheet.dismiss();
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w640dp-h320dp")
+    public void readerSettingsOpenExpandedOnShortScreens() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                controller.get().findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog sheet = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(BottomSheetBehavior.STATE_EXPANDED, sheet.getBehavior().getState());
                 sheet.dismiss();
             }
         }
