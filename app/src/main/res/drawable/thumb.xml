@@ -4,8 +4,8 @@
     android:tint="?colorControlActivated">
 
     <size
-        android:width="8dp"
-        android:height="48dp" />
+        android:width="4dp"
+        android:height="36dp" />
 
     <corners
         android:bottomLeftRadius="360dp"

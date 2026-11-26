@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.GalleryActivity;
@@ -36,7 +37,9 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
+import me.zhanghai.android.fastscroll.PopupTextProvider;
+
+public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> implements PopupTextProvider {
     private final List<SimpleGallery> mDataset;
     private final List<SimpleGallery> allDataset = new ArrayList<>();
     private final ExecutorService filterExecutor = Executors.newSingleThreadExecutor();
@@ -211,6 +214,14 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     @Override
     public int getItemCount() {
         return mDataset == null ? 0 : mDataset.size();
+    }
+
+    @Nullable
+    @Override
+    public CharSequence getPopupText(@NonNull View view, int position) {
+        if (position < 0 || position >= mDataset.size()) return null;
+        SimpleGallery gallery = mDataset.get(position);
+        return gallery == null ? null : gallery.getTitle();
     }
 
     public void setLoadedFilters(boolean downloadedOnly, boolean favoriteOnly, int readingFilter, boolean customStatusOnly) {

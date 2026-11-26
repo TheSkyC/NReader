@@ -15,7 +15,11 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.theskyc.nreader.BuildConfig;
@@ -50,6 +55,7 @@ import java.util.List;
 import java.util.Objects;
 
 import me.zhanghai.android.fastscroll.FastScrollerBuilder;
+import me.zhanghai.android.fastscroll.PopupTextProvider;
 import okhttp3.Cookie;
 import okhttp3.OkHttpClient;
 
@@ -718,9 +724,37 @@ public class Global {
 
     public static void applyFastScroller(RecyclerView recycler) {
         if (recycler == null) return;
-        Drawable drawable = ContextCompat.getDrawable(recycler.getContext(), R.drawable.thumb);
+        int thumbResource = recycler.getLayoutManager() instanceof GridLayoutManager
+            ? R.drawable.thumb_grid : R.drawable.thumb;
+        Drawable drawable = ContextCompat.getDrawable(recycler.getContext(), thumbResource);
         if (drawable == null) return;
-        new FastScrollerBuilder(recycler).setThumbDrawable(drawable).build();
+        FastScrollerBuilder builder = new FastScrollerBuilder(recycler).setThumbDrawable(drawable);
+        if (recycler.getAdapter() instanceof PopupTextProvider) {
+            builder.setPopupTextProvider((PopupTextProvider) recycler.getAdapter())
+                .setPopupStyle(Global::styleFastScrollerPopup);
+        }
+        builder.build();
+    }
+
+    private static void styleFastScrollerPopup(TextView popup) {
+        Resources resources = popup.getResources();
+        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) popup.getLayoutParams();
+        layoutParams.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
+        layoutParams.setMarginEnd(resources.getDimensionPixelOffset(R.dimen.fast_scroller_popup_margin_end));
+        popup.setLayoutParams(layoutParams);
+        popup.setBackground(ContextCompat.getDrawable(popup.getContext(), R.drawable.fast_scroller_popup));
+        popup.setMinWidth(resources.getDimensionPixelSize(R.dimen.fast_scroller_popup_min_width));
+        popup.setMinHeight(resources.getDimensionPixelSize(R.dimen.fast_scroller_popup_min_height));
+        popup.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+        popup.setGravity(Gravity.CENTER);
+        popup.setIncludeFontPadding(false);
+        popup.setSingleLine(true);
+        popup.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge);
+        popup.setTextColor(com.google.android.material.color.MaterialColors.getColor(
+            popup, com.google.android.material.R.attr.colorOnPrimaryContainer));
+        int horizontalPadding = resources.getDimensionPixelSize(R.dimen.fast_scroller_popup_horizontal_padding);
+        popup.setPaddingRelative(horizontalPadding, 0, horizontalPadding, 0);
+        popup.setElevation(resources.getDimension(R.dimen.fast_scroller_popup_elevation));
     }
 
     public enum DataUsageType {NONE, THUMBNAIL, FULL}

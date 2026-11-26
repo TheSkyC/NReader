@@ -132,8 +132,8 @@ public class TagTypePage extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_tag_filter, container, false);
         recyclerView = rootView.findViewById(R.id.recycler);
         rulesEmpty = rootView.findViewById(R.id.tag_rules_empty);
-        Global.applyFastScroller(recyclerView);
         loadTags();
+        Global.applyFastScroller(recyclerView);
         if (type.equals(TagType.CATEGORY)) {
             observedRestoreGeneration = Login.onlineTagsRestoreGeneration();
             Login.observeOnlineTags(onlineTagsObserver);
