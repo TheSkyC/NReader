@@ -18,7 +18,10 @@ public final class ReaderWindowInsets {
         Insets safe = insets.getInsetsIgnoringVisibility(
             WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
         root.setPadding(0, 0, 0, 0);
-        setMargins(root.findViewById(R.id.toolbar), safe.left, safe.top, safe.right, 0);
+        View toolbarContainer = root.findViewById(R.id.reader_toolbar_container);
+        if (toolbarContainer != null) {
+            toolbarContainer.setPadding(safe.left, safe.top, safe.right, 0);
+        }
         setMargins(root.findViewById(R.id.master_layout), safe.left, 0, safe.right, safe.bottom);
         setMargins(root.findViewById(R.id.page_text), safe.left, safe.top, safe.right, 0);
     }

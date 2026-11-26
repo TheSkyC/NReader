@@ -1996,8 +1996,9 @@ public class ZoomActivity extends GeneralActivity {
 
     private void animateLayout() {
         int generation = ++controlsAnimationGeneration;
+        View toolbarContainer = findViewById(R.id.reader_toolbar_container);
         pageSwitcher.animate().setListener(null).cancel();
-        toolbar.animate().setListener(null).cancel();
+        toolbarContainer.animate().setListener(null).cancel();
         view.animate().setListener(null).cancel();
         AnimatorListenerAdapter adapter = new AnimatorListenerAdapter() {
             @Override
@@ -2005,7 +2006,7 @@ public class ZoomActivity extends GeneralActivity {
                 if (generation == controlsAnimationGeneration && isHidden) {
                     pageSwitcher.setVisibility(View.GONE);
                     findViewById(R.id.master_layout).setVisibility(View.GONE);
-                    toolbar.setVisibility(View.GONE);
+                    toolbarContainer.setVisibility(View.GONE);
                     view.setVisibility(View.GONE);
                     cornerPageViewer.setVisibility(View.VISIBLE);
                 }
@@ -2014,17 +2015,20 @@ public class ZoomActivity extends GeneralActivity {
 
         pageSwitcher.setVisibility(View.VISIBLE);
         findViewById(R.id.master_layout).setVisibility(View.VISIBLE);
-        toolbar.setVisibility(View.VISIBLE);
+        toolbarContainer.setVisibility(View.VISIBLE);
         view.setVisibility(View.VISIBLE);
         cornerPageViewer.setVisibility(View.GONE);
 
         pageSwitcher.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
         view.animate().alpha(isHidden ? 0f : 1f).setDuration(150).start();
-        toolbar.animate().alpha(isHidden ? 0f : 1f).setDuration(150).setListener(adapter).start();
+        toolbarContainer.animate().alpha(isHidden ? 0f : 1f).setDuration(150).setListener(adapter).start();
     }
 
     private void applyVisibilityFlag() {
-        getWindow().getDecorView().setSystemUiVisibility(isHidden ? hideFlags : showFlags);
+        View decor = getWindow().getDecorView();
+        int appearance = decor.getSystemUiVisibility()
+            & (View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        decor.setSystemUiVisibility((isHidden ? hideFlags : showFlags) | appearance);
     }
 
     public class DoublePagePagerAdapter extends FragmentStateAdapter {

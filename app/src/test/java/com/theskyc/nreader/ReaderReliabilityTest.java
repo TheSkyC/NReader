@@ -1472,7 +1472,7 @@ public class ReaderReliabilityTest {
                     View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
                 content.layout(0, 0, 1080, 1920);
                 View viewport = activity.findViewById(R.id.continuous_reader);
-                View toolbar = activity.findViewById(R.id.toolbar);
+                View toolbar = activity.findViewById(R.id.reader_toolbar_container);
                 View controls = activity.findViewById(R.id.master_layout);
                 View pageSwitcher = activity.findViewById(R.id.page_switcher);
                 assertEquals(0, viewport.getTop());
@@ -1680,14 +1680,19 @@ public class ReaderReliabilityTest {
                 ZoomActivity activity = controller.get();
                 int layoutFlags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-                int before = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
-                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
-                    ReflectionHelpers.ClassParameter.from(float.class, 0.5f));
-                int hidden = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
-                ReflectionHelpers.callInstanceMethod(activity, "handleReaderPageTap",
-                    ReflectionHelpers.ClassParameter.from(float.class, 0.5f));
-                int shown = activity.getWindow().getDecorView().getSystemUiVisibility() & layoutFlags;
-                assertEquals(hidden, shown);
+                int appearanceFlags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                View decor = activity.getWindow().getDecorView();
+                for (int appearance : new int[]{0, appearanceFlags}) {
+                    decor.setSystemUiVisibility(appearance);
+                    ReflectionHelpers.callInstanceMethod(activity, "toggleReaderControls");
+                    int hidden = decor.getSystemUiVisibility();
+                    ReflectionHelpers.callInstanceMethod(activity, "toggleReaderControls");
+                    int shown = decor.getSystemUiVisibility();
+                    assertEquals(hidden & layoutFlags, shown & layoutFlags);
+                    assertEquals(appearance, hidden & appearanceFlags);
+                    assertEquals(appearance, shown & appearanceFlags);
+                }
             }
         }
     }

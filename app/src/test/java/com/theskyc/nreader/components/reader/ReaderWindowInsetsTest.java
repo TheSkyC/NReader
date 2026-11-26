@@ -36,7 +36,7 @@ public class ReaderWindowInsetsTest {
         layout(root, 1080, 1920);
         Rect pagerBounds = bounds(pager);
         Rect continuousBounds = bounds(continuous);
-        View toolbar = activity.findViewById(R.id.toolbar);
+        View toolbar = activity.findViewById(R.id.reader_toolbar_container);
         View controls = activity.findViewById(R.id.master_layout);
         for (boolean visible : new boolean[]{false, true, false}) {
             toolbar.setVisibility(visible ? View.VISIBLE : View.GONE);
@@ -61,7 +61,10 @@ public class ReaderWindowInsetsTest {
         ReaderWindowInsets.apply(root, landscape);
         layout(root, 1920, 1080);
         View toolbar = activity.findViewById(R.id.toolbar);
+        View toolbarContainer = activity.findViewById(R.id.reader_toolbar_container);
         View controls = activity.findViewById(R.id.master_layout);
+        assertEquals(0, toolbarContainer.getLeft());
+        assertEquals(1920, toolbarContainer.getRight());
         assertEquals(72, toolbar.getLeft());
         assertEquals(1920 - 48, toolbar.getRight());
         assertEquals(72, controls.getLeft());
@@ -73,6 +76,10 @@ public class ReaderWindowInsetsTest {
         assertEquals(0, toolbar.getLeft());
         assertEquals(1080, toolbar.getRight());
         assertEquals(24, toolbar.getTop());
+        assertEquals(0, toolbarContainer.getTop());
+        assertEquals(1080, toolbarContainer.getWidth());
+        assertTrue(toolbarContainer.getBackground().getOpacity() == android.graphics.PixelFormat.OPAQUE);
+        assertEquals(toolbar.getBottom(), toolbarContainer.getBottom());
         assertEquals(1920 - 48, controls.getBottom());
     }
 
@@ -80,7 +87,7 @@ public class ReaderWindowInsetsTest {
     public void hiddenControlsRotateAndReturnWithoutLeavingViewportMargins() {
         Activity activity = createActivity();
         View root = activity.getWindow().getDecorView();
-        View toolbar = activity.findViewById(R.id.toolbar);
+        View toolbar = activity.findViewById(R.id.reader_toolbar_container);
         View controls = activity.findViewById(R.id.master_layout);
         View continuous = activity.findViewById(R.id.continuous_reader);
         continuous.setVisibility(View.VISIBLE);
@@ -99,8 +106,10 @@ public class ReaderWindowInsetsTest {
         controls.setVisibility(View.VISIBLE);
         ReaderWindowInsets.apply(root, insets(Insets.of(32, 0, 48, 0), true));
         layout(root, 1920, 1080);
-        assertEquals(32, toolbar.getLeft());
-        assertEquals(1920 - 48, toolbar.getRight());
+        assertEquals(0, toolbar.getLeft());
+        assertEquals(1920, toolbar.getRight());
+        assertEquals(32, activity.findViewById(R.id.toolbar).getLeft());
+        assertEquals(1920 - 48, activity.findViewById(R.id.toolbar).getRight());
         assertEquals(new Rect(0, 0, 1920, 1080), bounds(continuous));
         assertEquals(new Rect(0, 0, 1920, 1080), bounds(activity.findViewById(R.id.container)));
     }
@@ -111,7 +120,7 @@ public class ReaderWindowInsetsTest {
         View pager = activity.findViewById(R.id.container);
         View continuous = activity.findViewById(R.id.continuous_reader);
         ViewGroup parent = (ViewGroup) pager.getParent();
-        for (int id : new int[]{R.id.toolbar, R.id.master_layout, R.id.page_text}) {
+        for (int id : new int[]{R.id.reader_toolbar_container, R.id.master_layout, R.id.page_text}) {
             View overlay = activity.findViewById(id);
             assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(pager));
             assertTrue(parent.indexOfChild(overlay) > parent.indexOfChild(continuous));
