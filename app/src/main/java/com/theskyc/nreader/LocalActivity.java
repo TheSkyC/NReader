@@ -136,7 +136,7 @@ public class LocalActivity extends BaseActivity {
         this.adapter.addListener(listener);
         runOnUiThread(() -> {
             recycler.setAdapter(adapter);
-            adapter.getFilter().filter(query);
+            adapter.filterQuery(query);
             listGrid.refresh();
         });
     }
@@ -376,6 +376,6 @@ public class LocalActivity extends BaseActivity {
     private void applySearchQuery(String value) {
         query = value;
         searchBar.setText(query);
-        if (adapter != null) adapter.getFilter().filter(query);
+        if (adapter != null) adapter.filterQuery(query);
     }
 }

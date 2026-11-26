@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.os.Looper;
+import android.widget.Filter;
 
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.app.AlertDialog;
@@ -36,6 +37,7 @@ import org.robolectric.shadows.ShadowDialog;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -345,6 +347,187 @@ public class LocalAdapterDownloadMergeTest {
             assertEquals(MultichoiceAdapter.Mode.NORMAL, adapter.getMode());
             Shadows.shadowOf(Looper.getMainLooper()).idle();
             assertEquals(0, adapter.getItemCount());
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void anotherTaskFinishingKeepsSelectionAcrossDeferredFolderMerge() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("pending-selected-folder");
+        LocalGallery oldFolder = new LocalGallery(target, true);
+        GalleryDownloaderV2 pending = new GalleryDownloaderV2(activity, "pending-selected-folder", null, 113);
+        GalleryDownloaderV2 finished = new GalleryDownloaderV2(activity, "other-finished", null, 114);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Collections.singletonList(oldFolder)));
+        try {
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Arrays.asList(pending, finished)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            int galleryPosition = -1;
+            for (int position = 0; position < adapter.getItemCount(); position++)
+                if (adapter.getItemAt(position) == oldFolder) galleryPosition = position;
+            assertTrue(galleryPosition >= 0);
+            ReflectionHelpers.callInstanceMethod(adapter, "toggleSelection",
+                ReflectionHelpers.ClassParameter.from(int.class, galleryPosition));
+            ReflectionHelpers.setField(pending, "folder", target);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerStartDownload(pending);
+            ReflectionHelpers.setField(finished, "status", GalleryDownloaderV2.Status.FINISHED);
+            observer.triggerEndDownload(finished);
+
+            assertEquals(Collections.singletonList(pending), new java.util.ArrayList<>(adapter.getSelected()));
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(pending, adapter.getItemAt(0));
+            ReflectionHelpers.callInstanceMethod(adapter, "toggleSelection",
+                ReflectionHelpers.ClassParameter.from(int.class, 0));
+            assertEquals(MultichoiceAdapter.Mode.NORMAL, adapter.getMode());
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void completedSelectionSurvivesFilterUntilSelectionEnds() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("renamed-local-folder");
+        assertTrue(new File(target, "1.jpg").createNewFile());
+        GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "searchable-task", null, 115);
+        ReflectionHelpers.setField(task, "folder", target);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            ReflectionHelpers.setField(adapter, "lastQuery", "searchable");
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Collections.singletonList(task)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            adapter.selectAll();
+            ReflectionHelpers.setField(task, "status", GalleryDownloaderV2.Status.FINISHED);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerEndDownload(task);
+
+            assertEquals(1, adapter.getItemCount());
+            assertTrue(adapter.getItemAt(0) instanceof LocalGallery);
+            assertEquals(Collections.singletonList(adapter.getItemAt(0)), new java.util.ArrayList<>(adapter.getSelected()));
+            adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(0, adapter.getItemCount());
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void selectedActiveTaskSurvivesChangedFilterUntilSelectionEnds() {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        GalleryDownloaderV2 selectedTask = new GalleryDownloaderV2(activity, "active-task", null, 117);
+        GalleryDownloaderV2 finishedTask = new GalleryDownloaderV2(activity, "finished-task", null, 118);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Arrays.asList(selectedTask, finishedTask)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            int selectedPosition = adapter.getItemAt(0) == selectedTask ? 0 : 1;
+            ReflectionHelpers.callInstanceMethod(adapter, "toggleSelection",
+                ReflectionHelpers.ClassParameter.from(int.class, selectedPosition));
+            ReflectionHelpers.setField(adapter, "lastQuery", "no-match");
+            ReflectionHelpers.setField(finishedTask, "status", GalleryDownloaderV2.Status.FINISHED);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerEndDownload(finishedTask);
+
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(selectedTask, adapter.getItemAt(0));
+            assertEquals(Collections.singletonList(selectedTask), new java.util.ArrayList<>(adapter.getSelected()));
+            adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(0, adapter.getItemCount());
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void selectedFolderTransfersToActiveTaskOutsideSearch() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("matching-folder");
+        LocalGallery selected = new LocalGallery(target, true);
+        GalleryDownloaderV2 active = new GalleryDownloaderV2(activity, "different-title", null, 119);
+        GalleryDownloaderV2 finished = new GalleryDownloaderV2(activity, "finished", null, 120);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Collections.singletonList(selected)));
+        try {
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Arrays.asList(active, finished)));
+            ReflectionHelpers.setField(adapter, "lastQuery", "matching");
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            adapter.selectAll();
+            ReflectionHelpers.setField(active, "folder", target);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerStartDownload(active);
+            ReflectionHelpers.setField(finished, "status", GalleryDownloaderV2.Status.FINISHED);
+            observer.triggerEndDownload(finished);
+
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(active, adapter.getItemAt(0));
+            assertEquals(Collections.singletonList(active), new java.util.ArrayList<>(adapter.getSelected()));
+            adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(selected, adapter.getItemAt(0));
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void staleFilterResultCannotRestoreTaskAfterItFinishes() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        File target = temporaryFolder.newFolder("filter-finished-task");
+        assertTrue(new File(target, "1.jpg").createNewFile());
+        GalleryDownloaderV2 task = new GalleryDownloaderV2(activity, "filter-finished-task", null, 116);
+        ReflectionHelpers.setField(task, "folder", target);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>());
+        try {
+            ReflectionHelpers.setField(adapter, "galleryDownloaders", new java.util.ArrayList<>(Collections.singletonList(task)));
+            ReflectionHelpers.callInstanceMethod(adapter, "sortElements");
+            Filter pending = adapter.getFilter();
+            Method perform = pending.getClass().getDeclaredMethod("performFiltering", CharSequence.class);
+            perform.setAccessible(true);
+            Object oldResults = perform.invoke(pending, "");
+            adapter.selectAll();
+            ReflectionHelpers.setField(task, "status", GalleryDownloaderV2.Status.FINISHED);
+            DownloadObserver observer = ReflectionHelpers.getField(adapter, "observer");
+            observer.triggerEndDownload(task);
+            Method publish = pending.getClass().getDeclaredMethod("publishResults", CharSequence.class,
+                Class.forName("android.widget.Filter$FilterResults"));
+            publish.setAccessible(true);
+            publish.invoke(pending, "", oldResults);
+            assertTrue(adapter.getItemAt(0) instanceof LocalGallery);
+            assertEquals(Collections.singletonList(adapter.getItemAt(0)), new java.util.ArrayList<>(adapter.getSelected()));
+
+            adapter.deselectAll();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            publish.invoke(pending, "", oldResults);
+            assertTrue(adapter.getItemAt(0) instanceof LocalGallery);
+        } finally {
+            adapter.removeObserver();
+        }
+    }
+
+    @Test public void oldQueryFinishingLateCannotReplaceNewSearch() throws Exception {
+        LocalActivity activity = Robolectric.buildActivity(LocalActivity.class).get();
+        Global.initFromShared(activity);
+        LocalGallery older = new LocalGallery(temporaryFolder.newFolder("old-query"), true);
+        LocalGallery newer = new LocalGallery(temporaryFolder.newFolder("new-query"), true);
+        LocalAdapter adapter = new LocalAdapter(activity, new java.util.ArrayList<>(Arrays.asList(older, newer)));
+        try {
+            Filter pending = adapter.getFilter();
+            Method perform = pending.getClass().getDeclaredMethod("performFiltering", CharSequence.class);
+            perform.setAccessible(true);
+            Method publish = pending.getClass().getDeclaredMethod("publishResults", CharSequence.class,
+                Class.forName("android.widget.Filter$FilterResults"));
+            publish.setAccessible(true);
+            adapter.filterQuery("new-query");
+            Object newResults = perform.invoke(pending, "new-query");
+            Object oldResults = perform.invoke(pending, "old-query");
+            publish.invoke(pending, "new-query", newResults);
+            publish.invoke(pending, "old-query", oldResults);
+            assertEquals(1, adapter.getItemCount());
+            assertEquals(newer, adapter.getItemAt(0));
+            assertEquals("new-query", ReflectionHelpers.getField(adapter, "lastQuery"));
         } finally {
             adapter.removeObserver();
         }

@@ -55,6 +55,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHolder> implements Filterable {
     public enum DownloadFilter { ALL, COMPLETE, PARTIAL, DAMAGED, UNVERIFIED, ABSENT }
@@ -131,8 +132,10 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     private int readingFilter;
     private boolean customStatusOnly;
     private boolean refreshAfterSelection;
+    private final AtomicLong listRevision = new AtomicLong();
+    private Filter galleryFilter;
     @NonNull
-    private String lastQuery;
+    private volatile String lastQuery;
     private final DownloadObserver observer = new DownloadObserver() {
         private void updatePosition(GalleryDownloaderV2 downloader) {
             context.runOnUiThread(() -> {
@@ -145,6 +148,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         @SuppressLint("NotifyDataSetChanged")
         public void triggerStartDownload(GalleryDownloaderV2 downloader) {
             context.runOnUiThread(() -> {
+                listRevision.incrementAndGet();
                 if (getMode() == Mode.SELECTING) {
                     refreshAfterSelection = true;
                     updatePosition(downloader);
@@ -169,6 +173,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                     dataset.remove(l);
                     dataset.add(l);
                 }
+                listRevision.incrementAndGet();
                 refreshAfterTaskEnded(downloader, l);
             });
         }
@@ -188,6 +193,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                     File deletedFolder = target.getAbsoluteFile();
                     dataset.removeIf(gallery -> deletedFolder.equals(gallery.getDirectory().getAbsoluteFile()));
                 }
+                listRevision.incrementAndGet();
                 refreshAfterTaskEnded(downloader, retained);
             });
         }
@@ -243,10 +249,13 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
 
     public void addGalleries(@Nullable List<LocalGallery> gallery) {
         if (gallery != null && !gallery.isEmpty()) {
-            dataset.removeAll(gallery);
-            dataset.addAll(gallery);
-            sortElements();
-            context.runOnUiThread(() -> notifyItemRangeChanged(0, getItemCount()));
+            List<LocalGallery> additions = new ArrayList<>(gallery);
+            context.runOnUiThread(() -> {
+                dataset.removeAll(additions);
+                dataset.addAll(additions);
+                listRevision.incrementAndGet();
+                getFilter().filter(lastQuery);
+            });
         }
     }
 
@@ -261,14 +270,18 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     private CopyOnWriteArrayList<Object> createHash(List<GalleryDownloaderV2> galleryDownloaders, List<LocalGallery> dataset) {
+        return createHash(galleryDownloaders, dataset, lastQuery);
+    }
+
+    private CopyOnWriteArrayList<Object> createHash(List<GalleryDownloaderV2> galleryDownloaders, List<LocalGallery> dataset, String query) {
         HashMap<Object, Object> hashMap = new HashMap<>(dataset.size() + galleryDownloaders.size());
         for (LocalGallery gall : dataset) {
-            if (gall != null && matchesQuery(gall))
+            if (gall != null && matchesQuery(gall, query))
                 hashMap.put(gall.getDirectory().getAbsoluteFile(), gall);
         }
 
         for (GalleryDownloaderV2 gall : galleryDownloaders) {
-            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(lastQuery)) {
+            if (gall != null && gall.getTitle().toLowerCase(Locale.US).contains(query)) {
                 File target = gall.getFolder();
                 if (target == null) target = gall.getRepairFolder();
                 hashMap.put(target == null ? gall : target.getAbsoluteFile(), gall);
@@ -282,18 +295,19 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         return new CopyOnWriteArrayList<>(arr);
     }
 
-    private boolean matchesQuery(LocalGallery gallery) {
+    private boolean matchesQuery(LocalGallery gallery, String query) {
         if (!matchesDownloadFilter(gallery)) return false;
         if (!matchesPersonalFilters(gallery)) return false;
-        if (lastQuery.isEmpty()) return true;
-        if (gallery.getTitle().toLowerCase(Locale.US).contains(lastQuery)) return true;
+        if (query.isEmpty()) return true;
+        if (gallery.getTitle().toLowerCase(Locale.US).contains(query)) return true;
         for (Tag tag : gallery.getGalleryData().getTags().getAllTagsList())
-            if (tag.getName().toLowerCase(Locale.US).contains(lastQuery)) return true;
+            if (tag.getName().toLowerCase(Locale.US).contains(query)) return true;
         return false;
     }
 
     public void setDownloadFilter(DownloadFilter value) {
         downloadFilter = value == null ? DownloadFilter.ALL : value;
+        listRevision.incrementAndGet();
         getFilter().filter(lastQuery);
     }
 
@@ -309,6 +323,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         this.favoriteOnly = favoriteOnly;
         this.readingFilter = readingFilter;
         this.customStatusOnly = customStatusOnly;
+        listRevision.incrementAndGet();
         getFilter().filter(lastQuery);
     }
 
@@ -368,24 +383,63 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         List<Object> selected = new ArrayList<>(getSelected());
         sortElements();
         if (!selected.isEmpty()) {
-            Set<LocalGallery> selectedGalleries = new HashSet<>();
+            Set<File> selectedFolders = new HashSet<>();
             Set<GalleryDownloaderV2> selectedTasks = Collections.newSetFromMap(new IdentityHashMap<>());
             for (Object previous : selected) {
                 Object target = previous == task ? retained : previous;
-                if (target instanceof LocalGallery) selectedGalleries.add((LocalGallery) target);
+                if (target instanceof LocalGallery)
+                    selectedFolders.add(((LocalGallery) target).getDirectory().getAbsoluteFile());
                 else if (target instanceof GalleryDownloaderV2) selectedTasks.add((GalleryDownloaderV2) target);
+            }
+            Set<File> visibleFolders = new HashSet<>();
+            Set<GalleryDownloaderV2> visibleTasks = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (Object candidate : filter) {
+                File folder = itemFolder(candidate);
+                if (folder != null) visibleFolders.add(folder);
+                if (candidate instanceof GalleryDownloaderV2) visibleTasks.add((GalleryDownloaderV2) candidate);
+            }
+            ArrayList<Object> visible = new ArrayList<>(filter);
+            for (GalleryDownloaderV2 current : galleryDownloaders) {
+                File folder = itemFolder(current);
+                if ((selectedTasks.contains(current) || folder != null && selectedFolders.contains(folder))
+                    && visibleTasks.add(current)) {
+                    if (folder != null) visible.removeIf(item -> item instanceof LocalGallery && folder.equals(itemFolder(item)));
+                    visible.add(current);
+                    if (folder != null) visibleFolders.add(folder);
+                }
+            }
+            for (LocalGallery gallery : dataset) {
+                File folder = itemFolder(gallery);
+                if (selectedFolders.contains(folder) && visibleFolders.add(folder)) visible.add(gallery);
+            }
+            boolean retainedOutsideFilter = !visible.equals(filter);
+            if (retainedOutsideFilter) {
+                sortItems(visible);
+                filter = new CopyOnWriteArrayList<>(visible);
             }
             HashMap<Long, Object> selection = new HashMap<>();
             for (int position = 0; position < filter.size(); position++) {
                 Object candidate = filter.get(position);
-                if (candidate instanceof LocalGallery && selectedGalleries.contains(candidate)
+                if (selectedFolders.contains(itemFolder(candidate))
                     || candidate instanceof GalleryDownloaderV2 && selectedTasks.contains(candidate))
                     selection.put(getItemId(position), candidate);
             }
-            refreshAfterSelection = false;
+            refreshAfterSelection |= retainedOutsideFilter;
             replaceSelection(selection);
         }
         notifyDataSetChanged();
+    }
+
+    @Nullable
+    private File itemFolder(Object item) {
+        File folder;
+        if (item instanceof LocalGallery) folder = ((LocalGallery) item).getDirectory();
+        else if (item instanceof GalleryDownloaderV2) {
+            GalleryDownloaderV2 task = (GalleryDownloaderV2) item;
+            folder = task.getFolder();
+            if (folder == null) folder = task.getRepairFolder();
+        } else return null;
+        return folder == null ? null : folder.getAbsoluteFile();
     }
 
     @NonNull
@@ -559,6 +613,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
                     DownloadQueue.remove((GalleryDownloaderV2) o, true);
                 }
             }
+            listRevision.incrementAndGet();
             com.theskyc.nreader.async.database.GalleryStateRepository.invalidateLocalFiles();
             context.runOnUiThread(this::notifyDataSetChanged);
         }).setNegativeButton(R.string.no, null).setCancelable(true);
@@ -611,15 +666,27 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
         return filter.size();
     }
 
+    public void filterQuery(@Nullable String query) {
+        lastQuery = query == null ? "" : query.toLowerCase(Locale.US);
+        getFilter().filter(lastQuery);
+    }
+
     @Override
     public Filter getFilter() {
-        return new Filter() {
+        if (galleryFilter != null) return galleryFilter;
+        galleryFilter = new Filter() {
+            class VersionedResults extends FilterResults {
+                long revision;
+                String query;
+            }
+
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
-                String query = constraint.toString().toLowerCase(Locale.US);
-                FilterResults results = new FilterResults();
-                lastQuery = query;
-                results.values = createHash(galleryDownloaders, dataset);
+                String query = constraint == null ? "" : constraint.toString().toLowerCase(Locale.US);
+                VersionedResults results = new VersionedResults();
+                results.revision = listRevision.get();
+                results.query = query;
+                results.values = createHash(galleryDownloaders, dataset, query);
                 return results;
             }
 
@@ -628,11 +695,22 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null && results.values instanceof CopyOnWriteArrayList) {
+                    if (!(results instanceof VersionedResults)
+                        || !((VersionedResults) results).query.equals(lastQuery)) return;
+                    if (getMode() == Mode.SELECTING) {
+                        refreshAfterSelection = true;
+                        return;
+                    }
+                    if (((VersionedResults) results).revision != listRevision.get()) {
+                        getFilter().filter(lastQuery);
+                        return;
+                    }
                     filter = (CopyOnWriteArrayList<Object>) results.values;
                     context.runOnUiThread(() -> notifyDataSetChanged());
                 }
             }
         };
+        return galleryFilter;
     }
 
     public void removeObserver() {
@@ -646,6 +724,7 @@ public class LocalAdapter extends MultichoiceAdapter<Object, LocalAdapter.ViewHo
     }
 
     public void sortChanged() {
+        listRevision.incrementAndGet();
         sortElements();
         context.runOnUiThread(() -> notifyItemRangeChanged(0, getItemCount()));
     }
