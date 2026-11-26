@@ -46,7 +46,7 @@
             android:layout_marginTop="2dp"
             android:text="@string/accounts_add"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-            android:textColor="?android:attr/textColorSecondary" />
+            android:textColor="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
 
     <ImageView
@@ -55,5 +55,5 @@
         android:layout_marginStart="8dp"
         android:contentDescription="@null"
         app:srcCompat="@drawable/ic_keyboard_arrow_right"
-        app:tint="?android:attr/textColorSecondary" />
+        app:tint="?attr/colorOnSurfaceVariant" />
 </LinearLayout>

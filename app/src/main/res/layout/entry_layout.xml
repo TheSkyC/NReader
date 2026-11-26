@@ -56,7 +56,7 @@
         android:includeFontPadding="false"
         android:lines="2"
         android:textAppearance="?attr/textAppearanceTitleSmall"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/gallery_cover" />
@@ -71,7 +71,7 @@
         android:includeFontPadding="false"
         android:lines="1"
         android:textAppearance="?attr/textAppearanceBodySmall"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/flag"
         app:layout_constraintStart_toStartOf="parent"

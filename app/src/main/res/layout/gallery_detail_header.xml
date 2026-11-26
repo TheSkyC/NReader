@@ -62,7 +62,7 @@
                     android:maxLines="2"
                     android:minWidth="48dp"
                     android:minHeight="48dp"
-                    android:textColor="?android:attr/textColorSecondary" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
         </LinearLayout>
@@ -138,7 +138,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@string/gallery_loading_details"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
     </FrameLayout>
 

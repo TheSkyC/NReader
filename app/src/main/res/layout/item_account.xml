@@ -60,7 +60,7 @@
             android:contentDescription="@null"
             android:visibility="invisible"
             app:srcCompat="@drawable/ic_check"
-            app:tint="?android:attr/textColorPrimary" />
+            app:tint="?attr/colorPrimary" />
     </LinearLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton

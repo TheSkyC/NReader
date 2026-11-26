@@ -47,7 +47,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-        android:textColor="?android:attr/textColorSecondary" />
+        android:textColor="?attr/colorOnSurfaceVariant" />
 
     <TextView
         android:layout_width="match_parent"
@@ -63,7 +63,7 @@
         android:layout_marginTop="8dp"
         android:lineSpacingExtra="3dp"
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-        android:textColor="?android:attr/textColorSecondary" />
+        android:textColor="?attr/colorOnSurfaceVariant" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/update_prompt_view"

@@ -70,7 +70,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -78,7 +78,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -132,7 +132,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -140,7 +140,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -193,7 +193,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -201,7 +201,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -281,7 +281,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/reader_status_summary"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -289,7 +289,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <LinearLayout
@@ -320,7 +320,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -328,7 +328,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -396,7 +396,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -404,7 +404,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -487,7 +487,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <LinearLayout
@@ -559,7 +559,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -567,7 +567,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
@@ -621,7 +621,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <LinearLayout
@@ -762,7 +762,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:importantForAccessibility="no" />
             </LinearLayout>
             <ImageView
@@ -770,7 +770,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_keyboard_arrow_right"
-                app:tint="?android:attr/textColorSecondary"
+                app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
         </LinearLayout>
         <RadioGroup
