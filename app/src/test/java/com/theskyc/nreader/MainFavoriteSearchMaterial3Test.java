@@ -57,6 +57,7 @@ public class MainFavoriteSearchMaterial3Test {
                 SearchView search = activity.findViewById(R.id.favorite_search_view);
                 assertTrue(bar.isShown());
                 assertFalse(bar.getMenu().findItem(R.id.search).isVisible());
+                assertFalse(bar.getMenu().findItem(R.id.save_search_plan).isVisible());
                 bar.performClick();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 search.getEditText().setText("submitted");
@@ -81,6 +82,32 @@ public class MainFavoriteSearchMaterial3Test {
                 Shadows.shadowOf(Looper.getMainLooper()).idle();
                 assertFalse(restored.isFinishing());
                 assertEquals("submitted", search.getEditText().getText().toString());
+            }
+        } finally {
+            Global.client = previous;
+            ReflectionHelpers.setStaticField(MainActivity.class, "firstTime", firstTime);
+        }
+    }
+
+    @Test public void searchResultsOfferSavingTheSearchPlan() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        OkHttpClient previous = Global.client;
+        boolean firstTime = ReflectionHelpers.getStaticField(MainActivity.class, "firstTime");
+        ReflectionHelpers.setStaticField(MainActivity.class, "firstTime", false);
+        Global.client = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
+            .request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("fixture")
+            .body(ResponseBody.create("{\"num_pages\":1,\"result\":[]}", null)).build()).build();
+        Intent intent = new Intent(app, MainActivity.class)
+            .putExtra(app.getPackageName() + ".SEARCHMODE", true)
+            .putExtra(app.getPackageName() + ".QUERY", "fixture");
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class, intent).setup()) {
+                MainActivity activity = controller.get();
+                androidx.appcompat.widget.Toolbar toolbar = activity.findViewById(R.id.toolbar);
+                activity.onCreateOptionsMenu(toolbar.getMenu());
+                assertTrue(toolbar.getMenu().findItem(R.id.save_search_plan).isVisible());
             }
         } finally {
             Global.client = previous;

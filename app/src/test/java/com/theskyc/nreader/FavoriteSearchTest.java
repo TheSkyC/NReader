@@ -125,6 +125,7 @@ public class FavoriteSearchTest {
                 activity.onCreateOptionsMenu(menu);
                 MenuItem item = menu.findItem(R.id.search);
                 assertFalse(item.isVisible());
+                assertFalse(menu.findItem(R.id.save_search_plan).isVisible());
                 MenuItem random = menu.findItem(R.id.random_favorite);
                 assertTrue(random.isVisible());
                 assertFalse(((androidx.appcompat.view.menu.MenuItemImpl) random).requestsActionButton());

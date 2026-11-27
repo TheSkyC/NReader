@@ -46,6 +46,7 @@
     <item
         android:id="@+id/save_search_plan"
         android:title="@string/save_search_plan"
+        android:visible="false"
         app:showAsAction="never" />
     <item
         android:id="@+id/download_page"
