@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">Entre para ver as páginas favoritas desta conta.</string>
     <string name="online_favorite_page_never_synced">Nunca sincronizado</string>
     <string name="summary_online_favorite_page_usage">Páginas armazenadas na conta atual: %1$d (%2$s). Última sincronização: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Atividade do cache de favoritos</string>
+    <string name="online_favorite_page_metrics_checking">Carregando atividade do cache…</string>
+    <string name="online_favorite_page_metrics_unavailable">Atividade do cache de páginas favoritas indisponível.</string>
+    <string name="summary_online_favorite_page_metrics">Todas as contas neste dispositivo: acertos %1$d, falhas %2$d (taxa de acerto %3$s); atualizações concluídas %4$d, com falha %5$d; páginas removidas %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">Ainda não há leituras do cache. Atualizações concluídas %1$d, com falha %2$d; páginas removidas %3$d.</string>
     <string name="clear_online_favorite_pages">Limpar páginas de favoritos salvas</string>
     <string name="message_clear_online_favorite_pages">Remover as páginas de favoritos salvas para a conta atual? Os estados dos favoritos e as outras contas serão mantidos.</string>
     <string name="online_favorite_pages_cleared">Páginas de favoritos limpas</string>

@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">Melde dich an, um die Favoritenseiten dieses Kontos anzuzeigen.</string>
     <string name="online_favorite_page_never_synced">Noch nie synchronisiert</string>
     <string name="summary_online_favorite_page_usage">Gespeicherte Seiten im aktuellen Konto: %1$d (%2$s). Zuletzt synchronisiert: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Aktivität des Favoritenlisten-Caches</string>
+    <string name="online_favorite_page_metrics_checking">Cache-Aktivität wird geladen…</string>
+    <string name="online_favorite_page_metrics_unavailable">Cache-Aktivität der Favoritenseiten nicht verfügbar.</string>
+    <string name="summary_online_favorite_page_metrics">Alle Konten auf diesem Gerät: Treffer %1$d, Fehlzugriffe %2$d (Trefferquote %3$s); erfolgreich aktualisiert %4$d, fehlgeschlagen %5$d; entfernte Seiten %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">Noch keine Cache-Lesevorgänge. Erfolgreich aktualisiert %1$d, fehlgeschlagen %2$d; entfernte Seiten %3$d.</string>
     <string name="clear_online_favorite_pages">Gespeicherte Favoritenseiten löschen</string>
     <string name="message_clear_online_favorite_pages">Gespeicherte Favoritenseiten des aktuellen Kontos entfernen? Favoritenstatus und andere Konten bleiben erhalten.</string>
     <string name="online_favorite_pages_cleared">Favoritenseiten gelöscht</string>

@@ -73,6 +73,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -90,6 +91,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private SettingsActivity act;
     private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
     private final AtomicInteger favoritePageCacheGeneration = new AtomicInteger();
+    private final AtomicInteger favoritePageMetricsGeneration = new AtomicInteger();
     private final AtomicInteger managedCacheGeneration = new AtomicInteger();
     @Nullable private ManagedCacheStorage.Usage managedCacheUsage;
     private final IntConsumer favoriteCacheObserver = galleryId -> {
@@ -499,6 +501,9 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             Preference favoritePageUsage = Objects.requireNonNull(
                 findPreference(getString(R.string.preference_key_online_favorite_page_usage)));
             favoritePageUsage.setSelectable(false);
+            Preference favoritePageMetrics = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_page_metrics)));
+            favoritePageMetrics.setSelectable(false);
             Preference clearFavoritePages = Objects.requireNonNull(
                 findPreference(getString(R.string.preference_key_online_favorite_pages_clear)));
             clearFavoritePages.setEnabled(false);
@@ -674,6 +679,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             scheduleFavoritePageCacheTrim();
             updateFavoritePageCacheUsage();
         }
+        if (findPreference(getString(R.string.preference_key_online_favorite_page_metrics)) != null)
+            updateFavoritePageCacheMetrics();
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
         if (accountTags != null) updateAccountTagAvailability(accountTags);
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
@@ -683,6 +690,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     @Override
     public void onPause() {
         favoritePageCacheGeneration.incrementAndGet();
+        favoritePageMetricsGeneration.incrementAndGet();
         managedCacheGeneration.incrementAndGet();
         OnlineFavoriteClient.removeObserver(favoriteCacheObserver);
         super.onPause();
@@ -802,6 +810,59 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 usage.setSummary(getString(R.string.summary_online_favorite_page_usage,
                     result.pageCount, Formatter.formatFileSize(activity, result.bytes), lastSynced));
                 clear.setEnabled(result.pageCount > 0);
+            });
+        });
+    }
+
+    private void updateFavoritePageCacheMetrics() {
+        SettingsActivity activity = act;
+        if (!isAdded() || activity == null) return;
+        Preference metrics = findPreference(getString(R.string.preference_key_online_favorite_page_metrics));
+        if (metrics == null) return;
+
+        int generation = favoritePageMetricsGeneration.incrementAndGet();
+        metrics.setSummary(R.string.online_favorite_page_metrics_checking);
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            OnlineFavoritePageStore.CacheMetrics stats = null;
+            RuntimeException failure = null;
+            OnlineFavoritePageStore store = null;
+            try {
+                store = OnlineFavoritePageStore.open(application);
+                stats = store.cacheMetrics();
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                }
+            }
+            OnlineFavoritePageStore.CacheMetrics result = stats;
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || favoritePageMetricsGeneration.get() != generation) return;
+                if (error != null || result == null) {
+                    metrics.setSummary(R.string.online_favorite_page_metrics_unavailable);
+                    return;
+                }
+                long lookups = result.cacheHits > Long.MAX_VALUE - result.cacheMisses
+                    ? Long.MAX_VALUE : result.cacheHits + result.cacheMisses;
+                if (lookups == 0) {
+                    metrics.setSummary(getString(R.string.summary_online_favorite_page_metrics_empty,
+                        result.refreshSuccesses, result.refreshFailures, result.pageEvictions));
+                    return;
+                }
+                String hitRate = NumberFormat.getPercentInstance(
+                    activity.getResources().getConfiguration().getLocales().get(0))
+                    .format((double) result.cacheHits / lookups);
+                metrics.setSummary(getString(R.string.summary_online_favorite_page_metrics,
+                    result.cacheHits, result.cacheMisses, hitRate, result.refreshSuccesses,
+                    result.refreshFailures, result.pageEvictions));
             });
         });
     }

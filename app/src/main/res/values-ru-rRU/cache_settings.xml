@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">Войдите, чтобы просмотреть страницы избранного этого аккаунта.</string>
     <string name="online_favorite_page_never_synced">Ещё не синхронизировано</string>
     <string name="summary_online_favorite_page_usage">Сохранённые страницы текущего аккаунта: %1$d (%2$s). Последняя синхронизация: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Статистика кэша избранного</string>
+    <string name="online_favorite_page_metrics_checking">Загрузка статистики кэша…</string>
+    <string name="online_favorite_page_metrics_unavailable">Статистика кэша страниц избранного недоступна.</string>
+    <string name="summary_online_favorite_page_metrics">Все аккаунты на устройстве: попадания %1$d, промахи %2$d (доля попаданий %3$s); успешные обновления %4$d, неудачные %5$d; вытеснено страниц %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">Обращений к кэшу пока нет. Успешные обновления %1$d, неудачные %2$d; вытеснено страниц %3$d.</string>
     <string name="clear_online_favorite_pages">Очистить сохранённые страницы избранного</string>
     <string name="message_clear_online_favorite_pages">Удалить сохранённые страницы избранного текущего аккаунта? Состояния избранного и данные других аккаунтов сохранятся.</string>
     <string name="online_favorite_pages_cleared">Страницы избранного очищены</string>

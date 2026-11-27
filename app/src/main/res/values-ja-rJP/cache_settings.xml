@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">ログインすると、このアカウントのお気に入りページを確認できます。</string>
     <string name="online_favorite_page_never_synced">未同期</string>
     <string name="summary_online_favorite_page_usage">現在のアカウントのキャッシュ済みページ: %1$d（%2$s）。最終同期: %3$s。</string>
+    <string name="title_online_favorite_page_metrics">お気に入りページキャッシュの状況</string>
+    <string name="online_favorite_page_metrics_checking">キャッシュ状況を読み込み中…</string>
+    <string name="online_favorite_page_metrics_unavailable">お気に入りページキャッシュの状況を取得できません。</string>
+    <string name="summary_online_favorite_page_metrics">この端末の全アカウント: ヒット %1$d 回、ミス %2$d 回（ヒット率 %3$s）；更新成功数 %4$d、失敗数 %5$d；容量により削除したページ数 %6$d。</string>
+    <string name="summary_online_favorite_page_metrics_empty">キャッシュ読み取りはまだありません。更新成功数 %1$d、失敗数 %2$d；容量により削除したページ数 %3$d。</string>
     <string name="clear_online_favorite_pages">保存済みお気に入りページを削除</string>
     <string name="message_clear_online_favorite_pages">現在のアカウントに保存されたお気に入り一覧ページを削除しますか？お気に入り状態と他のアカウントのデータは保持されます。</string>
     <string name="online_favorite_pages_cleared">お気に入りページを削除しました</string>

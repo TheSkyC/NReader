@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">登入後即可查看此帳戶的收藏清單快取。</string>
     <string name="online_favorite_page_never_synced">從未同步</string>
     <string name="summary_online_favorite_page_usage">目前帳戶已快取頁面：%1$d（%2$s）。最近同步：%3$s。</string>
+    <string name="title_online_favorite_page_metrics">收藏清單快取統計</string>
+    <string name="online_favorite_page_metrics_checking">正在載入快取統計…</string>
+    <string name="online_favorite_page_metrics_unavailable">無法讀取收藏清單快取統計。</string>
+    <string name="summary_online_favorite_page_metrics">本機所有帳戶累計：命中次數 %1$d、未命中次數 %2$d（命中率 %3$s）；更新成功數 %4$d、失敗數 %5$d；容量淘汰頁數 %6$d。</string>
+    <string name="summary_online_favorite_page_metrics_empty">尚無快取讀取記錄。更新成功數 %1$d、失敗數 %2$d；容量淘汰頁數 %3$d。</string>
     <string name="clear_online_favorite_pages">清除已快取的收藏清單頁</string>
     <string name="message_clear_online_favorite_pages">刪除目前帳戶儲存的收藏清單頁？收藏狀態記錄和其他帳戶的資料會保留。</string>
     <string name="online_favorite_pages_cleared">已清除收藏清單頁</string>

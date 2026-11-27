@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">Увійдіть, щоб переглянути сторінки обраного цього облікового запису.</string>
     <string name="online_favorite_page_never_synced">Ще не синхронізовано</string>
     <string name="summary_online_favorite_page_usage">Збережені сторінки поточного облікового запису: %1$d (%2$s). Остання синхронізація: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Активність кешу сторінок обраного</string>
+    <string name="online_favorite_page_metrics_checking">Завантаження статистики кешу…</string>
+    <string name="online_favorite_page_metrics_unavailable">Статистика кешу сторінок обраного недоступна.</string>
+    <string name="summary_online_favorite_page_metrics">Усі облікові записи на цьому пристрої: влучання %1$d, промахи %2$d (частка влучань %3$s); успішні оновлення %4$d, невдалі %5$d; витіснено сторінок %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">Звернень до кешу ще не було. Успішні оновлення %1$d, невдалі %2$d; витіснено сторінок %3$d.</string>
     <string name="clear_online_favorite_pages">Очистити збережені сторінки обраного</string>
     <string name="message_clear_online_favorite_pages">Видалити збережені сторінки обраного поточного облікового запису? Стани обраного та інші облікові записи залишаться.</string>
     <string name="online_favorite_pages_cleared">Сторінки обраного очищено</string>

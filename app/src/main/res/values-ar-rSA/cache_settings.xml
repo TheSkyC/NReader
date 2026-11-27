@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">سجّل الدخول لعرض صفحات المفضلة لهذا الحساب.</string>
     <string name="online_favorite_page_never_synced">لم تتم المزامنة</string>
     <string name="summary_online_favorite_page_usage">الصفحات المخزنة للحساب الحالي: %1$d (%2$s). آخر مزامنة: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">نشاط ذاكرة صفحات المفضلة</string>
+    <string name="online_favorite_page_metrics_checking">جارٍ تحميل إحصاءات الذاكرة المؤقتة…</string>
+    <string name="online_favorite_page_metrics_unavailable">إحصاءات ذاكرة صفحات المفضلة غير متاحة.</string>
+    <string name="summary_online_favorite_page_metrics">جميع الحسابات على هذا الجهاز: الإصابات %1$d، الإخفاقات %2$d (معدل الإصابة %3$s)؛ التحديثات الناجحة %4$d، الفاشلة %5$d؛ الصفحات المحذوفة %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">لا توجد قراءات مخبأة بعد. التحديثات الناجحة %1$d، الفاشلة %2$d؛ الصفحات المحذوفة %3$d.</string>
     <string name="clear_online_favorite_pages">مسح صفحات المفضلة المخزنة</string>
     <string name="message_clear_online_favorite_pages">هل تريد إزالة صفحات قائمة المفضلة المحفوظة للحساب الحالي؟ ستبقى حالات المفضلة والحسابات الأخرى.</string>
     <string name="online_favorite_pages_cleared">تم مسح صفحات المفضلة</string>

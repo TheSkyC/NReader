@@ -123,4 +123,24 @@ public class LocalizationTest {
             assertFalse(languageTag, details.contains("%"));
         }
     }
+
+    @Test
+    public void favoritePageCacheMetricsAreLocalizedAndFormatCounts() {
+        String[] locales = {"en-US", "ar-SA", "de-DE", "es-ES", "fr-FR", "it-IT", "ja-JP",
+            "pt-BR", "ru-RU", "tr-TR", "uk-UA", "zh-CN", "zh-TW"};
+        for (String languageTag : locales) {
+            Resources resources = resources(languageTag);
+            assertFalse(languageTag, resources.getString(R.string.title_online_favorite_page_metrics).isEmpty());
+            assertFalse(languageTag,
+                resources.getString(R.string.online_favorite_page_metrics_checking).isEmpty());
+            String summary = resources.getString(R.string.summary_online_favorite_page_metrics,
+                12, 3, "80%", 9, 1, 4);
+            String empty = resources.getString(R.string.summary_online_favorite_page_metrics_empty, 9, 1, 4);
+            assertFalse(languageTag, summary.contains("%1$") || summary.contains("%2$")
+                || summary.contains("%3$") || summary.contains("%4$")
+                || summary.contains("%5$") || summary.contains("%6$"));
+            assertFalse(languageTag, empty.contains("%1$") || empty.contains("%2$")
+                || empty.contains("%3$"));
+        }
+    }
 }

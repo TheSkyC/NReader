@@ -29,6 +29,7 @@
     <string name="preference_key_online_favorite_page_limit" translatable="false">online_favorite_page_limit</string>
     <string name="preference_key_online_favorite_page_quota" translatable="false">online_favorite_page_quota</string>
     <string name="preference_key_online_favorite_page_usage" translatable="false">online_favorite_page_usage</string>
+    <string name="preference_key_online_favorite_page_metrics" translatable="false">online_favorite_page_metrics</string>
     <string name="preference_key_online_favorite_pages_clear" translatable="false">online_favorite_pages_clear</string>
     <string name="title_online_favorite_page_limit">Favorite list pages per account</string>
     <string name="summary_online_favorite_page_limit">Keep up to %1$s visited pages per account; least recently used pages are trimmed first.</string>
@@ -42,6 +43,11 @@
     <string name="online_favorite_page_no_account">Log in to view favorite pages for this account.</string>
     <string name="online_favorite_page_never_synced">Never synced</string>
     <string name="summary_online_favorite_page_usage">Pages cached for current account: %1$d (%2$s). Last synced: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Favorite page cache activity</string>
+    <string name="online_favorite_page_metrics_checking">Loading cache activity…</string>
+    <string name="online_favorite_page_metrics_unavailable">Favorite page cache activity unavailable.</string>
+    <string name="summary_online_favorite_page_metrics">All accounts on this device: cache hits %1$d, misses %2$d (%3$s hit rate); successful refreshes %4$d, failed refreshes %5$d; evicted pages %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">No cache reads yet. Successful refreshes %1$d, failed refreshes %2$d; evicted pages %3$d.</string>
     <string name="clear_online_favorite_pages">Clear cached favorite pages</string>
     <string name="message_clear_online_favorite_pages">Remove saved favorite list pages for the current account? Favorite status records and other accounts are kept.</string>
     <string name="online_favorite_pages_cleared">Favorite list pages cleared</string>

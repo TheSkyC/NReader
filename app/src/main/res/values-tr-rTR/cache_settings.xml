@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">Bu hesabın favori sayfalarını görmek için giriş yapın.</string>
     <string name="online_favorite_page_never_synced">Hiç eşitlenmedi</string>
     <string name="summary_online_favorite_page_usage">Mevcut hesapta önbelleğe alınan sayfalar: %1$d (%2$s). Son eşitleme: %3$s.</string>
+    <string name="title_online_favorite_page_metrics">Favori sayfası önbellek etkinliği</string>
+    <string name="online_favorite_page_metrics_checking">Önbellek etkinliği yükleniyor…</string>
+    <string name="online_favorite_page_metrics_unavailable">Favori sayfası önbellek etkinliği kullanılamıyor.</string>
+    <string name="summary_online_favorite_page_metrics">Bu cihazdaki tüm hesaplar: isabet %1$d, kaçırma %2$d (isabet oranı %3$s); başarılı yenileme %4$d, başarısız yenileme %5$d; çıkarılan sayfa %6$d.</string>
+    <string name="summary_online_favorite_page_metrics_empty">Henüz önbellek okuması yok. Başarılı yenileme %1$d, başarısız yenileme %2$d; çıkarılan sayfa %3$d.</string>
     <string name="clear_online_favorite_pages">Kaydedilmiş favori sayfalarını temizle</string>
     <string name="message_clear_online_favorite_pages">Mevcut hesap için kaydedilmiş favori listesi sayfaları kaldırılsın mı? Favori durumları ve diğer hesaplar korunur.</string>
     <string name="online_favorite_pages_cleared">Favori sayfaları temizlendi</string>

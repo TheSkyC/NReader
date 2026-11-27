@@ -40,6 +40,11 @@
     <string name="online_favorite_page_no_account">登录后可查看此账号的收藏列表缓存。</string>
     <string name="online_favorite_page_never_synced">从未同步</string>
     <string name="summary_online_favorite_page_usage">当前账号已缓存页面：%1$d（%2$s）。最近同步：%3$s。</string>
+    <string name="title_online_favorite_page_metrics">收藏列表缓存统计</string>
+    <string name="online_favorite_page_metrics_checking">正在加载缓存统计…</string>
+    <string name="online_favorite_page_metrics_unavailable">无法读取收藏列表缓存统计。</string>
+    <string name="summary_online_favorite_page_metrics">本设备所有账号累计：命中次数 %1$d、未命中次数 %2$d（命中率 %3$s）；刷新成功数 %4$d、失败数 %5$d；容量淘汰页数 %6$d。</string>
+    <string name="summary_online_favorite_page_metrics_empty">尚无缓存读取记录。刷新成功数 %1$d、失败数 %2$d；容量淘汰页数 %3$d。</string>
     <string name="clear_online_favorite_pages">清除已缓存的收藏列表页</string>
     <string name="message_clear_online_favorite_pages">删除当前账号保存的收藏列表页？收藏状态记录和其他账号的数据会保留。</string>
     <string name="online_favorite_pages_cleared">已清除收藏列表页</string>
