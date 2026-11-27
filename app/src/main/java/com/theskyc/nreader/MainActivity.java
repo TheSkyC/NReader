@@ -24,7 +24,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -107,7 +106,6 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1366,17 +1364,18 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateSortType(MenuItem item) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
+        SortType[] types = SortType.values();
+        String[] labels = new String[types.length];
+        for (int index = 0; index < types.length; index++)
+            labels[index] = getString(types[index].getNameId());
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        for (SortType type : SortType.values())
-            adapter.add(getString(type.getNameId()));
         temporaryType = currentSortType();
         builder.setIcon(R.drawable.ic_sort).setTitle(R.string.sort_select_type);
-        builder.setSingleChoiceItems(adapter, temporaryType.ordinal(), (dialog, which) -> temporaryType = SortType.values()[which]);
+        builder.setSingleChoiceItems(labels, temporaryType.ordinal(), (dialog, which) -> temporaryType = types[which]);
         builder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                temporaryType = SortType.values()[position];
+                temporaryType = types[position];
                 parent.setSelection(position);
             }
 
@@ -1396,19 +1395,18 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateLanguageAndIcon(MenuItem item) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
 
-        adapter.addAll(Arrays.stream(Language.getFilteredValuesArray())
+        Language[] languages = Language.getFilteredValuesArray();
+        String[] labels = Arrays.stream(languages)
             .map(lang -> getString(lang.getNameResId()))
-            .collect(Collectors.toList())
-        );
+            .toArray(String[]::new);
 
         AtomicReference<Language> selectedLanguage = new AtomicReference<>(Global.getOnlyLanguage());
         builder.setIcon(R.drawable.ic_world)
             .setTitle(R.string.change_language)
-            .setSingleChoiceItems(adapter, selectedLanguage.get().ordinal(),
-                (dialog, which) -> selectedLanguage.set(Language.getFilteredValuesArray()[which]))
+            .setSingleChoiceItems(labels, Arrays.asList(languages).indexOf(selectedLanguage.get()),
+                (dialog, which) -> selectedLanguage.set(languages[which]))
             .setPositiveButton(R.string.ok, (dialog, which) -> {
                 Global.updateOnlyLanguage(MainActivity.this, Language.valueOf(selectedLanguage.get().name()));
                 // wait 250ms to reduce the requests
