@@ -60,6 +60,35 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class, qualifiers = "en-rUS")
 @LooperMode(LooperMode.Mode.PAUSED)
 public class SearchTagEntryTest {
+    @Test public void filterSearchActionStaysWithinTheViewport() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        initializeSearch(app);
+        try (DatabaseHelper helper = new DatabaseHelper(app)) {
+            helper.getWritableDatabase();
+            try (ActivityController<SearchActivity> controller = Robolectric.buildActivity(SearchActivity.class).setup()) {
+                SearchActivity activity = controller.get();
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(activity, activity.findViewById(R.id.toolbar));
+                activity.onCreateOptionsMenu(popup.getMenu());
+                activity.onOptionsItemSelected(popup.getMenu().findItem(R.id.view_groups));
+                View root = activity.findViewById(android.R.id.content);
+                View content = activity.findViewById(R.id.search_content);
+                View actions = activity.findViewById(R.id.search_actions);
+                View groups = activity.findViewById(R.id.groups);
+                for (int[] size : new int[][]{{864, 1536}, {1536, 864}}) {
+                    root.measure(View.MeasureSpec.makeMeasureSpec(size[0], View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(size[1], View.MeasureSpec.EXACTLY));
+                    root.layout(0, 0, size[0], size[1]);
+                    assertTrue("search content extends below the viewport", content.getBottom() <= root.getHeight());
+                    assertTrue("search action extends below the viewport",
+                        content.getTop() + actions.getBottom() <= root.getHeight());
+                    assertTrue("filter list needs room to scroll", groups.getHeight() > 0);
+                }
+            }
+        } finally {
+            Queries.setDb(null);
+        }
+    }
+
     @Test public void expandedSearchKeepsHistoryAndFiltersAvailable() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         initializeSearch(app);
