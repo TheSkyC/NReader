@@ -1055,9 +1055,11 @@ public class ZoomActivity extends GeneralActivity {
         spreadAuto.setText(R.string.reader_spread_auto);
         RadioGroup spread = Objects.requireNonNull(dialog.findViewById(R.id.reader_spread_mode));
         spread.check(spreadId(spreadMode));
-        spread.setOnCheckedChangeListener((group, id) -> setSpreadMode(
-            id == R.id.reader_spread_double ? SPREAD_MODE_DOUBLE
-                : id == R.id.reader_spread_auto ? SPREAD_MODE_AUTO : SPREAD_MODE_SINGLE));
+        spread.setOnCheckedChangeListener((group, id) -> {
+            setSpreadMode(id == R.id.reader_spread_double ? SPREAD_MODE_DOUBLE
+                : id == R.id.reader_spread_auto ? SPREAD_MODE_AUTO : SPREAD_MODE_SINGLE);
+            direction.check(isVerticalPageTurn() ? R.id.reader_vertical : R.id.reader_horizontal);
+        });
 
         MaterialRadioButton scaleSmart = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_smart));
         MaterialRadioButton scaleScreen = Objects.requireNonNull(dialog.findViewById(R.id.reader_scale_screen));

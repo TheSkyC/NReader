@@ -436,6 +436,33 @@ public class ReaderReliabilityTest {
     }
 
     @Test
+    public void choosingSpreadWhileContinuousUpdatesTheDisplayedDirection() throws Exception {
+        Application application = RuntimeEnvironment.getApplication();
+        File folder = galleryFolder();
+        application.getSharedPreferences("Settings", 0).edit().clear().commit();
+        Global.initFromShared(application);
+        try (DatabaseHelper database = new DatabaseHelper(application)) {
+            database.getWritableDatabase();
+            try (ActivityController<ZoomActivity> controller = Robolectric.buildActivity(
+                ZoomActivity.class, readerIntent(application, folder)).setup()) {
+                ZoomActivity activity = controller.get();
+                ReflectionHelpers.callInstanceMethod(activity, "setContinuousMode",
+                    ReflectionHelpers.ClassParameter.from(boolean.class, true));
+                activity.findViewById(R.id.reader_settings).performClick();
+                BottomSheetDialog dialog = (BottomSheetDialog) ShadowDialog.getLatestDialog();
+                android.widget.RadioGroup direction = dialog.findViewById(R.id.reader_direction);
+                android.widget.RadioGroup spread = dialog.findViewById(R.id.reader_spread_mode);
+                assertEquals(R.id.reader_continuous, direction.getCheckedRadioButtonId());
+                spread.check(R.id.reader_spread_double);
+                assertFalse((boolean) ReflectionHelpers.getField(activity, "continuousMode"));
+                assertEquals(activity.isVerticalPageTurn() ? R.id.reader_vertical : R.id.reader_horizontal,
+                    direction.getCheckedRadioButtonId());
+                dialog.dismiss();
+            }
+        }
+    }
+
+    @Test
     public void reachingTheEndShowsRestartAndReturnActions() throws Exception {
         Application application = RuntimeEnvironment.getApplication();
         File folder = galleryFolder();
