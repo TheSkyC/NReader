@@ -75,10 +75,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 
 public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private SettingsActivity act;
     private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
+    private final IntConsumer favoriteCacheObserver = galleryId -> updateFavoriteCacheUsage();
 
     public void setAct(SettingsActivity act) {
         this.act = act;
@@ -589,10 +591,27 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         if (act == null) return;
+        OnlineFavoriteClient.observe(act, favoriteCacheObserver);
+        updateFavoriteCacheUsage();
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
         if (accountTags != null) updateAccountTagAvailability(accountTags);
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
         if (restore != null) updateSnapshotAvailability(restore);
+    }
+
+    @Override
+    public void onPause() {
+        OnlineFavoriteClient.removeObserver(favoriteCacheObserver);
+        super.onPause();
+    }
+
+    private void updateFavoriteCacheUsage() {
+        if (!isAdded() || act == null) return;
+        Preference usage = findPreference(getString(R.string.preference_key_online_favorite_state_usage));
+        if (usage != null) {
+            usage.setSummary(getString(R.string.summary_online_favorite_state_usage,
+                OnlineFavoriteClient.cachedStateCount(act)));
+        }
     }
 
     private void updateAccountTagAvailability(Preference preference) {

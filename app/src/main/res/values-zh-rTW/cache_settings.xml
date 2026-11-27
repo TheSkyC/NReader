@@ -18,4 +18,6 @@
         <item>5,120 筆狀態</item>
         <item>10,240 筆狀態</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">已快取的收藏狀態</string>
+    <string name="summary_online_favorite_state_usage">目前帳戶記憶體中的狀態數：%1$d 筆</string>
 </resources>

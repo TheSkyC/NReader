@@ -18,4 +18,6 @@
         <item>5.120 durum</item>
         <item>10.240 durum</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Önbelleğe alınan favori durumları</string>
+    <string name="summary_online_favorite_state_usage">Bu hesap için bellekte: %1$d</string>
 </resources>

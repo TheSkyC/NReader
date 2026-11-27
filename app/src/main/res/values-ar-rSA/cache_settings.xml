@@ -9,6 +9,8 @@
     <string name="image_cache_size_unavailable">حجم ذاكرة الصور غير متاح</string>
     <string name="image_cache_cleared">تم مسح ذاكرة الصور المؤقتة</string>
     <string name="image_cache_clear_failed">تعذر مسح ذاكرة الصور المؤقتة</string>
+    <string name="title_online_favorite_state_usage">حالات المفضلة المخزنة</string>
+    <string name="summary_online_favorite_state_usage">في الذاكرة للحساب الحالي: %1$d</string>
     <string name="title_online_favorite_state_limit">حد حالات المفضلة عبر الإنترنت</string>
     <string name="summary_online_favorite_state_limit">حتى %1$s حالة مؤكدة للحساب الحالي. تُزال الحالات الأقل استخدامًا مؤخرًا أولاً.</string>
     <string name="online_favorite_state_limit_default">512 حالة</string>

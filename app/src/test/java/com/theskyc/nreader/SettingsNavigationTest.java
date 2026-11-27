@@ -302,6 +302,13 @@ public class SettingsNavigationTest {
                     if (section[0].equals("settings_screen_reader")) {
                         assertFalse(((SwitchPreferenceCompat) preference).isChecked());
                     }
+                    if (section[0].equals("settings_screen_data")) {
+                        Preference favoriteCacheUsage = child.get().fragment.findPreference(
+                            application.getString(R.string.preference_key_online_favorite_state_usage));
+                        assertNotNull(favoriteCacheUsage);
+                        assertNotNull(favoriteCacheUsage.getSummary());
+                        assertFalse(favoriteCacheUsage.getSummary().toString().contains("%1$d"));
+                    }
                     if (section[0].equals("settings_screen_search")) {
                         ListPreference display = child.get().fragment.findPreference(
                             application.getString(R.string.preference_key_tag_display_format));

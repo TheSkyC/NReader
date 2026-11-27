@@ -18,4 +18,6 @@
         <item>5 120 станів</item>
         <item>10 240 станів</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Стани обраного в кеші</string>
+    <string name="summary_online_favorite_state_usage">У пам’яті для цього облікового запису: %1$d</string>
 </resources>

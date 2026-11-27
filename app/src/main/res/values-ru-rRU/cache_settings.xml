@@ -18,4 +18,6 @@
         <item>5 120 состояний</item>
         <item>10 240 состояний</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Состояния избранного в кэше</string>
+    <string name="summary_online_favorite_state_usage">В памяти для этого аккаунта: %1$d</string>
 </resources>

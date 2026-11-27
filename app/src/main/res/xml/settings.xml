@@ -363,6 +363,11 @@
                 android:title="@string/title_online_favorite_state_limit"
                 app:iconSpaceReserved="false" />
             <Preference
+                android:key="@string/preference_key_online_favorite_state_usage"
+                android:summary="@string/summary_online_favorite_state_usage"
+                android:title="@string/title_online_favorite_state_usage"
+                app:iconSpaceReserved="false" />
+            <Preference
                 android:key="@string/preference_key_cache"
                 android:title="@string/clear_image_cache"
                 app:iconSpaceReserved="false" />

@@ -18,4 +18,6 @@
         <item>5.120 stati</item>
         <item>10.240 stati</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Stati preferiti nella cache</string>
+    <string name="summary_online_favorite_state_usage">In memoria per questo account: %1$d</string>
 </resources>

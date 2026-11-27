@@ -18,4 +18,6 @@
         <item>5.120 estados</item>
         <item>10.240 estados</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Estados favoritos en caché</string>
+    <string name="summary_online_favorite_state_usage">En memoria para esta cuenta: %1$d</string>
 </resources>

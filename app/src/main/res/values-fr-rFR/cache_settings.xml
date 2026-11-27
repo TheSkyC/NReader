@@ -18,4 +18,6 @@
         <item>5 120 états</item>
         <item>10 240 états</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">États de favoris en cache</string>
+    <string name="summary_online_favorite_state_usage">En mémoire pour ce compte : %1$d</string>
 </resources>

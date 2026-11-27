@@ -11,9 +11,12 @@
     <string name="image_cache_cleared">Image cache cleared</string>
     <string name="image_cache_clear_failed">Could not clear image cache</string>
     <string name="preference_key_online_favorite_state_limit" translatable="false">online_favorite_state_limit</string>
+    <string name="preference_key_online_favorite_state_usage" translatable="false">online_favorite_state_usage</string>
     <string name="title_online_favorite_state_limit">Favorite status cache limit</string>
     <string name="summary_online_favorite_state_limit">Up to %1$s confirmed states for this account. Least recently used states are evicted first.</string>
     <string name="online_favorite_state_limit_default">512 states</string>
+    <string name="title_online_favorite_state_usage">Cached favorite states</string>
+    <string name="summary_online_favorite_state_usage">In memory for the current account: %1$d</string>
     <string-array name="image_cache_quota_entries">
         <item>250 MiB</item>
         <item>512 MiB</item>

@@ -18,4 +18,6 @@
         <item>5,120 条状态</item>
         <item>10,240 条状态</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">已缓存的收藏状态</string>
+    <string name="summary_online_favorite_state_usage">当前账号内存中的状态数：%1$d 条</string>
 </resources>

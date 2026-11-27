@@ -18,4 +18,6 @@
         <item>5.120 Status</item>
         <item>10.240 Status</item>
     </string-array>
+    <string name="title_online_favorite_state_usage">Gespeicherte Favoritenstatus</string>
+    <string name="summary_online_favorite_state_usage">Im Speicher für dieses Konto: %1$d</string>
 </resources>
