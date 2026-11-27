@@ -6,80 +6,87 @@
     android:layout_height="match_parent"
     tools:context=".StatusViewerActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        android:paddingTop="@dimen/appbar_padding_top"
-        app:elevation="0dp">
-
-        <com.google.android.material.search.SearchBar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_weight="1"
-            android:background="?attr/colorSurface"
-            app:layout_scrollFlags="scroll|enterAlways"
-            android:hint="@string/search">
-
-        </com.google.android.material.search.SearchBar>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
     <LinearLayout
-        android:id="@+id/search_results"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical">
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabs"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?attr/colorSurface"
-            app:tabIndicatorColor="?attr/colorPrimary"
-            app:tabSelectedTextColor="?attr/colorOnSurface"
-            app:tabTextColor="?attr/colorOnSurfaceVariant"
-            app:tabMode="scrollable" />
-        <FrameLayout
+            android:paddingTop="@dimen/appbar_padding_top"
+            app:elevation="0dp">
+
+            <com.google.android.material.search.SearchBar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorSurface"
+                android:hint="@string/search" />
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/search_results"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/view_pager"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <LinearLayout
-                android:id="@+id/no_statuses"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:background="?attr/colorSurface"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:visibility="gone">
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabSelectedTextColor="?attr/colorOnSurface"
+                app:tabTextColor="?attr/colorOnSurfaceVariant"
+                app:tabMode="scrollable" />
 
-                <TextView
-                    android:id="@+id/no_statuses_message"
-                    style="@style/TextAppearance.Material3.BodyLarge"
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tabs">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/view_pager"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/status_viewer_no_statuses"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:layout_height="match_parent" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/manage_statuses_action"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/manage_statuses" />
-            </LinearLayout>
-        </FrameLayout>
+                <LinearLayout
+                    android:id="@+id/no_statuses"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/colorSurface"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/no_statuses_message"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/status_viewer_no_statuses"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/manage_statuses_action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/manage_statuses" />
+                </LinearLayout>
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 
     <com.theskyc.nreader.components.widgets.ResultsSearchView

@@ -42,6 +42,34 @@ import java.util.Collections;
 @Config(sdk = 28, application = Application.class)
 public class StatusViewerEmptyTest {
     @Test
+    public void collapsedStatusResultsRemainWithinTheViewportAfterSearch() {
+        Application app = RuntimeEnvironment.getApplication();
+        Global.initFromShared(app);
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            Database.setDatabase(database.getWritableDatabase());
+            StatusManager.replaceAll(Collections.singletonList(new Status(0xff336699, "Reading")));
+            try (ActivityController<StatusViewerActivity> controller =
+                     Robolectric.buildActivity(StatusViewerActivity.class).setup()) {
+                StatusViewerActivity activity = controller.get();
+                SearchView search = activity.findViewById(R.id.search_view);
+                search.show();
+                search.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                View root = activity.findViewById(android.R.id.content);
+                View results = activity.findViewById(R.id.search_results);
+                for (int[] size : new int[][]{{864, 1536}, {1536, 864}}) {
+                    root.measure(View.MeasureSpec.makeMeasureSpec(size[0], View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(size[1], View.MeasureSpec.EXACTLY));
+                    root.layout(0, 0, size[0], size[1]);
+                    int bottom = results.getHeight();
+                    for (View view = results; view != root; view = (View) view.getParent()) bottom += view.getTop();
+                    assertTrue("status results extend below the viewport: " + bottom, bottom <= root.getHeight());
+                }
+            }
+        }
+    }
+
+    @Test
     public void noStatusesShowsGuidanceWithoutTabs() {
         Application app = RuntimeEnvironment.getApplication();
         Global.initFromShared(app);
