@@ -7,9 +7,14 @@ NReader modifications by TheSkyC (2026); see NOTICE.
 - Gallery details, page previews, and comments are separate tabs. The details
   reading action opens the paged reader directly. The preview retains the
   existing single-column continuous reading mode and its offset restoration.
-- Horizontal gestures drag between adjacent tabs and settle on release. Nested
-  horizontal galleries, zoomed images, and system back gestures retain priority;
-  tab selection and each page's scrolling state remain independent.
+- Horizontal gestures drag between adjacent tabs and settle on release. A touch
+  during settling holds the tabs and indicator in place. Dragging continues from
+  that position, and a tap resumes the interrupted animation. Nested horizontal
+  galleries, zoomed images, and system back gestures retain priority when
+  starting a swipe. Tab selection and each page's scrolling state remain
+  independent.
+- In the paged reader, touching an image during an animated zoom holds its
+  current scale and position. Dragging and pinching continue from that point.
 - The comments tab loads independently; unavailable, empty, and failed results
   are distinguished. Comment publishing uses a separately selected saved
   username/password account; browsing and online favorites keep their selected

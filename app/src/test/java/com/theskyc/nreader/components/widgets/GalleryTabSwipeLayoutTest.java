@@ -1,8 +1,8 @@
 // NReader modifications by TheSkyC (2026); see NOTICE.
 package com.theskyc.nreader.components.widgets;
 
-import android.content.Context;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +15,10 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = android.app.Application.class)
@@ -84,6 +87,111 @@ public class GalleryTabSwipeLayoutTest {
     }
 
     @Test
+    public void tapDuringSettleKeepsBothPagesInPlaceAndResumesTheOriginalTransition() {
+        AtomicInteger clicks = new AtomicInteger();
+        View next = layout.getChildAt(1);
+        child.setOnClickListener(view -> clicks.incrementAndGet());
+        next.setOnClickListener(view -> clicks.incrementAndGet());
+        dispatch(0, MotionEvent.ACTION_DOWN, 300, 200);
+        dispatch(10, MotionEvent.ACTION_MOVE, 250, 200);
+        dispatch(20, MotionEvent.ACTION_UP, 220, 200);
+        seekAnimation(0.05f);
+        float offset = child.getTranslationX();
+        float nextOffset = next.getTranslationX();
+        float intermediateIndicator = indicator;
+        assertTrue(intermediateIndicator < 1f / 3f);
+
+        dispatch(100, MotionEvent.ACTION_DOWN, 200, 200);
+        assertEquals(offset, child.getTranslationX(), 0f);
+        assertEquals(nextOffset, next.getTranslationX(), 0f);
+        assertEquals(View.VISIBLE, next.getVisibility());
+        assertEquals(intermediateIndicator, indicator, 0f);
+
+        dispatch(150, MotionEvent.ACTION_UP, 201, 200);
+        assertEquals(offset, child.getTranslationX(), 0f);
+        assertEquals(0, selected);
+        finishAnimation();
+        assertEquals(1, selected);
+        assertEquals(1f, indicator, 0f);
+        assertEquals(0, clicks.get());
+    }
+
+    @Test
+    public void dragDuringSettleFollowsFingerFromTheIntermediatePosition() {
+        startSettling(100);
+        float offset = child.getTranslationX();
+
+        dispatch(1100, MotionEvent.ACTION_DOWN, 150, 200);
+        dispatch(1500, MotionEvent.ACTION_MOVE, 330, 200);
+        assertEquals(offset + 180 * density, child.getTranslationX(), 1f);
+        assertEquals(-child.getTranslationX() / layout.getWidth(), indicator, 0.01f);
+        dispatch(2000, MotionEvent.ACTION_UP, 330, 200);
+        finishAnimation();
+        assertEquals(0, selected);
+        assertEquals(0f, indicator, 0f);
+    }
+
+    @Test
+    public void dragDuringReturnToOriginalPageCanSettleOnTheNextPage() {
+        startSettling(200);
+        float offset = child.getTranslationX();
+
+        dispatch(1100, MotionEvent.ACTION_DOWN, 300, 200);
+        dispatch(1500, MotionEvent.ACTION_MOVE, 150, 200);
+        assertEquals(offset - 150 * density, child.getTranslationX(), 1f);
+        dispatch(2000, MotionEvent.ACTION_UP, 150, 200);
+        finishAnimation();
+        assertEquals(1, selected);
+        assertEquals(1f, indicator, 0f);
+    }
+
+    @Test
+    public void diagonalDragDuringSettleKeepsTheTabsStillWhileTheChildScrolls() {
+        startSettling(200);
+        float offset = child.getTranslationX();
+        int moves = child.moves;
+
+        dispatch(1100, MotionEvent.ACTION_DOWN, 300, 200);
+        dispatch(1500, MotionEvent.ACTION_MOVE, 140, 330);
+        assertEquals(offset, child.getTranslationX(), 0f);
+        assertEquals(moves + 1, child.moves);
+        finishAnimation();
+        dispatch(1600, MotionEvent.ACTION_MOVE, 90, 300);
+        assertEquals(offset, child.getTranslationX(), 0f);
+        assertEquals(moves + 2, child.moves);
+        dispatch(2000, MotionEvent.ACTION_UP, 90, 300);
+        finishAnimation();
+        assertEquals(0, selected);
+        assertEquals(0f, indicator, 0f);
+    }
+
+    @Test
+    public void horizontalDragDuringSettleChecksTheVisiblePageForNestedScrolling() {
+        startSettling(200);
+        child.canScroll = true;
+        float offset = child.getTranslationX();
+
+        dispatch(1100, MotionEvent.ACTION_DOWN, 360, 200);
+        dispatch(1500, MotionEvent.ACTION_MOVE, 190, 200);
+        assertEquals(offset - 170 * density, child.getTranslationX(), 1f);
+        dispatch(2000, MotionEvent.ACTION_UP, 190, 200);
+        finishAnimation();
+        assertEquals(1, selected);
+    }
+
+    @Test
+    public void systemEdgeTouchLetsTheCurrentAnimationFinish() {
+        startSettling(100);
+        float offset = child.getTranslationX();
+
+        dispatch(1100, MotionEvent.ACTION_DOWN, 10, 200);
+        assertEquals(offset, child.getTranslationX(), 0f);
+        finishAnimation();
+        dispatch(1200, MotionEvent.ACTION_CANCEL, 10, 200);
+        assertEquals(1, selected);
+    }
+
+    @Test
     public void rtlAndDirectionReversalRevealCorrectNeighbor() {
         layout.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
         layout.setCurrentPage(1);
@@ -142,8 +250,21 @@ public class GalleryTabSwipeLayoutTest {
         if (animator != null) animator.end();
     }
 
+    private void startSettling(float toX) {
+        dispatch(0, MotionEvent.ACTION_DOWN, 300, 200);
+        dispatch(500, MotionEvent.ACTION_MOVE, toX, 200);
+        dispatch(1000, MotionEvent.ACTION_UP, toX, 200);
+        seekAnimation(0.25f);
+    }
+
+    private void seekAnimation(float fraction) {
+        ValueAnimator animator = ReflectionHelpers.getField(layout, "animator");
+        animator.setCurrentFraction(fraction);
+    }
+
     private static class ScrollableChild extends View {
         boolean canScroll;
+        int moves;
 
         ScrollableChild(Context context) {
             super(context);
@@ -151,5 +272,10 @@ public class GalleryTabSwipeLayoutTest {
         }
 
         @Override public boolean canScrollHorizontally(int direction) { return canScroll; }
+
+        @Override public boolean onTouchEvent(MotionEvent event) {
+            if (event.getActionMasked() == MotionEvent.ACTION_MOVE) moves++;
+            return super.onTouchEvent(event);
+        }
     }
 }

@@ -21,16 +21,20 @@ import androidx.annotation.Nullable;
 import com.theskyc.nreader.github.chrisbanes.photoview.PhotoView;
 
 public class GalleryTabSwipeLayout extends FrameLayout {
+    private static final float EDGE_DRAG_FACTOR = 0.25f;
+
     private final int touchSlop;
     private final int minimumVelocity;
     private final float edgeInset;
     private float startX;
     private float startY;
+    private float dragStartDistance;
     private float offset;
     private boolean dragging;
     private boolean ignored;
     private int currentPage;
     private int targetPage = -1;
+    private int settlingPage = -1;
     private VelocityTracker velocityTracker;
     private ValueAnimator animator;
     private OnPageSwipeListener listener;
@@ -54,13 +58,10 @@ public class GalleryTabSwipeLayout extends FrameLayout {
     }
 
     public void setCurrentPage(int page) {
-        if (animator != null) {
-            animator.removeAllListeners();
-            animator.cancel();
-            animator = null;
-        }
+        cancelAnimation();
         currentPage = page;
         targetPage = -1;
+        settlingPage = -1;
         offset = 0;
         dragging = false;
         recycleVelocityTracker();
@@ -72,33 +73,93 @@ public class GalleryTabSwipeLayout extends FrameLayout {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (!hasInterruptedSettle()) return super.dispatchTouchEvent(event);
+
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_MOVE:
+                if (ignored) break;
+                if (velocityTracker != null) velocityTracker.addMovement(event);
+                float dx = event.getX() - startX;
+                float dy = event.getY() - startY;
+                boolean horizontal = startsHorizontalDrag(dx, dy);
+                if (!horizontal && Math.abs(dy) <= touchSlop) break;
+                if (horizontal && !canScrollChild(this, startX, startY, dx > 0 ? -1 : 1)) {
+                    cancelChildTouch(event);
+                    settlingPage = -1;
+                    dragging = true;
+                    updateDrag(dragStartDistance + dx);
+                    return true;
+                }
+                ignored = true;
+                recycleVelocityTracker();
+                break;
+            case MotionEvent.ACTION_UP:
+                if (!ignored) {
+                    cancelChildTouch(event);
+                    resumeInterruptedSettle();
+                    return true;
+                }
+                // A child handling the gesture needs its terminal event before the pages move.
+            case MotionEvent.ACTION_CANCEL:
+                boolean handled = super.dispatchTouchEvent(event);
+                if (hasInterruptedSettle()) resumeInterruptedSettle();
+                return handled;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                ignored = true;
+                recycleVelocityTracker();
+                break;
+            default:
+                break;
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    private boolean hasInterruptedSettle() {
+        return settlingPage >= 0 && animator == null;
+    }
+
+    private void resumeInterruptedSettle() {
+        settle(settlingPage != currentPage);
+        recycleVelocityTracker();
+    }
+
+    private void cancelChildTouch(MotionEvent event) {
+        MotionEvent cancel = MotionEvent.obtain(event);
+        cancel.setAction(MotionEvent.ACTION_CANCEL);
+        super.dispatchTouchEvent(cancel);
+        cancel.recycle();
+    }
+
+    @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                if (animator != null) {
-                    setCurrentPage(currentPage);
-                    if (listener != null) listener.onPageScrolled(currentPage, 0);
-                }
                 startX = event.getX();
                 startY = event.getY();
                 ignored = startX < edgeInset || startX > getWidth() - edgeInset;
                 dragging = false;
+                dragStartDistance = 0f;
                 recycleVelocityTracker();
                 velocityTracker = VelocityTracker.obtain();
                 velocityTracker.addMovement(event);
+                if (!ignored && animator != null) {
+                    cancelAnimation();
+                    dragStartDistance = targetPage < 0 ? offset / EDGE_DRAG_FACTOR : offset;
+                }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 ignored = true;
                 recycleVelocityTracker();
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (ignored || event.getPointerCount() != 1) break;
+                if (ignored || hasInterruptedSettle() || event.getPointerCount() != 1) break;
                 if (velocityTracker != null) velocityTracker.addMovement(event);
                 float dx = event.getX() - startX;
                 float dy = event.getY() - startY;
-                if (Math.abs(dy) > touchSlop && Math.abs(dy) >= Math.abs(dx)) {
+                if (startsVerticalDrag(dx, dy)) {
                     ignored = true;
-                } else if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy) * 1.5f) {
+                } else if (startsHorizontalDrag(dx, dy)) {
                     int direction = dx > 0 ? -1 : 1;
                     if (canScrollChild(this, startX, startY, direction)) {
                         ignored = true;
@@ -111,7 +172,7 @@ public class GalleryTabSwipeLayout extends FrameLayout {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                recycleVelocityTracker();
+                if (!hasInterruptedSettle()) recycleVelocityTracker();
                 break;
             default:
                 break;
@@ -122,10 +183,12 @@ public class GalleryTabSwipeLayout extends FrameLayout {
     private static boolean canScrollChild(ViewGroup parent, float x, float y, int direction) {
         for (int index = parent.getChildCount() - 1; index >= 0; index--) {
             View child = parent.getChildAt(index);
-            if (child.getVisibility() != View.VISIBLE || x < child.getLeft() || x >= child.getRight()
-                || y < child.getTop() || y >= child.getBottom()) continue;
-            float childX = x - child.getLeft() + child.getScrollX();
-            float childY = y - child.getTop() + child.getScrollY();
+            if (child.getVisibility() != View.VISIBLE) continue;
+            float localX = x - child.getX();
+            float localY = y - child.getY();
+            if (localX < 0 || localX >= child.getWidth() || localY < 0 || localY >= child.getHeight()) continue;
+            float childX = localX + child.getScrollX();
+            float childY = localY + child.getScrollY();
             if (child instanceof PhotoView && ((PhotoView) child).getScale() > 1f) return true;
             if (child instanceof ViewGroup && canScrollChild((ViewGroup) child, childX, childY, direction)) return true;
             if (child.canScrollHorizontally(direction)) return true;
@@ -136,14 +199,14 @@ public class GalleryTabSwipeLayout extends FrameLayout {
     @Override
     @SuppressLint("ClickableViewAccessibility") // Tabs provide accessible click actions.
     public boolean onTouchEvent(MotionEvent event) {
-        if (!dragging) return false;
+        if (!dragging) return hasInterruptedSettle();
         if (velocityTracker != null) velocityTracker.addMovement(event);
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_MOVE:
-                updateDrag(event.getX() - startX);
+                updateDrag(dragStartDistance + event.getX() - startX);
                 break;
             case MotionEvent.ACTION_UP:
-                updateDrag(event.getX() - startX);
+                updateDrag(dragStartDistance + event.getX() - startX);
                 float velocity = 0;
                 if (velocityTracker != null) {
                     velocityTracker.computeCurrentVelocity(1000);
@@ -162,6 +225,14 @@ public class GalleryTabSwipeLayout extends FrameLayout {
                 break;
         }
         return true;
+    }
+
+    private boolean startsHorizontalDrag(float dx, float dy) {
+        return Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy) * 1.5f;
+    }
+
+    private boolean startsVerticalDrag(float dx, float dy) {
+        return Math.abs(dy) > touchSlop && Math.abs(dy) >= Math.abs(dx);
     }
 
     private void updateDrag(float distance) {
@@ -183,7 +254,7 @@ public class GalleryTabSwipeLayout extends FrameLayout {
             }
         }
         float limit = targetPage < 0 ? getWidth() * 0.15f : getWidth();
-        float adjusted = targetPage < 0 ? distance * 0.25f : distance;
+        float adjusted = targetPage < 0 ? distance * EDGE_DRAG_FACTOR : distance;
         applyOffset(Math.max(-limit, Math.min(limit, adjusted)));
     }
 
@@ -205,6 +276,7 @@ public class GalleryTabSwipeLayout extends FrameLayout {
     private void settle(boolean changePage) {
         dragging = false;
         final int destination = changePage ? targetPage : currentPage;
+        settlingPage = destination;
         float end = changePage ? Math.copySign(getWidth(), offset) : 0f;
         animator = ValueAnimator.ofFloat(offset, end);
         animator.setDuration(200);
@@ -223,6 +295,13 @@ public class GalleryTabSwipeLayout extends FrameLayout {
         animator.start();
     }
 
+    private void cancelAnimation() {
+        if (animator == null) return;
+        animator.removeAllListeners();
+        animator.cancel();
+        animator = null;
+    }
+
     private void recycleVelocityTracker() {
         if (velocityTracker != null) velocityTracker.recycle();
         velocityTracker = null;
@@ -230,12 +309,8 @@ public class GalleryTabSwipeLayout extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
-        if (animator != null) {
-            animator.removeAllListeners();
-            animator.cancel();
-            animator = null;
-        }
-        recycleVelocityTracker();
+        if (settlingPage >= 0 || dragging) setCurrentPage(currentPage);
+        else recycleVelocityTracker();
         super.onDetachedFromWindow();
     }
 }

@@ -21,6 +21,7 @@ import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -86,6 +87,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private OnViewDragListener mOnViewDragListener;
 
     private FlingRunnable mCurrentFlingRunnable;
+    private AnimatedZoomRunnable mCurrentZoomRunnable;
     private int mHorizontalScrollEdge = HORIZONTAL_EDGE_BOTH;
     private int mVerticalScrollEdge = VERTICAL_EDGE_BOTH;
     private float mBaseRotation;
@@ -99,6 +101,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             if (mScaleDragDetector.isScaling()) {
                 return; // Do not drag if we are already scaling
             }
+            cancelZoomAnimation();
             if (mOnViewDragListener != null) {
                 mOnViewDragListener.onDrag(dx, dy);
             }
@@ -154,18 +157,23 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
         @Override
         public void onScale(float scaleFactor, float focusX, float focusY, float dx, float dy) {
-            ViewParent parent = mImageView.getParent();
-            if (parent != null) parent.requestDisallowInterceptTouchEvent(true);
-            if (getScale() < mMaxScale || scaleFactor < 1f) {
-                if (mScaleChangeListener != null) {
-                    mScaleChangeListener.onScaleChange(scaleFactor, focusX, focusY);
-                }
-                mSuppMatrix.postScale(scaleFactor, scaleFactor, focusX, focusY);
-                mSuppMatrix.postTranslate(dx, dy);
-                checkAndDisplayMatrix();
-            }
+            cancelZoomAnimation();
+            applyScale(scaleFactor, focusX, focusY, dx, dy);
         }
     };
+
+    private void applyScale(float scaleFactor, float focusX, float focusY, float dx, float dy) {
+        ViewParent parent = mImageView.getParent();
+        if (parent != null) parent.requestDisallowInterceptTouchEvent(true);
+        if (getScale() < mMaxScale || scaleFactor < 1f) {
+            if (mScaleChangeListener != null) {
+                mScaleChangeListener.onScaleChange(scaleFactor, focusX, focusY);
+            }
+            mSuppMatrix.postScale(scaleFactor, scaleFactor, focusX, focusY);
+            mSuppMatrix.postTranslate(dx, dy);
+            checkAndDisplayMatrix();
+        }
+    }
 
     public PhotoViewAttacher(ImageView imageView) {
         mImageView = imageView;
@@ -365,7 +373,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     public boolean onTouch(View v, MotionEvent ev) {
         boolean handled = false;
         if (mZoomEnabled && Util.hasDrawable((ImageView) v)) {
-            switch (ev.getAction()) {
+            switch (ev.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     ViewParent parent = v.getParent();
                     // First, disable the Parent from intercepting the touch
@@ -376,6 +384,10 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     // If we're flinging, and the user presses down, cancel
                     // fling
                     cancelFling();
+                    cancelZoomAnimation();
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    cancelZoomAnimation();
                     break;
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
@@ -384,15 +396,13 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     if (getScale() < mMinScale) {
                         RectF rect = getDisplayRect();
                         if (rect != null) {
-                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
-                                rect.centerX(), rect.centerY()));
+                            setScale(mMinScale, rect.centerX(), rect.centerY(), true);
                             handled = true;
                         }
                     } else if (getScale() > mMaxScale) {
                         RectF rect = getDisplayRect();
                         if (rect != null) {
-                            v.post(new AnimatedZoomRunnable(getScale(), mMaxScale,
-                                rect.centerX(), rect.centerY()));
+                            setScale(mMaxScale, rect.centerX(), rect.centerY(), true);
                             handled = true;
                         }
                     }
@@ -472,9 +482,10 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
         scale = Math.min(scale, mMaxScale);
         scale = Math.max(scale, mMinScale);
+        cancelZoomAnimation();
         if (animate) {
-            mImageView.post(new AnimatedZoomRunnable(getScale(), scale,
-                focalX, focalY));
+            mCurrentZoomRunnable = new AnimatedZoomRunnable(getScale(), scale, focalX, focalY);
+            mImageView.post(mCurrentZoomRunnable);
         } else {
             mSuppMatrix.setScale(scale, scale, focalX, focalY);
             checkAndDisplayMatrix();
@@ -546,6 +557,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
      * Resets the Matrix back to FIT_CENTER, and then displays its contents
      */
     private void resetMatrix() {
+        cancelZoomAnimation();
         mSuppMatrix.reset();
         setRotationBy(mBaseRotation);
         setImageViewMatrix(getDrawMatrix());
@@ -721,6 +733,13 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         }
     }
 
+    private void cancelZoomAnimation() {
+        if (mCurrentZoomRunnable != null) {
+            mImageView.removeCallbacks(mCurrentZoomRunnable);
+            mCurrentZoomRunnable = null;
+        }
+    }
+
     private class AnimatedZoomRunnable implements Runnable {
 
         private final float mFocalX, mFocalY;
@@ -731,25 +750,28 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                                     final float focalX, final float focalY) {
             mFocalX = focalX;
             mFocalY = focalY;
-            mStartTime = System.currentTimeMillis();
+            mStartTime = SystemClock.uptimeMillis();
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
         }
 
         @Override
         public void run() {
+            if (mCurrentZoomRunnable != this) return;
             float t = interpolate();
             float scale = mZoomStart + t * (mZoomEnd - mZoomStart);
             float deltaScale = scale / getScale();
-            onGestureListener.onScale(deltaScale, mFocalX, mFocalY);
-            // We haven't hit our target scale yet, so post ourselves again
+            applyScale(deltaScale, mFocalX, mFocalY, 0f, 0f);
+            if (mCurrentZoomRunnable != this) return;
             if (t < 1f) {
                 Compat.postOnAnimation(mImageView, this);
+            } else {
+                mCurrentZoomRunnable = null;
             }
         }
 
         private float interpolate() {
-            float t = 1f * (System.currentTimeMillis() - mStartTime) / mZoomDuration;
+            float t = 1f * (SystemClock.uptimeMillis() - mStartTime) / mZoomDuration;
             t = Math.min(1f, t);
             t = mInterpolator.getInterpolation(t);
             return t;
