@@ -18,7 +18,8 @@
     <color name="theme_surface_container_highest">#E6EBEE</color>
     <color name="theme_surface_variant">#F5F7FA</color>
     <color name="theme_on_surface_variant">#5F6368</color>
-    <color name="theme_outline">#D7DCE2</color>
+    <color name="theme_outline">#73777F</color>
+    <color name="theme_outline_variant">#D7DCE2</color>
     <color name="theme_error">#B3261E</color>
     <color name="theme_on_error">@android:color/white</color>
     <color name="m3_primary">#00677D</color>
@@ -52,11 +53,13 @@
     <color name="theme_black_background">@android:color/black</color>
     <color name="theme_black_surface">@android:color/black</color>
     <color name="theme_black_on_surface">@android:color/white</color>
+    <color name="theme_black_on_surface_variant">#C4C7CE</color>
     <color name="theme_black_surface_container_lowest">@android:color/black</color>
     <color name="theme_black_surface_container_low">#080808</color>
     <color name="theme_black_surface_container">#111214</color>
     <color name="theme_black_surface_container_high">#191A1D</color>
     <color name="theme_black_surface_container_highest">#1F2023</color>
     <color name="theme_black_surface_variant">#1F2023</color>
-    <color name="theme_black_outline">#4B4F56</color>
+    <color name="theme_black_outline">#8D9199</color>
+    <color name="theme_black_outline_variant">#4B4F56</color>
 </resources>

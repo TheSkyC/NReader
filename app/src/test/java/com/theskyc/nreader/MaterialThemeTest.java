@@ -1,5 +1,6 @@
 package com.theskyc.nreader.components.activities;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -59,6 +60,55 @@ public class MaterialThemeTest {
     @Test
     public void blackThemeUsesProgressiveSurfaceContainers() {
         assertSurfaceContainerOrder(R.style.AppTheme_Material3_Black, true);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void lightThemeDistinguishesControlsFromDividers() {
+        assertOutlineAndTextHierarchy(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    public void darkThemeDistinguishesControlsFromDividers() {
+        assertOutlineAndTextHierarchy(R.style.AppTheme_Material3);
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    public void blackThemeDistinguishesControlsFromDividers() {
+        assertOutlineAndTextHierarchy(R.style.AppTheme_Material3_Black);
+    }
+
+    private void assertOutlineAndTextHierarchy(int themeResource) {
+        Context context = new ContextThemeWrapper(application, themeResource);
+        int[] attributes = {
+            com.google.android.material.R.attr.colorSurface,
+            com.google.android.material.R.attr.colorSurfaceContainerHighest,
+            com.google.android.material.R.attr.colorOutline,
+            com.google.android.material.R.attr.colorOutlineVariant,
+            com.google.android.material.R.attr.colorOnSurface,
+            com.google.android.material.R.attr.colorOnSurfaceVariant,
+            android.R.attr.textColorSecondary,
+        };
+        TypedArray values = context.obtainStyledAttributes(attributes);
+        int surface = values.getColor(0, 0);
+        int container = values.getColor(1, 0);
+        int outline = values.getColor(2, 0);
+        int divider = values.getColor(3, 0);
+        int primaryText = values.getColor(4, 0);
+        int secondaryText = values.getColor(5, 0);
+        int platformSecondaryText = values.getColor(6, 0);
+        values.recycle();
+
+        assertTrue(ColorUtils.calculateContrast(outline, surface) >= 3.0);
+        assertTrue(ColorUtils.calculateContrast(outline, container) >= 3.0);
+        assertTrue(ColorUtils.calculateContrast(divider, surface)
+            < ColorUtils.calculateContrast(outline, surface));
+        assertTrue(ColorUtils.calculateContrast(secondaryText, container) >= 4.5);
+        assertTrue(ColorUtils.calculateContrast(secondaryText, surface)
+            < ColorUtils.calculateContrast(primaryText, surface));
+        assertEquals(secondaryText, platformSecondaryText);
     }
 
     private void assertSurfaceContainerOrder(int themeResource, boolean dark) {
