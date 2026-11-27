@@ -505,7 +505,7 @@ public class SearchActivity extends GeneralActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.choose_unit);
         builder.setIcon(R.drawable.ic_search);
-        builder.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, strings), (dialog, which) -> {
+        builder.setItems(strings, (dialog, which) -> {
             temporaryUnit = Ranges.TimeUnit.values()[which];
             Ranges.TimeUnit previousUnit = from ? ranges.getFromDateUnit() : ranges.getToDateUnit();
             int previousValue = from ? ranges.getFromDate() : ranges.getToDate();
