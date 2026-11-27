@@ -133,6 +133,8 @@
     <string name="save_page">Зберегти зображення</string>
     <string name="upload_date_format" formatted="true">Завантажено %1$s о %2$s</string>
     <string name="favorite_manga">Локальне обране</string>
+    <string name="favorites_empty">У локальному обраному поки нічого немає.</string>
+    <string name="favorites_load_failed">Не вдалося завантажити локальне обране.</string>
     <string name="setting_on_remove_ignored">Галереї з ігнорованими мітками не будуть показані</string>
     <string name="setting_off_remove_ignored">Галереї з ігнорованими мітками будуть розмиті</string>
     <string name="remove_ignored_galleries">Приховувати ігноровані галереї</string>

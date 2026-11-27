@@ -230,6 +230,8 @@
     <string name="save_page">保存图片</string>
     <string name="upload_date_format" formatted="true">上传时间：%1$s %2$s</string>
     <string name="favorite_manga">本地收藏</string>
+    <string name="favorites_empty">还没有本地收藏。</string>
+    <string name="favorites_load_failed">无法加载本地收藏。</string>
     <string name="setting_on_remove_ignored">不显示带有已忽略标签的画廊</string>
     <string name="setting_off_remove_ignored">模糊显示带有已忽略标签的画廊</string>
     <string name="remove_ignored_galleries">隐藏已忽略的画廊</string>

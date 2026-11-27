@@ -133,6 +133,8 @@
     <string name="save_page">حفظ الصورة</string>
     <string name="upload_date_format" formatted="true">رُفِع بتاريخ %1$s عند الـ %2$s</string>
     <string name="favorite_manga">المفضلة المحلية</string>
+    <string name="favorites_empty">لا توجد عناصر في المفضلة المحلية بعد.</string>
+    <string name="favorites_load_failed">تعذر تحميل المفضلة المحلية.</string>
     <string name="setting_on_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة لن تُعرض</string>
     <string name="setting_off_remove_ignored">الأعمال ذات الوسوم المُتجاهَلة ستُضبَّب</string>
     <string name="remove_ignored_galleries">إخفاء الأعمال المتجاهلة</string>

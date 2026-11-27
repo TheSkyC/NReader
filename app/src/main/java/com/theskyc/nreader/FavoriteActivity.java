@@ -10,6 +10,8 @@ import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
@@ -29,6 +31,7 @@ import com.theskyc.nreader.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Objects;
 
@@ -146,10 +149,39 @@ public class FavoriteActivity extends BaseActivity {
         return Global.getColPortFavorite();
     }
 
-    public void onFavoritesLoaded(int totalPages, int page) {
+    public void onFavoritesLoading() {
+        findViewById(R.id.content_state).setVisibility(View.GONE);
+    }
+
+    public void onFavoritesLoaded(int totalPages, int page, int count, String loadedQuery) {
         applyingPages = true;
         pageSwitcher.setPages(totalPages, page);
         applyingPages = false;
+        if (count == 0) {
+            boolean searching = !loadedQuery.trim().isEmpty();
+            showContentState(searching ? R.string.no_entry_found : R.string.favorites_empty,
+                searching ? R.drawable.ic_search : R.drawable.ic_favorite_border, false);
+        } else {
+            findViewById(R.id.content_state).setVisibility(View.GONE);
+        }
+    }
+
+    public void onFavoritesLoadFailed() {
+        if (adapter.getItemCount() == 0) {
+            showContentState(R.string.favorites_load_failed, R.drawable.ic_refresh, true);
+        } else {
+            Snackbar.make(findViewById(android.R.id.content), R.string.favorites_load_failed, Snackbar.LENGTH_LONG)
+                .setAction(R.string.retry, view -> adapter.forceReload()).show();
+        }
+    }
+
+    private void showContentState(int message, int icon, boolean retry) {
+        ((ImageView) findViewById(R.id.content_state_icon)).setImageResource(icon);
+        ((TextView) findViewById(R.id.content_state_message)).setText(message);
+        View action = findViewById(R.id.content_state_action);
+        action.setVisibility(retry ? View.VISIBLE : View.GONE);
+        action.setOnClickListener(retry ? view -> adapter.forceReload() : null);
+        findViewById(R.id.content_state).setVisibility(View.VISIBLE);
     }
 
     @Override

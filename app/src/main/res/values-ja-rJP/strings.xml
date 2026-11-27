@@ -133,6 +133,8 @@
     <string name="save_page">画像を保存</string>
     <string name="upload_date_format" formatted="true">%1$sの%2$sにアップロード</string>
     <string name="favorite_manga">ローカルのお気に入り</string>
+    <string name="favorites_empty">ローカルのお気に入りはまだありません。</string>
+    <string name="favorites_load_failed">ローカルのお気に入りを読み込めませんでした。</string>
     <string name="setting_on_remove_ignored">タグが無視されているギャラリーは表示されません</string>
     <string name="setting_off_remove_ignored">タグが無視されたギャラリーはぼやけます</string>
     <string name="remove_ignored_galleries">無視するタグのあるギャラリーを非表示</string>

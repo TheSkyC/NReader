@@ -133,6 +133,8 @@
     <string name="save_page">Görüntüyü kaydet</string>
     <string name="upload_date_format" formatted="true">%1$s tarihinde %2$s saatinde yüklendi</string>
     <string name="favorite_manga">Yerel favoriler</string>
+    <string name="favorites_empty">Henüz yerel favori yok.</string>
+    <string name="favorites_load_failed">Yerel favoriler yüklenemedi.</string>
     <string name="setting_on_remove_ignored">Dikkate alınmayan etiket içeren galeriler gösterilmeyecek</string>
     <string name="setting_off_remove_ignored">Dikkate alınmayan etiket içeren galeriler bulanıklaştırılacak</string>
     <string name="remove_ignored_galleries">Yok sayılan galerileri gizle</string>

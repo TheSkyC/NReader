@@ -145,6 +145,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         boolean sort = sortByTitle;
         int requestedPage = Math.max(1, activity.getActualPage());
         int[] pages = new int[2];
+        activity.onFavoritesLoading();
         setRefresh(true);
         queryLoader.load(() -> {
             int count = Queries.FavoriteTable.countFavorite(query);
@@ -155,12 +156,15 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
             int oldSize = getItemCount(), newSize = result.getCount();
             cursor = result;
             galleries = new Gallery[newSize];
-            activity.onFavoritesLoaded(pages[0], pages[1]);
+            activity.onFavoritesLoaded(pages[0], pages[1], newSize, query);
             if (oldSize > newSize) notifyItemRangeRemoved(newSize, oldSize - newSize);
             else if (newSize > oldSize) notifyItemRangeInserted(oldSize, newSize - oldSize);
             notifyItemRangeChanged(0, Math.min(newSize, oldSize));
             setRefresh(false);
-        }, () -> setRefresh(false));
+        }, () -> {
+            activity.onFavoritesLoadFailed();
+            setRefresh(false);
+        });
     }
 
     public void setRefresh(boolean refresh) {

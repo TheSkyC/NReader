@@ -133,6 +133,8 @@
     <string name="save_page">Guardar imagen</string>
     <string name="upload_date_format" formatted="true">Subido el %1$s a las %2$s</string>
     <string name="favorite_manga">Favoritos locales</string>
+    <string name="favorites_empty">Aún no hay favoritos locales.</string>
+    <string name="favorites_load_failed">No se pudieron cargar los favoritos locales.</string>
     <string name="setting_on_remove_ignored">Las galerías con etiquetas ignoradas no se mostrarán</string>
     <string name="setting_off_remove_ignored">Las galerías con etiquetas ignoradas se pondrán borrosas</string>
     <string name="remove_ignored_galleries">Ocultar galerías ignoradas</string>

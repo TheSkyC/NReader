@@ -365,6 +365,8 @@
     <string name="save_page">Save image</string>
     <string name="upload_date_format" formatted="true">Uploaded on %1$s at %2$s</string>
     <string name="favorite_manga">Local favorites</string>
+    <string name="favorites_empty">No local favorites yet.</string>
+    <string name="favorites_load_failed">Could not load local favorites.</string>
     <string name="setting_on_remove_ignored">Hide galleries with ignored tags.</string>
     <string name="setting_off_remove_ignored">Blur galleries with ignored tags.</string>
     <string name="remove_ignored_galleries">Hide ignored galleries</string>

@@ -230,6 +230,8 @@
     <string name="save_page">儲存圖片</string>
     <string name="upload_date_format" formatted="true">上傳於 %1$s %2$s</string>
     <string name="favorite_manga">本機收藏</string>
+    <string name="favorites_empty">還沒有本機收藏。</string>
+    <string name="favorites_load_failed">無法載入本機收藏。</string>
     <string name="setting_on_remove_ignored">不顯示帶有已忽略標籤的圖庫</string>
     <string name="setting_off_remove_ignored">模糊化帶有已忽略標籤的圖庫</string>
     <string name="remove_ignored_galleries">隱藏已忽略的圖庫</string>

@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewParent;
+import android.widget.TextView;
 
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.async.database.DatabaseHelper;
@@ -30,6 +31,56 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class FavoriteSearchTest {
+    @Test
+    public void emptySearchLoadingAndFailureStatesFollowTheLatestResult() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        app.deleteDatabase("Entries.db");
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            Global.initFromShared(app);
+            try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).setup()) {
+                FavoriteActivity activity = controller.get();
+                awaitCount(activity, 0);
+                View state = activity.findViewById(R.id.content_state);
+                TextView message = activity.findViewById(R.id.content_state_message);
+                View retry = activity.findViewById(R.id.content_state_action);
+                assertEquals(View.VISIBLE, state.getVisibility());
+                assertEquals(activity.getString(R.string.favorites_empty), message.getText().toString());
+                assertEquals(View.GONE, retry.getVisibility());
+
+                SearchView search = activity.findViewById(R.id.favorite_search_view);
+                search.getEditText().setText("no match");
+                assertEquals(View.GONE, state.getVisibility());
+                awaitCount(activity, 0);
+                assertEquals(activity.getString(R.string.no_entry_found), message.getText().toString());
+                assertEquals(View.VISIBLE, state.getVisibility());
+
+                activity.onFavoritesLoading();
+                assertEquals(View.GONE, state.getVisibility());
+                activity.onFavoritesLoadFailed();
+                assertEquals(View.VISIBLE, state.getVisibility());
+                assertEquals(activity.getString(R.string.favorites_load_failed), message.getText().toString());
+                assertEquals(View.VISIBLE, retry.getVisibility());
+                retry.performClick();
+                awaitCount(activity, 0);
+                assertEquals(activity.getString(R.string.no_entry_found), message.getText().toString());
+                assertEquals(View.GONE, retry.getVisibility());
+
+                Queries.FavoriteTable.addFavorite(gallery(123, "Synthetic favorite"));
+                search.getEditText().setText("no match again");
+                search.getEditText().setText("Synthetic");
+                awaitCount(activity, 1);
+                assertEquals(View.GONE, state.getVisibility());
+                activity.onFavoritesLoadFailed();
+                assertEquals(View.GONE, state.getVisibility());
+                assertEquals(1, ((androidx.recyclerview.widget.RecyclerView) activity.findViewById(R.id.recycler))
+                    .getAdapter().getItemCount());
+            }
+            Thread.sleep(100);
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+        }
+    }
+
     @Test
     public void collapseRetainsQueryAndRecreationRestoresItWithoutOpeningSearch() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
