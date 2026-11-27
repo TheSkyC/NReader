@@ -7,6 +7,8 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import androidx.appcompat.widget.AppCompatEditText;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -22,6 +24,39 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w320dp-h640dp")
 public class CommentComposerLayoutTest {
+    @Test
+    public void galleryComposerCentersSingleLineAndExpandsForMultipleLines() {
+        CommentActivity activity = Robolectric.buildActivity(CommentActivity.class).get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        float density = activity.getResources().getDisplayMetrics().density;
+        for (int direction : new int[]{View.LAYOUT_DIRECTION_LTR, View.LAYOUT_DIRECTION_RTL}) {
+            View root = LayoutInflater.from(activity).inflate(R.layout.app_bar_gallery, null, false);
+            root.setLayoutDirection(direction);
+            View card = root.findViewById(R.id.comment_input_card);
+            AppCompatEditText input = root.findViewById(R.id.comment_input);
+            MaterialButton send = root.findViewById(R.id.comment_send);
+            int width = Math.round(296 * density);
+            input.setText("A comment");
+            card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            card.layout(0, 0, width, card.getMeasuredHeight());
+            int textTop = input.getBaseline() - input.getLayout().getLineBaseline(0);
+            int textBottom = input.getHeight() - textTop - input.getLayout().getHeight();
+            assertTrue(Math.abs(textTop - textBottom) <= 1);
+            int singleLineHeight = card.getHeight();
+            input.setText("First line\nSecond line\nThird line");
+            card.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            card.layout(0, 0, width, card.getMeasuredHeight());
+            assertTrue(card.getHeight() > singleLineHeight);
+            assertTrue(input.getLayout().getLineCount() == 3);
+            assertTrue(input.getHeight() >= input.getLayout().getHeight()
+                + input.getCompoundPaddingTop() + input.getCompoundPaddingBottom());
+            assertTrue(input.getPaddingEnd() >= send.getWidth());
+            assertTrue(send.getBottom() <= ((View) send.getParent()).getHeight());
+        }
+    }
+
     @Test
     public void standaloneComposerKeepsInputAndSendActionUsableAtLargeTextSizes() {
         CommentActivity activity = Robolectric.buildActivity(CommentActivity.class).get();
