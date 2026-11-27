@@ -9,6 +9,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate;
@@ -1156,12 +1158,19 @@ public class GalleryActivity extends BaseActivity {
         List<String> statuses = StatusManager.getNames();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         statusString = Queries.StatusMangaTable.getStatus(gallery.getId()).name;
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, statuses) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.status_choice, statuses) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
                 CheckedTextView textView = (CheckedTextView) super.getView(position, convertView, parent);
-                textView.setTextColor(StatusManager.getByName(statuses.get(position)).opaqueColor());
+                Drawable color = AppCompatResources.getDrawable(GalleryActivity.this, R.drawable.status_color_swatch).mutate();
+                color.setTint(StatusManager.getByName(statuses.get(position)).opaqueColor());
+                Drawable outline = AppCompatResources.getDrawable(GalleryActivity.this, R.drawable.status_color_swatch_outline).mutate();
+                Drawable swatch = new LayerDrawable(new Drawable[]{color, outline});
+                int size = Math.round(24 * getResources().getDisplayMetrics().density);
+                swatch.setBounds(0, 0, size, size);
+                Drawable[] drawables = textView.getCompoundDrawablesRelative();
+                textView.setCompoundDrawablesRelative(drawables[0], drawables[1], swatch, drawables[3]);
                 return textView;
             }
         };
