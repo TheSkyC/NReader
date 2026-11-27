@@ -62,6 +62,55 @@ public class OnlineFavoritePageStoreTest {
         store.finishRequest(otherQuery);
     }
 
+    @Test public void metricsPersistAsAggregatedCacheActivity() {
+        OnlineFavoritePageStore.Request miss = store.beginRequest("account-a",
+            "https://example.test/favorites?page=1");
+        assertNull(store.load(miss, 100));
+        store.finishRequest(miss);
+        assertTrue(store.recordCacheHit(miss));
+        assertTrue(store.recordRefreshSuccess(miss));
+        assertTrue(store.recordRefreshFailure(miss));
+
+        store = new OnlineFavoritePageStore(database);
+        OnlineFavoritePageStore.CacheMetrics metrics = store.cacheMetrics();
+        assertEquals(1, metrics.cacheHits);
+        assertEquals(1, metrics.cacheMisses);
+        assertEquals(1, metrics.refreshSuccesses);
+        assertEquals(1, metrics.refreshFailures);
+        assertEquals(0, metrics.pageEvictions);
+
+        OnlineFavoritePageStore.Request stale = store.beginRequest("account-a",
+            "https://example.test/favorites?page=2");
+        OnlineFavoritePageStore.Request current = store.beginRequest("account-a",
+            "https://example.test/favorites?page=2");
+        assertFalse(store.recordRefreshFailure(stale));
+        assertEquals(1, store.cacheMetrics().refreshFailures);
+        store.finishRequest(stale);
+        store.finishRequest(current);
+    }
+
+    @Test public void databaseUpgradePreservesPagesAndAddsMetrics() throws Exception {
+        String identity = "upgrade-account";
+        String url = "https://example.test/favorites?page=4";
+        OnlineFavoritePageStore.Request write = store.beginRequest(identity, url);
+        assertTrue(store.save(write, response(204, "preserved"), 6, 100));
+        store.finishRequest(write);
+        database.execSQL("DROP TABLE IF EXISTS `OnlineFavoritePageCacheMetrics`");
+        database.setVersion(1);
+
+        OnlineFavoritePageStore.initializeDatabase(database);
+
+        assertEquals(2, database.getVersion());
+        OnlineFavoritePageStore.Request read = store.beginRequest(identity, url);
+        OnlineFavoritePageStore.CachedPage cached = store.load(read, 200);
+        assertNotNull(cached);
+        assertEquals("preserved", new JSONObject(cached.payload)
+            .getJSONArray("result").getJSONObject(0).getString("english_title"));
+        assertEquals(0, store.cacheMetrics().cacheHits);
+        assertEquals(0, store.cacheMetrics().cacheMisses);
+        store.finishRequest(read);
+    }
+
     @Test public void lateOlderResponseCannotReplaceNewerPage() throws Exception {
         String url = "https://nhentai.net/api/v2/favorites?page=1";
         OnlineFavoritePageStore.Request older = store.beginRequest("account", url);
@@ -112,6 +161,7 @@ public class OnlineFavoritePageStoreTest {
         assertTrue(OnlineFavoritePageStore.cachedPageCount(database) <= 10);
         assertTrue(OnlineFavoritePageStore.cachedByteCount(database) <= 450);
         assertTrue(store.stats("account-a").pageCount + store.stats("account-b").pageCount <= 2);
+        assertTrue(store.cacheMetrics().pageEvictions > 0);
     }
 
     @Test public void applyingLowerAccountLimitTrimsEveryAccount() {

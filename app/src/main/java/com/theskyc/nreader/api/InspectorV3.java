@@ -92,6 +92,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     @Nullable private OnlineFavoritePageStore favoritePageStore;
     @Nullable private OnlineFavoritePageStore.Request favoritePageRequest;
     private boolean favoriteCacheHit;
+    private boolean favoriteNetworkRequestAttempted;
+    private boolean favoriteRefreshSucceeded;
 
     public boolean isFavoriteIdentityCurrent() {
         if (requestType != ApiRequestType.FAVORITE && requestType != ApiRequestType.RANDOM_FAVORITE) return true;
@@ -501,6 +503,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         okhttp3.Call call = Global.getClient(requestContext).newCall(builder.build());
         activeCall = call;
         if (canceled) call.cancel();
+        if (requestType == ApiRequestType.FAVORITE) favoriteNetworkRequestAttempted = true;
         try (Response response = call.execute()) {
             responseCode = response.code();
             retryAfter = response.header("Retry-After");
@@ -557,7 +560,8 @@ public class InspectorV3 extends Thread implements Parcelable {
             parseDocument();
             if (favoritePageStore != null && favoritePageRequest != null && responseForCache != null
                 && responseCode == HttpURLConnection.HTTP_OK && !canceled && resultCurrent.getAsBoolean()
-                && isFavoriteIdentityCurrent()) {
+                && isFavoriteIdentityCurrent() && favoritePageStore.recordRefreshSuccess(favoritePageRequest)) {
+                favoriteRefreshSucceeded = true;
                 try {
                     favoritePageStore.save(favoritePageRequest, responseForCache, pageCount,
                         System.currentTimeMillis());
@@ -580,6 +584,7 @@ public class InspectorV3 extends Thread implements Parcelable {
                 }
             }
         } catch (Exception e) {
+            recordFavoriteRefreshFailure();
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isAccountTagScopeCurrent()
                 && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
         } finally {
@@ -619,6 +624,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         try {
             parseDocument();
         } catch (Exception error) {
+            favoritePageStore.recordCacheMiss(favoritePageRequest);
             favoritePageStore.delete(favoritePageRequest);
             favoriteCacheHit = false;
             galleries = null;
@@ -628,9 +634,16 @@ public class InspectorV3 extends Thread implements Parcelable {
             return;
         }
         if (deliveryResponse != null && resultCurrent.getAsBoolean() && !canceled
-            && isFavoriteIdentityCurrent() && favoritePageStore.isCurrent(favoritePageRequest)) {
+            && isFavoriteIdentityCurrent() && favoritePageStore.recordCacheHit(favoritePageRequest)) {
             deliveryResponse.onCacheHit(galleries, cached.syncedAt);
         }
+    }
+
+    private void recordFavoriteRefreshFailure() {
+        if (!favoriteNetworkRequestAttempted || favoriteRefreshSucceeded || canceled
+            || !resultCurrent.getAsBoolean() || !isFavoriteIdentityCurrent()
+            || favoritePageStore == null || favoritePageRequest == null) return;
+        favoritePageStore.recordRefreshFailure(favoritePageRequest);
     }
 
     private void filterDocumentTags() {

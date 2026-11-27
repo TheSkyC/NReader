@@ -31,7 +31,9 @@ import java.util.Set;
 /** Stores only successfully parsed favorite pages. The table is intentionally excluded from backups. */
 public final class OnlineFavoritePageStore {
     public static final String TABLE_NAME = "OnlineFavoritePages";
-    private static final int SCHEMA_VERSION = 1;
+    private static final String METRICS_TABLE_NAME = "OnlineFavoritePageCacheMetrics";
+    private static final int DATABASE_VERSION = 2;
+    private static final int PAGE_SCHEMA_VERSION = 1;
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int MAX_TAGS_PER_GALLERY = 256;
     private static final int MAX_FIELD_LENGTH = 8192;
@@ -42,6 +44,7 @@ public final class OnlineFavoritePageStore {
     private static final long DEFAULT_TOTAL_BYTES = 16L * 1024 * 1024;
     private static final int MAX_TRACKED_REQUESTS = 256;
     private static final Object REQUEST_LOCK = new Object();
+    private static final Object DATABASE_INIT_LOCK = new Object();
     private static final Map<String, RequestState> requests = new LinkedHashMap<>(32, 0.75f, true);
     private static final Set<String> accountsPendingInvalidation = new HashSet<>();
     private static long nextRequestToken;
@@ -81,19 +84,7 @@ public final class OnlineFavoritePageStore {
             SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY);
         boolean initialized = false;
         try {
-            int version = database.getVersion();
-            if (version == 0) database.execSQL("PRAGMA auto_vacuum=INCREMENTAL");
-            if (version != SCHEMA_VERSION) {
-                database.beginTransaction();
-                try {
-                    database.execSQL("DROP TABLE IF EXISTS `" + TABLE_NAME + "`");
-                    createTable(database);
-                    database.setVersion(SCHEMA_VERSION);
-                    database.setTransactionSuccessful();
-                } finally {
-                    database.endTransaction();
-                }
-            }
+            initializeDatabase(database);
             initialized = true;
             return new OnlineFavoritePageStore(database, Limits.fromPreferences(application), true, application);
         } finally {
@@ -123,6 +114,39 @@ public final class OnlineFavoritePageStore {
             + TABLE_NAME + "` (`accessed_at`)");
         database.execSQL("CREATE INDEX IF NOT EXISTS `OnlineFavoritePagesIdentityAccess` ON `"
             + TABLE_NAME + "` (`identity_hash`, `accessed_at`)");
+        createMetricsTable(database);
+    }
+
+    static void initializeDatabase(SQLiteDatabase database) {
+        synchronized (DATABASE_INIT_LOCK) {
+            int version = database.getVersion();
+            if (version == DATABASE_VERSION) return;
+            if (version == 0) database.execSQL("PRAGMA auto_vacuum=INCREMENTAL");
+            database.beginTransaction();
+            try {
+                if (version != 1 && version != DATABASE_VERSION) {
+                    database.execSQL("DROP TABLE IF EXISTS `" + TABLE_NAME + "`");
+                    database.execSQL("DROP TABLE IF EXISTS `" + METRICS_TABLE_NAME + "`");
+                }
+                createTable(database);
+                database.setVersion(DATABASE_VERSION);
+                database.setTransactionSuccessful();
+            } finally {
+                database.endTransaction();
+            }
+        }
+    }
+
+    private static void createMetricsTable(SQLiteDatabase database) {
+        database.execSQL("CREATE TABLE IF NOT EXISTS `" + METRICS_TABLE_NAME + "` ("
+            + "`id` INTEGER PRIMARY KEY CHECK (`id`=1),"
+            + "`cache_hits` INTEGER NOT NULL DEFAULT 0,"
+            + "`cache_misses` INTEGER NOT NULL DEFAULT 0,"
+            + "`refresh_successes` INTEGER NOT NULL DEFAULT 0,"
+            + "`refresh_failures` INTEGER NOT NULL DEFAULT 0,"
+            + "`page_evictions` INTEGER NOT NULL DEFAULT 0"
+            + ")");
+        database.execSQL("INSERT OR IGNORE INTO `" + METRICS_TABLE_NAME + "` (`id`) VALUES (1)");
     }
 
     public Request beginRequest(String identity, String requestUrl) {
@@ -167,14 +191,18 @@ public final class OnlineFavoritePageStore {
                 new String[]{"schema_version", "page_count", "synced_at", "payload_bytes", "payload"},
                 "identity_hash=? AND request_hash=?",
                 new String[]{request.identityHash, request.requestHash}, null, null, null, "1")) {
-                if (!cursor.moveToFirst()) return null;
+                if (!cursor.moveToFirst()) {
+                    incrementMetric("cache_misses");
+                    return null;
+                }
                 String payload = cursor.getString(4);
                 int payloadBytes = cursor.getInt(3);
-                if (cursor.getInt(0) != SCHEMA_VERSION || payload == null
+                if (cursor.getInt(0) != PAGE_SCHEMA_VERSION || payload == null
                     || payloadBytes <= 0 || payloadBytes > limits.maxEntryBytes
                     || payload.getBytes(StandardCharsets.UTF_8).length != payloadBytes
                     || !isValidPayload(payload)) {
                     delete(request);
+                    incrementMetric("cache_misses");
                     return null;
                 }
                 ContentValues access = new ContentValues();
@@ -204,7 +232,7 @@ public final class OnlineFavoritePageStore {
                 ContentValues values = new ContentValues();
                 values.put("identity_hash", request.identityHash);
                 values.put("request_hash", request.requestHash);
-                values.put("schema_version", SCHEMA_VERSION);
+                values.put("schema_version", PAGE_SCHEMA_VERSION);
                 values.put("page_count", Math.max(0, pageCount));
                 values.put("synced_at", nowMillis);
                 values.put("accessed_at", nowMillis);
@@ -306,6 +334,31 @@ public final class OnlineFavoritePageStore {
         }
     }
 
+    public CacheMetrics cacheMetrics() {
+        try (Cursor cursor = database.rawQuery("SELECT cache_hits, cache_misses, refresh_successes, "
+            + "refresh_failures, page_evictions FROM " + METRICS_TABLE_NAME + " WHERE id=1", null)) {
+            if (!cursor.moveToFirst()) return CacheMetrics.EMPTY;
+            return new CacheMetrics(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2),
+                cursor.getLong(3), cursor.getLong(4));
+        }
+    }
+
+    public boolean recordCacheHit(Request request) {
+        return recordRequestMetric(request, "cache_hits");
+    }
+
+    public boolean recordCacheMiss(Request request) {
+        return recordRequestMetric(request, "cache_misses");
+    }
+
+    public boolean recordRefreshSuccess(Request request) {
+        return recordRequestMetric(request, "refresh_successes");
+    }
+
+    public boolean recordRefreshFailure(Request request) {
+        return recordRequestMetric(request, "refresh_failures");
+    }
+
     static int cachedPageCount(SQLiteDatabase database) {
         return (int) DatabaseUtils.longForQuery(database, "SELECT COUNT(*) FROM " + TABLE_NAME, null);
     }
@@ -323,8 +376,7 @@ public final class OnlineFavoritePageStore {
             while (cursor.moveToNext()) excess.add(cursor.getString(0));
         }
         for (String requestHash : excess) {
-            database.delete(TABLE_NAME, "identity_hash=? AND request_hash=?",
-                new String[]{identityHash, requestHash});
+            deleteEvictedPage(identityHash, requestHash);
         }
     }
 
@@ -339,8 +391,34 @@ public final class OnlineFavoritePageStore {
                 identityHash = cursor.getString(0);
                 requestHash = cursor.getString(1);
             }
-            database.delete(TABLE_NAME, "identity_hash=? AND request_hash=?",
-                new String[]{identityHash, requestHash});
+            deleteEvictedPage(identityHash, requestHash);
+        }
+    }
+
+    private void deleteEvictedPage(String identityHash, String requestHash) {
+        if (database.delete(TABLE_NAME, "identity_hash=? AND request_hash=?",
+            new String[]{identityHash, requestHash}) > 0) {
+            incrementMetric("page_evictions");
+        }
+    }
+
+    private void incrementMetric(String column) {
+        synchronized (REQUEST_LOCK) {
+            try {
+                database.execSQL("UPDATE `" + METRICS_TABLE_NAME + "` SET `" + column + "`="
+                    + "CASE WHEN `" + column + "` < ? THEN `" + column + "` + 1 ELSE `" + column + "` END "
+                    + "WHERE `id`=1", new Object[]{Long.MAX_VALUE});
+            } catch (RuntimeException error) {
+                LogUtility.w("Unable to update online favorite page cache metrics", error);
+            }
+        }
+    }
+
+    private boolean recordRequestMetric(Request request, String column) {
+        synchronized (REQUEST_LOCK) {
+            if (!isCurrentLocked(request) || accountsPendingInvalidation.contains(request.identityHash)) return false;
+            incrementMetric(column);
+            return true;
         }
     }
 
@@ -395,7 +473,7 @@ public final class OnlineFavoritePageStore {
                 safeResults.put(item);
             }
             JSONObject page = new JSONObject();
-            page.put("cache_version", SCHEMA_VERSION);
+            page.put("cache_version", PAGE_SCHEMA_VERSION);
             page.put("num_pages", Math.max(0, pageCount));
             page.put("result", safeResults);
             return page.toString();
@@ -479,7 +557,7 @@ public final class OnlineFavoritePageStore {
         try {
             JSONObject page = new JSONObject(payload);
             JSONArray results = page.optJSONArray("result");
-            if (page.optInt("cache_version", -1) != SCHEMA_VERSION || results == null
+            if (page.optInt("cache_version", -1) != PAGE_SCHEMA_VERSION || results == null
                 || results.length() > MAX_ITEMS_PER_PAGE || page.optInt("num_pages", -1) < 0) return false;
             for (int index = 0; index < results.length(); index++) {
                 JSONObject item = results.optJSONObject(index);
@@ -538,6 +616,24 @@ public final class OnlineFavoritePageStore {
             this.pageCount = pageCount;
             this.bytes = bytes;
             this.lastSyncedAt = lastSyncedAt;
+        }
+    }
+
+    public static final class CacheMetrics {
+        private static final CacheMetrics EMPTY = new CacheMetrics(0, 0, 0, 0, 0);
+        public final long cacheHits;
+        public final long cacheMisses;
+        public final long refreshSuccesses;
+        public final long refreshFailures;
+        public final long pageEvictions;
+
+        CacheMetrics(long cacheHits, long cacheMisses, long refreshSuccesses,
+                     long refreshFailures, long pageEvictions) {
+            this.cacheHits = cacheHits;
+            this.cacheMisses = cacheMisses;
+            this.refreshSuccesses = refreshSuccesses;
+            this.refreshFailures = refreshFailures;
+            this.pageEvictions = pageEvictions;
         }
     }
 

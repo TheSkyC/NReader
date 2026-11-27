@@ -301,6 +301,9 @@ public class OnlineFavoriteClientTest {
             List<String> firstEvents = Collections.synchronizedList(new ArrayList<>());
             runFavoriteInspector(firstEvents, new AtomicInteger(-1));
             assertEquals(Collections.singletonList("fresh"), firstEvents);
+            pageStore = OnlineFavoritePageStore.open(context);
+            OnlineFavoritePageStore.CacheMetrics beforeOfflineRefresh = pageStore.cacheMetrics();
+            pageStore.close();
 
             OnlineFavoriteClient.rememberState(context, 401, false);
             Global.client = client(chain -> { throw new IOException("synthetic offline failure"); });
@@ -311,6 +314,11 @@ public class OnlineFavoriteClientTest {
             assertEquals(java.util.Arrays.asList("cache", "failure"), offlineEvents);
             assertEquals(401, cachedGalleryId.get());
             assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 401));
+            pageStore = OnlineFavoritePageStore.open(context);
+            OnlineFavoritePageStore.CacheMetrics afterOfflineRefresh = pageStore.cacheMetrics();
+            assertEquals(beforeOfflineRefresh.cacheHits + 1, afterOfflineRefresh.cacheHits);
+            assertEquals(beforeOfflineRefresh.refreshFailures + 1, afterOfflineRefresh.refreshFailures);
+            pageStore.close();
         } finally {
             Global.client = previous;
         }
@@ -326,6 +334,7 @@ public class OnlineFavoriteClientTest {
             "{\"num_pages\":2,\"result\":[{\"id\":410,\"media_id\":\"1\","
                 + "\"english_title\":\"Cached\",\"num_pages\":1}]}", 2, 100));
         pageStore.finishRequest(write);
+        OnlineFavoritePageStore.CacheMetrics beforeRefresh = pageStore.cacheMetrics();
         pageStore.close();
         OnlineFavoriteClient.rememberState(context, 410, false);
 
@@ -358,6 +367,9 @@ public class OnlineFavoriteClientTest {
             assertEquals(3, cached.pageCount);
             assertEquals(411, new org.json.JSONObject(cached.payload)
                 .getJSONArray("result").getJSONObject(0).getInt("id"));
+            OnlineFavoritePageStore.CacheMetrics afterRefresh = pageStore.cacheMetrics();
+            assertEquals(beforeRefresh.cacheHits + 1, afterRefresh.cacheHits);
+            assertEquals(beforeRefresh.refreshSuccesses + 1, afterRefresh.refreshSuccesses);
             pageStore.finishRequest(read);
             pageStore.close();
         } finally {
