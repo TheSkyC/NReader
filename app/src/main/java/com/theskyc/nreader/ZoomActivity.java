@@ -260,6 +260,12 @@ public class ZoomActivity extends GeneralActivity {
         //Global.initActivity(this);
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
         side = preferences.getBoolean(VOLUME_SIDE_KEY, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams attributes = getWindow().getAttributes();
+            attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(attributes);
+        }
         setContentView(R.layout.activity_zoom);
 
         //read arguments

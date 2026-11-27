@@ -6,6 +6,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.SystemClock;
 import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
@@ -21,6 +22,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -85,7 +88,8 @@ public class ReaderStatusOverlayViewTest {
             .putFloat(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "position_y"), 1f)
             .apply();
         ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
-        view.setWindowInsets(Insets.of(0, 100, 40, 80), Insets.of(0, 30, 0, 0));
+        view.setWindowInsets(Insets.of(0, 100, 40, 80), Insets.of(0, 30, 0, 0),
+            Insets.NONE, Collections.emptyList());
         view.setTimeValue("21:38");
         view.setBatteryValue(76, false);
         view.setProgressValue(12, 48);
@@ -108,7 +112,8 @@ public class ReaderStatusOverlayViewTest {
 
         preferences.edit().putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, true).apply();
         view.setSettings(ReaderStatusSettings.load(preferences));
-        view.setWindowInsets(Insets.of(70, 0, 40, 0), Insets.of(70, 0, 0, 0));
+        view.setWindowInsets(Insets.of(70, 0, 40, 0), Insets.of(70, 0, 0, 0),
+            Insets.NONE, Collections.emptyList());
         layout(view, 1920, 1080);
         assertEquals(edge, time.getY(), 0.01f);
         assertTrue(time.getX() >= 70 + edge);
@@ -120,7 +125,8 @@ public class ReaderStatusOverlayViewTest {
         android.content.SharedPreferences preferences = activity.getSharedPreferences("Settings", 0);
         preferences.edit().putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, false).apply();
         ReaderStatusOverlayView reader = new ReaderStatusOverlayView(activity);
-        reader.setWindowInsets(Insets.of(0, 100, 0, 80), Insets.of(0, 30, 0, 0));
+        reader.setWindowInsets(Insets.of(0, 100, 0, 80), Insets.of(0, 30, 0, 0),
+            Insets.NONE, Collections.emptyList());
         layout(reader, 1000, 2000);
         ReaderStatusOverlayView preview = new ReaderStatusOverlayView(activity);
         reader.copyPreviewStateTo(preview, null);
@@ -152,6 +158,27 @@ public class ReaderStatusOverlayViewTest {
         assertTrue(time.getX() + time.getWidth() < battery.getX());
         assertTrue(progress.getX() + progress.getWidth() <= 1080 - 18 - dp(activity, 10));
         assertTrue(progress.getY() + progress.getHeight() <= 1920 - 28 - dp(activity, 10));
+        assertFalse(view.hasOverlappingItems());
+    }
+
+    @Test
+    public void stackedDefaultItemsStaySeparatedBelowACutout() {
+        Activity activity = themedActivity();
+        ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
+        int width = dp(activity, 50);
+        int cutoutBottom = dp(activity, 55);
+        Insets cutout = Insets.of(0, cutoutBottom, 0, 0);
+        view.setWindowInsets(cutout, cutout, Insets.NONE,
+            Collections.singletonList(new Rect(width / 2, 0, width, cutoutBottom)));
+        view.setTimeValue("21:38");
+        view.setBatteryValue(76, false);
+        view.setHostState(true, false, false, false, false, false);
+        layout(view, width, dp(activity, 280));
+
+        View time = view.getChildAt(ReaderStatusSettings.ITEM_TIME);
+        View battery = view.getChildAt(ReaderStatusSettings.ITEM_BATTERY);
+        assertEquals(cutoutBottom, time.getY(), 0.01f);
+        assertTrue(battery.getY() >= time.getY() + time.getHeight() + dp(activity, 4));
         assertFalse(view.hasOverlappingItems());
     }
 

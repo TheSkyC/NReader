@@ -3,6 +3,7 @@ package com.theskyc.nreader.components.reader;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
@@ -22,6 +23,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.widget.ImageViewCompat;
 
 import com.theskyc.nreader.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /** Renders a touch-through reader overlay without participating in image measurement. */
 public final class ReaderStatusOverlayView extends FrameLayout {
@@ -48,8 +53,13 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     private Insets safeInsets = Insets.NONE;
     private Insets systemSafeInsets = Insets.NONE;
     private Insets cutoutInsets = Insets.NONE;
+    private Insets waterfallInsets = Insets.NONE;
+    private List<Rect> cutoutBounds = Collections.emptyList();
+    private List<Rect> localCutoutBounds = Collections.emptyList();
     private Insets previewSystemInsets = Insets.NONE;
     private Insets previewCutoutInsets = Insets.NONE;
+    private Insets previewWaterfallInsets = Insets.NONE;
+    private List<Rect> previewCutoutBounds = Collections.emptyList();
     private int previewSourceWidth;
     private int previewSourceHeight;
     private ReaderStatusSettings settings;
@@ -132,14 +142,21 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         requestLayout();
     }
 
-    public void setWindowInsets(@NonNull Insets systemSafe, @NonNull Insets cutout) {
+    void setWindowInsets(@NonNull Insets systemSafe, @NonNull Insets cutout, @NonNull Insets waterfall,
+                         @NonNull List<Rect> bounds) {
         systemSafeInsets = systemSafe;
         cutoutInsets = cutout;
+        waterfallInsets = waterfall;
+        if (!cutoutBounds.equals(bounds)) {
+            cutoutBounds = bounds;
+            requestLayout();
+        }
         updateSafeInsets();
     }
 
     private void updateSafeInsets() {
-        setSafeInsets(settings.nearEdges ? cutoutInsets : systemSafeInsets);
+        setSafeInsets(settings.nearEdges
+            ? (cutoutBounds.isEmpty() ? cutoutInsets : waterfallInsets) : systemSafeInsets);
     }
 
     public void setHostState(boolean active, boolean controls, boolean modal,
@@ -200,9 +217,9 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         if (item < ReaderStatusSettings.ITEM_TIME || item > ReaderStatusSettings.ITEM_PROGRESS) return;
         ReaderStatusSettings.Position position = ReaderStatusSettings.Position.custom(x, y);
         editorPositions[item] = new float[]{position.x, position.y};
-        float[] coordinates = normalizedCoordinates(position, itemViews[item]);
-        itemViews[item].setX(coordinates[0]);
-        itemViews[item].setY(coordinates[1]);
+        View child = itemViews[item];
+        float[] coordinates = normalizedCoordinates(position, child);
+        layoutItemAt(child, coordinates[0], coordinates[1]);
     }
 
     public void clearEditorPosition(int item) {
@@ -223,6 +240,8 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         target.setSettings(settings);
         target.previewSystemInsets = systemSafeInsets;
         target.previewCutoutInsets = cutoutInsets;
+        target.previewWaterfallInsets = waterfallInsets;
+        target.previewCutoutBounds = cutoutBoundsInOverlay();
         target.previewSourceWidth = getWidth();
         target.previewSourceHeight = getHeight();
         target.updatePreviewInsets(target.getWidth(), target.getHeight());
@@ -244,8 +263,27 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         if (previewSourceWidth <= 0 || previewSourceHeight <= 0 || width <= 0 || height <= 0) return;
         float scaleX = (float) width / previewSourceWidth;
         float scaleY = (float) height / previewSourceHeight;
+        List<Rect> bounds = new ArrayList<>(previewCutoutBounds.size());
+        for (Rect cutout : previewCutoutBounds) {
+            bounds.add(new Rect((int) Math.floor(cutout.left * scaleX), (int) Math.floor(cutout.top * scaleY),
+                (int) Math.ceil(cutout.right * scaleX), (int) Math.ceil(cutout.bottom * scaleY)));
+        }
         setWindowInsets(scaleInsets(previewSystemInsets, scaleX, scaleY),
-            scaleInsets(previewCutoutInsets, scaleX, scaleY));
+            scaleInsets(previewCutoutInsets, scaleX, scaleY),
+            scaleInsets(previewWaterfallInsets, scaleX, scaleY), bounds);
+    }
+
+    private List<Rect> cutoutBoundsInOverlay() {
+        if (cutoutBounds.isEmpty() || previewSourceWidth > 0) return cutoutBounds;
+        int[] location = new int[2];
+        getLocationInWindow(location);
+        List<Rect> bounds = new ArrayList<>(cutoutBounds.size());
+        for (Rect cutout : cutoutBounds) {
+            Rect local = new Rect(cutout);
+            local.offset(-location[0], -location[1]);
+            bounds.add(local);
+        }
+        return bounds;
     }
 
     @Override
@@ -279,6 +317,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     }
 
     private void layoutItems() {
+        localCutoutBounds = settings.nearEdges ? cutoutBoundsInOverlay() : Collections.emptyList();
         int edge = dp(10);
         int safeLeft = safeInsets.left + edge;
         int safeTop = safeInsets.top + edge;
@@ -300,17 +339,30 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         int timeDefaultX = batteryDefaultX - dp(6) - timeItem.getMeasuredWidth();
         int timeDefaultY = safeTop;
         int batteryDefaultY = safeTop;
-        if (timeItem.getMeasuredWidth() + batteryItem.getMeasuredWidth() + dp(6) > availableWidth) {
+        boolean stacked = timeItem.getMeasuredWidth() + batteryItem.getMeasuredWidth() + dp(6) > availableWidth;
+        if (stacked) {
             timeDefaultX = safeRight - timeItem.getMeasuredWidth();
             batteryDefaultX = safeRight - batteryItem.getMeasuredWidth();
             batteryDefaultY += timeItem.getMeasuredHeight() + dp(4);
             int maxY = Math.max(safeTop, safeBottom - batteryItem.getMeasuredHeight());
             batteryDefaultY = Math.min(batteryDefaultY, maxY);
         }
-        placeItem(ReaderStatusSettings.ITEM_TIME, timeDefaultX, timeDefaultY, safeLeft, safeTop,
-            safeRight, safeBottom);
-        placeItem(ReaderStatusSettings.ITEM_BATTERY, batteryDefaultX, batteryDefaultY, safeLeft, safeTop,
-            safeRight, safeBottom);
+        if (stacked && !localCutoutBounds.isEmpty()
+            && !positionFor(ReaderStatusSettings.ITEM_TIME).custom
+            && !positionFor(ReaderStatusSettings.ITEM_BATTERY).custom) {
+            int left = Math.min(timeDefaultX, batteryDefaultX);
+            int height = batteryDefaultY - safeTop + batteryItem.getMeasuredHeight();
+            float[] position = positionOutsideCutouts(left, safeTop, safeRight - left, height);
+            timeItem.setX(position[0] + timeDefaultX - left);
+            timeItem.setY(position[1]);
+            batteryItem.setX(position[0] + batteryDefaultX - left);
+            batteryItem.setY(position[1] + batteryDefaultY - safeTop);
+        } else {
+            placeItem(ReaderStatusSettings.ITEM_TIME, timeDefaultX, timeDefaultY, safeLeft, safeTop,
+                safeRight, safeBottom);
+            placeItem(ReaderStatusSettings.ITEM_BATTERY, batteryDefaultX, batteryDefaultY, safeLeft, safeTop,
+                safeRight, safeBottom);
+        }
         placeItem(ReaderStatusSettings.ITEM_PROGRESS,
             safeRight - progressItem.getMeasuredWidth(),
             safeBottom - progressItem.getMeasuredHeight(), safeLeft, safeTop, safeRight, safeBottom);
@@ -322,21 +374,75 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         child.measure(width, height);
     }
 
-    private void placeItem(int item, int defaultX, int defaultY, int minX, int minY, int maxX, int maxY) {
-        ReaderStatusSettings.Position position = settings.positionFor(item);
+    private ReaderStatusSettings.Position positionFor(int item) {
         if (editorMode && editorPositions[item] != null) {
-            position = ReaderStatusSettings.Position.custom(editorPositions[item][0], editorPositions[item][1]);
+            return ReaderStatusSettings.Position.custom(editorPositions[item][0], editorPositions[item][1]);
         }
+        return settings.positionFor(item);
+    }
+
+    private void placeItem(int item, int defaultX, int defaultY, int minX, int minY, int maxX, int maxY) {
+        ReaderStatusSettings.Position position = positionFor(item);
         if (position.custom) {
             float[] coordinates = normalizedCoordinates(position, itemViews[item]);
-            itemViews[item].setX(coordinates[0]);
-            itemViews[item].setY(coordinates[1]);
+            layoutItemAt(itemViews[item], coordinates[0], coordinates[1]);
             return;
         }
         int width = itemViews[item].getMeasuredWidth();
         int height = itemViews[item].getMeasuredHeight();
-        itemViews[item].setX(clamp(defaultX, minX, Math.max(minX, maxX - width)));
-        itemViews[item].setY(clamp(defaultY, minY, Math.max(minY, maxY - height)));
+        layoutItemAt(itemViews[item], clamp(defaultX, minX, Math.max(minX, maxX - width)),
+            clamp(defaultY, minY, Math.max(minY, maxY - height)));
+    }
+
+    private void layoutItemAt(View child, float x, float y) {
+        float[] position = positionOutsideCutouts(x, y, child.getMeasuredWidth(), child.getMeasuredHeight());
+        child.setX(position[0]);
+        child.setY(position[1]);
+    }
+
+    private float[] positionOutsideCutouts(float x, float y, int width, int height) {
+        if (clearsCutouts(x, y, width, height)) return new float[]{x, y};
+        int edge = dp(10);
+        float[] best = {x, y};
+        float distance = Float.POSITIVE_INFINITY;
+        // Preserve horizontal alignment of the default time and battery row when possible.
+        for (Rect cutout : localCutoutBounds) {
+            for (int candidate : new int[]{cutout.top - height, cutout.bottom}) {
+                float movement = Math.abs(candidate - y);
+                if (movement < distance && candidate >= safeInsets.top + edge
+                    && candidate + height <= getHeight() - safeInsets.bottom - edge
+                    && clearsCutouts(x, candidate, width, height)) {
+                    best[1] = candidate;
+                    distance = movement;
+                }
+            }
+        }
+        if (distance < Float.POSITIVE_INFINITY) return best;
+        for (Rect cutout : localCutoutBounds) {
+            for (int candidate : new int[]{cutout.left - width, cutout.right}) {
+                float movement = Math.abs(candidate - x);
+                if (movement < distance && candidate >= safeInsets.left + edge
+                    && candidate + width <= getWidth() - safeInsets.right - edge
+                    && clearsCutouts(candidate, y, width, height)) {
+                    best[0] = candidate;
+                    distance = movement;
+                }
+            }
+        }
+        if (distance < Float.POSITIVE_INFINITY) return best;
+        int minX = cutoutInsets.left + edge;
+        int minY = cutoutInsets.top + edge;
+        int maxX = Math.max(minX, getWidth() - cutoutInsets.right - edge - width);
+        int maxY = Math.max(minY, getHeight() - cutoutInsets.bottom - edge - height);
+        return new float[]{Math.max(minX, Math.min(maxX, x)), Math.max(minY, Math.min(maxY, y))};
+    }
+
+    private boolean clearsCutouts(float x, float y, int width, int height) {
+        for (Rect cutout : localCutoutBounds) {
+            if (x < cutout.right && x + width > cutout.left
+                && y < cutout.bottom && y + height > cutout.top) return false;
+        }
+        return true;
     }
 
     private float[] normalizedCoordinates(@NonNull ReaderStatusSettings.Position position, View child) {
@@ -512,7 +618,8 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         float minY = safeInsets.top + edge;
         float maxX = Math.max(minX, getWidth() - safeInsets.right - edge - child.getWidth());
         float maxY = Math.max(minY, getHeight() - safeInsets.bottom - edge - child.getHeight());
-        return new float[]{Math.max(minX, Math.min(maxX, x)), Math.max(minY, Math.min(maxY, y))};
+        return positionOutsideCutouts(Math.max(minX, Math.min(maxX, x)), Math.max(minY, Math.min(maxY, y)),
+            child.getWidth(), child.getHeight());
     }
 
     private float[] normalizedPosition(View child) {

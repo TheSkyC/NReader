@@ -5,9 +5,12 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
+import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.theskyc.nreader.R;
+
+import java.util.Collections;
 
 /** Keeps system bar visibility changes outside the reader's image geometry. */
 public final class ReaderWindowInsets {
@@ -28,7 +31,10 @@ public final class ReaderWindowInsets {
         View statusOverlay = root.findViewById(R.id.reader_status_overlay);
         if (statusOverlay instanceof ReaderStatusOverlayView) {
             Insets cutout = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
-            ((ReaderStatusOverlayView) statusOverlay).setWindowInsets(safe, cutout);
+            DisplayCutoutCompat displayCutout = insets.getDisplayCutout();
+            ((ReaderStatusOverlayView) statusOverlay).setWindowInsets(safe, cutout,
+                displayCutout == null ? Insets.NONE : displayCutout.getWaterfallInsets(),
+                displayCutout == null ? Collections.emptyList() : displayCutout.getBoundingRects());
         }
     }
 }

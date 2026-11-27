@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.core.graphics.Insets;
+import androidx.core.view.DisplayCutoutCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.theskyc.nreader.R;
@@ -17,6 +18,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -46,6 +49,47 @@ public class ReaderWindowInsetsTest {
         overlay.setSettings(ReaderStatusSettings.load(activity.getSharedPreferences("Settings", 0)));
         layout(root, 1080, 1920);
         assertEquals(100 + edge, overlay.getChildAt(ReaderStatusSettings.ITEM_TIME).getY(), 0.01f);
+    }
+
+    @Test
+    public void centeredCutoutLeavesTopRightAvailableAndAvoidsItemsMovedToTheCenter() {
+        Activity activity = createActivity();
+        View root = activity.getWindow().getDecorView();
+        ReaderStatusOverlayView overlay = activity.findViewById(R.id.reader_status_overlay);
+        DisplayCutoutCompat cutout = new DisplayCutoutCompat(new Rect(0, 96, 0, 0),
+            Collections.singletonList(new Rect(470, 0, 610, 96)));
+        WindowInsetsCompat insets = new WindowInsetsCompat.Builder()
+            .setInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars(), Insets.of(0, 96, 0, 0))
+            .setVisible(WindowInsetsCompat.Type.statusBars(), false)
+            .setDisplayCutout(cutout)
+            .build();
+        ReaderWindowInsets.apply(root, insets);
+        overlay.setTimeValue("21:38");
+        overlay.setBatteryValue(76, false);
+        overlay.setHostState(true, false, false, false, false, false);
+        layout(root, 1080, 1920);
+
+        int edge = Math.round(10 * activity.getResources().getDisplayMetrics().density);
+        int time = ReaderStatusSettings.ITEM_TIME;
+        assertEquals(edge, overlay.getChildAt(time).getY(), 0.01f);
+        assertEquals(edge, overlay.getChildAt(ReaderStatusSettings.ITEM_BATTERY).getY(), 0.01f);
+
+        ReaderStatusOverlayView preview = new ReaderStatusOverlayView(activity);
+        overlay.copyPreviewStateTo(preview, null);
+        layout(preview, 540, 960);
+        assertEquals(edge, preview.getChildAt(time).getY(), 0.01f);
+        preview.setPosition(time, 0.5f, 0f);
+        assertEquals(48f, preview.getChildAt(time).getY(), 0.01f);
+
+        overlay.setEditorMode(true, null);
+        overlay.setPosition(time, 0.5f, 0f);
+        assertEquals(96f, overlay.getChildAt(time).getY(), 0.01f);
+
+        activity.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, false).apply();
+        overlay.setSettings(ReaderStatusSettings.load(activity.getSharedPreferences("Settings", 0)));
+        layout(root, 1080, 1920);
+        assertEquals(96 + edge, overlay.getChildAt(time).getY(), 0.01f);
     }
 
     @Test
