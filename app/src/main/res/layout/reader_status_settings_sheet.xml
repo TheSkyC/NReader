@@ -66,19 +66,19 @@
                 android:id="@+id/reader_status_battery_both"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="44dp"
+                android:minHeight="48dp"
                 android:text="@string/reader_status_battery_both" />
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_status_battery_icon_only"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="44dp"
+                android:minHeight="48dp"
                 android:text="@string/reader_status_battery_icon_only" />
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_status_battery_percent_only"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="44dp"
+                android:minHeight="48dp"
                 android:text="@string/reader_status_battery_percent_only" />
         </RadioGroup>
         <com.google.android.material.materialswitch.MaterialSwitch
@@ -104,13 +104,13 @@
                 android:id="@+id/reader_status_progress_pages"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="44dp"
+                android:minHeight="48dp"
                 android:text="@string/reader_status_progress_pages" />
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/reader_status_progress_percent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="44dp"
+                android:minHeight="48dp"
                 android:text="@string/reader_status_progress_percent" />
         </RadioGroup>
         <View

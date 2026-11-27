@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.radiobutton.MaterialRadioButton;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,28 @@ import java.util.Locale;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w280dp-h640dp")
 public class ReaderSettingsRowLayoutTest {
+    @Test
+    public void statusOptionsHaveAccessibleTouchTargets() {
+        AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();
+        Context context = new ContextThemeWrapper(activity, R.style.AppTheme_Material3);
+        View sheet = LayoutInflater.from(context).inflate(R.layout.reader_status_settings_sheet, null);
+        int[] options = {
+            R.id.reader_status_battery_both, R.id.reader_status_battery_icon_only,
+            R.id.reader_status_battery_percent_only, R.id.reader_status_progress_pages,
+            R.id.reader_status_progress_percent
+        };
+        float density = context.getResources().getDisplayMetrics().density;
+        int width = Math.round(232 * density);
+        for (int id : options) {
+            MaterialRadioButton option = sheet.findViewById(id);
+            option.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            assertTrue(option.getMeasuredHeight() >= Math.round(48 * density));
+            option.performClick();
+            assertTrue(option.isChecked());
+        }
+    }
+
     @Test
     public void readerSwitchesRemainUsableAtLargeText() {
         AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();
