@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">Використання керованого кешу</string>
+    <string name="managed_cache_usage_checking">Обчислення використання кешу…</string>
+    <string name="summary_managed_cache_usage">Усього в керованому кеші: %1$s</string>
+    <string name="managed_cache_usage_unavailable">Не вдалося виміряти розмір деяких кешів.</string>
+    <string name="managed_cache_size_unavailable">Недоступно</string>
+    <string name="managed_cache_usage_details">Зображення: %1$s\nБаза даних сторінок обраного: %2$s\nЗнімки сторінок читача: %3$s\nУсього: %4$s</string>
     <string name="title_image_cache_quota">Обмеження кешу зображень</string>
     <string name="summary_image_cache_quota">Максимум %1$s. Зміни набудуть чинності після перезапуску NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>

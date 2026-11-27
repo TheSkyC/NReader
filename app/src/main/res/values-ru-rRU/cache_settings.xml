@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">Использование управляемого кэша</string>
+    <string name="managed_cache_usage_checking">Подсчёт занятого места в кэше…</string>
+    <string name="summary_managed_cache_usage">Всего в управляемом кэше: %1$s</string>
+    <string name="managed_cache_usage_unavailable">Не удалось измерить размер некоторых кэшей.</string>
+    <string name="managed_cache_size_unavailable">Недоступно</string>
+    <string name="managed_cache_usage_details">Изображения: %1$s\nБаза данных страниц избранного: %2$s\nСнимки страниц чтения: %3$s\nВсего: %4$s</string>
     <string name="title_image_cache_quota">Лимит кэша изображений</string>
     <string name="summary_image_cache_quota">Максимум %1$s. Изменение вступит в силу после перезапуска NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">缓存占用</string>
+    <string name="managed_cache_usage_checking">正在统计缓存占用…</string>
+    <string name="summary_managed_cache_usage">受管缓存合计：%1$s</string>
+    <string name="managed_cache_usage_unavailable">部分缓存占用无法读取。</string>
+    <string name="managed_cache_size_unavailable">无法读取</string>
+    <string name="managed_cache_usage_details">图片缓存：%1$s\n收藏列表数据库：%2$s\n阅读器页面快照：%3$s\n合计：%4$s</string>
     <string name="title_image_cache_quota">图片缓存上限</string>
     <string name="summary_image_cache_quota">上限 %1$s。重启 NReader 后生效。</string>
     <string name="image_cache_default_quota">250 MiB</string>

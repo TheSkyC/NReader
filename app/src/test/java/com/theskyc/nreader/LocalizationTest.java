@@ -108,4 +108,19 @@ public class LocalizationTest {
             assertEquals(languageTag, values.length, resources.getStringArray(R.array.reader_prefetch_entries).length);
         }
     }
+
+    @Test
+    public void managedCacheUsageIsLocalizedAndFormatsEveryCategory() {
+        String[] locales = {"en-US", "ar-SA", "de-DE", "es-ES", "fr-FR", "it-IT", "ja-JP",
+            "pt-BR", "ru-RU", "tr-TR", "uk-UA", "zh-CN", "zh-TW"};
+        for (String languageTag : locales) {
+            Resources resources = resources(languageTag);
+            assertFalse(languageTag, resources.getString(R.string.title_managed_cache_usage).isEmpty());
+            String summary = resources.getString(R.string.summary_managed_cache_usage, "12 MB");
+            String details = resources.getString(R.string.managed_cache_usage_details,
+                "1 MB", "2 MB", "3 MB", "6 MB");
+            assertFalse(languageTag, summary.contains("%"));
+            assertFalse(languageTag, details.contains("%"));
+        }
+    }
 }

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">Uso de caché administrada</string>
+    <string name="managed_cache_usage_checking">Calculando el uso de la caché…</string>
+    <string name="summary_managed_cache_usage">Total en cachés administradas: %1$s</string>
+    <string name="managed_cache_usage_unavailable">No se pudo medir el tamaño de alguna caché.</string>
+    <string name="managed_cache_size_unavailable">No disponible</string>
+    <string name="managed_cache_usage_details">Imágenes: %1$s\nBase de datos de favoritos: %2$s\nInstantáneas del lector: %3$s\nTotal: %4$s</string>
     <string name="title_image_cache_quota">Límite de caché de imágenes</string>
     <string name="summary_image_cache_quota">Máximo de %1$s. El cambio se aplica al reiniciar NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>

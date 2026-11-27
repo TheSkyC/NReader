@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">Uso do cache gerenciado</string>
+    <string name="managed_cache_usage_checking">Calculando o uso do cache…</string>
+    <string name="summary_managed_cache_usage">Total nos caches gerenciados: %1$s</string>
+    <string name="managed_cache_usage_unavailable">Não foi possível medir alguns caches.</string>
+    <string name="managed_cache_size_unavailable">Indisponível</string>
+    <string name="managed_cache_usage_details">Imagens: %1$s\nBanco de dados das páginas favoritas: %2$s\nSnapshots do leitor: %3$s\nTotal: %4$s</string>
     <string name="title_image_cache_quota">Limite do cache de imagens</string>
     <string name="summary_image_cache_quota">Máximo de %1$s. A alteração será aplicada ao reiniciar o NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>

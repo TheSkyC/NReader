@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import androidx.annotation.Nullable;
 
+import com.theskyc.nreader.components.cache.CacheDirectories;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.R;
 
@@ -72,7 +73,7 @@ public final class OnlineFavoritePageStore {
 
     public static OnlineFavoritePageStore open(Context context) {
         Context application = context.getApplicationContext();
-        File directory = new File(application.getCacheDir(), "online_favorite_pages");
+        File directory = CacheDirectories.favoritePageCache(application);
         if (!directory.isDirectory() && !directory.mkdirs())
             throw new IllegalStateException("Unable to create online favorite cache directory");
         File file = new File(directory, "pages.db");

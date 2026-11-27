@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">Yönetilen önbellek kullanımı</string>
+    <string name="managed_cache_usage_checking">Önbellek kullanımı hesaplanıyor…</string>
+    <string name="summary_managed_cache_usage">Yönetilen önbelleklerin toplamı: %1$s</string>
+    <string name="managed_cache_usage_unavailable">Bazı önbellek boyutları ölçülemedi.</string>
+    <string name="managed_cache_size_unavailable">Kullanılamıyor</string>
+    <string name="managed_cache_usage_details">Görseller: %1$s\nFavori sayfaları veritabanı: %2$s\nOkuyucu anlık görüntüleri: %3$s\nToplam: %4$s</string>
     <string name="title_image_cache_quota">Görsel önbelleği sınırı</string>
     <string name="summary_image_cache_quota">En fazla %1$s. Değişiklik NReader yeniden başlatıldığında uygulanır.</string>
     <string name="image_cache_default_quota">250 MiB</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">管理対象キャッシュの使用量</string>
+    <string name="managed_cache_usage_checking">キャッシュ使用量を計算しています…</string>
+    <string name="summary_managed_cache_usage">管理対象キャッシュの合計: %1$s</string>
+    <string name="managed_cache_usage_unavailable">一部のキャッシュサイズを取得できません。</string>
+    <string name="managed_cache_size_unavailable">取得できません</string>
+    <string name="managed_cache_usage_details">画像: %1$s\nお気に入りページのデータベース: %2$s\nリーダーのスナップショット: %3$s\n合計: %4$s</string>
     <string name="title_image_cache_quota">画像キャッシュの上限</string>
     <string name="summary_image_cache_quota">上限 %1$s。変更はNReaderの再起動後に適用されます。</string>
     <string name="image_cache_default_quota">250 MiB</string>

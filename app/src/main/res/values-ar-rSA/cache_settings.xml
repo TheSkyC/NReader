@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">استخدام ذاكرة التخزين المؤقت المُدارة</string>
+    <string name="managed_cache_usage_checking">جارٍ حساب استخدام ذاكرة التخزين المؤقت…</string>
+    <string name="summary_managed_cache_usage">الإجمالي عبر الذاكرات المُدارة: %1$s</string>
+    <string name="managed_cache_usage_unavailable">تعذر قياس بعض أحجام الذاكرة المؤقتة.</string>
+    <string name="managed_cache_size_unavailable">غير متاح</string>
+    <string name="managed_cache_usage_details">الصور: %1$s\nقاعدة بيانات صفحات المفضلة: %2$s\nلقطات صفحات القارئ: %3$s\nالإجمالي: %4$s</string>
     <string name="title_image_cache_quota">حد ذاكرة الصور المؤقتة</string>
     <string name="summary_image_cache_quota">الحد الأقصى %1$s. يسري التغيير بعد إعادة تشغيل NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>

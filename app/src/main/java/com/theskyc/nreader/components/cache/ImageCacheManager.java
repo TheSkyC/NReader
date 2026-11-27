@@ -12,13 +12,10 @@ import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class ImageCacheManager {
-    private static final String GLIDE_CACHE_DIRECTORY = "image_manager_disk_cache";
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static final ExecutorService worker = Executors.newSingleThreadExecutor();
 
@@ -84,29 +81,11 @@ public final class ImageCacheManager {
     }
 
     static File imageCacheDirectory(@NonNull Context context) {
-        return new File(context.getCacheDir(), GLIDE_CACHE_DIRECTORY);
+        return CacheDirectories.imageDiskCache(context);
     }
 
     static long directorySize(@NonNull File root) throws IOException {
-        if (!root.exists() || Files.isSymbolicLink(root.toPath())) return 0;
-        ArrayDeque<File> pending = new ArrayDeque<>();
-        pending.add(root);
-        long size = 0;
-        while (!pending.isEmpty()) {
-            File current = pending.removeLast();
-            if (Files.isSymbolicLink(current.toPath())) continue;
-            if (current.isFile()) {
-                long fileSize = current.length();
-                if (fileSize > Long.MAX_VALUE - size) return Long.MAX_VALUE;
-                size += fileSize;
-                continue;
-            }
-            if (!current.isDirectory()) continue;
-            File[] children = current.listFiles();
-            if (children == null) throw new IOException("Unable to inspect image cache directory");
-            for (File child : children) pending.add(child);
-        }
-        return size;
+        return CacheDirectorySizer.directorySize(root);
     }
 
     private static void deliver(Callback callback, long bytes, @Nullable Exception error) {

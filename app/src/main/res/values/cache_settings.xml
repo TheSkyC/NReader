@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="preference_key_managed_cache_usage" translatable="false">managed_cache_usage</string>
+    <string name="title_managed_cache_usage">Managed cache usage</string>
+    <string name="managed_cache_usage_checking">Calculating cache usage…</string>
+    <string name="summary_managed_cache_usage">%1$s across managed caches</string>
+    <string name="managed_cache_usage_unavailable">Some cache sizes are unavailable.</string>
+    <string name="managed_cache_size_unavailable">Unavailable</string>
+    <string name="managed_cache_usage_details">Images: %1$s\nFavorite list database: %2$s\nReader snapshots: %3$s\nTotal: %4$s</string>
     <string name="preference_key_image_cache_quota" translatable="false">image_cache_quota</string>
     <string name="title_image_cache_quota">Image cache limit</string>
     <string name="summary_image_cache_quota">%1$s maximum. Changes apply after restarting NReader.</string>

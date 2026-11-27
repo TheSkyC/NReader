@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="title_managed_cache_usage">快取用量</string>
+    <string name="managed_cache_usage_checking">正在計算快取用量…</string>
+    <string name="summary_managed_cache_usage">受管理快取總計：%1$s</string>
+    <string name="managed_cache_usage_unavailable">部分快取用量無法讀取。</string>
+    <string name="managed_cache_size_unavailable">無法讀取</string>
+    <string name="managed_cache_usage_details">圖片快取：%1$s\n收藏清單資料庫：%2$s\n閱讀器頁面快照：%3$s\n總計：%4$s</string>
     <string name="title_image_cache_quota">圖片快取上限</string>
     <string name="summary_image_cache_quota">上限 %1$s。重新啟動 NReader 後生效。</string>
     <string name="image_cache_default_quota">250 MiB</string>

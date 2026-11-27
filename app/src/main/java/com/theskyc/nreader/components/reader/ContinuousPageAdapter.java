@@ -40,6 +40,7 @@ import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.components.GlideX;
+import com.theskyc.nreader.components.cache.CacheDirectories;
 import com.theskyc.nreader.files.GalleryFolder;
 import com.theskyc.nreader.files.PageFile;
 import com.theskyc.nreader.settings.Global;
@@ -389,7 +390,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
 
     private static synchronized ContinuousTileSnapshotStore snapshotStore(@NonNull File cacheDirectory) throws IOException {
         if (snapshotStore == null) snapshotStore = ContinuousTileSnapshotStore.open(
-            new File(cacheDirectory, "reader-tile-snapshots"), MAX_SNAPSHOT_BYTES, MAX_SNAPSHOT_TOTAL_BYTES);
+            CacheDirectories.readerTileSnapshots(cacheDirectory), MAX_SNAPSHOT_BYTES, MAX_SNAPSHOT_TOTAL_BYTES);
         return snapshotStore;
     }
 

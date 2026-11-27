@@ -55,6 +55,7 @@ import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.database.export.Importer;
 import com.theskyc.nreader.components.activities.CrashApplication;
 import com.theskyc.nreader.components.cache.ImageCacheManager;
+import com.theskyc.nreader.components.cache.ManagedCacheStorage;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.MainGridSettings;
@@ -89,6 +90,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private SettingsActivity act;
     private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
     private final AtomicInteger favoritePageCacheGeneration = new AtomicInteger();
+    private final AtomicInteger managedCacheGeneration = new AtomicInteger();
+    @Nullable private ManagedCacheStorage.Usage managedCacheUsage;
     private final IntConsumer favoriteCacheObserver = galleryId -> {
         updateFavoriteCacheUsage();
         updateFavoritePageCacheUsage();
@@ -439,6 +442,24 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                     entry == null ? getString(R.string.image_cache_default_quota) : entry);
             });
 
+            Preference cacheOverview = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_managed_cache_usage)));
+            cacheOverview.setEnabled(false);
+            cacheOverview.setOnPreferenceClickListener(preference -> {
+                ManagedCacheStorage.Usage usage = managedCacheUsage;
+                if (usage == null) return true;
+                new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.title_managed_cache_usage)
+                    .setMessage(getString(R.string.managed_cache_usage_details,
+                        formatManagedCacheBytes(usage.imageBytes),
+                        formatManagedCacheBytes(usage.favoritePageBytes),
+                        formatManagedCacheBytes(usage.readerSnapshotBytes),
+                        formatManagedCacheBytes(usage.totalBytes())))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+                return true;
+            });
+
             ListPreference favoriteStateLimit = Objects.requireNonNull(
                 findPreference(getString(R.string.preference_key_online_favorite_state_limit)));
             favoriteStateLimit.setSummaryProvider(preference -> {
@@ -510,6 +531,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                         if (!isAdded() || act == null || act.isFinishing()) return;
                         cache.setEnabled(true);
                         updateImageCacheSummary(cache, bytes, error);
+                        updateManagedCacheUsage();
                         Toast.makeText(act, error == null
                             ? R.string.image_cache_cleared : R.string.image_cache_clear_failed, Toast.LENGTH_SHORT).show();
                     });
@@ -645,6 +667,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         if (act == null) return;
+        updateManagedCacheUsage();
         OnlineFavoriteClient.observe(act, favoriteCacheObserver);
         updateFavoriteCacheUsage();
         if (findPreference(getString(R.string.preference_key_online_favorite_page_usage)) != null) {
@@ -660,8 +683,39 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     @Override
     public void onPause() {
         favoritePageCacheGeneration.incrementAndGet();
+        managedCacheGeneration.incrementAndGet();
         OnlineFavoriteClient.removeObserver(favoriteCacheObserver);
         super.onPause();
+    }
+
+    private void updateManagedCacheUsage() {
+        SettingsActivity activity = act;
+        if (!isAdded() || !isResumed() || activity == null) return;
+        Preference overview = findPreference(getString(R.string.preference_key_managed_cache_usage));
+        if (overview == null) return;
+        int generation = managedCacheGeneration.incrementAndGet();
+        overview.setEnabled(false);
+        overview.setSummary(R.string.managed_cache_usage_checking);
+        ManagedCacheStorage.measure(activity, usage -> {
+            if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                || managedCacheGeneration.get() != generation) return;
+            managedCacheUsage = usage;
+            overview.setEnabled(true);
+            long total = usage.totalBytes();
+            if (total == ManagedCacheStorage.UNAVAILABLE) {
+                overview.setSummary(R.string.managed_cache_usage_unavailable);
+            } else {
+                overview.setSummary(getString(R.string.summary_managed_cache_usage,
+                    Formatter.formatFileSize(activity, total)));
+            }
+        });
+    }
+
+    @NonNull
+    private String formatManagedCacheBytes(long bytes) {
+        return bytes == ManagedCacheStorage.UNAVAILABLE
+            ? getString(R.string.managed_cache_size_unavailable)
+            : Formatter.formatFileSize(requireContext(), bytes);
     }
 
     private void updateFavoriteCacheUsage() {
@@ -686,7 +740,10 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             } finally {
                 if (store != null) store.close();
             }
-            MAIN_HANDLER.post(this::updateFavoritePageCacheUsage);
+            MAIN_HANDLER.post(() -> {
+                updateFavoritePageCacheUsage();
+                updateManagedCacheUsage();
+            });
         }));
     }
 
@@ -785,6 +842,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                     ? R.string.online_favorite_pages_cleared
                     : R.string.online_favorite_pages_clear_failed, Toast.LENGTH_SHORT).show();
                 updateFavoritePageCacheUsage();
+                updateManagedCacheUsage();
             });
         });
     }
