@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Стани обраного в кеші</string>
     <string name="summary_online_favorite_state_usage">У пам’яті для цього облікового запису: %1$d</string>
     <string name="online_favorite_cache_showing">Під час оновлення показано обране, збережене %1$s</string>
+    <string name="online_favorite_cache_showing_stale">Під час оновлення показано давніше обране, збережене %1$s</string>
     <string name="online_favorite_cache_refresh_failed">Не вдалося оновити обране. Показано збережені результати.</string>
     <string name="title_online_favorite_page_limit">Сторінки обраного на обліковий запис</string>
     <string name="summary_online_favorite_page_limit">Зберігати до %1$s переглянутих сторінок для кожного облікового запису; спочатку видаляються давно не відкривані сторінки.</string>

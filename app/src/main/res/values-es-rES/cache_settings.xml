@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Estados favoritos en caché</string>
     <string name="summary_online_favorite_state_usage">En memoria para esta cuenta: %1$d</string>
     <string name="online_favorite_cache_showing">Se muestran los favoritos guardados el %1$s mientras se actualizan</string>
+    <string name="online_favorite_cache_showing_stale">Se muestran favoritos guardados anteriormente el %1$s mientras se actualizan</string>
     <string name="online_favorite_cache_refresh_failed">No se pudieron actualizar los favoritos. Se muestran los resultados guardados.</string>
     <string name="title_online_favorite_page_limit">Páginas de favoritos por cuenta</string>
     <string name="summary_online_favorite_page_limit">Conserva hasta %1$s páginas visitadas por cuenta; se eliminan primero las páginas menos recientes.</string>

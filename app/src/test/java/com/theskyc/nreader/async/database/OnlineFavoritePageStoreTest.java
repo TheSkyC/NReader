@@ -190,6 +190,37 @@ public class OnlineFavoritePageStoreTest {
         assertEquals(16L * 1024 * 1024, OnlineFavoritePageStore.Limits.bytesForValue("invalid"));
     }
 
+    @Test public void cachedPageFreshnessUsesSoftTwentyFourHourBoundary() {
+        long now = System.currentTimeMillis();
+        assertTrue(OnlineFavoritePageStore.isFresh(
+            now - OnlineFavoritePageStore.FRESHNESS_WINDOW_MILLIS + 1, now));
+        assertFalse(OnlineFavoritePageStore.isFresh(
+            now - OnlineFavoritePageStore.FRESHNESS_WINDOW_MILLIS, now));
+        assertFalse(OnlineFavoritePageStore.isFresh(now + 1, now));
+        assertFalse(OnlineFavoritePageStore.isFresh(0, now));
+    }
+
+    @Test public void stalePagesAreEvictedBeforeMoreRecentlyUsedFreshPages() {
+        long now = System.currentTimeMillis();
+        store = new OnlineFavoritePageStore(database,
+            new OnlineFavoritePageStore.Limits(2, 10, 1024 * 1024, 1024));
+        save("freshness-account", 1, now - OnlineFavoritePageStore.FRESHNESS_WINDOW_MILLIS - 1,
+            response(910, "stale"));
+
+        OnlineFavoritePageStore.Request staleRead = store.beginRequest("freshness-account",
+            "https://example.test/favorites?page=1");
+        assertNotNull(store.load(staleRead, now));
+        store.finishRequest(staleRead);
+
+        save("freshness-account", 2, now - 60 * 60 * 1000, response(911, "fresh-one"));
+        save("freshness-account", 3, now, response(912, "fresh-two"));
+
+        assertNull(loadPage("freshness-account", 1));
+        assertNotNull(loadPage("freshness-account", 2));
+        assertNotNull(loadPage("freshness-account", 3));
+        assertEquals(1, store.cacheMetrics().pageEvictions);
+    }
+
     @Test public void inFlightWriterUsesUpdatedQuotaBeforeSaving() {
         Context context = RuntimeEnvironment.getApplication();
         SharedPreferences settings = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
@@ -246,6 +277,14 @@ public class OnlineFavoritePageStoreTest {
             "https://example.test/favorites?page=" + page);
         assertTrue(store.save(request, response, 8, time));
         store.finishRequest(request);
+    }
+
+    private OnlineFavoritePageStore.CachedPage loadPage(String identity, int page) {
+        OnlineFavoritePageStore.Request request = store.beginRequest(identity,
+            "https://example.test/favorites?page=" + page);
+        OnlineFavoritePageStore.CachedPage cached = store.load(request, System.currentTimeMillis());
+        store.finishRequest(request);
+        return cached;
     }
 
     private static String response(int id, String title) {

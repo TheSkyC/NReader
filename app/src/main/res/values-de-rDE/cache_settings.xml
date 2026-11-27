@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Gespeicherte Favoritenstatus</string>
     <string name="summary_online_favorite_state_usage">Im Speicher für dieses Konto: %1$d</string>
     <string name="online_favorite_cache_showing">Gespeicherte Favoriten vom %1$s werden während der Aktualisierung angezeigt</string>
+    <string name="online_favorite_cache_showing_stale">Ältere gespeicherte Favoriten vom %1$s werden während der Aktualisierung angezeigt</string>
     <string name="online_favorite_cache_refresh_failed">Favoriten konnten nicht aktualisiert werden. Gespeicherte Ergebnisse werden angezeigt.</string>
     <string name="title_online_favorite_page_limit">Favoritenseiten pro Konto</string>
     <string name="summary_online_favorite_page_limit">Bis zu %1$s besuchte Seiten pro Konto behalten; am längsten nicht verwendete Seiten werden zuerst entfernt.</string>

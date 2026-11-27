@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">お気に入り状態のキャッシュ</string>
     <string name="summary_online_favorite_state_usage">現在のアカウントでメモリに保存: %1$d 件</string>
     <string name="online_favorite_cache_showing">%1$s に保存したお気に入りを表示しながら更新しています</string>
+    <string name="online_favorite_cache_showing_stale">以前保存したお気に入り（%1$s）を表示しながら更新しています</string>
     <string name="online_favorite_cache_refresh_failed">お気に入りを更新できませんでした。保存済みの結果を表示しています。</string>
     <string name="title_online_favorite_page_limit">アカウントごとのお気に入り一覧ページ数</string>
     <string name="summary_online_favorite_page_limit">アカウントごとに閲覧済みページを最大 %1$s 件保存し、使用日時の古いページから削除します。</string>

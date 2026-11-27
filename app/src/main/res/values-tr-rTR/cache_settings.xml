@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Önbelleğe alınan favori durumları</string>
     <string name="summary_online_favorite_state_usage">Bu hesap için bellekte: %1$d</string>
     <string name="online_favorite_cache_showing">Güncellenirken %1$s tarihinde kaydedilen favoriler gösteriliyor</string>
+    <string name="online_favorite_cache_showing_stale">Güncelleme sırasında %1$s tarihinde kaydedilmiş eski favoriler gösteriliyor</string>
     <string name="online_favorite_cache_refresh_failed">Favoriler güncellenemedi. Kaydedilmiş sonuçlar gösteriliyor.</string>
     <string name="title_online_favorite_page_limit">Hesap başına favori listesi sayfası</string>
     <string name="summary_online_favorite_page_limit">Hesap başına ziyaret edilen en fazla %1$s sayfayı tut; en uzun süredir kullanılmayan sayfalar önce kaldırılır.</string>

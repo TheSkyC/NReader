@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">已缓存的收藏状态</string>
     <string name="summary_online_favorite_state_usage">当前账号内存中的状态数：%1$d 条</string>
     <string name="online_favorite_cache_showing">正在刷新，显示的是 %1$s 保存的收藏</string>
+    <string name="online_favorite_cache_showing_stale">正在刷新，显示的是 %1$s 保存的较旧收藏</string>
     <string name="online_favorite_cache_refresh_failed">收藏刷新失败，当前显示的是已缓存结果。</string>
     <string name="title_online_favorite_page_limit">每个账号的收藏列表页数</string>
     <string name="summary_online_favorite_page_limit">每个账号最多保留 %1$s 个已访问页面，优先淘汰较久未访问的页面。</string>

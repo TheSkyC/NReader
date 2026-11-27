@@ -42,6 +42,7 @@ public final class OnlineFavoritePageStore {
     private static final int DEFAULT_ACCOUNT_PAGES = 50;
     private static final int MAX_TOTAL_PAGES = 200;
     private static final long DEFAULT_TOTAL_BYTES = 16L * 1024 * 1024;
+    public static final long FRESHNESS_WINDOW_MILLIS = 24L * 60 * 60 * 1000;
     private static final int MAX_TRACKED_REQUESTS = 256;
     private static final Object REQUEST_LOCK = new Object();
     private static final Object DATABASE_INIT_LOCK = new Object();
@@ -95,6 +96,11 @@ public final class OnlineFavoritePageStore {
     public void close() {
         if (!ownsDatabase || !database.isOpen()) return;
         database.close();
+    }
+
+    public static boolean isFresh(long syncedAt, long nowMillis) {
+        return syncedAt > 0 && syncedAt <= nowMillis
+            && nowMillis - syncedAt < FRESHNESS_WINDOW_MILLIS;
     }
 
     public static void createTable(SQLiteDatabase database) {
@@ -242,8 +248,8 @@ public final class OnlineFavoritePageStore {
                 long rowId = database.insertWithOnConflict(TABLE_NAME, null, values,
                     SQLiteDatabase.CONFLICT_REPLACE);
                 if (rowId < 0) return false;
-                trimAccount(request.identityHash);
-                trimGlobal();
+                trimAccount(request.identityHash, nowMillis);
+                trimGlobal(nowMillis);
                 if (ownTransaction) database.setTransactionSuccessful();
                 return true;
             } catch (RuntimeException error) {
@@ -298,6 +304,7 @@ public final class OnlineFavoritePageStore {
     public void trimToLimits() {
         synchronized (REQUEST_LOCK) {
             refreshLimits();
+            long nowMillis = System.currentTimeMillis();
             boolean ownTransaction = !database.inTransaction();
             if (ownTransaction) database.beginTransactionNonExclusive();
             try {
@@ -305,8 +312,8 @@ public final class OnlineFavoritePageStore {
                 try (Cursor cursor = database.rawQuery("SELECT DISTINCT identity_hash FROM " + TABLE_NAME, null)) {
                     while (cursor.moveToNext()) identities.add(cursor.getString(0));
                 }
-                for (String identityHash : identities) trimAccount(identityHash);
-                trimGlobal();
+                for (String identityHash : identities) trimAccount(identityHash, nowMillis);
+                trimGlobal(nowMillis);
                 if (ownTransaction) database.setTransactionSuccessful();
             } catch (RuntimeException error) {
                 LogUtility.w("Unable to apply online favorite page cache limits", error);
@@ -368,11 +375,13 @@ public final class OnlineFavoritePageStore {
             "SELECT COALESCE(SUM(payload_bytes), 0) FROM " + TABLE_NAME, null);
     }
 
-    private void trimAccount(String identityHash) {
+    private void trimAccount(String identityHash, long nowMillis) {
         List<String> excess = new ArrayList<>();
         try (Cursor cursor = database.rawQuery("SELECT request_hash FROM " + TABLE_NAME
-            + " WHERE identity_hash=? ORDER BY accessed_at DESC, rowid DESC LIMIT -1 OFFSET ?",
-            new String[]{identityHash, Integer.toString(limits.maxAccountPages)})) {
+            + " WHERE identity_hash=? ORDER BY CASE WHEN synced_at>? AND synced_at<=? THEN 0 ELSE 1 END, "
+            + "accessed_at DESC, rowid DESC LIMIT -1 OFFSET ?",
+            new String[]{identityHash, Long.toString(nowMillis - FRESHNESS_WINDOW_MILLIS),
+                Long.toString(nowMillis), Integer.toString(limits.maxAccountPages)})) {
             while (cursor.moveToNext()) excess.add(cursor.getString(0));
         }
         for (String requestHash : excess) {
@@ -380,13 +389,15 @@ public final class OnlineFavoritePageStore {
         }
     }
 
-    private void trimGlobal() {
+    private void trimGlobal(long nowMillis) {
         while (cachedPageCount(database) > limits.maxTotalPages
             || cachedByteCount(database) > limits.maxTotalBytes) {
             String identityHash;
             String requestHash;
             try (Cursor cursor = database.rawQuery("SELECT identity_hash, request_hash FROM " + TABLE_NAME
-                + " ORDER BY accessed_at ASC, rowid ASC LIMIT 1", null)) {
+                + " ORDER BY CASE WHEN synced_at>? AND synced_at<=? THEN 1 ELSE 0 END, "
+                + "accessed_at ASC, rowid ASC LIMIT 1",
+                new String[]{Long.toString(nowMillis - FRESHNESS_WINDOW_MILLIS), Long.toString(nowMillis)})) {
                 if (!cursor.moveToFirst()) return;
                 identityHash = cursor.getString(0);
                 requestHash = cursor.getString(1);

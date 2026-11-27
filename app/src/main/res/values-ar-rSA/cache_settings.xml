@@ -18,6 +18,7 @@
     <string name="title_online_favorite_state_usage">حالات المفضلة المخزنة</string>
     <string name="summary_online_favorite_state_usage">في الذاكرة للحساب الحالي: %1$d</string>
     <string name="online_favorite_cache_showing">عرض المفضلة المحفوظة من %1$s أثناء التحديث</string>
+    <string name="online_favorite_cache_showing_stale">عرض صفحة المفضلة الأقدم المحفوظة في %1$s أثناء التحديث</string>
     <string name="online_favorite_cache_refresh_failed">تعذر تحديث المفضلة. يتم عرض النتائج المحفوظة.</string>
     <string name="title_online_favorite_state_limit">حد حالات المفضلة عبر الإنترنت</string>
     <string name="summary_online_favorite_state_limit">حتى %1$s حالة مؤكدة للحساب الحالي. تُزال الحالات الأقل استخدامًا مؤخرًا أولاً.</string>

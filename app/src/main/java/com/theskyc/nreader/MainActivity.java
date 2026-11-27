@@ -57,6 +57,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.adapters.ListAdapter;
 import com.theskyc.nreader.api.AccountSearchTags;
 import com.theskyc.nreader.api.InspectorV3;
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.api.components.Ranges;
@@ -1598,7 +1599,10 @@ public class MainActivity extends BaseActivity
             java.util.Date syncedDate = new java.util.Date(syncedAt);
             String formattedDate = android.text.format.DateFormat.getDateFormat(MainActivity.this).format(syncedDate)
                 + " " + android.text.format.DateFormat.getTimeFormat(MainActivity.this).format(syncedDate);
-            showError(getString(R.string.online_favorite_cache_showing, formattedDate), null);
+            int message = OnlineFavoritePageStore.isFresh(syncedAt, System.currentTimeMillis())
+                ? R.string.online_favorite_cache_showing
+                : R.string.online_favorite_cache_showing_stale;
+            showError(getString(message, formattedDate), null);
         }
 
         @Override

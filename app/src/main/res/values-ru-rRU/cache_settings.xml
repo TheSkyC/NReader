@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Состояния избранного в кэше</string>
     <string name="summary_online_favorite_state_usage">В памяти для этого аккаунта: %1$d</string>
     <string name="online_favorite_cache_showing">Во время обновления показаны избранные, сохранённые %1$s</string>
+    <string name="online_favorite_cache_showing_stale">Во время обновления показаны старые избранные, сохранённые %1$s</string>
     <string name="online_favorite_cache_refresh_failed">Не удалось обновить избранное. Показаны сохранённые результаты.</string>
     <string name="title_online_favorite_page_limit">Страницы избранного на аккаунт</string>
     <string name="summary_online_favorite_page_limit">Хранить до %1$s просмотренных страниц для каждого аккаунта; сначала удаляются давно не открывавшиеся страницы.</string>

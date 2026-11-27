@@ -25,6 +25,7 @@
     <string name="title_online_favorite_state_usage">Cached favorite states</string>
     <string name="summary_online_favorite_state_usage">In memory for the current account: %1$d</string>
     <string name="online_favorite_cache_showing">Showing cached favorites from %1$s while refreshing</string>
+    <string name="online_favorite_cache_showing_stale">Showing an older saved favorites page from %1$s while refreshing</string>
     <string name="online_favorite_cache_refresh_failed">Couldn’t refresh favorites. Showing saved results.</string>
     <string name="preference_key_online_favorite_page_limit" translatable="false">online_favorite_page_limit</string>
     <string name="preference_key_online_favorite_page_quota" translatable="false">online_favorite_page_quota</string>

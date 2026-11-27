@@ -27,6 +27,7 @@
     <string name="title_online_favorite_state_usage">Stati preferiti nella cache</string>
     <string name="summary_online_favorite_state_usage">In memoria per questo account: %1$d</string>
     <string name="online_favorite_cache_showing">Preferiti salvati il %1$s mostrati durante l’aggiornamento</string>
+    <string name="online_favorite_cache_showing_stale">Preferiti salvati in precedenza il %1$s mostrati durante l’aggiornamento</string>
     <string name="online_favorite_cache_refresh_failed">Impossibile aggiornare i preferiti. Sono mostrati i risultati salvati.</string>
     <string name="title_online_favorite_page_limit">Pagine preferite per account</string>
     <string name="summary_online_favorite_page_limit">Conserva fino a %1$s pagine visitate per account; le pagine meno recenti vengono rimosse per prime.</string>
