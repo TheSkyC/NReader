@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">Kaydederken veya paylaşırken döndürülmemiş özgün görsel kullanılır. Devam edilsin mi?</string>
     <string name="jump_first_page">İlk sayfaya git</string>
     <string name="jump_last_page">Son sayfaya git</string>
+    <string name="title_reader_prefetch">Okuyucu görsellerini önceden yükle</string>
+    <string name="summary_reader_prefetch">Yakındaki sayfaların görsellerini görsel önbelleğine indirir</string>
+    <string name="title_reader_prefetch_metered">Ölçülü ağlarda önceden yüklemeye izin ver</string>
+    <string name="summary_reader_prefetch_metered">Geçerli sayfaya öncelik verir ve arka plan işlemlerini en fazla iki görselle sınırlar</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Kapalı</item><item>2 sayfa</item><item>4 sayfa</item><item>8 sayfa</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

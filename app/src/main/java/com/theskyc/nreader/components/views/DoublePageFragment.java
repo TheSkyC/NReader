@@ -28,6 +28,7 @@ public final class DoublePageFragment extends Fragment {
     private static final String SCALE_MODE_KEY = "SCALE_MODE";
     private static final String FILTER_MODE_KEY = "FILTER_MODE";
     private static final String AUTO_CROP_KEY = "AUTO_CROP";
+    private static final String LOAD_ON_CREATE_KEY = "LOAD_ON_CREATE";
 
     private int firstPage;
     private int secondPage;
@@ -64,6 +65,24 @@ public final class DoublePageFragment extends Fragment {
                                                  int scaleMode, int filterMode, boolean autoCrop,
                                                  int brightness, int contrast, int saturation,
                                                  float initialScale) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, filterMode, autoCrop,
+            brightness, contrast, saturation, initialScale, true);
+    }
+
+    public static DoublePageFragment newDeferredInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                         int secondPage, @Nullable GalleryFolder directory,
+                                                         int scaleMode, int filterMode, boolean autoCrop,
+                                                         int brightness, int contrast, int saturation,
+                                                         float initialScale) {
+        return newInstance(gallery, firstPage, secondPage, directory, scaleMode, filterMode, autoCrop,
+            brightness, contrast, saturation, initialScale, false);
+    }
+
+    private static DoublePageFragment newInstance(@NonNull GenericGallery gallery, int firstPage,
+                                                 int secondPage, @Nullable GalleryFolder directory,
+                                                 int scaleMode, int filterMode, boolean autoCrop,
+                                                 int brightness, int contrast, int saturation,
+                                                 float initialScale, boolean loadOnCreate) {
         Bundle args = new Bundle();
         args.putParcelable(GALLERY_KEY, gallery);
         args.putParcelable(DIRECTORY_KEY, directory);
@@ -76,6 +95,7 @@ public final class DoublePageFragment extends Fragment {
         args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
         args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
         args.putFloat("INITIAL_SCALE", initialScale);
+        args.putBoolean(LOAD_ON_CREATE_KEY, loadOnCreate);
         DoublePageFragment fragment = new DoublePageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -113,6 +133,7 @@ public final class DoublePageFragment extends Fragment {
         int contrast = ReaderImageFilter.sanitizeAdjustment(args.getInt("CONTRAST", 0));
         int saturation = ReaderImageFilter.sanitizeAdjustment(args.getInt("SATURATION", 0));
         float initialScale = args.getFloat("INITIAL_SCALE", 0f);
+        boolean loadOnCreate = args.getBoolean(LOAD_ON_CREATE_KEY, true);
         LinearLayout root = view.findViewById(R.id.double_page_root);
         FrameLayout secondContainer = view.findViewById(R.id.double_page_second);
         if (secondPage < 0) {
@@ -121,14 +142,20 @@ public final class DoublePageFragment extends Fragment {
         }
         if (getChildFragmentManager().findFragmentByTag(pageTag(firstPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_first, ZoomFragment.newInstance(gallery, firstPage, directory,
-                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale), pageTag(firstPage))
+                .add(R.id.double_page_first, (loadOnCreate
+                    ? ZoomFragment.newInstance(gallery, firstPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale)
+                    : ZoomFragment.newDeferredInstance(gallery, firstPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale)), pageTag(firstPage))
                 .commitNow();
         }
         if (secondPage >= 0 && getChildFragmentManager().findFragmentByTag(pageTag(secondPage)) == null) {
             getChildFragmentManager().beginTransaction()
-                .add(R.id.double_page_second, ZoomFragment.newInstance(gallery, secondPage, directory,
-                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale), pageTag(secondPage))
+                .add(R.id.double_page_second, (loadOnCreate
+                    ? ZoomFragment.newInstance(gallery, secondPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale)
+                    : ZoomFragment.newDeferredInstance(gallery, secondPage, directory,
+                    scaleMode, filterMode, autoCrop, brightness, contrast, saturation, initialScale)), pageTag(secondPage))
                 .commitNow();
         }
     }

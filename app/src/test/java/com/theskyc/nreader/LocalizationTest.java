@@ -16,6 +16,7 @@ import java.util.Locale;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
 
 @RunWith(RobolectricTestRunner.class)
 // API 28 is the lowest runtime supported by the minApi28 test APK; the same
@@ -89,6 +90,22 @@ public class LocalizationTest {
                 resources.getString(R.string.backup_integrity_verified));
             assertTrue(languageTag, preview.contains(resources.getString(R.string.backup_integrity_verified)));
             assertFalse(languageTag, preview.contains("%"));
+        }
+    }
+
+    @Test
+    public void readerPrefetchSettingsAreLocalizedAcrossSupportedLocales() {
+        String[] locales = {"en-US", "ar-SA", "de-DE", "es-ES", "fr-FR", "it-IT", "ja-JP",
+            "pt-BR", "ru-RU", "tr-TR", "uk-UA", "zh-CN", "zh-TW"};
+        String[] values = {"0", "2", "4", "8"};
+        for (String languageTag : locales) {
+            Resources resources = resources(languageTag);
+            assertFalse(languageTag, resources.getString(R.string.title_reader_prefetch).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.summary_reader_prefetch).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.title_reader_prefetch_metered).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.summary_reader_prefetch_metered).isEmpty());
+            assertArrayEquals(languageTag, values, resources.getStringArray(R.array.reader_prefetch_values));
+            assertEquals(languageTag, values.length, resources.getStringArray(R.array.reader_prefetch_entries).length);
         }
     }
 }

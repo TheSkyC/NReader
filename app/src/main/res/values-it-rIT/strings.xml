@@ -409,8 +409,8 @@
     <string name="summary_beta">Per tornare a una versione stabile precedente potrebbe essere necessario disinstallare l’app. Esporta i dati prima di cambiare versione.</string>
     <string name="navigation_settings_per_screen">Impostazioni di navigazione per schermata</string>
     <string name="downloaded_update_at" formatted="true">Scaricamento aggiornamento al %s</string>
-    <string name="summary_offscreen_limit">Imposta il numero di immagini da preacricare quando si sta leggendo una galleria</string>
-    <string name="title_offscreen_limit">Immagini da precaricare</string>
+    <string name="summary_offscreen_limit">Imposta quante viste delle pagine vicine restano attive; il precaricamento delle immagini si configura separatamente</string>
+    <string name="title_offscreen_limit">Pagine da mantenere fuori schermo</string>
     <string name="sort_popoular_month">Popolarità mensile</string>
     <string name="random">Casuale</string>
     <string name="summary_fetch_metadata">Scarica metadati per gallerie scaricate prima della versione 2.3.0 che non avevano metadati come i tag inclusi</string>

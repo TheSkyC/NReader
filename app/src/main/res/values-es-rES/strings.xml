@@ -409,8 +409,8 @@
     <string name="summary_beta">Volver a una versión estable anterior puede requerir desinstalar la aplicación. Exporta tus datos antes de cambiar de versión.</string>
     <string name="navigation_settings_per_screen">Opciones de navegación por pantalla</string>
     <string name="downloaded_update_at" formatted="true">Actualización descargada en la ruta: %s</string>
-    <string name="summary_offscreen_limit">Establece el número de imágenes precargadas fuera de la pantalla</string>
-    <string name="title_offscreen_limit">Imagen a precargar</string>
+    <string name="summary_offscreen_limit">Controla cuántas vistas de páginas cercanas permanecen activas; la precarga de imágenes se configura por separado</string>
+    <string name="title_offscreen_limit">Páginas que mantener fuera de pantalla</string>
     <string name="sort_popoular_month">Populares por mes</string>
     <string name="random">Aleatorio</string>
     <string name="summary_fetch_metadata">Recuperar las etiquetas y otros metadatos que faltan en las galerías descargadas antes de la versión 2.3.0.</string>

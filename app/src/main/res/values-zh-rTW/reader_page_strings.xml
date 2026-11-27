@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">儲存或分享將使用未旋轉的原圖。要繼續嗎？</string>
     <string name="jump_first_page">跳至第一頁</string>
     <string name="jump_last_page">跳至最後一頁</string>
+    <string name="title_reader_prefetch">閱讀器圖片預載</string>
+    <string name="summary_reader_prefetch">將鄰近頁面的原圖下載至圖片快取</string>
+    <string name="title_reader_prefetch_metered">允許在計量網路預載</string>
+    <string name="summary_reader_prefetch_metered">目前頁面維持最高優先級，背景最多同時處理兩張圖片</string>
+    <string-array name="reader_prefetch_entries">
+        <item>關閉</item><item>2 頁</item><item>4 頁</item><item>8 頁</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

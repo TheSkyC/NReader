@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">保存または共有には回転前の元画像が使用されます。続行しますか？</string>
     <string name="jump_first_page">最初のページへ</string>
     <string name="jump_last_page">最後のページへ</string>
+    <string name="title_reader_prefetch">リーダー画像の先読み</string>
+    <string name="summary_reader_prefetch">近くのページ画像を画像キャッシュにダウンロードします</string>
+    <string name="title_reader_prefetch_metered">従量制ネットワークでの先読みを許可</string>
+    <string name="summary_reader_prefetch_metered">現在のページを優先し、バックグラウンド処理は最大2枚に制限します</string>
+    <string-array name="reader_prefetch_entries">
+        <item>オフ</item><item>2ページ</item><item>4ページ</item><item>8ページ</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

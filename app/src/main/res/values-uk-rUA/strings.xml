@@ -409,8 +409,8 @@
     <string name="summary_beta">Для повернення до старішої стабільної версії може знадобитися видалення застосунку. Експортуйте дані перед зміною версії.</string>
     <string name="navigation_settings_per_screen">Налаштування навігації для кожного екрана</string>
     <string name="downloaded_update_at" formatted="true">Завантажене оновлення %s</string>
-    <string name="summary_offscreen_limit">Встановити ліміт предзавантаження</string>
-    <string name="title_offscreen_limit">Зображення для предзавантаження</string>
+    <string name="summary_offscreen_limit">Визначає кількість активних подань сусідніх сторінок; попереднє завантаження зображень налаштовується окремо</string>
+    <string name="title_offscreen_limit">Сторінки поза екраном</string>
     <string name="sort_popoular_month">Популярні за місяць</string>
     <string name="random">Випадкова</string>
     <string name="summary_fetch_metadata">Завантажити метадані для галерей, завантажених до 2.3.0 які не мали метаданих, таких як теги що включені</string>

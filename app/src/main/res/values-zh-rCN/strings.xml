@@ -535,8 +535,8 @@
     <string name="summary_beta">回退到较旧的稳定版可能需要卸载应用。切换版本前请先导出数据。</string>
     <string name="navigation_settings_per_screen">各界面浏览设置</string>
     <string name="downloaded_update_at" formatted="true">更新文件已下载至 %s</string>
-    <string name="summary_offscreen_limit">设置阅读时提前加载的图片数量</string>
-    <string name="title_offscreen_limit">预加载图片数</string>
+    <string name="summary_offscreen_limit">设置保持活跃的邻近页面视图数量；图片预加载可单独设置</string>
+    <string name="title_offscreen_limit">离屏保留页面数</string>
     <string name="sort_popoular_month">月榜</string>
     <string name="random">随机</string>
     <string name="summary_fetch_metadata">为 2.3.0 之前下载、缺少标签等元数据的画廊补全元数据。</string>

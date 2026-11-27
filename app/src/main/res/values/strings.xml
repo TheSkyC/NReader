@@ -121,6 +121,8 @@
     <string name="comment_deleting">Deleting comment…</string>
     <string name="comment_deleted">Comment deleted</string>
     <string name="preference_key_offscreen_limit" translatable="false">offscreen_limit</string>
+    <string name="preference_key_reader_prefetch" translatable="false">reader_prefetch</string>
+    <string name="preference_key_reader_prefetch_metered" translatable="false">reader_prefetch_metered</string>
     <string name="preference_key_enable_beta" translatable="false">enable_beta</string>
     <string name="preference_key_save_path" translatable="false">save_path</string>
     <string name="preference_key_fake_icon" translatable="false">fake_icon</string>
@@ -685,8 +687,8 @@
     <string name="summary_beta">Returning to an older stable version may require uninstalling the app. Export your data before switching versions.</string>
     <string name="navigation_settings_per_screen">Navigation settings per screen</string>
     <string name="downloaded_update_at" formatted="true">Downloaded update at %s</string>
-    <string name="summary_offscreen_limit">Set the number of images to preload offscreen when reading a gallery</string>
-    <string name="title_offscreen_limit">Images to preload</string>
+    <string name="summary_offscreen_limit">Controls how many nearby page views stay active; image prefetch is configured separately</string>
+    <string name="title_offscreen_limit">Pages to keep offscreen</string>
     <string name="sort_popoular_month">Monthly popular</string>
     <string name="random">Random</string>
     <string name="summary_fetch_metadata">Retrieve tags and other missing metadata for galleries downloaded before version 2.3.0.</string>

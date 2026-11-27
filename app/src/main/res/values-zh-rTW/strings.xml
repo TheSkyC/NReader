@@ -535,8 +535,8 @@
     <string name="summary_beta">回復較舊的穩定版可能需要解除安裝應用程式。切換版本前請先匯出資料。</string>
     <string name="navigation_settings_per_screen">各畫面瀏覽設定</string>
     <string name="downloaded_update_at" formatted="true">更新檔案已下載至 %s</string>
-    <string name="summary_offscreen_limit">設定閱讀圖庫時預先載入的圖片數量</string>
-    <string name="title_offscreen_limit">預先載入圖片數</string>
+    <string name="summary_offscreen_limit">設定保持啟用的鄰近頁面檢視數量；圖片預載可另外設定</string>
+    <string name="title_offscreen_limit">離屏保留頁面數</string>
     <string name="sort_popoular_month">月榜</string>
     <string name="random">隨機</string>
     <string name="summary_fetch_metadata">為 2.3.0 之前下載、缺少標籤等中繼資料的圖庫補齊資料。</string>

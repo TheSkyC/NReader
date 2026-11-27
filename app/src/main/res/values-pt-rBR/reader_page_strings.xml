@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">Ao salvar ou compartilhar, a imagem original será usada sem rotação. Continuar?</string>
     <string name="jump_first_page">Ir para a primeira página</string>
     <string name="jump_last_page">Ir para a última página</string>
+    <string name="title_reader_prefetch">Pré-carregamento de imagens do leitor</string>
+    <string name="summary_reader_prefetch">Baixa imagens das páginas próximas para o cache de imagens</string>
+    <string name="title_reader_prefetch_metered">Permitir pré-carregamento em redes limitadas</string>
+    <string name="summary_reader_prefetch_metered">Mantém a página atual como prioridade e limita o trabalho em segundo plano a duas imagens</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Desativado</item><item>2 páginas</item><item>4 páginas</item><item>8 páginas</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

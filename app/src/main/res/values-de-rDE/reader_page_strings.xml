@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">Beim Speichern oder Teilen wird das Originalbild ohne Drehung verwendet. Fortfahren?</string>
     <string name="jump_first_page">Zur ersten Seite</string>
     <string name="jump_last_page">Zur letzten Seite</string>
+    <string name="title_reader_prefetch">Reader-Bilder vorladen</string>
+    <string name="summary_reader_prefetch">Bilder benachbarter Seiten in den Bildcache laden</string>
+    <string name="title_reader_prefetch_metered">Vorabrufe in getakteten Netzwerken erlauben</string>
+    <string name="summary_reader_prefetch_metered">Die aktuelle Seite bleibt priorisiert; im Hintergrund werden höchstens zwei Bilder geladen</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Aus</item><item>2 Seiten</item><item>4 Seiten</item><item>8 Seiten</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

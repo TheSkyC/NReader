@@ -79,6 +79,7 @@ public class ZoomFragment extends Fragment {
     private float initialScale;
     private boolean completedDownload = false;
     private ImageViewTarget<Drawable> target = null;
+    private boolean loadOnCreate = true;
 
 
     public ZoomFragment() {
@@ -113,6 +114,21 @@ public class ZoomFragment extends Fragment {
     public static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
                                            int scaleMode, int filterMode, boolean autoCrop,
                                            int brightness, int contrast, int saturation, float initialScale) {
+        return newInstance(gallery, page, directory, scaleMode, filterMode, autoCrop,
+            brightness, contrast, saturation, initialScale, true);
+    }
+
+    public static ZoomFragment newDeferredInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                                   int scaleMode, int filterMode, boolean autoCrop,
+                                                   int brightness, int contrast, int saturation, float initialScale) {
+        return newInstance(gallery, page, directory, scaleMode, filterMode, autoCrop,
+            brightness, contrast, saturation, initialScale, false);
+    }
+
+    private static ZoomFragment newInstance(GenericGallery gallery, int page, @Nullable GalleryFolder directory,
+                                           int scaleMode, int filterMode, boolean autoCrop,
+                                           int brightness, int contrast, int saturation, float initialScale,
+                                           boolean loadOnCreate) {
         Bundle args = new Bundle();
         args.putString("URL", gallery.isLocal() ? null : ((Gallery) gallery).getPageUrl(page).toString());
         args.putParcelable("FOLDER", directory == null ? null : directory.getPage(page + 1));
@@ -125,6 +141,7 @@ public class ZoomFragment extends Fragment {
         args.putInt("CONTRAST", ReaderImageFilter.sanitizeAdjustment(contrast));
         args.putInt("SATURATION", ReaderImageFilter.sanitizeAdjustment(saturation));
         args.putFloat("INITIAL_SCALE", initialScale);
+        args.putBoolean("LOAD_ON_CREATE", loadOnCreate);
         ZoomFragment fragment = new ZoomFragment();
         fragment.setArguments(args);
         return fragment;
@@ -153,6 +170,7 @@ public class ZoomFragment extends Fragment {
         contrast = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("CONTRAST", 0));
         saturation = ReaderImageFilter.sanitizeAdjustment(getArguments().getInt("SATURATION", 0));
         initialScale = sanitizeInitialScale(getArguments().getFloat("INITIAL_SCALE", 0f));
+        loadOnCreate = getArguments().getBoolean("LOAD_ON_CREATE", true);
         photoView.setContentDescription(getString(R.string.bookmark_page_format, pageIndex + 1));
         photoView.setClickable(true);
         ViewCompat.replaceAccessibilityAction(photoView,
@@ -184,7 +202,7 @@ public class ZoomFragment extends Fragment {
         });
         rootView.findViewById(R.id.reader_retry).setOnClickListener(v -> retryPage());
         createTarget();
-        loadImage();
+        if (loadOnCreate) loadImage();
         return rootView;
     }
 

@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">保存或分享将使用未经旋转的原图。是否继续？</string>
     <string name="jump_first_page">跳到第一页</string>
     <string name="jump_last_page">跳到最后一页</string>
+    <string name="title_reader_prefetch">阅读器图片预加载</string>
+    <string name="summary_reader_prefetch">将邻近页面的原图下载到图片缓存</string>
+    <string name="title_reader_prefetch_metered">允许在计费网络预加载</string>
+    <string name="summary_reader_prefetch_metered">当前页保持最高优先级，后台最多同时处理两张图片</string>
+    <string-array name="reader_prefetch_entries">
+        <item>关闭</item><item>2 页</item><item>4 页</item><item>8 页</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

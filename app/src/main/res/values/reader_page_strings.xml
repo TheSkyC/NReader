@@ -7,4 +7,20 @@
     <string name="reader_export_original_rotation">Saving or sharing uses the original image without your rotation. Continue?</string>
     <string name="jump_first_page">Jump to first page</string>
     <string name="jump_last_page">Jump to last page</string>
+    <string name="title_reader_prefetch">Reader image prefetch</string>
+    <string name="summary_reader_prefetch">Download nearby source images into the image cache</string>
+    <string name="title_reader_prefetch_metered">Allow prefetch on metered networks</string>
+    <string name="summary_reader_prefetch_metered">Keeps the current page priority and limits background work to two images</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Off</item>
+        <item>2 pages</item>
+        <item>4 pages</item>
+        <item>8 pages</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+    </string-array>
 </resources>

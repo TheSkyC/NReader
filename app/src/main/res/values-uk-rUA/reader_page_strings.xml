@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">Для збереження або поширення буде використано оригінальне зображення без обертання. Продовжити?</string>
     <string name="jump_first_page">Перейти до першої сторінки</string>
     <string name="jump_last_page">Перейти до останньої сторінки</string>
+    <string name="title_reader_prefetch">Попереднє завантаження зображень у читачі</string>
+    <string name="summary_reader_prefetch">Завантажує зображення сусідніх сторінок до кешу зображень</string>
+    <string name="title_reader_prefetch_metered">Дозволити попереднє завантаження в мережах із тарифікацією</string>
+    <string name="summary_reader_prefetch_metered">Поточна сторінка має пріоритет; у фоновому режимі завантажуються не більш як два зображення</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Вимкнено</item><item>2 сторінки</item><item>4 сторінки</item><item>8 сторінок</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

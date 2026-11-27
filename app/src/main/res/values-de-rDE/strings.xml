@@ -409,8 +409,8 @@
     <string name="summary_beta">Für die Rückkehr zu einer älteren stabilen Version kann eine Deinstallation erforderlich sein. Exportiere vor dem Wechsel deine Daten.</string>
     <string name="navigation_settings_per_screen">Navigationseinstellungen pro Bildschirm</string>
     <string name="downloaded_update_at" formatted="true">Update unter %s heruntergeladen</string>
-    <string name="summary_offscreen_limit">Anzahl an Seiten die vorgeladen werden beim lesen einer Galerie</string>
-    <string name="title_offscreen_limit">Bilder vorladen</string>
+    <string name="summary_offscreen_limit">Legt fest, wie viele benachbarte Seitenansichten aktiv bleiben; der Bildvorabruf wird separat eingestellt</string>
+    <string name="title_offscreen_limit">Seiten außerhalb des Bildschirms behalten</string>
     <string name="sort_popoular_month">Populär diesen Monat</string>
     <string name="random">Zufällig</string>
     <string name="summary_fetch_metadata">Tags und andere fehlende Metadaten für Galerien abrufen, die vor Version 2.3.0 heruntergeladen wurden.</string>

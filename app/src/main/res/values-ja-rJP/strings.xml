@@ -409,8 +409,8 @@
     <string name="summary_beta">古い安定版に戻すには、アプリのアンインストールが必要になる場合があります。切り替える前にデータをエクスポートしてください。</string>
     <string name="navigation_settings_per_screen">画面ごとのナビゲーションを設定</string>
     <string name="downloaded_update_at" formatted="true">%sでダウンロードされた更新</string>
-    <string name="summary_offscreen_limit">ギャラリーを読むときに画面外にプリロードする画像の数を設定</string>
-    <string name="title_offscreen_limit">プリロードする画像</string>
+    <string name="summary_offscreen_limit">近くのページ表示をいくつ保持するか設定します。画像の先読みは別に設定できます。</string>
+    <string name="title_offscreen_limit">画面外に保持するページ</string>
     <string name="sort_popoular_month">毎月の人気</string>
     <string name="random">ランダム</string>
     <string name="summary_fetch_metadata">タグなどのメタデータが含まれていない2.3.0より前にダウンロードされたギャラリーのメタデータをダウンロード</string>

@@ -409,8 +409,8 @@
     <string name="summary_beta">Для возврата к более старой стабильной версии может потребоваться удаление приложения. Экспортируйте данные перед сменой версии.</string>
     <string name="navigation_settings_per_screen">Настройки навигации для каждого экрана</string>
     <string name="downloaded_update_at" formatted="true">Обновление загружено в %s</string>
-    <string name="summary_offscreen_limit">Установите количество предзагружамых изображений во время чтения галереи</string>
-    <string name="title_offscreen_limit">Изображение предзагрузки</string>
+    <string name="summary_offscreen_limit">Определяет число активных представлений соседних страниц; предзагрузка изображений настраивается отдельно</string>
+    <string name="title_offscreen_limit">Страницы вне экрана</string>
     <string name="sort_popoular_month">Популярные за месяц</string>
     <string name="random">Случайная</string>
     <string name="summary_fetch_metadata">Загрузить метаданные для галерей, загруженных до 2.3.0, которые не имеют метаданных, по типу применённых тэгов</string>

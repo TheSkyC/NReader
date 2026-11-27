@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">ستُستخدم الصورة الأصلية دون تدوير عند الحفظ أو المشاركة. هل تريد المتابعة؟</string>
     <string name="jump_first_page">الانتقال إلى الصفحة الأولى</string>
     <string name="jump_last_page">الانتقال إلى الصفحة الأخيرة</string>
+    <string name="title_reader_prefetch">التحميل المسبق لصور القارئ</string>
+    <string name="summary_reader_prefetch">تنزيل صور الصفحات القريبة إلى ذاكرة الصور المؤقتة</string>
+    <string name="title_reader_prefetch_metered">السماح بالتحميل المسبق عبر الشبكات محدودة البيانات</string>
+    <string name="summary_reader_prefetch_metered">يحافظ على أولوية الصفحة الحالية ويحدّ المهام الخلفية بصورتين</string>
+    <string-array name="reader_prefetch_entries">
+        <item>إيقاف</item><item>صفحتان</item><item>4 صفحات</item><item>8 صفحات</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

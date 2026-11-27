@@ -409,8 +409,8 @@
     <string name="summary_beta">Le retour à une ancienne version stable peut nécessiter la désinstallation de l’application. Exportez vos données avant de changer de version.</string>
     <string name="navigation_settings_per_screen">Paramètres de navigation par écran</string>
     <string name="downloaded_update_at" formatted="true">Mise à jour téléchargée dans %s</string>
-    <string name="summary_offscreen_limit">Définissez le nombre d\'images à précharger en arrière-plan lors de la lecture d\'une galerie</string>
-    <string name="title_offscreen_limit">Nombre d\'images à précharger</string>
+    <string name="summary_offscreen_limit">Définit le nombre de vues de pages proches conservées actives ; le préchargement des images se règle séparément</string>
+    <string name="title_offscreen_limit">Pages à garder hors écran</string>
     <string name="sort_popoular_month">Populaire ce mois-ci</string>
     <string name="random">Aléatoire</string>
     <string name="summary_fetch_metadata">Télécharger les métadonnées des galeries téléchargées avant 2.3.0 auxquelles il manque des métadonnées, comme les tags.</string>

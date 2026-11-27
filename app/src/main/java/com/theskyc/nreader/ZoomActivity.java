@@ -11,6 +11,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -55,6 +58,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.FutureTarget;
 import com.theskyc.nreader.adapters.ReaderPagePreviewAdapter;
 import com.theskyc.nreader.adapters.ReaderBookmarkAdapter;
 import com.theskyc.nreader.api.components.GenericGallery;
@@ -77,6 +83,8 @@ import com.theskyc.nreader.components.reader.ReaderStatusSettings;
 import com.theskyc.nreader.components.reader.ReaderStatusOverlayView;
 import com.theskyc.nreader.components.reader.ReaderScaleMode;
 import com.theskyc.nreader.components.reader.ReaderImageFilter;
+import com.theskyc.nreader.components.reader.ReaderPrefetchPlan;
+import com.theskyc.nreader.components.reader.ReaderPrefetchQueue;
 import com.theskyc.nreader.components.reader.SpreadReaderNavigation;
 import com.theskyc.nreader.components.views.ZoomFragment;
 import com.theskyc.nreader.components.views.DoublePageFragment;
@@ -86,6 +94,7 @@ import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.utility.LogUtility;
 import com.theskyc.nreader.utility.DebugImageMask;
 import com.theskyc.nreader.utility.Utility;
+import com.theskyc.nreader.utility.network.NetworkUtil;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -102,6 +111,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntConsumer;
 
 public class ZoomActivity extends GeneralActivity {
@@ -171,6 +181,12 @@ public class ZoomActivity extends GeneralActivity {
     private static final int READER_PRESET_SCAN = 2;
     private static final int[] AUTO_SCROLL_SPEEDS = {40, 100, 220};
     private static final ExecutorService PAGE_EXPORT_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final ExecutorService READER_PREFETCH_EXECUTOR = Executors.newFixedThreadPool(
+        ReaderPrefetchQueue.MAX_CONCURRENT, runnable -> {
+            Thread thread = new Thread(runnable, "reader-prefetch");
+            thread.setDaemon(true);
+            return thread;
+        });
     private GenericGallery gallery;
     private int actualPage = 0;
     private ReadingPosition initialPosition;
@@ -200,11 +216,23 @@ public class ZoomActivity extends GeneralActivity {
     @Nullable private Object pendingContinuousSource;
     @Nullable private Future<?> pageExportTask;
     private final Handler readerHandler = new Handler(Looper.getMainLooper());
+    @Nullable private ConnectivityManager readerConnectivityManager;
+    private final ConnectivityManager.NetworkCallback readerNetworkCallback = new ConnectivityManager.NetworkCallback() {
+        @Override public void onAvailable(@NonNull Network network) { handleReaderNetworkChange(); }
+        @Override public void onCapabilitiesChanged(@NonNull Network network,
+                                                   @NonNull NetworkCapabilities capabilities) {
+            handleReaderNetworkChange();
+        }
+        @Override public void onLost(@NonNull Network network) { handleReaderNetworkChange(); }
+    };
+    private final Runnable readerPrefetchPolicyRefresh = this::refreshReaderPrefetchPolicy;
     private boolean autoScrolling;
     @Nullable private AlertDialog completionDialog;
     private long autoScrollLastFrame;
     private float autoScrollRemainder;
     private int autoScrollSpeedIndex;
+    @Nullable private ReaderPrefetchQueue prefetchQueue;
+    private int prefetchDirection = 1;
     private int readerScaleMode = ReaderScaleMode.SMART;
     private int readerFilterMode = ReaderImageFilter.NONE;
     private boolean readerAutoCrop;
@@ -392,6 +420,7 @@ public class ZoomActivity extends GeneralActivity {
                 clearFarRequests(oldPage, actualPage);
                 makeNearRequests(actualPage);
                 if (!initializingPager) savePosition();
+                updateReaderPrefetch(oldPage, actualPage);
             }
         });
         pageManagerLabel.setOnClickListener(v -> {
@@ -443,6 +472,11 @@ public class ZoomActivity extends GeneralActivity {
         pageSlider.setValue(page);
         boolean continuous = isContinuousModeEnabled(preferences);
         if (continuous) setContinuousMode(true, page);
+        else {
+            prefetchQueue = createPrefetchQueue();
+            makeNearRequests(actualPage);
+            updateReaderPrefetch(actualPage, actualPage);
+        }
     }
 
     private FragmentStateAdapter createPagedAdapter() {
@@ -464,6 +498,7 @@ public class ZoomActivity extends GeneralActivity {
         if (continuousMode == enabled) return;
         switchingReaderMode = true;
         continuousMode = enabled;
+        if (enabled && prefetchQueue != null) prefetchQueue.cancelAll();
         stopAutoScroll();
         continuousZoomViewport.resetZoom();
         if (enabled) {
@@ -511,11 +546,16 @@ public class ZoomActivity extends GeneralActivity {
             readerNavigation = createPagedNavigation();
             mViewPager.setVisibility(View.VISIBLE);
             readerNavigation.goToPage(page, false);
+            if (prefetchQueue == null) prefetchQueue = createPrefetchQueue();
         }
         actualPage = page;
         setPageText(page + 1);
         pageSlider.setValue(page);
         switchingReaderMode = false;
+        if (!continuousMode && prefetchQueue != null) {
+            makeNearRequests(page);
+            updateReaderPrefetch(page, page);
+        }
         getSharedPreferences("Settings", 0).edit().putBoolean(readerModePreferenceKey(), enabled).apply();
     }
 
@@ -549,6 +589,8 @@ public class ZoomActivity extends GeneralActivity {
         setPageText(actualPage + 1);
         pageSlider.setValue(actualPage);
         switchingReaderMode = false;
+        makeNearRequests(actualPage);
+        if (prefetchQueue != null) updateReaderPrefetch(actualPage, actualPage);
     }
 
     private boolean isContinuousModeEnabled(@NonNull SharedPreferences preferences) {
@@ -710,24 +752,65 @@ public class ZoomActivity extends GeneralActivity {
     protected void onStart() {
         super.onStart();
         setContinuousTilesActive(true);
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager != null && readerConnectivityManager == null) {
+            try {
+                manager.registerDefaultNetworkCallback(readerNetworkCallback);
+                readerConnectivityManager = manager;
+            } catch (SecurityException error) {
+                LogUtility.w("Unable to observe network changes for reader prefetch", error);
+            }
+        }
     }
 
     @Override
     protected void onStop() {
         setContinuousTilesActive(false);
+        if (readerConnectivityManager != null) {
+            try {
+                readerConnectivityManager.unregisterNetworkCallback(readerNetworkCallback);
+            } catch (IllegalArgumentException error) {
+                LogUtility.w("Unable to unregister reader network callback", error);
+            }
+            readerConnectivityManager = null;
+        }
+        readerHandler.removeCallbacks(readerPrefetchPolicyRefresh);
+        if (prefetchQueue != null) prefetchQueue.cancelAll();
         super.onStop();
     }
 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) setContinuousTilesActive(false);
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+            setContinuousTilesActive(false);
+            if (prefetchQueue != null) prefetchQueue.cancelAll();
+        }
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
         setContinuousTilesActive(false);
+        if (prefetchQueue != null) prefetchQueue.cancelAll();
+    }
+
+    private void scheduleReaderPrefetchPolicyRefresh() {
+        readerHandler.removeCallbacks(readerPrefetchPolicyRefresh);
+        readerHandler.postDelayed(readerPrefetchPolicyRefresh, 500);
+    }
+
+    private void refreshReaderPrefetchPolicy() {
+        if (prefetchQueue != null && !continuousMode && !isFinishing() && !isDestroyed())
+            updateReaderPrefetch(actualPage, actualPage);
+    }
+
+    private void handleReaderNetworkChange() {
+        readerHandler.post(() -> {
+            if (readerConnectivityManager == null) return;
+            if (prefetchQueue != null) prefetchQueue.cancelAll();
+            scheduleReaderPrefetchPolicyRefresh();
+        });
     }
 
     private void setContinuousTilesActive(boolean active) {
@@ -738,6 +821,7 @@ public class ZoomActivity extends GeneralActivity {
     @Override
     protected void onPause() {
         stopAutoScroll();
+        if (prefetchQueue != null) prefetchQueue.cancelAll();
         savePosition();
         if (readerStatusOverlay != null) readerStatusOverlay.onPause();
         super.onPause();
@@ -747,6 +831,7 @@ public class ZoomActivity extends GeneralActivity {
     protected void onResume() {
         super.onResume();
         if (readerStatusOverlay != null) readerStatusOverlay.onResume();
+        if (prefetchQueue != null) updateReaderPrefetch(actualPage, actualPage);
     }
 
     @Override
@@ -768,6 +853,7 @@ public class ZoomActivity extends GeneralActivity {
     @Override
     protected void onDestroy() {
         stopAutoScroll();
+        if (prefetchQueue != null) prefetchQueue.cancelAll();
         continuousZoomViewport.setOnUserInteractionListener(null);
         if (pageExportTask != null) pageExportTask.cancel(true);
         if (readerStatusOverlay != null) readerStatusOverlay.close();
@@ -2279,26 +2365,94 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void makeNearRequests(int newPage) {
-        ZoomFragment fragment;
-        int offScreenLimit = Global.getOffscreenLimit();
-        for (int i = newPage - offScreenLimit; i <= newPage + offScreenLimit; i++) {
-            fragment = getActualFragment(i);
-            if (fragment == null) continue;
-            if (i == newPage) fragment.loadImage(Priority.IMMEDIATE);
-            else fragment.loadImage();
+        requestVisiblePages(newPage);
+        readerHandler.postDelayed(() -> {
+            if (actualPage == newPage && !continuousMode && !switchingReaderMode)
+                requestVisiblePages(newPage);
+        }, 50);
+    }
+
+    private void requestVisiblePages(int newPage) {
+        int[] range = visiblePageRange(newPage);
+        for (int page = range[0]; page <= range[1]; page++) {
+            ZoomFragment fragment = getActualFragment(page);
+            if (fragment != null) fragment.loadImage(Priority.IMMEDIATE);
         }
     }
 
     private void clearFarRequests(int oldPage, int newPage) {
-        ZoomFragment fragment;
-        int offScreenLimit = Global.getOffscreenLimit();
-        for (int i = oldPage - offScreenLimit; i <= oldPage + offScreenLimit; i++) {
-            if (i >= newPage - offScreenLimit && i <= newPage + offScreenLimit) continue;
-            fragment = getActualFragment(i);
-            if (fragment == null) continue;
-            fragment.cancelRequest();
+        if (oldPage == newPage) return;
+        int[] oldRange = visiblePageRange(oldPage);
+        int[] newRange = visiblePageRange(newPage);
+        for (int page = oldRange[0]; page <= oldRange[1]; page++) {
+            if (page >= newRange[0] && page <= newRange[1]) continue;
+            ZoomFragment fragment = getActualFragment(page);
+            if (fragment != null) fragment.cancelRequest();
         }
+    }
 
+    private int[] visiblePageRange(int page) {
+        if (doublePageMode && !continuousMode) {
+            int spread = SpreadReaderNavigation.spreadForPage(page, gallery.getPageCount());
+            return new int[]{SpreadReaderNavigation.firstPageForSpread(spread, gallery.getPageCount()),
+                SpreadReaderNavigation.secondPageForSpread(spread, gallery.getPageCount())};
+        }
+        return new int[]{page, page};
+    }
+
+    @NonNull
+    private ReaderPrefetchQueue createPrefetchQueue() {
+        return new ReaderPrefetchQueue((page, sourceKey, onComplete) -> {
+            Object source = prefetchSource(page);
+            RequestManager manager = GlideX.with(getApplicationContext());
+            if (source == null || manager == null) {
+                onComplete.run();
+                return () -> { };
+            }
+            FutureTarget<File> target = manager.downloadOnly().load(source)
+                .diskCacheStrategy(DiskCacheStrategy.DATA).priority(Priority.LOW).submit();
+            AtomicBoolean cancelled = new AtomicBoolean();
+            Future<?> watcher = READER_PREFETCH_EXECUTOR.submit(() -> {
+                try {
+                    target.get();
+                } catch (Exception ignored) {
+                } finally {
+                    if (!cancelled.get()) readerHandler.post(onComplete);
+                }
+            });
+            return () -> {
+                cancelled.set(true);
+                watcher.cancel(true);
+                target.cancel(true);
+                manager.clear(target);
+            };
+        });
+    }
+
+    @Nullable
+    private Object prefetchSource(int page) {
+        if (gallery == null || page < 0 || page >= gallery.getPageCount()) return null;
+        return ContinuousPageAdapter.pageSource(gallery, directory, page);
+    }
+
+    private void updateReaderPrefetch(int oldPage, int newPage) {
+        if (prefetchQueue == null) return;
+        if (newPage != oldPage) prefetchDirection = newPage > oldPage ? 1 : -1;
+        SharedPreferences preferences = getSharedPreferences("Settings", Context.MODE_PRIVATE);
+        String value = preferences.getString(getString(R.string.preference_key_reader_prefetch), "4");
+        int pageCount = ReaderPrefetchPlan.pageCountForValue(value);
+        boolean allowMetered = preferences.getBoolean(getString(R.string.preference_key_reader_prefetch_metered), false);
+        if (!ReaderPrefetchPlan.isAllowed(pageCount, allowMetered, Global.getDownloadPolicy(), NetworkUtil.getType())) {
+            prefetchQueue.cancelAll();
+            return;
+        }
+        List<ReaderPrefetchQueue.Request> requests = new java.util.ArrayList<>();
+        for (Integer page : ReaderPrefetchPlan.pageWindow(gallery.getPageCount(), newPage,
+            prefetchDirection, pageCount, doublePageMode && !continuousMode)) {
+            Object source = prefetchSource(page);
+            if (source != null) requests.add(new ReaderPrefetchQueue.Request(page, source.toString()));
+        }
+        prefetchQueue.update(requests);
     }
 
     private ZoomFragment getActualFragment(int position) {
@@ -2455,7 +2609,7 @@ public class ZoomActivity extends GeneralActivity {
         public Fragment createFragment(int position) {
             int firstPage = SpreadReaderNavigation.firstPageForSpread(position, gallery.getPageCount());
             int secondPage = SpreadReaderNavigation.secondPageForSpread(position, gallery.getPageCount());
-            return DoublePageFragment.newInstance(gallery, firstPage, secondPage, directory,
+            return DoublePageFragment.newDeferredInstance(gallery, firstPage, secondPage, directory,
                 readerScaleMode, readerFilterMode, readerAutoCrop,
                 readerBrightness, readerContrast, readerSaturation, readerZoomScale);
         }
@@ -2475,7 +2629,7 @@ public class ZoomActivity extends GeneralActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return ZoomFragment.newInstance(gallery, position, directory, readerScaleMode,
+            return ZoomFragment.newDeferredInstance(gallery, position, directory, readerScaleMode,
                 readerFilterMode, readerAutoCrop, readerBrightness, readerContrast, readerSaturation,
                 readerZoomScale);
         }

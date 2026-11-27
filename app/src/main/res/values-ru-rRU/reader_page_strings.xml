@@ -7,4 +7,14 @@
     <string name="reader_export_original_rotation">При сохранении или отправке будет использовано исходное изображение без поворота. Продолжить?</string>
     <string name="jump_first_page">Перейти к первой странице</string>
     <string name="jump_last_page">Перейти к последней странице</string>
+    <string name="title_reader_prefetch">Предзагрузка изображений в читалке</string>
+    <string name="summary_reader_prefetch">Загружать изображения ближайших страниц в кэш изображений</string>
+    <string name="title_reader_prefetch_metered">Разрешить предзагрузку в сетях с оплатой за трафик</string>
+    <string name="summary_reader_prefetch_metered">Текущая страница сохраняет приоритет; в фоне загружается не более двух изображений</string>
+    <string-array name="reader_prefetch_entries">
+        <item>Выкл.</item><item>2 страницы</item><item>4 страницы</item><item>8 страниц</item>
+    </string-array>
+    <string-array name="reader_prefetch_values" translatable="false">
+        <item>0</item><item>2</item><item>4</item><item>8</item>
+    </string-array>
 </resources>

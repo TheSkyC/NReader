@@ -409,8 +409,8 @@
     <string name="summary_beta">قد تتطلب العودة إلى إصدار مستقر أقدم إلغاء تثبيت التطبيق. صدّر بياناتك قبل تبديل الإصدار.</string>
     <string name="navigation_settings_per_screen">إعدادات التنقُّل حسب الشاشة</string>
     <string name="downloaded_update_at" formatted="true">نُزِّل التحديث في %s</string>
-    <string name="summary_offscreen_limit">عيِّن عدد الصور المراد تحميلها استباقيًّا خارج الشاشة أثناء قراءة عمل ما</string>
-    <string name="title_offscreen_limit">الصور المراد تحميلها استباقيًّا</string>
+    <string name="summary_offscreen_limit">يحدد عدد صفحات القارئ القريبة النشطة؛ يُضبط التحميل المسبق للصور بشكل منفصل</string>
+    <string name="title_offscreen_limit">صفحات للاحتفاظ بها خارج الشاشة</string>
     <string name="sort_popoular_month">رائجة على مدار الشهر</string>
     <string name="random">عشوائي</string>
     <string name="summary_fetch_metadata">نزِّل البيانات الوصفية للأعمال المُنزَّلة قبل 2.3.0 والتي لا تحوي بيانات وصفية كالوسوم</string>

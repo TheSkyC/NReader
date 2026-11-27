@@ -70,6 +70,20 @@
                 android:title="@string/title_offscreen_limit"
                 app:iconSpaceReserved="false"
                 app:min="1" />
+            <ListPreference
+                android:defaultValue="4"
+                android:entries="@array/reader_prefetch_entries"
+                android:entryValues="@array/reader_prefetch_values"
+                android:key="@string/preference_key_reader_prefetch"
+                android:title="@string/title_reader_prefetch"
+                android:summary="@string/summary_reader_prefetch"
+                app:iconSpaceReserved="false" />
+            <SwitchPreferenceCompat
+                android:defaultValue="false"
+                android:key="@string/preference_key_reader_prefetch_metered"
+                android:title="@string/title_reader_prefetch_metered"
+                android:summary="@string/summary_reader_prefetch_metered"
+                app:iconSpaceReserved="false" />
         </PreferenceCategory>
     </PreferenceScreen>
 
