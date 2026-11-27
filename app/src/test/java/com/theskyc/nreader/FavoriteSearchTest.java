@@ -125,6 +125,14 @@ public class FavoriteSearchTest {
                 activity.onCreateOptionsMenu(menu);
                 MenuItem item = menu.findItem(R.id.search);
                 assertFalse(item.isVisible());
+                MenuItem random = menu.findItem(R.id.random_favorite);
+                assertTrue(random.isVisible());
+                assertFalse(((androidx.appcompat.view.menu.MenuItemImpl) random).requestsActionButton());
+                assertFalse(((androidx.appcompat.view.menu.MenuItemImpl) random).requiresActionButton());
+                MenuItem browser = menu.findItem(R.id.open_browser);
+                assertTrue(browser.isVisible());
+                assertFalse(((androidx.appcompat.view.menu.MenuItemImpl) browser).requestsActionButton());
+                assertFalse(((androidx.appcompat.view.menu.MenuItemImpl) browser).requiresActionButton());
                 SearchView search = activity.findViewById(R.id.favorite_search_view);
                 search.show();
                 Shadows.shadowOf(Looper.getMainLooper()).idle();

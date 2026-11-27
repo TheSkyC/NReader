@@ -217,6 +217,8 @@ public class FavoriteActivity extends BaseActivity {
         menu.findItem(R.id.only_language).setVisible(false);
         menu.findItem(R.id.add_bookmark).setVisible(false);
         menu.findItem(R.id.search).setVisible(false);
+        menu.findItem(R.id.random_favorite).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        menu.findItem(R.id.open_browser).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
         menu.findItem(R.id.sort_by_name).setTitle(sortByTitle ? R.string.sort_by_latest : R.string.sort_by_title);
         adapter.setSortByTitle(sortByTitle);
