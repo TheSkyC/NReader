@@ -35,6 +35,7 @@ import okhttp3.ResponseBody;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -315,6 +316,55 @@ public class OnlineFavoriteClientTest {
         }
     }
 
+    @Test public void cachedFavoritePageRefreshesFromNetworkAndReplacesStoredPage() throws Exception {
+        String identity = OnlineFavoriteClient.sessionIdentity(context);
+        String url = "https://nhentai.net/api/v2/favorites?page=1";
+        OnlineFavoritePageStore pageStore = OnlineFavoritePageStore.open(context);
+        pageStore.clearAccount(identity);
+        OnlineFavoritePageStore.Request write = pageStore.beginRequest(identity, url);
+        assertTrue(pageStore.save(write,
+            "{\"num_pages\":2,\"result\":[{\"id\":410,\"media_id\":\"1\","
+                + "\"english_title\":\"Cached\",\"num_pages\":1}]}", 2, 100));
+        pageStore.finishRequest(write);
+        pageStore.close();
+        OnlineFavoriteClient.rememberState(context, 410, false);
+
+        OkHttpClient previous = Global.client;
+        try {
+            AtomicInteger networkCalls = new AtomicInteger();
+            Global.client = client(chain -> {
+                networkCalls.incrementAndGet();
+                return response(chain, 200,
+                    "{\"num_pages\":3,\"result\":[{\"id\":411,\"media_id\":\"2\","
+                        + "\"english_title\":\"Fresh\",\"num_pages\":1}]} ");
+            });
+
+            List<String> events = Collections.synchronizedList(new ArrayList<>());
+            AtomicInteger cachedGalleryId = new AtomicInteger(-1);
+            AtomicInteger freshGalleryId = new AtomicInteger(-1);
+            runFavoriteInspector(events, cachedGalleryId, freshGalleryId);
+
+            assertEquals(java.util.Arrays.asList("cache", "fresh"), events);
+            assertEquals(1, networkCalls.get());
+            assertEquals(410, cachedGalleryId.get());
+            assertEquals(411, freshGalleryId.get());
+            assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 410));
+
+            pageStore = OnlineFavoritePageStore.open(context);
+            OnlineFavoritePageStore.Request read = pageStore.beginRequest(identity, url);
+            OnlineFavoritePageStore.CachedPage cached = pageStore.load(read, System.currentTimeMillis());
+            assertNotNull(cached);
+            assertTrue(cached.syncedAt > 100);
+            assertEquals(3, cached.pageCount);
+            assertEquals(411, new org.json.JSONObject(cached.payload)
+                .getJSONArray("result").getJSONObject(0).getInt("id"));
+            pageStore.finishRequest(read);
+            pageStore.close();
+        } finally {
+            Global.client = previous;
+        }
+    }
+
     @Test public void successfulFavoriteMutationInvalidatesThatAccountsCachedPages() throws Exception {
         AuthStore.saveApiKey(context, "favorite-page-test-key", true);
         String identity = OnlineFavoriteClient.sessionIdentity(context);
@@ -354,6 +404,11 @@ public class OnlineFavoriteClientTest {
     }
 
     private void runFavoriteInspector(List<String> events, AtomicInteger cachedGalleryId) throws Exception {
+        runFavoriteInspector(events, cachedGalleryId, new AtomicInteger(-1));
+    }
+
+    private void runFavoriteInspector(List<String> events, AtomicInteger cachedGalleryId,
+                                      AtomicInteger freshGalleryId) throws Exception {
         CountDownLatch ended = new CountDownLatch(1);
         InspectorV3 inspector = InspectorV3.favoriteInspector(context, null, 1,
             new InspectorV3.DefaultInspectorResponse() {
@@ -364,6 +419,7 @@ public class OnlineFavoriteClientTest {
                 }
                 @Override public void onSuccess(List<com.theskyc.nreader.api.components.GenericGallery> galleries) {
                     events.add("fresh");
+                    freshGalleryId.set(galleries.get(0).getId());
                 }
                 @Override public void onFailure(Exception error) {
                     events.add("failure");
