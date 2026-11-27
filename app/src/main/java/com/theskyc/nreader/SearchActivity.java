@@ -979,7 +979,7 @@ public class SearchActivity extends GeneralActivity {
         };
 
         TagSuggestionAdapter(TagType type, AppCompatAutoCompleteTextView entry) {
-            super(SearchActivity.this, android.R.layout.simple_dropdown_item_1line);
+            super(SearchActivity.this, R.layout.search_tag_suggestion);
             this.type = type;
             this.entry = entry;
         }
@@ -988,7 +988,7 @@ public class SearchActivity extends GeneralActivity {
         @Override
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             TextView row = convertView == null
-                ? (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_dropdown_item_1line, parent, false)
+                ? (TextView) LayoutInflater.from(getContext()).inflate(R.layout.search_tag_suggestion, parent, false)
                 : (TextView) convertView;
             TagSuggestion suggestion = getItem(position);
             row.setText(suggestion == null ? null
