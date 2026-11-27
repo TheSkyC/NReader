@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.AccountLoginActivity;
 import com.theskyc.nreader.AccountsActivity;
 import com.theskyc.nreader.ApiKeyActivity;
@@ -73,6 +74,24 @@ public class AccountManagementUiTest {
         long expiry = System.currentTimeMillis() + 600000;
         return new AccountVault.Account(id, AccountVault.Type.PASSWORD, "Display name", "fixture-password", null,
             "access", "refresh", expiry, expiry, rejected, 7, "login-name", null);
+    }
+
+    @Test public void emptyApiKeyShowsFieldErrorUntilEdited() {
+        Intent intent = new Intent(application, ApiKeyActivity.class)
+            .putExtra(ApiKeyActivity.EXTRA_ADD_ACCOUNT, true);
+        try (ActivityController<ApiKeyActivity> controller = Robolectric.buildActivity(ApiKeyActivity.class, intent).setup()) {
+            ApiKeyActivity activity = controller.get();
+            EditText input = activity.findViewById(R.id.api_key_input);
+            TextInputLayout field = activity.findViewById(R.id.api_key_input_layout);
+            input.setText("   ");
+            activity.findViewById(R.id.validate_api_key).performClick();
+            assertEquals(activity.getString(R.string.login_api_key_empty), field.getError().toString());
+            assertTrue(input.hasFocus());
+            input.setText("fixture");
+            assertNull(field.getError());
+            assertFalse(field.isErrorEnabled());
+            assertNull(repository.snapshot().activeId);
+        }
     }
 
     @Test public void automaticRecoveryRequiresOptInAndRejectsStaleAccount() throws Exception {

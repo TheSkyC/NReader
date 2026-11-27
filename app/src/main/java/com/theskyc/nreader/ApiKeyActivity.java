@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputLayout;
 import com.theskyc.nreader.components.activities.GeneralActivity;
 import com.theskyc.nreader.loginapi.User;
 import com.theskyc.nreader.settings.AuthStore;
@@ -50,6 +51,7 @@ public class ApiKeyActivity extends GeneralActivity {
     private TextView statusText;
     private LinearLayout inputGroup;
     private EditText apiKeyInput;
+    private TextInputLayout apiKeyInputLayout;
     private ProgressBar progressBar;
     private MaterialButton openApiKeyPage;
     private MaterialButton clearApiKey;
@@ -79,12 +81,17 @@ public class ApiKeyActivity extends GeneralActivity {
 
         statusText = findViewById(R.id.api_key_status_text);
         inputGroup = findViewById(R.id.api_key_input_group);
+        apiKeyInputLayout = findViewById(R.id.api_key_input_layout);
         apiKeyInput = findViewById(R.id.api_key_input);
         keyEdited = savedInstanceState != null && savedInstanceState.getBoolean(KEY_EDITED, false);
         apiKeyInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
                 if (!updatingKey) keyEdited = true;
+                if (apiKeyInputLayout.isErrorEnabled()) {
+                    apiKeyInputLayout.setError(null);
+                    apiKeyInputLayout.setErrorEnabled(false);
+                }
             }
             @Override public void afterTextChanged(android.text.Editable text) { }
         });
@@ -214,7 +221,8 @@ public class ApiKeyActivity extends GeneralActivity {
     private void validateAndSaveApiKey() {
         String apiKey = apiKeyInput.getText().toString().trim();
         if (apiKey.isEmpty()) {
-            Toast.makeText(this, R.string.login_api_key_empty, Toast.LENGTH_SHORT).show();
+            apiKeyInputLayout.setError(getString(R.string.login_api_key_empty));
+            apiKeyInput.requestFocus();
             return;
         }
         String candidateId = ApiAuthInterceptor.fingerprint(apiKey);

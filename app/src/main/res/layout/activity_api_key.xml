@@ -97,6 +97,7 @@
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/api_key_input_layout"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
