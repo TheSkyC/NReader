@@ -14,6 +14,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 
+import com.google.android.material.materialswitch.MaterialSwitch;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -25,6 +27,45 @@ import java.util.Locale;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w280dp-h640dp")
 public class ReaderSettingsRowLayoutTest {
+    @Test
+    public void readerSwitchesRemainUsableAtLargeText() {
+        AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();
+        int[][] sheets = {
+            {R.layout.reader_settings_sheet, R.id.reader_auto_crop, R.id.reader_volume_turn,
+                R.id.reader_instant_turn},
+            {R.layout.reader_status_settings_sheet, R.id.reader_status_enabled,
+                R.id.reader_status_time_enabled, R.id.reader_status_battery_enabled,
+                R.id.reader_status_progress_enabled, R.id.reader_status_time_idle,
+                R.id.reader_status_battery_idle, R.id.reader_status_progress_idle}
+        };
+        for (Locale locale : new Locale[]{Locale.ENGLISH, new Locale("zh", "CN"), new Locale("ar", "SA")}) {
+            Configuration configuration = new Configuration(activity.getResources().getConfiguration());
+            configuration.setLocale(locale);
+            configuration.setLayoutDirection(locale);
+            configuration.fontScale = 1.5f;
+            Context context = new ContextThemeWrapper(activity.createConfigurationContext(configuration),
+                R.style.AppTheme_Material3);
+            float density = context.getResources().getDisplayMetrics().density;
+            int width = Math.round(232 * density);
+            for (int[] entry : sheets) {
+                View sheet = LayoutInflater.from(context).inflate(entry[0], null);
+                sheet.setLayoutDirection(configuration.getLayoutDirection());
+                for (int index = 1; index < entry.length; index++) {
+                    MaterialSwitch control = sheet.findViewById(entry[index]);
+                    control.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                    control.layout(0, 0, width, control.getMeasuredHeight());
+                    assertTrue(control.getHeight() >= Math.round(48 * density));
+                    assertTrue(control.getHeight() >= control.getLayout().getHeight());
+                    assertEquals(0, control.getLayout().getEllipsisCount(control.getLineCount() - 1));
+                    boolean checked = control.isChecked();
+                    control.performClick();
+                    assertEquals(!checked, control.isChecked());
+                }
+            }
+        }
+    }
+
     @Test
     public void choicesKeepLabelsAndValuesReadableAtLargeText() {
         AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();

@@ -434,7 +434,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp" />
         </RadioGroup>
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/reader_auto_crop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -798,13 +798,13 @@
                 android:minHeight="48dp"
                 android:text="@string/reader_tap_action_none" />
         </RadioGroup>
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/reader_volume_turn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:text="@string/volume_change_setting" />
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/reader_instant_turn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

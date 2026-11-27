@@ -86,9 +86,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.slider.Slider;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.IOException;
@@ -1094,7 +1094,7 @@ public class ZoomActivity extends GeneralActivity {
             }
         });
 
-        SwitchMaterial autoCrop = Objects.requireNonNull(dialog.findViewById(R.id.reader_auto_crop));
+        MaterialSwitch autoCrop = Objects.requireNonNull(dialog.findViewById(R.id.reader_auto_crop));
         autoCrop.setChecked(readerAutoCrop);
         autoCrop.setOnCheckedChangeListener((button, checked) -> {
             if (!updatingPresetControls[0]) setReaderAutoCrop(checked);
@@ -1157,7 +1157,7 @@ public class ZoomActivity extends GeneralActivity {
                 : id == R.id.reader_tap_action_none ? READER_TAP_NONE : READER_TAP_CONTROLS;
             setReaderTapAction(action);
         });
-        SwitchMaterial volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
+        MaterialSwitch volume = Objects.requireNonNull(dialog.findViewById(R.id.reader_volume_turn));
         volume.setChecked(Global.volumeOverride());
         volume.setOnCheckedChangeListener((button, checked) -> {
             up = false;
@@ -1165,7 +1165,7 @@ public class ZoomActivity extends GeneralActivity {
             Global.setVolumeOverride(this, checked);
         });
         SharedPreferences preferences = getSharedPreferences("Settings", 0);
-        SwitchMaterial instant = Objects.requireNonNull(dialog.findViewById(R.id.reader_instant_turn));
+        MaterialSwitch instant = Objects.requireNonNull(dialog.findViewById(R.id.reader_instant_turn));
         instant.setChecked(isInstantPageTurn(preferences));
         instant.setOnCheckedChangeListener((button, checked) ->
             preferences.edit().putBoolean(INSTANT_PAGE_TURN_KEY, checked).apply());
@@ -1330,7 +1330,7 @@ public class ZoomActivity extends GeneralActivity {
     private void bindReaderStatusSwitch(@NonNull BottomSheetDialog dialog,
                                        @NonNull SharedPreferences preferences, int viewId,
                                        @NonNull String key, boolean checked) {
-        SwitchMaterial control = Objects.requireNonNull(dialog.findViewById(viewId));
+        MaterialSwitch control = Objects.requireNonNull(dialog.findViewById(viewId));
         control.setChecked(checked);
         control.setOnCheckedChangeListener((button, value) -> {
             SharedPreferences.Editor editor = preferences.edit();
