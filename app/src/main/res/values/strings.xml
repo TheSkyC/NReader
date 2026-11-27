@@ -345,6 +345,7 @@
     <string name="prev_page">Previous page</string>
     <string name="next_page">Next page</string>
     <string name="downloaded_manga">Downloaded galleries</string>
+    <string name="downloads_title">Downloads</string>
     <string name="download_gallery">Download gallery</string>
     <string name="share_with">Share with</string>
     <string name="link_copied_to_clipboard">Link copied to clipboard</string>

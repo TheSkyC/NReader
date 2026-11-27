@@ -117,6 +117,7 @@
     <string name="prev_page">Página Anterior</string>
     <string name="next_page">Próxima página</string>
     <string name="downloaded_manga">Galerias baixadas</string>
+    <string name="downloads_title">Downloads</string>
     <string name="download_gallery">Baixar galeria</string>
     <string name="share_with">Compartilhar com</string>
     <string name="link_copied_to_clipboard">Link copiado para a área de transferência</string>

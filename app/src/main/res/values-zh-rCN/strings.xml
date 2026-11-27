@@ -214,6 +214,7 @@
     <string name="prev_page">上一页</string>
     <string name="next_page">下一页</string>
     <string name="downloaded_manga">已下载</string>
+    <string name="downloads_title">下载</string>
     <string name="download_gallery">下载画廊</string>
     <string name="share_with">分享</string>
     <string name="link_copied_to_clipboard">链接已复制到剪贴板</string>

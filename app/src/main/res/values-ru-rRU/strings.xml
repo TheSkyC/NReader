@@ -117,6 +117,7 @@
     <string name="prev_page">Предыдущая страница</string>
     <string name="next_page">Следующая страница</string>
     <string name="downloaded_manga">Скачанные галереи</string>
+    <string name="downloads_title">Загрузки</string>
     <string name="download_gallery">Скачать галерею</string>
     <string name="share_with">Поделиться с</string>
     <string name="link_copied_to_clipboard">Ссылка скопирована в буфер обмена</string>
