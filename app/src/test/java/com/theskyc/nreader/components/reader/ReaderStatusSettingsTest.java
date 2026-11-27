@@ -46,7 +46,7 @@ public class ReaderStatusSettingsTest {
             .setup().get().getSharedPreferences("Settings", 0);
         preferences.edit()
             .putString(ReaderStatusSettings.KEY_ENABLED, "yes")
-            .putInt(ReaderStatusSettings.KEY_IDLE_DELAY, 4)
+            .putInt(ReaderStatusSettings.KEY_IDLE_DELAY, 31)
             .putInt(ReaderStatusSettings.KEY_STYLE, 9)
             .putInt(ReaderStatusSettings.KEY_BATTERY_FORMAT, -1)
             .putFloat(ReaderStatusSettings.KEY_TEXT_SIZE, Float.NaN)
@@ -65,6 +65,21 @@ public class ReaderStatusSettingsTest {
         assertTrue(settings.timePosition.custom);
         assertEquals(1f, settings.timePosition.x, 0f);
         assertEquals(0f, settings.timePosition.y, 0f);
+    }
+
+    @Test
+    public void idleDelayAcceptsEverySecondAndRejectsOutOfRangeValues() {
+        SharedPreferences preferences = Robolectric.buildActivity(android.app.Activity.class)
+            .setup().get().getSharedPreferences("Settings", 0);
+        for (int seconds = 1; seconds <= 30; seconds++) {
+            preferences.edit().putInt(ReaderStatusSettings.KEY_IDLE_DELAY, seconds).apply();
+            assertEquals(seconds, ReaderStatusSettings.load(preferences).idleDelaySeconds);
+        }
+        for (int seconds : new int[]{0, 31, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+            preferences.edit().putInt(ReaderStatusSettings.KEY_IDLE_DELAY, seconds).apply();
+            assertEquals(ReaderStatusSettings.DEFAULT_IDLE_DELAY_SECONDS,
+                ReaderStatusSettings.load(preferences).idleDelaySeconds);
+        }
     }
 
     @Test

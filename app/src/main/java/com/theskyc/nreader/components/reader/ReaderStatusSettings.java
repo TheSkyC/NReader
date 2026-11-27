@@ -25,6 +25,8 @@ public final class ReaderStatusSettings {
     public static final int STYLE_MINIMAL = 1;
 
     public static final int DEFAULT_IDLE_DELAY_SECONDS = 3;
+    public static final int MIN_IDLE_DELAY_SECONDS = 1;
+    public static final int MAX_IDLE_DELAY_SECONDS = 30;
     public static final float DEFAULT_TEXT_SIZE_SP = 12f;
     public static final int DEFAULT_BACKGROUND_OPACITY = 58;
 
@@ -65,7 +67,8 @@ public final class ReaderStatusSettings {
             VISIBILITY_ALWAYS, VISIBILITY_IDLE);
         progressVisibility = boundedInt(preferences, PREFIX + "progress_visibility", VISIBILITY_IDLE,
             VISIBILITY_ALWAYS, VISIBILITY_IDLE);
-        idleDelaySeconds = allowedDelay(getInt(preferences, KEY_IDLE_DELAY, DEFAULT_IDLE_DELAY_SECONDS));
+        idleDelaySeconds = boundedInt(preferences, KEY_IDLE_DELAY, DEFAULT_IDLE_DELAY_SECONDS,
+            MIN_IDLE_DELAY_SECONDS, MAX_IDLE_DELAY_SECONDS);
         batteryFormat = boundedInt(preferences, KEY_BATTERY_FORMAT, BATTERY_ICON_AND_PERCENT,
             BATTERY_ICON_AND_PERCENT, BATTERY_PERCENT_ONLY);
         progressFormat = boundedInt(preferences, KEY_PROGRESS_FORMAT, PROGRESS_COUNT,
@@ -164,11 +167,6 @@ public final class ReaderStatusSettings {
         if (Float.isNaN(x) || Float.isInfinite(x) || Float.isNaN(y) || Float.isInfinite(y))
             return Position.defaultPosition();
         return Position.custom(x, y);
-    }
-
-    private static int allowedDelay(int seconds) {
-        return seconds == 2 || seconds == 3 || seconds == 5 || seconds == 10 ? seconds
-            : DEFAULT_IDLE_DELAY_SECONDS;
     }
 
     private static int boundedInt(SharedPreferences preferences, String key, int fallback,

@@ -16,8 +16,6 @@ import androidx.appcompat.view.ContextThemeWrapper;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.radiobutton.MaterialRadioButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,37 +28,6 @@ import java.util.Locale;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class, qualifiers = "w280dp-h640dp")
 public class ReaderSettingsRowLayoutTest {
-    @Test
-    public void idleDelayChoicesFitAndRemainSelectableAtLargeText() {
-        AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();
-        for (Locale locale : new Locale[]{Locale.ENGLISH, new Locale("zh", "CN"), new Locale("ar", "SA")}) {
-            Configuration configuration = new Configuration(activity.getResources().getConfiguration());
-            configuration.setLocale(locale);
-            configuration.setLayoutDirection(locale);
-            configuration.fontScale = 1.5f;
-            Context context = new ContextThemeWrapper(activity.createConfigurationContext(configuration),
-                R.style.AppTheme_Material3);
-            View sheet = LayoutInflater.from(context).inflate(R.layout.reader_status_settings_sheet, null);
-            ChipGroup group = sheet.findViewById(R.id.reader_status_idle_delay);
-            group.setLayoutDirection(configuration.getLayoutDirection());
-            int width = Math.round(232 * context.getResources().getDisplayMetrics().density);
-            group.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            group.layout(0, 0, width, group.getMeasuredHeight());
-            int[] options = {R.id.reader_status_delay_2, R.id.reader_status_delay_3,
-                R.id.reader_status_delay_5, R.id.reader_status_delay_10};
-            for (int id : options) {
-                Chip chip = group.findViewById(id);
-                assertTrue(chip.getLeft() >= 0 && chip.getRight() <= group.getWidth());
-                assertEquals(0, chip.getLayout().getEllipsisCount(0));
-                assertTrue(chip.getPaint().measureText(chip.getText().toString())
-                    <= chip.getLayout().getWidth());
-                chip.performClick();
-                assertEquals(id, group.getCheckedChipId());
-            }
-        }
-    }
-
     @Test
     public void statusOptionsHaveAccessibleTouchTargets() {
         AppCompatActivity activity = Robolectric.buildActivity(AppCompatActivity.class).get();

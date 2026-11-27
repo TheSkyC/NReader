@@ -27,7 +27,7 @@ public class ReaderStatusOverlayControllerTest {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         activity.setTheme(com.theskyc.nreader.R.style.AppTheme_Material3);
         activity.getSharedPreferences("Settings", 0).edit()
-            .putInt(ReaderStatusSettings.KEY_IDLE_DELAY, 2).apply();
+            .putInt(ReaderStatusSettings.KEY_IDLE_DELAY, 4).apply();
         ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
         activity.setContentView(view, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -44,7 +44,9 @@ public class ReaderStatusOverlayControllerTest {
         assertEquals(View.VISIBLE, view.getChildAt(1).getVisibility());
         assertEquals(View.VISIBLE, view.getChildAt(2).getVisibility());
 
-        Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(2, TimeUnit.SECONDS);
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(3, TimeUnit.SECONDS);
+        assertEquals(View.VISIBLE, view.getChildAt(2).getVisibility());
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(1, TimeUnit.SECONDS);
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(200, TimeUnit.MILLISECONDS);
 
         assertEquals(View.VISIBLE, view.getChildAt(0).getVisibility());

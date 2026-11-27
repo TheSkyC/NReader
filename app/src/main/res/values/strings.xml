@@ -227,6 +227,7 @@
     <string name="reader_status_battery_idle">Hide battery when idle</string>
     <string name="reader_status_progress_idle">Hide progress when idle</string>
     <string name="reader_status_idle_delay">Hide after</string>
+    <string name="reader_status_idle_delay_value" translatable="false">%1$s: %2$s</string>
     <string name="reader_status_delay_2">2 s</string>
     <string name="reader_status_delay_3">3 s</string>
     <string name="reader_status_delay_5">5 s</string>

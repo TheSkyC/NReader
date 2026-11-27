@@ -14,6 +14,9 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.icu.text.MeasureFormat;
+import android.icu.util.Measure;
+import android.icu.util.MeasureUnit;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -86,7 +89,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.slider.Slider;
@@ -1259,18 +1261,27 @@ public class ZoomActivity extends GeneralActivity {
             refreshReaderStatusSettings();
         });
 
-        ChipGroup delay = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_idle_delay));
-        delay.check(settings.idleDelaySeconds == 2 ? R.id.reader_status_delay_2
-            : settings.idleDelaySeconds == 5 ? R.id.reader_status_delay_5
-            : settings.idleDelaySeconds == 10 ? R.id.reader_status_delay_10 : R.id.reader_status_delay_3);
-        delay.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-            int checkedId = checkedIds.get(0);
-            int seconds = checkedId == R.id.reader_status_delay_2 ? 2
-                : checkedId == R.id.reader_status_delay_5 ? 5
-                : checkedId == R.id.reader_status_delay_10 ? 10 : 3;
-            preferences.edit().putInt(ReaderStatusSettings.KEY_IDLE_DELAY, seconds).apply();
-            refreshReaderStatusSettings();
+        TextView delayLabel = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_idle_delay_label));
+        Slider delay = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_idle_delay));
+        MeasureFormat secondsFormat = MeasureFormat.getInstance(getResources().getConfiguration().getLocales().get(0),
+            MeasureFormat.FormatWidth.SHORT);
+        delay.setValueFrom(ReaderStatusSettings.MIN_IDLE_DELAY_SECONDS);
+        delay.setValueTo(ReaderStatusSettings.MAX_IDLE_DELAY_SECONDS);
+        delay.setStepSize(1f);
+        delay.setLabelFormatter(value -> secondsFormat.format(new Measure(Math.round(value), MeasureUnit.SECOND)));
+        delay.setValue(settings.idleDelaySeconds);
+        delayLabel.setText(getString(R.string.reader_status_idle_delay_value,
+            getString(R.string.reader_status_idle_delay), secondsFormat.format(new Measure(settings.idleDelaySeconds,
+                MeasureUnit.SECOND))));
+        delay.addOnChangeListener((slider, value, fromUser) -> {
+            int seconds = Math.round(value);
+            delayLabel.setText(getString(R.string.reader_status_idle_delay_value,
+                getString(R.string.reader_status_idle_delay), secondsFormat.format(new Measure(seconds,
+                    MeasureUnit.SECOND))));
+            if (fromUser) {
+                preferences.edit().putInt(ReaderStatusSettings.KEY_IDLE_DELAY, seconds).apply();
+                refreshReaderStatusSettings();
+            }
         });
 
         MaterialButtonToggleGroup style = Objects.requireNonNull(dialog.findViewById(R.id.reader_status_style));
