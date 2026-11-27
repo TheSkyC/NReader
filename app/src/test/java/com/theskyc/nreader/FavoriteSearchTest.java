@@ -32,6 +32,34 @@ import static org.junit.Assert.*;
 @Config(sdk = 28, application = Application.class)
 public class FavoriteSearchTest {
     @Test
+    public void collapsedResultsRemainWithinTheViewportAfterSearch() throws Exception {
+        Application app = RuntimeEnvironment.getApplication();
+        app.deleteDatabase("Entries.db");
+        try (DatabaseHelper database = new DatabaseHelper(app)) {
+            database.getWritableDatabase();
+            Global.initFromShared(app);
+            try (ActivityController<FavoriteActivity> controller = Robolectric.buildActivity(FavoriteActivity.class).setup()) {
+                FavoriteActivity activity = controller.get();
+                awaitCount(activity, 0);
+                View root = activity.findViewById(android.R.id.content);
+                SearchView search = activity.findViewById(R.id.favorite_search_view);
+                search.show();
+                search.hide();
+                Shadows.shadowOf(Looper.getMainLooper()).idle();
+                View results = activity.findViewById(R.id.master_layout);
+                for (int[] size : new int[][]{{864, 1536}, {1536, 864}}) {
+                    root.measure(View.MeasureSpec.makeMeasureSpec(size[0], View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(size[1], View.MeasureSpec.EXACTLY));
+                    root.layout(0, 0, size[0], size[1]);
+                    int bottom = results.getHeight();
+                    for (View view = results; view != root; view = (View) view.getParent()) bottom += view.getTop();
+                    assertTrue("favorite results extend below the viewport: " + bottom, bottom <= root.getHeight());
+                }
+            }
+        }
+    }
+
+    @Test
     public void emptySearchLoadingAndFailureStatesFollowTheLatestResult() throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         app.deleteDatabase("Entries.db");

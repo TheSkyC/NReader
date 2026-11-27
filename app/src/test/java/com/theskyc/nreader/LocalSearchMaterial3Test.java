@@ -93,6 +93,16 @@ public class LocalSearchMaterial3Test {
             assertFalse(restored.isFinishing());
             assertFalse(isInside(restored.findViewById(R.id.recycler), restoredView));
             assertEquals("local fixture", restoredBar.getText().toString());
+            View root = restored.findViewById(android.R.id.content);
+            View results = restored.findViewById(R.id.master_layout);
+            for (int[] size : new int[][]{{864, 1536}, {1536, 864}}) {
+                root.measure(View.MeasureSpec.makeMeasureSpec(size[0], View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(size[1], View.MeasureSpec.EXACTLY));
+                root.layout(0, 0, size[0], size[1]);
+                int bottom = results.getHeight();
+                for (View view = results; view != root; view = (View) view.getParent()) bottom += view.getTop();
+                assertTrue("download results extend below the viewport: " + bottom, bottom <= root.getHeight());
+            }
             restoredBar.performClick();
             assertTrue(isInside(restored.findViewById(R.id.recycler), restoredView));
             assertEquals(1f, ((View) restored.findViewById(R.id.master_layout).getParent()).getAlpha(), 0f);
