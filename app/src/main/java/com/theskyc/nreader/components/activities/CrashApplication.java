@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.work.Configuration;
 
 import com.google.android.material.color.DynamicColors;
+import com.theskyc.nreader.AccountLoginActivity;
 import com.theskyc.nreader.BuildConfig;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.TagFilterActivity;
@@ -131,7 +132,8 @@ public class CrashApplication extends Application implements Configuration.Provi
         }
         Insets barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
         int bottom = barsInsets.bottom;
-        if (activity instanceof com.theskyc.nreader.GalleryActivity || activity instanceof TagFilterActivity) {
+        if (activity instanceof com.theskyc.nreader.GalleryActivity || activity instanceof TagFilterActivity
+            || activity instanceof AccountLoginActivity) {
             bottom = Math.max(bottom, insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
         }
         view.setPadding(barsInsets.left, barsInsets.top, barsInsets.right, bottom);
