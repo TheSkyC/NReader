@@ -69,6 +69,7 @@ import com.theskyc.nreader.components.reader.ReaderNavigation;
 import com.theskyc.nreader.components.reader.ContinuousPageAdapter;
 import com.theskyc.nreader.components.reader.ContinuousReaderNavigation;
 import com.theskyc.nreader.components.reader.ContinuousZoomViewport;
+import com.theskyc.nreader.components.reader.ReaderChoiceDialog;
 import com.theskyc.nreader.components.reader.ReaderPageExport;
 import com.theskyc.nreader.components.reader.ReaderPageRotations;
 import com.theskyc.nreader.components.reader.ReaderStatusOverlayController;
@@ -1553,23 +1554,8 @@ public class ZoomActivity extends GeneralActivity {
                 if (checked) row.post(update);
             });
         }
-        row.setOnClickListener(view -> {
-            CharSequence[] options = new CharSequence[group.getChildCount()];
-            int selectedIndex = -1;
-            for (int index = 0; index < options.length; index++) {
-                MaterialRadioButton option = (MaterialRadioButton) group.getChildAt(index);
-                options[index] = option.getText();
-                if (option.getId() == group.getCheckedRadioButtonId()) selectedIndex = index;
-            }
-            new MaterialAlertDialogBuilder(this)
-                .setTitle(titleId)
-                .setSingleChoiceItems(options, selectedIndex, (choice, index) -> {
-                    group.check(group.getChildAt(index).getId());
-                    choice.dismiss();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-        });
+        row.setOnClickListener(view ->
+            ReaderChoiceDialog.show(this, titleId, group));
         update.run();
     }
 
