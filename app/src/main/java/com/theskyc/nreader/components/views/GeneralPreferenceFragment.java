@@ -15,12 +15,14 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.format.Formatter;
 import android.util.JsonWriter;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.biometric.BiometricManager;
@@ -47,6 +49,7 @@ import com.theskyc.nreader.async.MetadataFetcher;
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.database.export.Importer;
 import com.theskyc.nreader.components.activities.CrashApplication;
+import com.theskyc.nreader.components.cache.ImageCacheManager;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.settings.MainGridSettings;
@@ -413,21 +416,34 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             });
         }
         {
-            //clear cache if pressed
-            double cacheSize = Global.recursiveSize(act.getCacheDir()) / ((double) (1 << 20));
+            ListPreference imageCacheQuota = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_image_cache_quota)));
+            imageCacheQuota.setSummaryProvider(preference -> {
+                CharSequence entry = ((ListPreference) preference).getEntry();
+                return getString(R.string.summary_image_cache_quota,
+                    entry == null ? getString(R.string.image_cache_default_quota) : entry);
+            });
+
             Preference cache = Objects.requireNonNull(findPreference(getString(R.string.preference_key_cache)));
-            cache.setSummary(getString(R.string.cache_size_formatted, cacheSize));
+            cache.setEnabled(false);
+            ImageCacheManager.measure(act, (bytes, error) -> {
+                if (!isAdded() || act == null || act.isFinishing()) return;
+                cache.setEnabled(true);
+                updateImageCacheSummary(cache, bytes, error);
+            });
             cache.setOnPreferenceClickListener(preference -> {
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(act);
-                builder.setTitle(R.string.clear_cache);
+                builder.setTitle(R.string.clear_image_cache);
+                builder.setMessage(R.string.message_clear_image_cache);
                 builder.setPositiveButton(R.string.yes, (dialog, which) -> {
-                    Global.recursiveDelete(act.getCacheDir());
-                    act.runOnUiThread(() -> {
-                        Toast.makeText(act, act.getString(R.string.cache_cleared), Toast.LENGTH_SHORT).show();
-                        double cSize = Global.recursiveSize(act.getCacheDir()) / ((double) (2 << 20));
-                        cache.setSummary(getString(R.string.cache_size_formatted, cSize));
+                    cache.setEnabled(false);
+                    ImageCacheManager.clear(act, (bytes, error) -> {
+                        if (!isAdded() || act == null || act.isFinishing()) return;
+                        cache.setEnabled(true);
+                        updateImageCacheSummary(cache, bytes, error);
+                        Toast.makeText(act, error == null
+                            ? R.string.image_cache_cleared : R.string.image_cache_clear_failed, Toast.LENGTH_SHORT).show();
                     });
-
                 }).setNegativeButton(R.string.no, null).setCancelable(true);
                 builder.show();
 
@@ -534,6 +550,14 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+    }
+
+    private void updateImageCacheSummary(@NonNull Preference cache, long bytes, @Nullable Exception error) {
+        if (error != null) {
+            cache.setSummary(R.string.image_cache_size_unavailable);
+            return;
+        }
+        cache.setSummary(getString(R.string.image_cache_size, Formatter.formatFileSize(requireContext(), bytes)));
     }
 
     private String readLegalAsset(String name) throws IOException {

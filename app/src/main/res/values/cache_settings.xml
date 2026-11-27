@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preference_key_image_cache_quota" translatable="false">image_cache_quota</string>
+    <string name="title_image_cache_quota">Image cache limit</string>
+    <string name="summary_image_cache_quota">%1$s maximum. Changes apply after restarting NReader.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">Clear image cache</string>
+    <string name="message_clear_image_cache">Only cached images are removed. Downloaded galleries and restore data are kept.</string>
+    <string name="image_cache_size">Image cache: %1$s</string>
+    <string name="image_cache_size_unavailable">Image cache size unavailable</string>
+    <string name="image_cache_cleared">Image cache cleared</string>
+    <string name="image_cache_clear_failed">Could not clear image cache</string>
+    <string-array name="image_cache_quota_entries">
+        <item>250 MiB</item>
+        <item>512 MiB</item>
+        <item>1 GiB</item>
+    </string-array>
+    <string-array name="image_cache_quota_values" translatable="false">
+        <item>250</item>
+        <item>512</item>
+        <item>1024</item>
+    </string-array>
+</resources>

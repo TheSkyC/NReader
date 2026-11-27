@@ -348,9 +348,16 @@
         <PreferenceCategory
             android:title="@string/settings_storage_maintenance"
             app:iconSpaceReserved="false">
+            <ListPreference
+                android:defaultValue="250"
+                android:entries="@array/image_cache_quota_entries"
+                android:entryValues="@array/image_cache_quota_values"
+                android:key="@string/preference_key_image_cache_quota"
+                android:title="@string/title_image_cache_quota"
+                app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_cache"
-                android:title="@string/clear_cache"
+                android:title="@string/clear_image_cache"
                 app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_cookie"

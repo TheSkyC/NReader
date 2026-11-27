@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">图片缓存上限</string>
+    <string name="summary_image_cache_quota">上限 %1$s。重启 NReader 后生效。</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">清除图片缓存</string>
+    <string name="message_clear_image_cache">仅清除缓存图片。已下载画廊和恢复数据会保留。</string>
+    <string name="image_cache_size">图片缓存：%1$s</string>
+    <string name="image_cache_size_unavailable">无法读取图片缓存大小</string>
+    <string name="image_cache_cleared">图片缓存已清除</string>
+    <string name="image_cache_clear_failed">无法清除图片缓存</string>
+</resources>

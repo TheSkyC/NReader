@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">Görsel önbelleği sınırı</string>
+    <string name="summary_image_cache_quota">En fazla %1$s. Değişiklik NReader yeniden başlatıldığında uygulanır.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">Görsel önbelleğini temizle</string>
+    <string name="message_clear_image_cache">Yalnızca önbelleğe alınan görseller silinir. İndirilen galeriler ve geri yükleme verileri korunur.</string>
+    <string name="image_cache_size">Görsel önbelleği: %1$s</string>
+    <string name="image_cache_size_unavailable">Görsel önbelleği boyutu kullanılamıyor</string>
+    <string name="image_cache_cleared">Görsel önbelleği temizlendi</string>
+    <string name="image_cache_clear_failed">Görsel önbelleği temizlenemedi</string>
+</resources>

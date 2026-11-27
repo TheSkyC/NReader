@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">Límite de caché de imágenes</string>
+    <string name="summary_image_cache_quota">Máximo de %1$s. El cambio se aplica al reiniciar NReader.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">Borrar caché de imágenes</string>
+    <string name="message_clear_image_cache">Solo se borrarán las imágenes almacenadas en caché. Se conservarán las galerías descargadas y los datos de restauración.</string>
+    <string name="image_cache_size">Caché de imágenes: %1$s</string>
+    <string name="image_cache_size_unavailable">Tamaño de la caché de imágenes no disponible</string>
+    <string name="image_cache_cleared">Caché de imágenes borrada</string>
+    <string name="image_cache_clear_failed">No se pudo borrar la caché de imágenes</string>
+</resources>

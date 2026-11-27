@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">حد ذاكرة الصور المؤقتة</string>
+    <string name="summary_image_cache_quota">الحد الأقصى %1$s. يسري التغيير بعد إعادة تشغيل NReader.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">مسح ذاكرة الصور المؤقتة</string>
+    <string name="message_clear_image_cache">سيتم مسح الصور المخزنة مؤقتًا فقط. ستبقى المعارض المنزلة وبيانات الاستعادة.</string>
+    <string name="image_cache_size">حجم ذاكرة الصور: %1$s</string>
+    <string name="image_cache_size_unavailable">حجم ذاكرة الصور غير متاح</string>
+    <string name="image_cache_cleared">تم مسح ذاكرة الصور المؤقتة</string>
+    <string name="image_cache_clear_failed">تعذر مسح ذاكرة الصور المؤقتة</string>
+</resources>

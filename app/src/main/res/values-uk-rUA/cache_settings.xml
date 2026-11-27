@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">Обмеження кешу зображень</string>
+    <string name="summary_image_cache_quota">Максимум %1$s. Зміни набудуть чинності після перезапуску NReader.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">Очистити кеш зображень</string>
+    <string name="message_clear_image_cache">Буде видалено лише кешовані зображення. Завантажені галереї та дані відновлення залишаться.</string>
+    <string name="image_cache_size">Кеш зображень: %1$s</string>
+    <string name="image_cache_size_unavailable">Розмір кешу зображень недоступний</string>
+    <string name="image_cache_cleared">Кеш зображень очищено</string>
+    <string name="image_cache_clear_failed">Не вдалося очистити кеш зображень</string>
+</resources>

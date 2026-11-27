@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">画像キャッシュの上限</string>
+    <string name="summary_image_cache_quota">上限 %1$s。変更はNReaderの再起動後に適用されます。</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">画像キャッシュを削除</string>
+    <string name="message_clear_image_cache">削除されるのはキャッシュ画像のみです。ダウンロード済みギャラリーと復元データは保持されます。</string>
+    <string name="image_cache_size">画像キャッシュ: %1$s</string>
+    <string name="image_cache_size_unavailable">画像キャッシュのサイズを取得できません</string>
+    <string name="image_cache_cleared">画像キャッシュを削除しました</string>
+    <string name="image_cache_clear_failed">画像キャッシュを削除できませんでした</string>
+</resources>

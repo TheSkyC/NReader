@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">Лимит кэша изображений</string>
+    <string name="summary_image_cache_quota">Максимум %1$s. Изменение вступит в силу после перезапуска NReader.</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">Очистить кэш изображений</string>
+    <string name="message_clear_image_cache">Будут удалены только кэшированные изображения. Загруженные галереи и данные восстановления сохранятся.</string>
+    <string name="image_cache_size">Кэш изображений: %1$s</string>
+    <string name="image_cache_size_unavailable">Размер кэша изображений недоступен</string>
+    <string name="image_cache_cleared">Кэш изображений очищен</string>
+    <string name="image_cache_clear_failed">Не удалось очистить кэш изображений</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_image_cache_quota">圖片快取上限</string>
+    <string name="summary_image_cache_quota">上限 %1$s。重新啟動 NReader 後生效。</string>
+    <string name="image_cache_default_quota">250 MiB</string>
+    <string name="clear_image_cache">清除圖片快取</string>
+    <string name="message_clear_image_cache">只會清除快取圖片。已下載畫廊和還原資料會保留。</string>
+    <string name="image_cache_size">圖片快取：%1$s</string>
+    <string name="image_cache_size_unavailable">無法讀取圖片快取大小</string>
+    <string name="image_cache_cleared">圖片快取已清除</string>
+    <string name="image_cache_clear_failed">無法清除圖片快取</string>
+</resources>
