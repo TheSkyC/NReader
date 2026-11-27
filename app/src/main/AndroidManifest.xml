@@ -233,6 +233,7 @@
             android:label="@string/copyURL" />
         <activity
             android:name=".ApiKeyActivity"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme.Material3"
             android:label="@string/title_activity_api_key">
         </activity>

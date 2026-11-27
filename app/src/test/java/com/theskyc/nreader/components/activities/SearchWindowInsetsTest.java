@@ -10,6 +10,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.theskyc.nreader.AccountLoginActivity;
+import com.theskyc.nreader.ApiKeyActivity;
 import com.theskyc.nreader.GalleryActivity;
 import com.theskyc.nreader.TagFilterActivity;
 
@@ -28,6 +29,7 @@ public class SearchWindowInsetsTest {
             Robolectric.buildActivity(TagFilterActivity.class).get(),
             Robolectric.buildActivity(GalleryActivity.class).get(),
             Robolectric.buildActivity(AccountLoginActivity.class).get(),
+            Robolectric.buildActivity(ApiKeyActivity.class).get(),
             Robolectric.buildActivity(Activity.class).get()
         };
         WindowInsetsCompat withKeyboard = new WindowInsetsCompat.Builder()
@@ -45,7 +47,7 @@ public class SearchWindowInsetsTest {
             assertEquals(20, root.getPaddingTop());
             assertEquals(6, root.getPaddingRight());
             assertEquals(activity instanceof TagFilterActivity || activity instanceof GalleryActivity
-                || activity instanceof AccountLoginActivity ? 300 : 30,
+                || activity instanceof AccountLoginActivity || activity instanceof ApiKeyActivity ? 300 : 30,
                 root.getPaddingBottom());
             CrashApplication.applyWindowInsets(activity, root, withoutKeyboard);
             assertEquals(30, root.getPaddingBottom());
