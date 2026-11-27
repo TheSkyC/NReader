@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -133,7 +132,7 @@ public class SearchPlanAdapter extends RecyclerView.Adapter<SearchPlanAdapter.Ho
         SortType[] types = SortType.values();
         List<String> labels = new ArrayList<>();
         for (SortType type : types) labels.add(activity.getString(type.getNameId()));
-        sort.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, labels));
+        sort.setSimpleItems(labels.toArray(new String[0]));
         int selectedSort = SortType.findFromAddition(plan.getAsString("sort")).ordinal();
         sort.setText(labels.get(selectedSort), false);
         sort.setTag(types[selectedSort]);

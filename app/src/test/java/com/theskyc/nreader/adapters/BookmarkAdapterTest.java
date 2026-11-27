@@ -15,6 +15,7 @@ import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.theskyc.nreader.BookmarkActivity;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.enums.ApiRequestType;
@@ -180,6 +181,32 @@ public class BookmarkAdapterTest {
         assertEquals("artist:two -tag:x", link.getQueryParameter("q"));
         assertEquals("popular-week", link.getQueryParameter("sort"));
         assertEquals("7", link.getQueryParameter("page"));
+    }
+
+    @Test
+    public void editingPlanSavesSelectedSort() throws Exception {
+        ContentValues plan = new ContentValues();
+        plan.put("name", "Example");
+        plan.put("query", "tag:one");
+        plan.put("sort", "popular-week");
+        plan.put("page", 1);
+        plan.put("pinned", 0);
+        SearchPlanStore.insert(plan);
+        BookmarkActivity activity = Robolectric.buildActivity(BookmarkActivity.class).setup().get();
+        awaitPlans();
+        RecyclerView list = activity.findViewById(R.id.recycler);
+        layout(list);
+        openPlanActions(list);
+        chooseAction(0);
+        shadowOf(Looper.getMainLooper()).idle();
+        AlertDialog editor = (AlertDialog) ShadowDialog.getLatestDialog();
+        MaterialAutoCompleteTextView sort = editor.findViewById(R.id.plan_sort);
+        assertNotNull(sort);
+        View choice = sort.getAdapter().getView(3, null, new android.widget.FrameLayout(activity));
+        sort.getOnItemClickListener().onItemClick(null, choice, 3, 3);
+        editor.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        awaitPlans();
+        assertEquals("popular-today", SearchPlanStore.list().get(0).getAsString("sort"));
     }
 
     private void awaitPlans() throws Exception {
