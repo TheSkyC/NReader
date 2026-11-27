@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.util.Linkify;
 import android.view.MenuItem;
@@ -156,17 +155,6 @@ public class SettingsActivity extends GeneralActivity implements PreferenceFragm
             }
         } else {
             actionBar.setTitle(type == Type.COLUMN ? R.string.settings_list_layout : R.string.settings_network_images);
-        }
-        for (int index = 0; index < toolbar.getChildCount(); index++) {
-            View child = toolbar.getChildAt(index);
-            if (child instanceof TextView) {
-                TextView title = (TextView) child;
-                if (TextUtils.equals(title.getText(), actionBar.getTitle())) {
-                    title.setSingleLine(false);
-                    title.setEllipsize(null);
-                    break;
-                }
-            }
         }
         catalogRefresh = new ViewModelProvider(this).get(CatalogRefreshViewModel.class);
         catalogRefresh.status().observe(this, this::updateCatalogCheckDialog);

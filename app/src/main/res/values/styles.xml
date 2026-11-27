@@ -88,6 +88,7 @@
     </style>
 
     <style name="NReaderPreferenceThemeOverlay" parent="PreferenceThemeOverlay.v14.Material">
+        <item name="dialogPreferenceStyle">@style/NReaderDialogPreference</item>
         <item name="preferenceScreenStyle">@style/NReaderPreferenceScreen</item>
         <item name="switchPreferenceCompatStyle">@style/NReaderSwitchPreference</item>
         <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Material3.TitleSmall</item>
@@ -97,6 +98,10 @@
     </style>
 
     <style name="NReaderPreferenceScreen" parent="Preference.PreferenceScreen.Material">
+        <item name="singleLineTitle">false</item>
+    </style>
+
+    <style name="NReaderDialogPreference" parent="Preference.DialogPreference.Material">
         <item name="singleLineTitle">false</item>
     </style>
 

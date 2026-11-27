@@ -24,6 +24,7 @@ public class MultilineMaterialToolbar extends MaterialToolbar {
             if (child instanceof TextView && TextUtils.equals(((TextView) child).getText(), title)) {
                 TextView titleView = (TextView) child;
                 titleView.setSingleLine(false);
+                titleView.setHorizontallyScrolling(false);
                 titleView.setEllipsize(null);
                 return;
             }
