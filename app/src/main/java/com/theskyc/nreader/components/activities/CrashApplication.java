@@ -3,6 +3,7 @@ package com.theskyc.nreader.components.activities;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -63,7 +64,9 @@ public class CrashApplication extends Application implements Configuration.Provi
         super.onCreate();
         AccountRuntime.initialize(this);
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            applyApplicationNightMode(this);
             DynamicColors.applyToActivitiesIfAvailable(this,
                 (activity, themeOverlay) -> shouldApplyDynamicColors(activity));
         }
@@ -71,7 +74,6 @@ public class CrashApplication extends Application implements Configuration.Provi
         //noinspection resource
         Database.setDatabase(new DatabaseHelper(getApplicationContext()).getWritableDatabase());
         String version = Global.getLastVersion(this);
-        SharedPreferences preferences = getSharedPreferences("Settings", 0);
         if (!BuildConfig.VERSION_NAME.equals(version))
             afterUpdateChecks(preferences, version);
 
@@ -88,9 +90,23 @@ public class CrashApplication extends Application implements Configuration.Provi
         UpdateCheckWorker.schedule(this);
         registerActivityLifecycleCallbacks(new CustomActivityLifecycleCallback());
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            String theme = preferences.getString(getString(R.string.preference_key_theme_select), "");
-            setDarkLightTheme(theme, this);
+            String defaultTheme = getResources().getStringArray(R.array.theme_data)[0];
+            String selectedTheme = preferences.getString(getString(R.string.preference_key_theme_select), defaultTheme);
+            setDarkLightTheme(selectedTheme, this);
         }
+    }
+
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
+    static void applyApplicationNightMode(@NonNull Context context) {
+        context.getSystemService(UiModeManager.class).setApplicationNightMode(resolveApplicationNightMode(context));
+    }
+
+    static int resolveApplicationNightMode(@NonNull Context context) {
+        String[] availableThemes = context.getResources().getStringArray(R.array.theme_data);
+        String selectedTheme = context.getSharedPreferences("Settings", 0)
+            .getString(context.getString(R.string.preference_key_theme_select), availableThemes[0]);
+        return availableThemes[1].equals(selectedTheme) || availableThemes[2].equals(selectedTheme)
+            ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO;
     }
 
     static boolean shouldApplyDynamicColors(@NonNull Context context) {

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.TypedArray;
 
@@ -29,7 +30,22 @@ public class MaterialThemeTest {
     public void clearThemePreference() {
         application.getSharedPreferences("Settings", 0).edit()
             .remove(application.getString(R.string.preference_key_black_theme))
+            .remove(application.getString(R.string.preference_key_theme_select))
             .commit();
+    }
+
+    @Test
+    public void applicationNightModeMatchesDefaultAndSavedTheme() {
+        String key = application.getString(R.string.preference_key_theme_select);
+        String[] themes = application.getResources().getStringArray(R.array.theme_data);
+        application.getSharedPreferences("Settings", 0).edit().remove(key).commit();
+        assertEquals(UiModeManager.MODE_NIGHT_NO, CrashApplication.resolveApplicationNightMode(application));
+
+        for (int index = 0; index < themes.length; index++) {
+            application.getSharedPreferences("Settings", 0).edit().putString(key, themes[index]).commit();
+            assertEquals(index == 0 ? UiModeManager.MODE_NIGHT_NO : UiModeManager.MODE_NIGHT_YES,
+                CrashApplication.resolveApplicationNightMode(application));
+        }
     }
 
     @Test

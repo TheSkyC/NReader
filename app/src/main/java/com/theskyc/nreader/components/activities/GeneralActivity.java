@@ -24,6 +24,7 @@ public abstract class GeneralActivity extends AppCompatActivity {
     private boolean isFastScrollerApplied = false;
     private CFTokenView tokenView = null;
     private boolean imagesMasked;
+    private boolean blackTheme;
 
     public static @Nullable
     CFTokenView getLastCFView() {
@@ -57,6 +58,7 @@ public abstract class GeneralActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         imagesMasked = DebugImageMask.isEnabled(this);
+        blackTheme = isBlackThemeSelected();
         // FLAG_SECURE (防截屏/防录屏/隐藏多任务预览) 已移除，允许正常截屏录屏
         Global.initActivity(this);
     }
@@ -64,7 +66,7 @@ public abstract class GeneralActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (imagesMasked != DebugImageMask.isEnabled(this)) {
+        if (imagesMasked != DebugImageMask.isEnabled(this) || blackTheme != isBlackThemeSelected()) {
             recreate();
             return;
         }
@@ -79,11 +81,15 @@ public abstract class GeneralActivity extends AppCompatActivity {
     @Override
     public Resources.Theme getTheme() {
         Resources.Theme theme = super.getTheme();
-        SharedPreferences preferences = getSharedPreferences("Settings", 0);
-        if (preferences.getBoolean(getString(R.string.preference_key_black_theme), false)) {
+        if (isBlackThemeSelected()) {
             theme.applyStyle(getBlackThemeStyle(), true);
         }
         return theme;
+    }
+
+    private boolean isBlackThemeSelected() {
+        SharedPreferences preferences = getSharedPreferences("Settings", 0);
+        return preferences.getBoolean(getString(R.string.preference_key_black_theme), false);
     }
 
     protected int getBlackThemeStyle() {

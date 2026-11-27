@@ -316,7 +316,11 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 if (Arrays.stream(availableThemes).noneMatch(newTheme::equals)) {
                     return false;
                 }
-                act.getSharedPreferences("Settings", 0)
+                SharedPreferences settings = act.getSharedPreferences("Settings", 0);
+                String oldTheme = settings.getString(getString(R.string.preference_key_theme_select), availableThemes[0]);
+                boolean blackChanged = settings.getBoolean(getString(R.string.preference_key_black_theme), false)
+                    != newTheme.equals(availableThemes[2]);
+                settings
                     .edit()
                     .putBoolean(getString(R.string.preference_key_black_theme), newTheme.equals(availableThemes[2])) // black
                     .apply();
@@ -333,6 +337,10 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                     uim.setApplicationNightMode(theme);
                 } else {
                     CrashApplication.setDarkLightTheme(newTheme, act);
+                }
+                if (blackChanged && !availableThemes[0].equals(oldTheme)
+                    && !availableThemes[0].equals(newTheme)) {
+                    act.getWindow().getDecorView().post(act::recreate);
                 }
                 return true;
             });

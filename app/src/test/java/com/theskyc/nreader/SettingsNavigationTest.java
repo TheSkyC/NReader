@@ -177,6 +177,65 @@ public class SettingsNavigationTest {
     }
 
     @Test
+    @Config(sdk = 31, qualifiers = "night")
+    public void switchingDarkAndBlackRecreatesTheSettingsScreen() {
+        Application application = RuntimeEnvironment.getApplication();
+        String themeKey = application.getString(R.string.preference_key_theme_select);
+        String blackKey = application.getString(R.string.preference_key_black_theme);
+        application.getSharedPreferences("Settings", 0).edit()
+            .putString(themeKey, "dark").putBoolean(blackKey, false).commit();
+        Global.initFromShared(application);
+        Intent intent = new Intent(application, SettingsActivity.class)
+            .putExtra("settings_screen", "settings_screen_appearance");
+        try (ActivityController<SettingsActivity> controller =
+                 Robolectric.buildActivity(SettingsActivity.class, intent).setup()) {
+            SettingsActivity previous = controller.get();
+            ListPreference preference = previous.fragment.findPreference(themeKey);
+            assertTrue(preference.callChangeListener("black"));
+            preference.setValue("black");
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNotSame(previous, controller.get());
+            assertEquals("black", ((ListPreference) controller.get().fragment.findPreference(themeKey)).getValue());
+            assertEquals(android.graphics.Color.BLACK,
+                com.google.android.material.color.MaterialColors.getColor(controller.get(), R.attr.colorSurface, 0));
+
+            previous = controller.get();
+            preference = previous.fragment.findPreference(themeKey);
+            assertTrue(preference.callChangeListener("dark"));
+            preference.setValue("dark");
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNotSame(previous, controller.get());
+            assertEquals("dark", ((ListPreference) controller.get().fragment.findPreference(themeKey)).getValue());
+            assertNotEquals(android.graphics.Color.BLACK,
+                com.google.android.material.color.MaterialColors.getColor(controller.get(), R.attr.colorSurface, 0));
+        } finally {
+            application.getSharedPreferences("Settings", 0).edit()
+                .remove(themeKey).remove(blackKey).commit();
+        }
+    }
+
+    @Test
+    @Config(sdk = 31, qualifiers = "night")
+    public void pausedScreenRefreshesAfterBlackThemeChanges() {
+        Application application = RuntimeEnvironment.getApplication();
+        String blackKey = application.getString(R.string.preference_key_black_theme);
+        application.getSharedPreferences("Settings", 0).edit().putBoolean(blackKey, false).commit();
+        try (ActivityController<AccountsActivity> controller =
+                 Robolectric.buildActivity(AccountsActivity.class).setup()) {
+            AccountsActivity previous = controller.get();
+            controller.pause().stop();
+            application.getSharedPreferences("Settings", 0).edit().putBoolean(blackKey, true).commit();
+            controller.restart().start().resume();
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNotSame(previous, controller.get());
+            assertEquals(android.graphics.Color.BLACK,
+                com.google.android.material.color.MaterialColors.getColor(controller.get(), R.attr.colorSurface, 0));
+        } finally {
+            application.getSharedPreferences("Settings", 0).edit().remove(blackKey).commit();
+        }
+    }
+
+    @Test
     public void successfulRestoreClosesSettingsStackButCancellationDoesNot() {
         Application application = RuntimeEnvironment.getApplication();
         Global.initFromShared(application);
