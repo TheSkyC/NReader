@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.Request;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.settings.Global;
@@ -94,6 +96,24 @@ public class ImageDownloadUtilityTest {
             target.onLoadFailed(placeholder);
             assertCenteredLogo(image, width, height, density);
             assertEquals(ImageView.ScaleType.CENTER_CROP, image.getScaleType());
+        }
+    }
+
+    @Test
+    public void blackThemeCoverPlaceholdersRemainDistinctFromThePage() {
+        try (ActivityController<AppCompatActivity> controller = Robolectric.buildActivity(AppCompatActivity.class)) {
+            AppCompatActivity activity = controller.get();
+            activity.setTheme(R.style.AppTheme_Material3_Black);
+            controller.setup();
+            for (int layout : new int[]{R.layout.entry_layout, R.layout.entry_layout_single}) {
+                MaterialCardView cover = LayoutInflater.from(activity).inflate(layout, null)
+                    .findViewById(R.id.gallery_cover);
+                int surface = MaterialColors.getColor(cover, com.google.android.material.R.attr.colorSurface);
+                int placeholder = cover.getCardBackgroundColor().getDefaultColor();
+                assertNotEquals(surface, placeholder);
+                assertEquals(MaterialColors.getColor(cover,
+                    com.google.android.material.R.attr.colorSurfaceContainerHigh), placeholder);
+            }
         }
     }
 
