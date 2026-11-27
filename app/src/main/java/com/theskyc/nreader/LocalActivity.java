@@ -11,7 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ArrayAdapter;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
@@ -306,12 +305,15 @@ public class LocalActivity extends BaseActivity {
     }
 
     private void showDialogFolderChoose() {
-        List<File> strings = Global.getUsableFolders(this);
-        ArrayAdapter<File> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, strings);
+        List<File> folders = Global.getUsableFolders(this);
+        folders.removeIf(Objects::isNull);
+        String[] labels = new String[folders.size()];
+        for (int index = 0; index < folders.size(); index++)
+            labels[index] = folders.get(index).toString();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.choose_directory).setIcon(R.drawable.ic_folder);
-        builder.setAdapter(adapter, (dialog, which) -> {
-            folder = new File(strings.get(which), Global.MAINFOLDER_NAME);
+        builder.setItems(labels, (dialog, which) -> {
+            folder = new File(folders.get(which), Global.MAINFOLDER_NAME);
             new FakeInspector(this, folder).execute(this);
         }).setNegativeButton(R.string.cancel, null).show();
     }
