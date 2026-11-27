@@ -492,7 +492,7 @@
     <string name="accounts_current">Поточний обліковий запис</string>
     <string name="accounts_needs_sign_in">Потрібен вхід</string>
     <string name="accounts_key_invalid">Ключ API потребує перевірки</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s (%2$s)</string>
     <string name="accounts_unnamed_key">обліковий запис ключа API</string>
     <string name="accounts_reauthenticate">Увійдіть знову</string>
     <string name="accounts_revalidate_key">Ще раз перевірте ключ API</string>

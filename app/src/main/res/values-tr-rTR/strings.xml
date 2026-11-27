@@ -492,7 +492,7 @@
     <string name="accounts_current">Geçerli hesap</string>
     <string name="accounts_needs_sign_in">Oturum açmanız gerekiyor</string>
     <string name="accounts_key_invalid">API anahtarının doğrulanması gerekiyor</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s (%2$s)</string>
     <string name="accounts_unnamed_key">API anahtarı hesabı</string>
     <string name="accounts_reauthenticate">Tekrar oturum açın</string>
     <string name="accounts_revalidate_key">API anahtarını tekrar doğrulayın</string>

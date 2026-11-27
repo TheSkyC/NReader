@@ -492,7 +492,7 @@
     <string name="accounts_current">現在のアカウント</string>
     <string name="accounts_needs_sign_in">サインインが必要です</string>
     <string name="accounts_key_invalid">APIキーは検証が必要です</string>
-    <string name="accounts_detail_format">%1$s・%2$s</string>
+    <string name="accounts_detail_format">%1$s（%2$s）</string>
     <string name="accounts_unnamed_key">APIキーアカウント</string>
     <string name="accounts_reauthenticate">再度サインインしてください</string>
     <string name="accounts_revalidate_key">APIキーを再度確認してください</string>

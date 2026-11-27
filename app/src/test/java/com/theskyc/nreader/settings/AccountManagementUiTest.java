@@ -122,7 +122,10 @@ public class AccountManagementUiTest {
             View row = list.getChildAt(0);
             assertEquals("Display name", ((TextView) row.findViewById(R.id.account_name)).getText().toString());
             String detail = ((TextView) row.findViewById(R.id.account_detail)).getText().toString();
-            assertTrue(detail.contains(activity.getString(R.string.accounts_needs_sign_in)));
+            assertEquals(activity.getString(R.string.accounts_password_method), detail);
+            assertEquals(View.VISIBLE, row.findViewById(R.id.account_state).getVisibility());
+            assertEquals(activity.getString(R.string.accounts_needs_sign_in),
+                ((TextView) row.findViewById(R.id.account_state)).getText().toString());
             assertEquals(View.VISIBLE, row.findViewById(R.id.account_current).getVisibility());
             assertTrue(row.findViewById(R.id.account_select).getContentDescription().toString()
                 .contains(activity.getString(R.string.accounts_current)));

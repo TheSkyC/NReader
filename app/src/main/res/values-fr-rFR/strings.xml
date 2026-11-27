@@ -492,7 +492,7 @@
     <string name="accounts_current">Compte actuel</string>
     <string name="accounts_needs_sign_in">Connexion requise</string>
     <string name="accounts_key_invalid">La clé API doit être vérifiée</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s (%2$s)</string>
     <string name="accounts_unnamed_key">Compte clé API</string>
     <string name="accounts_reauthenticate">Connectez-vous à nouveau</string>
     <string name="accounts_revalidate_key">Vérifiez à nouveau la clé API</string>

@@ -492,7 +492,7 @@
     <string name="accounts_current">Conta atual</string>
     <string name="accounts_needs_sign_in">É necessário fazer login</string>
     <string name="accounts_key_invalid">A chave da API precisa de verificação</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s (%2$s)</string>
     <string name="accounts_unnamed_key">Conta de chave de API</string>
     <string name="accounts_reauthenticate">Faça login novamente</string>
     <string name="accounts_revalidate_key">Verifique a chave da API novamente</string>

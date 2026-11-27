@@ -86,6 +86,7 @@ public final class AccountsActivity extends GeneralActivity {
         View row = getLayoutInflater().inflate(R.layout.item_account, list, false);
         TextView name = row.findViewById(R.id.account_name);
         TextView detail = row.findViewById(R.id.account_detail);
+        TextView accountState = row.findViewById(R.id.account_state);
         ImageView avatar = row.findViewById(R.id.account_avatar);
         String displayName = account.username.isEmpty() ? getString(R.string.accounts_unnamed_key) : account.username;
         name.setText(displayName);
@@ -97,7 +98,13 @@ public final class AccountsActivity extends GeneralActivity {
             state = getString(account.type == AccountVault.Type.PASSWORD
                 ? R.string.accounts_needs_sign_in : R.string.accounts_key_invalid);
         }
-        detail.setText(state == null ? method : getString(R.string.accounts_detail_format, method, state));
+        detail.setText(method);
+        if (state == null) {
+            accountState.setVisibility(View.GONE);
+        } else {
+            accountState.setText(state);
+            accountState.setVisibility(View.VISIBLE);
+        }
         boolean current = Objects.equals(account.id, activeId);
         row.findViewById(R.id.account_current).setVisibility(current ? View.VISIBLE : View.INVISIBLE);
         String avatarUrl = NhentaiLoginApi.accountAvatarUrl(account.avatarUrl, account.userId);
@@ -107,7 +114,8 @@ public final class AccountsActivity extends GeneralActivity {
                 .error(R.drawable.nav_account_placeholder).circleCrop().into(avatar);
         View select = row.findViewById(R.id.account_select);
         select.setEnabled(!busy);
-        String description = getString(R.string.accounts_detail_format, displayName, detail.getText());
+        String accountDetails = state == null ? method : getString(R.string.accounts_detail_format, method, state);
+        String description = getString(R.string.accounts_detail_format, displayName, accountDetails);
         select.setContentDescription(current
             ? getString(R.string.accounts_detail_format, description, getString(R.string.accounts_current)) : description);
         select.setOnClickListener(view -> select(account.id));

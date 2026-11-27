@@ -492,7 +492,7 @@
     <string name="accounts_current">الحساب الجاري</string>
     <string name="accounts_needs_sign_in">تسجيل الدخول مطلوب</string>
     <string name="accounts_key_invalid">يحتاج مفتاح API إلى التحقق</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s (%2$s)</string>
     <string name="accounts_unnamed_key">حساب مفتاح API</string>
     <string name="accounts_reauthenticate">قم بتسجيل الدخول مرة أخرى</string>
     <string name="accounts_revalidate_key">تحقق من مفتاح API مرة أخرى</string>

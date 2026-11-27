@@ -86,7 +86,7 @@
     <string name="accounts_current">当前账号</string>
     <string name="accounts_needs_sign_in">需要重新登录</string>
     <string name="accounts_key_invalid">API 密钥需要验证</string>
-    <string name="accounts_detail_format">%1$s · %2$s</string>
+    <string name="accounts_detail_format">%1$s（%2$s）</string>
     <string name="accounts_unnamed_key">API 密钥账号</string>
     <string name="accounts_reauthenticate">重新登录</string>
     <string name="accounts_revalidate_key">重新验证 API 密钥</string>
