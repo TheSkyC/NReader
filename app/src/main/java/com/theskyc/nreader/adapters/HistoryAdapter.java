@@ -10,11 +10,11 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.SearchActivity;
 import com.theskyc.nreader.components.classes.History;
 import com.theskyc.nreader.settings.Global;
-import com.theskyc.nreader.utility.ImageDownloadUtility;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +22,6 @@ import java.util.List;
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
     private final List<History> history;
     private final SearchActivity context;
-    private int remove = -1;
 
     public HistoryAdapter(SearchActivity context) {
         this.context = context;
@@ -39,37 +38,17 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        boolean deleting = remove == holder.getBindingAdapterPosition();
-        ImageDownloadUtility.loadImage(deleting ? R.drawable.ic_close : R.drawable.ic_mode_edit, holder.imageButton);
-        holder.imageButton.setContentDescription(context.getString(deleting ? R.string.delete : R.string.edit));
-        String entry = history.get(holder.getBindingAdapterPosition()).getValue();
+        History historyEntry = history.get(position);
+        String entry = historyEntry.getValue();
         holder.text.setText(entry);
         holder.master.setOnClickListener(v -> context.setQuery(entry, true));
-        holder.imageButton.setOnLongClickListener(v -> {
-            context.runOnUiThread(() -> {
-                if (remove == holder.getBindingAdapterPosition()) {
-                    remove = -1;
-                    notifyItemChanged(holder.getBindingAdapterPosition());
-                } else {
-                    if (remove != -1) {
-                        int l = remove;
-                        remove = -1;
-                        notifyItemChanged(l);
-                    }
-                    remove = holder.getBindingAdapterPosition();
-                    notifyItemChanged(holder.getBindingAdapterPosition());
-                }
-            });
-            return true;
-        });
-        holder.imageButton.setOnClickListener(v -> {
-            if (remove == holder.getBindingAdapterPosition()) {
-                removeHistory(remove);
-                remove = -1;
-            } else {
-                context.setQuery(entry, false);
-            }
-        });
+        holder.imageButton.setOnClickListener(v -> new MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.options)
+            .setItems(new String[]{context.getString(R.string.edit), context.getString(R.string.delete)}, (dialog, which) -> {
+                if (which == 0) context.setQuery(entry, false);
+                else if (which == 1) removeHistory(historyEntry);
+            })
+            .show());
     }
 
     @Override
@@ -91,6 +70,15 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         history.remove(pos);
         context.getSharedPreferences("History", 0).edit().putStringSet("history", History.listToSet(this.history)).apply();
         context.runOnUiThread(() -> notifyItemRemoved(pos));
+    }
+
+    private void removeHistory(History entry) {
+        for (int i = 0; i < history.size(); i++) {
+            if (history.get(i) == entry) {
+                removeHistory(i);
+                return;
+            }
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

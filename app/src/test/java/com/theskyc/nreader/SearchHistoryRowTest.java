@@ -6,13 +6,13 @@ import static org.junit.Assert.assertTrue;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,9 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
+import org.robolectric.shadows.ShadowDialog;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,7 +61,7 @@ public class SearchHistoryRowTest {
         }
     }
 
-    @Test public void deleteModeUpdatesAccessibilityAndRemovesOnlyTheSelectedEntry() {
+    @Test public void historyActionsExposeEditAndDeleteAndRemoveOnlyTheSelectedEntry() {
         SearchActivity activity = Robolectric.buildActivity(SearchActivity.class).get();
         activity.setTheme(R.style.AppTheme_Material3);
         Global.initFromShared(activity);
@@ -77,18 +77,40 @@ public class SearchHistoryRowTest {
         recycler.layout(0, 0, 800, 1000);
         RecyclerView.ViewHolder holder = recycler.findViewHolderForAdapterPosition(0);
         ImageButton action = holder.itemView.findViewById(R.id.edit);
-        assertEquals(activity.getString(R.string.edit), action.getContentDescription());
-        assertTrue(action.performLongClick());
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(activity.getString(R.string.options), action.getContentDescription());
+        assertTrue(action.performClick());
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        assertEquals(activity.getString(R.string.edit), dialog.getListView().getItemAtPosition(0));
+        assertEquals(activity.getString(R.string.delete), dialog.getListView().getItemAtPosition(1));
+        dialog.cancel();
+        assertEquals(2, adapter.getItemCount());
+        assertTrue(action.performClick());
+        dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        assertTrue(dialog.getListView().performItemClick(null, 1, 1));
+        assertEquals(1, adapter.getItemCount());
+        assertEquals(Collections.singleton("1|language:english"),
+            activity.getSharedPreferences("History", 0).getStringSet("history", Collections.emptySet()));
+    }
+
+    @Test public void deletingDuplicateQueriesRemovesTheSelectedRecord() {
+        SearchActivity activity = Robolectric.buildActivity(SearchActivity.class).get();
+        activity.setTheme(R.style.AppTheme_Material3);
+        Global.initFromShared(activity);
+        activity.getSharedPreferences("History", 0).edit()
+            .putStringSet("history", new HashSet<>(Arrays.asList("2|same query", "1|same query"))).commit();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        HistoryAdapter adapter = new HistoryAdapter(activity);
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
         recycler.measure(View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY));
         recycler.layout(0, 0, 800, 1000);
-        holder = recycler.findViewHolderForAdapterPosition(0);
-        action = holder.itemView.findViewById(R.id.edit);
-        assertEquals(activity.getString(R.string.delete), action.getContentDescription());
-        assertTrue(action.performClick());
-        assertEquals(1, adapter.getItemCount());
-        assertEquals(Collections.singleton("1|language:english"),
+        RecyclerView.ViewHolder holder = recycler.findViewHolderForAdapterPosition(1);
+        assertTrue(holder.itemView.findViewById(R.id.edit).performClick());
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        assertTrue(dialog.getListView().performItemClick(null, 1, 1));
+        assertEquals(Collections.singleton("2|same query"),
             activity.getSharedPreferences("History", 0).getStringSet("history", Collections.emptySet()));
     }
 }

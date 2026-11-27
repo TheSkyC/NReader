@@ -33,10 +33,10 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:contentDescription="@string/edit"
+        android:contentDescription="@string/options"
         app:tint="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_mode_edit" />
+        app:srcCompat="@drawable/ic_account_more" />
 </androidx.constraintlayout.widget.ConstraintLayout>
