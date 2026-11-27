@@ -7,7 +7,6 @@ import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -401,15 +400,15 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void optionDialog(ImageView imgView, final int pos) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.select_dialog_item);
-        adapter.add(context.getString(R.string.share));
-        adapter.add(context.getString(R.string.rotate_image));
-        adapter.add(context.getString(R.string.bookmark_here));
+        ArrayList<String> actions = new ArrayList<>();
+        actions.add(context.getString(R.string.share));
+        actions.add(context.getString(R.string.rotate_image));
+        actions.add(context.getString(R.string.bookmark_here));
         if (Global.hasStoragePermission(context))
-            adapter.add(context.getString(R.string.save_page));
+            actions.add(context.getString(R.string.save_page));
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
         builder.setTitle(R.string.settings).setIcon(R.drawable.ic_share);
-        builder.setAdapter(adapter, (dialog, which) -> {
+        builder.setItems(actions.toArray(new String[0]), (dialog, which) -> {
             switch (which) {
                 case 0:
                     openSendImageDialog(imgView, pos);
