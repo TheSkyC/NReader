@@ -361,8 +361,10 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         }
         int paddingHorizontal = dp(settings.style == ReaderStatusSettings.STYLE_BACKED ? 5 : 1);
         int paddingVertical = dp(settings.style == ReaderStatusSettings.STYLE_BACKED ? 3 : 1);
+        int itemHeight = Math.max(timeText.getLineHeight(), iconSize) + 2 * paddingVertical;
         for (View child : itemViews) {
             child.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
+            child.setMinimumHeight(itemHeight);
             if (settings.style == ReaderStatusSettings.STYLE_BACKED) {
                 GradientDrawable background = new GradientDrawable();
                 background.setColor(Color.argb(settings.backgroundOpacity * 255 / 100, 0, 0, 0));

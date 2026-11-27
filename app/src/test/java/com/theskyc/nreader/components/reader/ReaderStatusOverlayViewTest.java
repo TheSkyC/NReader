@@ -3,7 +3,11 @@ package com.theskyc.nreader.components.reader;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.SystemClock;
+import android.view.ContextThemeWrapper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -25,6 +29,52 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 32, application = Application.class)
 public class ReaderStatusOverlayViewTest {
+    @Test
+    public void statusItemsHaveMatchingAdaptiveHeightsAcrossFormatsAndFontScales() {
+        Activity activity = themedActivity();
+        SharedPreferences preferences = activity.getSharedPreferences("Settings", 0);
+        for (float fontScale : new float[]{1f, 2f}) {
+            Configuration configuration = new Configuration(activity.getResources().getConfiguration());
+            configuration.fontScale = fontScale;
+            Context context = new ContextThemeWrapper(activity.createConfigurationContext(configuration),
+                com.theskyc.nreader.R.style.AppTheme_Material3);
+            for (float textSize : new float[]{10f, 12f, 18f}) {
+                for (int style : new int[]{ReaderStatusSettings.STYLE_BACKED, ReaderStatusSettings.STYLE_MINIMAL}) {
+                    int previousHeight = -1;
+                    for (int format : new int[]{ReaderStatusSettings.BATTERY_ICON_AND_PERCENT,
+                        ReaderStatusSettings.BATTERY_ICON_ONLY, ReaderStatusSettings.BATTERY_PERCENT_ONLY}) {
+                        preferences.edit().putFloat(ReaderStatusSettings.KEY_TEXT_SIZE, textSize)
+                            .putInt(ReaderStatusSettings.KEY_STYLE, style)
+                            .putInt(ReaderStatusSettings.KEY_BATTERY_FORMAT, format).apply();
+                        ReaderStatusOverlayView view = new ReaderStatusOverlayView(context);
+                        view.setTimeValue("21:38");
+                        view.setBatteryValue(76, false);
+                        view.setProgressValue(12, 48);
+                        view.setEditorMode(true, null);
+                        layout(view, 1080, 1920);
+
+                        View time = view.getChildAt(ReaderStatusSettings.ITEM_TIME);
+                        LinearLayout battery = (LinearLayout) view.getChildAt(ReaderStatusSettings.ITEM_BATTERY);
+                        View progress = view.getChildAt(ReaderStatusSettings.ITEM_PROGRESS);
+                        assertEquals(time.getHeight(), battery.getHeight());
+                        assertEquals(time.getHeight(), progress.getHeight());
+                        assertEquals(time.getY(), battery.getY(), 0f);
+                        if (previousHeight >= 0) assertEquals(previousHeight, time.getHeight());
+                        previousHeight = time.getHeight();
+                        for (int child = 0; child < battery.getChildCount(); child++) {
+                            View content = battery.getChildAt(child);
+                            if (content.getVisibility() == View.GONE) continue;
+                            assertTrue(content.getTop() >= battery.getPaddingTop());
+                            assertTrue(content.getBottom() <= battery.getHeight() - battery.getPaddingBottom());
+                            assertEquals(battery.getHeight() / 2f,
+                                (content.getTop() + content.getBottom()) / 2f, 1f);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     public void edgeSettingChangesPlacementWithoutLosingCustomCoordinates() {
         Activity activity = themedActivity();
