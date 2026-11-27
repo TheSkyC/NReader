@@ -38,6 +38,7 @@ import com.theskyc.nreader.ZoomActivity;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.components.GlideX;
+import com.theskyc.nreader.components.reader.ReaderImageRequestPolicy;
 import com.theskyc.nreader.components.reader.ReaderScaleMode;
 import com.theskyc.nreader.components.reader.ReaderImageFilter;
 import com.theskyc.nreader.components.reader.ReaderAutoCropTransformation;
@@ -381,7 +382,10 @@ public class ZoomFragment extends Fragment {
             LogUtility.d("Requested url glide: " + url);
             request = glide.load(url);
         }
-        return request.override(SIZE_ORIGINAL);
+        request = request.override(SIZE_ORIGINAL);
+        if (pageFile == null && ReaderImageRequestPolicy.onlyUseCache(url, Global.getDownloadPolicy()))
+            request = request.onlyRetrieveFromCache(true);
+        return request;
     }
 
     @Nullable
