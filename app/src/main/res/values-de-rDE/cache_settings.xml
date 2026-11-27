@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">Gespeicherte Favoritenstatus</string>
     <string name="summary_online_favorite_state_usage">Im Speicher für dieses Konto: %1$d</string>
+    <string name="online_favorite_cache_showing">Gespeicherte Favoriten vom %1$s werden während der Aktualisierung angezeigt</string>
+    <string name="online_favorite_cache_refresh_failed">Favoriten konnten nicht aktualisiert werden. Gespeicherte Ergebnisse werden angezeigt.</string>
+    <string name="title_online_favorite_page_limit">Favoritenseiten pro Konto</string>
+    <string name="summary_online_favorite_page_limit">Bis zu %1$s besuchte Seiten pro Konto behalten; am längsten nicht verwendete Seiten werden zuerst entfernt.</string>
+    <string name="online_favorite_page_limit_default">50 Seiten</string>
+    <string name="title_online_favorite_page_quota">Cachelimit für Favoritenseiten</string>
+    <string name="summary_online_favorite_page_quota">Für alle Konten gemeinsam: %1$s. Ältere Seiten werden zuerst entfernt.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Gespeicherte Favoritenseiten</string>
+    <string name="online_favorite_page_usage_checking">Cache des aktuellen Kontos wird geprüft…</string>
+    <string name="online_favorite_page_usage_unavailable">Cachegröße der Favoritenseiten nicht verfügbar</string>
+    <string name="online_favorite_page_no_account">Melde dich an, um die Favoritenseiten dieses Kontos anzuzeigen.</string>
+    <string name="online_favorite_page_never_synced">Noch nie synchronisiert</string>
+    <string name="summary_online_favorite_page_usage">Gespeicherte Seiten im aktuellen Konto: %1$d (%2$s). Zuletzt synchronisiert: %3$s.</string>
+    <string name="clear_online_favorite_pages">Gespeicherte Favoritenseiten löschen</string>
+    <string name="message_clear_online_favorite_pages">Gespeicherte Favoritenseiten des aktuellen Kontos entfernen? Favoritenstatus und andere Konten bleiben erhalten.</string>
+    <string name="online_favorite_pages_cleared">Favoritenseiten gelöscht</string>
+    <string name="online_favorite_pages_clear_failed">Favoritenseiten konnten nicht gelöscht werden</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 Seiten</item><item>35 Seiten</item><item>50 Seiten</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

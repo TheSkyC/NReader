@@ -194,6 +194,7 @@ public class MainActivity extends BaseActivity
     private String headerProfileIdentity;
     private long headerProfileGeneration = -1;
     private long favoriteInspectorGeneration = -1;
+    private boolean showingCachedFavoritePage;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
         resetDataset = new MainInspectorResponse() {
@@ -357,6 +358,9 @@ public class MainActivity extends BaseActivity
                 @Override public boolean shouldStart(InspectorV3 value) { return current.getAsBoolean() && delegate.shouldStart(value); }
                 @Override public void onStart() { deliver(delegate::onStart); }
                 @Override public void onSuccess(List<GenericGallery> galleries) { deliver(() -> delegate.onSuccess(galleries)); }
+                @Override public void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
+                    deliver(() -> delegate.onCacheHit(galleries, syncedAt));
+                }
                 @Override public void onFailure(Exception error) { deliver(() -> delegate.onFailure(error)); }
                 @Override public void onEnd() {
                     runOnUiThread(() -> {
@@ -1569,6 +1573,7 @@ public class MainActivity extends BaseActivity
     abstract class MainInspectorResponse extends InspectorV3.DefaultInspectorResponse {
         @Override
         public void onSuccess(List<GenericGallery> galleries) {
+            if (this == resetDataset) showingCachedFavoritePage = false;
             super.onSuccess(galleries);
             if (adapter != null) adapter.resetStatuses();
             if (galleries.isEmpty() && (adapter == null || adapter.getItemCount() == 0))
@@ -1578,7 +1583,27 @@ public class MainActivity extends BaseActivity
         }
 
         @Override
+        public void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
+            showingCachedFavoritePage = true;
+            if (adapter != null) {
+                adapter.resetStatuses();
+                if (this == addDataset) adapter.addGalleries(galleries);
+                else adapter.restartDataset(galleries);
+            }
+            updatePageSwitcher(galleries.isEmpty());
+            if (galleries.isEmpty() && (adapter == null || adapter.getItemCount() == 0))
+                showContentState(R.string.no_entry_found, R.drawable.ic_search, null);
+            else
+                runOnUiThread(MainActivity.this::hideContentState);
+            java.util.Date syncedDate = new java.util.Date(syncedAt);
+            String formattedDate = android.text.format.DateFormat.getDateFormat(MainActivity.this).format(syncedDate)
+                + " " + android.text.format.DateFormat.getTimeFormat(MainActivity.this).format(syncedDate);
+            showError(getString(R.string.online_favorite_cache_showing, formattedDate), null);
+        }
+
+        @Override
         public void onStart() {
+            if (this == resetDataset) showingCachedFavoritePage = false;
             runOnUiThread(() -> refresher.setRefreshing(true));
             hideError();
         }
@@ -1599,6 +1624,13 @@ public class MainActivity extends BaseActivity
                 inspector = inspector.cloneInspector(MainActivity.this, inspector.getResponse());
                 startInspector();
             };
+            if (modeType == ModeType.FAVORITE && showingCachedFavoritePage) {
+                if (adapter == null || adapter.getItemCount() == 0)
+                    showContentState(R.string.online_favorite_cache_refresh_failed, R.drawable.ic_refresh, retry);
+                else
+                    showError(R.string.online_favorite_cache_refresh_failed, retry);
+                return;
+            }
             if (adapter == null || adapter.getItemCount() == 0)
                 showContentState(R.string.unable_to_connect_to_the_site, R.drawable.ic_refresh, retry);
             else

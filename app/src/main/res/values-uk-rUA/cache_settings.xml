@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">Стани обраного в кеші</string>
     <string name="summary_online_favorite_state_usage">У пам’яті для цього облікового запису: %1$d</string>
+    <string name="online_favorite_cache_showing">Під час оновлення показано обране, збережене %1$s</string>
+    <string name="online_favorite_cache_refresh_failed">Не вдалося оновити обране. Показано збережені результати.</string>
+    <string name="title_online_favorite_page_limit">Сторінки обраного на обліковий запис</string>
+    <string name="summary_online_favorite_page_limit">Зберігати до %1$s переглянутих сторінок для кожного облікового запису; спочатку видаляються давно не відкривані сторінки.</string>
+    <string name="online_favorite_page_limit_default">50 сторінок</string>
+    <string name="title_online_favorite_page_quota">Ліміт кешу сторінок обраного</string>
+    <string name="summary_online_favorite_page_quota">Спільний для облікових записів обсяг: %1$s. Спочатку видаляються найстаріші сторінки.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Сторінки обраного в кеші</string>
+    <string name="online_favorite_page_usage_checking">Перевіряємо кеш поточного облікового запису…</string>
+    <string name="online_favorite_page_usage_unavailable">Розмір кешу сторінок обраного недоступний</string>
+    <string name="online_favorite_page_no_account">Увійдіть, щоб переглянути сторінки обраного цього облікового запису.</string>
+    <string name="online_favorite_page_never_synced">Ще не синхронізовано</string>
+    <string name="summary_online_favorite_page_usage">Збережені сторінки поточного облікового запису: %1$d (%2$s). Остання синхронізація: %3$s.</string>
+    <string name="clear_online_favorite_pages">Очистити збережені сторінки обраного</string>
+    <string name="message_clear_online_favorite_pages">Видалити збережені сторінки обраного поточного облікового запису? Стани обраного та інші облікові записи залишаться.</string>
+    <string name="online_favorite_pages_cleared">Сторінки обраного очищено</string>
+    <string name="online_favorite_pages_clear_failed">Не вдалося очистити сторінки обраного</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 сторінок</item><item>35 сторінок</item><item>50 сторінок</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

@@ -9,6 +9,7 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.components.cache.OnlineFavoriteStateQuota;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
@@ -295,6 +296,7 @@ public final class OnlineFavoriteClient {
                     return;
                 }
                 remember(identity, generation, galleryId, favorited);
+                invalidateFavoritePages(context, identity);
                 result.onSuccess(favorited);
             }
             @Override public void onFailure() { result.onFailure(); }
@@ -403,6 +405,22 @@ public final class OnlineFavoriteClient {
 
     private static void remember(String identity, int galleryId, boolean favorited) {
         remember(identity, -1, galleryId, favorited);
+    }
+
+    private static void invalidateFavoritePages(Context context, String identity) {
+        OnlineFavoritePageStore.invalidateAccount(identity);
+        Context application = context.getApplicationContext();
+        storage.execute(() -> {
+            OnlineFavoritePageStore pageStore = null;
+            try {
+                pageStore = OnlineFavoritePageStore.open(application);
+                pageStore.clearInvalidatedAccount(identity);
+            } catch (RuntimeException error) {
+                LogUtility.w("Unable to invalidate online favorite pages", error);
+            } finally {
+                if (pageStore != null) pageStore.close();
+            }
+        });
     }
 
     private static void remember(String identity, long generation, int galleryId, boolean favorited) {

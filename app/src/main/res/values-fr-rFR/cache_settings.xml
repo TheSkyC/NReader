@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">États de favoris en cache</string>
     <string name="summary_online_favorite_state_usage">En mémoire pour ce compte : %1$d</string>
+    <string name="online_favorite_cache_showing">Favoris enregistrés le %1$s affichés pendant l’actualisation</string>
+    <string name="online_favorite_cache_refresh_failed">Impossible d’actualiser les favoris. Les résultats enregistrés restent affichés.</string>
+    <string name="title_online_favorite_page_limit">Pages de favoris par compte</string>
+    <string name="summary_online_favorite_page_limit">Conserver jusqu’à %1$s pages consultées par compte ; les moins récemment utilisées sont supprimées en premier.</string>
+    <string name="online_favorite_page_limit_default">50 pages</string>
+    <string name="title_online_favorite_page_quota">Quota du cache des favoris</string>
+    <string name="summary_online_favorite_page_quota">Partagé entre les comptes : %1$s. Les pages les plus anciennes sont supprimées en premier.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Pages de favoris en cache</string>
+    <string name="online_favorite_page_usage_checking">Vérification du cache du compte actuel…</string>
+    <string name="online_favorite_page_usage_unavailable">Utilisation du cache des pages indisponible</string>
+    <string name="online_favorite_page_no_account">Connectez-vous pour afficher les pages de favoris de ce compte.</string>
+    <string name="online_favorite_page_never_synced">Jamais synchronisé</string>
+    <string name="summary_online_favorite_page_usage">Pages mises en cache pour le compte actuel : %1$d (%2$s). Dernière synchronisation : %3$s.</string>
+    <string name="clear_online_favorite_pages">Effacer les pages de favoris enregistrées</string>
+    <string name="message_clear_online_favorite_pages">Supprimer les pages de favoris enregistrées pour le compte actuel ? Les états de favoris et les autres comptes sont conservés.</string>
+    <string name="online_favorite_pages_cleared">Pages de favoris effacées</string>
+    <string name="online_favorite_pages_clear_failed">Impossible d’effacer les pages de favoris</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 pages</item><item>35 pages</item><item>50 pages</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

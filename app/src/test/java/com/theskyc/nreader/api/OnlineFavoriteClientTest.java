@@ -7,6 +7,7 @@ import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.AuthSessionStore;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.settings.AccountRuntimeTestScope;
 import com.theskyc.nreader.settings.Global;
 
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -282,6 +284,94 @@ public class OnlineFavoriteClientTest {
         } finally {
             Global.client = previous;
         }
+    }
+
+    @Test public void cachedFavoritePageIsDeliveredBeforeOfflineFailureWithoutChangingState() throws Exception {
+        String identity = OnlineFavoriteClient.sessionIdentity(context);
+        OnlineFavoritePageStore pageStore = OnlineFavoritePageStore.open(context);
+        pageStore.clearAccount(identity);
+        pageStore.close();
+
+        OkHttpClient previous = Global.client;
+        try {
+            Global.client = client(chain -> response(chain, 200,
+                "{\"num_pages\":2,\"result\":[{\"id\":401,\"media_id\":\"1\","
+                    + "\"thumbnail\":\"g/1.jpg\",\"english_title\":\"Saved page\",\"num_pages\":1}]}"));
+            List<String> firstEvents = Collections.synchronizedList(new ArrayList<>());
+            runFavoriteInspector(firstEvents, new AtomicInteger(-1));
+            assertEquals(Collections.singletonList("fresh"), firstEvents);
+
+            OnlineFavoriteClient.rememberState(context, 401, false);
+            Global.client = client(chain -> { throw new IOException("synthetic offline failure"); });
+            List<String> offlineEvents = Collections.synchronizedList(new ArrayList<>());
+            AtomicInteger cachedGalleryId = new AtomicInteger(-1);
+            runFavoriteInspector(offlineEvents, cachedGalleryId);
+
+            assertEquals(java.util.Arrays.asList("cache", "failure"), offlineEvents);
+            assertEquals(401, cachedGalleryId.get());
+            assertEquals(Boolean.FALSE, OnlineFavoriteClient.cachedState(context, 401));
+        } finally {
+            Global.client = previous;
+        }
+    }
+
+    @Test public void successfulFavoriteMutationInvalidatesThatAccountsCachedPages() throws Exception {
+        AuthStore.saveApiKey(context, "favorite-page-test-key", true);
+        String identity = OnlineFavoriteClient.sessionIdentity(context);
+        String url = "https://nhentai.net/api/v2/favorites?page=1";
+        OnlineFavoritePageStore pageStore = OnlineFavoritePageStore.open(context);
+        pageStore.clearAccount(identity);
+        OnlineFavoritePageStore.Request write = pageStore.beginRequest(identity, url);
+        assertTrue(pageStore.save(write,
+            "{\"result\":[{\"id\":402,\"media_id\":\"1\",\"english_title\":\"Saved\"}]}", 1, 100));
+        pageStore.finishRequest(write);
+        pageStore.close();
+        OnlineFavoriteClient.rememberState(context, 402, true);
+
+        Outcome outcome = new Outcome();
+        OnlineFavoriteClient.toggle(context, 402, client(chain -> {
+            assertEquals("DELETE", chain.request().method());
+            return response(chain, 200, "{\"favorited\":false}");
+        }), outcome);
+        outcome.await();
+        assertEquals(Boolean.FALSE, outcome.value);
+
+        pageStore = OnlineFavoritePageStore.open(context);
+        awaitPageCount(pageStore, identity, 0);
+        OnlineFavoritePageStore.Request read = pageStore.beginRequest(identity, url);
+        assertNull(pageStore.load(read, 200));
+        pageStore.finishRequest(read);
+        pageStore.close();
+    }
+
+    private static void awaitPageCount(OnlineFavoritePageStore store, String identity, int expected)
+        throws InterruptedException {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
+        while (System.currentTimeMillis() < deadline && store.stats(identity).pageCount != expected) {
+            Thread.sleep(10);
+        }
+        assertEquals(expected, store.stats(identity).pageCount);
+    }
+
+    private void runFavoriteInspector(List<String> events, AtomicInteger cachedGalleryId) throws Exception {
+        CountDownLatch ended = new CountDownLatch(1);
+        InspectorV3 inspector = InspectorV3.favoriteInspector(context, null, 1,
+            new InspectorV3.DefaultInspectorResponse() {
+                @Override public void onCacheHit(List<com.theskyc.nreader.api.components.GenericGallery> galleries,
+                                                 long syncedAt) {
+                    events.add("cache");
+                    cachedGalleryId.set(galleries.get(0).getId());
+                }
+                @Override public void onSuccess(List<com.theskyc.nreader.api.components.GenericGallery> galleries) {
+                    events.add("fresh");
+                }
+                @Override public void onFailure(Exception error) {
+                    events.add("failure");
+                }
+                @Override public void onEnd() { ended.countDown(); }
+            });
+        inspector.start();
+        assertTrue(ended.await(5, TimeUnit.SECONDS));
     }
 
     @Test public void rejectedWriteKeepsConfirmedState() throws Exception {

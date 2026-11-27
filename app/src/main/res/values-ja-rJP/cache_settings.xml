@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">お気に入り状態のキャッシュ</string>
     <string name="summary_online_favorite_state_usage">現在のアカウントでメモリに保存: %1$d 件</string>
+    <string name="online_favorite_cache_showing">%1$s に保存したお気に入りを表示しながら更新しています</string>
+    <string name="online_favorite_cache_refresh_failed">お気に入りを更新できませんでした。保存済みの結果を表示しています。</string>
+    <string name="title_online_favorite_page_limit">アカウントごとのお気に入り一覧ページ数</string>
+    <string name="summary_online_favorite_page_limit">アカウントごとに閲覧済みページを最大 %1$s 件保存し、使用日時の古いページから削除します。</string>
+    <string name="online_favorite_page_limit_default">50 ページ</string>
+    <string name="title_online_favorite_page_quota">お気に入り一覧キャッシュ容量</string>
+    <string name="summary_online_favorite_page_quota">全アカウント共通: %1$s。古いページから削除されます。</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">お気に入り一覧のキャッシュ</string>
+    <string name="online_favorite_page_usage_checking">現在のアカウントのキャッシュを確認中…</string>
+    <string name="online_favorite_page_usage_unavailable">お気に入り一覧キャッシュの使用量を取得できません</string>
+    <string name="online_favorite_page_no_account">ログインすると、このアカウントのお気に入りページを確認できます。</string>
+    <string name="online_favorite_page_never_synced">未同期</string>
+    <string name="summary_online_favorite_page_usage">現在のアカウントのキャッシュ済みページ: %1$d（%2$s）。最終同期: %3$s。</string>
+    <string name="clear_online_favorite_pages">保存済みお気に入りページを削除</string>
+    <string name="message_clear_online_favorite_pages">現在のアカウントに保存されたお気に入り一覧ページを削除しますか？お気に入り状態と他のアカウントのデータは保持されます。</string>
+    <string name="online_favorite_pages_cleared">お気に入りページを削除しました</string>
+    <string name="online_favorite_pages_clear_failed">お気に入りページを削除できませんでした</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 ページ</item><item>35 ページ</item><item>50 ページ</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

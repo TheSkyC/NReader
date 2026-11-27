@@ -20,9 +20,11 @@ import com.theskyc.nreader.api.enums.SpecialTagIds;
 import com.theskyc.nreader.api.enums.TagStatus;
 import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.api.local.LocalGallery;
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.async.database.Queries;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
+import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
 import com.theskyc.nreader.settings.Login;
 import com.theskyc.nreader.utility.LogUtility;
@@ -87,6 +89,9 @@ public class InspectorV3 extends Thread implements Parcelable {
     @Nullable private JSONArray pendingRelated;
     private OnlineFavoriteClient.FavoriteListSnapshot favoriteListSnapshot;
     private volatile long favoriteAuthGeneration = -1;
+    @Nullable private OnlineFavoritePageStore favoritePageStore;
+    @Nullable private OnlineFavoritePageStore.Request favoritePageRequest;
+    private boolean favoriteCacheHit;
 
     public boolean isFavoriteIdentityCurrent() {
         if (requestType != ApiRequestType.FAVORITE && requestType != ApiRequestType.RANDOM_FAVORITE) return true;
@@ -484,18 +489,10 @@ public class InspectorV3 extends Thread implements Parcelable {
         Context requestContext = context.get();
         if (requestContext == null) throw new IOException("Request context unavailable");
         boolean accountFavorites = requestType == ApiRequestType.FAVORITE || requestType == ApiRequestType.RANDOM_FAVORITE;
-        String requestUrl = url;
-        if (accountFavorites || accountTagScope != null) {
-            okhttp3.HttpUrl parsed = okhttp3.HttpUrl.get(url);
-            okhttp3.HttpUrl base = okhttp3.HttpUrl.get(Utility.getAuthenticatedApiBaseUrl(requestContext));
-            requestUrl = parsed.newBuilder().host(base.host()).port(base.port()).build().toString();
-        }
+        String requestUrl = resolveRequestUrl(requestContext, accountFavorites);
         Request.Builder builder = new Request.Builder().url(requestUrl);
         if (accountFavorites) {
-            favoriteAuthGeneration = com.theskyc.nreader.settings.AuthStore.identityGeneration();
-            favoriteListSnapshot = OnlineFavoriteClient.beginFavoriteList(requestContext);
-            if (favoriteListSnapshot == null || favoriteAuthGeneration < 0 || !isFavoriteIdentityCurrent())
-                throw new IOException("Online identity is unavailable");
+            prepareFavoriteList(requestContext);
             builder.tag(ApiAuthInterceptor.ExpectedIdentity.class,
                 new ApiAuthInterceptor.ExpectedIdentity(favoriteListSnapshot.identity, this::isFavoriteIdentityCurrent));
         } else if (accountTagScope != null) {
@@ -512,6 +509,22 @@ public class InspectorV3 extends Thread implements Parcelable {
         } finally {
             activeCall = null;
         }
+    }
+
+    private String resolveRequestUrl(Context requestContext, boolean accountFavorites) {
+        if (!accountFavorites && accountTagScope == null) return url;
+        okhttp3.HttpUrl parsed = okhttp3.HttpUrl.get(url);
+        okhttp3.HttpUrl base = okhttp3.HttpUrl.get(Utility.getAuthenticatedApiBaseUrl(requestContext));
+        return parsed.newBuilder().host(base.host()).port(base.port()).build().toString();
+    }
+
+    private void prepareFavoriteList(Context requestContext) throws IOException {
+        if (favoriteListSnapshot == null) {
+            favoriteAuthGeneration = AuthStore.identityGeneration();
+            favoriteListSnapshot = OnlineFavoriteClient.beginFavoriteList(requestContext);
+        }
+        if (favoriteListSnapshot == null || favoriteAuthGeneration < 0 || !isFavoriteIdentityCurrent())
+            throw new IOException("Online identity is unavailable");
     }
 
     public void parseDocument() throws IOException, InvalidResponseException {
@@ -537,8 +550,21 @@ public class InspectorV3 extends Thread implements Parcelable {
         LogUtility.d("Starting API request: " + requestType);
         if (deliveryResponse != null) deliveryResponse.onStart();
         try {
+            if (requestType == ApiRequestType.FAVORITE) loadFavoritePageCache();
+            favoriteCacheHit = false;
             if (!createDocument()) throw new IOException("API request failed: HTTP " + responseCode);
+            String responseForCache = requestType == ApiRequestType.FAVORITE ? jsonResponse : null;
             parseDocument();
+            if (favoritePageStore != null && favoritePageRequest != null && responseForCache != null
+                && responseCode == HttpURLConnection.HTTP_OK && !canceled && resultCurrent.getAsBoolean()
+                && isFavoriteIdentityCurrent()) {
+                try {
+                    favoritePageStore.save(favoritePageRequest, responseForCache, pageCount,
+                        System.currentTimeMillis());
+                } catch (RuntimeException error) {
+                    LogUtility.w("Unable to update online favorite page cache", error);
+                }
+            }
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()
                 && isAccountTagScopeCurrent()) {
                 deliveryResponse.onSuccess(galleries);
@@ -556,9 +582,55 @@ public class InspectorV3 extends Thread implements Parcelable {
         } catch (Exception e) {
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isAccountTagScopeCurrent()
                 && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
+        } finally {
+            if (favoritePageStore != null) {
+                if (favoritePageRequest != null) favoritePageStore.finishRequest(favoritePageRequest);
+                favoritePageStore.close();
+                favoritePageStore = null;
+                favoritePageRequest = null;
+            }
         }
         if (deliveryResponse != null) deliveryResponse.onEnd();
         LogUtility.d("Finished API request: " + requestType);
+    }
+
+    private void loadFavoritePageCache() throws IOException {
+        Context requestContext = context.get();
+        if (requestContext == null) return;
+        String requestUrl = resolveRequestUrl(requestContext, true);
+        prepareFavoriteList(requestContext);
+        try {
+            favoritePageStore = OnlineFavoritePageStore.open(requestContext);
+            favoritePageRequest = favoritePageStore.beginRequest(favoriteListSnapshot.identity, requestUrl);
+        } catch (RuntimeException error) {
+            if (favoritePageStore != null) favoritePageStore.close();
+            favoritePageStore = null;
+            LogUtility.w("Online favorite page cache is unavailable", error);
+            return;
+        }
+        OnlineFavoritePageStore.CachedPage cached = favoritePageStore.load(favoritePageRequest,
+            System.currentTimeMillis());
+        if (cached == null || canceled || !resultCurrent.getAsBoolean() || !isFavoriteIdentityCurrent()
+            || !favoritePageStore.isCurrent(favoritePageRequest)) return;
+
+        favoriteCacheHit = true;
+        responseCode = HttpURLConnection.HTTP_OK;
+        jsonResponse = cached.payload;
+        try {
+            parseDocument();
+        } catch (Exception error) {
+            favoritePageStore.delete(favoritePageRequest);
+            favoriteCacheHit = false;
+            galleries = null;
+            pageCount = -1;
+            jsonResponse = null;
+            LogUtility.w("Discarded invalid online favorite page cache", error);
+            return;
+        }
+        if (deliveryResponse != null && resultCurrent.getAsBoolean() && !canceled
+            && isFavoriteIdentityCurrent() && favoritePageStore.isCurrent(favoritePageRequest)) {
+            deliveryResponse.onCacheHit(galleries, cached.syncedAt);
+        }
     }
 
     private void filterDocumentTags() {
@@ -699,7 +771,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         }
         Context resultContext = context.get();
         if (requestType == ApiRequestType.FAVORITE && responseCode == HttpURLConnection.HTTP_OK
-            && !canceled && resultContext != null) {
+            && !favoriteCacheHit && !canceled && resultContext != null) {
             List<Integer> ids = new ArrayList<>(galleries.size());
             for (GenericGallery gallery : galleries) ids.add(gallery.getId());
             OnlineFavoriteClient.acceptFavoriteList(resultContext, favoriteListSnapshot, ids);
@@ -767,6 +839,9 @@ public class InspectorV3 extends Thread implements Parcelable {
         boolean shouldStart(InspectorV3 inspector);
 
         void onSuccess(List<GenericGallery> galleries);
+
+        default void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
+        }
 
         void onFailure(Exception e);
 

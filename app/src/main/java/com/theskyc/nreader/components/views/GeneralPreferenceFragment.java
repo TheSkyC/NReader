@@ -14,7 +14,10 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
+import android.text.format.DateUtils;
 import android.text.format.Formatter;
 import android.util.JsonWriter;
 import android.view.View;
@@ -46,6 +49,7 @@ import com.theskyc.nreader.SettingsActivity;
 import com.theskyc.nreader.UpdateCenterActivity;
 import com.theskyc.nreader.StatusManagerActivity;
 import com.theskyc.nreader.api.OnlineFavoriteClient;
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.async.MetadataFetcher;
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.database.export.Importer;
@@ -75,12 +79,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.IntConsumer;
 
 public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+    private static final ExecutorService FAVORITE_PAGE_CACHE_WORKER = Executors.newSingleThreadExecutor();
     private SettingsActivity act;
     private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
-    private final IntConsumer favoriteCacheObserver = galleryId -> updateFavoriteCacheUsage();
+    private final AtomicInteger favoritePageCacheGeneration = new AtomicInteger();
+    private final IntConsumer favoriteCacheObserver = galleryId -> {
+        updateFavoriteCacheUsage();
+        updateFavoritePageCacheUsage();
+    };
 
     public void setAct(SettingsActivity act) {
         this.act = act;
@@ -439,6 +451,48 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 return true;
             });
 
+            ListPreference favoritePageLimit = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_page_limit)));
+            favoritePageLimit.setSummaryProvider(preference -> {
+                CharSequence entry = ((ListPreference) preference).getEntry();
+                return getString(R.string.summary_online_favorite_page_limit,
+                    entry == null ? getString(R.string.online_favorite_page_limit_default) : entry);
+            });
+            favoritePageLimit.setOnPreferenceChangeListener((preference, newValue) -> {
+                scheduleFavoritePageCacheTrim();
+                return true;
+            });
+
+            ListPreference favoritePageQuota = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_page_quota)));
+            favoritePageQuota.setSummaryProvider(preference -> {
+                CharSequence entry = ((ListPreference) preference).getEntry();
+                return getString(R.string.summary_online_favorite_page_quota,
+                    entry == null ? getString(R.string.online_favorite_page_quota_default) : entry);
+            });
+            favoritePageQuota.setOnPreferenceChangeListener((preference, newValue) -> {
+                scheduleFavoritePageCacheTrim();
+                return true;
+            });
+
+            Preference favoritePageUsage = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_page_usage)));
+            favoritePageUsage.setSelectable(false);
+            Preference clearFavoritePages = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_pages_clear)));
+            clearFavoritePages.setEnabled(false);
+            clearFavoritePages.setOnPreferenceClickListener(preference -> {
+                String identity = OnlineFavoriteClient.sessionIdentity(requireContext());
+                if (identity == null) return true;
+                new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.clear_online_favorite_pages)
+                    .setMessage(R.string.message_clear_online_favorite_pages)
+                    .setNegativeButton(R.string.no, null)
+                    .setPositiveButton(R.string.yes, (dialog, which) -> clearFavoritePages(identity, clearFavoritePages))
+                    .show();
+                return true;
+            });
+
             Preference cache = Objects.requireNonNull(findPreference(getString(R.string.preference_key_cache)));
             cache.setEnabled(false);
             ImageCacheManager.measure(act, (bytes, error) -> {
@@ -593,6 +647,10 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         if (act == null) return;
         OnlineFavoriteClient.observe(act, favoriteCacheObserver);
         updateFavoriteCacheUsage();
+        if (findPreference(getString(R.string.preference_key_online_favorite_page_usage)) != null) {
+            scheduleFavoritePageCacheTrim();
+            updateFavoritePageCacheUsage();
+        }
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
         if (accountTags != null) updateAccountTagAvailability(accountTags);
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
@@ -601,6 +659,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onPause() {
+        favoritePageCacheGeneration.incrementAndGet();
         OnlineFavoriteClient.removeObserver(favoriteCacheObserver);
         super.onPause();
     }
@@ -612,6 +671,122 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             usage.setSummary(getString(R.string.summary_online_favorite_state_usage,
                 OnlineFavoriteClient.cachedStateCount(act)));
         }
+    }
+
+    private void scheduleFavoritePageCacheTrim() {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        MAIN_HANDLER.post(() -> FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            OnlineFavoritePageStore store = null;
+            try {
+                store = OnlineFavoritePageStore.open(activity.getApplicationContext());
+                store.trimToLimits();
+            } catch (RuntimeException error) {
+                LogUtility.w("Unable to apply favorite page cache settings", error);
+            } finally {
+                if (store != null) store.close();
+            }
+            MAIN_HANDLER.post(this::updateFavoritePageCacheUsage);
+        }));
+    }
+
+    private void updateFavoritePageCacheUsage() {
+        SettingsActivity activity = act;
+        if (!isAdded() || activity == null) return;
+        Preference usage = findPreference(getString(R.string.preference_key_online_favorite_page_usage));
+        Preference clear = findPreference(getString(R.string.preference_key_online_favorite_pages_clear));
+        if (usage == null || clear == null) return;
+
+        String identity = OnlineFavoriteClient.sessionIdentity(activity);
+        int generation = favoritePageCacheGeneration.incrementAndGet();
+        clear.setEnabled(false);
+        if (identity == null) {
+            usage.setSummary(R.string.online_favorite_page_no_account);
+            return;
+        }
+
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            OnlineFavoritePageStore.PageStats stats = null;
+            RuntimeException failure = null;
+            OnlineFavoritePageStore store = null;
+            try {
+                store = OnlineFavoritePageStore.open(application);
+                stats = store.stats(identity);
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                }
+            }
+            OnlineFavoritePageStore.PageStats result = stats;
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || favoritePageCacheGeneration.get() != generation) return;
+                if (!identity.equals(OnlineFavoriteClient.sessionIdentity(activity))) {
+                    updateFavoritePageCacheUsage();
+                    return;
+                }
+                if (error != null || result == null) {
+                    usage.setSummary(R.string.online_favorite_page_usage_unavailable);
+                    clear.setEnabled(false);
+                    return;
+                }
+                String lastSynced = result.lastSyncedAt <= 0
+                    ? getString(R.string.online_favorite_page_never_synced)
+                    : DateUtils.getRelativeTimeSpanString(result.lastSyncedAt,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString();
+                usage.setSummary(getString(R.string.summary_online_favorite_page_usage,
+                    result.pageCount, Formatter.formatFileSize(activity, result.bytes), lastSynced));
+                clear.setEnabled(result.pageCount > 0);
+            });
+        });
+    }
+
+    private void clearFavoritePages(String identity, Preference clearPreference) {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        clearPreference.setEnabled(false);
+        int generation = favoritePageCacheGeneration.incrementAndGet();
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            RuntimeException failure = null;
+            OnlineFavoritePageStore store = null;
+            try {
+                store = OnlineFavoritePageStore.open(application);
+                store.clearAccount(identity);
+                store.compactAfterMaintenance();
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                }
+            }
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || favoritePageCacheGeneration.get() != generation) return;
+                if (!identity.equals(OnlineFavoriteClient.sessionIdentity(activity))) {
+                    updateFavoritePageCacheUsage();
+                    return;
+                }
+                Toast.makeText(activity, error == null
+                    ? R.string.online_favorite_pages_cleared
+                    : R.string.online_favorite_pages_clear_failed, Toast.LENGTH_SHORT).show();
+                updateFavoritePageCacheUsage();
+            });
+        });
     }
 
     private void updateAccountTagAvailability(Preference preference) {

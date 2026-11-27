@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">Estados favoritos en caché</string>
     <string name="summary_online_favorite_state_usage">En memoria para esta cuenta: %1$d</string>
+    <string name="online_favorite_cache_showing">Se muestran los favoritos guardados el %1$s mientras se actualizan</string>
+    <string name="online_favorite_cache_refresh_failed">No se pudieron actualizar los favoritos. Se muestran los resultados guardados.</string>
+    <string name="title_online_favorite_page_limit">Páginas de favoritos por cuenta</string>
+    <string name="summary_online_favorite_page_limit">Conserva hasta %1$s páginas visitadas por cuenta; se eliminan primero las páginas menos recientes.</string>
+    <string name="online_favorite_page_limit_default">50 páginas</string>
+    <string name="title_online_favorite_page_quota">Límite de caché de favoritos</string>
+    <string name="summary_online_favorite_page_quota">Compartido entre cuentas: %1$s. Se eliminan primero las páginas más antiguas.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Páginas de favoritos en caché</string>
+    <string name="online_favorite_page_usage_checking">Comprobando la caché de la cuenta actual…</string>
+    <string name="online_favorite_page_usage_unavailable">Uso de caché de páginas no disponible</string>
+    <string name="online_favorite_page_no_account">Inicia sesión para ver las páginas favoritas de esta cuenta.</string>
+    <string name="online_favorite_page_never_synced">Nunca sincronizado</string>
+    <string name="summary_online_favorite_page_usage">Páginas guardadas en la cuenta actual: %1$d (%2$s). Última sincronización: %3$s.</string>
+    <string name="clear_online_favorite_pages">Borrar páginas favoritas guardadas</string>
+    <string name="message_clear_online_favorite_pages">¿Eliminar las páginas guardadas de favoritos de la cuenta actual? Se conservan los estados de favoritos y las demás cuentas.</string>
+    <string name="online_favorite_pages_cleared">Páginas favoritas borradas</string>
+    <string name="online_favorite_pages_clear_failed">No se pudieron borrar las páginas favoritas</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 páginas</item><item>35 páginas</item><item>50 páginas</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

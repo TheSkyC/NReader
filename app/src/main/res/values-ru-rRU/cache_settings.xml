@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">Состояния избранного в кэше</string>
     <string name="summary_online_favorite_state_usage">В памяти для этого аккаунта: %1$d</string>
+    <string name="online_favorite_cache_showing">Во время обновления показаны избранные, сохранённые %1$s</string>
+    <string name="online_favorite_cache_refresh_failed">Не удалось обновить избранное. Показаны сохранённые результаты.</string>
+    <string name="title_online_favorite_page_limit">Страницы избранного на аккаунт</string>
+    <string name="summary_online_favorite_page_limit">Хранить до %1$s просмотренных страниц для каждого аккаунта; сначала удаляются давно не открывавшиеся страницы.</string>
+    <string name="online_favorite_page_limit_default">50 страниц</string>
+    <string name="title_online_favorite_page_quota">Лимит кэша страниц избранного</string>
+    <string name="summary_online_favorite_page_quota">Общий для аккаунтов объём: %1$s. Сначала удаляются самые старые страницы.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Страницы избранного в кэше</string>
+    <string name="online_favorite_page_usage_checking">Проверка кэша текущего аккаунта…</string>
+    <string name="online_favorite_page_usage_unavailable">Размер кэша страниц избранного недоступен</string>
+    <string name="online_favorite_page_no_account">Войдите, чтобы просмотреть страницы избранного этого аккаунта.</string>
+    <string name="online_favorite_page_never_synced">Ещё не синхронизировано</string>
+    <string name="summary_online_favorite_page_usage">Сохранённые страницы текущего аккаунта: %1$d (%2$s). Последняя синхронизация: %3$s.</string>
+    <string name="clear_online_favorite_pages">Очистить сохранённые страницы избранного</string>
+    <string name="message_clear_online_favorite_pages">Удалить сохранённые страницы избранного текущего аккаунта? Состояния избранного и данные других аккаунтов сохранятся.</string>
+    <string name="online_favorite_pages_cleared">Страницы избранного очищены</string>
+    <string name="online_favorite_pages_clear_failed">Не удалось очистить страницы избранного</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 страниц</item><item>35 страниц</item><item>50 страниц</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

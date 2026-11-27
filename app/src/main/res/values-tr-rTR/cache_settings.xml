@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">Önbelleğe alınan favori durumları</string>
     <string name="summary_online_favorite_state_usage">Bu hesap için bellekte: %1$d</string>
+    <string name="online_favorite_cache_showing">Güncellenirken %1$s tarihinde kaydedilen favoriler gösteriliyor</string>
+    <string name="online_favorite_cache_refresh_failed">Favoriler güncellenemedi. Kaydedilmiş sonuçlar gösteriliyor.</string>
+    <string name="title_online_favorite_page_limit">Hesap başına favori listesi sayfası</string>
+    <string name="summary_online_favorite_page_limit">Hesap başına ziyaret edilen en fazla %1$s sayfayı tut; en uzun süredir kullanılmayan sayfalar önce kaldırılır.</string>
+    <string name="online_favorite_page_limit_default">50 sayfa</string>
+    <string name="title_online_favorite_page_quota">Favori listesi önbellek kotası</string>
+    <string name="summary_online_favorite_page_quota">Hesaplar arasında paylaşılır: %1$s. En eski sayfalar önce kaldırılır.</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">Önbelleğe alınan favori listesi sayfaları</string>
+    <string name="online_favorite_page_usage_checking">Mevcut hesabın önbelleği denetleniyor…</string>
+    <string name="online_favorite_page_usage_unavailable">Favori sayfası önbellek kullanımı kullanılamıyor</string>
+    <string name="online_favorite_page_no_account">Bu hesabın favori sayfalarını görmek için giriş yapın.</string>
+    <string name="online_favorite_page_never_synced">Hiç eşitlenmedi</string>
+    <string name="summary_online_favorite_page_usage">Mevcut hesapta önbelleğe alınan sayfalar: %1$d (%2$s). Son eşitleme: %3$s.</string>
+    <string name="clear_online_favorite_pages">Kaydedilmiş favori sayfalarını temizle</string>
+    <string name="message_clear_online_favorite_pages">Mevcut hesap için kaydedilmiş favori listesi sayfaları kaldırılsın mı? Favori durumları ve diğer hesaplar korunur.</string>
+    <string name="online_favorite_pages_cleared">Favori sayfaları temizlendi</string>
+    <string name="online_favorite_pages_clear_failed">Favori sayfaları temizlenemedi</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 sayfa</item><item>35 sayfa</item><item>50 sayfa</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>

@@ -362,6 +362,29 @@
                 android:key="@string/preference_key_online_favorite_state_limit"
                 android:title="@string/title_online_favorite_state_limit"
                 app:iconSpaceReserved="false" />
+            <ListPreference
+                android:defaultValue="50"
+                android:entries="@array/online_favorite_page_limit_entries"
+                android:entryValues="@array/online_favorite_page_limit_values"
+                android:key="@string/preference_key_online_favorite_page_limit"
+                android:title="@string/title_online_favorite_page_limit"
+                app:iconSpaceReserved="false" />
+            <ListPreference
+                android:defaultValue="16"
+                android:entries="@array/online_favorite_page_quota_entries"
+                android:entryValues="@array/online_favorite_page_quota_values"
+                android:key="@string/preference_key_online_favorite_page_quota"
+                android:title="@string/title_online_favorite_page_quota"
+                app:iconSpaceReserved="false" />
+            <Preference
+                android:key="@string/preference_key_online_favorite_page_usage"
+                android:summary="@string/online_favorite_page_usage_checking"
+                android:title="@string/title_online_favorite_page_usage"
+                app:iconSpaceReserved="false" />
+            <Preference
+                android:key="@string/preference_key_online_favorite_pages_clear"
+                android:title="@string/clear_online_favorite_pages"
+                app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_online_favorite_state_usage"
                 android:summary="@string/summary_online_favorite_state_usage"

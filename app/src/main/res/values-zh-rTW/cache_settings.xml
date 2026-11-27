@@ -20,4 +20,28 @@
     </string-array>
     <string name="title_online_favorite_state_usage">已快取的收藏狀態</string>
     <string name="summary_online_favorite_state_usage">目前帳戶記憶體中的狀態數：%1$d 筆</string>
+    <string name="online_favorite_cache_showing">正在更新，顯示的是 %1$s 儲存的收藏</string>
+    <string name="online_favorite_cache_refresh_failed">收藏更新失敗，目前顯示的是已快取結果。</string>
+    <string name="title_online_favorite_page_limit">每個帳戶的收藏清單頁數</string>
+    <string name="summary_online_favorite_page_limit">每個帳戶最多保留 %1$s 個已瀏覽頁面，優先淘汰較久未瀏覽的頁面。</string>
+    <string name="online_favorite_page_limit_default">50 頁</string>
+    <string name="title_online_favorite_page_quota">收藏清單快取容量</string>
+    <string name="summary_online_favorite_page_quota">所有帳戶共用：%1$s。優先淘汰較舊頁面。</string>
+    <string name="online_favorite_page_quota_default">16 MiB</string>
+    <string name="title_online_favorite_page_usage">已快取的收藏清單頁</string>
+    <string name="online_favorite_page_usage_checking">正在檢查目前帳戶的快取…</string>
+    <string name="online_favorite_page_usage_unavailable">無法取得收藏清單快取用量</string>
+    <string name="online_favorite_page_no_account">登入後即可查看此帳戶的收藏清單快取。</string>
+    <string name="online_favorite_page_never_synced">從未同步</string>
+    <string name="summary_online_favorite_page_usage">目前帳戶已快取頁面：%1$d（%2$s）。最近同步：%3$s。</string>
+    <string name="clear_online_favorite_pages">清除已快取的收藏清單頁</string>
+    <string name="message_clear_online_favorite_pages">刪除目前帳戶儲存的收藏清單頁？收藏狀態記錄和其他帳戶的資料會保留。</string>
+    <string name="online_favorite_pages_cleared">已清除收藏清單頁</string>
+    <string name="online_favorite_pages_clear_failed">無法清除收藏清單頁</string>
+    <string-array name="online_favorite_page_limit_entries">
+        <item>20 頁</item><item>35 頁</item><item>50 頁</item>
+    </string-array>
+    <string-array name="online_favorite_page_quota_entries">
+        <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
+    </string-array>
 </resources>
