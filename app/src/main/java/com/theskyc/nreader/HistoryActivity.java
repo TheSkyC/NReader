@@ -10,6 +10,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.theskyc.nreader.adapters.ListAdapter;
 import com.theskyc.nreader.api.GalleryDetailRequests;
 import com.theskyc.nreader.api.SimpleGallery;
@@ -68,6 +69,7 @@ public class HistoryActivity extends BaseActivity {
 
     private void updateEmptyState() {
         findViewById(R.id.history_empty).setVisibility(adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+        invalidateOptionsMenu();
     }
 
     @Override
@@ -76,15 +78,25 @@ public class HistoryActivity extends BaseActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.cancelAll) {
-            historyCleared = true;
-            pendingMetadata.clear();
-            if (metadataRequest != null) metadataRequest.cancelRequest();
-            Queries.HistoryTable.emptyHistory();
-            adapter.restartDataset(new ArrayList<>(1));
+            if (adapter.getItemCount() == 0) return true;
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.clear_history)
+                .setMessage(R.string.clear_this_list)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.delete, (dialog, which) -> clearHistory())
+                .show();
             return true;
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void clearHistory() {
+        historyCleared = true;
+        pendingMetadata.clear();
+        if (metadataRequest != null) metadataRequest.cancelRequest();
+        Queries.HistoryTable.emptyHistory();
+        adapter.restartDataset(new ArrayList<>(1));
     }
 
     public void resolveMetadata(SimpleGallery gallery) {
@@ -147,5 +159,12 @@ public class HistoryActivity extends BaseActivity {
         getMenuInflater().inflate(R.menu.history, menu);
         Utility.tintMenu(this, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem clear = menu.findItem(R.id.cancelAll);
+        if (clear != null) clear.setVisible(adapter != null && adapter.getItemCount() > 0);
+        return super.onPrepareOptionsMenu(menu);
     }
 }
