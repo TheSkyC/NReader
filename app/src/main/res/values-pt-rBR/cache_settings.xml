@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Tamanho do cache de imagens indisponível</string>
     <string name="image_cache_cleared">Cache de imagens limpo</string>
     <string name="image_cache_clear_failed">Não foi possível limpar o cache de imagens</string>
+    <string name="title_online_favorite_state_limit">Limite de estados de favoritos on-line</string>
+    <string name="summary_online_favorite_state_limit">Até %1$s estados confirmados para esta conta. Os estados menos usados recentemente são removidos primeiro.</string>
+    <string name="online_favorite_state_limit_default">512 estados</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 estados</item>
+        <item>2.048 estados</item>
+        <item>5.120 estados</item>
+        <item>10.240 estados</item>
+    </string-array>
 </resources>

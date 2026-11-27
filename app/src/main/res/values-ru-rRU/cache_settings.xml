@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Размер кэша изображений недоступен</string>
     <string name="image_cache_cleared">Кэш изображений очищен</string>
     <string name="image_cache_clear_failed">Не удалось очистить кэш изображений</string>
+    <string name="title_online_favorite_state_limit">Лимит состояний онлайн-избранного</string>
+    <string name="summary_online_favorite_state_limit">До %1$s подтверждённых состояний для этого аккаунта. Сначала удаляются состояния, к которым давно не обращались.</string>
+    <string name="online_favorite_state_limit_default">512 состояний</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 состояний</item>
+        <item>2 048 состояний</item>
+        <item>5 120 состояний</item>
+        <item>10 240 состояний</item>
+    </string-array>
 </resources>

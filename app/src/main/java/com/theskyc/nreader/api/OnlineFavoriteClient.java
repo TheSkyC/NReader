@@ -9,6 +9,7 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.theskyc.nreader.components.cache.OnlineFavoriteStateQuota;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
 import com.theskyc.nreader.settings.Global;
@@ -39,8 +40,9 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public final class OnlineFavoriteClient {
-    private static final int MAX_CACHED_STATES = 512;
+    private static final int MAX_TRACKED_MUTATIONS = 512;
     private static final Map<String, Boolean> confirmedStates = new LinkedHashMap<>(128, 0.75f, true);
+    private static int maxCachedStates = OnlineFavoriteStateQuota.DEFAULT_ENTRIES;
     private static final Set<String> inFlight = new HashSet<>();
     private static final Set<String> restoredStates = new HashSet<>();
     private static final ExecutorService storage = Executors.newSingleThreadExecutor();
@@ -192,6 +194,28 @@ public final class OnlineFavoriteClient {
         return identity(context);
     }
 
+    public static void applyCacheCapacity(@NonNull Context context, @Nullable String value) {
+        Context application = context.getApplicationContext();
+        identity(application);
+        int capacity = OnlineFavoriteStateQuota.entriesForValue(value);
+        boolean evicted;
+        synchronized (confirmedStates) {
+            maxCachedStates = capacity;
+            evicted = trimConfirmedStates();
+        }
+        if (evicted) {
+            persist(application);
+            notifyStateChanged(0);
+        }
+    }
+
+    public static int cachedStateCount(@NonNull Context context) {
+        identity(context);
+        synchronized (confirmedStates) {
+            return confirmedStates.size();
+        }
+    }
+
     static final class FavoriteListSnapshot {
         final String identity;
         final long version;
@@ -232,12 +256,7 @@ public final class OnlineFavoriteClient {
                 Boolean previous = confirmedStates.put(key, true);
                 restoredStates.remove(key);
                 changed |= !Boolean.TRUE.equals(previous);
-                while (confirmedStates.size() > MAX_CACHED_STATES) {
-                    String oldest = confirmedStates.keySet().iterator().next();
-                    confirmedStates.remove(oldest);
-                    restoredStates.remove(oldest);
-                    changed = true;
-                }
+                changed |= trimConfirmedStates();
             }
         }
         if (changed) persist(context);
@@ -249,6 +268,17 @@ public final class OnlineFavoriteClient {
         synchronized (confirmedStates) {
             return identity.equals(activeIdentity) && generation == identityVersion;
         }
+    }
+
+    private static boolean trimConfirmedStates() {
+        boolean evicted = false;
+        while (confirmedStates.size() > maxCachedStates) {
+            String oldest = confirmedStates.keySet().iterator().next();
+            confirmedStates.remove(oldest);
+            restoredStates.remove(oldest);
+            evicted = true;
+        }
+        return evicted;
     }
 
     private static void mutate(Context context, int galleryId, boolean remove,
@@ -339,9 +369,13 @@ public final class OnlineFavoriteClient {
     @Nullable
     private static String identity(Context context) {
         observeAuthChanges(context);
+        int configuredCapacity = OnlineFavoriteStateQuota.configuredEntries(context);
         String identity;
         boolean changed;
+        boolean evicted;
         synchronized (confirmedStates) {
+            maxCachedStates = configuredCapacity;
+            evicted = trimConfirmedStates();
             long currentGeneration = AuthStore.identityGeneration();
             identity = currentGeneration < 0 ? null : AuthStore.activeIdentity(context);
             if (currentGeneration != AuthStore.identityGeneration()) {
@@ -358,6 +392,10 @@ public final class OnlineFavoriteClient {
                 resetIdentityChanges();
                 if (identity != null) load(context.getApplicationContext(), identity, identityVersion, mutationVersion);
             }
+        }
+        if (evicted && !changed) {
+            persist(context);
+            notifyStateChanged(0);
         }
         if (changed) notifyStateChanged(0);
         return identity;
@@ -376,12 +414,7 @@ public final class OnlineFavoriteClient {
             restoredStates.remove(cacheKey(identity, galleryId));
             changed = previous == null || previous != favorited;
             if (changed) markChanged(cacheKey(identity, galleryId));
-            while (confirmedStates.size() > MAX_CACHED_STATES) {
-                String oldest = confirmedStates.keySet().iterator().next();
-                confirmedStates.remove(oldest);
-                restoredStates.remove(oldest);
-                evicted = true;
-            }
+            evicted = trimConfirmedStates();
         }
         if (changed || evicted) persist(authContext);
         if (evicted) notifyStateChanged(0);
@@ -395,7 +428,7 @@ public final class OnlineFavoriteClient {
     private static void markChanged(String key) {
         changedVersions.remove(key);
         changedVersions.put(key, ++mutationVersion);
-        if (changedVersions.size() > MAX_CACHED_STATES) {
+        if (changedVersions.size() > MAX_TRACKED_MUTATIONS) {
             String oldest = changedVersions.keySet().iterator().next();
             discardedVersion = changedVersions.remove(oldest);
         }
@@ -414,10 +447,15 @@ public final class OnlineFavoriteClient {
             try {
                 JSONObject states = new JSONObject(preferences.getString("states", "{}"));
                 boolean changed = false;
+                boolean truncated = false;
                 synchronized (confirmedStates) {
                     if (!identity.equals(activeIdentity) || generation != identityVersion) return;
                     java.util.Iterator<String> keys = states.keys();
-                    while (keys.hasNext() && confirmedStates.size() < MAX_CACHED_STATES) {
+                    while (keys.hasNext()) {
+                        if (confirmedStates.size() >= maxCachedStates) {
+                            truncated = true;
+                            break;
+                        }
                         String id = keys.next();
                         int galleryId;
                         try { galleryId = Integer.parseInt(id); } catch (NumberFormatException ignored) { continue; }
@@ -432,6 +470,7 @@ public final class OnlineFavoriteClient {
                         changed = true;
                     }
                 }
+                if (truncated) persist(context);
                 if (changed) notifyStateChanged(0);
             } catch (JSONException | ClassCastException exception) {
                 LogUtility.w("Unable to read online favorite cache", exception);

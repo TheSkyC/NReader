@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Bildcache-Größe nicht verfügbar</string>
     <string name="image_cache_cleared">Bildcache geleert</string>
     <string name="image_cache_clear_failed">Bildcache konnte nicht geleert werden</string>
+    <string name="title_online_favorite_state_limit">Limit für Online-Favoritenstatus</string>
+    <string name="summary_online_favorite_state_limit">Bis zu %1$s bestätigte Status für dieses Konto. Am längsten nicht verwendete Status werden zuerst entfernt.</string>
+    <string name="online_favorite_state_limit_default">512 Status</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 Status</item>
+        <item>2.048 Status</item>
+        <item>5.120 Status</item>
+        <item>10.240 Status</item>
+    </string-array>
 </resources>

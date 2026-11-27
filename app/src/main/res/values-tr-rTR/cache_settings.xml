@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Görsel önbelleği boyutu kullanılamıyor</string>
     <string name="image_cache_cleared">Görsel önbelleği temizlendi</string>
     <string name="image_cache_clear_failed">Görsel önbelleği temizlenemedi</string>
+    <string name="title_online_favorite_state_limit">Çevrimiçi favori durumu sınırı</string>
+    <string name="summary_online_favorite_state_limit">Bu hesap için en fazla %1$s doğrulanmış durum tutulur. Uzun süredir kullanılmayan durumlar önce kaldırılır.</string>
+    <string name="online_favorite_state_limit_default">512 durum</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 durum</item>
+        <item>2.048 durum</item>
+        <item>5.120 durum</item>
+        <item>10.240 durum</item>
+    </string-array>
 </resources>

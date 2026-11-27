@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Розмір кешу зображень недоступний</string>
     <string name="image_cache_cleared">Кеш зображень очищено</string>
     <string name="image_cache_clear_failed">Не вдалося очистити кеш зображень</string>
+    <string name="title_online_favorite_state_limit">Ліміт станів онлайн-обраного</string>
+    <string name="summary_online_favorite_state_limit">До %1$s підтверджених станів для цього облікового запису. Спочатку видаляються стани, до яких давно не зверталися.</string>
+    <string name="online_favorite_state_limit_default">512 станів</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 станів</item>
+        <item>2 048 станів</item>
+        <item>5 120 станів</item>
+        <item>10 240 станів</item>
+    </string-array>
 </resources>

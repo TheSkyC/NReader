@@ -45,6 +45,7 @@ import com.theskyc.nreader.R;
 import com.theskyc.nreader.SettingsActivity;
 import com.theskyc.nreader.UpdateCenterActivity;
 import com.theskyc.nreader.StatusManagerActivity;
+import com.theskyc.nreader.api.OnlineFavoriteClient;
 import com.theskyc.nreader.async.MetadataFetcher;
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.database.export.Importer;
@@ -422,6 +423,18 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 CharSequence entry = ((ListPreference) preference).getEntry();
                 return getString(R.string.summary_image_cache_quota,
                     entry == null ? getString(R.string.image_cache_default_quota) : entry);
+            });
+
+            ListPreference favoriteStateLimit = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_online_favorite_state_limit)));
+            favoriteStateLimit.setSummaryProvider(preference -> {
+                CharSequence entry = ((ListPreference) preference).getEntry();
+                return getString(R.string.summary_online_favorite_state_limit,
+                    entry == null ? getString(R.string.online_favorite_state_limit_default) : entry);
+            });
+            favoriteStateLimit.setOnPreferenceChangeListener((preference, newValue) -> {
+                OnlineFavoriteClient.applyCacheCapacity(act, String.valueOf(newValue));
+                return true;
             });
 
             Preference cache = Objects.requireNonNull(findPreference(getString(R.string.preference_key_cache)));

@@ -355,6 +355,13 @@
                 android:key="@string/preference_key_image_cache_quota"
                 android:title="@string/title_image_cache_quota"
                 app:iconSpaceReserved="false" />
+            <ListPreference
+                android:defaultValue="512"
+                android:entries="@array/online_favorite_state_limit_entries"
+                android:entryValues="@array/online_favorite_state_limit_values"
+                android:key="@string/preference_key_online_favorite_state_limit"
+                android:title="@string/title_online_favorite_state_limit"
+                app:iconSpaceReserved="false" />
             <Preference
                 android:key="@string/preference_key_cache"
                 android:title="@string/clear_image_cache"

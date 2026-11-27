@@ -45,6 +45,8 @@ public class OnlineFavoriteClientTest {
     @Before public void setUp() {
         context = RuntimeEnvironment.getApplication();
         Global.initFromShared(context);
+        context.getSharedPreferences("Settings", 0).edit()
+            .putString(context.getString(R.string.preference_key_online_favorite_state_limit), "512").commit();
         AuthStore.clear(context);
         OnlineFavoriteClient.sessionIdentity(context);
         AuthStore.saveApiKey(context, "synthetic-key", true);
@@ -209,6 +211,27 @@ public class OnlineFavoriteClientTest {
         OnlineFavoriteClient.acceptFavoriteList(context, snapshot, java.util.Arrays.asList(10000, 20000));
         assertNull(OnlineFavoriteClient.cachedState(context, 10000));
         assertNull(OnlineFavoriteClient.cachedState(context, 20000));
+    }
+
+    @Test public void configuredCapacityExpandsCacheAndTrimsItWhenReduced() throws Exception {
+        context.getSharedPreferences("Settings", 0).edit()
+            .putString(context.getString(R.string.preference_key_online_favorite_state_limit), "2048").commit();
+        for (int id = 70000; id < 70600; id++) OnlineFavoriteClient.rememberState(context, id, true);
+        awaitStorage();
+
+        assertTrue(OnlineFavoriteClient.cachedStateCount(context) >= 600);
+
+        OnlineFavoriteClient.applyCacheCapacity(context, "512");
+        assertEquals("2048", context.getSharedPreferences("Settings", 0).getString(
+            context.getString(R.string.preference_key_online_favorite_state_limit), null));
+        assertEquals(512, OnlineFavoriteClient.cachedStateCount(context));
+
+        context.getSharedPreferences("Settings", 0).edit()
+            .putString(context.getString(R.string.preference_key_online_favorite_state_limit), "512").commit();
+        awaitStorage();
+        org.json.JSONObject persisted = new org.json.JSONObject(context
+            .getSharedPreferences("online_favorite_cache", 0).getString("states", "{}"));
+        assertEquals(512, persisted.length());
     }
 
     @Test public void authenticatedFavoriteListSeedsOnlySuccessfulCurrentAccountResults() throws Exception {

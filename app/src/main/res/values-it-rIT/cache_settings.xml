@@ -9,4 +9,13 @@
     <string name="image_cache_size_unavailable">Dimensione della cache immagini non disponibile</string>
     <string name="image_cache_cleared">Cache immagini cancellata</string>
     <string name="image_cache_clear_failed">Impossibile cancellare la cache immagini</string>
+    <string name="title_online_favorite_state_limit">Limite degli stati dei preferiti online</string>
+    <string name="summary_online_favorite_state_limit">Fino a %1$s stati confermati per questo account. Gli stati meno usati di recente vengono rimossi per primi.</string>
+    <string name="online_favorite_state_limit_default">512 stati</string>
+    <string-array name="online_favorite_state_limit_entries">
+        <item>512 stati</item>
+        <item>2.048 stati</item>
+        <item>5.120 stati</item>
+        <item>10.240 stati</item>
+    </string-array>
 </resources>
