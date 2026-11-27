@@ -728,7 +728,9 @@ public class Global {
             ? R.drawable.thumb_grid : R.drawable.thumb;
         Drawable drawable = ContextCompat.getDrawable(recycler.getContext(), thumbResource);
         if (drawable == null) return;
-        FastScrollerBuilder builder = new FastScrollerBuilder(recycler).setThumbDrawable(drawable);
+        FastScrollerBuilder builder = new FastScrollerBuilder(recycler)
+            .setTrackDrawable(ContextCompat.getDrawable(recycler.getContext(), R.drawable.fast_scroller_track))
+            .setThumbDrawable(drawable);
         if (recycler.getAdapter() instanceof PopupTextProvider) {
             builder.setPopupTextProvider((PopupTextProvider) recycler.getAdapter())
                 .setPopupStyle(Global::styleFastScrollerPopup);
