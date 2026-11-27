@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Непрозрачность фона</string>
     <string name="reader_status_opacity_value">Непрозрачность фона: %1$d%%</string>
     <string name="reader_status_positions">Настроить расположение</string>
+    <string name="reader_status_near_edges">Разместить ближе к краям экрана</string>
     <string name="reader_status_reset">Сбросить статус чтения</string>
     <string name="reader_status_position_title">Расположение индикаторов</string>
     <string name="reader_status_position_back">Назад</string>

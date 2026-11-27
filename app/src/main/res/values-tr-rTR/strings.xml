@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Arka plan opaklığı</string>
     <string name="reader_status_opacity_value">Arka plan opaklığı: %1$d%%</string>
     <string name="reader_status_positions">Konumları ayarla</string>
+    <string name="reader_status_near_edges">Ekran kenarlarına yakın yerleştir</string>
     <string name="reader_status_reset">Okuma durumunu sıfırla</string>
     <string name="reader_status_position_title">Durum öğelerini yerleştir</string>
     <string name="reader_status_position_back">Geri</string>

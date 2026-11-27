@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Opacité de l’arrière-plan</string>
     <string name="reader_status_opacity_value">Opacité de l’arrière-plan : %1$d%%</string>
     <string name="reader_status_positions">Ajuster les positions</string>
+    <string name="reader_status_near_edges">Placer près des bords de l’écran</string>
     <string name="reader_status_reset">Réinitialiser l’état de lecture</string>
     <string name="reader_status_position_title">Placer les indicateurs</string>
     <string name="reader_status_position_back">Retour</string>

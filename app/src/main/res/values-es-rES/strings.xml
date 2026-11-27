@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Opacidad del fondo</string>
     <string name="reader_status_opacity_value">Opacidad del fondo: %1$d%%</string>
     <string name="reader_status_positions">Ajustar posiciones</string>
+    <string name="reader_status_near_edges">Colocar cerca de los bordes de la pantalla</string>
     <string name="reader_status_reset">Restablecer estado de lectura</string>
     <string name="reader_status_position_title">Colocar indicadores</string>
     <string name="reader_status_position_back">Atrás</string>

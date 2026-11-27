@@ -241,6 +241,7 @@
     <string name="reader_status_opacity">Background opacity</string>
     <string name="reader_status_opacity_value">Background opacity: %1$d%%</string>
     <string name="reader_status_positions">Adjust positions</string>
+    <string name="reader_status_near_edges">Place near screen edges</string>
     <string name="reader_status_reset">Reset reading status</string>
     <string name="reader_status_position_title">Place status items</string>
     <string name="reader_status_position_back">Back</string>

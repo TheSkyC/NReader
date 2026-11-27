@@ -46,6 +46,12 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     private final View[] itemViews;
     private final boolean[] targetVisible = new boolean[3];
     private Insets safeInsets = Insets.NONE;
+    private Insets systemSafeInsets = Insets.NONE;
+    private Insets cutoutInsets = Insets.NONE;
+    private Insets previewSystemInsets = Insets.NONE;
+    private Insets previewCutoutInsets = Insets.NONE;
+    private int previewSourceWidth;
+    private int previewSourceHeight;
     private ReaderStatusSettings settings;
     private CharSequence timeValue = "";
     private int batteryLevel = -1;
@@ -113,6 +119,7 @@ public final class ReaderStatusOverlayView extends FrameLayout {
 
     public void setSettings(@NonNull ReaderStatusSettings value) {
         settings = value;
+        updateSafeInsets();
         refreshAppearance();
         refreshContent();
         updateVisibility(false);
@@ -123,6 +130,16 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         if (safeInsets.equals(value)) return;
         safeInsets = value;
         requestLayout();
+    }
+
+    public void setWindowInsets(@NonNull Insets systemSafe, @NonNull Insets cutout) {
+        systemSafeInsets = systemSafe;
+        cutoutInsets = cutout;
+        updateSafeInsets();
+    }
+
+    private void updateSafeInsets() {
+        setSafeInsets(settings.nearEdges ? cutoutInsets : systemSafeInsets);
     }
 
     public void setHostState(boolean active, boolean controls, boolean modal,
@@ -204,6 +221,11 @@ public final class ReaderStatusOverlayView extends FrameLayout {
     public void copyPreviewStateTo(@NonNull ReaderStatusOverlayView target,
                                    @Nullable PositionListener listener) {
         target.setSettings(settings);
+        target.previewSystemInsets = systemSafeInsets;
+        target.previewCutoutInsets = cutoutInsets;
+        target.previewSourceWidth = getWidth();
+        target.previewSourceHeight = getHeight();
+        target.updatePreviewInsets(target.getWidth(), target.getHeight());
         target.setTimeValue(timeValue.length() == 0
             ? android.text.format.DateFormat.getTimeFormat(getContext()).format(new java.util.Date())
             : timeValue);
@@ -211,6 +233,25 @@ public final class ReaderStatusOverlayView extends FrameLayout {
         boolean validProgress = currentPage > 0 && totalPages > 0 && currentPage <= totalPages;
         target.setProgressValue(validProgress ? currentPage : 12, validProgress ? totalPages : 48);
         target.setEditorMode(true, listener);
+    }
+
+    private static Insets scaleInsets(Insets insets, float scaleX, float scaleY) {
+        return Insets.of(Math.round(insets.left * scaleX), Math.round(insets.top * scaleY),
+            Math.round(insets.right * scaleX), Math.round(insets.bottom * scaleY));
+    }
+
+    private void updatePreviewInsets(int width, int height) {
+        if (previewSourceWidth <= 0 || previewSourceHeight <= 0 || width <= 0 || height <= 0) return;
+        float scaleX = (float) width / previewSourceWidth;
+        float scaleY = (float) height / previewSourceHeight;
+        setWindowInsets(scaleInsets(previewSystemInsets, scaleX, scaleY),
+            scaleInsets(previewCutoutInsets, scaleX, scaleY));
+    }
+
+    @Override
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
+        updatePreviewInsets(width, height);
     }
 
     public boolean hasOverlappingItems() {

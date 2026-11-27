@@ -1224,6 +1224,8 @@ public class ZoomActivity extends GeneralActivity {
 
         bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_enabled,
             ReaderStatusSettings.KEY_ENABLED, settings.enabled);
+        bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_near_edges,
+            ReaderStatusSettings.KEY_NEAR_EDGES, settings.nearEdges);
         bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_time_enabled,
             ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_TIME, "enabled"), settings.timeEnabled);
         bindReaderStatusSwitch(dialog, preferences, R.id.reader_status_battery_enabled,
@@ -1369,6 +1371,7 @@ public class ZoomActivity extends GeneralActivity {
     private void clearReaderStatusPreferences(@NonNull SharedPreferences preferences) {
         SharedPreferences.Editor editor = preferences.edit()
             .remove(ReaderStatusSettings.KEY_ENABLED)
+            .remove(ReaderStatusSettings.KEY_NEAR_EDGES)
             .remove(ReaderStatusSettings.KEY_IDLE_DELAY)
             .remove(ReaderStatusSettings.KEY_BATTERY_FORMAT)
             .remove(ReaderStatusSettings.KEY_PROGRESS_FORMAT)

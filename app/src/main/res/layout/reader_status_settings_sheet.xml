@@ -219,6 +219,12 @@
             android:id="@+id/reader_status_opacity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/reader_status_near_edges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/reader_status_near_edges" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/reader_status_positions"
             style="@style/Widget.Material3.Button.OutlinedButton"

@@ -27,7 +27,8 @@ public final class ReaderWindowInsets {
         }
         View statusOverlay = root.findViewById(R.id.reader_status_overlay);
         if (statusOverlay instanceof ReaderStatusOverlayView) {
-            ((ReaderStatusOverlayView) statusOverlay).setSafeInsets(safe);
+            Insets cutout = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
+            ((ReaderStatusOverlayView) statusOverlay).setWindowInsets(safe, cutout);
         }
     }
 }

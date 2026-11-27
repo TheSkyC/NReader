@@ -25,6 +25,7 @@ public class ReaderStatusSettingsTest {
         ReaderStatusSettings settings = ReaderStatusSettings.load(preferences);
 
         assertTrue(settings.enabled);
+        assertTrue(settings.nearEdges);
         assertTrue(settings.timeEnabled);
         assertTrue(settings.batteryEnabled);
         assertTrue(settings.progressEnabled);
@@ -46,6 +47,7 @@ public class ReaderStatusSettingsTest {
             .setup().get().getSharedPreferences("Settings", 0);
         preferences.edit()
             .putString(ReaderStatusSettings.KEY_ENABLED, "yes")
+            .putString(ReaderStatusSettings.KEY_NEAR_EDGES, "yes")
             .putInt(ReaderStatusSettings.KEY_IDLE_DELAY, 31)
             .putInt(ReaderStatusSettings.KEY_STYLE, 9)
             .putInt(ReaderStatusSettings.KEY_BATTERY_FORMAT, -1)
@@ -58,6 +60,7 @@ public class ReaderStatusSettingsTest {
         ReaderStatusSettings settings = ReaderStatusSettings.load(preferences);
 
         assertTrue(settings.enabled);
+        assertTrue(settings.nearEdges);
         assertEquals(ReaderStatusSettings.DEFAULT_IDLE_DELAY_SECONDS, settings.idleDelaySeconds);
         assertEquals(ReaderStatusSettings.STYLE_BACKED, settings.style);
         assertEquals(ReaderStatusSettings.BATTERY_ICON_AND_PERCENT, settings.batteryFormat);

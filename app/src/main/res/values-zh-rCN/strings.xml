@@ -730,6 +730,7 @@
     <string name="reader_status_opacity">背景不透明度</string>
     <string name="reader_status_opacity_value">背景不透明度：%1$d%%</string>
     <string name="reader_status_positions">调整位置</string>
+    <string name="reader_status_near_edges">靠近屏幕边缘</string>
     <string name="reader_status_reset">恢复阅读状态默认设置</string>
     <string name="reader_status_position_title">设置状态项位置</string>
     <string name="reader_status_position_back">返回</string>

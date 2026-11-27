@@ -25,6 +25,30 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 32, application = Application.class)
 public class ReaderWindowInsetsTest {
     @Test
+    public void overlayUsesCutoutInsetsAtEdgesAndCanRestoreSystemBarInsets() {
+        Activity activity = createActivity();
+        View root = activity.getWindow().getDecorView();
+        ReaderStatusOverlayView overlay = activity.findViewById(R.id.reader_status_overlay);
+        overlay.setTimeValue("21:38");
+        overlay.setBatteryValue(76, false);
+        overlay.setHostState(true, false, false, false, false, false);
+        WindowInsetsCompat insets = new WindowInsetsCompat.Builder()
+            .setInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars(), Insets.of(0, 100, 40, 80))
+            .setInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout(), Insets.of(0, 30, 0, 0))
+            .build();
+        ReaderWindowInsets.apply(root, insets);
+        layout(root, 1080, 1920);
+        int edge = Math.round(10 * activity.getResources().getDisplayMetrics().density);
+        assertEquals(30 + edge, overlay.getChildAt(ReaderStatusSettings.ITEM_TIME).getY(), 0.01f);
+
+        activity.getSharedPreferences("Settings", 0).edit()
+            .putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, false).apply();
+        overlay.setSettings(ReaderStatusSettings.load(activity.getSharedPreferences("Settings", 0)));
+        layout(root, 1080, 1920);
+        assertEquals(100 + edge, overlay.getChildAt(ReaderStatusSettings.ITEM_TIME).getY(), 0.01f);
+    }
+
+    @Test
     public void systemBarVisibilityKeepsBothReaderBoundsStable() {
         Activity activity = createActivity();
         View root = activity.getWindow().getDecorView();

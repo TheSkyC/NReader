@@ -32,6 +32,7 @@ public final class ReaderStatusSettings {
 
     private static final String PREFIX = "reader_status_";
     public static final String KEY_ENABLED = PREFIX + "enabled";
+    public static final String KEY_NEAR_EDGES = PREFIX + "near_edges";
     public static final String KEY_IDLE_DELAY = PREFIX + "idle_delay";
     public static final String KEY_BATTERY_FORMAT = PREFIX + "battery_format";
     public static final String KEY_PROGRESS_FORMAT = PREFIX + "progress_format";
@@ -40,6 +41,7 @@ public final class ReaderStatusSettings {
     public static final String KEY_BACKGROUND_OPACITY = PREFIX + "background_opacity";
 
     public final boolean enabled;
+    public final boolean nearEdges;
     public final boolean timeEnabled;
     public final boolean batteryEnabled;
     public final boolean progressEnabled;
@@ -58,6 +60,7 @@ public final class ReaderStatusSettings {
 
     private ReaderStatusSettings(SharedPreferences preferences) {
         enabled = getBoolean(preferences, KEY_ENABLED, true);
+        nearEdges = getBoolean(preferences, KEY_NEAR_EDGES, true);
         timeEnabled = getBoolean(preferences, PREFIX + "time_enabled", true);
         batteryEnabled = getBoolean(preferences, PREFIX + "battery_enabled", true);
         progressEnabled = getBoolean(preferences, PREFIX + "progress_enabled", true);

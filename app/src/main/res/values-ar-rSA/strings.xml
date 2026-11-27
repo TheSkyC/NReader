@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">عتامة الخلفية</string>
     <string name="reader_status_opacity_value">عتامة الخلفية: %1$d%%</string>
     <string name="reader_status_positions">ضبط المواضع</string>
+    <string name="reader_status_near_edges">وضع العناصر قرب حواف الشاشة</string>
     <string name="reader_status_reset">إعادة ضبط حالة القراءة</string>
     <string name="reader_status_position_title">مواضع عناصر الحالة</string>
     <string name="reader_status_position_back">رجوع</string>

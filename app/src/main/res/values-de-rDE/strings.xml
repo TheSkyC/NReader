@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Hintergrunddeckkraft</string>
     <string name="reader_status_opacity_value">Hintergrunddeckkraft: %1$d%%</string>
     <string name="reader_status_positions">Positionen anpassen</string>
+    <string name="reader_status_near_edges">Nahe am Bildschirmrand platzieren</string>
     <string name="reader_status_reset">Lesestatus zurücksetzen</string>
     <string name="reader_status_position_title">Statusanzeigen platzieren</string>
     <string name="reader_status_position_back">Zurück</string>

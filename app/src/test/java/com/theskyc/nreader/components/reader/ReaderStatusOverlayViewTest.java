@@ -26,6 +26,61 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 32, application = Application.class)
 public class ReaderStatusOverlayViewTest {
     @Test
+    public void edgeSettingChangesPlacementWithoutLosingCustomCoordinates() {
+        Activity activity = themedActivity();
+        android.content.SharedPreferences preferences = activity.getSharedPreferences("Settings", 0);
+        preferences.edit()
+            .putBoolean(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "position_custom"), true)
+            .putFloat(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "position_x"), 1f)
+            .putFloat(ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "position_y"), 1f)
+            .apply();
+        ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);
+        view.setWindowInsets(Insets.of(0, 100, 40, 80), Insets.of(0, 30, 0, 0));
+        view.setTimeValue("21:38");
+        view.setBatteryValue(76, false);
+        view.setProgressValue(12, 48);
+        view.setHostState(true, false, false, false, false, false);
+        layout(view, 1080, 1920);
+        int edge = dp(activity, 10);
+        View time = view.getChildAt(ReaderStatusSettings.ITEM_TIME);
+        View progress = view.getChildAt(ReaderStatusSettings.ITEM_PROGRESS);
+        assertEquals(30 + edge, time.getY(), 0.01f);
+        assertEquals(1920 - edge, progress.getY() + progress.getHeight(), 0.01f);
+
+        preferences.edit().putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, false).apply();
+        view.setSettings(ReaderStatusSettings.load(preferences));
+        layout(view, 1080, 1920);
+        assertEquals(100 + edge, time.getY(), 0.01f);
+        assertEquals(1920 - 80 - edge, progress.getY() + progress.getHeight(), 0.01f);
+        assertEquals(1080 - 40 - edge, progress.getX() + progress.getWidth(), 0.01f);
+        assertEquals(1f, preferences.getFloat(
+            ReaderStatusSettings.preferenceKey(ReaderStatusSettings.ITEM_PROGRESS, "position_y"), -1f), 0f);
+
+        preferences.edit().putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, true).apply();
+        view.setSettings(ReaderStatusSettings.load(preferences));
+        view.setWindowInsets(Insets.of(70, 0, 40, 0), Insets.of(70, 0, 0, 0));
+        layout(view, 1920, 1080);
+        assertEquals(edge, time.getY(), 0.01f);
+        assertTrue(time.getX() >= 70 + edge);
+    }
+
+    @Test
+    public void editorUsesScaledReaderInsetsForSelectedSetting() {
+        Activity activity = themedActivity();
+        android.content.SharedPreferences preferences = activity.getSharedPreferences("Settings", 0);
+        preferences.edit().putBoolean(ReaderStatusSettings.KEY_NEAR_EDGES, false).apply();
+        ReaderStatusOverlayView reader = new ReaderStatusOverlayView(activity);
+        reader.setWindowInsets(Insets.of(0, 100, 0, 80), Insets.of(0, 30, 0, 0));
+        layout(reader, 1000, 2000);
+        ReaderStatusOverlayView preview = new ReaderStatusOverlayView(activity);
+        reader.copyPreviewStateTo(preview, null);
+        layout(preview, 500, 1000);
+        layout(preview, 500, 1000);
+        assertEquals(50 + dp(activity, 10),
+            preview.getChildAt(ReaderStatusSettings.ITEM_TIME).getY(), 0.01f);
+    }
+
+    @Test
     public void defaultItemsFitTheSafeAreaAndDoNotOverlap() {
         Activity activity = themedActivity();
         ReaderStatusOverlayView view = new ReaderStatusOverlayView(activity);

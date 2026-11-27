@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">背景の不透明度</string>
     <string name="reader_status_opacity_value">背景の不透明度: %1$d%%</string>
     <string name="reader_status_positions">位置を調整</string>
+    <string name="reader_status_near_edges">画面の端に近づける</string>
     <string name="reader_status_reset">読書ステータスをリセット</string>
     <string name="reader_status_position_title">ステータス項目の位置</string>
     <string name="reader_status_position_back">戻る</string>

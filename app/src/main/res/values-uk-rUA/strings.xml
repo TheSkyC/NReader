@@ -679,6 +679,7 @@
     <string name="reader_status_opacity">Непрозорість тла</string>
     <string name="reader_status_opacity_value">Непрозорість тла: %1$d%%</string>
     <string name="reader_status_positions">Налаштувати розташування</string>
+    <string name="reader_status_near_edges">Розмістити ближче до країв екрана</string>
     <string name="reader_status_reset">Скинути стан читання</string>
     <string name="reader_status_position_title">Розмістити індикатори</string>
     <string name="reader_status_position_back">Назад</string>
