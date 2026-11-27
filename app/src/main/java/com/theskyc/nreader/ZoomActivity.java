@@ -60,6 +60,8 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.FutureTarget;
 import com.theskyc.nreader.adapters.ReaderPagePreviewAdapter;
 import com.theskyc.nreader.adapters.ReaderBookmarkAdapter;
@@ -84,6 +86,7 @@ import com.theskyc.nreader.components.reader.ReaderStatusOverlayView;
 import com.theskyc.nreader.components.reader.ReaderScaleMode;
 import com.theskyc.nreader.components.reader.ReaderImageFilter;
 import com.theskyc.nreader.components.reader.ReaderPrefetchPlan;
+import com.theskyc.nreader.components.reader.ReaderPrefetchByteBudget;
 import com.theskyc.nreader.components.reader.ReaderPrefetchQueue;
 import com.theskyc.nreader.components.reader.SpreadReaderNavigation;
 import com.theskyc.nreader.components.views.ZoomFragment;
@@ -232,6 +235,8 @@ public class ZoomActivity extends GeneralActivity {
     private float autoScrollRemainder;
     private int autoScrollSpeedIndex;
     @Nullable private ReaderPrefetchQueue prefetchQueue;
+    private final ReaderPrefetchByteBudget prefetchByteBudget =
+        new ReaderPrefetchByteBudget(ReaderPrefetchPlan.DEFAULT_BYTE_BUDGET);
     private int prefetchDirection = 1;
     private int readerScaleMode = ReaderScaleMode.SMART;
     private int readerFilterMode = ReaderImageFilter.NONE;
@@ -854,6 +859,7 @@ public class ZoomActivity extends GeneralActivity {
     protected void onDestroy() {
         stopAutoScroll();
         if (prefetchQueue != null) prefetchQueue.cancelAll();
+        prefetchByteBudget.close();
         continuousZoomViewport.setOnUserInteractionListener(null);
         if (pageExportTask != null) pageExportTask.cancel(true);
         if (readerStatusOverlay != null) readerStatusOverlay.close();
@@ -2403,13 +2409,25 @@ public class ZoomActivity extends GeneralActivity {
     @NonNull
     private ReaderPrefetchQueue createPrefetchQueue() {
         return new ReaderPrefetchQueue((page, sourceKey, onComplete) -> {
+            if (prefetchByteBudget.remainingBytes() <= 0) {
+                onComplete.run();
+                return () -> { };
+            }
             Object source = prefetchSource(page);
             RequestManager manager = GlideX.with(getApplicationContext());
             if (source == null || manager == null) {
                 onComplete.run();
                 return () -> { };
             }
-            FutureTarget<File> target = manager.downloadOnly().load(source)
+            String scheme = Uri.parse(source.toString()).getScheme();
+            Object model = source;
+            if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+                LazyHeaders headers = new LazyHeaders.Builder()
+                    .addHeader(ReaderPrefetchByteBudget.TOKEN_HEADER, prefetchByteBudget.token())
+                    .build();
+                model = new GlideUrl(source.toString(), headers);
+            }
+            FutureTarget<File> target = manager.downloadOnly().load(model)
                 .diskCacheStrategy(DiskCacheStrategy.DATA).priority(Priority.LOW).submit();
             AtomicBoolean cancelled = new AtomicBoolean();
             Future<?> watcher = READER_PREFETCH_EXECUTOR.submit(() -> {
@@ -2441,6 +2459,12 @@ public class ZoomActivity extends GeneralActivity {
         SharedPreferences preferences = getSharedPreferences("Settings", Context.MODE_PRIVATE);
         String value = preferences.getString(getString(R.string.preference_key_reader_prefetch), "4");
         int pageCount = ReaderPrefetchPlan.pageCountForValue(value);
+        String byteBudget = preferences.getString(getString(R.string.preference_key_reader_prefetch_byte_budget), "16");
+        prefetchByteBudget.setLimit(ReaderPrefetchPlan.byteBudgetForValue(byteBudget));
+        if (prefetchByteBudget.remainingBytes() <= 0) {
+            prefetchQueue.cancelAll();
+            return;
+        }
         boolean allowMetered = preferences.getBoolean(getString(R.string.preference_key_reader_prefetch_metered), false);
         if (!ReaderPrefetchPlan.isAllowed(pageCount, allowMetered, Global.getDownloadPolicy(), NetworkUtil.getType())) {
             prefetchQueue.cancelAll();

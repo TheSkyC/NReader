@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Yakındaki sayfaların görsellerini görsel önbelleğine indirir</string>
     <string name="title_reader_prefetch_metered">Ölçülü ağlarda önceden yüklemeye izin ver</string>
     <string name="summary_reader_prefetch_metered">Geçerli sayfaya öncelik verir ve arka plan işlemlerini en fazla iki görselle sınırlar</string>
+    <string name="title_reader_prefetch_byte_budget">Önceden yükleme veri sınırı</string>
+    <string name="summary_reader_prefetch_byte_budget">Oturum başına önceden yüklenen görsel verisini sınırlar; geçerli sayfa hesaba katılmaz.</string>
     <string-array name="reader_prefetch_entries">
         <item>Kapalı</item><item>2 sayfa</item><item>4 sayfa</item><item>8 sayfa</item>
     </string-array>

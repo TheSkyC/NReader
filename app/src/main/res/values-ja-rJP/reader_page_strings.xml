@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">近くのページ画像を画像キャッシュにダウンロードします</string>
     <string name="title_reader_prefetch_metered">従量制ネットワークでの先読みを許可</string>
     <string name="summary_reader_prefetch_metered">現在のページを優先し、バックグラウンド処理は最大2枚に制限します</string>
+    <string name="title_reader_prefetch_byte_budget">先読みデータ上限</string>
+    <string name="summary_reader_prefetch_byte_budget">1回の閲覧中に先読みする画像データ量を制限します。表示中のページは対象外です。</string>
     <string-array name="reader_prefetch_entries">
         <item>オフ</item><item>2ページ</item><item>4ページ</item><item>8ページ</item>
     </string-array>

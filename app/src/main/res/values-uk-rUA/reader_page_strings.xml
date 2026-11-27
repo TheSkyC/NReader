@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Завантажує зображення сусідніх сторінок до кешу зображень</string>
     <string name="title_reader_prefetch_metered">Дозволити попереднє завантаження в мережах із тарифікацією</string>
     <string name="summary_reader_prefetch_metered">Поточна сторінка має пріоритет; у фоновому режимі завантажуються не більш як два зображення</string>
+    <string name="title_reader_prefetch_byte_budget">Ліміт попереднього завантаження</string>
+    <string name="summary_reader_prefetch_byte_budget">Обмежує обсяг завчасно завантажених зображень за сеанс; поточна сторінка не враховується.</string>
     <string-array name="reader_prefetch_entries">
         <item>Вимкнено</item><item>2 сторінки</item><item>4 сторінки</item><item>8 сторінок</item>
     </string-array>

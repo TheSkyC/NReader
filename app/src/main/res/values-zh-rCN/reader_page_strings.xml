@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">将邻近页面的原图下载到图片缓存</string>
     <string name="title_reader_prefetch_metered">允许在计费网络预加载</string>
     <string name="summary_reader_prefetch_metered">当前页保持最高优先级，后台最多同时处理两张图片</string>
+    <string name="title_reader_prefetch_byte_budget">阅读器预加载流量上限</string>
+    <string name="summary_reader_prefetch_byte_budget">限制单次阅读会话预加载的图片数据量；当前页加载不计入。</string>
     <string-array name="reader_prefetch_entries">
         <item>关闭</item><item>2 页</item><item>4 页</item><item>8 页</item>
     </string-array>

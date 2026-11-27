@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Scarica le immagini delle pagine vicine nella cache immagini</string>
     <string name="title_reader_prefetch_metered">Consenti il precaricamento sulle reti a consumo</string>
     <string name="summary_reader_prefetch_metered">La pagina corrente mantiene la priorità e le attività in background sono limitate a due immagini</string>
+    <string name="title_reader_prefetch_byte_budget">Limite dati del precaricamento</string>
+    <string name="summary_reader_prefetch_byte_budget">Limita i dati immagine precaricati per sessione; la pagina corrente non viene conteggiata.</string>
     <string-array name="reader_prefetch_entries">
         <item>Disattivato</item><item>2 pagine</item><item>4 pagine</item><item>8 pagine</item>
     </string-array>

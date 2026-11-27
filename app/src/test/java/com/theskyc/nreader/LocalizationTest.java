@@ -98,14 +98,21 @@ public class LocalizationTest {
         String[] locales = {"en-US", "ar-SA", "de-DE", "es-ES", "fr-FR", "it-IT", "ja-JP",
             "pt-BR", "ru-RU", "tr-TR", "uk-UA", "zh-CN", "zh-TW"};
         String[] values = {"0", "2", "4", "8"};
+        String[] byteBudgetValues = {"8", "16", "32"};
         for (String languageTag : locales) {
             Resources resources = resources(languageTag);
             assertFalse(languageTag, resources.getString(R.string.title_reader_prefetch).isEmpty());
             assertFalse(languageTag, resources.getString(R.string.summary_reader_prefetch).isEmpty());
             assertFalse(languageTag, resources.getString(R.string.title_reader_prefetch_metered).isEmpty());
             assertFalse(languageTag, resources.getString(R.string.summary_reader_prefetch_metered).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.title_reader_prefetch_byte_budget).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.summary_reader_prefetch_byte_budget).isEmpty());
             assertArrayEquals(languageTag, values, resources.getStringArray(R.array.reader_prefetch_values));
             assertEquals(languageTag, values.length, resources.getStringArray(R.array.reader_prefetch_entries).length);
+            assertArrayEquals(languageTag, byteBudgetValues,
+                resources.getStringArray(R.array.reader_prefetch_byte_budget_values));
+            assertEquals(languageTag, byteBudgetValues.length,
+                resources.getStringArray(R.array.reader_prefetch_byte_budget_entries).length);
         }
     }
 

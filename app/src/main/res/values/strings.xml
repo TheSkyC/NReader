@@ -123,6 +123,7 @@
     <string name="preference_key_offscreen_limit" translatable="false">offscreen_limit</string>
     <string name="preference_key_reader_prefetch" translatable="false">reader_prefetch</string>
     <string name="preference_key_reader_prefetch_metered" translatable="false">reader_prefetch_metered</string>
+    <string name="preference_key_reader_prefetch_byte_budget" translatable="false">reader_prefetch_byte_budget</string>
     <string name="preference_key_enable_beta" translatable="false">enable_beta</string>
     <string name="preference_key_save_path" translatable="false">save_path</string>
     <string name="preference_key_fake_icon" translatable="false">fake_icon</string>

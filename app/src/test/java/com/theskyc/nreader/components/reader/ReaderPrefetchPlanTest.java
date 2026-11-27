@@ -21,6 +21,14 @@ public class ReaderPrefetchPlanTest {
         assertEquals(4, ReaderPrefetchPlan.pageCountForValue("invalid"));
     }
 
+    @Test public void byteBudgetSettingsAcceptOnlySupportedLimits() {
+        assertEquals(8L * 1024 * 1024, ReaderPrefetchPlan.byteBudgetForValue("8"));
+        assertEquals(16L * 1024 * 1024, ReaderPrefetchPlan.byteBudgetForValue("16"));
+        assertEquals(32L * 1024 * 1024, ReaderPrefetchPlan.byteBudgetForValue("32"));
+        assertEquals(16L * 1024 * 1024, ReaderPrefetchPlan.byteBudgetForValue("invalid"));
+        assertEquals(16L * 1024 * 1024, ReaderPrefetchPlan.byteBudgetForValue(null));
+    }
+
     @Test public void meteredPrefetchRequiresExplicitOptIn() {
         assertTrue(ReaderPrefetchPlan.isAllowed(4, false, Global.DataUsageType.FULL,
             NetworkUtil.ConnectionType.WIFI));

@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">تنزيل صور الصفحات القريبة إلى ذاكرة الصور المؤقتة</string>
     <string name="title_reader_prefetch_metered">السماح بالتحميل المسبق عبر الشبكات محدودة البيانات</string>
     <string name="summary_reader_prefetch_metered">يحافظ على أولوية الصفحة الحالية ويحدّ المهام الخلفية بصورتين</string>
+    <string name="title_reader_prefetch_byte_budget">حد بيانات التحميل المسبق للقارئ</string>
+    <string name="summary_reader_prefetch_byte_budget">يحد بيانات الصور المحمّلة مسبقاً في جلسة القراءة؛ لا تُحتسب الصفحة الحالية.</string>
     <string-array name="reader_prefetch_entries">
         <item>إيقاف</item><item>صفحتان</item><item>4 صفحات</item><item>8 صفحات</item>
     </string-array>

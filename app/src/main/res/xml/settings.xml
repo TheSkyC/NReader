@@ -84,6 +84,14 @@
                 android:title="@string/title_reader_prefetch_metered"
                 android:summary="@string/summary_reader_prefetch_metered"
                 app:iconSpaceReserved="false" />
+            <ListPreference
+                android:defaultValue="16"
+                android:entries="@array/reader_prefetch_byte_budget_entries"
+                android:entryValues="@array/reader_prefetch_byte_budget_values"
+                android:key="@string/preference_key_reader_prefetch_byte_budget"
+                android:title="@string/title_reader_prefetch_byte_budget"
+                android:summary="@string/summary_reader_prefetch_byte_budget"
+                app:iconSpaceReserved="false" />
         </PreferenceCategory>
     </PreferenceScreen>
 

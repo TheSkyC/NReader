@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Baixa imagens das páginas próximas para o cache de imagens</string>
     <string name="title_reader_prefetch_metered">Permitir pré-carregamento em redes limitadas</string>
     <string name="summary_reader_prefetch_metered">Mantém a página atual como prioridade e limita o trabalho em segundo plano a duas imagens</string>
+    <string name="title_reader_prefetch_byte_budget">Limite de dados do pré-carregamento</string>
+    <string name="summary_reader_prefetch_byte_budget">Limita os dados de imagem pré-carregados por sessão; a página atual não é contabilizada.</string>
     <string-array name="reader_prefetch_entries">
         <item>Desativado</item><item>2 páginas</item><item>4 páginas</item><item>8 páginas</item>
     </string-array>

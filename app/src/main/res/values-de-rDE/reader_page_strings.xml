@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Bilder benachbarter Seiten in den Bildcache laden</string>
     <string name="title_reader_prefetch_metered">Vorabrufe in getakteten Netzwerken erlauben</string>
     <string name="summary_reader_prefetch_metered">Die aktuelle Seite bleibt priorisiert; im Hintergrund werden höchstens zwei Bilder geladen</string>
+    <string name="title_reader_prefetch_byte_budget">Datenlimit für das Vorabladen im Reader</string>
+    <string name="summary_reader_prefetch_byte_budget">Begrenzt vorab geladene Bilddaten pro Lesesitzung; die aktuelle Seite zählt nicht.</string>
     <string-array name="reader_prefetch_entries">
         <item>Aus</item><item>2 Seiten</item><item>4 Seiten</item><item>8 Seiten</item>
     </string-array>

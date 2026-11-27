@@ -12,6 +12,7 @@ import java.util.List;
 public final class ReaderPrefetchPlan {
     public static final int DEFAULT_PAGE_COUNT = 4;
     public static final int MAX_PAGE_COUNT = 8;
+    public static final long DEFAULT_BYTE_BUDGET = 16L * 1024 * 1024;
 
     private ReaderPrefetchPlan() {}
 
@@ -20,6 +21,12 @@ public final class ReaderPrefetchPlan {
         if ("2".equals(value)) return 2;
         if ("8".equals(value)) return 8;
         return DEFAULT_PAGE_COUNT;
+    }
+
+    public static long byteBudgetForValue(@Nullable String value) {
+        if ("8".equals(value)) return 8L * 1024 * 1024;
+        if ("32".equals(value)) return 32L * 1024 * 1024;
+        return DEFAULT_BYTE_BUDGET;
     }
 
     public static boolean isAllowed(int pageCount, boolean allowMetered,

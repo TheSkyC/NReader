@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">將鄰近頁面的原圖下載至圖片快取</string>
     <string name="title_reader_prefetch_metered">允許在計量網路預載</string>
     <string name="summary_reader_prefetch_metered">目前頁面維持最高優先級，背景最多同時處理兩張圖片</string>
+    <string name="title_reader_prefetch_byte_budget">閱讀器預載資料上限</string>
+    <string name="summary_reader_prefetch_byte_budget">限制單次閱讀期間預載的圖片資料量；目前頁面載入不計入。</string>
     <string-array name="reader_prefetch_entries">
         <item>關閉</item><item>2 頁</item><item>4 頁</item><item>8 頁</item>
     </string-array>

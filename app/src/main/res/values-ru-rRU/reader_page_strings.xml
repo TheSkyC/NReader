@@ -11,6 +11,8 @@
     <string name="summary_reader_prefetch">Загружать изображения ближайших страниц в кэш изображений</string>
     <string name="title_reader_prefetch_metered">Разрешить предзагрузку в сетях с оплатой за трафик</string>
     <string name="summary_reader_prefetch_metered">Текущая страница сохраняет приоритет; в фоне загружается не более двух изображений</string>
+    <string name="title_reader_prefetch_byte_budget">Лимит предзагрузки изображений</string>
+    <string name="summary_reader_prefetch_byte_budget">Ограничивает объём заранее загруженных изображений за сеанс; текущая страница не учитывается.</string>
     <string-array name="reader_prefetch_entries">
         <item>Выкл.</item><item>2 страницы</item><item>4 страницы</item><item>8 страниц</item>
     </string-array>
