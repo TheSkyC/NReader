@@ -6,7 +6,7 @@
     <string name="summary_managed_cache_usage">%1$s across managed caches</string>
     <string name="managed_cache_usage_unavailable">Some cache sizes are unavailable.</string>
     <string name="managed_cache_size_unavailable">Unavailable</string>
-    <string name="managed_cache_usage_details">Images: %1$s\nFavorite list database: %2$s\nReader snapshots: %3$s\nTotal: %4$s</string>
+    <string name="managed_cache_usage_details">Images: %1$s\nFavorite list database: %2$s\nSearch pages: %3$s\nReader snapshots: %4$s\nTotal: %5$s</string>
     <string name="preference_key_image_cache_quota" translatable="false">image_cache_quota</string>
     <string name="title_image_cache_quota">Image cache limit</string>
     <string name="summary_image_cache_quota">%1$s maximum. Changes apply after restarting NReader.</string>
@@ -20,7 +20,7 @@
     <string name="preference_key_online_favorite_state_limit" translatable="false">online_favorite_state_limit</string>
     <string name="preference_key_online_favorite_state_usage" translatable="false">online_favorite_state_usage</string>
     <string name="title_online_favorite_state_limit">Favorite status cache limit</string>
-    <string name="summary_online_favorite_state_limit">Up to %1$s confirmed states for this account. Least recently used states are evicted first.</string>
+    <string name="summary_online_favorite_state_limit">Limit for this account: %1$s. Least recently used states are evicted first.</string>
     <string name="online_favorite_state_limit_default">512 states</string>
     <string name="title_online_favorite_state_usage">Cached favorite states</string>
     <string name="summary_online_favorite_state_usage">In memory for the current account: %1$d</string>
@@ -33,7 +33,7 @@
     <string name="preference_key_online_favorite_page_metrics" translatable="false">online_favorite_page_metrics</string>
     <string name="preference_key_online_favorite_pages_clear" translatable="false">online_favorite_pages_clear</string>
     <string name="title_online_favorite_page_limit">Favorite list pages per account</string>
-    <string name="summary_online_favorite_page_limit">Keep up to %1$s visited pages per account; least recently used pages are trimmed first.</string>
+    <string name="summary_online_favorite_page_limit">Limit per account: %1$s. Least recently used pages are removed first.</string>
     <string name="online_favorite_page_limit_default">50 pages</string>
     <string name="title_online_favorite_page_quota">Favorite list cache quota</string>
     <string name="summary_online_favorite_page_quota">Shared across accounts: %1$s. Older pages are evicted first.</string>
@@ -53,6 +53,31 @@
     <string name="message_clear_online_favorite_pages">Remove saved favorite list pages for the current account? Favorite status records and other accounts are kept.</string>
     <string name="online_favorite_pages_cleared">Favorite list pages cleared</string>
     <string name="online_favorite_pages_clear_failed">Could not clear favorite list pages</string>
+    <string name="settings_search_page_cache">Search page cache</string>
+    <string name="preference_key_search_page_quota" translatable="false">search_page_quota</string>
+    <string name="preference_key_search_page_usage" translatable="false">search_page_usage</string>
+    <string name="preference_key_search_page_metrics" translatable="false">search_page_metrics</string>
+    <string name="preference_key_search_pages_clear" translatable="false">search_pages_clear</string>
+    <string name="title_search_page_quota">Search page cache quota</string>
+    <string name="summary_search_page_quota">Across stored search pages: %1$s maximum. Older pages are evicted first.</string>
+    <string name="search_page_quota_default">64 MiB</string>
+    <string name="title_search_page_usage">Cached search pages</string>
+    <string name="search_page_usage_checking">Checking search page cache…</string>
+    <string name="search_page_usage_unavailable">Search page cache usage unavailable</string>
+    <string name="search_page_never_synced">Never synced</string>
+    <string name="summary_search_page_usage">Visited pages cached: %1$d (%2$s). Last synced: %3$s.</string>
+    <string name="title_search_page_metrics">Search page cache activity</string>
+    <string name="search_page_metrics_checking">Loading search cache activity…</string>
+    <string name="search_page_metrics_unavailable">Search page cache activity unavailable.</string>
+    <string name="summary_search_page_metrics">This device: cache hits %1$d, misses %2$d (%3$s hit rate); successful refreshes %4$d, failed refreshes %5$d; evicted pages %6$d.</string>
+    <string name="summary_search_page_metrics_empty">No cache reads yet. Successful refreshes %1$d, failed refreshes %2$d; evicted pages %3$d.</string>
+    <string name="clear_search_pages">Clear cached search pages</string>
+    <string name="message_clear_search_pages">Remove all saved search result pages on this device? Other cache categories and downloaded galleries are kept.</string>
+    <string name="search_pages_cleared">Search pages cleared</string>
+    <string name="search_pages_clear_failed">Could not clear search pages</string>
+    <string name="search_page_cache_showing">Showing cached search results from %1$s while refreshing</string>
+    <string name="search_page_cache_showing_stale">Showing older cached search results from %1$s while refreshing</string>
+    <string name="search_page_cache_refresh_failed">Couldn’t refresh search results. Showing saved results.</string>
     <string-array name="image_cache_quota_entries">
         <item>250 MiB</item>
         <item>512 MiB</item>
@@ -94,5 +119,15 @@
         <item>8</item>
         <item>16</item>
         <item>32</item>
+    </string-array>
+    <string-array name="search_page_quota_entries">
+        <item>32 MiB</item>
+        <item>64 MiB</item>
+        <item>128 MiB</item>
+    </string-array>
+    <string-array name="search_page_quota_values" translatable="false">
+        <item>32</item>
+        <item>64</item>
+        <item>128</item>
     </string-array>
 </resources>

@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">Yönetilen önbelleklerin toplamı: %1$s</string>
     <string name="managed_cache_usage_unavailable">Bazı önbellek boyutları ölçülemedi.</string>
     <string name="managed_cache_size_unavailable">Kullanılamıyor</string>
-    <string name="managed_cache_usage_details">Görseller: %1$s\nFavori sayfaları veritabanı: %2$s\nOkuyucu anlık görüntüleri: %3$s\nToplam: %4$s</string>
+    <string name="managed_cache_usage_details">Görseller: %1$s\nFavori sayfaları veritabanı: %2$s\nArama sayfaları: %3$s\nOkuyucu anlık görüntüleri: %4$s\nToplam: %5$s</string>
     <string name="title_image_cache_quota">Görsel önbelleği sınırı</string>
     <string name="summary_image_cache_quota">En fazla %1$s. Değişiklik NReader yeniden başlatıldığında uygulanır.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -16,7 +16,7 @@
     <string name="image_cache_cleared">Görsel önbelleği temizlendi</string>
     <string name="image_cache_clear_failed">Görsel önbelleği temizlenemedi</string>
     <string name="title_online_favorite_state_limit">Çevrimiçi favori durumu sınırı</string>
-    <string name="summary_online_favorite_state_limit">Bu hesap için en fazla %1$s doğrulanmış durum tutulur. Uzun süredir kullanılmayan durumlar önce kaldırılır.</string>
+    <string name="summary_online_favorite_state_limit">Bu hesap için sınır: %1$s. Uzun süredir kullanılmayan durumlar önce kaldırılır.</string>
     <string name="online_favorite_state_limit_default">512 durum</string>
     <string-array name="online_favorite_state_limit_entries">
         <item>512 durum</item>
@@ -30,7 +30,7 @@
     <string name="online_favorite_cache_showing_stale">Güncelleme sırasında %1$s tarihinde kaydedilmiş eski favoriler gösteriliyor</string>
     <string name="online_favorite_cache_refresh_failed">Favoriler güncellenemedi. Kaydedilmiş sonuçlar gösteriliyor.</string>
     <string name="title_online_favorite_page_limit">Hesap başına favori listesi sayfası</string>
-    <string name="summary_online_favorite_page_limit">Hesap başına ziyaret edilen en fazla %1$s sayfayı tut; en uzun süredir kullanılmayan sayfalar önce kaldırılır.</string>
+    <string name="summary_online_favorite_page_limit">Hesap başına sınır: %1$s. Uzun süredir kullanılmayan sayfalar önce kaldırılır.</string>
     <string name="online_favorite_page_limit_default">50 sayfa</string>
     <string name="title_online_favorite_page_quota">Favori listesi önbellek kotası</string>
     <string name="summary_online_favorite_page_quota">Hesaplar arasında paylaşılır: %1$s. En eski sayfalar önce kaldırılır.</string>
@@ -56,4 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
+    <string name="settings_search_page_cache">Arama sayfası önbelleği</string>
+    <string name="title_search_page_quota">Arama sayfası önbellek kotası</string>
+    <string name="summary_search_page_quota">Kaydedilen arama sayfaları için üst sınır: %1$s. Önce eski sayfalar kaldırılır.</string>
+    <string name="search_page_quota_default">64 MiB</string>
+    <string name="title_search_page_usage">Önbelleğe alınan arama sayfaları</string>
+    <string name="search_page_usage_checking">Arama sayfası önbelleği denetleniyor…</string>
+    <string name="search_page_usage_unavailable">Arama sayfası önbelleği kullanımı alınamıyor</string>
+    <string name="search_page_never_synced">Henüz eşitlenmedi</string>
+    <string name="summary_search_page_usage">Önbellekteki ziyaret edilmiş sayfalar: %1$d (%2$s). Son eşitleme: %3$s.</string>
+    <string name="title_search_page_metrics">Arama sayfası önbelleği etkinliği</string>
+    <string name="search_page_metrics_checking">Önbellek etkinliği yükleniyor…</string>
+    <string name="search_page_metrics_unavailable">Arama sayfası önbelleği etkinliği kullanılamıyor.</string>
+    <string name="summary_search_page_metrics">Bu cihazda: önbellek isabeti %1$d, kaçırma %2$d (%3$s isabet); başarılı yenileme %4$d, başarısız %5$d; kaldırılan sayfa %6$d.</string>
+    <string name="summary_search_page_metrics_empty">Henüz önbellek okuması yok. Başarılı yenileme %1$d, başarısız %2$d; kaldırılan sayfa %3$d.</string>
+    <string name="clear_search_pages">Kaydedilen arama sayfalarını temizle</string>
+    <string name="message_clear_search_pages">Bu cihazdaki tüm kaydedilmiş arama sonucu sayfaları kaldırılsın mı? Diğer önbellek kategorileri ve indirilen galeriler korunur.</string>
+    <string name="search_pages_cleared">Arama sayfaları temizlendi</string>
+    <string name="search_pages_clear_failed">Arama sayfaları temizlenemedi</string>
+    <string name="search_page_cache_showing">Yenilenirken %1$s tarihli kaydedilmiş arama sonuçları gösteriliyor</string>
+    <string name="search_page_cache_showing_stale">Yenilenirken %1$s tarihli eski arama sonuçları gösteriliyor</string>
+    <string name="search_page_cache_refresh_failed">Arama sonuçları yenilenemedi. Kaydedilmiş sonuçlar gösteriliyor.</string>
 </resources>

@@ -27,17 +27,21 @@ public final class ManagedCacheStorage {
     public static final class Usage {
         public final long imageBytes;
         public final long favoritePageBytes;
+        public final long searchPageBytes;
         public final long readerSnapshotBytes;
 
-        Usage(long imageBytes, long favoritePageBytes, long readerSnapshotBytes) {
+        Usage(long imageBytes, long favoritePageBytes, long searchPageBytes, long readerSnapshotBytes) {
             this.imageBytes = imageBytes;
             this.favoritePageBytes = favoritePageBytes;
+            this.searchPageBytes = searchPageBytes;
             this.readerSnapshotBytes = readerSnapshotBytes;
         }
 
         public long totalBytes() {
-            if (imageBytes < 0 || favoritePageBytes < 0 || readerSnapshotBytes < 0) return UNAVAILABLE;
+            if (imageBytes < 0 || favoritePageBytes < 0 || searchPageBytes < 0 || readerSnapshotBytes < 0)
+                return UNAVAILABLE;
             long total = saturatedAdd(imageBytes, favoritePageBytes);
+            total = saturatedAdd(total, searchPageBytes);
             return saturatedAdd(total, readerSnapshotBytes);
         }
     }
@@ -58,6 +62,7 @@ public final class ManagedCacheStorage {
         return new Usage(
             measureDirectory(CacheDirectories.imageDiskCache(cacheDirectory), "image"),
             measureDirectory(CacheDirectories.favoritePageCache(cacheDirectory), "favorite pages"),
+            measureDirectory(CacheDirectories.searchPageCache(cacheDirectory), "search pages"),
             measureDirectory(CacheDirectories.readerTileSnapshots(cacheDirectory), "reader snapshots"));
     }
 

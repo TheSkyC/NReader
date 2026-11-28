@@ -125,7 +125,7 @@ public class LocalizationTest {
             assertFalse(languageTag, resources.getString(R.string.title_managed_cache_usage).isEmpty());
             String summary = resources.getString(R.string.summary_managed_cache_usage, "12 MB");
             String details = resources.getString(R.string.managed_cache_usage_details,
-                "1 MB", "2 MB", "3 MB", "6 MB");
+                "1 MB", "2 MB", "3 MB", "4 MB", "10 MB");
             assertFalse(languageTag, summary.contains("%"));
             assertFalse(languageTag, details.contains("%"));
         }
@@ -150,6 +150,38 @@ public class LocalizationTest {
                 || summary.contains("%5$") || summary.contains("%6$"));
             assertFalse(languageTag, empty.contains("%1$") || empty.contains("%2$")
                 || empty.contains("%3$"));
+        }
+    }
+
+    @Test
+    public void searchPageCacheSettingsAreLocalizedAndFormatCounts() {
+        String[] locales = {"en-US", "ar-SA", "de-DE", "es-ES", "fr-FR", "it-IT", "ja-JP",
+            "pt-BR", "ru-RU", "tr-TR", "uk-UA", "zh-CN", "zh-TW"};
+        String[] quotaValues = {"32", "64", "128"};
+        for (String languageTag : locales) {
+            Resources resources = resources(languageTag);
+            assertFalse(languageTag, resources.getString(R.string.settings_search_page_cache).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.title_search_page_quota).isEmpty());
+            assertFalse(languageTag, resources.getString(R.string.title_search_page_usage).isEmpty());
+            String summary = resources.getString(R.string.summary_search_page_usage, 12, "3 MB", "now");
+            String metrics = resources.getString(R.string.summary_search_page_metrics,
+                12, 3, "80%", 9, 1, 4);
+            String empty = resources.getString(R.string.summary_search_page_metrics_empty, 9, 1, 4);
+            String details = resources.getString(R.string.managed_cache_usage_details,
+                "1 MB", "2 MB", "3 MB", "4 MB", "10 MB");
+            String stalePage = resources.getString(R.string.search_page_cache_showing_stale, "2026-11-28");
+            assertArrayEquals(languageTag, quotaValues,
+                resources.getStringArray(R.array.search_page_quota_values));
+            assertFalse(languageTag, summary.contains("%1$") || summary.contains("%2$")
+                || summary.contains("%3$"));
+            assertFalse(languageTag, metrics.contains("%1$") || metrics.contains("%2$")
+                || metrics.contains("%3$") || metrics.contains("%4$")
+                || metrics.contains("%5$") || metrics.contains("%6$"));
+            assertFalse(languageTag, empty.contains("%1$") || empty.contains("%2$")
+                || empty.contains("%3$"));
+            assertFalse(languageTag, details.contains("%1$") || details.contains("%2$")
+                || details.contains("%3$") || details.contains("%4$") || details.contains("%5$"));
+            assertFalse(languageTag, stalePage.contains("%1$"));
         }
     }
 }

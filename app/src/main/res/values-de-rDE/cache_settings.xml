@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">In verwalteten Caches: %1$s</string>
     <string name="managed_cache_usage_unavailable">Einige Cachegrößen sind nicht verfügbar.</string>
     <string name="managed_cache_size_unavailable">Nicht verfügbar</string>
-    <string name="managed_cache_usage_details">Bilder: %1$s\nFavoritenseiten-Datenbank: %2$s\nLeser-Snapshots: %3$s\nGesamt: %4$s</string>
+    <string name="managed_cache_usage_details">Bilder: %1$s\nFavoritenseiten-Datenbank: %2$s\nSuchseiten: %3$s\nLeser-Snapshots: %4$s\nGesamt: %5$s</string>
     <string name="title_image_cache_quota">Limit für den Bildcache</string>
     <string name="summary_image_cache_quota">Maximal %1$s. Änderungen gelten nach einem Neustart von NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -16,7 +16,7 @@
     <string name="image_cache_cleared">Bildcache geleert</string>
     <string name="image_cache_clear_failed">Bildcache konnte nicht geleert werden</string>
     <string name="title_online_favorite_state_limit">Limit für Online-Favoritenstatus</string>
-    <string name="summary_online_favorite_state_limit">Bis zu %1$s bestätigte Status für dieses Konto. Am längsten nicht verwendete Status werden zuerst entfernt.</string>
+    <string name="summary_online_favorite_state_limit">Limit für dieses Konto: %1$s. Am längsten nicht verwendete Status werden zuerst entfernt.</string>
     <string name="online_favorite_state_limit_default">512 Status</string>
     <string-array name="online_favorite_state_limit_entries">
         <item>512 Status</item>
@@ -30,7 +30,7 @@
     <string name="online_favorite_cache_showing_stale">Ältere gespeicherte Favoriten vom %1$s werden während der Aktualisierung angezeigt</string>
     <string name="online_favorite_cache_refresh_failed">Favoriten konnten nicht aktualisiert werden. Gespeicherte Ergebnisse werden angezeigt.</string>
     <string name="title_online_favorite_page_limit">Favoritenseiten pro Konto</string>
-    <string name="summary_online_favorite_page_limit">Bis zu %1$s besuchte Seiten pro Konto behalten; am längsten nicht verwendete Seiten werden zuerst entfernt.</string>
+    <string name="summary_online_favorite_page_limit">Limit pro Konto: %1$s. Am längsten nicht verwendete Seiten werden zuerst entfernt.</string>
     <string name="online_favorite_page_limit_default">50 Seiten</string>
     <string name="title_online_favorite_page_quota">Cachelimit für Favoritenseiten</string>
     <string name="summary_online_favorite_page_quota">Für alle Konten gemeinsam: %1$s. Ältere Seiten werden zuerst entfernt.</string>
@@ -56,4 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
+    <string name="settings_search_page_cache">Suchseiten-Cache</string>
+    <string name="title_search_page_quota">Kontingent für Suchseiten-Cache</string>
+    <string name="summary_search_page_quota">Maximal für gespeicherte Suchseiten: %1$s. Ältere Seiten werden zuerst entfernt.</string>
+    <string name="search_page_quota_default">64 MiB</string>
+    <string name="title_search_page_usage">Gespeicherte Suchseiten</string>
+    <string name="search_page_usage_checking">Suchseiten-Cache wird geprüft…</string>
+    <string name="search_page_usage_unavailable">Belegung des Suchseiten-Caches nicht verfügbar</string>
+    <string name="search_page_never_synced">Noch nie synchronisiert</string>
+    <string name="summary_search_page_usage">Besuchte Seiten im Cache: %1$d (%2$s). Zuletzt synchronisiert: %3$s.</string>
+    <string name="title_search_page_metrics">Aktivität des Suchseiten-Caches</string>
+    <string name="search_page_metrics_checking">Cache-Aktivität wird geladen…</string>
+    <string name="search_page_metrics_unavailable">Aktivität des Suchseiten-Caches nicht verfügbar.</string>
+    <string name="summary_search_page_metrics">Dieses Gerät: Cache-Treffer %1$d, Fehlversuche %2$d (%3$s Trefferquote); erfolgreiche Aktualisierungen %4$d, fehlgeschlagene %5$d; entfernte Seiten %6$d.</string>
+    <string name="summary_search_page_metrics_empty">Noch keine Cache-Aufrufe. Erfolgreiche Aktualisierungen %1$d, fehlgeschlagene %2$d; entfernte Seiten %3$d.</string>
+    <string name="clear_search_pages">Gespeicherte Suchseiten löschen</string>
+    <string name="message_clear_search_pages">Alle gespeicherten Suchergebnisse auf diesem Gerät entfernen? Andere Cache-Kategorien und heruntergeladene Galerien bleiben erhalten.</string>
+    <string name="search_pages_cleared">Suchseiten gelöscht</string>
+    <string name="search_pages_clear_failed">Suchseiten konnten nicht gelöscht werden</string>
+    <string name="search_page_cache_showing">Gespeicherte Suchergebnisse von %1$s werden während der Aktualisierung angezeigt</string>
+    <string name="search_page_cache_showing_stale">Ältere gespeicherte Suchergebnisse von %1$s werden während der Aktualisierung angezeigt</string>
+    <string name="search_page_cache_refresh_failed">Suchergebnisse konnten nicht aktualisiert werden. Gespeicherte Ergebnisse werden angezeigt.</string>
 </resources>

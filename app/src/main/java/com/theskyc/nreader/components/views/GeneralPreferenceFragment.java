@@ -50,6 +50,7 @@ import com.theskyc.nreader.UpdateCenterActivity;
 import com.theskyc.nreader.StatusManagerActivity;
 import com.theskyc.nreader.api.OnlineFavoriteClient;
 import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
+import com.theskyc.nreader.async.database.SearchPageStore;
 import com.theskyc.nreader.async.MetadataFetcher;
 import com.theskyc.nreader.async.VersionChecker;
 import com.theskyc.nreader.async.database.export.Importer;
@@ -92,6 +93,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private final AtomicInteger snapshotCheckGeneration = new AtomicInteger();
     private final AtomicInteger favoritePageCacheGeneration = new AtomicInteger();
     private final AtomicInteger favoritePageMetricsGeneration = new AtomicInteger();
+    private final AtomicInteger searchPageCacheGeneration = new AtomicInteger();
+    private final AtomicInteger searchPageMetricsGeneration = new AtomicInteger();
     private final AtomicInteger managedCacheGeneration = new AtomicInteger();
     @Nullable private ManagedCacheStorage.Usage managedCacheUsage;
     private final IntConsumer favoriteCacheObserver = galleryId -> {
@@ -455,6 +458,7 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                     .setMessage(getString(R.string.managed_cache_usage_details,
                         formatManagedCacheBytes(usage.imageBytes),
                         formatManagedCacheBytes(usage.favoritePageBytes),
+                        formatManagedCacheBytes(usage.searchPageBytes),
                         formatManagedCacheBytes(usage.readerSnapshotBytes),
                         formatManagedCacheBytes(usage.totalBytes())))
                     .setPositiveButton(android.R.string.ok, null)
@@ -515,6 +519,37 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                     .setMessage(R.string.message_clear_online_favorite_pages)
                     .setNegativeButton(R.string.no, null)
                     .setPositiveButton(R.string.yes, (dialog, which) -> clearFavoritePages(identity, clearFavoritePages))
+                    .show();
+                return true;
+            });
+
+            ListPreference searchPageQuota = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_search_page_quota)));
+            searchPageQuota.setSummaryProvider(preference -> {
+                CharSequence entry = ((ListPreference) preference).getEntry();
+                return getString(R.string.summary_search_page_quota,
+                    entry == null ? getString(R.string.search_page_quota_default) : entry);
+            });
+            searchPageQuota.setOnPreferenceChangeListener((preference, newValue) -> {
+                scheduleSearchPageCacheTrim();
+                return true;
+            });
+
+            Preference searchPageUsage = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_search_page_usage)));
+            searchPageUsage.setSelectable(false);
+            Preference searchPageMetrics = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_search_page_metrics)));
+            searchPageMetrics.setSelectable(false);
+            Preference clearSearchPages = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_search_pages_clear)));
+            clearSearchPages.setEnabled(false);
+            clearSearchPages.setOnPreferenceClickListener(preference -> {
+                new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.clear_search_pages)
+                    .setMessage(R.string.message_clear_search_pages)
+                    .setNegativeButton(R.string.no, null)
+                    .setPositiveButton(R.string.yes, (dialog, which) -> clearSearchPages(clearSearchPages))
                     .show();
                 return true;
             });
@@ -681,6 +716,12 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         }
         if (findPreference(getString(R.string.preference_key_online_favorite_page_metrics)) != null)
             updateFavoritePageCacheMetrics();
+        if (findPreference(getString(R.string.preference_key_search_page_usage)) != null) {
+            scheduleSearchPageCacheTrim();
+            updateSearchPageCacheUsage();
+        }
+        if (findPreference(getString(R.string.preference_key_search_page_metrics)) != null)
+            updateSearchPageCacheMetrics();
         Preference accountTags = findPreference(getString(R.string.preference_key_use_account_tag));
         if (accountTags != null) updateAccountTagAvailability(accountTags);
         Preference restore = findPreference(getString(R.string.preference_key_restore_snapshot));
@@ -691,6 +732,8 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     public void onPause() {
         favoritePageCacheGeneration.incrementAndGet();
         favoritePageMetricsGeneration.incrementAndGet();
+        searchPageCacheGeneration.incrementAndGet();
+        searchPageMetricsGeneration.incrementAndGet();
         managedCacheGeneration.incrementAndGet();
         OnlineFavoriteClient.removeObserver(favoriteCacheObserver);
         super.onPause();
@@ -733,6 +776,168 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             usage.setSummary(getString(R.string.summary_online_favorite_state_usage,
                 OnlineFavoriteClient.cachedStateCount(act)));
         }
+    }
+
+    private void scheduleSearchPageCacheTrim() {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        MAIN_HANDLER.post(() -> FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            SearchPageStore store = null;
+            try {
+                store = SearchPageStore.open(activity.getApplicationContext());
+                store.trimToLimits();
+            } catch (RuntimeException error) {
+                LogUtility.w("Unable to apply search page cache settings", error);
+            } finally {
+                if (store != null) store.close();
+            }
+            MAIN_HANDLER.post(() -> {
+                updateSearchPageCacheUsage();
+                updateManagedCacheUsage();
+            });
+        }));
+    }
+
+    private void updateSearchPageCacheUsage() {
+        SettingsActivity activity = act;
+        if (!isAdded() || activity == null) return;
+        Preference usage = findPreference(getString(R.string.preference_key_search_page_usage));
+        Preference clear = findPreference(getString(R.string.preference_key_search_pages_clear));
+        if (usage == null || clear == null) return;
+
+        int generation = searchPageCacheGeneration.incrementAndGet();
+        clear.setEnabled(false);
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            SearchPageStore.PageStats stats = null;
+            RuntimeException failure = null;
+            SearchPageStore store = null;
+            try {
+                store = SearchPageStore.open(application);
+                stats = store.stats();
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                }
+            }
+            SearchPageStore.PageStats result = stats;
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || searchPageCacheGeneration.get() != generation) return;
+                if (error != null || result == null) {
+                    usage.setSummary(R.string.search_page_usage_unavailable);
+                    clear.setEnabled(false);
+                    return;
+                }
+                String lastSynced = result.lastSyncedAt <= 0
+                    ? getString(R.string.search_page_never_synced)
+                    : DateUtils.getRelativeTimeSpanString(result.lastSyncedAt,
+                        System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString();
+                usage.setSummary(getString(R.string.summary_search_page_usage,
+                    result.pageCount, Formatter.formatFileSize(activity, result.bytes), lastSynced));
+                clear.setEnabled(result.pageCount > 0);
+            });
+        });
+    }
+
+    private void updateSearchPageCacheMetrics() {
+        SettingsActivity activity = act;
+        if (!isAdded() || activity == null) return;
+        Preference metrics = findPreference(getString(R.string.preference_key_search_page_metrics));
+        if (metrics == null) return;
+
+        int generation = searchPageMetricsGeneration.incrementAndGet();
+        metrics.setSummary(R.string.search_page_metrics_checking);
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            SearchPageStore.CacheMetrics stats = null;
+            RuntimeException failure = null;
+            SearchPageStore store = null;
+            try {
+                store = SearchPageStore.open(application);
+                stats = store.cacheMetrics();
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                }
+            }
+            SearchPageStore.CacheMetrics result = stats;
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || searchPageMetricsGeneration.get() != generation) return;
+                if (error != null || result == null) {
+                    metrics.setSummary(R.string.search_page_metrics_unavailable);
+                    return;
+                }
+                long lookups = result.cacheHits > Long.MAX_VALUE - result.cacheMisses
+                    ? Long.MAX_VALUE : result.cacheHits + result.cacheMisses;
+                if (lookups == 0) {
+                    metrics.setSummary(getString(R.string.summary_search_page_metrics_empty,
+                        result.refreshSuccesses, result.refreshFailures, result.pageEvictions));
+                    return;
+                }
+                String hitRate = NumberFormat.getPercentInstance(
+                    activity.getResources().getConfiguration().getLocales().get(0))
+                    .format((double) result.cacheHits / lookups);
+                metrics.setSummary(getString(R.string.summary_search_page_metrics,
+                    result.cacheHits, result.cacheMisses, hitRate, result.refreshSuccesses,
+                    result.refreshFailures, result.pageEvictions));
+            });
+        });
+    }
+
+    private void clearSearchPages(Preference clearPreference) {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        clearPreference.setEnabled(false);
+        int generation = searchPageCacheGeneration.incrementAndGet();
+        SearchPageStore.markClearPending();
+        Context application = activity.getApplicationContext();
+        FAVORITE_PAGE_CACHE_WORKER.execute(() -> {
+            RuntimeException failure = null;
+            SearchPageStore store = null;
+            try {
+                store = SearchPageStore.open(application);
+                store.clearAll();
+            } catch (RuntimeException error) {
+                failure = error;
+            } finally {
+                if (store != null) {
+                    try {
+                        store.close();
+                    } catch (RuntimeException error) {
+                        if (failure == null) failure = error;
+                    }
+                } else {
+                    SearchPageStore.cancelPendingClear();
+                }
+            }
+            RuntimeException error = failure;
+            MAIN_HANDLER.post(() -> {
+                if (!isAdded() || getActivity() != activity || activity.isFinishing()
+                    || searchPageCacheGeneration.get() != generation) return;
+                Toast.makeText(activity, error == null
+                    ? R.string.search_pages_cleared : R.string.search_pages_clear_failed,
+                    Toast.LENGTH_SHORT).show();
+                updateSearchPageCacheUsage();
+                updateSearchPageCacheMetrics();
+                updateManagedCacheUsage();
+            });
+        });
     }
 
     private void scheduleFavoritePageCacheTrim() {

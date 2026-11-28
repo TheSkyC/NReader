@@ -11,6 +11,7 @@ import java.io.File;
 public final class CacheDirectories {
     private static final String IMAGE_DISK_CACHE = "image_manager_disk_cache";
     private static final String FAVORITE_PAGE_CACHE = "online_favorite_pages";
+    private static final String SEARCH_PAGE_CACHE = "search_pages";
     private static final String READER_TILE_SNAPSHOTS = "reader-tile-snapshots";
 
     private CacheDirectories() {
@@ -34,6 +35,16 @@ public final class CacheDirectories {
     @NonNull
     static File favoritePageCache(@NonNull File cacheDirectory) {
         return new File(cacheDirectory, FAVORITE_PAGE_CACHE);
+    }
+
+    @NonNull
+    public static File searchPageCache(@NonNull Context context) {
+        return searchPageCache(context.getApplicationContext().getCacheDir());
+    }
+
+    @NonNull
+    static File searchPageCache(@NonNull File cacheDirectory) {
+        return new File(cacheDirectory, SEARCH_PAGE_CACHE);
     }
 
     @NonNull

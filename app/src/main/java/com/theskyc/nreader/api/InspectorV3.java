@@ -22,6 +22,7 @@ import com.theskyc.nreader.api.enums.TagType;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
 import com.theskyc.nreader.async.database.Queries;
+import com.theskyc.nreader.async.database.SearchPageStore;
 import com.theskyc.nreader.async.database.TagCatalog;
 import com.theskyc.nreader.settings.ApiAuthInterceptor;
 import com.theskyc.nreader.settings.AuthStore;
@@ -91,14 +92,29 @@ public class InspectorV3 extends Thread implements Parcelable {
     private volatile long favoriteAuthGeneration = -1;
     @Nullable private OnlineFavoritePageStore favoritePageStore;
     @Nullable private OnlineFavoritePageStore.Request favoritePageRequest;
+    @Nullable private SearchPageStore searchPageStore;
+    @Nullable private SearchPageStore.Request searchPageRequest;
+    @Nullable private String searchCacheIdentity;
+    private long searchAuthGeneration = -1;
+    private boolean searchAccountScopedCache;
     private boolean favoriteCacheHit;
     private boolean favoriteNetworkRequestAttempted;
     private boolean favoriteRefreshSucceeded;
+    private boolean searchNetworkRequestAttempted;
+    private boolean searchRefreshSucceeded;
 
     public boolean isFavoriteIdentityCurrent() {
         if (requestType != ApiRequestType.FAVORITE && requestType != ApiRequestType.RANDOM_FAVORITE) return true;
         return favoriteAuthGeneration < 0
             || favoriteAuthGeneration == com.theskyc.nreader.settings.AuthStore.identityGeneration();
+    }
+
+    private boolean isSearchIdentityCurrent() {
+        if (!searchAccountScopedCache) return true;
+        Context requestContext = context.get();
+        return searchAuthGeneration >= 0 && requestContext != null
+            && searchAuthGeneration == AuthStore.identityGeneration()
+            && Objects.equals(searchCacheIdentity, AuthStore.activeIdentity(requestContext));
     }
 
     public void cancelRequest() {
@@ -504,6 +520,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         activeCall = call;
         if (canceled) call.cancel();
         if (requestType == ApiRequestType.FAVORITE) favoriteNetworkRequestAttempted = true;
+        else if (requestType == ApiRequestType.BYSEARCH) searchNetworkRequestAttempted = true;
         try (Response response = call.execute()) {
             responseCode = response.code();
             retryAfter = response.header("Retry-After");
@@ -554,23 +571,37 @@ public class InspectorV3 extends Thread implements Parcelable {
         if (deliveryResponse != null) deliveryResponse.onStart();
         try {
             if (requestType == ApiRequestType.FAVORITE) loadFavoritePageCache();
+            else if (requestType == ApiRequestType.BYSEARCH) loadSearchPageCache();
             favoriteCacheHit = false;
             if (!createDocument()) throw new IOException("API request failed: HTTP " + responseCode);
-            String responseForCache = requestType == ApiRequestType.FAVORITE ? jsonResponse : null;
+            String favoriteResponseForCache = requestType == ApiRequestType.FAVORITE ? jsonResponse : null;
+            String searchResponseForCache = requestType == ApiRequestType.BYSEARCH ? jsonResponse : null;
             parseDocument();
-            if (favoritePageStore != null && favoritePageRequest != null && responseForCache != null
+            if (favoritePageStore != null && favoritePageRequest != null && favoriteResponseForCache != null
                 && responseCode == HttpURLConnection.HTTP_OK && !canceled && resultCurrent.getAsBoolean()
                 && isFavoriteIdentityCurrent() && favoritePageStore.recordRefreshSuccess(favoritePageRequest)) {
                 favoriteRefreshSucceeded = true;
                 try {
-                    favoritePageStore.save(favoritePageRequest, responseForCache, pageCount,
+                    favoritePageStore.save(favoritePageRequest, favoriteResponseForCache, pageCount,
                         System.currentTimeMillis());
                 } catch (RuntimeException error) {
                     LogUtility.w("Unable to update online favorite page cache", error);
                 }
             }
+            if (searchPageStore != null && searchPageRequest != null && searchResponseForCache != null
+                && responseCode == HttpURLConnection.HTTP_OK && !canceled && resultCurrent.getAsBoolean()
+                && isSearchIdentityCurrent() && isAccountTagScopeCurrent()
+                && searchPageStore.recordRefreshSuccess(searchPageRequest)) {
+                searchRefreshSucceeded = true;
+                try {
+                    searchPageStore.save(searchPageRequest, searchResponseForCache, pageCount,
+                        System.currentTimeMillis());
+                } catch (RuntimeException error) {
+                    LogUtility.w("Unable to update search page cache", error);
+                }
+            }
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isFavoriteIdentityCurrent()
-                && isAccountTagScopeCurrent()) {
+                && isSearchIdentityCurrent() && isAccountTagScopeCurrent()) {
                 deliveryResponse.onSuccess(galleries);
             }
             if (pendingRelated != null && deferredRelatedResponse != null && !canceled) {
@@ -585,14 +616,22 @@ public class InspectorV3 extends Thread implements Parcelable {
             }
         } catch (Exception e) {
             recordFavoriteRefreshFailure();
+            recordSearchRefreshFailure();
             if (deliveryResponse != null && resultCurrent.getAsBoolean() && isAccountTagScopeCurrent()
-                && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent())) deliveryResponse.onFailure(e);
+                && (favoriteAuthGeneration < 0 || isFavoriteIdentityCurrent()) && isSearchIdentityCurrent())
+                deliveryResponse.onFailure(e);
         } finally {
             if (favoritePageStore != null) {
                 if (favoritePageRequest != null) favoritePageStore.finishRequest(favoritePageRequest);
                 favoritePageStore.close();
                 favoritePageStore = null;
                 favoritePageRequest = null;
+            }
+            if (searchPageStore != null) {
+                if (searchPageRequest != null) searchPageStore.finishRequest(searchPageRequest);
+                searchPageStore.close();
+                searchPageStore = null;
+                searchPageRequest = null;
             }
         }
         if (deliveryResponse != null) deliveryResponse.onEnd();
@@ -644,6 +683,65 @@ public class InspectorV3 extends Thread implements Parcelable {
             || !resultCurrent.getAsBoolean() || !isFavoriteIdentityCurrent()
             || favoritePageStore == null || favoritePageRequest == null) return;
         favoritePageStore.recordRefreshFailure(favoritePageRequest);
+    }
+
+    private void loadSearchPageCache() {
+        Context requestContext = context.get();
+        if (requestContext == null || canceled || !resultCurrent.getAsBoolean()
+            || !isAccountTagScopeCurrent()) return;
+
+        searchAccountScopedCache = accountTagScope != null;
+        if (searchAccountScopedCache) {
+            searchAuthGeneration = AuthStore.identityGeneration();
+            searchCacheIdentity = AuthStore.activeIdentity(requestContext);
+            if (searchAuthGeneration < 0 || searchCacheIdentity == null) return;
+        } else {
+            searchAuthGeneration = -1;
+            searchCacheIdentity = null;
+        }
+
+        String requestUrl = resolveRequestUrl(requestContext, false);
+        try {
+            searchPageStore = SearchPageStore.open(requestContext);
+            searchPageRequest = searchPageStore.beginRequest(searchCacheIdentity, requestUrl);
+        } catch (RuntimeException error) {
+            if (searchPageStore != null) searchPageStore.close();
+            searchPageStore = null;
+            LogUtility.w("Search page cache is unavailable", error);
+            return;
+        }
+
+        SearchPageStore.CachedPage cached = searchPageStore.load(searchPageRequest,
+            System.currentTimeMillis());
+        if (cached == null || canceled || !resultCurrent.getAsBoolean() || !isSearchIdentityCurrent()
+            || !isAccountTagScopeCurrent() || !searchPageStore.isCurrent(searchPageRequest)) return;
+
+        responseCode = HttpURLConnection.HTTP_OK;
+        pageCount = cached.pageCount;
+        jsonResponse = cached.payload;
+        try {
+            parseDocument();
+        } catch (Exception error) {
+            searchPageStore.recordCacheMiss(searchPageRequest);
+            searchPageStore.delete(searchPageRequest);
+            galleries = null;
+            pageCount = -1;
+            jsonResponse = null;
+            LogUtility.w("Discarded invalid search page cache", error);
+            return;
+        }
+        if (deliveryResponse != null && resultCurrent.getAsBoolean() && !canceled
+            && isSearchIdentityCurrent() && isAccountTagScopeCurrent()
+            && searchPageStore.recordCacheHit(searchPageRequest)) {
+            deliveryResponse.onCacheHit(galleries, cached.syncedAt);
+        }
+    }
+
+    private void recordSearchRefreshFailure() {
+        if (!searchNetworkRequestAttempted || searchRefreshSucceeded || canceled
+            || !resultCurrent.getAsBoolean() || !isSearchIdentityCurrent() || !isAccountTagScopeCurrent()
+            || searchPageStore == null || searchPageRequest == null) return;
+        searchPageStore.recordRefreshFailure(searchPageRequest);
     }
 
     private void filterDocumentTags() {

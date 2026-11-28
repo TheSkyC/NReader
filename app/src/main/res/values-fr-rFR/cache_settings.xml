@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">Total des caches gérés : %1$s</string>
     <string name="managed_cache_usage_unavailable">La taille de certains caches est indisponible.</string>
     <string name="managed_cache_size_unavailable">Indisponible</string>
-    <string name="managed_cache_usage_details">Images : %1$s\nBase de données des favoris : %2$s\nInstantanés du lecteur : %3$s\nTotal : %4$s</string>
+    <string name="managed_cache_usage_details">Images : %1$s\nBase de données des favoris : %2$s\nPages de recherche : %3$s\nInstantanés du lecteur : %4$s\nTotal : %5$s</string>
     <string name="title_image_cache_quota">Limite du cache d’images</string>
     <string name="summary_image_cache_quota">Maximum : %1$s. Le changement prend effet après le redémarrage de NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -16,7 +16,7 @@
     <string name="image_cache_cleared">Cache d’images vidé</string>
     <string name="image_cache_clear_failed">Impossible de vider le cache d’images</string>
     <string name="title_online_favorite_state_limit">Limite des états de favoris en ligne</string>
-    <string name="summary_online_favorite_state_limit">Jusqu’à %1$s états confirmés pour ce compte. Les états les moins récemment utilisés sont supprimés en premier.</string>
+    <string name="summary_online_favorite_state_limit">Limite pour ce compte : %1$s. Les états les moins récemment utilisés sont supprimés en premier.</string>
     <string name="online_favorite_state_limit_default">512 états</string>
     <string-array name="online_favorite_state_limit_entries">
         <item>512 états</item>
@@ -30,7 +30,7 @@
     <string name="online_favorite_cache_showing_stale">Anciens favoris enregistrés le %1$s affichés pendant l’actualisation</string>
     <string name="online_favorite_cache_refresh_failed">Impossible d’actualiser les favoris. Les résultats enregistrés restent affichés.</string>
     <string name="title_online_favorite_page_limit">Pages de favoris par compte</string>
-    <string name="summary_online_favorite_page_limit">Conserver jusqu’à %1$s pages consultées par compte ; les moins récemment utilisées sont supprimées en premier.</string>
+    <string name="summary_online_favorite_page_limit">Limite par compte : %1$s. Les pages les moins récemment utilisées sont supprimées en premier.</string>
     <string name="online_favorite_page_limit_default">50 pages</string>
     <string name="title_online_favorite_page_quota">Quota du cache des favoris</string>
     <string name="summary_online_favorite_page_quota">Partagé entre les comptes : %1$s. Les pages les plus anciennes sont supprimées en premier.</string>
@@ -56,4 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
+    <string name="settings_search_page_cache">Cache des pages de recherche</string>
+    <string name="title_search_page_quota">Limite du cache des pages de recherche</string>
+    <string name="summary_search_page_quota">Maximum pour les pages de recherche enregistrées : %1$s. Les pages les plus anciennes sont supprimées en premier.</string>
+    <string name="search_page_quota_default">64 MiB</string>
+    <string name="title_search_page_usage">Pages de recherche enregistrées</string>
+    <string name="search_page_usage_checking">Vérification du cache de recherche…</string>
+    <string name="search_page_usage_unavailable">Utilisation du cache de recherche indisponible</string>
+    <string name="search_page_never_synced">Jamais synchronisé</string>
+    <string name="summary_search_page_usage">Pages visitées en cache : %1$d (%2$s). Dernière synchronisation : %3$s.</string>
+    <string name="title_search_page_metrics">Activité du cache de recherche</string>
+    <string name="search_page_metrics_checking">Chargement de l’activité du cache…</string>
+    <string name="search_page_metrics_unavailable">Activité du cache de recherche indisponible.</string>
+    <string name="summary_search_page_metrics">Cet appareil : succès du cache %1$d, échecs %2$d (%3$s de réussite) ; actualisations réussies %4$d, échouées %5$d ; pages supprimées %6$d.</string>
+    <string name="summary_search_page_metrics_empty">Aucune lecture du cache pour l’instant. Actualisations réussies %1$d, échouées %2$d ; pages supprimées %3$d.</string>
+    <string name="clear_search_pages">Effacer les pages de recherche enregistrées</string>
+    <string name="message_clear_search_pages">Supprimer toutes les pages de résultats enregistrées sur cet appareil ? Les autres catégories de cache et les galeries téléchargées sont conservées.</string>
+    <string name="search_pages_cleared">Pages de recherche effacées</string>
+    <string name="search_pages_clear_failed">Impossible d’effacer les pages de recherche</string>
+    <string name="search_page_cache_showing">Affichage des résultats de recherche enregistrés du %1$s pendant l’actualisation</string>
+    <string name="search_page_cache_showing_stale">Affichage d’anciens résultats de recherche enregistrés du %1$s pendant l’actualisation</string>
+    <string name="search_page_cache_refresh_failed">Impossible d’actualiser les résultats. Les résultats enregistrés sont affichés.</string>
 </resources>

@@ -58,6 +58,7 @@ import com.theskyc.nreader.adapters.ListAdapter;
 import com.theskyc.nreader.api.AccountSearchTags;
 import com.theskyc.nreader.api.InspectorV3;
 import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
+import com.theskyc.nreader.async.database.SearchPageStore;
 import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.api.components.Ranges;
@@ -196,6 +197,7 @@ public class MainActivity extends BaseActivity
     private long headerProfileGeneration = -1;
     private long favoriteInspectorGeneration = -1;
     private boolean showingCachedFavoritePage;
+    private boolean showingCachedSearchPage;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
         resetDataset = new MainInspectorResponse() {
@@ -1574,7 +1576,12 @@ public class MainActivity extends BaseActivity
     abstract class MainInspectorResponse extends InspectorV3.DefaultInspectorResponse {
         @Override
         public void onSuccess(List<GenericGallery> galleries) {
-            if (this == resetDataset) showingCachedFavoritePage = false;
+            if (this == resetDataset) {
+                boolean replacingCachedPage = showingCachedFavoritePage || showingCachedSearchPage;
+                showingCachedFavoritePage = false;
+                showingCachedSearchPage = false;
+                if (replacingCachedPage) hideError();
+            }
             super.onSuccess(galleries);
             if (adapter != null) adapter.resetStatuses();
             if (galleries.isEmpty() && (adapter == null || adapter.getItemCount() == 0))
@@ -1585,7 +1592,8 @@ public class MainActivity extends BaseActivity
 
         @Override
         public void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
-            showingCachedFavoritePage = true;
+            if (modeType == ModeType.FAVORITE) showingCachedFavoritePage = true;
+            if (modeType == ModeType.SEARCH) showingCachedSearchPage = true;
             if (adapter != null) {
                 adapter.resetStatuses();
                 if (this == addDataset) adapter.addGalleries(galleries);
@@ -1599,15 +1607,24 @@ public class MainActivity extends BaseActivity
             java.util.Date syncedDate = new java.util.Date(syncedAt);
             String formattedDate = android.text.format.DateFormat.getDateFormat(MainActivity.this).format(syncedDate)
                 + " " + android.text.format.DateFormat.getTimeFormat(MainActivity.this).format(syncedDate);
-            int message = OnlineFavoritePageStore.isFresh(syncedAt, System.currentTimeMillis())
-                ? R.string.online_favorite_cache_showing
-                : R.string.online_favorite_cache_showing_stale;
+            boolean fresh = modeType == ModeType.SEARCH
+                ? SearchPageStore.isFresh(syncedAt, System.currentTimeMillis())
+                : OnlineFavoritePageStore.isFresh(syncedAt, System.currentTimeMillis());
+            int message;
+            if (modeType == ModeType.SEARCH) {
+                message = fresh ? R.string.search_page_cache_showing : R.string.search_page_cache_showing_stale;
+            } else {
+                message = fresh ? R.string.online_favorite_cache_showing : R.string.online_favorite_cache_showing_stale;
+            }
             showError(getString(message, formattedDate), null);
         }
 
         @Override
         public void onStart() {
-            if (this == resetDataset) showingCachedFavoritePage = false;
+            if (this == resetDataset) {
+                showingCachedFavoritePage = false;
+                showingCachedSearchPage = false;
+            }
             runOnUiThread(() -> refresher.setRefreshing(true));
             hideError();
         }
@@ -1633,6 +1650,13 @@ public class MainActivity extends BaseActivity
                     showContentState(R.string.online_favorite_cache_refresh_failed, R.drawable.ic_refresh, retry);
                 else
                     showError(R.string.online_favorite_cache_refresh_failed, retry);
+                return;
+            }
+            if (modeType == ModeType.SEARCH && showingCachedSearchPage) {
+                if (adapter == null || adapter.getItemCount() == 0)
+                    showContentState(R.string.search_page_cache_refresh_failed, R.drawable.ic_refresh, retry);
+                else
+                    showError(R.string.search_page_cache_refresh_failed, retry);
                 return;
             }
             if (adapter == null || adapter.getItemCount() == 0)

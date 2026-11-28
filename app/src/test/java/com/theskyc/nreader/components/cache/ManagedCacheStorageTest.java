@@ -19,6 +19,7 @@ public class ManagedCacheStorageTest {
         write(new File(CacheDirectories.imageDiskCache(cacheRoot), "image.bin"), 3);
         write(new File(CacheDirectories.favoritePageCache(cacheRoot), "pages.db"), 5);
         write(new File(CacheDirectories.favoritePageCache(cacheRoot), "pages.db-wal"), 2);
+        write(new File(CacheDirectories.searchPageCache(cacheRoot), "pages.db"), 4);
         write(new File(CacheDirectories.readerTileSnapshots(cacheRoot), "reader-tile-1.snapshot"), 11);
         write(new File(cacheRoot, "last-restore-snapshot.zip"), 13);
         write(new File(new File(cacheRoot, "tag-catalog"), "catalog.part"), 17);
@@ -27,8 +28,9 @@ public class ManagedCacheStorageTest {
 
         assertEquals(3, usage.imageBytes);
         assertEquals(7, usage.favoritePageBytes);
+        assertEquals(4, usage.searchPageBytes);
         assertEquals(11, usage.readerSnapshotBytes);
-        assertEquals(21, usage.totalBytes());
+        assertEquals(25, usage.totalBytes());
     }
 
     private static void write(File file, int size) throws IOException {
