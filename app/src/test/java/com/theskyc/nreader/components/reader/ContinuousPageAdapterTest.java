@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.request.BaseRequestOptions;
 import com.bumptech.glide.request.Request;
 import com.theskyc.nreader.R;
+import com.theskyc.nreader.api.components.Gallery;
 import com.theskyc.nreader.api.local.LocalGallery;
 import com.theskyc.nreader.components.classes.ReadingPosition;
 import com.theskyc.nreader.files.PageFile;
@@ -54,6 +55,44 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 28, application = Application.class)
 public class ContinuousPageAdapterTest {
     @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void offlineRemotePageUsesCacheOnlyAndLocalPageRemainsReadable() throws Exception {
+        Global.initFromShared(RuntimeEnvironment.getApplication());
+        NetworkUtil.setType(NetworkUtil.ConnectionType.UNKNOWN);
+        Gallery gallery = new Gallery(null, "{\"id\":42,\"num_pages\":1,\"title\":{\"pretty\":\"Test\"},"
+            + "\"cover\":{\"path\":\"cover.png\"},\"thumbnail\":{\"path\":\"thumb.png\"},"
+            + "\"pages\":[{\"path\":\"1.png\"}]}", null, false);
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        RecyclerView recycler = new RecyclerView(activity);
+        recycler.setLayoutManager(new LinearLayoutManager(activity));
+        ContinuousPageAdapter adapter = new ContinuousPageAdapter(gallery, null, (page, x) -> {});
+        recycler.setAdapter(adapter);
+        activity.setContentView(recycler);
+        measureRecycler(recycler, 600);
+        ContinuousPageAdapter.Holder holder = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        assertEquals(gallery.getHighPage(0), holder.source);
+        Request request = (Request) holder.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(request);
+        BaseRequestOptions<?> options = ReflectionHelpers.getField(request, "requestOptions");
+        assertTrue((boolean) ReflectionHelpers.getField(options, "onlyRetrieveFromCache"));
+        recycler.setAdapter(null);
+
+        File folder = temporaryFolder.newFolder();
+        assertTrue(new File(folder, "1.png").createNewFile());
+        LocalGallery local = new LocalGallery(folder, true);
+        recycler.setAdapter(new ContinuousPageAdapter(local, local.getGalleryFolder(), (page, x) -> {}));
+        measureRecycler(recycler, 600);
+        holder = (ContinuousPageAdapter.Holder) recycler.findViewHolderForAdapterPosition(0);
+        assertNotNull(holder);
+        assertTrue(holder.source instanceof PageFile);
+        request = (Request) holder.image.getTag(com.bumptech.glide.R.id.glide_custom_view_target_tag);
+        assertNotNull(request);
+        options = ReflectionHelpers.getField(request, "requestOptions");
+        assertFalse((boolean) ReflectionHelpers.getField(options, "onlyRetrieveFromCache"));
+        recycler.setAdapter(null);
+    }
 
     @Test
     public void changingPageAspectRatioKeepsContentAtMidPage() {

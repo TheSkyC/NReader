@@ -25,6 +25,7 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.MultiTransformation;
@@ -593,7 +594,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         MultiTransformation<android.graphics.Bitmap> transforms = autoCrop
             ? new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle), new ReaderAutoCropTransformation()))
             : new MultiTransformation<>(Arrays.asList(new FitCenter(), new Rotate(angle)));
-        manager.load(source).override(targetWidth, targetHeight).fitCenter()
+        RequestBuilder<Drawable> request = manager.load(source).override(targetWidth, targetHeight).fitCenter()
             .transform(transforms)
             .addListener(new RequestListener<Drawable>() {
                 @Override
@@ -615,7 +616,11 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
                     });
                     return false;
                 }
-            }).into(DebugImageMask.target(holder.image));
+            });
+        if (source instanceof android.net.Uri
+            && ReaderImageRequestPolicy.onlyUseCache((android.net.Uri) source, Global.getDownloadPolicy()))
+            request = request.onlyRetrieveFromCache(true);
+        request.into(DebugImageMask.target(holder.image));
     }
 
     public boolean rotate(@NonNull RecyclerView.ViewHolder viewHolder) {
@@ -643,7 +648,7 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         if (position < 0 || position >= gallery.getPageCount()) return null;
         PageFile local = directory == null ? null : directory.getPage(position + 1);
         if (local != null) return local;
-        if (gallery instanceof Gallery && Global.getDownloadPolicy() != Global.DataUsageType.NONE)
+        if (gallery instanceof Gallery)
             return ((Gallery) gallery).getPageUrl(position);
         return null;
     }
