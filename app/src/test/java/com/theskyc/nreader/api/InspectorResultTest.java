@@ -5,6 +5,7 @@ import android.app.Application;
 import com.theskyc.nreader.R;
 import com.theskyc.nreader.api.components.GenericGallery;
 import com.theskyc.nreader.api.components.Tag;
+import com.theskyc.nreader.api.enums.ApiRequestType;
 import com.theskyc.nreader.api.enums.SortType;
 import com.theskyc.nreader.api.enums.SpecialTagIds;
 import com.theskyc.nreader.api.enums.TagStatus;
@@ -36,11 +37,23 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28, application = Application.class)
 public class InspectorResultTest {
+    @Test public void onlyOrdinaryGalleryListRequestsUseBrowsePageCache() {
+        assertTrue(InspectorV3.isCacheableListRequest(ApiRequestType.BYALL));
+        assertTrue(InspectorV3.isCacheableListRequest(ApiRequestType.BYTAG));
+        assertTrue(InspectorV3.isCacheableListRequest(ApiRequestType.BYSEARCH));
+        assertFalse(InspectorV3.isCacheableListRequest(ApiRequestType.BYSINGLE));
+        assertFalse(InspectorV3.isCacheableListRequest(ApiRequestType.FAVORITE));
+        assertFalse(InspectorV3.isCacheableListRequest(ApiRequestType.RANDOM));
+        assertFalse(InspectorV3.isCacheableListRequest(ApiRequestType.RANDOM_FAVORITE));
+        assertFalse(InspectorV3.isCacheableListRequest(null));
+    }
+
     @Test public void exactMatchingLeavesCustomTermsToTheSite() throws Exception {
         Tag custom = new Tag("custom", 0, SpecialTagIds.INVALID_ID, TagType.TAG, TagStatus.DEFAULT);
         Tag included = new Tag("included", 0, 900001, TagType.TAG, TagStatus.DEFAULT);

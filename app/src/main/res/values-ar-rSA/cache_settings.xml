@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">الإجمالي عبر الذاكرات المُدارة: %1$s</string>
     <string name="managed_cache_usage_unavailable">تعذر قياس بعض أحجام الذاكرة المؤقتة.</string>
     <string name="managed_cache_size_unavailable">غير متاح</string>
-    <string name="managed_cache_usage_details">الصور: %1$s\nقاعدة بيانات صفحات المفضلة: %2$s\nصفحات البحث: %3$s\nلقطات صفحات القارئ: %4$s\nالإجمالي: %5$s</string>
+    <string name="managed_cache_usage_details">الصور: %1$s\nقاعدة بيانات صفحات المفضلة: %2$s\nصفحات التصفح: %3$s\nلقطات صفحات القارئ: %4$s\nالإجمالي: %5$s</string>
     <string name="title_image_cache_quota">حد ذاكرة الصور المؤقتة</string>
     <string name="summary_image_cache_quota">الحد الأقصى %1$s. يسري التغيير بعد إعادة تشغيل NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">ذاكرة صفحات البحث</string>
-    <string name="title_search_page_quota">حد ذاكرة صفحات البحث</string>
-    <string name="summary_search_page_quota">الحد الأقصى لصفحات البحث المحفوظة: %1$s. تُحذف الصفحات الأقدم أولاً.</string>
+    <string name="settings_search_page_cache">ذاكرة صفحات التصفح</string>
+    <string name="title_search_page_quota">حد ذاكرة صفحات التصفح</string>
+    <string name="summary_search_page_quota">الحد الأقصى لصفحات التصفح المحفوظة: %1$s. تُحذف الصفحات الأقدم أولاً.</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">صفحات البحث المخزنة</string>
-    <string name="search_page_usage_checking">جارٍ فحص ذاكرة صفحات البحث…</string>
-    <string name="search_page_usage_unavailable">تعذر معرفة استخدام ذاكرة صفحات البحث</string>
+    <string name="title_search_page_usage">صفحات التصفح المخزنة</string>
+    <string name="search_page_usage_checking">جارٍ فحص ذاكرة صفحات التصفح…</string>
+    <string name="search_page_usage_unavailable">تعذر معرفة استخدام ذاكرة صفحات التصفح</string>
     <string name="search_page_never_synced">لم تتم المزامنة مطلقًا</string>
     <string name="summary_search_page_usage">الصفحات التي تمت زيارتها والمخزنة: %1$d (%2$s). آخر مزامنة: %3$s.</string>
-    <string name="title_search_page_metrics">نشاط ذاكرة صفحات البحث</string>
-    <string name="search_page_metrics_checking">جارٍ تحميل نشاط ذاكرة البحث…</string>
-    <string name="search_page_metrics_unavailable">تعذر عرض نشاط ذاكرة صفحات البحث.</string>
+    <string name="title_search_page_metrics">نشاط ذاكرة صفحات التصفح</string>
+    <string name="search_page_metrics_checking">جارٍ تحميل نشاط ذاكرة التصفح…</string>
+    <string name="search_page_metrics_unavailable">تعذر عرض نشاط ذاكرة صفحات التصفح.</string>
     <string name="summary_search_page_metrics">على هذا الجهاز: إصابات التخزين المؤقت %1$d، حالات عدم إصابة %2$d (%3$s)؛ تحديثات ناجحة %4$d، فاشلة %5$d؛ صفحات محذوفة %6$d.</string>
     <string name="summary_search_page_metrics_empty">لا توجد قراءات بعد. تحديثات ناجحة %1$d، فاشلة %2$d؛ صفحات محذوفة %3$d.</string>
-    <string name="clear_search_pages">مسح صفحات البحث المخزنة</string>
-    <string name="message_clear_search_pages">إزالة كل صفحات نتائج البحث المحفوظة على هذا الجهاز؟ ستبقى فئات التخزين الأخرى والمعارض التي تم تنزيلها.</string>
-    <string name="search_pages_cleared">تم مسح صفحات البحث</string>
-    <string name="search_pages_clear_failed">تعذر مسح صفحات البحث</string>
-    <string name="search_page_cache_showing">عرض نتائج البحث المخزنة من %1$s أثناء التحديث</string>
-    <string name="search_page_cache_showing_stale">عرض نتائج بحث مخزنة أقدم من %1$s أثناء التحديث</string>
-    <string name="search_page_cache_refresh_failed">تعذر تحديث نتائج البحث. يتم عرض النتائج المحفوظة.</string>
+    <string name="clear_search_pages">مسح صفحات التصفح المخزنة</string>
+    <string name="message_clear_search_pages">إزالة كل صفحات نتائج التصفح المحفوظة على هذا الجهاز؟ ستبقى فئات التخزين الأخرى والمعارض التي تم تنزيلها.</string>
+    <string name="search_pages_cleared">تم مسح صفحات التصفح</string>
+    <string name="search_pages_clear_failed">تعذر مسح صفحات التصفح</string>
+    <string name="search_page_cache_showing">عرض نتائج التصفح المخزنة من %1$s أثناء التحديث</string>
+    <string name="search_page_cache_showing_stale">عرض نتائج تصفح مخزنة أقدم من %1$s أثناء التحديث</string>
+    <string name="search_page_cache_refresh_failed">تعذر تحديث نتائج التصفح. يتم عرض النتائج المحفوظة.</string>
 </resources>

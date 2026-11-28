@@ -281,6 +281,20 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         else context.runOnUiThread(() -> notifyItemRangeInserted(c, galleries.size()));
     }
 
+    public void replaceLastGalleries(int previousCount, List<GenericGallery> galleries) {
+        ArrayList<GenericGallery> combined = replaceLastItems(allDataset, previousCount, galleries);
+        restartDataset(combined);
+    }
+
+    static <T> ArrayList<T> replaceLastItems(List<? extends T> existing, int previousCount,
+                                             List<? extends T> replacement) {
+        int retainedCount = Math.max(0, existing.size() - Math.max(0, previousCount));
+        ArrayList<T> combined = new ArrayList<>(retainedCount + replacement.size());
+        combined.addAll(existing.subList(0, retainedCount));
+        combined.addAll(replacement);
+        return combined;
+    }
+
     public void restartDataset(List<GenericGallery> galleries) {
         filterGeneration.incrementAndGet();
         /*int c=mDataset.size();

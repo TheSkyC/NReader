@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">Всего в управляемом кэше: %1$s</string>
     <string name="managed_cache_usage_unavailable">Не удалось измерить размер некоторых кэшей.</string>
     <string name="managed_cache_size_unavailable">Недоступно</string>
-    <string name="managed_cache_usage_details">Изображения: %1$s\nБаза данных страниц избранного: %2$s\nСтраницы поиска: %3$s\nСнимки страниц чтения: %4$s\nВсего: %5$s</string>
+    <string name="managed_cache_usage_details">Изображения: %1$s\nБаза данных страниц избранного: %2$s\nСтраницы просмотра: %3$s\nСнимки страниц чтения: %4$s\nВсего: %5$s</string>
     <string name="title_image_cache_quota">Лимит кэша изображений</string>
     <string name="summary_image_cache_quota">Максимум %1$s. Изменение вступит в силу после перезапуска NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">Кэш страниц поиска</string>
-    <string name="title_search_page_quota">Лимит кэша страниц поиска</string>
-    <string name="summary_search_page_quota">Максимум для сохранённых страниц поиска: %1$s. Сначала удаляются старые страницы.</string>
+    <string name="settings_search_page_cache">Кэш страниц просмотра</string>
+    <string name="title_search_page_quota">Лимит кэша страниц просмотра</string>
+    <string name="summary_search_page_quota">Максимум для сохранённых страниц просмотра: %1$s. Сначала удаляются старые страницы.</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">Сохранённые страницы поиска</string>
-    <string name="search_page_usage_checking">Проверка кэша страниц поиска…</string>
-    <string name="search_page_usage_unavailable">Размер кэша страниц поиска недоступен</string>
+    <string name="title_search_page_usage">Сохранённые страницы просмотра</string>
+    <string name="search_page_usage_checking">Проверка кэша страниц просмотра…</string>
+    <string name="search_page_usage_unavailable">Размер кэша страниц просмотра недоступен</string>
     <string name="search_page_never_synced">Ещё не синхронизировано</string>
     <string name="summary_search_page_usage">Посещённые страницы в кэше: %1$d (%2$s). Последняя синхронизация: %3$s.</string>
-    <string name="title_search_page_metrics">Активность кэша страниц поиска</string>
+    <string name="title_search_page_metrics">Активность кэша страниц просмотра</string>
     <string name="search_page_metrics_checking">Загрузка статистики кэша…</string>
-    <string name="search_page_metrics_unavailable">Статистика кэша страниц поиска недоступна.</string>
+    <string name="search_page_metrics_unavailable">Статистика кэша страниц просмотра недоступна.</string>
     <string name="summary_search_page_metrics">На устройстве: попадания в кэш %1$d, промахи %2$d (%3$s); успешные обновления %4$d, неудачные %5$d; удалено страниц %6$d.</string>
     <string name="summary_search_page_metrics_empty">Обращений к кэшу пока нет. Успешные обновления %1$d, неудачные %2$d; удалено страниц %3$d.</string>
-    <string name="clear_search_pages">Очистить сохранённые страницы поиска</string>
-    <string name="message_clear_search_pages">Удалить все сохранённые страницы результатов поиска на этом устройстве? Остальные категории кэша и загруженные галереи останутся.</string>
-    <string name="search_pages_cleared">Страницы поиска очищены</string>
-    <string name="search_pages_clear_failed">Не удалось очистить страницы поиска</string>
-    <string name="search_page_cache_showing">Во время обновления показаны сохранённые результаты поиска от %1$s</string>
-    <string name="search_page_cache_showing_stale">Во время обновления показаны старые сохранённые результаты поиска от %1$s</string>
-    <string name="search_page_cache_refresh_failed">Не удалось обновить результаты поиска. Показаны сохранённые результаты.</string>
+    <string name="clear_search_pages">Очистить сохранённые страницы просмотра</string>
+    <string name="message_clear_search_pages">Удалить все сохранённые страницы результатов просмотра на этом устройстве? Остальные категории кэша и загруженные галереи останутся.</string>
+    <string name="search_pages_cleared">Страницы просмотра очищены</string>
+    <string name="search_pages_clear_failed">Не удалось очистить страницы просмотра</string>
+    <string name="search_page_cache_showing">Во время обновления показаны сохранённые результаты просмотра от %1$s</string>
+    <string name="search_page_cache_showing_stale">Во время обновления показаны старые сохранённые результаты просмотра от %1$s</string>
+    <string name="search_page_cache_refresh_failed">Не удалось обновить результаты просмотра. Показаны сохранённые результаты.</string>
 </resources>

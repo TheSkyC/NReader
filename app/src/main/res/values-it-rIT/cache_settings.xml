@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">Totale delle cache gestite: %1$s</string>
     <string name="managed_cache_usage_unavailable">Non è possibile misurare alcune cache.</string>
     <string name="managed_cache_size_unavailable">Non disponibile</string>
-    <string name="managed_cache_usage_details">Immagini: %1$s\nDatabase delle pagine preferite: %2$s\nPagine di ricerca: %3$s\nSnapshot del lettore: %4$s\nTotale: %5$s</string>
+    <string name="managed_cache_usage_details">Immagini: %1$s\nDatabase delle pagine preferite: %2$s\nPagine di navigazione: %3$s\nSnapshot del lettore: %4$s\nTotale: %5$s</string>
     <string name="title_image_cache_quota">Limite della cache immagini</string>
     <string name="summary_image_cache_quota">Massimo %1$s. La modifica si applica al riavvio di NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">Cache delle pagine di ricerca</string>
-    <string name="title_search_page_quota">Limite cache delle pagine di ricerca</string>
-    <string name="summary_search_page_quota">Massimo per le pagine di ricerca salvate: %1$s. Le pagine meno recenti vengono rimosse per prime.</string>
+    <string name="settings_search_page_cache">Cache delle pagine di navigazione</string>
+    <string name="title_search_page_quota">Limite cache delle pagine di navigazione</string>
+    <string name="summary_search_page_quota">Massimo per le pagine di navigazione salvate: %1$s. Le pagine meno recenti vengono rimosse per prime.</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">Pagine di ricerca salvate</string>
-    <string name="search_page_usage_checking">Controllo della cache di ricerca…</string>
-    <string name="search_page_usage_unavailable">Uso della cache di ricerca non disponibile</string>
+    <string name="title_search_page_usage">Pagine di navigazione salvate</string>
+    <string name="search_page_usage_checking">Controllo della cache di navigazione…</string>
+    <string name="search_page_usage_unavailable">Uso della cache di navigazione non disponibile</string>
     <string name="search_page_never_synced">Mai sincronizzato</string>
     <string name="summary_search_page_usage">Pagine visitate in cache: %1$d (%2$s). Ultima sincronizzazione: %3$s.</string>
-    <string name="title_search_page_metrics">Attività della cache di ricerca</string>
+    <string name="title_search_page_metrics">Attività della cache di navigazione</string>
     <string name="search_page_metrics_checking">Caricamento attività cache…</string>
-    <string name="search_page_metrics_unavailable">Attività della cache di ricerca non disponibile.</string>
+    <string name="search_page_metrics_unavailable">Attività della cache di navigazione non disponibile.</string>
     <string name="summary_search_page_metrics">Questo dispositivo: cache trovata %1$d, non trovata %2$d (%3$s di successi); aggiornamenti riusciti %4$d, non riusciti %5$d; pagine rimosse %6$d.</string>
     <string name="summary_search_page_metrics_empty">Nessuna lettura della cache. Aggiornamenti riusciti %1$d, non riusciti %2$d; pagine rimosse %3$d.</string>
-    <string name="clear_search_pages">Cancella le pagine di ricerca salvate</string>
+    <string name="clear_search_pages">Cancella le pagine di navigazione salvate</string>
     <string name="message_clear_search_pages">Rimuovere tutte le pagine dei risultati salvate su questo dispositivo? Le altre categorie di cache e le gallerie scaricate vengono conservate.</string>
-    <string name="search_pages_cleared">Pagine di ricerca cancellate</string>
-    <string name="search_pages_clear_failed">Impossibile cancellare le pagine di ricerca</string>
-    <string name="search_page_cache_showing">Risultati di ricerca salvati del %1$s mostrati durante l’aggiornamento</string>
-    <string name="search_page_cache_showing_stale">Risultati di ricerca salvati meno recenti del %1$s mostrati durante l’aggiornamento</string>
+    <string name="search_pages_cleared">Pagine di navigazione cancellate</string>
+    <string name="search_pages_clear_failed">Impossibile cancellare le pagine di navigazione</string>
+    <string name="search_page_cache_showing">Risultati di navigazione salvati del %1$s mostrati durante l’aggiornamento</string>
+    <string name="search_page_cache_showing_stale">Risultati di navigazione salvati meno recenti del %1$s mostrati durante l’aggiornamento</string>
     <string name="search_page_cache_refresh_failed">Impossibile aggiornare i risultati. Vengono mostrati quelli salvati.</string>
 </resources>

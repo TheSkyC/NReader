@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">管理対象キャッシュの合計: %1$s</string>
     <string name="managed_cache_usage_unavailable">一部のキャッシュサイズを取得できません。</string>
     <string name="managed_cache_size_unavailable">取得できません</string>
-    <string name="managed_cache_usage_details">画像: %1$s\nお気に入りページのデータベース: %2$s\n検索ページ: %3$s\nリーダーのスナップショット: %4$s\n合計: %5$s</string>
+    <string name="managed_cache_usage_details">画像: %1$s\nお気に入りページのデータベース: %2$s\n閲覧ページ: %3$s\nリーダーのスナップショット: %4$s\n合計: %5$s</string>
     <string name="title_image_cache_quota">画像キャッシュの上限</string>
     <string name="summary_image_cache_quota">上限 %1$s。変更はNReaderの再起動後に適用されます。</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">検索ページのキャッシュ</string>
-    <string name="title_search_page_quota">検索ページキャッシュの容量</string>
-    <string name="summary_search_page_quota">保存する検索ページの上限: %1$s。古いページから削除されます。</string>
+    <string name="settings_search_page_cache">閲覧ページのキャッシュ</string>
+    <string name="title_search_page_quota">閲覧ページキャッシュの容量</string>
+    <string name="summary_search_page_quota">保存する閲覧ページの上限: %1$s。古いページから削除されます。</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">保存済み検索ページ</string>
-    <string name="search_page_usage_checking">検索ページのキャッシュを確認しています…</string>
-    <string name="search_page_usage_unavailable">検索ページキャッシュの使用量を取得できません</string>
+    <string name="title_search_page_usage">保存済み閲覧ページ</string>
+    <string name="search_page_usage_checking">閲覧ページのキャッシュを確認しています…</string>
+    <string name="search_page_usage_unavailable">閲覧ページキャッシュの使用量を取得できません</string>
     <string name="search_page_never_synced">未同期</string>
     <string name="summary_search_page_usage">キャッシュされた閲覧済みページ: %1$d（%2$s）。最終同期: %3$s。</string>
-    <string name="title_search_page_metrics">検索ページキャッシュの利用状況</string>
+    <string name="title_search_page_metrics">閲覧ページキャッシュの利用状況</string>
     <string name="search_page_metrics_checking">キャッシュの利用状況を読み込み中…</string>
-    <string name="search_page_metrics_unavailable">検索ページキャッシュの利用状況を取得できません。</string>
+    <string name="search_page_metrics_unavailable">閲覧ページキャッシュの利用状況を取得できません。</string>
     <string name="summary_search_page_metrics">この端末: キャッシュヒット %1$d、ミス %2$d（ヒット率 %3$s）、更新成功 %4$d、失敗 %5$d、削除ページ %6$d。</string>
     <string name="summary_search_page_metrics_empty">キャッシュの読み込みはまだありません。更新成功 %1$d、失敗 %2$d、削除ページ %3$d。</string>
-    <string name="clear_search_pages">保存済み検索ページを削除</string>
-    <string name="message_clear_search_pages">この端末に保存された検索結果ページをすべて削除しますか？他のキャッシュとダウンロード済みギャラリーは保持されます。</string>
-    <string name="search_pages_cleared">検索ページを削除しました</string>
-    <string name="search_pages_clear_failed">検索ページを削除できませんでした</string>
-    <string name="search_page_cache_showing">更新中: %1$s の保存済み検索結果を表示しています</string>
-    <string name="search_page_cache_showing_stale">更新中: %1$s の古い検索結果を表示しています</string>
-    <string name="search_page_cache_refresh_failed">検索結果を更新できませんでした。保存済みの結果を表示しています。</string>
+    <string name="clear_search_pages">保存済み閲覧ページを削除</string>
+    <string name="message_clear_search_pages">この端末に保存された閲覧結果ページをすべて削除しますか？他のキャッシュとダウンロード済みギャラリーは保持されます。</string>
+    <string name="search_pages_cleared">閲覧ページを削除しました</string>
+    <string name="search_pages_clear_failed">閲覧ページを削除できませんでした</string>
+    <string name="search_page_cache_showing">更新中: %1$s の保存済み閲覧結果を表示しています</string>
+    <string name="search_page_cache_showing_stale">更新中: %1$s の古い閲覧結果を表示しています</string>
+    <string name="search_page_cache_refresh_failed">閲覧結果を更新できませんでした。保存済みの結果を表示しています。</string>
 </resources>

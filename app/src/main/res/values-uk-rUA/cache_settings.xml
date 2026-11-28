@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">Усього в керованому кеші: %1$s</string>
     <string name="managed_cache_usage_unavailable">Не вдалося виміряти розмір деяких кешів.</string>
     <string name="managed_cache_size_unavailable">Недоступно</string>
-    <string name="managed_cache_usage_details">Зображення: %1$s\nБаза даних сторінок обраного: %2$s\nСторінки пошуку: %3$s\nЗнімки сторінок читача: %4$s\nУсього: %5$s</string>
+    <string name="managed_cache_usage_details">Зображення: %1$s\nБаза даних сторінок обраного: %2$s\nСторінки перегляду: %3$s\nЗнімки сторінок читача: %4$s\nУсього: %5$s</string>
     <string name="title_image_cache_quota">Обмеження кешу зображень</string>
     <string name="summary_image_cache_quota">Максимум %1$s. Зміни набудуть чинності після перезапуску NReader.</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">Кеш сторінок пошуку</string>
-    <string name="title_search_page_quota">Ліміт кешу сторінок пошуку</string>
-    <string name="summary_search_page_quota">Максимум для збережених сторінок пошуку: %1$s. Спочатку вилучаються старі сторінки.</string>
+    <string name="settings_search_page_cache">Кеш сторінок перегляду</string>
+    <string name="title_search_page_quota">Ліміт кешу сторінок перегляду</string>
+    <string name="summary_search_page_quota">Максимум для збережених сторінок перегляду: %1$s. Спочатку вилучаються старі сторінки.</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">Збережені сторінки пошуку</string>
-    <string name="search_page_usage_checking">Перевірка кешу сторінок пошуку…</string>
-    <string name="search_page_usage_unavailable">Розмір кешу сторінок пошуку недоступний</string>
+    <string name="title_search_page_usage">Збережені сторінки перегляду</string>
+    <string name="search_page_usage_checking">Перевірка кешу сторінок перегляду…</string>
+    <string name="search_page_usage_unavailable">Розмір кешу сторінок перегляду недоступний</string>
     <string name="search_page_never_synced">Ще не синхронізовано</string>
     <string name="summary_search_page_usage">Відвідані сторінки в кеші: %1$d (%2$s). Остання синхронізація: %3$s.</string>
-    <string name="title_search_page_metrics">Активність кешу сторінок пошуку</string>
+    <string name="title_search_page_metrics">Активність кешу сторінок перегляду</string>
     <string name="search_page_metrics_checking">Завантаження статистики кешу…</string>
-    <string name="search_page_metrics_unavailable">Статистика кешу сторінок пошуку недоступна.</string>
+    <string name="search_page_metrics_unavailable">Статистика кешу сторінок перегляду недоступна.</string>
     <string name="summary_search_page_metrics">На пристрої: влучання в кеш %1$d, промахи %2$d (%3$s); успішні оновлення %4$d, невдалі %5$d; вилучено сторінок %6$d.</string>
     <string name="summary_search_page_metrics_empty">Звернень до кешу ще немає. Успішні оновлення %1$d, невдалі %2$d; вилучено сторінок %3$d.</string>
-    <string name="clear_search_pages">Очистити збережені сторінки пошуку</string>
-    <string name="message_clear_search_pages">Вилучити всі збережені сторінки результатів пошуку на цьому пристрої? Інші категорії кешу та завантажені галереї залишаться.</string>
-    <string name="search_pages_cleared">Сторінки пошуку очищено</string>
-    <string name="search_pages_clear_failed">Не вдалося очистити сторінки пошуку</string>
-    <string name="search_page_cache_showing">Під час оновлення показано збережені результати пошуку від %1$s</string>
-    <string name="search_page_cache_showing_stale">Під час оновлення показано старі збережені результати пошуку від %1$s</string>
-    <string name="search_page_cache_refresh_failed">Не вдалося оновити результати пошуку. Показано збережені результати.</string>
+    <string name="clear_search_pages">Очистити збережені сторінки перегляду</string>
+    <string name="message_clear_search_pages">Вилучити всі збережені сторінки результатів перегляду на цьому пристрої? Інші категорії кешу та завантажені галереї залишаться.</string>
+    <string name="search_pages_cleared">Сторінки перегляду очищено</string>
+    <string name="search_pages_clear_failed">Не вдалося очистити сторінки перегляду</string>
+    <string name="search_page_cache_showing">Під час оновлення показано збережені результати перегляду від %1$s</string>
+    <string name="search_page_cache_showing_stale">Під час оновлення показано старі збережені результати перегляду від %1$s</string>
+    <string name="search_page_cache_refresh_failed">Не вдалося оновити результати перегляду. Показано збережені результати.</string>
 </resources>

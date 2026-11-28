@@ -5,7 +5,7 @@
     <string name="summary_managed_cache_usage">受管缓存合计：%1$s</string>
     <string name="managed_cache_usage_unavailable">部分缓存占用无法读取。</string>
     <string name="managed_cache_size_unavailable">无法读取</string>
-    <string name="managed_cache_usage_details">图片缓存：%1$s\n收藏列表数据库：%2$s\n搜索页面：%3$s\n阅读器页面快照：%4$s\n合计：%5$s</string>
+    <string name="managed_cache_usage_details">图片缓存：%1$s\n收藏列表数据库：%2$s\n浏览列表页面：%3$s\n阅读器页面快照：%4$s\n合计：%5$s</string>
     <string name="title_image_cache_quota">图片缓存上限</string>
     <string name="summary_image_cache_quota">上限 %1$s。重启 NReader 后生效。</string>
     <string name="image_cache_default_quota">250 MiB</string>
@@ -56,25 +56,25 @@
     <string-array name="online_favorite_page_quota_entries">
         <item>8 MiB</item><item>16 MiB</item><item>32 MiB</item>
     </string-array>
-    <string name="settings_search_page_cache">搜索页面缓存</string>
-    <string name="title_search_page_quota">搜索页面缓存配额</string>
-    <string name="summary_search_page_quota">已保存搜索页面的上限：%1$s。优先淘汰较旧页面。</string>
+    <string name="settings_search_page_cache">浏览列表页面缓存</string>
+    <string name="title_search_page_quota">浏览列表页面缓存配额</string>
+    <string name="summary_search_page_quota">已保存浏览列表页面的上限：%1$s。优先淘汰较旧页面。</string>
     <string name="search_page_quota_default">64 MiB</string>
-    <string name="title_search_page_usage">已缓存搜索页面</string>
-    <string name="search_page_usage_checking">正在检查搜索页面缓存…</string>
-    <string name="search_page_usage_unavailable">无法获取搜索页面缓存占用</string>
+    <string name="title_search_page_usage">已缓存浏览列表页面</string>
+    <string name="search_page_usage_checking">正在检查浏览列表页面缓存…</string>
+    <string name="search_page_usage_unavailable">无法获取浏览列表页面缓存占用</string>
     <string name="search_page_never_synced">从未同步</string>
     <string name="summary_search_page_usage">已访问并缓存的页面：%1$d（%2$s）。最近同步：%3$s。</string>
-    <string name="title_search_page_metrics">搜索页面缓存活动</string>
+    <string name="title_search_page_metrics">浏览列表页面缓存活动</string>
     <string name="search_page_metrics_checking">正在读取缓存活动…</string>
-    <string name="search_page_metrics_unavailable">无法获取搜索页面缓存活动。</string>
+    <string name="search_page_metrics_unavailable">无法获取浏览列表页面缓存活动。</string>
     <string name="summary_search_page_metrics">此设备：缓存命中 %1$d、未命中 %2$d（命中率 %3$s）；刷新成功 %4$d、失败 %5$d；淘汰页面 %6$d。</string>
     <string name="summary_search_page_metrics_empty">尚无缓存读取。刷新成功 %1$d、失败 %2$d；淘汰页面 %3$d。</string>
-    <string name="clear_search_pages">清除已缓存的搜索页面</string>
-    <string name="message_clear_search_pages">清除此设备保存的所有搜索结果页面？其他缓存类别和已下载作品会保留。</string>
-    <string name="search_pages_cleared">搜索页面已清除</string>
-    <string name="search_pages_clear_failed">无法清除搜索页面</string>
-    <string name="search_page_cache_showing">正在刷新，暂时显示 %1$s 的已缓存搜索结果</string>
-    <string name="search_page_cache_showing_stale">正在刷新，暂时显示 %1$s 的较旧搜索结果</string>
-    <string name="search_page_cache_refresh_failed">无法刷新搜索结果，正在显示已保存的结果。</string>
+    <string name="clear_search_pages">清除已缓存的浏览列表页面</string>
+    <string name="message_clear_search_pages">清除此设备保存的所有浏览结果页面？其他缓存类别和已下载作品会保留。</string>
+    <string name="search_pages_cleared">浏览列表页面已清除</string>
+    <string name="search_pages_clear_failed">无法清除浏览列表页面</string>
+    <string name="search_page_cache_showing">正在刷新，暂时显示 %1$s 的已缓存浏览结果</string>
+    <string name="search_page_cache_showing_stale">正在刷新，暂时显示 %1$s 的较旧浏览结果</string>
+    <string name="search_page_cache_refresh_failed">无法刷新浏览结果，正在显示已保存的结果。</string>
 </resources>

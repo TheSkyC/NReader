@@ -153,8 +153,25 @@ public class MainActivity extends BaseActivity
     public ListAdapter adapter;
     private final InspectorV3.InspectorResponse addDataset = new MainInspectorResponse() {
         @Override
+        public void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
+            super.onCacheHit(galleries, syncedAt);
+            cachedAppendPage = inspector.getPage();
+            cachedAppendCount = galleries.size();
+        }
+
+        @Override
         public void onSuccess(List<GenericGallery> galleries) {
-            adapter.addGalleries(galleries);
+            if (cachedAppendPage == inspector.getPage()) {
+                adapter.replaceLastGalleries(cachedAppendCount, galleries);
+                cachedAppendPage = -1;
+                cachedAppendCount = 0;
+            } else {
+                adapter.addGalleries(galleries);
+            }
+            if (showingCachedBrowsePage) {
+                showingCachedBrowsePage = false;
+                hideError();
+            }
             updatePageSwitcher(galleries.isEmpty());
         }
     };
@@ -197,7 +214,9 @@ public class MainActivity extends BaseActivity
     private long headerProfileGeneration = -1;
     private long favoriteInspectorGeneration = -1;
     private boolean showingCachedFavoritePage;
-    private boolean showingCachedSearchPage;
+    private boolean showingCachedBrowsePage;
+    private int cachedAppendPage = -1;
+    private int cachedAppendCount;
     private PageSwitcher pageSwitcher;
     private final InspectorV3.InspectorResponse
         resetDataset = new MainInspectorResponse() {
@@ -1577,9 +1596,9 @@ public class MainActivity extends BaseActivity
         @Override
         public void onSuccess(List<GenericGallery> galleries) {
             if (this == resetDataset) {
-                boolean replacingCachedPage = showingCachedFavoritePage || showingCachedSearchPage;
+                boolean replacingCachedPage = showingCachedFavoritePage || showingCachedBrowsePage;
                 showingCachedFavoritePage = false;
-                showingCachedSearchPage = false;
+                showingCachedBrowsePage = false;
                 if (replacingCachedPage) hideError();
             }
             super.onSuccess(galleries);
@@ -1593,11 +1612,17 @@ public class MainActivity extends BaseActivity
         @Override
         public void onCacheHit(List<GenericGallery> galleries, long syncedAt) {
             if (modeType == ModeType.FAVORITE) showingCachedFavoritePage = true;
-            if (modeType == ModeType.SEARCH) showingCachedSearchPage = true;
+            if (modeType != ModeType.FAVORITE) showingCachedBrowsePage = true;
             if (adapter != null) {
                 adapter.resetStatuses();
-                if (this == addDataset) adapter.addGalleries(galleries);
-                else adapter.restartDataset(galleries);
+                if (this == addDataset) {
+                    if (cachedAppendPage == inspector.getPage())
+                        adapter.replaceLastGalleries(cachedAppendCount, galleries);
+                    else
+                        adapter.addGalleries(galleries);
+                } else {
+                    adapter.restartDataset(galleries);
+                }
             }
             updatePageSwitcher(galleries.isEmpty());
             if (galleries.isEmpty() && (adapter == null || adapter.getItemCount() == 0))
@@ -1607,11 +1632,11 @@ public class MainActivity extends BaseActivity
             java.util.Date syncedDate = new java.util.Date(syncedAt);
             String formattedDate = android.text.format.DateFormat.getDateFormat(MainActivity.this).format(syncedDate)
                 + " " + android.text.format.DateFormat.getTimeFormat(MainActivity.this).format(syncedDate);
-            boolean fresh = modeType == ModeType.SEARCH
-                ? SearchPageStore.isFresh(syncedAt, System.currentTimeMillis())
-                : OnlineFavoritePageStore.isFresh(syncedAt, System.currentTimeMillis());
+            boolean fresh = modeType == ModeType.FAVORITE
+                ? OnlineFavoritePageStore.isFresh(syncedAt, System.currentTimeMillis())
+                : SearchPageStore.isFresh(syncedAt, System.currentTimeMillis());
             int message;
-            if (modeType == ModeType.SEARCH) {
+            if (modeType != ModeType.FAVORITE) {
                 message = fresh ? R.string.search_page_cache_showing : R.string.search_page_cache_showing_stale;
             } else {
                 message = fresh ? R.string.online_favorite_cache_showing : R.string.online_favorite_cache_showing_stale;
@@ -1623,7 +1648,14 @@ public class MainActivity extends BaseActivity
         public void onStart() {
             if (this == resetDataset) {
                 showingCachedFavoritePage = false;
-                showingCachedSearchPage = false;
+                showingCachedBrowsePage = false;
+                cachedAppendPage = -1;
+                cachedAppendCount = 0;
+            } else if (cachedAppendPage != inspector.getPage()) {
+                showingCachedFavoritePage = false;
+                showingCachedBrowsePage = false;
+                cachedAppendPage = -1;
+                cachedAppendCount = 0;
             }
             runOnUiThread(() -> refresher.setRefreshing(true));
             hideError();
@@ -1652,7 +1684,7 @@ public class MainActivity extends BaseActivity
                     showError(R.string.online_favorite_cache_refresh_failed, retry);
                 return;
             }
-            if (modeType == ModeType.SEARCH && showingCachedSearchPage) {
+            if (modeType != ModeType.FAVORITE && showingCachedBrowsePage) {
                 if (adapter == null || adapter.getItemCount() == 0)
                     showContentState(R.string.search_page_cache_refresh_failed, R.drawable.ic_refresh, retry);
                 else

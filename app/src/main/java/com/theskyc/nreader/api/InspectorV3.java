@@ -102,11 +102,18 @@ public class InspectorV3 extends Thread implements Parcelable {
     private boolean favoriteRefreshSucceeded;
     private boolean searchNetworkRequestAttempted;
     private boolean searchRefreshSucceeded;
+    @Nullable private List<GenericGallery> cachedSearchGalleries;
+    private long cachedSearchSyncedAt;
 
     public boolean isFavoriteIdentityCurrent() {
         if (requestType != ApiRequestType.FAVORITE && requestType != ApiRequestType.RANDOM_FAVORITE) return true;
         return favoriteAuthGeneration < 0
             || favoriteAuthGeneration == com.theskyc.nreader.settings.AuthStore.identityGeneration();
+    }
+
+    static boolean isCacheableListRequest(@Nullable ApiRequestType requestType) {
+        return requestType == ApiRequestType.BYALL || requestType == ApiRequestType.BYTAG
+            || requestType == ApiRequestType.BYSEARCH;
     }
 
     private boolean isSearchIdentityCurrent() {
@@ -520,7 +527,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         activeCall = call;
         if (canceled) call.cancel();
         if (requestType == ApiRequestType.FAVORITE) favoriteNetworkRequestAttempted = true;
-        else if (requestType == ApiRequestType.BYSEARCH) searchNetworkRequestAttempted = true;
+        else if (isCacheableListRequest(requestType)) searchNetworkRequestAttempted = true;
         try (Response response = call.execute()) {
             responseCode = response.code();
             retryAfter = response.header("Retry-After");
@@ -571,11 +578,12 @@ public class InspectorV3 extends Thread implements Parcelable {
         if (deliveryResponse != null) deliveryResponse.onStart();
         try {
             if (requestType == ApiRequestType.FAVORITE) loadFavoritePageCache();
-            else if (requestType == ApiRequestType.BYSEARCH) loadSearchPageCache();
+            else if (isCacheableListRequest(requestType)) loadSearchPageCache();
+            deliverCachedSearchPage();
             favoriteCacheHit = false;
             if (!createDocument()) throw new IOException("API request failed: HTTP " + responseCode);
             String favoriteResponseForCache = requestType == ApiRequestType.FAVORITE ? jsonResponse : null;
-            String searchResponseForCache = requestType == ApiRequestType.BYSEARCH ? jsonResponse : null;
+            String searchResponseForCache = isCacheableListRequest(requestType) ? jsonResponse : null;
             parseDocument();
             if (favoritePageStore != null && favoritePageRequest != null && favoriteResponseForCache != null
                 && responseCode == HttpURLConnection.HTTP_OK && !canceled && resultCurrent.getAsBoolean()
@@ -730,11 +738,18 @@ public class InspectorV3 extends Thread implements Parcelable {
             LogUtility.w("Discarded invalid search page cache", error);
             return;
         }
-        if (deliveryResponse != null && resultCurrent.getAsBoolean() && !canceled
-            && isSearchIdentityCurrent() && isAccountTagScopeCurrent()
-            && searchPageStore.recordCacheHit(searchPageRequest)) {
-            deliveryResponse.onCacheHit(galleries, cached.syncedAt);
-        }
+        cachedSearchGalleries = new ArrayList<>(galleries);
+        cachedSearchSyncedAt = cached.syncedAt;
+    }
+
+    private void deliverCachedSearchPage() {
+        List<GenericGallery> cached = cachedSearchGalleries;
+        cachedSearchGalleries = null;
+        if (cached == null || deliveryResponse == null || canceled || !resultCurrent.getAsBoolean()
+            || !isSearchIdentityCurrent() || !isAccountTagScopeCurrent() || searchPageStore == null
+            || searchPageRequest == null || !searchPageStore.isCurrent(searchPageRequest)) return;
+        if (searchPageStore.recordCacheHit(searchPageRequest))
+            deliveryResponse.onCacheHit(cached, cachedSearchSyncedAt);
     }
 
     private void recordSearchRefreshFailure() {
