@@ -136,8 +136,6 @@ public class Queries {
                     "%s NOT IN (SELECT %s FROM %s)",
                     DownloadTable.ID_GALLERY, GalleryTable.IDGALLERY, GalleryTable.TABLE_NAME)
                 , null);
-            db.delete(ReaderBookmarkTable.TABLE_NAME, String.format(Locale.US,
-                    "id_gallery NOT IN (SELECT %s FROM %s)", GalleryTable.IDGALLERY, GalleryTable.TABLE_NAME), null);
         }
 
         /**
@@ -285,7 +283,6 @@ public class Queries {
         public static void delete(int id) {
             db.delete(TABLE_NAME, IDGALLERY + "=?", new String[]{"" + id});
             GalleryBridgeTable.deleteGallery(id);
-            ReaderBookmarkTable.deleteForGallery(id);
         }
 
 
