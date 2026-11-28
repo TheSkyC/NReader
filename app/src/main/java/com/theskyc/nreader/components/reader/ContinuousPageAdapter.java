@@ -394,6 +394,11 @@ public final class ContinuousPageAdapter extends RecyclerView.Adapter<Continuous
         return snapshotStore;
     }
 
+    public static synchronized boolean clearIdleSnapshots(@NonNull Context context) throws IOException {
+        File cacheDirectory = context.getApplicationContext().getCacheDir();
+        return snapshotStore(cacheDirectory).clearIdleSnapshots();
+    }
+
     private static synchronized void registerSnapshotLoader(@NonNull Context context) {
         if (snapshotLoaderRegistered) return;
         Glide.get(context.getApplicationContext()).getRegistry().prepend(

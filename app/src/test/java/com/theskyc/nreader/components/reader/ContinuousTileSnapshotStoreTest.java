@@ -35,7 +35,8 @@ public class ContinuousTileSnapshotStoreTest {
             assertTrue(blocker.createNewFile());
             assertThrows(IOException.class, lease::close);
             assertThrows(IllegalStateException.class, lease::file);
-            assertThrows(ContinuousTileSnapshotStore.BudgetExceededException.class, () -> store.create(source, () -> false));
+            assertThrows(ContinuousTileSnapshotStore.BudgetExceededException.class,
+                () -> store.create(source, () -> false));
             assertTrue(blocker.delete());
             try (ContinuousTileSnapshotStore.Lease next = store.create(source, () -> false)) {
                 assertTrue(next.file().isFile());
@@ -132,5 +133,35 @@ public class ContinuousTileSnapshotStoreTest {
         assertTrue(stale.mkdir());
         assertThrows(IOException.class, () -> ContinuousTileSnapshotStore.open(cache, 8, 8));
         assertTrue(stale.isDirectory());
+    }
+
+    @Test
+    public void clearsOnlyOwnedSnapshotsWhenNoLeaseIsActive() throws IOException {
+        File cache = folder.newFolder("cache");
+        File staleSnapshot = new File(cache, "reader-tile-stale.snapshot");
+        File unrelatedFile = new File(cache, "other.cache");
+        Files.write(staleSnapshot.toPath(), new byte[] {1});
+        Files.write(unrelatedFile.toPath(), new byte[] {2});
+        try (ContinuousTileSnapshotStore store = ContinuousTileSnapshotStore.open(cache, 16, 32)) {
+            assertTrue(store.clearIdleSnapshots());
+            assertFalse(staleSnapshot.exists());
+            assertTrue(unrelatedFile.isFile());
+            assertTrue(new File(cache, ".lock").isFile());
+        }
+    }
+
+    @Test
+    public void activeLeasePreventsSnapshotCleanup() throws IOException {
+        File cache = folder.newFolder("cache");
+        File source = folder.newFile("page");
+        Files.write(source.toPath(), new byte[] {1, 2, 3, 4});
+        try (ContinuousTileSnapshotStore store = ContinuousTileSnapshotStore.open(cache, 16, 32)) {
+            try (ContinuousTileSnapshotStore.Lease lease = store.create(source, () -> false)) {
+                File snapshot = lease.file();
+                assertFalse(store.clearIdleSnapshots());
+                assertTrue(snapshot.isFile());
+            }
+            assertTrue(store.clearIdleSnapshots());
+        }
     }
 }

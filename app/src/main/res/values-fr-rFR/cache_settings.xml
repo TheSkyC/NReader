@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Affichage des résultats de navigation enregistrés du %1$s pendant l’actualisation</string>
     <string name="search_page_cache_showing_stale">Affichage d’anciens résultats de navigation enregistrés du %1$s pendant l’actualisation</string>
     <string name="search_page_cache_refresh_failed">Impossible d’actualiser les résultats. Les résultats enregistrés sont affichés.</string>
+    <string name="clear_managed_caches">Effacer les caches gérés</string>
+    <string name="message_clear_managed_caches">Effacer les caches gérés des images, des pages de favoris, des pages de navigation et des instantanés du lecteur sur cet appareil ? Les instantanés du lecteur en cours d’utilisation peuvent être ignorés. Les galeries téléchargées, les données de compte, les états des favoris, les instantanés de restauration, la progression de lecture et les marque-pages sont conservés.</string>
+    <string name="title_managed_cache_clear_result">Résultat du nettoyage du cache</string>
+    <string name="managed_cache_clear_result">Images : %1$s\nPages de favoris : %2$s\nPages de navigation : %3$s\nInstantanés du lecteur : %4$s</string>
+    <string name="managed_cache_clear_cleared">Effacé</string>
+    <string name="managed_cache_clear_failed">Échec de l’effacement</string>
+    <string name="managed_cache_clear_skipped">Ignoré : lecteur en cours d’utilisation</string>
 </resources>

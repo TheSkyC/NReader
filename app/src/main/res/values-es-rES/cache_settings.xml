@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Mostrando resultados de exploración guardados del %1$s mientras se actualizan</string>
     <string name="search_page_cache_showing_stale">Mostrando resultados de exploración guardados antiguos del %1$s mientras se actualizan</string>
     <string name="search_page_cache_refresh_failed">No se pudieron actualizar los resultados. Se muestran los resultados guardados.</string>
+    <string name="clear_managed_caches">Borrar cachés administradas</string>
+    <string name="message_clear_managed_caches">¿Borrar las cachés administradas de imágenes, páginas favoritas, páginas de navegación y capturas del lector en este dispositivo? Es posible que se omitan las capturas del lector que estén en uso. Se conservarán las galerías descargadas, los datos de la cuenta, los estados de favoritos, las capturas de restauración, el progreso de lectura y los marcadores.</string>
+    <string name="title_managed_cache_clear_result">Resultado de la limpieza de caché</string>
+    <string name="managed_cache_clear_result">Imágenes: %1$s\nPáginas favoritas: %2$s\nPáginas de navegación: %3$s\nCapturas del lector: %4$s</string>
+    <string name="managed_cache_clear_cleared">Borrada</string>
+    <string name="managed_cache_clear_failed">No se pudo borrar</string>
+    <string name="managed_cache_clear_skipped">Omitida: el lector está activo</string>
 </resources>

@@ -130,4 +130,12 @@
         <item>64</item>
         <item>128</item>
     </string-array>
+    <string name="preference_key_managed_cache_clear" translatable="false">managed_cache_clear</string>
+    <string name="clear_managed_caches">Clear managed caches</string>
+    <string name="message_clear_managed_caches">Clear the managed image, favorite-page, browse-page, and reader snapshot caches on this device? Active reader snapshots may be skipped. Downloads, account data, favorite status records, restore snapshots, reading progress, and bookmarks are kept.</string>
+    <string name="title_managed_cache_clear_result">Cache clearing results</string>
+    <string name="managed_cache_clear_result">Images: %1$s\nFavorite pages: %2$s\nBrowse pages: %3$s\nReader snapshots: %4$s</string>
+    <string name="managed_cache_clear_cleared">Cleared</string>
+    <string name="managed_cache_clear_failed">Could not clear</string>
+    <string name="managed_cache_clear_skipped">Skipped while reader is active</string>
 </resources>

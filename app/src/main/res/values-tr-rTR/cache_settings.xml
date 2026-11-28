@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Yenilenirken %1$s tarihli kaydedilmiş gezinti sonuçları gösteriliyor</string>
     <string name="search_page_cache_showing_stale">Yenilenirken %1$s tarihli eski gezinti sonuçları gösteriliyor</string>
     <string name="search_page_cache_refresh_failed">Gezinti sonuçları yenilenemedi. Kaydedilmiş sonuçlar gösteriliyor.</string>
+    <string name="clear_managed_caches">Yönetilen önbellekleri temizle</string>
+    <string name="message_clear_managed_caches">Bu cihazdaki yönetilen görsel, favori sayfası, gezinme sayfası ve okuyucu anlık görüntüsü önbellekleri temizlensin mi? Kullanımdaki okuyucu anlık görüntüleri atlanabilir. İndirilen galeriler, hesap verileri, favori durumları, geri yükleme anlık görüntüleri, okuma ilerlemesi ve yer imleri korunur.</string>
+    <string name="title_managed_cache_clear_result">Önbellek temizleme sonucu</string>
+    <string name="managed_cache_clear_result">Görseller: %1$s\nFavori sayfaları: %2$s\nGezinme sayfaları: %3$s\nOkuyucu anlık görüntüleri: %4$s</string>
+    <string name="managed_cache_clear_cleared">Temizlendi</string>
+    <string name="managed_cache_clear_failed">Temizlenemedi</string>
+    <string name="managed_cache_clear_skipped">Okuyucu kullanımda, atlandı</string>
 </resources>

@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">正在刷新，暂时显示 %1$s 的已缓存浏览结果</string>
     <string name="search_page_cache_showing_stale">正在刷新，暂时显示 %1$s 的较旧浏览结果</string>
     <string name="search_page_cache_refresh_failed">无法刷新浏览结果，正在显示已保存的结果。</string>
+    <string name="clear_managed_caches">清除受管缓存</string>
+    <string name="message_clear_managed_caches">清除本设备受管的图片、收藏列表页、浏览列表页和阅读器快照缓存？正在使用的阅读器快照可能会跳过。已下载作品、账号数据、单本收藏状态、恢复快照、阅读进度和书签会保留。</string>
+    <string name="title_managed_cache_clear_result">缓存清理结果</string>
+    <string name="managed_cache_clear_result">图片：%1$s\n收藏列表页：%2$s\n浏览列表页：%3$s\n阅读器快照：%4$s</string>
+    <string name="managed_cache_clear_cleared">已清除</string>
+    <string name="managed_cache_clear_failed">清除失败</string>
+    <string name="managed_cache_clear_skipped">阅读器正在使用，已跳过</string>
 </resources>

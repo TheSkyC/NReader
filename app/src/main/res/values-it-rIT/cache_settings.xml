@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Risultati di navigazione salvati del %1$s mostrati durante l’aggiornamento</string>
     <string name="search_page_cache_showing_stale">Risultati di navigazione salvati meno recenti del %1$s mostrati durante l’aggiornamento</string>
     <string name="search_page_cache_refresh_failed">Impossibile aggiornare i risultati. Vengono mostrati quelli salvati.</string>
+    <string name="clear_managed_caches">Svuota le cache gestite</string>
+    <string name="message_clear_managed_caches">Svuotare le cache gestite di immagini, pagine dei preferiti, pagine di navigazione e istantanee del lettore su questo dispositivo? Le istantanee del lettore in uso potrebbero essere ignorate. Le gallerie scaricate, i dati dell’account, gli stati dei preferiti, le istantanee di ripristino, i progressi di lettura e i segnalibri verranno conservati.</string>
+    <string name="title_managed_cache_clear_result">Risultato della pulizia della cache</string>
+    <string name="managed_cache_clear_result">Immagini: %1$s\nPagine preferiti: %2$s\nPagine di navigazione: %3$s\nIstantanee lettore: %4$s</string>
+    <string name="managed_cache_clear_cleared">Svuotata</string>
+    <string name="managed_cache_clear_failed">Impossibile svuotare</string>
+    <string name="managed_cache_clear_skipped">Ignorata: lettore attivo</string>
 </resources>

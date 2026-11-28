@@ -40,6 +40,8 @@ final class ContinuousTileSnapshotStore implements AutoCloseable {
         throws IOException {
         if (maxFileBytes <= 0 || maxTotalBytes < maxFileBytes)
             throw new IllegalArgumentException("Invalid image snapshot budget");
+        if (Files.isSymbolicLink(directory.toPath()))
+            throw new IOException("Image snapshot directory is a symbolic link");
         if (!directory.isDirectory() && !directory.mkdirs() && !directory.isDirectory())
             throw new IOException("Could not create image snapshot directory");
         FileOutputStream stream = new FileOutputStream(new File(directory, ".lock"), true);
@@ -119,6 +121,23 @@ final class ContinuousTileSnapshotStore implements AutoCloseable {
             } finally {
                 lockStream.close();
             }
+        }
+    }
+
+    boolean clearIdleSnapshots() throws IOException {
+        retryPendingCleanup();
+        synchronized (this) {
+            if (closed || poisoned) throw new IOException("Image snapshot store is unavailable");
+            if (active != 0) return false;
+            File[] files = directory.listFiles();
+            if (files == null) throw new IOException("Could not inspect image snapshot directory");
+            for (File file : files) {
+                String name = file.getName();
+                if (!name.startsWith("reader-tile-") || !name.endsWith(".snapshot")) continue;
+                if (Files.isSymbolicLink(file.toPath()) || !file.isFile() || !file.delete())
+                    throw new IOException("Could not remove image snapshot");
+            }
+            return true;
         }
     }
 

@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Під час оновлення показано збережені результати перегляду від %1$s</string>
     <string name="search_page_cache_showing_stale">Під час оновлення показано старі збережені результати перегляду від %1$s</string>
     <string name="search_page_cache_refresh_failed">Не вдалося оновити результати перегляду. Показано збережені результати.</string>
+    <string name="clear_managed_caches">Очистити керований кеш</string>
+    <string name="message_clear_managed_caches">Очистити керований кеш зображень, сторінок обраного, сторінок перегляду та знімків читача на цьому пристрої? Активні знімки читача можуть бути пропущені. Завантажені галереї, дані облікового запису, стани обраного, знімки відновлення, прогрес читання та закладки буде збережено.</string>
+    <string name="title_managed_cache_clear_result">Результат очищення кешу</string>
+    <string name="managed_cache_clear_result">Зображення: %1$s\nСторінки обраного: %2$s\nСторінки перегляду: %3$s\nЗнімки читача: %4$s</string>
+    <string name="managed_cache_clear_cleared">Очищено</string>
+    <string name="managed_cache_clear_failed">Не вдалося очистити</string>
+    <string name="managed_cache_clear_skipped">Пропущено: читач активний</string>
 </resources>

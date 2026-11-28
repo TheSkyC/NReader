@@ -6,7 +6,11 @@ import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.theskyc.nreader.async.database.OnlineFavoritePageStore;
+import com.theskyc.nreader.async.database.SearchPageStore;
+import com.theskyc.nreader.components.reader.ContinuousPageAdapter;
 import com.theskyc.nreader.utility.LogUtility;
 
 import java.io.File;
@@ -22,6 +26,29 @@ public final class ManagedCacheStorage {
 
     public interface Callback {
         void onComplete(@NonNull Usage usage);
+    }
+
+    public interface ClearCallback {
+        void onComplete(@NonNull ClearResult result);
+    }
+
+    public static final class ClearResult {
+        public final long imageCacheBytes;
+        @Nullable public final Exception imageError;
+        public final boolean favoritePagesCleared;
+        public final boolean browsePagesCleared;
+        public final boolean readerSnapshotsCleared;
+        public final boolean readerSnapshotsSkipped;
+
+        ClearResult(long imageCacheBytes, @Nullable Exception imageError, boolean favoritePagesCleared,
+                    boolean browsePagesCleared, boolean readerSnapshotsCleared, boolean readerSnapshotsSkipped) {
+            this.imageCacheBytes = imageCacheBytes;
+            this.imageError = imageError;
+            this.favoritePagesCleared = favoritePagesCleared;
+            this.browsePagesCleared = browsePagesCleared;
+            this.readerSnapshotsCleared = readerSnapshotsCleared;
+            this.readerSnapshotsSkipped = readerSnapshotsSkipped;
+        }
     }
 
     public static final class Usage {
@@ -56,6 +83,74 @@ public final class ManagedCacheStorage {
             Usage usage = measure(cacheDirectory);
             main.post(() -> callback.onComplete(usage));
         });
+    }
+
+    public static void clearAll(@NonNull Context context, @NonNull ClearCallback callback) {
+        Context application = context.getApplicationContext();
+        SearchPageStore.markClearPending();
+        ImageCacheManager.clear(application, (bytes, imageError) -> worker.execute(() -> {
+            boolean browsePagesCleared = clearBrowsePages(application);
+            boolean favoritePagesCleared = clearFavoritePages(application);
+            boolean readerSnapshotsCleared = false;
+            boolean readerSnapshotsSkipped = false;
+            try {
+                readerSnapshotsCleared = ContinuousPageAdapter.clearIdleSnapshots(application);
+                readerSnapshotsSkipped = !readerSnapshotsCleared;
+            } catch (IOException | RuntimeException error) {
+                LogUtility.w("Unable to clear reader snapshot cache", error);
+            }
+            ClearResult result = new ClearResult(bytes, imageError, favoritePagesCleared,
+                browsePagesCleared, readerSnapshotsCleared, readerSnapshotsSkipped);
+            new Handler(Looper.getMainLooper()).post(() -> callback.onComplete(result));
+        }));
+    }
+
+    private static boolean clearBrowsePages(Context application) {
+        SearchPageStore store = null;
+        RuntimeException failure = null;
+        try {
+            store = SearchPageStore.open(application);
+            store.clearAll();
+        } catch (RuntimeException error) {
+            failure = error;
+            LogUtility.w("Unable to clear browse page cache", error);
+        } finally {
+            if (store != null) {
+                try {
+                    store.close();
+                } catch (RuntimeException error) {
+                    if (failure == null) failure = error;
+                    else failure.addSuppressed(error);
+                    LogUtility.w("Unable to close browse page cache", error);
+                }
+            } else {
+                SearchPageStore.cancelPendingClear();
+            }
+        }
+        return failure == null;
+    }
+
+    private static boolean clearFavoritePages(Context application) {
+        OnlineFavoritePageStore store = null;
+        RuntimeException failure = null;
+        try {
+            store = OnlineFavoritePageStore.open(application);
+            store.clearAll();
+        } catch (RuntimeException error) {
+            failure = error;
+            LogUtility.w("Unable to clear favorite page cache", error);
+        } finally {
+            if (store != null) {
+                try {
+                    store.close();
+                } catch (RuntimeException error) {
+                    if (failure == null) failure = error;
+                    else failure.addSuppressed(error);
+                    LogUtility.w("Unable to close favorite page cache", error);
+                }
+            }
+        }
+        return failure == null;
     }
 
     static Usage measure(@NonNull File cacheDirectory) {

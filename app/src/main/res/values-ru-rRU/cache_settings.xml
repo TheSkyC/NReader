@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Во время обновления показаны сохранённые результаты просмотра от %1$s</string>
     <string name="search_page_cache_showing_stale">Во время обновления показаны старые сохранённые результаты просмотра от %1$s</string>
     <string name="search_page_cache_refresh_failed">Не удалось обновить результаты просмотра. Показаны сохранённые результаты.</string>
+    <string name="clear_managed_caches">Очистить управляемый кэш</string>
+    <string name="message_clear_managed_caches">Очистить управляемый кэш изображений, страниц избранного, страниц просмотра и снимков чтения на этом устройстве? Активные снимки чтения могут быть пропущены. Загруженные галереи, данные аккаунта, состояния избранного, снимки восстановления, прогресс чтения и закладки сохраняются.</string>
+    <string name="title_managed_cache_clear_result">Результат очистки кэша</string>
+    <string name="managed_cache_clear_result">Изображения: %1$s\nСтраницы избранного: %2$s\nСтраницы просмотра: %3$s\nСнимки чтения: %4$s</string>
+    <string name="managed_cache_clear_cleared">Очищено</string>
+    <string name="managed_cache_clear_failed">Не удалось очистить</string>
+    <string name="managed_cache_clear_skipped">Пропущено: ридер активен</string>
 </resources>

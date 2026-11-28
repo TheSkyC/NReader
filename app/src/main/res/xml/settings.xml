@@ -375,6 +375,10 @@
                 android:summary="@string/managed_cache_usage_checking"
                 android:title="@string/title_managed_cache_usage"
                 app:iconSpaceReserved="false" />
+            <Preference
+                android:key="@string/preference_key_managed_cache_clear"
+                android:title="@string/clear_managed_caches"
+                app:iconSpaceReserved="false" />
             <ListPreference
                 android:defaultValue="250"
                 android:entries="@array/image_cache_quota_entries"

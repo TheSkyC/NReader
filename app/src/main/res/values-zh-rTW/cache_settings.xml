@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">正在刷新，暫時顯示 %1$s 的已快取瀏覽結果</string>
     <string name="search_page_cache_showing_stale">正在刷新，暫時顯示 %1$s 的較舊瀏覽結果</string>
     <string name="search_page_cache_refresh_failed">無法刷新瀏覽結果，正在顯示已儲存的結果。</string>
+    <string name="clear_managed_caches">清除受管理快取</string>
+    <string name="message_clear_managed_caches">清除此裝置受管理的圖片、收藏清單頁、瀏覽清單頁和閱讀器快照快取？正在使用的閱讀器快照可能會略過。已下載作品、帳號資料、單本收藏狀態、還原快照、閱讀進度和書籤會保留。</string>
+    <string name="title_managed_cache_clear_result">快取清理結果</string>
+    <string name="managed_cache_clear_result">圖片：%1$s\n收藏清單頁：%2$s\n瀏覽清單頁：%3$s\n閱讀器快照：%4$s</string>
+    <string name="managed_cache_clear_cleared">已清除</string>
+    <string name="managed_cache_clear_failed">清除失敗</string>
+    <string name="managed_cache_clear_skipped">閱讀器正在使用，已略過</string>
 </resources>

@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Gespeicherte Listenergebnisse von %1$s werden während der Aktualisierung angezeigt</string>
     <string name="search_page_cache_showing_stale">Ältere gespeicherte Listenergebnisse von %1$s werden während der Aktualisierung angezeigt</string>
     <string name="search_page_cache_refresh_failed">Listenergebnisse konnten nicht aktualisiert werden. Gespeicherte Ergebnisse werden angezeigt.</string>
+    <string name="clear_managed_caches">Verwaltete Caches leeren</string>
+    <string name="message_clear_managed_caches">Die verwalteten Bild-, Favoriten-, Übersichtsseiten- und Lesesnapshot-Caches auf diesem Gerät leeren? Aktive Lesesnapshots werden möglicherweise übersprungen. Heruntergeladene Galerien, Kontodaten, Favoritenstatus, Wiederherstellungssnapshots, Lesefortschritt und Lesezeichen bleiben erhalten.</string>
+    <string name="title_managed_cache_clear_result">Ergebnis der Cache-Bereinigung</string>
+    <string name="managed_cache_clear_result">Bilder: %1$s\nFavoritenseiten: %2$s\nÜbersichtsseiten: %3$s\nLesesnapshots: %4$s</string>
+    <string name="managed_cache_clear_cleared">Geleert</string>
+    <string name="managed_cache_clear_failed">Konnte nicht geleert werden</string>
+    <string name="managed_cache_clear_skipped">Übersprungen, Reader ist aktiv</string>
 </resources>

@@ -466,6 +466,19 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
                 return true;
             });
 
+            Preference clearManagedCaches = Objects.requireNonNull(
+                findPreference(getString(R.string.preference_key_managed_cache_clear)));
+            clearManagedCaches.setOnPreferenceClickListener(preference -> {
+                new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.clear_managed_caches)
+                    .setMessage(R.string.message_clear_managed_caches)
+                    .setNegativeButton(R.string.no, null)
+                    .setPositiveButton(R.string.yes,
+                        (dialog, which) -> clearManagedCaches(clearManagedCaches))
+                    .show();
+                return true;
+            });
+
             ListPreference favoriteStateLimit = Objects.requireNonNull(
                 findPreference(getString(R.string.preference_key_online_favorite_state_limit)));
             favoriteStateLimit.setSummaryProvider(preference -> {
@@ -767,6 +780,43 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         return bytes == ManagedCacheStorage.UNAVAILABLE
             ? getString(R.string.managed_cache_size_unavailable)
             : Formatter.formatFileSize(requireContext(), bytes);
+    }
+
+    private void clearManagedCaches(Preference clearPreference) {
+        SettingsActivity activity = act;
+        if (activity == null) return;
+        clearPreference.setEnabled(false);
+        ManagedCacheStorage.clearAll(activity, result -> {
+            if (!isAdded() || getActivity() != activity || activity.isFinishing()) return;
+            clearPreference.setEnabled(true);
+            Preference imageCache = findPreference(getString(R.string.preference_key_cache));
+            if (imageCache != null) {
+                imageCache.setEnabled(true);
+                updateImageCacheSummary(imageCache, result.imageCacheBytes, result.imageError);
+            }
+            updateFavoritePageCacheUsage();
+            updateFavoritePageCacheMetrics();
+            updateSearchPageCacheUsage();
+            updateSearchPageCacheMetrics();
+            updateManagedCacheUsage();
+
+            String favoritePages = getString(result.favoritePagesCleared
+                ? R.string.managed_cache_clear_cleared : R.string.managed_cache_clear_failed);
+            String browsePages = getString(result.browsePagesCleared
+                ? R.string.managed_cache_clear_cleared : R.string.managed_cache_clear_failed);
+            String readerSnapshots = getString(result.readerSnapshotsSkipped
+                ? R.string.managed_cache_clear_skipped
+                : result.readerSnapshotsCleared
+                    ? R.string.managed_cache_clear_cleared : R.string.managed_cache_clear_failed);
+            new MaterialAlertDialogBuilder(activity)
+                .setTitle(R.string.title_managed_cache_clear_result)
+                .setMessage(getString(R.string.managed_cache_clear_result,
+                    getString(result.imageError == null
+                        ? R.string.managed_cache_clear_cleared : R.string.managed_cache_clear_failed),
+                    favoritePages, browsePages, readerSnapshots))
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+        });
     }
 
     private void updateFavoriteCacheUsage() {

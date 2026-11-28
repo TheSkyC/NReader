@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">更新中: %1$s の保存済み閲覧結果を表示しています</string>
     <string name="search_page_cache_showing_stale">更新中: %1$s の古い閲覧結果を表示しています</string>
     <string name="search_page_cache_refresh_failed">閲覧結果を更新できませんでした。保存済みの結果を表示しています。</string>
+    <string name="clear_managed_caches">管理対象のキャッシュを消去</string>
+    <string name="message_clear_managed_caches">この端末の画像、お気に入りページ、閲覧ページ、リーダースナップショットの管理対象キャッシュを消去しますか？使用中のリーダースナップショットはスキップされる場合があります。ダウンロード済み作品、アカウントデータ、お気に入り状態、復元用スナップショット、読書位置、ブックマークは保持されます。</string>
+    <string name="title_managed_cache_clear_result">キャッシュ消去結果</string>
+    <string name="managed_cache_clear_result">画像: %1$s\nお気に入りページ: %2$s\n閲覧ページ: %3$s\nリーダースナップショット: %4$s</string>
+    <string name="managed_cache_clear_cleared">消去済み</string>
+    <string name="managed_cache_clear_failed">消去できませんでした</string>
+    <string name="managed_cache_clear_skipped">リーダー使用中のためスキップ</string>
 </resources>

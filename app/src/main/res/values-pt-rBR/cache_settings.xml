@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">Exibindo resultados de navegação salvos de %1$s enquanto atualiza</string>
     <string name="search_page_cache_showing_stale">Exibindo resultados de navegação antigos salvos de %1$s enquanto atualiza</string>
     <string name="search_page_cache_refresh_failed">Não foi possível atualizar os resultados. Exibindo os resultados salvos.</string>
+    <string name="clear_managed_caches">Limpar caches gerenciados</string>
+    <string name="message_clear_managed_caches">Limpar os caches gerenciados de imagens, páginas de favoritos, páginas de navegação e capturas do leitor neste dispositivo? Capturas do leitor em uso podem ser ignoradas. Galerias baixadas, dados da conta, estados dos favoritos, capturas de restauração, progresso de leitura e marcadores serão mantidos.</string>
+    <string name="title_managed_cache_clear_result">Resultado da limpeza de cache</string>
+    <string name="managed_cache_clear_result">Imagens: %1$s\nPáginas de favoritos: %2$s\nPáginas de navegação: %3$s\nCapturas do leitor: %4$s</string>
+    <string name="managed_cache_clear_cleared">Limpo</string>
+    <string name="managed_cache_clear_failed">Não foi possível limpar</string>
+    <string name="managed_cache_clear_skipped">Ignorado: leitor em uso</string>
 </resources>

@@ -77,4 +77,11 @@
     <string name="search_page_cache_showing">عرض نتائج التصفح المخزنة من %1$s أثناء التحديث</string>
     <string name="search_page_cache_showing_stale">عرض نتائج تصفح مخزنة أقدم من %1$s أثناء التحديث</string>
     <string name="search_page_cache_refresh_failed">تعذر تحديث نتائج التصفح. يتم عرض النتائج المحفوظة.</string>
+    <string name="clear_managed_caches">مسح ذاكرات التخزين المُدارة</string>
+    <string name="message_clear_managed_caches">هل تريد مسح ذاكرات الصور وصفحات المفضلة وصفحات التصفح ولقطات القارئ المُدارة على هذا الجهاز؟ قد يتم تخطي لقطات القارئ النشطة. ستبقى المعارض التي تم تنزيلها وبيانات الحساب وحالات المفضلة ولقطات الاستعادة وتقدم القراءة والإشارات المرجعية.</string>
+    <string name="title_managed_cache_clear_result">نتيجة مسح ذاكرة التخزين</string>
+    <string name="managed_cache_clear_result">الصور: %1$s\nصفحات المفضلة: %2$s\nصفحات التصفح: %3$s\nلقطات القارئ: %4$s</string>
+    <string name="managed_cache_clear_cleared">تم المسح</string>
+    <string name="managed_cache_clear_failed">تعذر المسح</string>
+    <string name="managed_cache_clear_skipped">تم التخطي: القارئ نشط</string>
 </resources>
