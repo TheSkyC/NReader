@@ -143,6 +143,49 @@ public class OnlineFavoriteClientTest {
         assertEquals(Boolean.TRUE, outcome.value);
     }
 
+    @Test public void queuedPersistenceDoesNotEraseStateAfterSwitchingAwayAndBack() throws Exception {
+        int existingGalleryId = 99002;
+        int queuedGalleryId = 99003;
+        String identity = OnlineFavoriteClient.sessionIdentity(context);
+        OnlineFavoriteClient.rememberState(context, existingGalleryId, true);
+        awaitStorage();
+
+        java.lang.reflect.Field field = OnlineFavoriteClient.class.getDeclaredField("storage");
+        field.setAccessible(true);
+        java.util.concurrent.ExecutorService storage = (java.util.concurrent.ExecutorService) field.get(null);
+        CountDownLatch storageBlocked = new CountDownLatch(1);
+        CountDownLatch releaseStorage = new CountDownLatch(1);
+        storage.submit(() -> {
+            storageBlocked.countDown();
+            try {
+                releaseStorage.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(storageBlocked.await(5, TimeUnit.SECONDS));
+
+        try {
+            OnlineFavoriteClient.rememberState(context, queuedGalleryId, true);
+            AuthStore.saveApiKey(context, "temporary-cache-account", true);
+            OnlineFavoriteClient.sessionIdentity(context);
+            AuthStore.saveApiKey(context, "synthetic-key", true);
+            OnlineFavoriteClient.sessionIdentity(context);
+        } finally {
+            releaseStorage.countDown();
+        }
+        awaitStorage();
+
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, existingGalleryId));
+        assertEquals(Boolean.TRUE, OnlineFavoriteClient.cachedState(context, queuedGalleryId));
+        org.json.JSONObject persisted = new org.json.JSONObject(context
+            .getSharedPreferences("online_favorite_cache", 0).getString("states", "{}"));
+        assertEquals(identity, context.getSharedPreferences("online_favorite_cache", 0)
+            .getString("identity", null));
+        assertTrue(persisted.getBoolean(String.valueOf(existingGalleryId)));
+        assertTrue(persisted.getBoolean(String.valueOf(queuedGalleryId)));
+    }
+
     private void awaitStorage() throws Exception {
         java.lang.reflect.Field field = OnlineFavoriteClient.class.getDeclaredField("storage");
         field.setAccessible(true);

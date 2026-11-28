@@ -42,6 +42,8 @@ import okhttp3.Response;
 
 public final class OnlineFavoriteClient {
     private static final int MAX_TRACKED_MUTATIONS = 512;
+    // Bound retained snapshots while allowing an account switch during a queued write.
+    private static final int MAX_PENDING_CACHE_IDENTITIES = 2;
     private static final Map<String, Boolean> confirmedStates = new LinkedHashMap<>(128, 0.75f, true);
     private static int maxCachedStates = OnlineFavoriteStateQuota.DEFAULT_ENTRIES;
     private static final Set<String> inFlight = new HashSet<>();
@@ -49,6 +51,8 @@ public final class OnlineFavoriteClient {
     private static final ExecutorService storage = Executors.newSingleThreadExecutor();
     private static final String CACHE_PREFERENCES = "online_favorite_cache";
     private static boolean saveQueued;
+    private static final Map<String, Map<String, Boolean>> pendingCacheWrites =
+        new LinkedHashMap<>(4, 0.75f, true);
     private static long mutationVersion;
     private static long identityVersion;
     private static long authGeneration = -1;
@@ -500,25 +504,47 @@ public final class OnlineFavoriteClient {
         if (context == null) return;
         Context application = context.getApplicationContext();
         synchronized (confirmedStates) {
+            if (activeIdentity == null) return;
+            pendingCacheWrites.put(activeIdentity, new LinkedHashMap<>(confirmedStates));
+            while (pendingCacheWrites.size() > MAX_PENDING_CACHE_IDENTITIES) {
+                String oldest = pendingCacheWrites.keySet().iterator().next();
+                pendingCacheWrites.remove(oldest);
+            }
             if (saveQueued) return;
             saveQueued = true;
         }
-        storage.execute(() -> {
+        storage.execute(() -> persistQueued(application));
+    }
+
+    private static void persistQueued(Context context) {
+        while (true) {
             synchronized (confirmedStates) {
-                saveQueued = false;
-                if (activeIdentity == null) return;
+                if (pendingCacheWrites.isEmpty()) {
+                    saveQueued = false;
+                    return;
+                }
+                String identity = activeIdentity != null && pendingCacheWrites.containsKey(activeIdentity)
+                    ? activeIdentity : null;
+                if (identity == null) {
+                    for (String pendingIdentity : pendingCacheWrites.keySet()) identity = pendingIdentity;
+                }
+                Map<String, Boolean> snapshot = pendingCacheWrites.remove(identity);
+                pendingCacheWrites.clear();
                 JSONObject states = new JSONObject();
                 try {
-                    for (Map.Entry<String, Boolean> entry : confirmedStates.entrySet()) {
-                        states.put(entry.getKey().substring(activeIdentity.length() + 1), entry.getValue());
+                    String prefix = identity + ":";
+                    for (Map.Entry<String, Boolean> entry : snapshot.entrySet()) {
+                        if (entry.getKey().startsWith(prefix)) {
+                            states.put(entry.getKey().substring(prefix.length()), entry.getValue());
+                        }
                     }
                 } catch (JSONException exception) {
                     LogUtility.w("Unable to save online favorite cache", exception);
-                    return;
+                    continue;
                 }
-                application.getSharedPreferences(CACHE_PREFERENCES, Context.MODE_PRIVATE).edit()
-                    .putString("identity", activeIdentity).putString("states", states.toString()).apply();
+                context.getSharedPreferences(CACHE_PREFERENCES, Context.MODE_PRIVATE).edit()
+                    .putString("identity", identity).putString("states", states.toString()).apply();
             }
-        });
+        }
     }
 }
